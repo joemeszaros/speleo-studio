@@ -1,4 +1,5 @@
 import { Exporter } from '../io/export.js';
+import '../localization/local-setup.js';
 
 class NavigationBar {
 
