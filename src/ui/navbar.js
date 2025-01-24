@@ -1,4 +1,5 @@
 import { Exporter } from '../io/export.js';
+import '../localization/local-setup.js';
 
 class NavigationBar {
 
@@ -20,35 +21,35 @@ class NavigationBar {
   #getMenus() {
     return [
       {
-        name     : 'File',
+        name     : i18next.t('File'),
         elements : [
           {
-            name  : 'Open TopoDroid file',
+            name  : i18next.t('Open TopoDroid file'),
             click : () => {
               document.getElementById('topodroidInput').click();
             }
           },
           {
-            name  : 'Open Polygon file',
+            name  : i18next.t('Open Polygon file'),
             click : function () {
               document.getElementById('polygonInput').click();
             }
           },
           {
-            name  : 'Open JSON file',
+            name  : i18next.t('Open JSON file'),
             click : function () {
               document.getElementById('jsonInput').click();
             }
           },
-          { name: 'Export JSON', click: () => Exporter.exportCaves(this.db.caves) },
-          { name: 'Export PNG', click: () => Exporter.exportPNG(this.scene) }
+          { name: i18next.t('Export JSON'), click: () => Exporter.exportCaves(this.db.caves) },
+          { name: i18next.t('Export PNG'), click: () => Exporter.exportPNG(this.scene) }
         ]
       },
       {
-        name     : 'Surface',
+        name     : i18next.t('Surface'),
         elements : [
           {
-            name  : 'Open PLY file',
+            name  : i18next.t('Open PLY file'),
             click : function () {
               document.getElementById('plyInput').click();
             }
@@ -82,81 +83,75 @@ class NavigationBar {
   #getIcons() {
     return [
       {
-        tooltip : 'Print',
+        tooltip : i18next.t('Print'),
         icon    : './icons/print.svg',
         click   : () => window.print()
       },
       {
-        tooltip : 'Zoom to fit',
+        tooltip : i18next.t('Zoom to fit'),
         icon    : './icons/zoom_fit.svg',
         click   : () => this.scene.fitScene(this.scene.computeBoundingBox())
       },
       {
-        tooltip : 'Zoom in',
+        tooltip : i18next.t('Zoom in'),
         icon    : './icons/zoom_in.svg',
         click   : () => this.scene.zoomWithStep(this.options.scene.zoomStep)
       },
       {
-        tooltip : 'Zoom out',
+        tooltip : i18next.t('Zoom out'),
         icon    : './icons/zoom_out.svg',
         click   : () => this.scene.zoomWithStep(-1 * this.options.scene.zoomStep)
       },
       {
-        tooltip : 'Plan',
+        tooltip : i18next.t('Plan'),
         icon    : './icons/plan.svg',
         click   : () => this.scene.lookAtPlan()
       },
       {
-        tooltip : 'Profile',
+        tooltip : i18next.t('Profile'),
         icon    : './icons/profile.svg',
         click   : () => this.scene.lookAtProfile()
       },
       {
-        tooltip : '3D',
+        tooltip : i18next.t('3D'),
         icon    : './icons/3d.svg',
         click   : () => this.scene.lookAt3D()
       },
       {
-        tooltip : 'Bounding box',
+        tooltip : i18next.t('Bounding box'),
         icon    : './icons/bounding_box.svg',
         click   : () => this.scene.toogleBoundingBox()
       },
       {
-        tooltip : 'Show beddings',
+        tooltip : i18next.t('Show beddings'),
         icon    : './icons/bedding.svg',
         click   : () => this.scene.tooglePlaneFor('bedding')
       },
       {
-        tooltip : 'Show faults',
+        tooltip : i18next.t('Show faults'),
         icon    : './icons/fault.svg',
         click   : () => this.scene.tooglePlaneFor('fault')
       },
       {
-        tooltip : 'Line color mode',
+        tooltip : i18next.t('Line color mode'),
         icon    : './icons/cl_color.svg',
         click   : () => this.scene.rollCenterLineColor()
       },
       {
-        tooltip : 'Grid position/visibility',
+        tooltip : i18next.t('Grid position/visibility'),
         icon    : './icons/grid.svg',
         click   : () => this.scene.grid.roll()
       },
       {
-        tooltip : 'Surface visibility',
+        tooltip : i18next.t('Surface visibility'),
         icon    : './icons/surface.svg',
         click   : () => this.scene.rollSurface()
       },
       {
-        tooltip : 'Locate point',
+        tooltip : i18next.t('Locate point'),
         icon    : './icons/locate.svg',
-        click   : (event) => this.interactive.showLocateStationPanel(event.clientX)
-      },
-      {
-        tooltip : 'Distance between points',
-        icon    : './icons/distance.svg',
-        click   : (event) => this.interactive.showShortestPathPanel(event.clientX)
+        click   : (event) => this.interactive.showLocatePanel(event.clientX)
       }
-
     ];
   }
 
