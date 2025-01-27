@@ -5,18 +5,30 @@ import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
 import * as C from '../constants.js';
 
 class View {
+
   constructor(camera, domElement, scene) {
     this.camera = camera;
     this.domElement = domElement;
     this.scene = scene;
+    this.spriteCamera = new THREE.OrthographicCamera(
+      -this.width / 2,
+      this.width / 2,
+      this.height / 2,
+      -this.height / 2,
+      1,
+      10
+    );
+    this.spriteCamera.position.z = 10;
+
   }
 
   renderView() {
     this.scene.renderScene(this.camera);
   }
 
-  onResize(aspect) {
+  onResize(width, height) {
     if (this.camera.isOrthographicCamera) {
+      const aspect = width / height;
       this.camera.left = this.camera.bottom * aspect;
       this.camera.right = this.camera.top * aspect;
       this.camera.updateProjectionMatrix();
@@ -50,8 +62,6 @@ class View {
     boundingBox.applyMatrix4(rotation);
     const width = boundingBox.max.x - boundingBox.min.x;
     const height = boundingBox.max.y - boundingBox.min.y;
-    //const maxSize = Math.max(width, height);
-    //this.options.scene.zoomStep = C.FRUSTRUM / maxSize;
     const zoomLevel = Math.min((2 * C.FRUSTRUM * aspect) / width, (2 * C.FRUSTRUM) / height);
     const zoomChanged = this.camera.zoom !== zoomLevel;
     this.camera.zoom = zoomLevel;
@@ -147,12 +157,22 @@ class SpatialView extends View {
 
 class PlanView extends View {
 
-  constructor(scene, domElement, compass, ratio) {
+  constructor(scene, spriteScene, domElement) {
     super(View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
+    this.spriteCamera = new THREE.OrthographicCamera( //TODO: standardize ortho camera creation (static methon in view)
+      -scene.width / 2,
+      scene.width / 2,
+      scene.height / 2,
+      -scene.height / 2,
+      1,
+      10
+    );
+    this.spriteCamera.position.z = 10;
+
     this.control = new SimpleOrbitControl(this.camera, domElement, COORDINATE_INDEX.Z);
-    this.compass = compass;
-    this.ratio = ratio;
+    this.compass = this.#createCompass();
+    spriteScene.add(this.compass);
     this.initiated = false;
     this.enabled = false;
     this.addListener('orbitChange', (e) => this.#handleControlChange(e));
@@ -164,10 +184,10 @@ class PlanView extends View {
 
   #handleControlChange(e) {
     if (e.detail.reason === 'rotate') {
-      this.compass.style.transform = `rotate(${e.detail.value.rotation}rad)`;
+      this.compass.material.rotation = -e.detail.value.rotation;
     }
     if (e.detail.reason === 'zoom') {
-      this.ratio.style.transform = `scale(${e.detail.value.level})`;
+      //TODO scale ratio
     }
     this.renderView();
   }
@@ -182,17 +202,37 @@ class PlanView extends View {
       this.fitScreen(boundingBox, true);
       this.initiated = true;
     }
-    this.compass.classList.remove('hide');
-    this.compass.classList.add('show');
-
     this.renderView();
 
   }
 
   deactivate() {
-    this.compass.classList.remove('show');
-    this.compass.classList.add('hide');
     this.enabled = false;
+  }
+
+  renderView() {
+    this.scene.renderScene(this.camera, this.spriteCamera);
+  }
+
+  onResize(width, height) {
+    super.onResize(width, height);
+    this.compass.position.set(width / 2 - 60, -height / 2 + 60, 1); // bottom right
+    this.spriteCamera.left = -width / 2;
+    this.spriteCamera.right = width / 2;
+    this.spriteCamera.top = height / 2;
+    this.spriteCamera.bottom = -height / 2;
+    this.spriteCamera.updateProjectionMatrix();
+
+  }
+
+  #createCompass() {
+    const map = new THREE.TextureLoader().load('images/compass.svg');
+    const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
+    const sprite = new THREE.Sprite(material);
+    sprite.center.set(0.5, 0.5);
+    sprite.scale.set(100, 100, 1);
+    sprite.position.set(this.scene.width / 2 - 60, -this.scene.height / 2 + 60, 1); // bottom right
+    return sprite;
   }
 }
 

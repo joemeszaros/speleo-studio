@@ -41,17 +41,20 @@ class MyScene {
     this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
     this.sceneRenderer.setPixelRatio(window.devicePixelRatio);
     this.sceneRenderer.setSize(container.offsetWidth, container.offsetHeight);
+    this.sceneRenderer.autoClear = false; // To allow render overlay on top of normal scene
     this.domElement = this.sceneRenderer.domElement; // auto generate canvas
     container.appendChild(this.domElement);
     this.width = container.offsetWidth;
     this.height = container.offsetHeight;
 
+    this.spriteScene = new THREE.Scene();
+
     this.views = {
       plan : new PlanView(
         this,
-        this.domElement,
-        container.querySelector('#viewport-compass'),
-        container.querySelector('#viewport-ratio')
+        this.spriteScene,
+        this.domElement
+
       ),
       profile : new ProfileView(this, this.domElement),
       spatial : new SpatialView(this, this.domElement)
@@ -59,6 +62,7 @@ class MyScene {
 
     this.threejsScene = new THREE.Scene();
     this.threejsScene.background = new THREE.Color(this.options.scene.background.color.hex());
+
     this.grid = new Grid(this.options, this);
 
     this.threejsScene.add(this.caveObject3DGroup);
@@ -246,9 +250,8 @@ class MyScene {
   onWindowResize() {
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
-    const aspect = this.width / this.height;
     this.sceneRenderer.setSize(this.width, this.height);
-    Object.keys(this.views).forEach((k) => this.views[k].onResize(aspect));
+    Object.keys(this.views).forEach((k) => this.views[k].onResize(this.width, this.height));
     this.view.renderView();
   }
 
@@ -585,13 +588,22 @@ class MyScene {
     this.view.renderView();
   }
 
-  renderScene(camera) {
+  renderScene(camera, spriteCamera) {
     this.sectionAttributes.forEach((e) => {
       const pos = e.center.clone();
       pos.z = pos.z + 100;
       e.text.lookAt(pos);
     });
-    this.sceneRenderer.render(this.threejsScene, camera);
+
+    if (spriteCamera === undefined) {
+      this.sceneRenderer.render(this.threejsScene, camera);
+    } else {
+      this.sceneRenderer.clear();
+      this.sceneRenderer.render(this.threejsScene, camera);
+      this.sceneRenderer.clearDepth();
+      this.sceneRenderer.render(this.spriteScene, spriteCamera);
+    }
+
   }
 
   #getCaveObjectsFlattened() {
