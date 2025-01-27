@@ -48,7 +48,7 @@ export function addGui(options, scene, materials, element) {
   centerLineFolder.addColor(centerLineParam, 'line color').onChange(function (val) {
     s.centerLines.segments.color = new Color(val);
     materials.segments.centerLine.color = new THREE.Color(val);
-    scene.renderScene();
+    scene.view.renderView();
   });
 
   centerLineFolder.addColor(centerLineParam, 'gradient start color').onChange(function (val) {
@@ -67,7 +67,7 @@ export function addGui(options, scene, materials, element) {
       materials.segments.centerLine.linewidth = s.centerLines.segments.width;
       materials.whiteLine.linewidth = s.centerLines.segments.width;
       scene.updateSegmentsWidth(val);
-      scene.renderScene();
+      scene.view.renderView();
     });
 
   centerLineFolder
@@ -78,7 +78,7 @@ export function addGui(options, scene, materials, element) {
       materials.segments.centerLine.opacity = val;
       materials.whiteLine.opacity = val;
       scene.setObjectsOpacity('centerLines', val);
-      scene.renderScene();
+      scene.view.renderView();
     });
 
   centerLineFolder.add(centerLineParam, 'show station').onChange(function (val) {
@@ -88,7 +88,7 @@ export function addGui(options, scene, materials, element) {
 
   centerLineFolder.addColor(centerLineParam, 'station color').onChange(function (val) {
     s.centerLines.spheres.color = new Color(val);
-    scene.renderScene();
+    scene.view.renderView();
   });
 
   centerLineFolder
@@ -109,14 +109,14 @@ export function addGui(options, scene, materials, element) {
   splaysFolder.addColor(splayParam, 'line color').onChange(function (val) {
     s.splays.segments.color = new Color(val);
     materials.segments.splay.color = new THREE.Color(val);
-    scene.renderScene();
+    scene.view.renderView();
   });
 
   splaysFolder.add(splayParam, 'width', 1, 5).onChange(function (val) {
     s.splays.segments.width = val;
     materials.segments.splay.linewidth = s.splays.segments.width;
     materials.whiteLine.linewidth = s.splays.segments.width;
-    scene.renderScene();
+    scene.view.renderView();
   });
 
   splaysFolder.add(splayParam, 'show station').onChange(function (val) {
@@ -126,7 +126,7 @@ export function addGui(options, scene, materials, element) {
 
   splaysFolder.addColor(splayParam, 'station color').onChange(function (val) {
     s.splays.spheres.color = new Color(val);
-    scene.renderScene();
+    scene.view.renderView();
   });
 
   splaysFolder
@@ -142,7 +142,7 @@ export function addGui(options, scene, materials, element) {
   labelsFolder.addColor(labelParam, 'font color').onChange(function (val) {
     s.labels.color = new Color(val);
     materials.text.color = new THREE.Color(val);
-    scene.renderScene();
+    scene.view.renderView();
   });
 
   labelsFolder
@@ -151,7 +151,7 @@ export function addGui(options, scene, materials, element) {
     .onChange(function (val) {
       s.labels.size = val;
       scene.updateLabelSize(val);
-      scene.renderScene();
+      scene.view.renderView();
     });
 
   const sceneFolder = gui.addFolder('Scene');

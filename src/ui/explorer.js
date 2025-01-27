@@ -32,13 +32,13 @@ class ProjectManager {
     //TODO : consider survey here and only recalculate following surveys
     const cave = e.detail.cave;
     this.recalculateCave(cave);
-    this.scene.renderScene();
+    this.scene.view.renderView();
     this.explorer.updateCave(cave, (n) => n.name === cave.name);
   }
 
   onAttributesChanged(e) {
     const cave = e.detail.cave;
-    this.scene.renderScene();
+    this.scene.view.renderView();
     this.explorer.updateCave(cave, (n) => n.name === cave.name);
   }
 
@@ -48,7 +48,7 @@ class ProjectManager {
     this.scene.disposeSurvey(caveName, surveyName);
     const cave = this.db.getCave(caveName);
     this.recalculateCave(cave);
-    this.scene.renderScene();
+    this.scene.view.renderView();
     this.explorer.deleteSurvey(caveName, surveyName);
     this.explorer.updateCave(cave, (n) => n.name === cave.name);
   }
@@ -64,7 +64,7 @@ class ProjectManager {
     const caveName = e.detail.cave;
     this.scene.disposeCave(caveName);
     this.scene.deleteCave(caveName);
-    this.scene.renderScene();
+    this.scene.view.renderView();
     this.explorer.deleteCave(caveName);
     this.explorer.closeEditors(caveName);
   }
@@ -103,7 +103,7 @@ class ProjectManager {
     this.scene.updateVisiblePlanes();
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
-    this.scene.fitScene(boundingBox);
+    this.scene.view.fitScreen(boundingBox);
   }
 
   #emitSurveyRecalculated(cave, survey) {

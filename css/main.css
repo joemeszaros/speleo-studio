@@ -40,20 +40,34 @@ body {
   position: absolute;
   bottom: 5px;
   right: 5px;
-  transform: rotate(21deg);
+}
+
+.viewport .compass .show {
+  display: block;
+}
+
+.viewport .compass .hide {
+  display: none;
 }
 
 .viewport .logo {
   position: absolute;
   bottom: 5px;
   left: 5px;
-  z-index: 100;
+}
+
+.viewport .ratio {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  margin-left: -100px;
+  color: azure;
 }
 
 #control-panel {
   color: red;
   position: absolute;
-  top: 49px;
+  top: 48px;
   right: 0px;
   max-height: calc(100% - 73px);
   overflow: auto;

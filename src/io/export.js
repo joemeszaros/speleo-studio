@@ -19,7 +19,8 @@ class Exporter {
   }
 
   static exportPNG(scene) {
-    scene.renderScene();
+    scene.view.renderView();
+    //TODO: include compass and ratio
     const base64 = scene.domElement.toDataURL('image/png');
     let a = document.createElement('a'); // Create a temporary anchor.
     a.href = base64;

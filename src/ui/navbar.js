@@ -89,32 +89,36 @@ class NavigationBar {
       {
         tooltip : 'Zoom to fit',
         icon    : './icons/zoom_fit.svg',
-        click   : () => this.scene.fitScene(this.scene.computeBoundingBox())
+        click   : () => this.scene.view.fitScreen(this.scene.computeBoundingBox())
       },
       {
         tooltip : 'Zoom in',
         icon    : './icons/zoom_in.svg',
-        click   : () => this.scene.zoomWithStep(this.options.scene.zoomStep)
+        click   : () => this.scene.view.zoomIn(this.options.scene.zoomStep)
       },
       {
         tooltip : 'Zoom out',
         icon    : './icons/zoom_out.svg',
-        click   : () => this.scene.zoomWithStep(-1 * this.options.scene.zoomStep)
+        click   : () => this.scene.view.zoomOut(this.options.scene.zoomStep)
       },
       {
-        tooltip : 'Plan',
-        icon    : './icons/plan.svg',
-        click   : () => this.scene.lookAtPlan()
+        tooltip    : 'Plan',
+        selectable : true,
+        icon       : './icons/plan.svg',
+        click      : () => this.scene.changeView('plan')
       },
       {
-        tooltip : 'Profile',
-        icon    : './icons/profile.svg',
-        click   : () => this.scene.lookAtProfile()
+        tooltip    : 'Profile',
+        selectable : true,
+        icon       : './icons/profile.svg',
+        click      : () => this.scene.changeView('profile')
       },
       {
-        tooltip : '3D',
-        icon    : './icons/3d.svg',
-        click   : () => this.scene.lookAt3D()
+        tooltip    : '3D',
+        selectable : true,
+        selected   : true,
+        icon       : './icons/3d.svg',
+        click      : () => this.scene.changeView('spatial')
       },
       {
         tooltip : 'Bounding box',
@@ -204,15 +208,17 @@ class NavigationBar {
       return d;
     };
 
-    const createIcon = (tooltip, icon, glyphName, click, width = 20, height = 20) => {
+    const createIcon = (tooltip, icon, selectable, selected, click, width = 20, height = 20) => {
       const a = document.createElement('a');
-      a.onclick = click;
+      a.onclick = (event) => {
+        if (a.hasAttribute('selectable')) {
+          a.parentNode.querySelectorAll('a[selectable="true"]').forEach((c) => c.classList.remove('selected'));
+          a.classList.add('selected');
+        }
+        click(event);
+      };
 
-      if (glyphName !== undefined) {
-        const i = document.createElement('i');
-        i.setAttribute('class', `glyphicon glyphicon-${glyphName}`);
-        a.appendChild(i);
-      } else if (icon !== undefined) {
+      if (icon !== undefined) {
         const img = document.createElement('img');
         img.setAttribute('src', icon);
         img.setAttribute('width', width);
@@ -226,6 +232,13 @@ class NavigationBar {
 
       a.appendChild(t);
       a.setAttribute('class', 'mytooltip');
+      if (selectable) {
+        a.setAttribute('selectable', 'true');
+      }
+
+      if (selected === true) {
+        a.classList.add('selected');
+      }
       return a;
     };
 
@@ -237,7 +250,8 @@ class NavigationBar {
           createIcon(
             i.tooltip,
             i.icon,
-            i.glyphName,
+            i.selectable,
+            i.selected,
             i.click,
             i.width === undefined ? 20 : i.width,
             i.height === undefined ? 20 : i.height

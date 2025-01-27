@@ -55,7 +55,7 @@ class Grid {
         this.grid.visible = false;
         break;
     }
-    this.scene.renderScene();
+    this.scene.view.renderView();
   }
 }
 

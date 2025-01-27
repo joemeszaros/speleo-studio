@@ -1,16 +1,16 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
 import { SurveyHelper } from '../survey.js';
-import * as C from '../constants.js';
 import { Grid } from './grid.js';
 import * as U from '../utils/utils.js';
 import { Options } from '../config.js';
 import { SECTION_LINE_MULTIPLIER } from '../constants.js';
+
+import { SpatialView, PlanView, ProfileView } from './views.js';
 
 class MyScene {
 
@@ -45,23 +45,17 @@ class MyScene {
     container.appendChild(this.domElement);
     this.width = container.offsetWidth;
     this.height = container.offsetHeight;
-    const aspect = this.width / this.height;
 
-    this.cameraOrtho = new THREE.OrthographicCamera(
-      -C.FRUSTRUM * aspect,
-      C.FRUSTRUM * aspect,
-      C.FRUSTRUM,
-      -C.FRUSTRUM,
-      -1000,
-      3000
-    );
-    this.currentCamera = this.cameraOrtho;
-    this.orbitTarget = new THREE.Vector3(0, 0, 0);
-    this.setCameraPosition(0, 0, 100);
-
-    this.orbit = new OrbitControls(this.currentCamera, this.domElement);
-    this.orbit.update();
-    this.orbit.addEventListener('change', () => this.renderScene());
+    this.views = {
+      plan : new PlanView(
+        this,
+        this.domElement,
+        container.querySelector('#viewport-compass'),
+        container.querySelector('#viewport-ratio')
+      ),
+      profile : new ProfileView(this, this.domElement),
+      spatial : new SpatialView(this, this.domElement)
+    };
 
     this.threejsScene = new THREE.Scene();
     this.threejsScene.background = new THREE.Color(this.options.scene.background.color.hex());
@@ -98,6 +92,8 @@ class MyScene {
         type : 'surface'
       }
     );
+    this.view = this.views.spatial;
+    this.view.activate();
 
     window.addEventListener('resize', () => this.onWindowResize());
   }
@@ -106,30 +102,9 @@ class MyScene {
     this.stationFont = font;
   }
 
-  setCameraPosition(x, y, z) {
-    this.currentCamera.position.set(x, y, z);
-    this.currentCamera.lookAt(this.orbitTarget);
-    this.currentCamera.updateMatrix();
-  }
-
-  setOrbitTarget(x, y, z) {
-    this.orbitTarget.set(x, y, z);
-  }
-
-  zoomOnStationSphere(stationSphere) {
-    const pos = stationSphere.position.clone();
-    const dir = this.currentCamera.position.clone().sub(this.orbitTarget);
-    const camPos = pos.clone().add(dir);
-    this.setOrbitTarget(pos.x, pos.y, pos.z);
-    this.setCameraPosition(camPos.x, camPos.y, camPos.z);
-    this.currentCamera.zoom = 4;
-    this.currentCamera.updateProjectionMatrix();
-    this.renderScene();
-  }
-
   setBackground(val) {
     this.threejsScene.background = new THREE.Color(val);
-    this.renderScene();
+    this.view.renderView();
   }
 
   setSurveyVisibility(cave, survey, value) {
@@ -143,7 +118,7 @@ class MyScene {
     entry.centerLinesSpheres.hidden = !value;
     entry.splaysSpheres.visible = value && s.splays.spheres.show;
     entry.splaysSpheres.hidden = !value;
-    this.renderScene();
+    this.view.renderView();
   }
 
   setObjectsVisibility(fieldName, val) {
@@ -151,7 +126,7 @@ class MyScene {
     entries.forEach((e) => {
       e[fieldName].visible = !e.centerLines.hidden && val;
     });
-    this.renderScene();
+    this.view.renderView();
   }
 
   setObjectsOpacity(fieldName, val) {
@@ -160,7 +135,7 @@ class MyScene {
       e[fieldName].material.transparent = true;
       e[fieldName].material.opacity = val;
     });
-    this.renderScene();
+    this.view.renderView();
   }
 
   changeStationSpheresRadius(type) {
@@ -177,7 +152,7 @@ class MyScene {
       s.geometry.dispose();
       s.geometry = geometry;
     });
-    this.renderScene();
+    this.view.renderView();
   }
 
   deleteSurvey(caveName, surveyName) {
@@ -237,7 +212,7 @@ class MyScene {
     const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
     const clSpheres = this.getAllCenterLineStationSpheres();
     const splaySpheres = this.getAllSplaysStationSpheres();
-    this.raycaster.setFromCamera(pointer, this.currentCamera);
+    this.raycaster.setFromCamera(pointer, this.view.camera);
     const intersectedSpheres = this.raycaster.intersectObjects(clSpheres.concat(splaySpheres));
     if (intersectedSpheres.length) {
       return intersectedSpheres[0].object;
@@ -250,7 +225,7 @@ class MyScene {
   getIntersectedSurfacePoint(mouseCoordinates, purpose) {
     const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
     const clouds = this.getAllSurfacePoints();
-    this.raycaster.setFromCamera(pointer, this.currentCamera);
+    this.raycaster.setFromCamera(pointer, this.view.camera);
     this.raycaster.params.Points.threshold = 0.1;
     const intersectedPoints = this.raycaster.intersectObjects(clouds);
     if (intersectedPoints.length) {
@@ -272,36 +247,36 @@ class MyScene {
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
     const aspect = this.width / this.height;
-    this.cameraOrtho.left = this.cameraOrtho.bottom * aspect;
-    this.cameraOrtho.right = this.cameraOrtho.top * aspect;
-    this.cameraOrtho.updateProjectionMatrix();
-
     this.sceneRenderer.setSize(this.width, this.height);
-    this.renderScene();
-
+    Object.keys(this.views).forEach((k) => this.views[k].onResize(aspect));
+    this.view.renderView();
   }
 
   computeBoundingBox() {
-    const bb = new THREE.Box3();
-    // eslint-disable-next-line no-unused-vars
-    this.caveObjects.forEach((sMap, _caveName) => {
+    if (this.caveObjects.size > 0 || this.surfaceObjects.size > 0) {
+      const bb = new THREE.Box3();
       // eslint-disable-next-line no-unused-vars
-      sMap.forEach((e, _surveyName) => {
-        if (e.centerLines.visible) {
-          bb.expandByObject(e.centerLines);
-        }
-        if (e.splays.visible) {
-          bb.expandByObject(e.splays);
+      this.caveObjects.forEach((sMap, _caveName) => {
+        // eslint-disable-next-line no-unused-vars
+        sMap.forEach((e, _surveyName) => {
+          if (e.centerLines.visible) {
+            bb.expandByObject(e.centerLines);
+          }
+          if (e.splays.visible) {
+            bb.expandByObject(e.splays);
+          }
+        });
+      });
+      // eslint-disable-next-line no-unused-vars
+      this.surfaceObjects.forEach((entry, surfaceName) => {
+        if (entry.cloud.visible) {
+          bb.expandByObject(entry.cloud);
         }
       });
-    });
-    // eslint-disable-next-line no-unused-vars
-    this.surfaceObjects.forEach((entry, surfaceName) => {
-      if (entry.cloud.visible) {
-        bb.expandByObject(entry.cloud);
-      }
-    });
-    return bb;
+      return bb;
+    } else {
+      return undefined;
+    }
   }
 
   toogleBoundingBox() {
@@ -309,15 +284,30 @@ class MyScene {
 
     if (this.options.scene.boundingBox.show === true) {
       const bb = this.computeBoundingBox();
-      const boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
-      this.boundingBoxHelper = boundingBoxHelper;
-      this.threejsScene.add(boundingBoxHelper);
+      if (bb !== undefined) {
+        const boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
+        this.boundingBoxHelper = boundingBoxHelper;
+        this.threejsScene.add(boundingBoxHelper);
+        this.addSphere(
+          '',
+          bb.getCenter(new THREE.Vector3()), //TODO: remove sphere from here
+          this.caveObject3DGroup,
+          new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius * 4, 10, 10),
+          this.materials.sphere.centerLine,
+          {
+
+          }
+        );
+        //this.addSphere('center', bb.getCenter(new THREE.Vector3()),);
+      }
     } else {
-      this.threejsScene.remove(this.boundingBoxHelper);
-      this.boundingBoxHelper.dispose();
-      this.boundingBoxHelper = undefined;
+      if (this.boundingBoxHelper !== undefined) {
+        this.threejsScene.remove(this.boundingBoxHelper);
+        this.boundingBoxHelper.dispose();
+        this.boundingBoxHelper = undefined;
+      }
     }
-    this.renderScene();
+    this.view.renderView();
   }
 
   showSegments(id, segments, color, caveName) {
@@ -337,7 +327,7 @@ class MyScene {
         segments : lineSegments,
         caveName : caveName
       });
-      this.renderScene();
+      this.view.renderView();
     }
   }
 
@@ -349,7 +339,7 @@ class MyScene {
       lineSegments.material.dispose();
       this.segments3DGroup.remove(lineSegments);
       this.segments.delete(id);
-      this.renderScene();
+      this.view.renderView();
     }
   }
 
@@ -382,7 +372,7 @@ class MyScene {
         center   : center,
         caveName : caveName
       });
-      this.renderScene();
+      this.view.renderView();
     }
   }
 
@@ -397,7 +387,7 @@ class MyScene {
       this.sectionAttributes3DGroup.remove(textMesh);
       textMesh.geometry.dispose();
       this.sectionAttributes.delete(id);
-      this.renderScene();
+      this.view.renderView();
     }
   }
 
@@ -424,7 +414,7 @@ class MyScene {
     });
 
     this.planeMeshes.set(attributeName, planes); // even set if planes is emptry
-    this.renderScene();
+    this.view.renderView();
   }
 
   rollCenterLineColor() {
@@ -509,7 +499,7 @@ class MyScene {
       default:
         throw new Error(`unknown configuration for cave line colors: ${config.value}`);
     }
-    this.renderScene();
+    this.view.renderView();
   }
 
   rollSurface() {
@@ -531,7 +521,7 @@ class MyScene {
       default:
         throw new Error(`unknown configuration for surface colors: ${config.value}`);
     }
-    this.renderScene();
+    this.view.renderView();
 
   }
 
@@ -545,7 +535,7 @@ class MyScene {
       this.planeMeshes.delete(attributeName);
     }
 
-    this.renderScene();
+    this.view.renderView();
   }
 
   tooglePlaneFor(attributeName) {
@@ -562,75 +552,26 @@ class MyScene {
     this.planeMeshes.keys().forEach((k) => this.showPlaneFor(k));
   }
 
-  zoomWithStep(step) {
-    const zoomValue = this.currentCamera.zoom + step;
-    if (zoomValue > 0.1) {
-      this.currentCamera.zoom = zoomValue;
-      this.currentCamera.updateProjectionMatrix();
-      this.renderScene();
+  changeView(viewName) {
+    if (this.view !== this.views[viewName]) {
+      this.view.deactivate();
+      this.view = this.views[viewName];
+      this.view.activate();
     }
-  }
-
-  fitScene(boundingBox) {
-    this.fitObjectsToCamera(boundingBox);
-  }
-
-  fitObjectsToCamera(boundingBox) {
-    const boundingBoxCenter = boundingBox.getCenter(new THREE.Vector3());
-    const aspect = this.width / this.height;
-    const rotation = new THREE.Matrix4().extractRotation(this.currentCamera.matrix);
-    boundingBox.applyMatrix4(rotation);
-    const width = boundingBox.max.x - boundingBox.min.x;
-    const height = boundingBox.max.y - boundingBox.min.y;
-    const maxSize = Math.max(width, height);
-
-    this.options.scene.zoomStep = C.FRUSTRUM / maxSize;
-    const zoomLevel = Math.min((2 * C.FRUSTRUM * aspect) / width, (2 * C.FRUSTRUM) / height);
-    this.currentCamera.zoom = zoomLevel;
-
-    const moveCameraBy = boundingBoxCenter.clone().sub(this.orbitTarget);
-    const oldPosition = this.currentCamera.position.clone();
-    const newCameraPosition = oldPosition.add(moveCameraBy);
-
-    this.orbitTarget.copy(boundingBoxCenter);
-    this.currentCamera.position.copy(newCameraPosition);
-    this.currentCamera.lookAt(this.orbitTarget);
-    this.currentCamera.updateProjectionMatrix();
-    this.orbit.target = this.orbitTarget;
-    this.orbit.update();
-    this.renderScene();
-  }
-
-  lookAtPlan() {
-    this.setCameraPosition(this.orbitTarget.x, this.orbitTarget.y, this.orbitTarget.z + 100);
-    const boundingBox = this.computeBoundingBox();
-    this.fitObjectsToCamera(boundingBox);
-    this.orbit.enableRotate = false;
-  }
-
-  lookAtProfile() {
-    this.setCameraPosition(this.orbitTarget.x, this.orbitTarget.y - 100, this.orbitTarget.z);
-    const boundingBox = this.computeBoundingBox();
-    this.fitObjectsToCamera(boundingBox);
-    this.orbit.enableRotate = false;
-  }
-
-  lookAt3D() {
-    this.orbit.enableRotate = true;
   }
 
   updateSegmentsWidth(width) {
     this.sectionAttributes.forEach((e) => {
       e.segments.material.linewidth = width * SECTION_LINE_MULTIPLIER;
     });
-    this.renderScene();
+    this.view.renderView();
   }
 
   updateCenterLinesOpacity(width) {
     this.sectionAttributes.forEach((e) => {
       e.segments.material.linewidth = width * SECTION_LINE_MULTIPLIER;
     });
-    this.renderScene();
+    this.view.renderView();
   }
 
   updateLabelSize(size) {
@@ -641,24 +582,16 @@ class MyScene {
       this.sectionAttributes3DGroup.add(newText);
       e.text = newText;
     });
-    this.renderScene();
+    this.view.renderView();
   }
 
-  renderScene() {
-    // if (cavesStationNamesGroup !== undefined && OPTIONS.scene.show.stationNames) {
-    //     cavesStationNamesGroup.forEach(
-    //         group => group.children.forEach(fontMesh =>
-    //             fontMesh.lookAt(currentCamera.position)
-    //         )
-    //     );
-    // }
+  renderScene(camera) {
     this.sectionAttributes.forEach((e) => {
       const pos = e.center.clone();
       pos.z = pos.z + 100;
       e.text.lookAt(pos);
-
     });
-    this.sceneRenderer.render(this.threejsScene, this.currentCamera);
+    this.sceneRenderer.render(this.threejsScene, camera);
   }
 
   #getCaveObjectsFlattened() {
@@ -682,7 +615,7 @@ class MyScene {
     textGeometry.translate(xMid, 0, 0);
 
     const textMesh = new THREE.Mesh(textGeometry, this.materials.text);
-    textMesh.lookAt(this.currentCamera.position);
+    textMesh.lookAt(this.view.camera.position);
     textMesh.position.x = position.x;
     textMesh.position.y = position.y;
     textMesh.position.z = position.z;
@@ -797,7 +730,7 @@ class MyScene {
   addSurfaceToScene(cloud, colorGradients) {
     cloud.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorGradients, 3));
     this.surfaceObject3DGroup.add(cloud);
-    this.renderScene();
+    this.view.renderView();
 
     return {
       id    : U.randomAlphaNumbericString(5),

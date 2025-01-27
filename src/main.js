@@ -94,7 +94,7 @@ class Main {
           .catch((error) => console.error(error));
       }
     } else {
-      this.scene.renderScene();
+      this.scene.view.renderView();
     }
   }
 }

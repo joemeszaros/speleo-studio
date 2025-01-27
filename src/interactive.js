@@ -62,12 +62,12 @@ class SceneInteraction {
 
       this.showDistancePanel(this.selectedStation, this.selectedStationForContext, diff, left, top, () => {
         this.scene.removeFromScene(line);
-        this.scene.renderScene();
+        this.scene.view.renderView();
       });
 
       this.#clearSelectedForContext();
       this.#clearSelected();
-      this.scene.renderScene();
+      this.scene.view.renderView();
     }
   }
 
@@ -139,8 +139,9 @@ class SceneInteraction {
   onClick() {
     const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
     const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selected');
+    const hasIntersection = intersectedStation !== undefined || intersectsSurfacePoint !== undefined;
 
-    if (intersectedStation !== undefined || intersectsSurfacePoint !== undefined) {
+    if (hasIntersection) {
 
       const intersectedObject = intersectsSurfacePoint !== undefined ? intersectsSurfacePoint : intersectedStation; // first intersected object
       if (intersectedObject.meta.type !== 'surface' && intersectedObject === this.selectedStation) {
@@ -167,7 +168,10 @@ class SceneInteraction {
     } else if (this.selectedStation !== undefined) {
       this.#clearSelected();
     }
-    this.scene.renderScene();
+
+    if (hasIntersection || this.selectedStation !== undefined) {
+      this.scene.view.renderView();
+    }
   }
 
   onMouseDown(event) {
@@ -210,7 +214,7 @@ class SceneInteraction {
         this.#setSelectedForContext(intersectedObject);
         this.showContextMenu(event.clientX - rect.left, event.clientY - rect.top);
       }
-      this.scene.renderScene();
+      this.scene.view.renderView();
     }
   }
 
@@ -257,7 +261,8 @@ class SceneInteraction {
           this.#setSelected(stationSphere);
         }
 
-        this.scene.zoomOnStationSphere(stationSphere);
+        this.scene.view.panCameraTo(stationSphere.position);
+        this.scene.view.zoomCameraTo(4);
         this.locatePanel.style.display = 'none';
         input.value = '';
       }

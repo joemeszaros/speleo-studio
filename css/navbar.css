@@ -40,6 +40,10 @@
   background-color: #04aa6d;
 }
 
+.topnavbar .selected {
+  background-color: #191919;
+}
+
 .mydropdown-content {
   display: none;
   position: absolute;

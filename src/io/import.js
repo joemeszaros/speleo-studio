@@ -96,7 +96,7 @@ class CaveImporter {
       this.explorer.addCave(cave);
       const boundingBox = this.scene.computeBoundingBox();
       this.scene.grid.adjust(boundingBox);
-      this.scene.fitScene(boundingBox);
+      this.scene.view.fitScreen(boundingBox);
     }
   }
 
