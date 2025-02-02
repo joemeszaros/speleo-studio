@@ -94,12 +94,12 @@ class NavigationBar {
       {
         tooltip : 'Zoom in',
         icon    : './icons/zoom_in.svg',
-        click   : () => this.scene.view.zoomIn(this.options.scene.zoomStep)
+        click   : () => this.scene.view.zoomIn()
       },
       {
         tooltip : 'Zoom out',
         icon    : './icons/zoom_out.svg',
-        click   : () => this.scene.view.zoomOut(this.options.scene.zoomStep)
+        click   : () => this.scene.view.zoomOut()
       },
       {
         tooltip    : 'Plan',

@@ -30,6 +30,7 @@ class MyScene {
     this.sectionAttributes = new Map();
     this.segments = new Map(); // for shortest path segments
     this.caveObject3DGroup = new THREE.Group();
+    this.sprites3DGroup = new THREE.Group();
     this.surfaceObject3DGroup = new THREE.Group();
     this.sectionAttributes3DGroup = new THREE.Group();
     this.segments3DGroup = new THREE.Group();
@@ -48,14 +49,10 @@ class MyScene {
     this.height = container.offsetHeight;
 
     this.spriteScene = new THREE.Scene();
+    this.spriteScene.add(this.sprites3DGroup);
 
     this.views = {
-      plan : new PlanView(
-        this,
-        this.spriteScene,
-        this.domElement
-
-      ),
+      plan    : new PlanView(this, this.domElement),
       profile : new ProfileView(this, this.domElement),
       spatial : new SpatialView(this, this.domElement)
     };
@@ -210,6 +207,19 @@ class MyScene {
     pointer.x = mousePosition.x * 2 - 1;
     pointer.y = -mousePosition.y * 2 + 1;
     return pointer;
+  }
+
+  getFirstIntersectedSprite(mouseCoordinates) {
+    const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
+    const sprites = this.sprites3DGroup.children;
+    this.raycaster.setFromCamera(pointer, this.view.spriteCamera);
+    const intersectedSprites = this.raycaster.intersectObjects(sprites);
+    if (intersectedSprites.length) {
+      return intersectedSprites[0].object;
+    } else {
+      return undefined;
+    }
+
   }
 
   getIntersectedStationSphere(mouseCoordinates) {

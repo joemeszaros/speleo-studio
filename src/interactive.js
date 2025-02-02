@@ -32,6 +32,7 @@ class SceneInteraction {
 
     document.addEventListener('pointermove', (event) => this.onPointerMove(event));
     sceneDOMElement.addEventListener('click', () => this.onClick(), false);
+    sceneDOMElement.addEventListener('dblclick', () => this.onDoubleClick(), false);
     sceneDOMElement.addEventListener('mousedown', (event) => this.onMouseDown(event), false);
 
     calcDistanceButton.addEventListener('click', (event) => this.calcualteDistanceListener(event), false);
@@ -136,6 +137,13 @@ class SceneInteraction {
     this.selectedStationForContext = undefined;
   }
 
+  onDoubleClick() {
+    const intersectedSprite = this.scene.getFirstIntersectedSprite(this.mouseCoordinates);
+    if (intersectedSprite !== undefined && typeof intersectedSprite.onclick === 'function') {
+      intersectedSprite.onclick(); // custom function
+    }
+
+  }
   onClick() {
     const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
     const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selected');

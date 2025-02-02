@@ -36,32 +36,10 @@ body {
   position: absolute;
 }
 
-.viewport .compass {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-}
-
-.viewport .compass .show {
-  display: block;
-}
-
-.viewport .compass .hide {
-  display: none;
-}
-
 .viewport .logo {
   position: absolute;
   bottom: 5px;
   left: 5px;
-}
-
-.viewport .ratio {
-  position: absolute;
-  bottom: 5px;
-  left: 50%;
-  margin-left: -100px;
-  color: azure;
 }
 
 #control-panel {
@@ -276,6 +254,7 @@ body {
   padding-left: 10px;
   padding-top: 5px;
   z-index: 100;
+  font-family: inherit;
 }
 
 .footer .content {

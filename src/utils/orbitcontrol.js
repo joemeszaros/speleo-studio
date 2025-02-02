@@ -32,11 +32,17 @@ class SimpleOrbitControl {
   onWheel(event) {
     event.preventDefault();
     if (event.deltaY < 0) {
-      this.camera.zoom += 0.1;
+      this.camera.zoom *= 1.02;
     } else {
-      this.camera.zoom -= 0.1;
+      this.camera.zoom /= 1.02;
     }
 
+    this.camera.updateProjectionMatrix();
+    this.#dispatchChange('zoom', { level: this.camera.zoom });
+  }
+
+  setZoomLevel(level) {
+    this.camera.zoom = level;
     this.camera.updateProjectionMatrix();
     this.#dispatchChange('zoom', { level: this.camera.zoom });
   }
