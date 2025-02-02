@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
+
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 
 class View {
 
@@ -44,8 +47,12 @@ class View {
       -1000,
       3000
     );
+
     camera.width = frustrum * aspect; // custom property
     camera.height = frustrum; // custom property
+    camera.layers.enable(0);
+    camera.layers.enable(1);
+    camera.layers.disable(31);
     return camera;
   }
 
@@ -95,11 +102,11 @@ class View {
   }
 
   zoomIn() {
-    this.zoomCameraTo(this.camera.zoom * 1.1);
+    this.zoomCameraTo(this.camera.zoom * 1.2);
   }
 
   zoomOut() {
-    this.zoomCameraTo(this.camera.zoom / 1.1);
+    this.zoomCameraTo(this.camera.zoom / 1.2);
   }
 
 }
@@ -155,6 +162,10 @@ class PlanView extends View {
       10
     );
     this.spriteCamera.position.z = 1;
+
+    this.overviewCamera = View.createOrthoCamera(1);
+    this.overviewCamera.layers.disable(1);
+    this.overviewCamera.layers.enable(31);
 
     this.control = new SimpleOrbitControl(this.camera, domElement, COORDINATE_INDEX.Z);
 
@@ -213,16 +224,30 @@ class PlanView extends View {
 
   zoomCameraTo(level) {
     super.zoomCameraTo(level);
-    this.onZoomLevelChange(this.camera.zoom);
+    this.onZoomLevelChange(level);
   }
 
   #handleControlChange(e) {
     if (e.detail.reason === 'rotate') {
-      this.compass.material.rotation = -e.detail.value.rotation;
+      const rotation = e.detail.value.rotation;
+      this.compass.material.rotation = -rotation;
     }
+
+    if (e.detail.reason === 'rotateEnd') {
+      this.overviewCamera.rotation.z = this.camera.rotation.z;
+      this.overviewCamera.updateProjectionMatrix();
+      this.updateFrustumFrame();
+    }
+
     if (e.detail.reason === 'zoom') {
       this.onZoomLevelChange(e.detail.value.level);
+      this.updateFrustumFrame();
     }
+
+    if (e.detail.reason === 'panEnd') {
+      this.updateFrustumFrame();
+    }
+
     this.renderView();
   }
 
@@ -236,6 +261,8 @@ class PlanView extends View {
       this.fitScreen(boundingBox, true);
       this.initiated = true;
       this.onZoomLevelChange(this.camera.zoom);
+      this.updateOverviewCameraZoom(boundingBox);
+      this.createFrustumFrame();
     }
     this.renderView();
 
@@ -245,8 +272,63 @@ class PlanView extends View {
     this.enabled = false;
   }
 
+  updateOverviewCameraZoom(boundingBox) {
+    const bbCenter = boundingBox.getCenter(new THREE.Vector3());
+    const [width, height] = boundingBox.getSize(new THREE.Vector3());
+    const diagonal = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
+    this.overviewCamera.position.set(bbCenter.x, bbCenter.y, bbCenter.z + 100);
+    const zoomLevel = Math.min(
+      this.overviewCamera.width / diagonal,
+      this.overviewCamera.width / width,
+      this.overviewCamera.height / height
+    ); // camera width and height in world units
+    this.overviewCamera.zoom = zoomLevel;
+    this.overviewCamera.updateProjectionMatrix();
+  }
+
+  updateFrustumFrame() {
+    const segments = this.#getFrustumFrame();
+    this.frustumFrame.geometry.setPositions(segments);
+  }
+
+  createFrustumFrame() {
+    const segments = this.#getFrustumFrame();
+    const geometry = new LineSegmentsGeometry();
+    geometry.setPositions(segments);
+    const material = new LineMaterial({
+      color        : 0xffffff,
+      linewidth    : 1,
+      worldUnits   : false,
+      vertexColors : false
+    });
+    this.frustumFrame = new LineSegments2(geometry, material);
+    this.frustumFrame.layers.set(31);
+    this.scene.threejsScene.add(this.frustumFrame);
+  }
+
+  #getFrustumFrame() {
+    const unproject = (x, y, z, camera) => {
+      return new THREE.Vector3(x, y, z).unproject(camera);
+    };
+
+    const _camera = new THREE.Camera();
+    _camera.projectionMatrixInverse.copy(this.camera.projectionMatrixInverse);
+    _camera.matrixWorld.copy(this.camera.matrixWorld);
+    const bottomLeft = unproject(-1, -1, 0.5, _camera); // z = 0.5 means middle between far and near planes
+    const topLeft = unproject(-1, 1, 0.5, _camera);
+    const topRight = unproject(1, 1, 0.5, _camera);
+    const bottomRight = unproject(1, -1, 0.5, _camera);
+
+    const segments = [];
+    segments.push(bottomLeft.x, bottomLeft.y, bottomLeft.z, topLeft.x, topLeft.y, topLeft.z);
+    segments.push(topLeft.x, topLeft.y, topLeft.z, topRight.x, topRight.y, topRight.z);
+    segments.push(topRight.x, topRight.y, topRight.z, bottomRight.x, bottomRight.y, bottomRight.z);
+    segments.push(bottomRight.x, bottomRight.y, bottomRight.z, bottomLeft.x, bottomLeft.y, bottomLeft.z);
+    return segments;
+  }
+
   renderView() {
-    this.scene.renderScene(this.camera, this.spriteCamera);
+    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
   }
 
   onResize(width, height) {
@@ -275,8 +357,8 @@ class PlanView extends View {
 
   #createRatioText() {
     //https://discourse.threejs.org/t/how-to-update-text-in-real-time/39050/12
-    const position = new THREE.Vector3(0, -this.scene.height / 2 + 45, 1);
-    return new TextSprite('10 m', position, { size: 40, family: 'Helvetica Neue', strokeColor: 'black' }, 0.5);
+    const position = new THREE.Vector3(0, -this.scene.height / 2 + 40, 1);
+    return new TextSprite('0', position, { size: 35, family: 'Helvetica Neue', strokeColor: 'black' }, 0.5);
 
   }
 
@@ -285,7 +367,7 @@ class PlanView extends View {
     const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
     const sprite = new THREE.Sprite(material);
     sprite.center.set(0.5, 0.5);
-    sprite.scale.set(width, (width / 605) * 35, 1);
+    sprite.scale.set(width, (width / 755) * 36, 1);
     sprite.position.set(0, -this.scene.height / 2 + 20, 1); // bottom right
     sprite.width = width; // custom property
     return sprite;

@@ -14,7 +14,7 @@ const COORDINATE_INDEX = Object.freeze({
 
 class SimpleOrbitControl {
 
-  constructor(camera, domElement, coordinateIndex) {
+  constructor(camera, domElement, coordinateIndex, zoomMultiplier = 1.2) {
     this.camera = camera;
     this.domElement = domElement;
     this.coordinateIndex = coordinateIndex;
@@ -26,15 +26,16 @@ class SimpleOrbitControl {
       x : boxBoundingRect.left + boxBoundingRect.width / 2,
       y : boxBoundingRect.top + boxBoundingRect.height / 2
     };
+    this.zoomMultiplier = zoomMultiplier;
 
   }
 
   onWheel(event) {
     event.preventDefault();
     if (event.deltaY < 0) {
-      this.camera.zoom *= 1.02;
+      this.camera.zoom *= this.zoomMultiplier;
     } else {
-      this.camera.zoom /= 1.02;
+      this.camera.zoom /= this.zoomMultiplier;
     }
 
     this.camera.updateProjectionMatrix();
@@ -58,6 +59,11 @@ class SimpleOrbitControl {
   }
 
   onUp() {
+    if (this.state === STATE.ROTATE) {
+      this.#dispatchChange('rotateEnd', {}); // just an indicator
+    } else if (this.state === STATE.PAN) {
+      this.#dispatchChange('panEnd', {}); // just an indicator
+    }
     this.state = STATE.NONE;
   }
 

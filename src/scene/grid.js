@@ -10,6 +10,7 @@ class Grid {
     this.scene = scene;
     this.grid = new GridHelper(100, 100, 10, 0.4);
     this.grid.visible = true;
+    this.grid.layers.set(1);
     this.scene.threejsScene.add(this.grid);
 
   }
@@ -25,6 +26,7 @@ class Grid {
     this.grid.material.dispose();
     this.scene.threejsScene.remove(this.grid);
     this.grid = new GridHelper(width, height, 10, 0.4);
+    this.grid.layers.set(1);
     this.grid.boundingBox = boundingBox; // custom property
     this.scene.threejsScene.add(this.grid);
   }

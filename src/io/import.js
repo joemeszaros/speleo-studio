@@ -99,12 +99,6 @@ class CaveImporter {
       this.scene.view.fitScreen(boundingBox);
     }
   }
-
-  importFiles(files) {
-    for (const file of files) {
-      this.importFile(file);
-    }
-  }
 }
 
 class PolygonImporter extends CaveImporter {
@@ -368,7 +362,7 @@ class PlySurfaceImporter {
       this.scene.addSurface(surface, _3dobjects);
       const boundingBox = this.scene.computeBoundingBox();
       this.scene.grid.adjust(boundingBox);
-      this.scene.fitScene(boundingBox);
+      this.scene.view.fitScreen(boundingBox);
     }
   }
 

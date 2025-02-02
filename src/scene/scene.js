@@ -12,6 +12,20 @@ import { SECTION_LINE_MULTIPLIER } from '../constants.js';
 
 import { SpatialView, PlanView, ProfileView } from './views.js';
 
+class SceneOverview {
+  constructor(container) {
+    this.container = container;
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setSize(container.offsetWidth, container.offsetHeight);
+    this.domElement = this.renderer.domElement; // auto generate canvas
+    container.appendChild(this.domElement);
+    this.width = container.offsetWidth;
+    this.height = container.offsetHeight;
+  }
+
+}
+
 class MyScene {
 
   /**
@@ -21,7 +35,7 @@ class MyScene {
    * @param {Database} db - The database of the application, containing caves and other infomations
    * @param {*} - Collection of line and geometry materials
    */
-  constructor(options, db, materials, container) {
+  constructor(options, db, materials, container, overview) {
     this.options = options;
     this.db = db;
     this.materials = materials;
@@ -47,6 +61,8 @@ class MyScene {
     container.appendChild(this.domElement);
     this.width = container.offsetWidth;
     this.height = container.offsetHeight;
+
+    this.overview = overview;
 
     this.spriteScene = new THREE.Scene();
     this.spriteScene.add(this.sprites3DGroup);
@@ -335,6 +351,7 @@ class MyScene {
         vertexColors : false
       });
       const lineSegments = new LineSegments2(geometry, material);
+      lineSegments.layers.set(1);
       this.segments3DGroup.add(lineSegments);
       this.segments.set(id, {
         segments : lineSegments,
@@ -368,6 +385,7 @@ class MyScene {
         vertexColors : false
       });
       const lineSegments = new LineSegments2(geometry, material);
+      lineSegments.layers.set(1);
       this.sectionAttributes3DGroup.add(lineSegments);
       const bb = geometry.boundingBox;
       const center = bb.getCenter(new THREE.Vector3());
@@ -377,6 +395,7 @@ class MyScene {
       const formattedAttribute = U.interpolate(format, attribute);
       const textMesh = this.addLabel(formattedAttribute, center, this.options.scene.labels.size);
       this.sectionAttributes3DGroup.add(textMesh);
+      textMesh.layers.set(1);
 
       this.sectionAttributes.set(id, {
         segments : lineSegments,
@@ -592,13 +611,14 @@ class MyScene {
       this.sectionAttributes3DGroup.remove(e.text);
       e.text.geometry.dispose();
       const newText = this.addLabel(e.label, e.center, size);
+      newText.layers.set(1);
       this.sectionAttributes3DGroup.add(newText);
       e.text = newText;
     });
     this.view.renderView();
   }
 
-  renderScene(camera, spriteCamera) {
+  renderScene(camera, overViewCamera, spriteCamera) {
     this.sectionAttributes.forEach((e) => {
       const pos = e.center.clone();
       pos.z = pos.z + 100;
@@ -612,6 +632,10 @@ class MyScene {
       this.sceneRenderer.render(this.threejsScene, camera);
       this.sceneRenderer.clearDepth();
       this.sceneRenderer.render(this.spriteScene, spriteCamera);
+    }
+
+    if (overViewCamera !== undefined) {
+      this.overview.renderer.render(this.threejsScene, overViewCamera);
     }
 
   }
@@ -827,4 +851,4 @@ class MyScene {
 
 }
 
-export { MyScene };
+export { MyScene, SceneOverview };

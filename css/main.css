@@ -42,6 +42,16 @@ body {
   left: 5px;
 }
 
+#overview {
+  width: 300px;
+  height: 300px;
+  left: 0px;
+  bottom: 30px;
+  position: absolute;
+  z-index: 102;
+  border: 1px solid white;
+}
+
 #control-panel {
   color: red;
   position: absolute;
