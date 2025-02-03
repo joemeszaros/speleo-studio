@@ -16,10 +16,6 @@ class View {
     this.scene = scene;
   }
 
-  renderView() {
-    this.scene.renderScene(this.camera);
-  }
-
   onResize(width, height) {
     if (this.camera.isOrthographicCamera) {
       const aspect = width / height;
@@ -79,6 +75,8 @@ class View {
 
     if (update || zoomChanged || offset.length > 0) {
       this.camera.updateProjectionMatrix(); //lookat or zoom
+      this.updateOverviewCameraZoom(boundingBox);
+      this.updateFrustumFrame();
       this.onZoomLevelChange(zoomLevel);
       this.renderView();
     }
@@ -115,6 +113,7 @@ class View {
   }
 
   updateOverviewCameraZoom(boundingBox) {
+    if (boundingBox === undefined) return;
     const [width, height] = boundingBox.getSize(new THREE.Vector3());
     const diagonal = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
     const zoomLevel = Math.min(
@@ -167,8 +166,41 @@ class View {
     return segments;
   }
 
+  renderView() {
+    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
+  }
+
+  activate() {
+    this.enabled = true;
+    const boundingBox = this.scene.computeBoundingBox();
+
+    if (this.initiated === false) {
+
+      this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
+      const cameraPos = this.getCameraRelativePosition(this.target);
+      this.camera.position.copy(cameraPos.clone());
+      this.overviewCamera.position.copy(cameraPos.clone());
+      this.camera.lookAt(this.target);
+      this.overviewCamera.lookAt(this.target);
+      this.target0 = this.target.clone();
+      this.createFrustumFrame();
+      this.fitScreen(boundingBox, true);
+      this.onZoomLevelChange(this.camera.zoom);
+      this.initiated = true;
+    }
+
+    if (this.initiated) {
+      this.frustumFrame.visible = true;
+    }
+
+    this.renderView();
+  }
+
   deactivate() {
-    this.frustumFrame.visible = false;
+    if (this.initiated) {
+      this.frustumFrame.visible = false;
+    }
+
     this.enabled = false;
   }
 
@@ -178,8 +210,21 @@ class SpatialView extends View {
 
   constructor(scene, domElement) {
     super(View.createOrthoCamera(scene.width / scene.height), domElement, scene);
+
+    this.overviewCamera = View.createOrthoCamera(1);
+    this.overviewCamera.layers.disable(1);
+    this.overviewCamera.layers.enable(31);
+
     this.control = new OrbitControls(this.camera, this.domElement);
     this.control.update();
+    this.control.addEventListener('end', () => {
+      const newpos = this.camera.position.clone().sub(this.control.target);
+      this.overviewCamera.position.copy(this.target0.clone().add(newpos));
+      this.overviewCamera.rotation.copy(this.camera.rotation);
+      this.overviewCamera.updateProjectionMatrix();
+      this.updateFrustumFrame();
+      this.renderView();
+    });
     this.control.addEventListener('change', () => {
       this.renderView();
     });
@@ -188,27 +233,19 @@ class SpatialView extends View {
     this.initiated = false;
   }
 
+  getCameraRelativePosition(target) {
+    return new THREE.Vector3(target.x, target.y, target.z + 100);
+  }
+
   activate() {
-    this.enabled = true;
+    super.activate();
     this.control.enabled = true;
-
-    if (this.initiated === false) {
-      const boundingBox = this.scene.computeBoundingBox();
-      this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
-      this.camera.position.set(this.target.x, this.target.y, this.target.z + 100);
-      this.camera.lookAt(this.target);
-      this.fitScreen(boundingBox, true);
-      this.initiated = true;
-    }
-
-    this.renderView();
   }
 
   deactivate() {
-    this.enabled = false;
+    super.deactivate();
     this.control.enabled = false;
   }
-
 }
 
 class PlanView extends View {
@@ -314,27 +351,8 @@ class PlanView extends View {
     this.renderView();
   }
 
-  activate() {
-    this.enabled = true;
-
-    if (this.initiated === false) {
-      const boundingBox = this.scene.computeBoundingBox();
-      this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
-      this.camera.position.set(this.target.x, this.target.y, this.target.z + 100);
-      this.overviewCamera.position.set(this.target.x, this.target.y, this.target.z + 100);
-      this.overviewCamera.lookAt(this.target);
-      this.fitScreen(boundingBox, true);
-      this.initiated = true;
-      this.onZoomLevelChange(this.camera.zoom);
-      this.updateOverviewCameraZoom(boundingBox);
-      this.createFrustumFrame();
-    }
-    this.frustumFrame.visible = true;
-    this.renderView();
-  }
-
-  renderView() {
-    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
+  getCameraRelativePosition(target) {
+    return new THREE.Vector3(target.x, target.y, target.z + 100);
   }
 
   onResize(width, height) {
@@ -419,29 +437,10 @@ class ProfileView extends View {
     this.renderView();
   }
 
-  activate() {
-    this.enabled = true;
-
-    if (this.initiated === false) {
-      const boundingBox = this.scene.computeBoundingBox();
-      this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
-      this.camera.position.set(this.target.x, this.target.y - 1, this.target.z);
-      this.overviewCamera.position.set(this.target.x, this.target.y - 1, this.target.z);
-      this.overviewCamera.lookAt(this.target);
-
-      this.fitScreen(boundingBox, true);
-      this.initiated = true;
-      this.updateOverviewCameraZoom(boundingBox);
-      this.createFrustumFrame();
-    }
-    this.frustumFrame.visible = true;
-    this.renderView();
-
+  getCameraRelativePosition(target) {
+    return new THREE.Vector3(target.x, target.y - 1, target.z);
   }
 
-  renderView() {
-    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
-  }
 }
 
 export { SpatialView, PlanView, ProfileView };

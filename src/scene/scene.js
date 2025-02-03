@@ -316,6 +316,7 @@ class MyScene {
       if (bb !== undefined) {
         const boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
         this.boundingBoxHelper = boundingBoxHelper;
+        this.boundingBoxHelper.layers.set(1);
         this.threejsScene.add(boundingBoxHelper);
         this.addSphere(
           '',
