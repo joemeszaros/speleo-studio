@@ -114,6 +114,64 @@ class View {
     //TODO: update text labels in footer
   }
 
+  updateOverviewCameraZoom(boundingBox) {
+    const [width, height] = boundingBox.getSize(new THREE.Vector3());
+    const diagonal = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
+    const zoomLevel = Math.min(
+      this.overviewCamera.width / diagonal,
+      this.overviewCamera.width / width,
+      this.overviewCamera.height / height
+    ); // camera width and height in world units
+    this.overviewCamera.zoom = zoomLevel;
+    this.overviewCamera.updateProjectionMatrix();
+  }
+
+  updateFrustumFrame() {
+    const segments = this.#getFrustumFrame();
+    this.frustumFrame.geometry.setPositions(segments);
+  }
+
+  createFrustumFrame() {
+    const segments = this.#getFrustumFrame();
+    const geometry = new LineSegmentsGeometry();
+    geometry.setPositions(segments);
+    const material = new LineMaterial({
+      color        : 0xffffff,
+      linewidth    : 1,
+      worldUnits   : false,
+      vertexColors : false
+    });
+    this.frustumFrame = new LineSegments2(geometry, material);
+    this.frustumFrame.layers.set(31);
+    this.scene.threejsScene.add(this.frustumFrame);
+  }
+
+  #getFrustumFrame() {
+    const unproject = (x, y, z, camera) => {
+      return new THREE.Vector3(x, y, z).unproject(camera);
+    };
+
+    const _camera = new THREE.Camera();
+    _camera.projectionMatrixInverse.copy(this.camera.projectionMatrixInverse);
+    _camera.matrixWorld.copy(this.camera.matrixWorld);
+    const bottomLeft = unproject(-1, -1, 0.5, _camera); // z = 0.5 means middle between far and near planes
+    const topLeft = unproject(-1, 1, 0.5, _camera);
+    const topRight = unproject(1, 1, 0.5, _camera);
+    const bottomRight = unproject(1, -1, 0.5, _camera);
+
+    const segments = [];
+    segments.push(bottomLeft.x, bottomLeft.y, bottomLeft.z, topLeft.x, topLeft.y, topLeft.z);
+    segments.push(topLeft.x, topLeft.y, topLeft.z, topRight.x, topRight.y, topRight.z);
+    segments.push(topRight.x, topRight.y, topRight.z, bottomRight.x, bottomRight.y, bottomRight.z);
+    segments.push(bottomRight.x, bottomRight.y, bottomRight.z, bottomLeft.x, bottomLeft.y, bottomLeft.z);
+    return segments;
+  }
+
+  deactivate() {
+    this.frustumFrame.visible = false;
+    this.enabled = false;
+  }
+
 }
 
 class SpatialView extends View {
@@ -263,73 +321,16 @@ class PlanView extends View {
       const boundingBox = this.scene.computeBoundingBox();
       this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
       this.camera.position.set(this.target.x, this.target.y, this.target.z + 100);
+      this.overviewCamera.position.set(this.target.x, this.target.y, this.target.z + 100);
+      this.overviewCamera.lookAt(this.target);
       this.fitScreen(boundingBox, true);
       this.initiated = true;
       this.onZoomLevelChange(this.camera.zoom);
       this.updateOverviewCameraZoom(boundingBox);
       this.createFrustumFrame();
     }
+    this.frustumFrame.visible = true;
     this.renderView();
-
-  }
-
-  deactivate() {
-    this.enabled = false;
-  }
-
-  updateOverviewCameraZoom(boundingBox) {
-    const bbCenter = boundingBox.getCenter(new THREE.Vector3());
-    const [width, height] = boundingBox.getSize(new THREE.Vector3());
-    const diagonal = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
-    this.overviewCamera.position.set(bbCenter.x, bbCenter.y, bbCenter.z + 100);
-    const zoomLevel = Math.min(
-      this.overviewCamera.width / diagonal,
-      this.overviewCamera.width / width,
-      this.overviewCamera.height / height
-    ); // camera width and height in world units
-    this.overviewCamera.zoom = zoomLevel;
-    this.overviewCamera.updateProjectionMatrix();
-  }
-
-  updateFrustumFrame() {
-    const segments = this.#getFrustumFrame();
-    this.frustumFrame.geometry.setPositions(segments);
-  }
-
-  createFrustumFrame() {
-    const segments = this.#getFrustumFrame();
-    const geometry = new LineSegmentsGeometry();
-    geometry.setPositions(segments);
-    const material = new LineMaterial({
-      color        : 0xffffff,
-      linewidth    : 1,
-      worldUnits   : false,
-      vertexColors : false
-    });
-    this.frustumFrame = new LineSegments2(geometry, material);
-    this.frustumFrame.layers.set(31);
-    this.scene.threejsScene.add(this.frustumFrame);
-  }
-
-  #getFrustumFrame() {
-    const unproject = (x, y, z, camera) => {
-      return new THREE.Vector3(x, y, z).unproject(camera);
-    };
-
-    const _camera = new THREE.Camera();
-    _camera.projectionMatrixInverse.copy(this.camera.projectionMatrixInverse);
-    _camera.matrixWorld.copy(this.camera.matrixWorld);
-    const bottomLeft = unproject(-1, -1, 0.5, _camera); // z = 0.5 means middle between far and near planes
-    const topLeft = unproject(-1, 1, 0.5, _camera);
-    const topRight = unproject(1, 1, 0.5, _camera);
-    const bottomRight = unproject(1, -1, 0.5, _camera);
-
-    const segments = [];
-    segments.push(bottomLeft.x, bottomLeft.y, bottomLeft.z, topLeft.x, topLeft.y, topLeft.z);
-    segments.push(topLeft.x, topLeft.y, topLeft.z, topRight.x, topRight.y, topRight.z);
-    segments.push(topRight.x, topRight.y, topRight.z, bottomRight.x, bottomRight.y, bottomRight.z);
-    segments.push(bottomRight.x, bottomRight.y, bottomRight.z, bottomLeft.x, bottomLeft.y, bottomLeft.z);
-    return segments;
   }
 
   renderView() {
@@ -383,20 +384,39 @@ class ProfileView extends View {
 
   constructor(scene, domElement) {
     super(View.createOrthoCamera(scene.width / scene.height), domElement, scene);
+
+    this.overviewCamera = View.createOrthoCamera(1);
+    this.overviewCamera.layers.disable(1);
+    this.overviewCamera.layers.enable(31);
+
     this.control = new SimpleOrbitControl(this.camera, domElement, COORDINATE_INDEX.Y);
+
     this.initiated = false;
     this.enabled = false;
-    this.addListener('orbitChange', () => this.#handleControlChange());
+    this.addListener('orbitChange', (e) => this.#handleControlChange(e));
     this.addListener('pointermove', (e) => this.control.onMove(e));
     this.addListener('pointerdown', (e) => this.control.onDown(e));
     this.addListener('pointerup', () => this.control.onUp());
     this.addListener('wheel', (e) => this.control.onWheel(e));
   }
 
-  #handleControlChange() {
-    this.sp.position.copy(this.target);
-    this.renderView();
+  #handleControlChange(e) {
 
+    if (e.detail.reason === 'rotateEnd') {
+      this.overviewCamera.rotation.y = this.camera.rotation.y;
+      this.overviewCamera.updateProjectionMatrix();
+      this.updateFrustumFrame();
+    }
+
+    if (e.detail.reason === 'zoom') {
+      this.updateFrustumFrame();
+    }
+
+    if (e.detail.reason === 'panEnd') {
+      this.updateFrustumFrame();
+    }
+
+    this.renderView();
   }
 
   activate() {
@@ -405,28 +425,22 @@ class ProfileView extends View {
     if (this.initiated === false) {
       const boundingBox = this.scene.computeBoundingBox();
       this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
-      this.sp = this.scene.addSphere(
-        '',
-        this.target, //TODO: remove sphere from here
-        this.scene.caveObject3DGroup,
-        new THREE.SphereGeometry(this.scene.options.scene.centerLines.spheres.radius * 6, 10, 10),
-        this.scene.materials.sphere.selected,
-        {
-
-        }
-      );
       this.camera.position.set(this.target.x, this.target.y - 1, this.target.z);
-      this.control.setTarget(this.target);
+      this.overviewCamera.position.set(this.target.x, this.target.y - 1, this.target.z);
+      this.overviewCamera.lookAt(this.target);
+
       this.fitScreen(boundingBox, true);
       this.initiated = true;
+      this.updateOverviewCameraZoom(boundingBox);
+      this.createFrustumFrame();
     }
-
+    this.frustumFrame.visible = true;
     this.renderView();
 
   }
 
-  deactivate() {
-    this.enabled = false;
+  renderView() {
+    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
   }
 }
 
