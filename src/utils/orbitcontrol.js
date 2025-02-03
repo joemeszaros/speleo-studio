@@ -30,6 +30,12 @@ class SimpleOrbitControl {
 
   }
 
+  setTarget(target) {
+    this.target = target;
+    this.camera.lookAt(this.target);
+    this.camera.updateProjectionMatrix();
+  }
+
   onWheel(event) {
     event.preventDefault();
     if (event.deltaY < 0) {
@@ -81,11 +87,10 @@ class SimpleOrbitControl {
           const actualValue = this.camera.rotation.y;
           newValue = actualValue + delta;
           this.camera.rotation.y = newValue;
-          this.camera.updateProjectionMatrix();
-
         }
 
         this.startAngle = angle;
+
         this.#dispatchChange(this.state, { rotation: newValue });
       }
     } else if (this.state === STATE.PAN) {

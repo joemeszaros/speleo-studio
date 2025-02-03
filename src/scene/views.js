@@ -79,6 +79,7 @@ class View {
 
     if (update || zoomChanged || offset.length > 0) {
       this.camera.updateProjectionMatrix(); //lookat or zoom
+      this.onZoomLevelChange(zoomLevel);
       this.renderView();
     }
   }
@@ -107,6 +108,10 @@ class View {
 
   zoomOut() {
     this.zoomCameraTo(this.camera.zoom / 1.2);
+  }
+
+  onZoomLevelChange() {
+    //TODO: update text labels in footer
   }
 
 }
@@ -410,7 +415,8 @@ class ProfileView extends View {
 
         }
       );
-      this.camera.position.set(this.target.x, this.target.y - 100, this.target.z);
+      this.camera.position.set(this.target.x, this.target.y - 1, this.target.z);
+      this.control.setTarget(this.target);
       this.fitScreen(boundingBox, true);
       this.initiated = true;
     }
