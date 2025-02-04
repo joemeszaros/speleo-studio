@@ -26,11 +26,12 @@ class TextSprite {
     this.#drawText(label, fontStyle);
 
     const spriteMap = new THREE.CanvasTexture(this.canvas);
+    spriteMap.colorSpace = THREE.SRGBColorSpace;
     spriteMap.minFilter = THREE.LinearFilter;
     spriteMap.generateMipmaps = false;
     spriteMap.needsUpdate = true;
 
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteMap }));
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteMap, toneMapped: false }));
     sprite.scale.set(scale * this.canvas.width, scale * this.canvas.height, 1);
     sprite.position.copy(position);
     return sprite;

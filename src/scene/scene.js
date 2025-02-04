@@ -35,7 +35,7 @@ class MyScene {
    * @param {Database} db - The database of the application, containing caves and other infomations
    * @param {*} - Collection of line and geometry materials
    */
-  constructor(options, db, materials, container, overview) {
+  constructor(options, db, materials, container, viewHelperContainer, overview) {
     this.options = options;
     this.db = db;
     this.materials = materials;
@@ -57,6 +57,8 @@ class MyScene {
     this.sceneRenderer.setPixelRatio(window.devicePixelRatio);
     this.sceneRenderer.setSize(container.offsetWidth, container.offsetHeight);
     this.sceneRenderer.autoClear = false; // To allow render overlay on top of normal scene
+    this.sceneRenderer.setAnimationLoop(() => this.animate());
+    this.clock = new THREE.Clock(); // only used for animations
     this.domElement = this.sceneRenderer.domElement; // auto generate canvas
     container.appendChild(this.domElement);
     this.width = container.offsetWidth;
@@ -70,7 +72,7 @@ class MyScene {
     this.views = {
       plan    : new PlanView(this, this.domElement),
       profile : new ProfileView(this, this.domElement),
-      spatial : new SpatialView(this, this.domElement)
+      spatial : new SpatialView(this, this.domElement, viewHelperContainer)
     };
 
     this.threejsScene = new THREE.Scene();
@@ -619,7 +621,13 @@ class MyScene {
     this.view.renderView();
   }
 
-  renderScene(camera, overViewCamera, spriteCamera) {
+  animate() {
+
+    const delta = this.clock.getDelta();
+    this.view.animate(delta);
+  }
+
+  renderScene(camera, overViewCamera, spriteCamera, helper) {
     this.sectionAttributes.forEach((e) => {
       const pos = e.center.clone();
       pos.z = pos.z + 100;
@@ -633,6 +641,10 @@ class MyScene {
       this.sceneRenderer.render(this.threejsScene, camera);
       this.sceneRenderer.clearDepth();
       this.sceneRenderer.render(this.spriteScene, spriteCamera);
+    }
+
+    if (helper !== undefined) {
+      helper.render(this.sceneRenderer);
     }
 
     if (overViewCamera !== undefined) {

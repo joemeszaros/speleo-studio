@@ -23,7 +23,14 @@ class Main {
     const materials = new Materials(options).materials;
     const attributeDefs = new AttributesDefinitions(attributeDefintions);
     const sceneOverview = new SceneOverview(document.querySelector('#overview'));
-    const scene = new MyScene(options, db, materials, document.querySelector('#viewport'), sceneOverview);
+    const scene = new MyScene(
+      options,
+      db,
+      materials,
+      document.querySelector('#viewport'),
+      document.querySelector('#view-helper'),
+      sceneOverview
+    );
 
     const footer = new Footer(document.getElementById('footer'));
 

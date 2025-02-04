@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
-import { TextSprite } from './textsprite.js';
-import { showWarningPanel } from '../ui/popups.js';
-
+import { ViewHelper } from 'three/addons/helpers/ViewHelper.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+
+import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
+import { TextSprite } from './textsprite.js';
+import { showWarningPanel } from '../ui/popups.js';
 
 class View {
 
@@ -170,6 +171,10 @@ class View {
     this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
   }
 
+  animate(delta) {
+
+  }
+
   activate() {
     this.enabled = true;
     const boundingBox = this.scene.computeBoundingBox();
@@ -208,7 +213,7 @@ class View {
 
 class SpatialView extends View {
 
-  constructor(scene, domElement) {
+  constructor(scene, domElement, viewHelperDomElement) {
     super(View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
@@ -228,6 +233,54 @@ class SpatialView extends View {
     this.control.addEventListener('change', () => {
       this.renderView();
     });
+
+    // helper
+    this.viewHelper = new ViewHelper(this.camera, this.domElement);
+    this.viewHelper.controls = this.control;
+    this.viewHelper.controls.center = this.control.target;
+    this.viewHelper.setLabels('x', 'y', 'z');
+    this.viewHelper.setLabelStyle('28px Arial', 'black', 18);
+
+    function getSpriteMaterial(color, radius = 18) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+
+      const context = canvas.getContext('2d');
+      context.beginPath();
+      context.arc(32, 32, radius, 0, 2 * Math.PI);
+      context.closePath();
+      context.fillStyle = color;
+      context.fill();
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return new THREE.SpriteMaterial({ map: texture, toneMapped: false });
+    }
+    const colorMap = new Map([
+      ['negX', '#ff4466'],
+      ['negY', '#88ff44'],
+      ['negZ', '#4488ff']
+    ]);
+
+    this.viewHelper.children.forEach((ah) => {
+      if (colorMap.has(ah.userData.type)) {
+        const mat = getSpriteMaterial(colorMap.get(ah.userData.type));
+        ah.material = mat;
+        ah.material.opacity = 0.4;
+      }
+    });
+    viewHelperDomElement.addEventListener('pointerup', (event) => {
+      event.stopPropagation();
+      this.viewHelper.handleClick(event);
+      console.log(this.viewHelper.animating);
+
+    });
+
+    viewHelperDomElement.addEventListener('pointerdown', function (event) {
+      event.stopPropagation();
+    });
+
     this.enabled = false;
     this.control.enabled = false;
     this.initiated = false;
@@ -235,6 +288,20 @@ class SpatialView extends View {
 
   getCameraRelativePosition(target) {
     return new THREE.Vector3(target.x, target.y, target.z + 100);
+  }
+
+  renderView() {
+    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera, this.viewHelper);
+  }
+
+  animate(delta) {
+    if (this.viewHelper.animating === true) {
+      const newpos = this.camera.position.clone().sub(this.control.target);
+      this.overviewCamera.position.copy(this.target0.clone().add(newpos));
+      this.overviewCamera.lookAt(this.target0);
+      this.viewHelper.update(delta);
+      this.renderView();
+    }
   }
 
   activate() {
@@ -370,8 +437,9 @@ class PlanView extends View {
   }
 
   #createCompass(size) {
-    const map = new THREE.TextureLoader().load('images/compass.svg');
-    const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
+    const map = new THREE.TextureLoader().load('images/compass.png');
+    map.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.SpriteMaterial({ map: map });
     const sprite = new THREE.Sprite(material);
     sprite.center.set(0.5, 0.5);
     sprite.scale.set(size, size, 1);
@@ -388,6 +456,7 @@ class PlanView extends View {
 
   #createRatioIndicator(width) {
     const map = new THREE.TextureLoader().load('images/ratio.png');
+    map.colorSpace = THREE.SRGBColorSpace;
     const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
     const sprite = new THREE.Sprite(material);
     sprite.center.set(0.5, 0.5);

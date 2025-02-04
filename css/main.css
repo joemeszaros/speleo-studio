@@ -52,6 +52,15 @@ body {
   border: 1px solid white;
 }
 
+#view-helper {
+  width: 128px;
+  height: 128px;
+  right: 0px;
+  bottom: 30px;
+  position: absolute;
+  z-index: 102;
+}
+
 #control-panel {
   color: red;
   position: absolute;
