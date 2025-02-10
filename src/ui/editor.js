@@ -1425,7 +1425,15 @@ class SurveyEditor extends Editor {
           });
 
         }
-      }
+      },
+      {
+        id    : 'export-to-csv',
+        text  : 'Export to CSV',
+        click : () => this.table.download('csv', this.survey.name + '.csv', { delimiter: ';' })
+      },
+      { break: true },
+      { id: 'undo', text: 'Undo', click: () => this.table.undo() },
+      { id: 'redo', text: 'Redo', click: () => this.table.redo() }
 
     ].forEach((b) => {
       if (b.break === true) {
@@ -1489,6 +1497,7 @@ class SurveyEditor extends Editor {
 
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
+      history                   : true, //enable undo and redo
       height                    : 300,
       data                      : this.#getTableData(this.survey, this.cave.stations),
       layout                    : 'fitDataStretch',
@@ -1514,6 +1523,12 @@ class SurveyEditor extends Editor {
       clipboardCopyRowRange : 'range',
       clipboardPasteParser  : 'range',
       clipboardPasteAction  : 'range',
+
+      // pagination
+      pagination             : true,
+      paginationSize         : 7, // By default, 7 rows are visible for me (NG)
+      paginationSizeSelector : [7, 10, 25, 50, 100], // optional: shows the dropdown to select page size
+      paginationCounter      : 'rows', // optional: shows the current page size
 
       rowContextMenu : this.baseTableFunctions.getContextMenu(),
       rowHeader      : {
