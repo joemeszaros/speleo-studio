@@ -155,7 +155,7 @@ class ProjectExplorer {
 
   showCaveContextMenu(cave) {
     const menu = U.node`<ul class="menu-options">`;
-    const editCaveData = U.node`<li class="menu-option">Edit cave sheet</li>`;
+    const editCaveData = U.node(`<li class="menu-option">` + i18next.t('Edit cave sheet') + `</li>`);
     editCaveData.onclick = () => {
       this.editor = new CaveEditor(
         this.db,
@@ -170,7 +170,7 @@ class ProjectExplorer {
       this.contextMenuElement.style.display = 'none';
     };
 
-    const editSectionAttributes = U.node`<li class="menu-option">Edit section attributes</li>`;
+    const editSectionAttributes = U.node(`<li class="menu-option">` + i18next.t('Edit section attributes') + `</li>`);
     editSectionAttributes.onclick = () => {
       this.editor = new SectionAttributeEditor(
         this.db,
@@ -186,7 +186,9 @@ class ProjectExplorer {
 
     };
 
-    const editComponentAttributes = U.node`<li class="menu-option">Edit component attributes</li>`;
+    const editComponentAttributes = U.node(
+      `<li class="menu-option">` + i18next.t('Edit component attributes') + `</li>`
+    );
     editComponentAttributes.onclick = () => {
       this.editor = new ComponentAttributeEditor(
         this.db,
@@ -326,7 +328,7 @@ class ProjectExplorer {
 
     } else if (event.target.id === 'delete') {
       if (state.nodeType === 'survey') {
-        const result = confirm(`Do you want to delete survey '${state.survey.name}'?`);
+        const result = confirm(i18next.t('Delete survey', { survey: state.survey.name }));
         if (result) {
           this.db.deleteSurvey(state.cave.name, state.survey.name);
         }
