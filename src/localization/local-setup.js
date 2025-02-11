@@ -25,7 +25,8 @@ i18next.init({
         'Line color mode'          : 'Line color mode',
         'Grid position/visibility' : 'Grid position/visibility',
         'Surface visibility'       : 'Surface visibility',
-        'Locate point'             : 'Locate point'
+        'Locate point'             : 'Locate point',
+        'Distance between points'  : 'Distance between points'
       }
     },
     hu : {
@@ -52,7 +53,8 @@ i18next.init({
         'Line color mode'          : 'Line color mode',
         'Grid position/visibility' : 'Grid position/visibility',
         'Surface visibility'       : 'Felszín láthatósága',
-        'Locate point'             : 'Pont lokalizáció'
+        'Locate point'             : 'Pont lokalizáció',
+        'Distance between points'  : 'Távolság két pont között'
       }
     }
     // Add other languages here

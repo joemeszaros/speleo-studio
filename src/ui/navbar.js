@@ -130,6 +130,11 @@ class NavigationBar {
         tooltip : i18next.t('Locate point'),
         icon    : './icons/locate.svg',
         click   : (event) => this.interactive.showLocatePanel(event.clientX)
+      },
+      {
+        tooltip : i18next.t('Distance between points'),
+        icon    : './icons/distance.svg',
+        click   : (event) => this.interactive.showShortestPathPanel(event.clientX)
       }
     ];
   }
