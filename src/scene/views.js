@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { ViewHelper } from 'three/addons/helpers/ViewHelper.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
@@ -8,6 +7,8 @@ import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
+import { get3DCoordsStr } from '../utils/utils.js';
+import { ViewHelper } from '../utils/viewhelper.js';
 
 class View {
 
@@ -72,6 +73,13 @@ class View {
       this.camera.position.copy(newCameraPosition);
       this.camera.lookAt(this.target);
       this.control.target = this.target;
+      if (this.viewHelper !== undefined) {
+        this.viewHelper.center = this.target;
+      }
+
+      const camDirection = this.camera.position.clone().sub(this.control.target);
+      this.overviewCamera.position.copy(this.target.clone().add(camDirection));
+      this.overviewCamera.rotation.copy(this.camera.rotation);
     }
 
     if (update || zoomChanged || offset.length > 0) {
@@ -171,6 +179,7 @@ class View {
     this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
   }
 
+  // eslint-disable-next-line no-unused-vars
   animate(delta) {
 
   }
@@ -187,7 +196,6 @@ class View {
       this.overviewCamera.position.copy(cameraPos.clone());
       this.camera.lookAt(this.target);
       this.overviewCamera.lookAt(this.target);
-      this.target0 = this.target.clone();
       this.createFrustumFrame();
       this.fitScreen(boundingBox, true);
       this.onZoomLevelChange(this.camera.zoom);
@@ -224,7 +232,7 @@ class SpatialView extends View {
     this.control.update();
     this.control.addEventListener('end', () => {
       const newpos = this.camera.position.clone().sub(this.control.target);
-      this.overviewCamera.position.copy(this.target0.clone().add(newpos));
+      this.overviewCamera.position.copy(this.target.clone().add(newpos));
       this.overviewCamera.rotation.copy(this.camera.rotation);
       this.overviewCamera.updateProjectionMatrix();
       this.updateFrustumFrame();
@@ -234,10 +242,7 @@ class SpatialView extends View {
       this.renderView();
     });
 
-    // helper
-    this.viewHelper = new ViewHelper(this.camera, this.domElement);
-    this.viewHelper.controls = this.control;
-    this.viewHelper.controls.center = this.control.target;
+    this.viewHelper = new ViewHelper(this.camera, this.domElement, new THREE.Vector3(0, 0, 0));
     this.viewHelper.setLabels('x', 'y', 'z');
     this.viewHelper.setLabelStyle('28px Arial', 'black', 18);
 
@@ -273,13 +278,13 @@ class SpatialView extends View {
     viewHelperDomElement.addEventListener('pointerup', (event) => {
       event.stopPropagation();
       this.viewHelper.handleClick(event);
-      console.log(this.viewHelper.animating);
 
     });
 
     viewHelperDomElement.addEventListener('pointerdown', function (event) {
       event.stopPropagation();
     });
+    this.animatedPreviously = false;
 
     this.enabled = false;
     this.control.enabled = false;
@@ -295,12 +300,28 @@ class SpatialView extends View {
   }
 
   animate(delta) {
+
     if (this.viewHelper.animating === true) {
-      const newpos = this.camera.position.clone().sub(this.control.target);
-      this.overviewCamera.position.copy(this.target0.clone().add(newpos));
-      this.overviewCamera.lookAt(this.target0);
       this.viewHelper.update(delta);
       this.renderView();
+      this.animatedPreviously = true;
+    } else if (this.animatedPreviously === true) {
+      const center = this.camera
+        .getWorldDirection(new THREE.Vector3())
+        .multiplyScalar(100)
+        .add(this.camera.position.clone());
+
+      this.control.target = center;
+      this.target = center;
+      this.control.update();
+
+      const newpos = this.camera.position.clone().sub(this.control.target);
+      this.overviewCamera.position.copy(this.target.clone().add(newpos));
+      this.overviewCamera.lookAt(this.target);
+      this.overviewCamera.updateProjectionMatrix();
+      this.renderView();
+
+      this.animatedPreviously = false;
     }
   }
 

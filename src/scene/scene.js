@@ -228,6 +228,7 @@ class MyScene {
   }
 
   getFirstIntersectedSprite(mouseCoordinates) {
+    if (this.view.spriteCamera === undefined) return;
     const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
     const sprites = this.sprites3DGroup.children;
     this.raycaster.setFromCamera(pointer, this.view.spriteCamera);
@@ -622,7 +623,6 @@ class MyScene {
   }
 
   animate() {
-
     const delta = this.clock.getDelta();
     this.view.animate(delta);
   }
@@ -706,12 +706,12 @@ class MyScene {
     if (colorGradients !== undefined) {
       if (colorGradients.center.length !== polygonSegments.length) {
         throw new Error(
-          `Color gradients length ${colorGradients.center.length} does not match polygon segments length ${polygonSegments.length} for survey ${surveyName}`
+          `Color gradients length ${colorGradients.center.length} does not match polygon segments length ${polygonSegments.length} for survey ${survey.name}`
         );
       }
       if (colorGradients.splays.length !== splaySegments.length) {
         throw new Error(
-          `Color gradients length ${colorGradients.splays.length} does not match splay segments length ${splaySegments.length} for survey ${surveyName}`
+          `Color gradients length ${colorGradients.splays.length} does not match splay segments length ${splaySegments.length} for survey ${survey.name}`
         );
       }
       geometryStations.setColors(colorGradients.center);
