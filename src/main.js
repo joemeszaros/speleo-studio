@@ -9,6 +9,7 @@ import { NavigationBar } from './ui/navbar.js';
 import { Footer } from './ui/footer.js';
 import { addGui } from './ui/controls.js';
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
+import { showErrorPanel } from './ui/popups.js';
 
 class Main {
 
@@ -78,7 +79,12 @@ class Main {
       .addEventListener('change', (e) => {
 
         for (const file of e.target.files) {
-          handler.importFile(file);
+          try {
+            handler.importFile(file);
+          } catch (error) {
+            showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);
+            console.error(error);
+          }
         }
 
         input.value = '';
@@ -102,8 +108,11 @@ class Main {
       if (importer !== undefined) {
         fetch(caveNameUrl)
           .then((data) => data.blob())
-          .then((res) => importer.importFile(res))
-          .catch((error) => console.error(error));
+          .then((res) => importer.importFile(res, caveNameUrl))
+          .catch((error) => {
+            showErrorPanel(`Unable to import file ${caveNameUrl}: ${error.message}`);
+            console.error(error);
+          });
       }
     } else {
       this.scene.view.renderView();

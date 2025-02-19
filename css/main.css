@@ -114,13 +114,13 @@ body {
   border-style: solid;
   border-color: white;
   border-width: 3px;
-  border-radius: 20px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-size: 14px;
   text-align: center;
 }
 
 .cautionpanel-error {
-  background-color: #a93027;
+  background-color: black;
 }
 
 .cautionpanel-warning {

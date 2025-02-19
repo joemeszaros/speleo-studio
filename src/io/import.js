@@ -5,6 +5,7 @@ import { showErrorPanel, showWarningPanel } from '../ui/popups.js';
 import { CAVES_MAX_DISTANCE } from '../constants.js';
 import {
   Shot,
+  SurveyMetadata,
   Survey,
   Cave,
   SurveyStartStation,
@@ -12,7 +13,10 @@ import {
   SurveyStation,
   SurveyAlias,
   Surface,
-  CaveMetadata
+  CaveMetadata,
+  SurveyTeamMember,
+  SurveyTeam,
+  SurveyInstrument
 } from '../model.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
@@ -99,6 +103,25 @@ class CaveImporter {
       this.scene.view.fitScreen(boundingBox);
     }
   }
+
+  importFile(file, name, endcoding = 'utf8') {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          this.importText(event.target.result);
+        } catch (e) {
+          console.error(e);
+          showErrorPanel(`Import of ${name.substring(name.lastIndexOf('/') + 1)} failed: ${e.message}`, 10);
+        }
+      };
+      reader.onerror = (error) => {
+        console.error(error);
+        showErrorPanel(`Import of ${name.substring(name.lastIndexOf('/') + 1)} failed: ${error}`, 10);
+      };
+      reader.readAsText(file, endcoding);
+    }
+  }
 }
 
 class PolygonImporter extends CaveImporter {
@@ -134,58 +157,94 @@ class PolygonImporter extends CaveImporter {
     return shots;
   };
 
+  getNextLineValue(iterator, start, processor = (x) => x, validator = (x) => x.length > 0) {
+    if (iterator.done) {
+      throw new Error(`Invalid Polygon survey, reached end of file`);
+    }
+    const nextLine = iterator.next();
+    if (!nextLine.value[1].startsWith(start)) {
+      throw new Error(`Invalid Polygon survey, expected ${start} at line ${nextLine.value[0]}`);
+    }
+    const parts = nextLine.value[1].split(':');
+    if (parts.length !== 2) {
+      throw new Error(`Invalid Polygon survey, expected value separated by : at line ${nextLine.value[0]}`);
+    }
+    const result = processor(parts[1].trim());
+    if (!validator(result)) {
+      throw new Error(`Invalid Polygon survey, invalid value at line ${nextLine.value[0]}`);
+    }
+    return result;
+  }
+
   getCave(wholeFileInText) {
     if (wholeFileInText.startsWith('POLYGON Cave Surveying Software')) {
       const lines = wholeFileInText.split(/\r\n|\n/);
       const lineIterator = lines.entries();
       U.iterateUntil(lineIterator, (v) => v !== '*** Project ***');
-
-      const caveNameResult = lineIterator.next();
-      if (!caveNameResult.value[1].startsWith('Project name:')) {
-        showErrorPanel(`Invalid file, unable to read project name at line ${caveNameResult.value[0]}`);
-        return;
-      }
-      const projectName = caveNameResult.value[1].substring(14);
-
-      const settlementResult = lineIterator.next();
-      if (!settlementResult.value[1].startsWith('Project place:')) {
-        showErrorPanel(`Invalid file, unable to read settlement at line ${settlementResult.value[0]}`);
-        return;
-      }
-      const settlement = settlementResult.value[1].substring(15);
-
-      const catasterCodeResult = lineIterator.next();
-      if (!catasterCodeResult.value[1].startsWith('Project code:')) {
-        showErrorPanel(`Invalid file, unable to read cataster code at line ${catasterCodeResult.value[0]}`);
-        return;
-      }
-      const catasterCode = catasterCodeResult.value[1].substring(14);
-
-      lineIterator.next(); // TODO: skip made by for now
-
-      const dateResult = lineIterator.next();
-      if (!dateResult.value[1].startsWith('Made date:')) {
-        showErrorPanel(`Invalid file, unable to read date at line ${dateResult.value[0]}`);
-        return;
-      }
-      const floatValue = U.parseMyFloat(dateResult.value[1].substring(11));
-      const date = U.getPolygonDate(floatValue);
-      const metaData = new CaveMetadata(settlement, catasterCode, date);
+      const projectName = this.getNextLineValue(lineIterator, 'Project name');
+      const settlement = this.getNextLineValue(lineIterator, 'Project place');
+      const catasterCode = this.getNextLineValue(lineIterator, 'Project code');
+      const madeBy = this.getNextLineValue(lineIterator, 'Made by');
+      const date = this.getNextLineValue(
+        lineIterator,
+        'Made date',
+        (x) => U.getPolygonDate(U.parseMyFloat(x)),
+        (x) => x instanceof Date
+      );
+      const metaData = new CaveMetadata(settlement, catasterCode, date, madeBy);
       const surveys = [];
       const stations = new Map();
       var surveyName;
       var surveyIndex = 0;
       let caveStartPosition;
+
       do {
         surveyName = U.iterateUntil(lineIterator, (v) => !v.startsWith('Survey name'));
+
         if (surveyName !== undefined) {
           const surveyNameStr = surveyName.substring(13);
-          let fixPoint = U.iterateUntil(lineIterator, (v) => !v.startsWith('Fix point')).substring(11);
+          const surveyTeamName = this.getNextLineValue(lineIterator, 'Survey team');
+
+          const members = [];
+          for (let i = 0; i < 5; i++) {
+            const memberStr = lineIterator.next().value[1];
+            if (memberStr.length > 0) {
+              const [name, role] = memberStr.split('\t').map((x) => x.trim());
+              if (name.length > 0) {
+                members.push(new SurveyTeamMember(name, role));
+              }
+            }
+          }
+          const surveyDate = this.getNextLineValue(
+            lineIterator,
+            'Survey date',
+            (x) => U.getPolygonDate(U.parseMyFloat(x)),
+            (x) => x instanceof Date
+          );
+          const declination = this.getNextLineValue(
+            lineIterator,
+            'Declination',
+            (x) => U.parseMyFloat(x),
+            (x) => x > 0 && x < 10
+          );
+          U.iterateUntil(lineIterator, (v) => !v.startsWith('Instruments'));
+          const instruments = [];
+          for (let i = 0; i < 3; i++) {
+            const instrumentStr = lineIterator.next().value[1];
+            if (instrumentStr.length > 0) {
+              const [instrument, correction] = instrumentStr.split('\t').map((x) => x.trim());
+              if (instrument.length > 0) {
+                instruments.push(new SurveyInstrument(instrument, correction));
+              }
+            }
+          }
+
+          let fixPoint = this.getNextLineValue(lineIterator, 'Fix point');
           let posLine = lineIterator.next();
           let parts = posLine.value[1].split(/\t|\s/);
           let parsed = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
           let startPosParsed = new Vector(...parsed);
-          let startPoint = new SurveyStartStation(fixPoint, new SurveyStation('center', startPosParsed)); //TODO: check if fix point is in shots
+          let startPoint = new SurveyStartStation(fixPoint, new SurveyStation('center', startPosParsed));
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
           lineIterator.next(); //From To ...
           const shots = this.#getShotsFromPolygon(lineIterator);
@@ -200,22 +259,25 @@ class PolygonImporter extends CaveImporter {
               );
             }
           }
-          const survey = new Survey(surveyNameStr, true, startPoint, shots);
+          const metadata = new SurveyMetadata(
+            surveyDate,
+            declination,
+            new SurveyTeam(surveyTeamName, members),
+            instruments
+          );
+          const survey = new Survey(surveyNameStr, true, metadata, startPoint, shots);
           SurveyHelper.calculateSurveyStations(survey, stations, [], startName, startPosition);
           surveys.push(survey);
           surveyIndex++;
         }
       } while (surveyName !== undefined);
+
       return new Cave(projectName, metaData, caveStartPosition, stations, surveys);
     }
   }
 
-  importFile(file) {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => this.importText(event.target.result);
-      reader.readAsText(file, 'iso_8859-2');
-    }
+  importFile(file, name, endcoding = 'iso_8859-2') {
+    super.importFile(file, name, endcoding);
   }
 
   importText(wholeFileInText) {
@@ -299,6 +361,9 @@ class JsonImporter extends CaveImporter {
       reader.onload = (event) => this.importJson(event.target.result);
       reader.readAsText(file);
     }
+  }
+  importText(wholeFileInText) {
+    return this.importJson(wholeFileInText);
   }
 
   importJson(json) {

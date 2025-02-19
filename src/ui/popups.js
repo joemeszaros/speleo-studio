@@ -12,7 +12,7 @@ function showCautionPanel(message, seconds, errorOrWarning) {
 
   cautionPanel.style.display = 'block';
   cautionPanel.querySelector('#content').innerHTML =
-    '<strong style="color:#8a1a12">⚠ ' + errorOrWarning.toUpperCase() + '</strong><br>' + message;
+    '<strong style="color:#8a1a12">⚠ ' + errorOrWarning.toUpperCase() + '</strong> ' + message;
   setTimeout(function () {
     cautionPanel.style.display = 'none';
   }, seconds * 1000);

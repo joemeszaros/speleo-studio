@@ -520,6 +520,37 @@ class SurveyStation {
   }
 }
 
+class SurveyTeamMember {
+  constructor(name, role) {
+    this.name = name;
+    this.role = role;
+  }
+}
+
+class SurveyTeam {
+  constructor(name, members = []) {
+    this.name = name;
+    this.members = members;
+  }
+}
+
+class SurveyInstrument {
+  constructor(name, value) {
+    this.name = name;
+    this.value = value;
+  }
+}
+
+class SurveyMetadata {
+
+  constructor(date, declination, team, instruments = []) {
+    this.date = date;
+    this.declination = declination;
+    this.team = team;
+    this.instruments = instruments;
+  }
+}
+
 class Survey {
 
   /**
@@ -531,9 +562,18 @@ class Survey {
    * @param {Array[Number]} orphanShotIds - An array of orphan shots that are disconnected (from and/or to is unknown)
    * @param {Array[Object]} attributes - Extra attributes (e.g. tectonics information) associated to this Survey
    */
-  constructor(name, visible = true, start = undefined, shots = [], orphanShotIds = new Set(), attributes = []) {
+  constructor(
+    name,
+    visible = true,
+    metadata = undefined,
+    start = undefined,
+    shots = [],
+    orphanShotIds = new Set(),
+    attributes = []
+  ) {
     this.name = name;
     this.visible = visible;
+    this.metadata = metadata;
     this.start = start;
     this.shots = shots;
     this.orphanShotIds = orphanShotIds;
@@ -667,10 +707,11 @@ class Surface {
 }
 class CaveMetadata {
 
-  constructor(settlement, catasterCode, date) {
+  constructor(settlement, catasterCode, date, creator) {
     this.settlement = settlement;
     this.catasterCode = catasterCode;
     this.date = date;
+    this.creator = creator;
   }
 
   toExport() {
@@ -831,6 +872,10 @@ export {
   SectionAttribute,
   ComponentAttribute,
   SurveyStation,
+  SurveyTeamMember,
+  SurveyTeam,
+  SurveyInstrument,
+  SurveyMetadata,
   Survey,
   SurveyAlias,
   Surface,

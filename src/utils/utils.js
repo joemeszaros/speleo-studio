@@ -2,11 +2,7 @@ import { Vector } from '../model.js';
 
 function fromPolar(distance, azimuth, clino) {
   const h = Math.cos(clino) * distance;
-  return new Vector(
-    Math.sin(azimuth) * h, //TODO: don't forget declination
-    Math.cos(azimuth) * h, //TODO: don't forget declination
-    Math.sin(clino) * distance
-  );
+  return new Vector(Math.sin(azimuth) * h, Math.cos(azimuth) * h, Math.sin(clino) * distance);
 }
 
 // https://courses.eas.ualberta.ca/eas421/formulasheets/formulasheetxythetaP12010.pdf

@@ -44,6 +44,7 @@ class SurveyHelper {
       sh.toAlias = undefined;
     });
 
+    const declination = survey?.metadata?.declination ?? 0.0; //TODO: remove fallback logic
     var repeat = true;
 
     // the basics of this algorithm came from Topodroid cave surveying software by Marco Corvi
@@ -58,7 +59,11 @@ class SurveyHelper {
         if (fromStation !== undefined) {
           if (toStation === undefined) {
             // from = 1, to = 0
-            const polarVector = U.fromPolar(sh.length, U.degreesToRads(sh.azimuth), U.degreesToRads(sh.clino));
+            const polarVector = U.fromPolar(
+              sh.length,
+              U.degreesToRads(sh.azimuth + declination),
+              U.degreesToRads(sh.clino)
+            );
             const fp = fromStation.position;
             const st = new Vector(fp.x, fp.y, fp.z).add(polarVector);
             const stationName = survey.getToStationName(sh);
@@ -71,7 +76,11 @@ class SurveyHelper {
         } else if (toStation !== undefined) {
           // from = 0, to = 1
           const tp = toStation.position;
-          const polarVector = U.fromPolar(sh.length, U.degreesToRads(sh.azimuth), U.degreesToRads(sh.clino));
+          const polarVector = U.fromPolar(
+            sh.length,
+            U.degreesToRads(sh.azimuth + declination),
+            U.degreesToRads(sh.clino)
+          );
           const st = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
           stations.set(sh.from, new ST(sh.type, st, survey));
           sh.processed = true;
@@ -81,7 +90,11 @@ class SurveyHelper {
           let falias = aliases.find((a) => a.contains(sh.from));
           let talias = aliases.find((a) => a.contains(sh.to));
           if (falias === undefined && talias === undefined) return; // think of it like a continue statement in a for loop
-          const polarVector = U.fromPolar(sh.length, U.degreesToRads(sh.azimuth), U.degreesToRads(sh.clino));
+          const polarVector = U.fromPolar(
+            sh.length,
+            U.degreesToRads(sh.azimuth + declination),
+            U.degreesToRads(sh.clino)
+          );
 
           if (falias !== undefined) {
             const pairName = falias.getPair(sh.from);
