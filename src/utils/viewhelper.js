@@ -19,7 +19,7 @@ import {
 
 class ViewHelper extends Object3D {
 
-  constructor(camera, domElement, center) {
+  constructor(camera, domElement, options, center = new Vector3(0, 0, 0)) {
 
     super();
 
@@ -28,12 +28,9 @@ class ViewHelper extends Object3D {
     this.animating = false;
     this.center = center;
 
-    const color1 = new Color('#ff4466');
-    const color2 = new Color('#88ff44');
-    const color3 = new Color('#4488ff');
-    const color4 = new Color('#000000');
-
-    const options = {};
+    const xColor = new Color('#ff4466');
+    const yColor = new Color('#88ff44');
+    const zColor = new Color('#4488ff');
 
     const interactiveObjects = [];
     const raycaster = new Raycaster();
@@ -45,9 +42,9 @@ class ViewHelper extends Object3D {
 
     const geometry = new CylinderGeometry(0.04, 0.04, 0.8, 5).rotateZ(-Math.PI / 2).translate(0.4, 0, 0);
 
-    const xAxis = new Mesh(geometry, getAxisMaterial(color1));
-    const yAxis = new Mesh(geometry, getAxisMaterial(color2));
-    const zAxis = new Mesh(geometry, getAxisMaterial(color3));
+    const xAxis = new Mesh(geometry, getAxisMaterial(xColor));
+    const yAxis = new Mesh(geometry, getAxisMaterial(yColor));
+    const zAxis = new Mesh(geometry, getAxisMaterial(zColor));
 
     yAxis.rotation.z = Math.PI / 2;
     zAxis.rotation.y = -Math.PI / 2;
@@ -56,49 +53,35 @@ class ViewHelper extends Object3D {
     this.add(zAxis);
     this.add(yAxis);
 
-    const spriteMaterial1 = getSpriteMaterial(color1);
-    const spriteMaterial2 = getSpriteMaterial(color2);
-    const spriteMaterial3 = getSpriteMaterial(color3);
-    const spriteMaterial4 = getSpriteMaterial(color4);
+    const posXSprite = new Sprite(getSpriteMaterial(xColor, options.labelX));
+    const posYSprite = new Sprite(getSpriteMaterial(yColor, options.labelY));
+    const posZSprite = new Sprite(getSpriteMaterial(zColor, options.labelZ));
+    const negXSprite = new Sprite(getSpriteMaterial(xColor));
+    const negYSprite = new Sprite(getSpriteMaterial(yColor));
+    const negZSprite = new Sprite(getSpriteMaterial(zColor));
 
-    const posXAxisHelper = new Sprite(spriteMaterial1);
-    const posYAxisHelper = new Sprite(spriteMaterial2);
-    const posZAxisHelper = new Sprite(spriteMaterial3);
-    const negXAxisHelper = new Sprite(spriteMaterial4);
-    const negYAxisHelper = new Sprite(spriteMaterial4);
-    const negZAxisHelper = new Sprite(spriteMaterial4);
+    posXSprite.position.x = 1;
+    posYSprite.position.y = 1;
+    posZSprite.position.z = 1;
+    negXSprite.position.x = -1;
+    negYSprite.position.y = -1;
+    negZSprite.position.z = -1;
 
-    posXAxisHelper.position.x = 1;
-    posYAxisHelper.position.y = 1;
-    posZAxisHelper.position.z = 1;
-    negXAxisHelper.position.x = -1;
-    negYAxisHelper.position.y = -1;
-    negZAxisHelper.position.z = -1;
+    negXSprite.material.opacity = 0.4;
+    negYSprite.material.opacity = 0.4;
+    negZSprite.material.opacity = 0.4;
 
-    negXAxisHelper.material.opacity = 0.2;
-    negYAxisHelper.material.opacity = 0.2;
-    negZAxisHelper.material.opacity = 0.2;
+    posXSprite.userData.type = 'posX';
+    posYSprite.userData.type = 'posY';
+    posZSprite.userData.type = 'posZ';
+    negXSprite.userData.type = 'negX';
+    negYSprite.userData.type = 'negY';
+    negZSprite.userData.type = 'negZ';
 
-    posXAxisHelper.userData.type = 'posX';
-    posYAxisHelper.userData.type = 'posY';
-    posZAxisHelper.userData.type = 'posZ';
-    negXAxisHelper.userData.type = 'negX';
-    negYAxisHelper.userData.type = 'negY';
-    negZAxisHelper.userData.type = 'negZ';
-
-    this.add(posXAxisHelper);
-    this.add(posYAxisHelper);
-    this.add(posZAxisHelper);
-    this.add(negXAxisHelper);
-    this.add(negYAxisHelper);
-    this.add(negZAxisHelper);
-
-    interactiveObjects.push(posXAxisHelper);
-    interactiveObjects.push(posYAxisHelper);
-    interactiveObjects.push(posZAxisHelper);
-    interactiveObjects.push(negXAxisHelper);
-    interactiveObjects.push(negYAxisHelper);
-    interactiveObjects.push(negZAxisHelper);
+    [posXSprite, posYSprite, posZSprite, negXSprite, negYSprite, negZSprite].forEach((sprite) => {
+      this.add(sprite);
+      interactiveObjects.push(sprite);
+    });
 
     const point = new Vector3();
     const dim = 128;
@@ -112,19 +95,13 @@ class ViewHelper extends Object3D {
       point.set(0, 0, 1);
       point.applyQuaternion(camera.quaternion);
 
-      //
-
       const x = domElement.offsetWidth - dim;
 
       renderer.clearDepth();
-
       renderer.getViewport(viewport);
       renderer.setViewport(x, 0, dim, dim);
-
       renderer.render(this, orthoCamera);
-
       renderer.setViewport(viewport.x, viewport.y, viewport.z, viewport.w);
-
     };
 
     const targetPosition = new Vector3();
@@ -150,41 +127,14 @@ class ViewHelper extends Object3D {
       const intersects = raycaster.intersectObjects(interactiveObjects);
 
       if (intersects.length > 0) {
-
         const intersection = intersects[0];
         const object = intersection.object;
-
         prepareAnimationData(object, this.center);
-
         this.animating = true;
-
         return true;
-
       } else {
-
         return false;
-
       }
-
-    };
-
-    this.setLabels = function (labelX, labelY, labelZ) {
-
-      options.labelX = labelX;
-      options.labelY = labelY;
-      options.labelZ = labelZ;
-
-      updateLabels();
-
-    };
-
-    this.setLabelStyle = function (font, color, radius) {
-
-      options.font = font;
-      options.color = color;
-      options.radius = radius;
-
-      updateLabels();
 
     };
 
@@ -193,18 +143,14 @@ class ViewHelper extends Object3D {
       const step = delta * turnRate;
 
       // animate position by doing a slerp and then scaling the position on the unit sphere
-
       q1.rotateTowards(q2, step);
       camera.position.set(0, 0, 1).applyQuaternion(q1).multiplyScalar(radius).add(this.center);
 
       // animate orientation
-
       camera.quaternion.rotateTowards(targetQuaternion, step);
 
       if (q1.angleTo(q2) === 0) {
-
         this.animating = false;
-
       }
 
     };
@@ -217,19 +163,19 @@ class ViewHelper extends Object3D {
       yAxis.material.dispose();
       zAxis.material.dispose();
 
-      posXAxisHelper.material.map.dispose();
-      posYAxisHelper.material.map.dispose();
-      posZAxisHelper.material.map.dispose();
-      negXAxisHelper.material.map.dispose();
-      negYAxisHelper.material.map.dispose();
-      negZAxisHelper.material.map.dispose();
+      posXSprite.material.map.dispose();
+      posYSprite.material.map.dispose();
+      posZSprite.material.map.dispose();
+      negXSprite.material.map.dispose();
+      negYSprite.material.map.dispose();
+      negZSprite.material.map.dispose();
 
-      posXAxisHelper.material.dispose();
-      posYAxisHelper.material.dispose();
-      posZAxisHelper.material.dispose();
-      negXAxisHelper.material.dispose();
-      negYAxisHelper.material.dispose();
-      negZAxisHelper.material.dispose();
+      posXSprite.material.dispose();
+      posYSprite.material.dispose();
+      posZSprite.material.dispose();
+      negXSprite.material.dispose();
+      negYSprite.material.dispose();
+      negZSprite.material.dispose();
 
     };
 
@@ -276,19 +222,14 @@ class ViewHelper extends Object3D {
       targetPosition.copy(focusPoint.clone().add(delta));
 
       dummy.position.copy(focusPoint);
-
       dummy.lookAt(camera.position);
       q1.copy(dummy.quaternion);
-
       dummy.lookAt(targetPosition);
       q2.copy(dummy.quaternion);
-
     }
 
     function getAxisMaterial(color) {
-
       return new MeshBasicMaterial({ color: color, toneMapped: false });
-
     }
 
     function getSpriteMaterial(color, text) {
@@ -307,34 +248,16 @@ class ViewHelper extends Object3D {
       context.fill();
 
       if (text) {
-
         context.font = font;
         context.textAlign = 'center';
         context.fillStyle = labelColor;
         context.fillText(text, 32, 41);
-
       }
 
       const texture = new CanvasTexture(canvas);
       texture.colorSpace = SRGBColorSpace;
 
       return new SpriteMaterial({ map: texture, toneMapped: false });
-
-    }
-
-    function updateLabels() {
-
-      posXAxisHelper.material.map.dispose();
-      posYAxisHelper.material.map.dispose();
-      posZAxisHelper.material.map.dispose();
-
-      posXAxisHelper.material.dispose();
-      posYAxisHelper.material.dispose();
-      posZAxisHelper.material.dispose();
-
-      posXAxisHelper.material = getSpriteMaterial(color1, options.labelX);
-      posYAxisHelper.material = getSpriteMaterial(color2, options.labelY);
-      posZAxisHelper.material = getSpriteMaterial(color3, options.labelZ);
 
     }
 

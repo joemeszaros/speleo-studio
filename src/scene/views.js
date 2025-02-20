@@ -7,7 +7,6 @@ import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
-import { get3DCoordsStr } from '../utils/utils.js';
 import { ViewHelper } from '../utils/viewhelper.js';
 
 class View {
@@ -242,48 +241,24 @@ class SpatialView extends View {
       this.renderView();
     });
 
-    this.viewHelper = new ViewHelper(this.camera, this.domElement, new THREE.Vector3(0, 0, 0));
-    this.viewHelper.setLabels('x', 'y', 'z');
-    this.viewHelper.setLabelStyle('28px Arial', 'black', 18);
-
-    function getSpriteMaterial(color, radius = 18) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 64;
-
-      const context = canvas.getContext('2d');
-      context.beginPath();
-      context.arc(32, 32, radius, 0, 2 * Math.PI);
-      context.closePath();
-      context.fillStyle = color;
-      context.fill();
-
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      return new THREE.SpriteMaterial({ map: texture, toneMapped: false });
-    }
-    const colorMap = new Map([
-      ['negX', '#ff4466'],
-      ['negY', '#88ff44'],
-      ['negZ', '#4488ff']
-    ]);
-
-    this.viewHelper.children.forEach((ah) => {
-      if (colorMap.has(ah.userData.type)) {
-        const mat = getSpriteMaterial(colorMap.get(ah.userData.type));
-        ah.material = mat;
-        ah.material.opacity = 0.4;
-      }
+    this.viewHelper = new ViewHelper(this.camera, this.domElement, {
+      labelX : 'x',
+      labelY : 'y',
+      labelZ : 'z',
+      font   : '28px Arial',
+      color  : 'black',
+      radius : 18
     });
+
     viewHelperDomElement.addEventListener('pointerup', (event) => {
       event.stopPropagation();
       this.viewHelper.handleClick(event);
-
     });
 
     viewHelperDomElement.addEventListener('pointerdown', function (event) {
       event.stopPropagation();
     });
+
     this.animatedPreviously = false;
 
     this.enabled = false;
