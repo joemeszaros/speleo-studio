@@ -13,6 +13,7 @@ import { AttributesDefinitions } from '../attributes.js';
 import { SectionHelper } from '../section.js';
 import { randomAlphaNumbericString } from '../utils/utils.js';
 import { makeMovable, showErrorPanel } from './popups.js';
+import { OPTIONS } from '../config.js';
 
 class Editor {
 
@@ -1176,6 +1177,7 @@ class SurveyEditor extends Editor {
     this.table = undefined;
     this.surveyModified = false;
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
+    this.options = OPTIONS;
   }
 
   #emitSurveyChanged() {
@@ -1429,7 +1431,7 @@ class SurveyEditor extends Editor {
       {
         id    : 'export-to-csv',
         text  : 'Export to CSV',
-        click : () => this.table.download('csv', this.survey.name + '.csv', { delimiter: ';' })
+        click : () => this.table.download('csv', this.cave.name + ' - ' + this.survey.name + '.csv', { delimiter: ';' })
       },
       { break: true },
       { id: 'undo', text: 'Undo', click: () => this.table.undo() },
@@ -1526,8 +1528,8 @@ class SurveyEditor extends Editor {
 
       // pagination
       pagination             : true,
-      paginationSize         : 7, // By default, 7 rows are visible for me (NG)
-      paginationSizeSelector : [7, 10, 25, 50, 100], // optional: shows the dropdown to select page size
+      paginationSize         : this.options.tabulator.paginationSize, // From config.js
+      paginationSizeSelector : [this.options.tabulator.paginationSize, 10, 25, 50, 100], // optional: shows the dropdown to select page size
       paginationCounter      : 'rows', // optional: shows the current page size
 
       rowContextMenu : this.baseTableFunctions.getContextMenu(),
@@ -1565,6 +1567,7 @@ class SurveyEditor extends Editor {
           title             : '',
           field             : 'status',
           editor            : false,
+          download          : false,
           accessorClipboard : (value) => value,
           formatter         : this.baseTableFunctions.statusIcon,
           clickPopup        : function (x, cell) {
@@ -1576,7 +1579,7 @@ class SurveyEditor extends Editor {
         },
         {
           width        : 25,
-          title        : '',
+          title        : 'Splay type',
           field        : 'type',
           editor       : 'list',
           editorParams : { values: ['center', 'splay'] },
