@@ -4,7 +4,13 @@ import { escapeHtml } from '../../dependencies/escape-html.js';
 import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { Color, Survey } from '../model.js';
-import { SurveyEditor, CaveEditor, SectionAttributeEditor, ComponentAttributeEditor } from './editor.js';
+import {
+  SurveyEditor,
+  SurveySheetEditor,
+  CaveEditor,
+  SectionAttributeEditor,
+  ComponentAttributeEditor
+} from './editor.js';
 import { CyclePanel } from '../cycle.js';
 import { showWarningPanel } from './popups.js';
 
@@ -26,6 +32,7 @@ class ProjectManager {
     document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
+    document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
   }
 
   onSurveyChanged(e) {
@@ -58,6 +65,16 @@ class ProjectManager {
     const cave = e.detail.cave;
     this.scene.renameCave(oldName, cave.name);
     this.explorer.updateCave(cave, (n) => n.name === oldName);
+  }
+
+  onSurveyRenamed(e) {
+    const oldName = e.detail.oldName;
+    const survey = e.detail.survey;
+    const newName = survey.name;
+    const cave = e.detail.cave;
+
+    this.scene.renameSurvey(oldName, newName, cave.name);
+    this.explorer.updateSurvey(cave, survey, (s) => s.name === oldName);
   }
 
   onCaveDeleted(e) {
@@ -174,6 +191,13 @@ class ProjectExplorer {
     this.itree.updateNode(caveNode, data);
   }
 
+  updateSurvey(cave, survey, predicate) {
+    const caveNode = this.itree.getChildNodes().find((n) => n.name === cave.name);
+    const surveyNode = this.itree.getChildNodes(caveNode).find(predicate);
+    const data = this.transformSurvey(cave, survey);
+    this.itree.updateNode(surveyNode, data);
+  }
+
   showCaveContextMenu(cave) {
     const menu = U.node`<ul class="menu-options">`;
     const editCaveData = U.node`<li class="menu-option">Edit cave sheet</li>`;
@@ -264,6 +288,21 @@ class ProjectExplorer {
     this.contextMenuElement.appendChild(menu);
   }
 
+  showSurveyContextMenu(cave, survey) {
+    const menu = U.node`<ul class="menu-options">`;
+    const editSurveySheet = U.node`<li class="menu-option">Edit survey sheet</li>`;
+    editSurveySheet.onclick = () => {
+      this.editor = new SurveySheetEditor(this.db, cave, survey, document.getElementById('surveyeditor'));
+      this.editor.setupPanel();
+      this.editor.show();
+      this.contextMenuElement.style.display = 'none';
+    };
+    menu.appendChild(editSurveySheet);
+    this.contextMenuElement.innerHTML = '';
+    this.contextMenuElement.appendChild(menu);
+
+  }
+
   contextMewnu = (tree) => (e) => {
     e.preventDefault();
     const currentNode = tree.getNodeFromPoint(e.clientX, e.clientY);
@@ -273,6 +312,11 @@ class ProjectExplorer {
     const state = currentNode.state;
     if (state.nodeType === 'cave') {
       this.showCaveContextMenu(state.cave);
+      this.contextMenuElement.style.left = `${e.pageX}px`;
+      this.contextMenuElement.style.top = `${e.pageY}px`;
+      this.contextMenuElement.style.display = 'block';
+    } else if (state.nodeType === 'survey') {
+      this.showSurveyContextMenu(state.cave, state.survey);
       this.contextMenuElement.style.left = `${e.pageX}px`;
       this.contextMenuElement.style.top = `${e.pageY}px`;
       this.contextMenuElement.style.display = 'block';
@@ -313,20 +357,21 @@ class ProjectExplorer {
     treeNode.addEventListener('contextmenu', this.contextMewnu(this.itree));
   }
 
-  transformCave(cave) {
-    const mapSurvey = (cave, survey) => {
-      return {
-        id           : U.randomAlphaNumbericString(8),
-        name         : survey.name,
-        loadOnDemand : true,
-        state        : { checked: survey.visible, nodeType: 'survey', cave: cave, survey: survey }
-      };
+  transformSurvey(cave, survey) {
+    return {
+      id           : U.randomAlphaNumbericString(8),
+      name         : survey.name,
+      loadOnDemand : true,
+      state        : { checked: survey.visible, nodeType: 'survey', cave: cave, survey: survey }
     };
+  }
+
+  transformCave(cave) {
     const mapCave = (cave) => {
       return {
         id           : U.randomAlphaNumbericString(8),
         name         : cave.name,
-        children     : cave.surveys.map((s) => mapSurvey(cave, s)),
+        children     : cave.surveys.map((s) => this.transformSurvey(cave, s)),
         loadOnDemand : true,
         state        : { checked: cave.visible, nodeType: 'cave', cave: cave }
       };

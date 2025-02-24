@@ -82,7 +82,17 @@ class Database {
     cave.name = newName;
     this.caves.delete(oldName);
     this.caves.set(newName, cave);
+  }
 
+  renameSurvey(cave, oldName, newName) {
+    const survey = this.getSurvey(cave.name, oldName);
+    if (survey === undefined) {
+      throw new Error(`Survey '${oldName}' does not exists!`);
+    }
+    if (this.getSurvey(cave, newName !== undefined)) {
+      throw new Error(`Survey '${newName}' already exists!`);
+    }
+    survey.name = newName;
   }
 
   getSurface(name) {

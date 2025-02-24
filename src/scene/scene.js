@@ -849,7 +849,18 @@ class MyScene {
     const surveyObjects = this.caveObjects.get(oldName);
     this.caveObjects.delete(oldName);
     this.caveObjects.set(newName, surveyObjects);
-    this.sectionAttributes.forEach((sa) => (sa.caveName = newName));
+    this.sectionAttributes.forEach((sa) => (sa.caveName = newName)); //TODO: what to do with component attributes here?
+  }
+
+  renameSurvey(oldName, newName, caveName) {
+    const caveObjects = this.caveObjects.get(caveName);
+
+    if (caveObjects.has(newName)) {
+      throw new Error(`Survey with ${newName} does exists!`);
+    }
+    const surveyObjects = caveObjects.get(oldName);
+    caveObjects.delete(oldName);
+    caveObjects.set(newName, surveyObjects);
   }
 
   disposeCave(caveName) {

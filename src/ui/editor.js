@@ -7,18 +7,42 @@ import {
   CaveComponent,
   SectionAttribute,
   ComponentAttribute,
-  Shot
+  Shot,
+  SurveyMetadata
 } from '../model.js';
 import { AttributesDefinitions } from '../attributes.js';
 import { SectionHelper } from '../section.js';
 import { randomAlphaNumbericString } from '../utils/utils.js';
 import { makeMovable, showErrorPanel } from './popups.js';
 import { OPTIONS } from '../config.js';
+import { Declination } from '../utils/geo.js';
 
-class Editor {
+class BaseEditor {
+  constructor(panel) {
+    this.panel = panel;
+  }
+
+  show() {
+    this.panel.style.display = 'block';
+  }
+
+  closeEditor() {
+    this.closed = true;
+
+    if (this.table !== undefined) {
+      this.table.destroy();
+      this.table = undefined;
+    }
+
+    this.panel.style.display = 'none';
+  }
+
+}
+
+class Editor extends BaseEditor {
 
   constructor(panel, scene, cave, attributeDefs) {
-    this.panel = panel;
+    super(panel);
     this.scene = scene;
     this.cave = cave;
     this.attributeDefs = attributeDefs;
@@ -319,21 +343,6 @@ class Editor {
       }
     }
   };
-
-  show() {
-    this.panel.style.display = 'block';
-  }
-
-  closeEditor() {
-    this.closed = true;
-
-    if (this.table !== undefined) {
-      this.table.destroy();
-      this.table = undefined;
-    }
-
-    this.panel.style.display = 'none';
-  }
 
 }
 
@@ -1676,4 +1685,132 @@ class SurveyEditor extends Editor {
   }
 }
 
-export { SurveyEditor, CaveEditor, SectionAttributeEditor, ComponentAttributeEditor };
+class SurveySheetEditor extends BaseEditor {
+
+  constructor(db, cave, survey, panel) {
+    super(panel);
+    this.panel = panel;
+    this.db = db;
+    this.cave = cave;
+    this.survey = survey;
+  }
+
+  setupPanel() {
+    this.panel.innerHTML = '';
+    makeMovable(
+      this.panel,
+      `Survey sheet editor: ${this.survey.name}`,
+      false,
+      () => this.closeEditor(),
+      () => {},
+      () => {}
+    );
+    this.#setupEditor();
+  }
+
+  #setupEditor() {
+    const editorFields = U.node`<div class="editor"></div>`;
+
+    [
+      { label: 'Name', id: 'name', field: 'name', type: 'text' },
+      { label: 'Start station', id: 'start', field: 'start', type: 'text' },
+      {
+        label       : 'Declination',
+        id          : 'declination',
+        fieldSource : 'metadata',
+        field       : 'declination',
+        type        : 'text',
+        parser      : (v) => U.parseMyFloat(v)
+      },
+      {
+        label : 'Declination (official)',
+        id    : 'declination-official',
+        type  : 'text',
+        value : ''
+      },
+      {
+        label       : 'Date',
+        id          : 'date',
+        fieldSource : 'metadata',
+        field       : 'date',
+        type        : 'date',
+        parser      : (value) => new Date(value),
+        formatter   : (value) => U.formatDateISO(value) // yyyy-mm-dd
+      }
+
+    ].forEach((i) => {
+      let value = i.value;
+      if (value === undefined) {
+        if (i.fieldSource === 'metadata' && this.survey.metadata !== undefined) {
+          value = this.survey.metadata[i.field];
+          if (value !== undefined && i.formatter !== undefined) {
+            value = i.formatter(value);
+          }
+        } else {
+          value = this.survey[i.field];
+        }
+      }
+      const label = U.node`<label for="${i.id}">${i.label}: <input type="${i.type}" id="${i.id}" value="${value}"></label>`;
+      label.childNodes[1].onchange = (e) => {
+        const newValue = e.target.value;
+        if (i.fieldSource === 'metadata') {
+          const parser = i.parser === undefined ? (v) => v : i.parser;
+          if (this.survey.metadata === undefined) {
+            this.survey.metadata = new SurveyMetadata();
+          }
+          this.survey.metadata[i.field] = parser(newValue);
+        }
+
+        if (i.id === 'name') {
+          if (this.cave.surveys.find((s) => s.name === newValue) !== undefined) {
+            showErrorPanel(`Survey with name ${newValue} alreay exists, cannot rename!`);
+            e.target.value = this.survey.name;
+          } else {
+            const oldName = this.survey.name;
+            this.db.renameSurvey(this.cave, oldName, newValue);
+            this.#emitSurveyRenamed(this.cave, this.survey, oldName);
+          }
+        } else if (i.id === 'declination') {
+          this.#emitSurveyChanged();
+        }
+
+      };
+      editorFields.appendChild(label);
+
+    });
+
+    Declination.getDeclination(48.5299, 20.724062, this.survey.metadata.date).then((declination) => {
+      const declinationInput = editorFields.querySelector('#declination-official');
+      declinationInput.value = declination;
+      declinationInput.setAttribute('disabled', 'true');
+    });
+
+    this.panel.appendChild(editorFields);
+
+    this.panel.appendChild(U.node`<hr/>`);
+  }
+
+  #emitSurveyChanged() {
+    const event = new CustomEvent('surveyChanged', {
+      detail : {
+        cave   : this.cave,
+        survey : this.survey
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitSurveyRenamed(cave, survey, oldName) {
+    const event = new CustomEvent('surveyRenamed', {
+      detail : {
+        oldName : oldName,
+        cave    : cave,
+        survey  : survey
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+}
+
+export { SurveyEditor, CaveEditor, SurveySheetEditor, SectionAttributeEditor, ComponentAttributeEditor };
