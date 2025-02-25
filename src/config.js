@@ -70,7 +70,12 @@ export const OPTIONS = {
     background : {
       color : new Color(0x000000)
     }
+  },
+
+  tabulator : {
+    paginationSize : 7
   }
+
 };
 
 export class Options {

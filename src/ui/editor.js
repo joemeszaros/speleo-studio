@@ -13,6 +13,7 @@ import { AttributesDefinitions } from '../attributes.js';
 import { SectionHelper } from '../section.js';
 import { randomAlphaNumbericString } from '../utils/utils.js';
 import { makeMovable, showErrorPanel } from './popups.js';
+import { OPTIONS } from '../config.js';
 
 class Editor {
 
@@ -1176,6 +1177,7 @@ class SurveyEditor extends Editor {
     this.table = undefined;
     this.surveyModified = false;
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
+    this.options = OPTIONS;
   }
 
   #emitSurveyChanged() {
@@ -1425,7 +1427,15 @@ class SurveyEditor extends Editor {
           });
 
         }
-      }
+      },
+      {
+        id    : 'export-to-csv',
+        text  : 'Export to CSV',
+        click : () => this.table.download('csv', this.cave.name + ' - ' + this.survey.name + '.csv', { delimiter: ';' })
+      },
+      { break: true },
+      { id: 'undo', text: 'Undo', click: () => this.table.undo() },
+      { id: 'redo', text: 'Redo', click: () => this.table.redo() }
 
     ].forEach((b) => {
       if (b.break === true) {
@@ -1489,6 +1499,7 @@ class SurveyEditor extends Editor {
 
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
+      history                   : true, //enable undo and redo
       height                    : 300,
       data                      : this.#getTableData(this.survey, this.cave.stations),
       layout                    : 'fitDataStretch',
@@ -1514,6 +1525,12 @@ class SurveyEditor extends Editor {
       clipboardCopyRowRange : 'range',
       clipboardPasteParser  : 'range',
       clipboardPasteAction  : 'range',
+
+      // pagination
+      pagination             : true,
+      paginationSize         : this.options.tabulator.paginationSize, // From config.js
+      paginationSizeSelector : [this.options.tabulator.paginationSize, 10, 25, 50, 100], // optional: shows the dropdown to select page size
+      paginationCounter      : 'rows', // optional: shows the current page size
 
       rowContextMenu : this.baseTableFunctions.getContextMenu(),
       rowHeader      : {
@@ -1550,6 +1567,7 @@ class SurveyEditor extends Editor {
           title             : '',
           field             : 'status',
           editor            : false,
+          download          : false,
           accessorClipboard : (value) => value,
           formatter         : this.baseTableFunctions.statusIcon,
           clickPopup        : function (x, cell) {
@@ -1561,7 +1579,7 @@ class SurveyEditor extends Editor {
         },
         {
           width        : 25,
-          title        : '',
+          title        : 'Splay type',
           field        : 'type',
           editor       : 'list',
           editorParams : { values: ['center', 'splay'] },
