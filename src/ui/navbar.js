@@ -73,6 +73,10 @@ class NavigationBar {
           {
             name  : 'Welcome panel',
             click : () => this.#toggleVisibility('#welcome-panel')
+          },
+          {
+            name  : 'Scene overwiew',
+            click : () => this.#toggleVisibility('#overview')
           }
         ]
       }
