@@ -47,7 +47,7 @@ class Main {
       materials,
       scene.domElement,
       document.getElementById('getdistance'),
-      document.getElementById('contextmenu'),
+      document.getElementById('right-click-panel'),
       document.getElementById('infopanel'),
       document.getElementById('interactive')
     );

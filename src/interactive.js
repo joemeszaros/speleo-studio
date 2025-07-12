@@ -367,7 +367,7 @@ class SceneInteraction {
   showContextMenu(left, top) {
     this.contextMenu.style.left = left + 'px';
     this.contextMenu.style.top = top + 'px';
-    this.contextMenu.style.display = '';
+    this.contextMenu.style.display = 'block';
   }
 
   hideContextMenu() {

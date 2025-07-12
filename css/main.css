@@ -98,6 +98,7 @@ body {
   border-color: coral;
   border-width: 1px;
   background-color: rgb(63, 53, 53);
+  z-index: 100;
 }
 
 .cautionpanel {
@@ -180,6 +181,14 @@ body {
   background: linear-gradient(to bottom, #328e3a 0%, #5fc768 100%);
   border: solid 1px white;
   border-radius: 6px;
+}
+
+#right-click-panel {
+  position: absolute;
+  z-index: 100;
+  color: azure;
+  background: rgb(40, 40, 40);
+  display: none;
 }
 
 #welcome-panel button:hover {

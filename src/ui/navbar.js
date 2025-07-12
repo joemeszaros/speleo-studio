@@ -160,8 +160,8 @@ class NavigationBar {
         click   : (event) => this.interactive.showLocateStationPanel(event.clientX)
       },
       {
-        tooltip : 'Distance between points',
-        icon    : './icons/distance.svg',
+        tooltip : 'Shortest path between points',
+        icon    : './icons/shortest_path.svg',
         click   : (event) => this.interactive.showShortestPathPanel(event.clientX)
       }
 
