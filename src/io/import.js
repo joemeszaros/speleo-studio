@@ -8,7 +8,6 @@ import {
   SurveyMetadata,
   Survey,
   Cave,
-  SurveyStartStation,
   Vector,
   SurveyStation,
   SurveyAlias,
@@ -16,7 +15,10 @@ import {
   CaveMetadata,
   SurveyTeamMember,
   SurveyTeam,
-  SurveyInstrument
+  SurveyInstrument,
+  EOVCoordinateWithElevation,
+  StationCoordinates,
+  StationCoordinate
 } from '../model.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
@@ -196,7 +198,7 @@ class PolygonImporter extends CaveImporter {
       const stations = new Map();
       var surveyName;
       var surveyIndex = 0;
-      let caveStartPosition;
+      let coordinates = new StationCoordinates([]);
 
       do {
         surveyName = U.iterateUntil(lineIterator, (v) => !v.startsWith('Survey name'));
@@ -239,23 +241,29 @@ class PolygonImporter extends CaveImporter {
             }
           }
 
-          let fixPoint = this.getNextLineValue(lineIterator, 'Fix point');
+          let fixPointName = this.getNextLineValue(lineIterator, 'Fix point');
           let posLine = lineIterator.next();
-          let parts = posLine.value[1].split(/\t|\s/);
-          let parsed = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
-          let startPosParsed = new Vector(...parsed);
-          let startPoint = new SurveyStartStation(fixPoint, new SurveyStation('center', startPosParsed));
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
           lineIterator.next(); //From To ...
           const shots = this.#getShotsFromPolygon(lineIterator);
-          let startName, startPosition;
+          let startPosition;
           if (surveyIndex == 0) {
-            startName = fixPoint;
-            startPosition = startPosParsed;
-            caveStartPosition = startPosParsed;
-            if (fixPoint != shots[0].from) {
+            let parts = posLine.value[1].split(/\t|\s/);
+            let [y, x, z] = parts.toSpliced(3).map((x) => U.parseMyFloat(x)); // Y and X are swapped in polygon format
+            if (y !== 0 && x !== 0 && z !== 0) {
+              let eovCoordinate = new EOVCoordinateWithElevation(y, x, z);
+              const eovErrors = eovCoordinate.validate();
+              if (eovErrors.length > 0) {
+                throw new Error(`Invalid EOV coordinates for start position: ${eovErrors.join(',')}`);
+              }
+              let startEov = new StationCoordinate(fixPointName, eovCoordinate);
+              coordinates.eov.push(startEov);
+            }
+
+            startPosition = new Vector(0, 0, 0);
+            if (fixPointName != shots[0].from) {
               throw new Error(
-                `Invalid Polygon survey, fix point ${fixPoint} != first shot's from value (${shots[0].from})`
+                `Invalid Polygon survey, fix point ${fixPointName} != first shot's from value (${shots[0].from})`
               );
             }
           }
@@ -265,14 +273,14 @@ class PolygonImporter extends CaveImporter {
             new SurveyTeam(surveyTeamName, members),
             instruments
           );
-          const survey = new Survey(surveyNameStr, true, metadata, startPoint, shots);
-          SurveyHelper.calculateSurveyStations(survey, stations, [], startName, startPosition);
+          const survey = new Survey(surveyNameStr, true, metadata, fixPointName, shots);
+          SurveyHelper.calculateSurveyStations(survey, stations, [], fixPointName, startPosition, coordinates);
           surveys.push(survey);
           surveyIndex++;
         }
       } while (surveyName !== undefined);
 
-      return new Cave(projectName, metaData, caveStartPosition, stations, surveys);
+      return new Cave(projectName, metaData, coordinates, stations, surveys);
     }
   }
 

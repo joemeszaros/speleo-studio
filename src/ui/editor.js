@@ -1713,7 +1713,13 @@ class SurveySheetEditor extends BaseEditor {
 
     [
       { label: 'Name', id: 'name', field: 'name', type: 'text' },
-      { label: 'Start station', id: 'start', field: 'start', type: 'text' },
+      {
+        label     : 'Start station',
+        id        : 'start',
+        field     : 'start',
+        type      : 'text',
+        formatter : (value) => value.name
+      },
       {
         label       : 'Declination',
         id          : 'declination',
@@ -1747,7 +1753,11 @@ class SurveySheetEditor extends BaseEditor {
             value = i.formatter(value);
           }
         } else {
-          value = this.survey[i.field];
+          if (i.formatter !== undefined) {
+            value = i.formatter(this.survey[i.field]);
+          } else {
+            value = this.survey[i.field];
+          }
         }
       }
       const label = U.node`<label for="${i.id}">${i.label}: <input type="${i.type}" id="${i.id}" value="${value}"></label>`;

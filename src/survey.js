@@ -1,5 +1,5 @@
 import * as U from './utils/utils.js';
-import { SurveyStation as ST, Vector, SurveyStartStation, SurveyStation } from './model.js';
+import { SurveyStation as ST, Vector } from './model.js';
 import { Graph } from './utils/graph.js';
 
 class SurveyHelper {
@@ -17,14 +17,14 @@ class SurveyHelper {
     if (index === 0) {
       //TODO: check if start station is still in shots
       startName = es.start !== undefined ? es.start.name : es.shots[0].from;
-      startPosition = es.start !== undefined ? es.start.station.position : new Vector(0, 0, 0);
+      startPosition = new Vector(0, 0, 0);
     }
 
     SurveyHelper.calculateSurveyStations(es, surveyStations, aliases, startName, startPosition);
     return es;
   }
 
-  static calculateSurveyStations(survey, stations, aliases, startName, startPosition) {
+  static calculateSurveyStations(survey, stations, aliases, startName, startPosition, coordinates) {
 
     if (survey.validShots.length === 0) return [];
 
@@ -34,10 +34,8 @@ class SurveyHelper {
       stations.set(startStationName, new ST('center', startPosition, survey));
     }
 
-    survey.start = new SurveyStartStation(
-      startStationName,
-      new SurveyStation('center', startPosition ?? new Vector(0, 0, 0))
-    );
+    survey.start = startStationName;
+
     survey.shots.forEach((sh) => {
       sh.processed = false;
       sh.fromAlias = undefined;

@@ -167,30 +167,116 @@ class Shot {
   }
 }
 
-class SurveyStartStation {
-
-  /**
-   * Represents the start point, the first station of whole survey
-   *
-   * @param {string} name - The name of the starting point for this survey
-   * @param {SurveyStation} station - The start position and type of the starting point
-   */
-  constructor(name, station) {
-    this.name = name;
-    this.station = station;
+class EOVCoordinate {
+  constructor(y, x) {
+    this.y = y;
+    this.x = x;
   }
 
   toExport() {
     return {
-      name    : this.name,
-      station : this.station.toExport()
+      y : this.y,
+      x : this.x
     };
   }
 
   static fromPure(pure) {
-    pure.station = SurveyStation.fromPure(pure.station);
-    return Object.assign(new SurveyStartStation(), pure);
+    return Object.assign(new EOVCoordinate(), pure);
   }
+
+}
+
+class EOVCoordinateWithElevation extends EOVCoordinate {
+  constructor(y, x, elevation) {
+    super(y, x);
+    this.elevation = elevation;
+  }
+
+  toVector() {
+    return new Vector(this.x, this.y, this.elevation);
+  }
+
+  isValid() {
+    return this.validate().length === 0;
+  }
+
+  validate() {
+
+    const errors = [];
+
+    const isValidFloat = (f) => {
+      return typeof f === 'number' && f !== Infinity && !isNaN(f);
+    };
+
+    [this.x, this.y, this.elevation].forEach((coord) => {
+      if (!isValidFloat(coord)) {
+        errors.push(`Coordinate '${coord}'is not a valid float number`);
+      }
+    });
+
+    if (this.x > 400_000 || this.x < 0) {
+      errors.push(`X coordinate '${this.x}' is out of bounds`);
+    }
+
+    if (this.y < 400_000) {
+      errors.push(`Y coordinate '${this.y}' is out of bounds`);
+    }
+
+    if (this.elevation < -3000 || this.elevation > 5000) {
+      //GO GO cave explorers for deep and high caves!
+      errors.push(`Z coordinate '${this.elevation}' is out of bounds`);
+    }
+    return errors;
+  }
+
+  toExport() {
+    return {
+      y         : this.y,
+      x         : this.x,
+      elevation : this.elevation
+    };
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new EOVCoordinateWithElevation(), pure);
+  }
+}
+
+class StationCoordinate {
+  constructor(name, eov) {
+    this.name = name;
+    this.eov = eov;
+  }
+
+  toExport() {
+    return {
+      name : this.name,
+      eov  : this.eov.toExport()
+    };
+  }
+
+  static fromPure(pure) {
+    pure.eov = EOVCoordinateWithElevation.fromPure(pure.eov);
+    return Object.assign(new StationCoordinate(), pure);
+  }
+}
+
+class StationCoordinates {
+  constructor(eovCoordinates) {
+    this.eov = eovCoordinates;
+  }
+
+  toExport() {
+    return {
+      eov : this.eov.map((coord) => coord.toExport())
+    };
+  }
+
+  static fromPure(pure) {
+    pure.eov = pure.eov.map((coord) => StationCoordinate.fromPure(coord));
+    return Object.assign(new StationCoordinates(), pure);
+  }
+
 }
 
 class CaveCycle {
@@ -557,7 +643,7 @@ class Survey {
    *
    * @param {string} name - The name of the Survey
    * @param {boolean} visible
-   * @param {SurveyStartStation} - The start point of the whole survey that was explicitly specified for a survey
+   * @param {string} - The start point of the whole survey that was explicitly specified for a survey
    * @param {Array[Shot]} shots - An array of shots holding the measurements for this Survey
    * @param {Array[Number]} orphanShotIds - An array of orphan shots that are disconnected (from and/or to is unknown)
    * @param {Array[Object]} attributes - Extra attributes (e.g. tectonics information) associated to this Survey
@@ -636,16 +722,13 @@ class Survey {
   toExport() {
     return {
       name       : this.name,
-      start      : this.start?.toExport(),
+      start      : this.start,
       attributes : this.attributes.map((sta) => sta.toExport()),
       shots      : this.shots.map((s) => s.toExport())
     };
   }
 
   static fromPure(pure, attributeDefs) {
-    if (pure.start !== undefined) {
-      pure.start = SurveyStartStation.fromPure(pure.start);
-    }
     pure.attributes = pure.attributes
       .map((a) => new StationAttribute(a.name, attributeDefs.createFromPure(a.attribute)));
     pure.shots = pure.shots.map((s) => Object.assign(new Shot(), s));
@@ -733,7 +816,6 @@ class Cave {
    *
    * @param {string} name - The name of the cave
    * @param {CaveMetadata} metaData - Additional information about the cave, like the settlement
-   * @param {Vector} startPosition - The start position of the cave that is defined by the first survey
    * @param {Map<string, SurveyStation>} stations - The merged map of all survey stations
    * @param {Survey[]} surveys - The surveys associated to a cave
    * @param {SurveyAlias[]} - Mapping of connection point between surveys
@@ -742,7 +824,7 @@ class Cave {
   constructor(
     name,
     metaData,
-    startPosition,
+    coordinates,
     stations = new Map(),
     surveys = [],
     aliases = [],
@@ -752,7 +834,7 @@ class Cave {
   ) {
     this.name = name;
     this.metaData = metaData;
-    this.startPosition = startPosition;
+    this.coordinates = coordinates;
     this.stations = stations;
     this.surveys = surveys;
     this.aliases = aliases;
@@ -822,8 +904,8 @@ class Cave {
       length              : length,
       orphanLength        : orphanLength,
       invalidLength       : invalidLength,
-      depth               : this.startPosition.z - minZ,
-      height              : maxZ - this.startPosition.z,
+      depth               : minZ,
+      height              : maxZ,
       vertical            : maxZ - minZ,
       vertiicalWithSplays : isNaN(verticalSplays) ? 0 : verticalSplays
     };
@@ -833,7 +915,7 @@ class Cave {
     return {
       name                : this.name,
       metaData            : this.metaData.toExport(),
-      startPosition       : this.startPosition,
+      coordinates         : this.coordinates.toExport(),
       aliases             : this.aliases.map((a) => a.toExport()),
       sectionAttributes   : this.sectionAttributes.map((sa) => sa.toExport()),
       componentAttributes : this.componentAttributes.map((ca) => ca.toExport()),
@@ -845,6 +927,8 @@ class Cave {
     if (pure.metaData !== undefined) {
       pure.metaData = CaveMetadata.fromPure(pure.metaData);
     }
+    pure.coordinates =
+      pure.coordinates === undefined ? new StationCoordinates([]) : StationCoordinates.fromPure(pure.coordinates);
     pure.surveys = pure.surveys.map((s) => Survey.fromPure(s, attributeDefs));
     pure.aliases = pure.aliases === undefined ? [] : pure.aliases.map((a) => SurveyAlias.fromPure(a));
     pure.startPosition = Vector.fromPure(pure.startPosition);
@@ -864,7 +948,9 @@ export {
   Vector,
   Color,
   Shot,
-  SurveyStartStation,
+  EOVCoordinateWithElevation,
+  StationCoordinates,
+  StationCoordinate,
   StationAttribute,
   CaveSection,
   CaveComponent,
