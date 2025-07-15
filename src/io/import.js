@@ -3,7 +3,8 @@ import { SurveyHelper } from '../survey.js';
 import { SurfaceHelper } from '../surface.js';
 import { showErrorPanel, showWarningPanel } from '../ui/popups.js';
 import { CAVES_MAX_DISTANCE } from '../constants.js';
-import { Shot, Cave, Vector, Surface, CaveMetadata } from '../model.js';
+import { Shot, Vector, Surface } from '../model.js';
+import { Cave, CaveMetadata } from '../model/cave.js';
 import {
   SurveyMetadata,
   Survey,

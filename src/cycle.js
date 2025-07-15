@@ -1,7 +1,8 @@
 import * as U from './utils/utils.js';
 import { SectionHelper } from './section.js';
 import { makeMovable } from './ui/popups.js';
-import { CaveCycle, Color } from './model.js';
+import { Color } from './model.js';
+import { CaveCycle } from './model/cave.js';
 
 class CyclePanel {
 

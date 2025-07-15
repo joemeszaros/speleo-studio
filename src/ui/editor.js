@@ -1,14 +1,6 @@
 import * as U from '../utils/utils.js';
-import {
-  CaveMetadata,
-  Color,
-  StationAttribute,
-  CaveSection,
-  CaveComponent,
-  SectionAttribute,
-  ComponentAttribute,
-  Shot
-} from '../model.js';
+import { Color, StationAttribute, SectionAttribute, ComponentAttribute, Shot } from '../model.js';
+import { CaveMetadata, CaveSection, CaveComponent } from '../model/cave.js';
 import { SurveyMetadata } from '../model/survey.js';
 import { AttributesDefinitions } from '../attributes.js';
 import { SectionHelper } from '../section.js';

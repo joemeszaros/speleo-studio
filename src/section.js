@@ -1,4 +1,4 @@
-import { CaveComponent, CaveCycle, CaveSection } from './model.js';
+import { CaveComponent, CaveCycle, CaveSection } from './model/cave.js';
 import { Graph } from './utils/graph.js';
 import { randomAlphaNumbericString } from './utils/utils.js';
 
