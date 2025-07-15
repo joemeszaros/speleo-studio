@@ -41,7 +41,8 @@ class NavigationBar {
             }
           },
           { name: 'Export JSON', click: () => Exporter.exportCaves(this.db.caves) },
-          { name: 'Export PNG', click: () => Exporter.exportPNG(this.scene) }
+          { name: 'Export PNG', click: () => Exporter.exportPNG(this.scene) },
+          { name: 'Export DXF', click: () => Exporter.exportDXF(this.db.caves) }
         ]
       },
       {

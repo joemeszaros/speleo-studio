@@ -131,6 +131,15 @@ function falsy(value) {
   return value === undefined || value === null || value === '' || value === ``;
 }
 
+function toAscii(str) {
+  // Replace diacritics and special characters with ASCII equivalents
+  return (
+    str.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/[^\x20-\x7E]/g, '')
+  ); // Remove non-ASCII chars;
+}
+
 export {
   fromPolar,
   normal,
@@ -149,5 +158,6 @@ export {
   formatDateISO,
   formatDistance,
   fitString,
-  falsy
+  falsy,
+  toAscii
 };
