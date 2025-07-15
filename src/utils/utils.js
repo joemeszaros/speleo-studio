@@ -21,6 +21,10 @@ function degreesToRads(deg) {
   return deg * deg2rad;
 }
 
+function radsToDegrees(rad) {
+  return (rad * 180.0) / Math.PI;
+}
+
 function interpolate(template, params) {
   const names = Object.keys(params);
   const vals = Object.values(params);
@@ -50,8 +54,8 @@ function isFloatStr(value) {
   return floatPattern.test(value);
 }
 
-function get3DCoordsStr(vector) {
-  const s = ['x', 'y', 'z'].map((n) => vector[n].toFixed(2)).join(', ');
+function get3DCoordsStr(vector, fields = ['x', 'y', 'z']) {
+  const s = fields.map((n) => vector[n].toFixed(2)).join(', ');
   return `(${s})`;
 }
 
@@ -131,6 +135,7 @@ export {
   fromPolar,
   normal,
   degreesToRads,
+  radsToDegrees,
   randomAlphaNumbericString,
   parseMyFloat,
   isFloatStr,

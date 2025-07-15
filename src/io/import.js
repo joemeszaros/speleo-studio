@@ -17,7 +17,6 @@ import {
   SurveyTeam,
   SurveyInstrument,
   EOVCoordinateWithElevation,
-  StationCoordinates,
   StationCoordinate
 } from '../model.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
@@ -198,7 +197,7 @@ class PolygonImporter extends CaveImporter {
       const stations = new Map();
       var surveyName;
       var surveyIndex = 0;
-      let coordinates = new StationCoordinates([]);
+      let coordinates = [];
 
       do {
         surveyName = U.iterateUntil(lineIterator, (v) => !v.startsWith('Survey name'));
@@ -246,26 +245,29 @@ class PolygonImporter extends CaveImporter {
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
           lineIterator.next(); //From To ...
           const shots = this.#getShotsFromPolygon(lineIterator);
-          let startPosition;
+          let startCoordinate, startPosition;
           if (surveyIndex == 0) {
             let parts = posLine.value[1].split(/\t|\s/);
-            let [y, x, z] = parts.toSpliced(3).map((x) => U.parseMyFloat(x)); // Y and X are swapped in polygon format
+            let [y, x, z] = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
             if (y !== 0 && x !== 0 && z !== 0) {
               let eovCoordinate = new EOVCoordinateWithElevation(y, x, z);
               const eovErrors = eovCoordinate.validate();
               if (eovErrors.length > 0) {
                 throw new Error(`Invalid EOV coordinates for start position: ${eovErrors.join(',')}`);
               }
-              let startEov = new StationCoordinate(fixPointName, eovCoordinate);
-              coordinates.eov.push(startEov);
+              startCoordinate = new StationCoordinate(fixPointName, eovCoordinate);
+              coordinates.push(startCoordinate);
+              startPosition = eovCoordinate.toVector();
+            } else {
+              startPosition = new Vector(y, x, z);
             }
 
-            startPosition = new Vector(0, 0, 0);
             if (fixPointName != shots[0].from) {
               throw new Error(
                 `Invalid Polygon survey, fix point ${fixPointName} != first shot's from value (${shots[0].from})`
               );
             }
+
           }
           const metadata = new SurveyMetadata(
             surveyDate,
@@ -274,7 +276,7 @@ class PolygonImporter extends CaveImporter {
             instruments
           );
           const survey = new Survey(surveyNameStr, true, metadata, fixPointName, shots);
-          SurveyHelper.calculateSurveyStations(survey, stations, [], fixPointName, startPosition, coordinates);
+          SurveyHelper.calculateSurveyStations(survey, stations, [], fixPointName, startPosition, startCoordinate?.eov);
           surveys.push(survey);
           surveyIndex++;
         }

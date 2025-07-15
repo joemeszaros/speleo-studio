@@ -749,9 +749,10 @@ class MyScene {
           clSphereGeo,
           this.materials.sphere.centerLine,
           {
-            cave   : cave,
-            survey : station.survey,
-            type   : station.type
+            cave        : cave,
+            survey      : station.survey,
+            type        : station.type,
+            coordinates : station.coordinates
           }
         );
       } else if (station.type === 'splay') {
@@ -762,9 +763,10 @@ class MyScene {
           splaySphereGeo,
           this.materials.sphere.splay,
           {
-            cave   : cave,
-            survey : station.survey,
-            type   : station.type
+            cave        : cave,
+            survey      : station.survey,
+            type        : station.type,
+            coordinates : station.coordinates
           }
         );
       }

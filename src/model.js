@@ -193,7 +193,23 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
   }
 
   toVector() {
-    return new Vector(this.x, this.y, this.elevation);
+    return new Vector(this.y, this.x, this.elevation);
+  }
+
+  add(y, x, elevation) {
+    return new EOVCoordinateWithElevation(this.y + y, this.x + x, this.elevation + elevation);
+  }
+
+  addVector(v) {
+    return new EOVCoordinateWithElevation(this.y + v.x, this.x + v.y, this.elevation + v.z);
+  }
+
+  sub(y, x, elevation) {
+    return new EOVCoordinateWithElevation(this.y - y, this.x - x, this.elevation - elevation);
+  }
+
+  subVector(v) {
+    return new EOVCoordinateWithElevation(this.y - v.x, this.x - v.y, this.elevation - v.z);
   }
 
   isValid() {
@@ -262,19 +278,9 @@ class StationCoordinate {
 }
 
 class StationCoordinates {
-  constructor(eovCoordinates) {
-    this.eov = eovCoordinates;
-  }
-
-  toExport() {
-    return {
-      eov : this.eov.map((coord) => coord.toExport())
-    };
-  }
-
-  static fromPure(pure) {
-    pure.eov = pure.eov.map((coord) => StationCoordinate.fromPure(coord));
-    return Object.assign(new StationCoordinates(), pure);
+  constructor(local, eov) {
+    this.local = local;
+    this.eov = eov;
   }
 
 }
@@ -579,9 +585,10 @@ class SurveyStation {
    * @param {Vector} position - the 3D vector representing the position of the station
    * @param {Survey} survey - the survey that this station belongs to
    */
-  constructor(type, position, survey) {
+  constructor(type, position, coordinates, survey) {
     this.type = type;
     this.position = position;
+    this.coordinates = coordinates;
     this.survey = survey;
   }
 
@@ -596,12 +603,14 @@ class SurveyStation {
   toExport() {
     return {
       type     : this.type,
-      position : this.position.toExport()
+      position : this.position.toExport(),
+      eov      : this.coordinates.toExport()
     };
   }
 
   static fromPure(pure) {
     pure.position = Vector.fromPure(pure.position);
+    pure.coordinates = StationCoordinates.fromPure(pure.coordinates);
     return Object.assign(new SurveyStation(), pure);
   }
 }
@@ -915,7 +924,7 @@ class Cave {
     return {
       name                : this.name,
       metaData            : this.metaData.toExport(),
-      coordinates         : this.coordinates.toExport(),
+      coordinates         : this.coordinates.map((c) => c.toExport()),
       aliases             : this.aliases.map((a) => a.toExport()),
       sectionAttributes   : this.sectionAttributes.map((sa) => sa.toExport()),
       componentAttributes : this.componentAttributes.map((ca) => ca.toExport()),
@@ -927,8 +936,7 @@ class Cave {
     if (pure.metaData !== undefined) {
       pure.metaData = CaveMetadata.fromPure(pure.metaData);
     }
-    pure.coordinates =
-      pure.coordinates === undefined ? new StationCoordinates([]) : StationCoordinates.fromPure(pure.coordinates);
+    pure.coordinates = pure.coordinates === undefined ? [] : pure.coordinates.map((c) => StationCoordinate.fromPure(c));
     pure.surveys = pure.surveys.map((s) => Survey.fromPure(s, attributeDefs));
     pure.aliases = pure.aliases === undefined ? [] : pure.aliases.map((a) => SurveyAlias.fromPure(a));
     pure.startPosition = Vector.fromPure(pure.startPosition);
