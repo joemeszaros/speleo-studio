@@ -1350,6 +1350,7 @@ class SurveyEditor extends Editor {
         length     : sh.length,
         azimuth    : sh.azimuth,
         clino      : sh.clino,
+        comment    : sh.comment,
         type       : sh.type,
         status     : 'ok',
         message    : 'No errors',
@@ -1467,6 +1468,13 @@ class SurveyEditor extends Editor {
         click : () => {
           this.table.toggleColumn('wgslat');
           this.table.toggleColumn('wgslon');
+        }
+      },
+      {
+        id    : 'comment-toggle',
+        text  : 'Toggle comment',
+        click : () => {
+          this.table.toggleColumn('comment');
         }
       }
 
@@ -1636,6 +1644,13 @@ class SurveyEditor extends Editor {
           () => true
         )
     });
+    columns.push({
+      title        : 'Comment',
+      field        : 'comment',
+      editor       : true,
+      headerFilter : 'input'
+    });
+
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
       history                   : true, //enable undo and redo
@@ -1740,11 +1755,10 @@ class SurveySheetEditor extends BaseEditor {
     [
       { label: 'Name', id: 'name', field: 'name', type: 'text' },
       {
-        label     : 'Start station',
-        id        : 'start',
-        field     : 'start',
-        type      : 'text',
-        formatter : (value) => value.name
+        label : 'Start station',
+        id    : 'start',
+        field : 'start',
+        type  : 'text'
       },
       {
         label       : 'Declination',

@@ -133,7 +133,7 @@ class PolygonImporter extends CaveImporter {
     const shots = [];
     do {
       it = iterator.next();
-      const parts = it.value[1].split(/\t|\s/);
+      const parts = it.value[1].split(/\t/);
       if (parts.length > 10) {
         // splays are not supported by polygon format
         shots.push(
@@ -144,7 +144,8 @@ class PolygonImporter extends CaveImporter {
             parts[1],
             U.parseMyFloat(parts[2]),
             U.parseMyFloat(parts[3]),
-            U.parseMyFloat(parts[4])
+            U.parseMyFloat(parts[4]),
+            parts[10]
           )
         );
       }
@@ -188,7 +189,7 @@ class PolygonImporter extends CaveImporter {
         (x) => x instanceof Date
       );
       const metaData = new CaveMetadata(settlement, catasterCode, date, madeBy);
-      let geoData;
+      let geoData, fixPointName;
       const surveys = [];
       const stations = new Map();
       var surveyName;
@@ -235,7 +236,7 @@ class PolygonImporter extends CaveImporter {
             }
           }
 
-          let fixPointName = this.getNextLineValue(lineIterator, 'Fix point');
+          fixPointName = this.getNextLineValue(lineIterator, 'Fix point');
           let posLine = lineIterator.next();
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
           lineIterator.next(); //From To ...

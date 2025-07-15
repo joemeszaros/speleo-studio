@@ -87,9 +87,9 @@ class Color {
 }
 
 class Shot {
-  export_fields = ['id', 'type', 'from', 'to', 'length', 'azimuth', 'clino'];
+  export_fields = ['id', 'type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
 
-  constructor(id, type, from, to, length, azimuth, clino) {
+  constructor(id, type, from, to, length, azimuth, clino, comment) {
     this.id = id;
     this.type = type;
     this.from = from;
@@ -97,6 +97,7 @@ class Shot {
     this.length = length;
     this.azimuth = azimuth;
     this.clino = clino;
+    this.comment = comment;
     this.processed = false;
   }
 
@@ -156,7 +157,7 @@ class Shot {
 
   getEmptyFields() {
     return this.export_fields
-      .filter((f) => f !== 'to')
+      .filter((f) => f !== 'to' && f !== 'comment')
       .filter((f) => this[f] === undefined || this[f] === null);
   }
 
