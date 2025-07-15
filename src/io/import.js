@@ -339,10 +339,11 @@ class TopodroidImporter extends CaveImporter {
     const [shots, aliases] = this.#getShotsAndAliasesFromCsv(csvTextData);
     const stations = new Map();
     const surveyName = 'polygon';
-    const startPoint = new SurveyStartStation(shots[0].from, new SurveyStation('center', new Vector(0, 0, 0)));
-    const survey = new Survey(surveyName, true, startPoint, shots);
-    SurveyHelper.calculateSurveyStations(survey, stations, aliases, startPoint.name, startPoint.station.position);
-    return new Cave(fileName, undefined, startPoint.station.position, stations, [survey], aliases);
+    //TODO: add metadata
+    const startStation = shots[0].from;
+    const survey = new Survey(surveyName, true, new SurveyMetadata(), startStation, shots);
+    SurveyHelper.calculateSurveyStations(survey, stations, aliases, startStation, new Vector(0, 0, 0));
+    return new Cave(fileName, undefined, [], stations, [survey], aliases);
   }
 
   importFile(file) {

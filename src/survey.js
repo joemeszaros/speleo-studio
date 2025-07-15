@@ -1,5 +1,5 @@
 import * as U from './utils/utils.js';
-import { SurveyStation as ST, Vector, StationCoordinates } from './model.js';
+import { SurveyStation as ST, Vector, StationCoordinates, WGS84Coordinate } from './model.js';
 import { Graph } from './utils/graph.js';
 import { EOVToWGS84Transformer } from './utils/geo.js';
 
@@ -48,6 +48,7 @@ class SurveyHelper {
     });
 
     const declination = survey?.metadata?.declination ?? 0.0; //TODO: remove fallback logic
+    const eovToWgs84Transformer = new EOVToWGS84Transformer();
     var repeat = true;
 
     // the basics of this algorithm came from Topodroid cave surveying software by Marco Corvi
@@ -59,29 +60,38 @@ class SurveyHelper {
         let fromStation = stations.get(sh.from);
         let toStation = stations.get(sh.to);
 
+        const polarVector = U.fromPolar(
+          sh.length,
+          U.degreesToRads(sh.azimuth + declination),
+          U.degreesToRads(sh.clino)
+        );
+
+        const newStation = (position, prevSt, diff) => {
+          if (prevSt === undefined) {
+            console.log('prevSt.coordinates.eov is undefined', prevSt);
+          }
+          let eovCoord, wgsCoord;
+          if (prevSt.coordinates.eov !== undefined) {
+            eovCoord = prevSt.coordinates.eov.addVector(diff);
+            const [lat, lon, h] = eovToWgs84Transformer.eovTOwgs84(eovCoord.y, eovCoord.x);
+            wgsCoord = new WGS84Coordinate(lat, lon);
+          }
+
+          return new ST(
+            sh.type,
+            position,
+            new StationCoordinates(prevSt.coordinates.local.add(diff), eovCoord, wgsCoord),
+            survey
+          );
+        };
+
         if (fromStation !== undefined) {
           if (toStation === undefined) {
             // from = 1, to = 0
-            const polarVector = U.fromPolar(
-              sh.length,
-              U.degreesToRads(sh.azimuth + declination),
-              U.degreesToRads(sh.clino)
-            );
             const fp = fromStation.position;
             const st = new Vector(fp.x, fp.y, fp.z).add(polarVector);
             const stationName = survey.getToStationName(sh);
-            stations.set(
-              stationName,
-              new ST(
-                sh.type,
-                st,
-                new StationCoordinates(
-                  fromStation.coordinates.local.add(polarVector),
-                  fromStation.coordinates.eov.addVector(polarVector)
-                ),
-                survey
-              )
-            );
+            stations.set(stationName, newStation(st, fromStation, polarVector));
             repeat = true;
           } else {
             //from = 1, to = 1
@@ -90,24 +100,8 @@ class SurveyHelper {
         } else if (toStation !== undefined) {
           // from = 0, to = 1
           const tp = toStation.position;
-          const polarVector = U.fromPolar(
-            sh.length,
-            U.degreesToRads(sh.azimuth + declination),
-            U.degreesToRads(sh.clino)
-          );
           const st = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-          stations.set(
-            sh.from,
-            new ST(
-              sh.type,
-              st,
-              new StationCoordinates(
-                fromStation.coordinates.local.sub(polarVector),
-                fromStation.coordinates.eov.subVector(polarVector)
-              ),
-              survey
-            )
-          );
+          stations.set(sh.from, newStation(st, toStation, polarVector.neg()));
           sh.processed = true;
           repeat = true;
         } else {
@@ -115,11 +109,6 @@ class SurveyHelper {
           let falias = aliases.find((a) => a.contains(sh.from));
           let talias = aliases.find((a) => a.contains(sh.to));
           if (falias === undefined && talias === undefined) return; // think of it like a continue statement in a for loop
-          const polarVector = U.fromPolar(
-            sh.length,
-            U.degreesToRads(sh.azimuth + declination),
-            U.degreesToRads(sh.clino)
-          );
 
           if (falias !== undefined) {
             const pairName = falias.getPair(sh.from);
@@ -128,18 +117,7 @@ class SurveyHelper {
               const fp = from.position;
               const to = new Vector(fp.x, fp.y, fp.z).add(polarVector);
               const toStationName = survey.getToStationName(sh);
-              stations.set(
-                toStationName,
-                new ST(
-                  sh.type,
-                  to,
-                  new StationCoordinates(
-                    from.coordinates.local.add(polarVector),
-                    from.coordinates.eov.addVector(polarVector)
-                  ),
-                  survey
-                )
-              );
+              stations.set(toStationName, newStation(to, from, polarVector));
               sh.processed = true;
               repeat = true;
               sh.fromAlias = pairName;
@@ -152,18 +130,7 @@ class SurveyHelper {
               const to = stations.get(pairName);
               const tp = to.position;
               const from = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-              stations.set(
-                sh.from,
-                new ST(
-                  sh.type,
-                  from,
-                  new StationCoordinates(
-                    from.coordinates.local.sub(polarVector),
-                    from.coordinates.eov.subVector(polarVector)
-                  ),
-                  survey
-                )
-              );
+              stations.set(sh.from, newStation(from, to, polarVector.neg()));
               sh.processed = true;
               repeat = true;
               sh.toAlias = pairName;

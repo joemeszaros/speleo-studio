@@ -92,8 +92,8 @@ class SceneInteraction {
     } else {
       stLabel = st.name;
     }
-
-    return `${stLabel} selected, type: ${st.meta.type}, position: ${get3DCoordsStr(st.position)}, local: ${get3DCoordsStr(st.meta.coordinates.local)}, eov: ${get3DCoordsStr(st.meta.coordinates.eov, ['y', 'x', 'elevation'])}`;
+    //, local: ${get3DCoordsStr(st.meta.coordinates.local)}, eov: ${get3DCoordsStr(st.meta.coordinates.eov, ['y', 'x', 'elevation'])}
+    return `${stLabel} selected, type: ${st.meta.type}, position: ${get3DCoordsStr(st.position)}`;
   }
   #setSelected(st) {
     this.selectedStation = st;

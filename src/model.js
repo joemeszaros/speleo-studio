@@ -18,6 +18,10 @@ class Vector {
     return new Vector(this.x * d, this.y * d, this.z * d);
   }
 
+  neg() {
+    return new Vector(-this.x, -this.y, -this.z);
+  }
+
   distanceTo(v) {
     const dx = this.x - v.x,
       dy = this.y - v.y,
@@ -186,7 +190,15 @@ class EOVCoordinate {
 
 }
 
+class WGS84Coordinate {
+  constructor(lat, lon) {
+    this.lat = lat;
+    this.lon = lon;
+  }
+}
+
 class EOVCoordinateWithElevation extends EOVCoordinate {
+
   constructor(y, x, elevation) {
     super(y, x);
     this.elevation = elevation;
@@ -278,11 +290,11 @@ class StationCoordinate {
 }
 
 class StationCoordinates {
-  constructor(local, eov) {
+  constructor(local, eov, wgs) {
     this.local = local;
     this.eov = eov;
+    this.wgs = wgs;
   }
-
 }
 
 class CaveCycle {
@@ -957,6 +969,7 @@ export {
   Color,
   Shot,
   EOVCoordinateWithElevation,
+  WGS84Coordinate,
   StationCoordinates,
   StationCoordinate,
   StationAttribute,
