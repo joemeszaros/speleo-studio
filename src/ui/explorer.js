@@ -3,7 +3,8 @@ import { tag } from '../../dependencies/html5-tag.js';
 import { escapeHtml } from '../../dependencies/escape-html.js';
 import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
-import { Color, Survey } from '../model.js';
+import { Color } from '../model.js';
+import { Survey } from '../model/survey.js';
 import {
   SurveyEditor,
   SurveySheetEditor,

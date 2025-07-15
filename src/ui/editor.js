@@ -7,9 +7,9 @@ import {
   CaveComponent,
   SectionAttribute,
   ComponentAttribute,
-  Shot,
-  SurveyMetadata
+  Shot
 } from '../model.js';
+import { SurveyMetadata } from '../model/survey.js';
 import { AttributesDefinitions } from '../attributes.js';
 import { SectionHelper } from '../section.js';
 import { randomAlphaNumbericString } from '../utils/utils.js';

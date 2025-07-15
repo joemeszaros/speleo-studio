@@ -3,19 +3,15 @@ import { SurveyHelper } from '../survey.js';
 import { SurfaceHelper } from '../surface.js';
 import { showErrorPanel, showWarningPanel } from '../ui/popups.js';
 import { CAVES_MAX_DISTANCE } from '../constants.js';
+import { Shot, Cave, Vector, Surface, CaveMetadata } from '../model.js';
 import {
-  Shot,
   SurveyMetadata,
   Survey,
-  Cave,
-  Vector,
   SurveyAlias,
-  Surface,
-  CaveMetadata,
   SurveyTeamMember,
   SurveyTeam,
   SurveyInstrument
-} from '../model.js';
+} from '../model/survey.js';
 import { EOVCoordinateWithElevation, StationWithCoordinate, GeoData, CoordinateSytem } from '../model/geo.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';

@@ -1,5 +1,6 @@
 import * as U from './utils/utils.js';
-import { SurveyStation as ST, Vector } from './model.js';
+import { SurveyStation as ST } from './model/survey.js';
+import { Vector } from './model.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
 import { EOVToWGS84Transformer } from './utils/geo.js';
