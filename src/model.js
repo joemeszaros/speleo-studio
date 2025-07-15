@@ -1,3 +1,5 @@
+import { GeoData } from './model/geo.js';
+
 class Vector {
 
   constructor(x, y, z) {
@@ -168,132 +170,6 @@ class Shot {
       newShot[fName] = this[fName];
     });
     return newShot;
-  }
-}
-
-class EOVCoordinate {
-  constructor(y, x) {
-    this.y = y;
-    this.x = x;
-  }
-
-  toExport() {
-    return {
-      y : this.y,
-      x : this.x
-    };
-  }
-
-  static fromPure(pure) {
-    return Object.assign(new EOVCoordinate(), pure);
-  }
-
-}
-
-class WGS84Coordinate {
-  constructor(lat, lon) {
-    this.lat = lat;
-    this.lon = lon;
-  }
-}
-
-class EOVCoordinateWithElevation extends EOVCoordinate {
-
-  constructor(y, x, elevation) {
-    super(y, x);
-    this.elevation = elevation;
-  }
-
-  toVector() {
-    return new Vector(this.y, this.x, this.elevation);
-  }
-
-  add(y, x, elevation) {
-    return new EOVCoordinateWithElevation(this.y + y, this.x + x, this.elevation + elevation);
-  }
-
-  addVector(v) {
-    return new EOVCoordinateWithElevation(this.y + v.x, this.x + v.y, this.elevation + v.z);
-  }
-
-  sub(y, x, elevation) {
-    return new EOVCoordinateWithElevation(this.y - y, this.x - x, this.elevation - elevation);
-  }
-
-  subVector(v) {
-    return new EOVCoordinateWithElevation(this.y - v.x, this.x - v.y, this.elevation - v.z);
-  }
-
-  isValid() {
-    return this.validate().length === 0;
-  }
-
-  validate() {
-
-    const errors = [];
-
-    const isValidFloat = (f) => {
-      return typeof f === 'number' && f !== Infinity && !isNaN(f);
-    };
-
-    [this.x, this.y, this.elevation].forEach((coord) => {
-      if (!isValidFloat(coord)) {
-        errors.push(`Coordinate '${coord}'is not a valid float number`);
-      }
-    });
-
-    if (this.x > 400_000 || this.x < 0) {
-      errors.push(`X coordinate '${this.x}' is out of bounds`);
-    }
-
-    if (this.y < 400_000) {
-      errors.push(`Y coordinate '${this.y}' is out of bounds`);
-    }
-
-    if (this.elevation < -3000 || this.elevation > 5000) {
-      //GO GO cave explorers for deep and high caves!
-      errors.push(`Z coordinate '${this.elevation}' is out of bounds`);
-    }
-    return errors;
-  }
-
-  toExport() {
-    return {
-      y         : this.y,
-      x         : this.x,
-      elevation : this.elevation
-    };
-  }
-
-  static fromPure(pure) {
-    return Object.assign(new EOVCoordinateWithElevation(), pure);
-  }
-}
-
-class StationCoordinate {
-  constructor(name, eov) {
-    this.name = name;
-    this.eov = eov;
-  }
-
-  toExport() {
-    return {
-      name : this.name,
-      eov  : this.eov.toExport()
-    };
-  }
-
-  static fromPure(pure) {
-    pure.eov = EOVCoordinateWithElevation.fromPure(pure.eov);
-    return Object.assign(new StationCoordinate(), pure);
-  }
-}
-
-class StationCoordinates {
-  constructor(local, eov, wgs) {
-    this.local = local;
-    this.eov = eov;
-    this.wgs = wgs;
   }
 }
 
@@ -809,6 +685,7 @@ class Surface {
   }
 
 }
+
 class CaveMetadata {
 
   constructor(settlement, catasterCode, date, creator) {
@@ -845,7 +722,7 @@ class Cave {
   constructor(
     name,
     metaData,
-    coordinates,
+    geoData,
     stations = new Map(),
     surveys = [],
     aliases = [],
@@ -855,7 +732,7 @@ class Cave {
   ) {
     this.name = name;
     this.metaData = metaData;
-    this.coordinates = coordinates;
+    this.geoData = geoData;
     this.stations = stations;
     this.surveys = surveys;
     this.aliases = aliases;
@@ -936,7 +813,7 @@ class Cave {
     return {
       name                : this.name,
       metaData            : this.metaData.toExport(),
-      coordinates         : this.coordinates.map((c) => c.toExport()),
+      geoData             : this.geoData.toExport(),
       aliases             : this.aliases.map((a) => a.toExport()),
       sectionAttributes   : this.sectionAttributes.map((sa) => sa.toExport()),
       componentAttributes : this.componentAttributes.map((ca) => ca.toExport()),
@@ -948,7 +825,7 @@ class Cave {
     if (pure.metaData !== undefined) {
       pure.metaData = CaveMetadata.fromPure(pure.metaData);
     }
-    pure.coordinates = pure.coordinates === undefined ? [] : pure.coordinates.map((c) => StationCoordinate.fromPure(c));
+    pure.geoData = pure.geoData === undefined ? [] : GeoData.fromPure(pure.geoData);
     pure.surveys = pure.surveys.map((s) => Survey.fromPure(s, attributeDefs));
     pure.aliases = pure.aliases === undefined ? [] : pure.aliases.map((a) => SurveyAlias.fromPure(a));
     pure.startPosition = Vector.fromPure(pure.startPosition);
@@ -968,10 +845,6 @@ export {
   Vector,
   Color,
   Shot,
-  EOVCoordinateWithElevation,
-  WGS84Coordinate,
-  StationCoordinates,
-  StationCoordinate,
   StationAttribute,
   CaveSection,
   CaveComponent,

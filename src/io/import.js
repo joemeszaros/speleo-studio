@@ -9,16 +9,14 @@ import {
   Survey,
   Cave,
   Vector,
-  SurveyStation,
   SurveyAlias,
   Surface,
   CaveMetadata,
   SurveyTeamMember,
   SurveyTeam,
-  SurveyInstrument,
-  EOVCoordinateWithElevation,
-  StationCoordinate
+  SurveyInstrument
 } from '../model.js';
+import { EOVCoordinateWithElevation, StationWithCoordinate, GeoData, CoordinateSytem } from '../model/geo.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
 import { SectionHelper } from '../section.js';
@@ -193,11 +191,11 @@ class PolygonImporter extends CaveImporter {
         (x) => x instanceof Date
       );
       const metaData = new CaveMetadata(settlement, catasterCode, date, madeBy);
+      let geoData;
       const surveys = [];
       const stations = new Map();
       var surveyName;
       var surveyIndex = 0;
-      let coordinates = [];
 
       do {
         surveyName = U.iterateUntil(lineIterator, (v) => !v.startsWith('Survey name'));
@@ -255,8 +253,8 @@ class PolygonImporter extends CaveImporter {
               if (eovErrors.length > 0) {
                 throw new Error(`Invalid EOV coordinates for start position: ${eovErrors.join(',')}`);
               }
-              startCoordinate = new StationCoordinate(fixPointName, eovCoordinate);
-              coordinates.push(startCoordinate);
+              startCoordinate = new StationWithCoordinate(fixPointName, eovCoordinate);
+              geoData = new GeoData(CoordinateSytem.EOV, [startCoordinate]);
               startPosition = eovCoordinate.toVector();
             } else {
               startPosition = new Vector(y, x, z);
@@ -282,7 +280,7 @@ class PolygonImporter extends CaveImporter {
         }
       } while (surveyName !== undefined);
 
-      return new Cave(projectName, metaData, coordinates, stations, surveys);
+      return new Cave(projectName, metaData, geoData, stations, surveys);
     }
   }
 
@@ -343,7 +341,7 @@ class TopodroidImporter extends CaveImporter {
     const startStation = shots[0].from;
     const survey = new Survey(surveyName, true, new SurveyMetadata(), startStation, shots);
     SurveyHelper.calculateSurveyStations(survey, stations, aliases, startStation, new Vector(0, 0, 0));
-    return new Cave(fileName, undefined, [], stations, [survey], aliases);
+    return new Cave(fileName, undefined, undefined, stations, [survey], aliases);
   }
 
   importFile(file) {
