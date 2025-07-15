@@ -1,4 +1,4 @@
-import { toAscii } from '../utils/utils.js';
+import { toAscii, textToIso88592Bytes, toPolygonDate } from '../utils/utils.js';
 
 class Exporter {
 
@@ -113,6 +113,77 @@ class Exporter {
     const a = document.createElement('a');
     a.href = url;
     a.download = `speleo-studio-export.dxf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  static exportPolygon(caves) {
+    const lines = [];
+
+    lines.push('POLYGON Cave Surveying Software');
+    lines.push('Polygon Program Version   = 2');
+    lines.push('Polygon Data File Version = 1');
+    lines.push('1998-2001 ===> Prepostffy Zsolt');
+    lines.push('-------------------------------');
+    lines.push('');
+
+    caves.values().forEach((cave) => {
+
+      lines.push('*** Project ***');
+      lines.push(`Project name: ${cave.name}`);
+      lines.push(`Project place: ${cave.metaData.settlement}`);
+      lines.push(`Project code: ${cave.metaData.catasterCode}`);
+      lines.push(`Made by: ${cave.metaData.creator}`);
+      lines.push(`Made date: ${toPolygonDate(cave.metaData.date)}`);
+      lines.push('Last modi: 0');
+      lines.push('AutoCorrect: 0');
+      lines.push('AutoSize: 12,0');
+      lines.push('');
+      lines.push('*** Surveys ***');
+
+      cave.surveys.forEach((survey) => {
+        lines.push(`Survey name: ${survey.name}`);
+        lines.push(`Survey team: ${survey.metadata.team.name}`);
+        for (let i = 0; i < 5; i++) {
+          lines.push(`${survey.metadata.team.members[i]?.name ?? ''}	`);
+        }
+        lines.push(`Survey date: ${toPolygonDate(survey.metadata.date)}`);
+        lines.push(`Declination: ${survey.metadata.declination}`);
+        lines.push('Instruments: ');
+        survey.metadata.instruments.forEach((instrument) => {
+          lines.push(`${instrument.name}	${instrument.value}`);
+        });
+        lines.push(`Fix point: ${survey.start}`);
+        const startSt = cave.stations.get(survey.start);
+        lines.push(`${startSt.position.x}	${startSt.position.y}	${startSt.position.z}	0	0	0	0`);
+        lines.push('Survey data');
+        lines.push('From	To	Length	Azimuth	Vertical	Label	Left	Right	Up	Down	Note');
+
+        survey.shots.forEach((shot) => {
+          lines.push(
+            [shot.from, shot.to, shot.length, shot.azimuth, shot.clino, '', '0', '0', '0', '0', shot.comment].join('\t')
+          );
+
+        });
+        lines.push('');
+      });
+    });
+
+    lines.push('End of survey data.');
+    lines.push('');
+    lines.push('*** Surface ***');
+    lines.push('End of surface data.');
+    lines.push('');
+    lines.push('EOF.');
+
+    // Convert string to ISO-8859-2 encoding
+    const text = lines.join('\n');
+    const iso88592Bytes = textToIso88592Bytes(text);
+    const blob = new Blob([iso88592Bytes], { type: 'text/plain;charset=iso-8859-2' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `polygon-export.cave`;
     a.click();
     URL.revokeObjectURL(url);
   }

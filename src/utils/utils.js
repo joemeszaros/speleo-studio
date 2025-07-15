@@ -93,6 +93,13 @@ function addDays(date, days) {
   return newDate;
 }
 
+function toPolygonDate(date) {
+  const epochStart = new Date(-2209161600000); //1899-12-30T00:00:00Z
+  const diffTime = date.getTime() - epochStart.getTime();
+  const diffDays = diffTime / (24 * 60 * 60 * 1000);
+  return Math.floor(diffDays);
+}
+
 function getPolygonDate(value) {
   const epochStart = new Date(-2209161600000); //1899-12-30T00:00:00Z
   const daysInt = Math.floor(value);
@@ -140,6 +147,89 @@ function toAscii(str) {
   ); // Remove non-ASCII chars;
 }
 
+function textToIso88592Bytes(text) {
+
+  // Create a proper ISO-8859-2 encoded byte array
+  const iso88592Bytes = new Uint8Array(text.length);
+  const mapping = new Map([
+    // Hungarian characters
+    ['í', 0xed],
+    ['Í', 0xcd],
+    ['é', 0xe9],
+    ['É', 0xc9],
+    ['á', 0xe1],
+    ['Á', 0xc1],
+    ['ú', 0xfa],
+    ['Ú', 0xda],
+    ['ó', 0xf3],
+    ['Ó', 0xd3],
+    ['ö', 0xf6],
+    ['Ö', 0xd6],
+    ['ő', 0xf5],
+    ['Ő', 0xd5],
+    ['ű', 0xfb],
+    ['Ű', 0xdb],
+    ['ü', 0xfc],
+    ['Ü', 0xdc],
+
+    // Polish characters
+    ['Ą', 0xa1],
+    ['ą', 0xb1],
+    ['Ć', 0xc6],
+    ['ć', 0xe6],
+    ['Ę', 0xea],
+    ['ę', 0xea],
+    ['Ł', 0xa3],
+    ['ł', 0xb3],
+    ['Ń', 0xd1],
+    ['ń', 0xf1],
+    ['Ś', 0xa6],
+    ['ś', 0xb6],
+    ['Ź', 0xac],
+    ['ź', 0xbc],
+    ['Ż', 0xaf],
+    ['ż', 0xbf],
+
+    // Czech/Slovak characters
+    ['Č', 0xc8],
+    ['č', 0xe8],
+    ['Ď', 0xcf],
+    ['ď', 0xef],
+    ['Ľ', 0xa5],
+    ['ľ', 0xb5],
+    ['Ň', 0xd2],
+    ['ň', 0xf2],
+    ['Ř', 0xd8],
+    ['ř', 0xf8],
+    ['Š', 0xa9],
+    ['š', 0xb9],
+    ['Ť', 0xab],
+    ['ť', 0xbb],
+    ['Ž', 0xae],
+    ['ž', 0xbe]
+  ]);
+
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+
+    // Map Unicode characters to ISO-8859-2
+    if (charCode < 128) {
+
+      // ASCII characters (0-127) are the same
+      iso88592Bytes[i] = charCode;
+    } else {
+      // Map specific Central European characters to ISO-8859-2
+      // This is a simplified mapping - you may need to add more characters
+      if (mapping.has(text[i])) {
+        iso88592Bytes[i] = mapping.get(text[i]);
+      } else {
+        iso88592Bytes[i] = 0x3f; // Question mark
+      }
+    }
+  }
+  return iso88592Bytes;
+}
+
 export {
   fromPolar,
   normal,
@@ -155,9 +245,11 @@ export {
   nodes,
   addDays,
   getPolygonDate,
+  toPolygonDate,
   formatDateISO,
   formatDistance,
   fitString,
   falsy,
-  toAscii
+  toAscii,
+  textToIso88592Bytes
 };
