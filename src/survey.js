@@ -1,6 +1,7 @@
 import * as U from './utils/utils.js';
-import { SurveyStation as ST, Vector } from './model.js';
+import { SurveyStation as ST, Vector, StationCoordinates } from './model.js';
 import { Graph } from './utils/graph.js';
+import { EOVToWGS84Transformer } from './utils/geo.js';
 
 class SurveyHelper {
 
@@ -12,7 +13,7 @@ class SurveyHelper {
    * @param {aliases} - The connection points between different surveys
    * @returns The survey with updated properties
    */
-  static recalculateSurvey(index, es, surveyStations, aliases) {
+  static recalculateSurvey(index, es, surveyStations, aliases, coordinates) {
     let startName, startPosition;
     if (index === 0) {
       //TODO: check if start station is still in shots
@@ -24,14 +25,18 @@ class SurveyHelper {
     return es;
   }
 
-  static calculateSurveyStations(survey, stations, aliases, startName, startPosition, coordinates) {
+  static calculateSurveyStations(survey, stations, aliases, startName, startPosition, startEov) {
 
     if (survey.validShots.length === 0) return [];
 
     const startStationName = startName !== undefined ? startName : survey.shots[0].from;
 
+    // this is the first survey
     if (startPosition !== undefined) {
-      stations.set(startStationName, new ST('center', startPosition, survey));
+      stations.set(
+        startStationName,
+        new ST('center', startPosition, new StationCoordinates(new Vector(0, 0, 0), startEov), survey)
+      );
     }
 
     survey.start = startStationName;
@@ -65,7 +70,18 @@ class SurveyHelper {
             const fp = fromStation.position;
             const st = new Vector(fp.x, fp.y, fp.z).add(polarVector);
             const stationName = survey.getToStationName(sh);
-            stations.set(stationName, new ST(sh.type, st, survey));
+            stations.set(
+              stationName,
+              new ST(
+                sh.type,
+                st,
+                new StationCoordinates(
+                  fromStation.coordinates.local.add(polarVector),
+                  fromStation.coordinates.eov.addVector(polarVector)
+                ),
+                survey
+              )
+            );
             repeat = true;
           } else {
             //from = 1, to = 1
@@ -80,7 +96,18 @@ class SurveyHelper {
             U.degreesToRads(sh.clino)
           );
           const st = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-          stations.set(sh.from, new ST(sh.type, st, survey));
+          stations.set(
+            sh.from,
+            new ST(
+              sh.type,
+              st,
+              new StationCoordinates(
+                fromStation.coordinates.local.sub(polarVector),
+                fromStation.coordinates.eov.subVector(polarVector)
+              ),
+              survey
+            )
+          );
           sh.processed = true;
           repeat = true;
         } else {
@@ -101,7 +128,18 @@ class SurveyHelper {
               const fp = from.position;
               const to = new Vector(fp.x, fp.y, fp.z).add(polarVector);
               const toStationName = survey.getToStationName(sh);
-              stations.set(toStationName, new ST(sh.type, to, survey));
+              stations.set(
+                toStationName,
+                new ST(
+                  sh.type,
+                  to,
+                  new StationCoordinates(
+                    from.coordinates.local.add(polarVector),
+                    from.coordinates.eov.addVector(polarVector)
+                  ),
+                  survey
+                )
+              );
               sh.processed = true;
               repeat = true;
               sh.fromAlias = pairName;
@@ -114,7 +152,18 @@ class SurveyHelper {
               const to = stations.get(pairName);
               const tp = to.position;
               const from = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-              stations.set(sh.from, new ST(sh.type, from, survey));
+              stations.set(
+                sh.from,
+                new ST(
+                  sh.type,
+                  from,
+                  new StationCoordinates(
+                    from.coordinates.local.sub(polarVector),
+                    from.coordinates.eov.subVector(polarVector)
+                  ),
+                  survey
+                )
+              );
               sh.processed = true;
               repeat = true;
               sh.toAlias = pairName;

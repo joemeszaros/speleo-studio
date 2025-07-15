@@ -26,6 +26,30 @@ class Declination {
   }
 }
 
+/**
+ * This class is used to transform EOV coordinates to WGS84 coordinates.
+ * It uses the Bursa-Wolf transformation formula.
+ * It is based on the following sources:
+ * - https://github.com/dojerz/Eov2Wgs84
+ * - https://sas2.elte.hu/tg/bajnok.htm
+ * The algorithm was initally implemented in Excel (https://sas2.elte.hu/tg/bajnok25.xls)
+ * by Gabor Timar at ELTE and later ported to C# by Peter Toth.
+ *
+ * Accuracy: The procedure for transformations between base surfaces includes the Bursa-Wolf transformation;
+ * its accuracy is about 3 meters for conversions involving the stereographic projection, and better than
+ * 1 meter in all other cases.
+ *
+ * The transformation is fairly precice.
+ * EOV coordinates for Laci cave: 644741, 255551
+ * This function gives implementation: 47.64378573513598, 18.97744998587031
+ * ERDA.hu reference:                  47.643785,         18.977448 (17 cm difference)
+ * PROJ library:                       47.6437852,        18.9774482 (13 cm difference)
+ *
+ * Links:
+ *  - Proj transformation https://epsg.io/transform#s_srs=23700&t_srs=4326&ops=1242&x=644741.0000000&y=255551.0000000
+ *  - ERDA.hu reference https://magyarorszag.erda.hu/
+ */
+
 class EOVToWGS84Transformer {
 
   static FROMhd72TOwgs84_p2 = [6378160, 6356774.516, 6378137, 6356752.3142];
