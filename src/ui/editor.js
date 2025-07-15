@@ -234,10 +234,10 @@ class Editor extends BaseEditor {
       }
     },
 
-    floatFormatter : (defaultValue = '0') => {
+    floatFormatter : (defaultValue = '0', decimals = 2) => {
       return (cell) => {
         if (cell.getValue() !== undefined) {
-          return cell.getValue().toFixed(2);
+          return cell.getValue().toFixed(decimals);
         } else {
           return defaultValue;
         }
@@ -1356,7 +1356,12 @@ class SurveyEditor extends Editor {
         attributes : stationAttributes,
         x          : toStation?.position?.x,
         y          : toStation?.position?.y,
-        z          : toStation?.position?.z
+        z          : toStation?.position?.z,
+        eovy       : toStation?.coordinates?.eov?.y,
+        eovx       : toStation?.coordinates?.eov?.x,
+        eove       : toStation?.coordinates?.eov?.elevation,
+        wgslat     : toStation?.coordinates?.wgs?.lat,
+        wgslon     : toStation?.coordinates?.wgs?.lon
       };
 
       return rowToBe;
@@ -1436,7 +1441,34 @@ class SurveyEditor extends Editor {
       },
       { break: true },
       { id: 'undo', text: 'Undo', click: () => this.table.undo() },
-      { id: 'redo', text: 'Redo', click: () => this.table.redo() }
+      { id: 'redo', text: 'Redo', click: () => this.table.redo() },
+      { break: true },
+      {
+        id    : 'eov-toggle',
+        text  : 'Toggle XYZ',
+        click : () => {
+          this.table.toggleColumn('x');
+          this.table.toggleColumn('y');
+          this.table.toggleColumn('z');
+        }
+      },
+      {
+        id    : 'eov-toggle',
+        text  : 'Toggle EOV',
+        click : () => {
+          this.table.toggleColumn('eovy');
+          this.table.toggleColumn('eovx');
+          this.table.toggleColumn('eove');
+        }
+      },
+      {
+        id    : 'wgs-toggle',
+        text  : 'Toggle WGS84',
+        click : () => {
+          this.table.toggleColumn('wgslat');
+          this.table.toggleColumn('wgslon');
+        }
+      }
 
     ].forEach((b) => {
       if (b.break === true) {
@@ -1498,6 +1530,112 @@ class SurveyEditor extends Editor {
       return data.status === 'orphan';
     }
 
+    const columns = [
+      {
+        width             : 25,
+        title             : '',
+        field             : 'status',
+        editor            : false,
+        download          : false,
+        accessorClipboard : (value) => value,
+        formatter         : this.baseTableFunctions.statusIcon,
+        clickPopup        : function (x, cell) {
+          const message = cell.getData().message;
+          return message === undefined ? 'No errors' : message;
+        },
+        validator  : ['required'],
+        bottomCalc : this.baseTableFunctions.countBadRows
+      },
+      {
+        width        : 25,
+        title        : 'Splay type',
+        field        : 'type',
+        editor       : 'list',
+        editorParams : { values: ['center', 'splay'] },
+        formatter    : typeIcon,
+        cellEdited   : typeEdited,
+        validator    : ['required']
+      },
+      {
+        title        : 'From',
+        field        : 'from',
+        editor       : true,
+        validator    : ['required'],
+        headerFilter : 'input',
+        bottomCalc   : countLines
+      },
+      {
+        title        : 'To',
+        field        : 'to',
+        editor       : true,
+        validator    : ['required'],
+        headerFilter : 'input'
+      },
+      {
+        title      : 'Length',
+        field      : 'length',
+        editor     : true,
+        accessor   : this.baseTableFunctions.floatAccessor,
+        validator  : ['required', 'min:0', customValidator],
+        bottomCalc : sumCenterLines
+      },
+      {
+        title     : 'Azimuth',
+        field     : 'azimuth',
+        editor    : true,
+        accessor  : this.baseTableFunctions.floatAccessor,
+        validator : ['required', 'min:-360', 'max:360', customValidator]
+      },
+      {
+        title     : 'Clino',
+        field     : 'clino',
+        editor    : true,
+        accessor  : this.baseTableFunctions.floatAccessor,
+        validator : ['required', 'min:-90', 'max:90', customValidator]
+      }
+    ];
+    const coordinateColumns = [
+      { field: 'x', title: 'X' },
+      { field: 'y', title: 'Y' },
+      { field: 'z', title: 'Z' },
+      { field: 'eovy', title: 'EOV Y', visible: false },
+      { field: 'eovx', title: 'EOV X', visible: false },
+      { field: 'eove', title: 'EOV Z', visible: false },
+      { field: 'wgslat', title: 'Lat', visible: false, decimals: 6 },
+      { field: 'wgslon', title: 'Lon', visible: false, decimals: 6 }
+    ];
+
+    coordinateColumns.forEach((c) => {
+      columns.push({
+        title            : c.title,
+        field            : c.field,
+        mutatorClipboard : this.baseTableFunctions.floatAccessor,
+        formatter        : this.baseTableFunctions.floatFormatter('', c.decimals),
+        editor           : false,
+        visible          : c.visible
+      });
+    });
+
+    columns.push({
+      title              : 'Attributes',
+      field              : 'attributes',
+      visible            : true,
+      headerFilterFunc   : this.baseTableFunctions.attributeHeaderFilter,
+      headerFilter       : 'input',
+      formatter          : (cell) => this.baseTableFunctions.atrributesFormatter(cell, (cv) => cv.attributes),
+      accessorClipboard  : (value) => this.baseTableFunctions.attributesToClipboard(value, (v) => v),
+      mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs),
+      formatterClipboard : (cell) => this.baseTableFunctions.clipboardFormatter(cell, (v) => v.attributes),
+      editor             : (cell, onRendered, success) =>
+        this.attributesEditor(
+          cell,
+          onRendered,
+          success,
+          (cv) => cv.attributes,
+          (attrs) => attrs,
+          () => true
+        )
+    });
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
       history                   : true, //enable undo and redo
@@ -1562,111 +1700,7 @@ class SurveyEditor extends Editor {
         headerHozAlign : 'center',
         resizable      : 'header'
       },
-      columns : [
-        {
-          width             : 25,
-          title             : '',
-          field             : 'status',
-          editor            : false,
-          download          : false,
-          accessorClipboard : (value) => value,
-          formatter         : this.baseTableFunctions.statusIcon,
-          clickPopup        : function (x, cell) {
-            const message = cell.getData().message;
-            return message === undefined ? 'No errors' : message;
-          },
-          validator  : ['required'],
-          bottomCalc : this.baseTableFunctions.countBadRows
-        },
-        {
-          width        : 25,
-          title        : 'Splay type',
-          field        : 'type',
-          editor       : 'list',
-          editorParams : { values: ['center', 'splay'] },
-          formatter    : typeIcon,
-          cellEdited   : typeEdited,
-          validator    : ['required']
-        },
-        {
-          title        : 'From',
-          field        : 'from',
-          editor       : true,
-          validator    : ['required'],
-          headerFilter : 'input',
-          bottomCalc   : countLines
-        },
-        {
-          title        : 'To',
-          field        : 'to',
-          editor       : true,
-          validator    : ['required'],
-          headerFilter : 'input'
-        },
-        {
-          title      : 'Length',
-          field      : 'length',
-          editor     : true,
-          accessor   : this.baseTableFunctions.floatAccessor,
-          validator  : ['required', 'min:0', customValidator],
-          bottomCalc : sumCenterLines
-        },
-        {
-          title     : 'Azimuth',
-          field     : 'azimuth',
-          editor    : true,
-          accessor  : this.baseTableFunctions.floatAccessor,
-          validator : ['required', 'min:-360', 'max:360', customValidator]
-        },
-        {
-          title     : 'Clino',
-          field     : 'clino',
-          editor    : true,
-          accessor  : this.baseTableFunctions.floatAccessor,
-          validator : ['required', 'min:-90', 'max:90', customValidator]
-        },
-        {
-          title            : 'X',
-          field            : 'x',
-          mutatorClipboard : this.baseTableFunctions.floatAccessor,
-          formatter        : this.baseTableFunctions.floatFormatter(''),
-          editor           : false
-        },
-        {
-          title            : 'Y',
-          field            : 'y',
-          editor           : false,
-          mutatorClipboard : this.baseTableFunctions.floatAccessor,
-          formatter        : this.baseTableFunctions.floatFormatter('')
-        },
-        {
-          title            : 'Z',
-          field            : 'z',
-          editor           : false,
-          mutatorClipboard : this.baseTableFunctions.floatAccessor,
-          formatter        : this.baseTableFunctions.floatFormatter('')
-        },
-        {
-          title              : 'Attributes',
-          field              : 'attributes',
-          headerFilterFunc   : this.baseTableFunctions.attributeHeaderFilter,
-          headerFilter       : 'input',
-          formatter          : (cell) => this.baseTableFunctions.atrributesFormatter(cell, (cv) => cv.attributes),
-          accessorClipboard  : (value) => this.baseTableFunctions.attributesToClipboard(value, (v) => v),
-          mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs),
-          formatterClipboard : (cell) => this.baseTableFunctions.clipboardFormatter(cell, (v) => v.attributes),
-          editor             : (cell, onRendered, success) =>
-            this.attributesEditor(
-              cell,
-              onRendered,
-              success,
-              (cv) => cv.attributes,
-              (attrs) => attrs,
-              () => true
-            )
-        }
-
-      ]
+      columns : columns
     });
 
     this.table.on('dataChanged', () => {

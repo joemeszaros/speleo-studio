@@ -32,12 +32,18 @@ class SurveyHelper {
     if (survey.validShots.length === 0) return [];
 
     const startStationName = startName !== undefined ? startName : survey.shots[0].from;
+    const eovToWgs84Transformer = new EOVToWGS84Transformer();
 
     // this is the first survey
     if (startPosition !== undefined) {
+      let wgsCoord;
+      if (startEov !== undefined) {
+        const [lat, lon, h] = eovToWgs84Transformer.eovTOwgs84(startEov.y, startEov.x);
+        wgsCoord = new WGS84Coordinate(lat, lon);
+      }
       stations.set(
         startStationName,
-        new ST('center', startPosition, new StationCoordinates(new Vector(0, 0, 0), startEov), survey)
+        new ST('center', startPosition, new StationCoordinates(new Vector(0, 0, 0), startEov, wgsCoord), survey)
       );
     }
 
@@ -50,7 +56,6 @@ class SurveyHelper {
     });
 
     const declination = survey?.metadata?.declination ?? 0.0; //TODO: remove fallback logic
-    const eovToWgs84Transformer = new EOVToWGS84Transformer();
     var repeat = true;
 
     // the basics of this algorithm came from Topodroid cave surveying software by Marco Corvi

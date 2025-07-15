@@ -271,7 +271,14 @@ class PolygonImporter extends CaveImporter {
             instruments
           );
           const survey = new Survey(surveyNameStr, true, metadata, fixPointName, shots);
-          SurveyHelper.calculateSurveyStations(survey, stations, [], fixPointName, startPosition, startCoordinate?.eov);
+          SurveyHelper.calculateSurveyStations(
+            survey,
+            stations,
+            [],
+            fixPointName,
+            startPosition,
+            startCoordinate?.coordinate
+          );
           surveys.push(survey);
           surveyIndex++;
         }
