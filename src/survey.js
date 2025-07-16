@@ -3,7 +3,7 @@ import { SurveyStation as ST } from './model/survey.js';
 import { Vector } from './model.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
-import { EOVToWGS84Transformer } from './utils/geo.js';
+import { EOVToWGS84Transformer, MeridianConvergence } from './utils/geo.js';
 
 class SurveyHelper {
 
@@ -56,6 +56,8 @@ class SurveyHelper {
     });
 
     const declination = survey?.metadata?.declination ?? 0.0; //TODO: remove fallback logic
+    const convergence = survey?.metadata?.convergence ?? 0.0;
+
     var repeat = true;
 
     // the basics of this algorithm came from Topodroid cave surveying software by Marco Corvi
@@ -69,14 +71,12 @@ class SurveyHelper {
 
         const polarVector = U.fromPolar(
           sh.length,
-          U.degreesToRads(sh.azimuth + declination),
+          U.degreesToRads(sh.azimuth + declination + convergence),
           U.degreesToRads(sh.clino)
         );
 
         const newStation = (position, prevSt, diff) => {
-          if (prevSt === undefined) {
-            console.log('prevSt.coordinates.eov is undefined', prevSt);
-          }
+
           let eovCoord, wgsCoord;
           if (prevSt.coordinates.eov !== undefined) {
             eovCoord = prevSt.coordinates.eov.addVector(diff);

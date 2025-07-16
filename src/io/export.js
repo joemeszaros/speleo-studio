@@ -48,21 +48,21 @@ class Exporter {
 
           lines.push('  0');
           lines.push('LINE');
-          lines.push('  5');
+          lines.push('  5'); // hande id, sort of object identifier
           lines.push(handle++);
-          lines.push('  8');
-          lines.push('POLYGON');
-          lines.push('  10');
+          lines.push('  8'); // layer name
+          lines.push('POLYGON'); // layer name
+          lines.push('  10'); // x coordinate
           lines.push(fromSt.position.x);
-          lines.push('  20');
+          lines.push('  20'); // y coordinate
           lines.push(fromSt.position.y);
-          lines.push('  30');
+          lines.push('  30'); // z coordinate
           lines.push(fromSt.position.z);
-          lines.push('  11');
+          lines.push('  11'); // x coordinate
           lines.push(toSt.position.x);
-          lines.push('  21');
+          lines.push('  21'); // y coordinate
           lines.push(toSt.position.y);
-          lines.push('  31');
+          lines.push('  31'); // z coordinate
           lines.push(toSt.position.z);
 
         });
@@ -70,19 +70,19 @@ class Exporter {
         cave.stations.forEach((st, name) => {
           lines.push('  0');
           lines.push('TEXT');
-          lines.push('  5');
+          lines.push('  5'); // hande id, sort of object identifier
           lines.push(handle++);
-          lines.push('  8');
+          lines.push('  8'); // layer name
           lines.push('POINTNAME');
-          lines.push('  10');
+          lines.push('  10'); // x coordinate
           lines.push(st.position.x);
-          lines.push('  20');
+          lines.push('  20'); // y coordinate
           lines.push(st.position.y);
-          lines.push('  30');
+          lines.push('  30'); // z coordinate
           lines.push(st.position.z);
-          lines.push('  40');
+          lines.push('  40'); // height
           lines.push('0.5');
-          lines.push('  1');
+          lines.push('  1'); // text
           lines.push(toAscii(name));
 
           lines.push('  0');
@@ -178,6 +178,7 @@ class Exporter {
 
     // Convert string to ISO-8859-2 encoding
     const text = lines.join('\n');
+    // it's funny but there is no textencoder for iso-8859-2 encoding so we need to convert it manually
     const iso88592Bytes = textToIso88592Bytes(text);
     const blob = new Blob([iso88592Bytes], { type: 'text/plain;charset=iso-8859-2' });
     const url = URL.createObjectURL(blob);

@@ -54,8 +54,8 @@ function isFloatStr(value) {
   return floatPattern.test(value);
 }
 
-function get3DCoordsStr(vector, fields = ['x', 'y', 'z']) {
-  const s = fields.map((n) => vector[n].toFixed(2)).join(', ');
+function get3DCoordsStr(vector, fields = ['x', 'y', 'z'], decimals = 3) {
+  const s = fields.map((n) => vector[n].toFixed(decimals)).join(', ');
   return `(${s})`;
 }
 

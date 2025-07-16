@@ -62,9 +62,10 @@ class SurveyInstrument {
 
 class SurveyMetadata {
 
-  constructor(date, declination, team, instruments = []) {
+  constructor(date, declination, convergence, team, instruments = []) {
     this.date = date;
     this.declination = declination;
+    this.convergence = convergence;
     this.team = team;
     this.instruments = instruments;
   }

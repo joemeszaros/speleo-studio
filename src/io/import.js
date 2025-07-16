@@ -13,6 +13,7 @@ import {
   SurveyTeam,
   SurveyInstrument
 } from '../model/survey.js';
+import { MeridianConvergence } from '../utils/geo.js';
 import { EOVCoordinateWithElevation, StationWithCoordinate, GeoData, CoordinateSytem } from '../model/geo.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
@@ -265,12 +266,19 @@ class PolygonImporter extends CaveImporter {
             }
 
           }
+          const convergence =
+            startCoordinate !== undefined
+              ? MeridianConvergence.getConvergence(startCoordinate.coordinate.y, startCoordinate.coordinate.x)
+              : undefined;
+
           const metadata = new SurveyMetadata(
             surveyDate,
             declination,
+            convergence,
             new SurveyTeam(surveyTeamName, members),
             instruments
           );
+
           const survey = new Survey(surveyNameStr, true, metadata, fixPointName, shots);
           SurveyHelper.calculateSurveyStations(
             survey,

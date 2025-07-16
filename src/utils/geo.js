@@ -1,5 +1,34 @@
 import { degreesToRads, radsToDegrees } from './utils.js';
 
+class MeridianConvergence {
+
+  static EARTH_RADIUS = 6379296.41898993;
+
+  /**
+   * Get the meridian convergence at a given EOV coordinate.
+   * This is the angle between the meridian and the north direction.
+   * To understand the meridian convergence, see: https://jerrymahun.com/index.php/home/open-access/32-vi-directions/265-chapter-c-meridian-conversion?start=3
+   * A Hungarian explanation: http://geopont.elte.hu/tajfutas/magyar/tajolo/01-2/eszak2.htm
+   * @param {*} y
+   * @param {*} x
+   * @returns
+   */
+  static getConvergence(y, x) {
+    let convergence =
+      (Math.atan(
+        (Math.cosh((x - 200000) / MeridianConvergence.EARTH_RADIUS) *
+          Math.sin((y - 650000) / MeridianConvergence.EARTH_RADIUS)) /
+          (1 / Math.tan(0.82205) -
+            Math.sinh((x - 200000) / MeridianConvergence.EARTH_RADIUS) *
+              Math.cos((y - 650000) / MeridianConvergence.EARTH_RADIUS))
+      ) *
+        180) /
+      Math.PI;
+    return convergence;
+  }
+
+}
+
 class Declination {
 
   static async getDeclination(lat, long, date, timeoutInMs = 3000) {
@@ -163,4 +192,4 @@ class EOVToWGS84Transformer {
   }
 }
 
-export { Declination, EOVToWGS84Transformer };
+export { Declination, EOVToWGS84Transformer, MeridianConvergence };

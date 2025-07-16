@@ -93,7 +93,7 @@ class SceneInteraction {
       stLabel = st.name;
     }
     //, local: ${get3DCoordsStr(st.meta.coordinates.local)}, eov: ${get3DCoordsStr(st.meta.coordinates.eov, ['y', 'x', 'elevation'])}
-    return `${stLabel} selected, type: ${st.meta.type}, position: ${get3DCoordsStr(st.position)}`;
+    return `${stLabel} selected, type: ${st.meta.type}, position: ${get3DCoordsStr(st.position, ['x', 'y', 'z'], 3)}`;
   }
   #setSelected(st) {
     this.selectedStation = st;

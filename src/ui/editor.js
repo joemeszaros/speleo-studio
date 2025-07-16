@@ -1769,6 +1769,16 @@ class SurveySheetEditor extends BaseEditor {
         parser      : (v) => U.parseMyFloat(v)
       },
       {
+        label       : 'Mer. Convergence',
+        id          : 'convergence',
+        fieldSource : 'metadata',
+        field       : 'convergence',
+        type        : 'text',
+        parser      : (v) => U.parseMyFloat(v),
+        formatter   : (v) => v.toFixed(3),
+        disabled    : true
+      },
+      {
         label : 'Declination (official)',
         id    : 'declination-official',
         type  : 'text',
@@ -1801,6 +1811,11 @@ class SurveySheetEditor extends BaseEditor {
         }
       }
       const label = U.node`<label for="${i.id}">${i.label}: <input type="${i.type}" id="${i.id}" value="${value}"></label>`;
+
+      if (i.disabled === true) {
+        label.childNodes[1].setAttribute('disabled', 'true');
+      }
+
       label.childNodes[1].onchange = (e) => {
         const newValue = e.target.value;
         if (i.fieldSource === 'metadata') {
@@ -1829,11 +1844,26 @@ class SurveySheetEditor extends BaseEditor {
 
     });
 
-    Declination.getDeclination(48.5299, 20.724062, this.survey.metadata.date).then((declination) => {
-      const declinationInput = editorFields.querySelector('#declination-official');
-      declinationInput.value = declination;
-      declinationInput.setAttribute('disabled', 'true');
-    });
+    const firstStation = this.cave.stations.get(this.survey.start);
+    const declinationInput = editorFields.querySelector('#declination-official');
+    declinationInput.setAttribute('disabled', 'true');
+
+    if (this.survey.metadata.declinationReal === undefined) {
+      if (firstStation.coordinates.wgs !== undefined) {
+        Declination.getDeclination(
+          firstStation.coordinates.wgs.lat,
+          firstStation.coordinates.wgs.lon,
+          this.survey.metadata.date
+        ).then((declination) => {
+          this.survey.metadata.declinationReal = declination;
+          declinationInput.value = declination;
+        });
+      } else {
+        declinationInput.value = 'No WGS84 coordinates';
+      }
+    } else {
+      declinationInput.value = this.survey.metadata.declinationReal;
+    }
 
     this.panel.appendChild(editorFields);
 
