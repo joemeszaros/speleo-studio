@@ -183,7 +183,7 @@ body {
   border-radius: 6px;
 }
 
-#right-click-panel {
+#station-context-menu {
   position: absolute;
   z-index: 100;
   color: azure;

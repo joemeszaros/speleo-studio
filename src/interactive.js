@@ -5,18 +5,7 @@ import { SectionHelper } from './section.js';
 
 class SceneInteraction {
 
-  constructor(
-    db,
-    options,
-    footer,
-    scene,
-    materials,
-    sceneDOMElement,
-    calcDistanceButton,
-    contextMenu,
-    infoPanel,
-    locatePanel
-  ) {
+  constructor(db, options, footer, scene, materials, sceneDOMElement, contextMenu, infoPanel, locatePanel) {
     this.db = db;
     this.options = options;
     this.footer = footer;
@@ -29,21 +18,44 @@ class SceneInteraction {
     this.selectedStation = undefined;
     this.selectedPosition = undefined;
     this.selectedStationForContext = undefined;
+    this.pointedStation = undefined;
 
     document.addEventListener('pointermove', (event) => this.onPointerMove(event));
     sceneDOMElement.addEventListener('click', () => this.onClick(), false);
     sceneDOMElement.addEventListener('dblclick', () => this.onDoubleClick(), false);
     sceneDOMElement.addEventListener('mousedown', (event) => this.onMouseDown(event), false);
 
-    calcDistanceButton.addEventListener('click', (event) => this.calcualteDistanceListener(event), false);
+    this.buildContextMenu();
   }
 
-  onPointerMove(event) {
-    this.mouseCoordinates.x = event.clientX;
-    this.mouseCoordinates.y = event.clientY;
+  buildContextMenu() {
+    [
+      {
+        name    : 'Station details',
+        onclick : (event) => {
+          const rect = this.scene.getBoundingClientRect();
+          this.showStationDetailsPanel(
+            this.selectedStationForContext,
+            event.clientX - rect.left,
+            event.clientY - rect.top
+          );
+        }
+      },
+      { name: 'Distance from here', onclick: (event) => this.calcualteDistanceListener(event, 'from') },
+      { name: 'Distance to here', onclick: (event) => this.calcualteDistanceListener(event, 'to') }
+
+    ].forEach((item) => {
+      const button = node`<button id="station-context-menu-${item.name.toLowerCase().replace(' ', '-')}">${item.name}</button>`;
+      button.onclick = (event) => {
+        item.onclick(event);
+        this.hideContextMenu();
+      };
+      this.contextMenu.appendChild(button);
+
+    });
   }
 
-  calcualteDistanceListener(event) {
+  calcualteDistanceListener(event, direction) {
     const rect = this.scene.getBoundingClientRect();
     const left = event.clientX - rect.left;
     const top = event.clientY - rect.top;
@@ -51,8 +63,14 @@ class SceneInteraction {
     if (this.selectedStation === undefined) {
       showErrorPanel('You should select the starting point for distance measurement');
     } else {
-      const from = this.selectedStation.position.clone();
-      const to = this.selectedStationForContext.position.clone();
+      let from, to;
+      if (direction === 'to') {
+        from = this.selectedStation.position.clone();
+        to = this.selectedStationForContext.position.clone();
+      } else {
+        from = this.selectedStationForContext.position.clone();
+        to = this.selectedStation.position.clone();
+      }
       const diff = to.clone().sub(from);
       this.hideContextMenu();
 
@@ -85,7 +103,7 @@ class SceneInteraction {
     }
   }
 
-  #getStationDetails(st) {
+  getSelectedStationDetails(st) {
     let stLabel;
     if (st.meta.survey !== undefined && st.meta.cave !== undefined) {
       stLabel = `${st.meta.cave.name} -> ${st.meta.survey.name} -> ${st.name}`;
@@ -93,8 +111,19 @@ class SceneInteraction {
       stLabel = st.name;
     }
     //, local: ${get3DCoordsStr(st.meta.coordinates.local)}, eov: ${get3DCoordsStr(st.meta.coordinates.eov, ['y', 'x', 'elevation'])}
-    return `${stLabel} selected, type: ${st.meta.type}, position: ${get3DCoordsStr(st.position, ['x', 'y', 'z'], 3)}`;
+    return `${stLabel} selected, type: ${st.meta.type}`;
   }
+
+  getPointedStationDetails(st) {
+    let stLabel;
+    if (st.meta.survey !== undefined && st.meta.cave !== undefined) {
+      stLabel = `${st.meta.cave.name} -> ${st.meta.survey.name} -> ${st.name}`;
+    } else {
+      stLabel = st.name;
+    }
+    return stLabel;
+  }
+
   #setSelected(st) {
     this.selectedStation = st;
     this.selectedPosition = st.position.clone();
@@ -104,7 +133,7 @@ class SceneInteraction {
       this.selectedStation.visible = true;
     }
 
-    this.footer.addMessage(this.#getStationDetails(st));
+    this.footer.showMessage(this.getSelectedStationDetails(st));
   }
 
   #clearSelected() {
@@ -115,6 +144,7 @@ class SceneInteraction {
       this.selectedStation.visible = false;
     }
     this.selectedStation = undefined;
+    this.hideContextMenu();
   }
 
   #setSelectedForContext(st) {
@@ -125,7 +155,7 @@ class SceneInteraction {
       this.selectedStationForContext.visible = true;
     }
 
-    this.footer.addMessage(this.#getStationDetails(st));
+    this.footer.showMessage(this.getSelectedStationDetails(st));
   }
 
   #clearSelectedForContext() {
@@ -135,6 +165,21 @@ class SceneInteraction {
       this.selectedStationForContext.visible = false;
     }
     this.selectedStationForContext = undefined;
+  }
+
+  onPointerMove(event) {
+    this.mouseCoordinates.x = event.clientX;
+    this.mouseCoordinates.y = event.clientY;
+    const hasPointedStationBefore = this.pointedStation !== undefined;
+    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
+    if (intersectedStation !== undefined) {
+      this.footer.showMessage(this.getPointedStationDetails(intersectedStation));
+      this.pointedStation = intersectedStation;
+    } else if (hasPointedStationBefore) {
+      // do not call clearmessage every time
+      this.footer.clearMessage();
+      this.pointedStation = undefined;
+    }
   }
 
   onDoubleClick() {
@@ -148,6 +193,8 @@ class SceneInteraction {
     const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
     const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selected');
     const hasIntersection = intersectedStation !== undefined || intersectsSurfacePoint !== undefined;
+
+    this.hideContextMenu();
 
     if (hasIntersection) {
 
@@ -168,9 +215,7 @@ class SceneInteraction {
           // deactivate previouly selected sphere
           this.#clearSelected();
         }
-        if (this.selectedStationForContext === intersectedObject) {
-          this.hideContextMenu();
-        }
+
         this.#setSelected(intersectedObject);
       }
     } else if (this.selectedStation !== undefined) {
@@ -207,22 +252,27 @@ class SceneInteraction {
         (intersectedObject.meta.type !== 'surface' && intersectedObject === this.selectedStation) ||
         (intersectedObject.meta.type === 'surface' && distanceToSelected < 0.2)
       ) {
+
         if (this.selectedStationForContext !== undefined) {
           // deselect previously selected station for context
           this.#clearSelectedForContext();
-          this.showContextMenu(event.clientX - rect.left, event.clientY - rect.top);
         }
         this.#clearSelected();
         this.#setSelectedForContext(intersectedObject);
+        this.showContextMenu(event.clientX - rect.left, event.clientY - rect.top);
       } else {
         if (this.selectedStationForContext !== undefined) {
           // clicked on the same sphere, that was already selected
           this.#clearSelectedForContext();
+          this.hideContextMenu();
+        } else {
+          this.#setSelectedForContext(intersectedObject);
+          this.showContextMenu(event.clientX - rect.left, event.clientY - rect.top);
         }
-        this.#setSelectedForContext(intersectedObject);
-        this.showContextMenu(event.clientX - rect.left, event.clientY - rect.top);
       }
       this.scene.view.renderView();
+    } else {
+      this.hideContextMenu();
     }
   }
 
@@ -394,6 +444,42 @@ class SceneInteraction {
         Z distance: ${diffVector.z}<br>
         Horizontal distance: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2))}<br>
         Spatial distance: ${diffVector.length()}
+        `;
+  }
+
+  showStationDetailsPanel(station, left, top) {
+    this.infoPanel.children.namedItem('close').onclick = () => {
+      this.infoPanel.style.display = 'none';
+      this.#clearSelectedForContext();
+      this.scene.view.renderView();
+      return false;
+    };
+
+    const shots = station.meta.cave.surveys.flatMap((s) =>
+      s.shots.filter((s) => s.from === station.name || s.to === station.name)
+    );
+    const shotDetails = shots
+      .map((s) => {
+        return `
+        ${s.from} -> ${s.to} (${s.length.toFixed(2)} m, ${s.clino.toFixed(2)}°, ${s.azimuth.toFixed(2)}°)`;
+      })
+      .join('<br>');
+
+    this.infoPanel.style.left = left + 'px';
+    this.infoPanel.style.top = top + 'px';
+    this.infoPanel.style.display = 'block';
+    this.infoPanel.children.namedItem('content').innerHTML = `
+        Name: ${station.name}<br><br>
+        X: ${station.position.x.toFixed(3)}<br>
+        Y: ${station.position.y.toFixed(3)}<br>
+        Z: ${station.position.z.toFixed(3)}<br>
+        Type: ${station.meta.type}<br>
+        Survey: ${station.meta.survey.name}<br>
+        Cave: ${station.meta.cave.name}<br>
+        Local coordinates: ${get3DCoordsStr(station.meta.coordinates.local)}<br>
+        EOV coordinates: ${station.meta.coordinates.eov === undefined ? 'not available' : get3DCoordsStr(station.meta.coordinates.eov, ['y', 'x', 'elevation'])}<br>
+        WGS84 coordinates: ${station.meta.coordinates.wgs === undefined ? 'not available' : get3DCoordsStr(station.meta.coordinates.wgs, ['lat', 'lon'], 6)}<br>
+        <br>Shots:<br>${shotDetails}<br>
         `;
   }
 }
