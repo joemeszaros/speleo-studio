@@ -9,8 +9,8 @@ class MeridianConvergence {
    * This is the angle between the meridian and the north direction.
    * To understand the meridian convergence, see: https://jerrymahun.com/index.php/home/open-access/32-vi-directions/265-chapter-c-meridian-conversion?start=3
    * A Hungarian explanation: http://geopont.elte.hu/tajfutas/magyar/tajolo/01-2/eszak2.htm
-   * @param {*} y
-   * @param {*} x
+   * @param {*} y EOV y coordinate
+   * @param {*} x EOV x coordinate
    * @returns
    */
   static getConvergence(y, x) {

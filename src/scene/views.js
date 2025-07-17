@@ -335,9 +335,9 @@ class PlanView extends View {
     this.compass = this.#createCompass(compassSize);
     scene.sprites3DGroup.add(this.compass);
 
-    this.ratio = this.#createRatioIndicator(ratioIndicatorWidth);
-    scene.sprites3DGroup.add(this.ratio);
-    this.ratio.onclick = () => {
+    this.ratioIndicator = this.#createRatioIndicator(ratioIndicatorWidth);
+    scene.sprites3DGroup.add(this.ratioIndicator);
+    this.ratioIndicator.onclick = () => {
       this.#setRatio();
     };
 
@@ -358,7 +358,7 @@ class PlanView extends View {
   }
 
   #setRatio() {
-    const ratioRaw = prompt('Enter the ratio values');
+    const ratioRaw = prompt('Enter the ratio value', this.ratio);
     if (!Number.isInteger(Number.parseInt(ratioRaw, 10))) {
       showWarningPanel(`Ratio '${ratioRaw}' is not an integer`);
       return;
@@ -368,21 +368,26 @@ class PlanView extends View {
       showWarningPanel('Ratio must be a positive number');
       return;
     } else {
-      const level = this.camera.width / (ratioValue * (this.scene.width / this.ratio.width));
-      this.control.setZoomLevel(level);
+      const cmInPixels = (this.dpi ?? 96) / 2.54;
+      const screenInCentimeters = window.screen.width / cmInPixels;
+      const ratioWithoutZoom = Math.floor((this.camera.width * 100) / screenInCentimeters);
+      const zoomLevel = ratioWithoutZoom / ratioValue;
+      //const level = this.camera.width / (ratioValue * (this.scene.width / this.ratioIndicator.width));
+      this.control.setZoomLevel(zoomLevel);
     }
   }
 
   onZoomLevelChange(level) {
-    const worldWidth = this.camera.width / level;
-    const ratio = worldWidth / (this.scene.width / this.ratio.width);
-    let ratioText;
-    if (ratio <= 15) {
-      ratioText = ratio.toFixed(1);
-    } else {
-      ratioText = Math.ceil(ratio);
-    }
-    this.ratioText.update(`${ratioText} m`);
+    console.log('onZoomLevelChange', level);
+    const cmInPixels = (this.dpi ?? 96) / 2.54;
+    const worldWidthInMeters = this.camera.width / level;
+    const indicatorWidthInMeters = worldWidthInMeters / (this.scene.width / this.ratioIndicator.width);
+    const screenInCentimeters = window.screen.width / cmInPixels;
+    this.ratio = Math.floor((worldWidthInMeters * 100) / screenInCentimeters);
+    const indicatorWidthFormatted =
+      indicatorWidthInMeters <= 15 ? indicatorWidthInMeters.toFixed(1) : Math.ceil(indicatorWidthInMeters);
+    const ratioText = `${indicatorWidthFormatted} m - M 1:${this.ratio}`;
+    this.ratioText.update(`${ratioText}`);
   }
 
   zoomCameraTo(level) {

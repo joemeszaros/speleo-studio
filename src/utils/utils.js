@@ -115,7 +115,6 @@ function formatDistance(distanceInMeters, decimals = 2) {
     return `${distanceInMeters.toFixed(decimals)} m`;
 
   }
-
 }
 
 function fitString(str, maxLength) {
