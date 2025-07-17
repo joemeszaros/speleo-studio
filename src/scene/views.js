@@ -11,10 +11,88 @@ import { ViewHelper } from '../utils/viewhelper.js';
 
 class View {
 
-  constructor(camera, domElement, scene) {
+  constructor(name, camera, domElement, scene, ratioIndicatorWidth = 200) {
+    this.name = name;
     this.camera = camera;
     this.domElement = domElement;
     this.scene = scene;
+
+    this.ratioIndicator = this.#createRatioIndicator(ratioIndicatorWidth);
+    this.ratioIndicator.visible = false;
+    scene.sprites3DGroup.add(this.ratioIndicator);
+    this.ratioIndicator.onclick = () => {
+      this.#setRatio();
+    };
+
+    this.ratioText = this.#createRatioText();
+    this.ratioText.sprite.visible = false;
+    const ratioTextSprite = this.ratioText.getSprite();
+    scene.sprites3DGroup.add(ratioTextSprite);
+    ratioTextSprite.onclick = () => {
+      this.#setRatio();
+    };
+
+    this.spriteCamera = new THREE.OrthographicCamera(
+      -scene.width / 2,
+      scene.width / 2,
+      scene.height / 2,
+      -scene.height / 2,
+      0,
+      10
+    );
+    this.spriteCamera.position.z = 1;
+
+  }
+
+  #createRatioText() {
+    //https://discourse.threejs.org/t/how-to-update-text-in-real-time/39050/12
+    const position = new THREE.Vector3(0, -this.scene.height / 2 + 40, 1);
+    return new TextSprite('0', position, { size: 35, family: 'Helvetica Neue', strokeColor: 'black' }, 0.5);
+  }
+
+  #createRatioIndicator(width) {
+    const map = new THREE.TextureLoader().load('images/ratio.png');
+    map.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
+    const sprite = new THREE.Sprite(material);
+    sprite.center.set(0.5, 0.5);
+    sprite.scale.set(width, (width / 755) * 36, 1);
+    sprite.position.set(0, -this.scene.height / 2 + 20, 1); // bottom right
+    sprite.width = width; // custom property
+    return sprite;
+  }
+
+  #setRatio() {
+    const ratioRaw = prompt('Enter the ratio value', this.ratio);
+    if (ratioRaw === null) return;
+    if (!Number.isInteger(Number.parseInt(ratioRaw, 10))) {
+      showWarningPanel(`Ratio '${ratioRaw}' is not an integer`);
+      return;
+    }
+    const ratioValue = Number.parseInt(ratioRaw);
+    if (ratioValue <= 0) {
+      showWarningPanel('Ratio must be a positive number');
+      return;
+    } else {
+      const cmInPixels = (this.dpi ?? 96) / 2.54;
+      const screenInCentimeters = window.screen.width / cmInPixels;
+      const ratioWithoutZoom = (this.camera.width * 100) / screenInCentimeters;
+      const zoomLevel = ratioWithoutZoom / ratioValue;
+      //const level = this.camera.width / (ratioValue * (this.scene.width / this.ratioIndicator.width));
+      this.zoomCameraTo(zoomLevel);
+    }
+  }
+
+  onZoomLevelChange(level) {
+    const cmInPixels = (this.dpi ?? 96) / 2.54;
+    const worldWidthInMeters = this.camera.width / level;
+    const indicatorWidthInMeters = worldWidthInMeters / (this.scene.width / this.ratioIndicator.width);
+    const screenInCentimeters = window.screen.width / cmInPixels;
+    this.ratio = Math.floor((worldWidthInMeters * 100) / screenInCentimeters);
+    const indicatorWidthFormatted =
+      indicatorWidthInMeters <= 15 ? indicatorWidthInMeters.toFixed(1) : Math.ceil(indicatorWidthInMeters);
+    const ratioText = `${indicatorWidthFormatted} m - M 1:${this.ratio}`;
+    this.ratioText.update(`${ratioText}`);
   }
 
   onResize(width, height) {
@@ -25,6 +103,16 @@ class View {
       this.camera.width = Math.abs(this.camera.left) + Math.abs(this.camera.right); // left is a negative number
       this.camera.updateProjectionMatrix();
     }
+
+    this.ratioText.getSprite().position.set(0, -this.scene.height / 2 + 45, 1);
+    this.ratioIndicator.position.set(0, -this.scene.height / 2 + 20, 1);
+    this.spriteCamera.left = -width / 2;
+    this.spriteCamera.right = width / 2;
+    this.spriteCamera.top = height / 2;
+    this.spriteCamera.bottom = -height / 2;
+    this.spriteCamera.updateProjectionMatrix();
+    this.onZoomLevelChange(this.camera.zoom);
+
   }
 
   addListener(name, handler) {
@@ -104,6 +192,7 @@ class View {
     if (level >= 0.1) {
       this.camera.zoom = level;
       this.camera.updateProjectionMatrix();
+      this.onZoomLevelChange(level);
       this.renderView();
     }
   }
@@ -114,10 +203,6 @@ class View {
 
   zoomOut() {
     this.zoomCameraTo(this.camera.zoom / 1.2);
-  }
-
-  onZoomLevelChange() {
-    //TODO: update text labels in footer
   }
 
   updateOverviewCameraZoom(boundingBox) {
@@ -203,6 +288,8 @@ class View {
 
     if (this.initiated) {
       this.frustumFrame.visible = true;
+      this.ratioIndicator.visible = true;
+      this.ratioText.sprite.visible = true;
     }
 
     this.renderView();
@@ -210,7 +297,8 @@ class View {
 
   deactivate() {
     if (this.initiated) {
-      this.frustumFrame.visible = false;
+      this.ratioIndicator.visible = false;
+      this.ratioText.sprite.visible = false;
     }
 
     this.enabled = false;
@@ -221,7 +309,7 @@ class View {
 class SpatialView extends View {
 
   constructor(scene, domElement, viewHelperDomElement) {
-    super(View.createOrthoCamera(scene.width / scene.height), domElement, scene);
+    super('spatialView', View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
     this.overviewCamera.layers.disable(1);
@@ -236,6 +324,7 @@ class SpatialView extends View {
       this.overviewCamera.updateProjectionMatrix();
       this.updateFrustumFrame();
       this.renderView();
+      this.onZoomLevelChange(this.camera.zoom);
     });
     this.control.addEventListener('change', () => {
       this.renderView();
@@ -313,18 +402,8 @@ class SpatialView extends View {
 
 class PlanView extends View {
 
-  constructor(scene, domElement, ratioIndicatorWidth = 200, compassSize = 100) {
-    super(View.createOrthoCamera(scene.width / scene.height), domElement, scene);
-
-    this.spriteCamera = new THREE.OrthographicCamera( //TODO: standardize ortho camera creation (static methon in view)
-      -scene.width / 2,
-      scene.width / 2,
-      scene.height / 2,
-      -scene.height / 2,
-      0,
-      10
-    );
-    this.spriteCamera.position.z = 1;
+  constructor(scene, domElement, compassSize = 100) {
+    super('planView', View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
     this.overviewCamera.layers.disable(1);
@@ -333,20 +412,8 @@ class PlanView extends View {
     this.control = new SimpleOrbitControl(this.camera, domElement, COORDINATE_INDEX.Z);
 
     this.compass = this.#createCompass(compassSize);
+    this.compass.visible = false;
     scene.sprites3DGroup.add(this.compass);
-
-    this.ratioIndicator = this.#createRatioIndicator(ratioIndicatorWidth);
-    scene.sprites3DGroup.add(this.ratioIndicator);
-    this.ratioIndicator.onclick = () => {
-      this.#setRatio();
-    };
-
-    this.ratioText = this.#createRatioText();
-    const ratioTextSprite = this.ratioText.getSprite();
-    scene.sprites3DGroup.add(ratioTextSprite);
-    ratioTextSprite.onclick = () => {
-      this.#setRatio();
-    };
 
     this.initiated = false;
     this.enabled = false;
@@ -355,44 +422,6 @@ class PlanView extends View {
     this.addListener('pointerdown', (e) => this.control.onDown(e));
     this.addListener('pointerup', () => this.control.onUp());
     this.addListener('wheel', (e) => this.control.onWheel(e));
-  }
-
-  #setRatio() {
-    const ratioRaw = prompt('Enter the ratio value', this.ratio);
-    if (!Number.isInteger(Number.parseInt(ratioRaw, 10))) {
-      showWarningPanel(`Ratio '${ratioRaw}' is not an integer`);
-      return;
-    }
-    const ratioValue = Number.parseInt(ratioRaw);
-    if (ratioValue <= 0) {
-      showWarningPanel('Ratio must be a positive number');
-      return;
-    } else {
-      const cmInPixels = (this.dpi ?? 96) / 2.54;
-      const screenInCentimeters = window.screen.width / cmInPixels;
-      const ratioWithoutZoom = Math.floor((this.camera.width * 100) / screenInCentimeters);
-      const zoomLevel = ratioWithoutZoom / ratioValue;
-      //const level = this.camera.width / (ratioValue * (this.scene.width / this.ratioIndicator.width));
-      this.control.setZoomLevel(zoomLevel);
-    }
-  }
-
-  onZoomLevelChange(level) {
-    console.log('onZoomLevelChange', level);
-    const cmInPixels = (this.dpi ?? 96) / 2.54;
-    const worldWidthInMeters = this.camera.width / level;
-    const indicatorWidthInMeters = worldWidthInMeters / (this.scene.width / this.ratioIndicator.width);
-    const screenInCentimeters = window.screen.width / cmInPixels;
-    this.ratio = Math.floor((worldWidthInMeters * 100) / screenInCentimeters);
-    const indicatorWidthFormatted =
-      indicatorWidthInMeters <= 15 ? indicatorWidthInMeters.toFixed(1) : Math.ceil(indicatorWidthInMeters);
-    const ratioText = `${indicatorWidthFormatted} m - M 1:${this.ratio}`;
-    this.ratioText.update(`${ratioText}`);
-  }
-
-  zoomCameraTo(level) {
-    super.zoomCameraTo(level);
-    this.onZoomLevelChange(level);
   }
 
   #handleControlChange(e) {
@@ -426,15 +455,6 @@ class PlanView extends View {
   onResize(width, height) {
     super.onResize(width, height);
     this.compass.position.set(width / 2 - 60, -height / 2 + 60, 1); // bottom right
-    this.ratioText.getSprite().position.set(0, -this.scene.height / 2 + 45, 1);
-    this.ratio.position.set(0, -this.scene.height / 2 + 20, 1);
-    this.spriteCamera.left = -width / 2;
-    this.spriteCamera.right = width / 2;
-    this.spriteCamera.top = height / 2;
-    this.spriteCamera.bottom = -height / 2;
-    this.spriteCamera.updateProjectionMatrix();
-    this.onZoomLevelChange(this.camera.zoom);
-
   }
 
   #createCompass(size) {
@@ -448,30 +468,23 @@ class PlanView extends View {
     return sprite;
   }
 
-  #createRatioText() {
-    //https://discourse.threejs.org/t/how-to-update-text-in-real-time/39050/12
-    const position = new THREE.Vector3(0, -this.scene.height / 2 + 40, 1);
-    return new TextSprite('0', position, { size: 35, family: 'Helvetica Neue', strokeColor: 'black' }, 0.5);
-
+  activate() {
+    super.activate();
+    this.compass.visible = true;
+    this.renderView();
   }
 
-  #createRatioIndicator(width) {
-    const map = new THREE.TextureLoader().load('images/ratio.png');
-    map.colorSpace = THREE.SRGBColorSpace;
-    const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
-    const sprite = new THREE.Sprite(material);
-    sprite.center.set(0.5, 0.5);
-    sprite.scale.set(width, (width / 755) * 36, 1);
-    sprite.position.set(0, -this.scene.height / 2 + 20, 1); // bottom right
-    sprite.width = width; // custom property
-    return sprite;
+  deactivate() {
+    super.deactivate();
+    this.compass.visible = false;
   }
+
 }
 
 class ProfileView extends View {
 
   constructor(scene, domElement) {
-    super(View.createOrthoCamera(scene.width / scene.height), domElement, scene);
+    super('profileView', View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
     this.overviewCamera.layers.disable(1);
@@ -497,6 +510,7 @@ class ProfileView extends View {
     }
 
     if (e.detail.reason === 'zoom') {
+      this.onZoomLevelChange(e.detail.value.level);
       this.updateFrustumFrame();
     }
 
