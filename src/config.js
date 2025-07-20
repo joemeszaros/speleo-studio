@@ -74,8 +74,11 @@ export const OPTIONS = {
 
   tabulator : {
     paginationSize : 7
-  }
+  },
 
+  screen : {
+    DPI : 96
+  }
 };
 
 export class Options {

@@ -38,6 +38,10 @@ export function addGui(options, scene, materials, element) {
     color : s.sectionAttributes.color.hex()
   };
 
+  const screenParam = {
+    DPI : options.screen.DPI
+  };
+
   const centerLineFolder = gui.addFolder('Center lines');
 
   centerLineFolder.add(centerLineParam, 'show center lines').onChange(function (val) {
@@ -166,6 +170,19 @@ export function addGui(options, scene, materials, element) {
   sectionAttrFolder.addColor(sectionAttributeParam, 'color').onChange(function (val) {
     s.sectionAttributes.color = new Color(val);
   });
+
+  const screenFolder = gui.addFolder('Screen');
+
+  screenFolder
+    .add(screenParam, 'DPI', 72, 300)
+    .step(1)
+    .onFinishChange(function (val) {
+      options.screen.DPI = val; // this sets the DPI in the options object that is used in the View
+      scene.views.spatial.onDPIChange(val);
+      scene.views.plan.onDPIChange(val);
+      scene.views.profile.onDPIChange(val);
+      scene.view.renderView();
+    });
 
   return gui;
 

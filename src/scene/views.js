@@ -11,11 +11,12 @@ import { ViewHelper } from '../utils/viewhelper.js';
 
 class View {
 
-  constructor(name, camera, domElement, scene, ratioIndicatorWidth = 200) {
+  constructor(name, camera, domElement, scene, dpi = 96, ratioIndicatorWidth = 200) {
     this.name = name;
     this.camera = camera;
     this.domElement = domElement;
     this.scene = scene;
+    this.dpi = dpi;
 
     this.ratioIndicator = this.#createRatioIndicator(ratioIndicatorWidth);
     this.ratioIndicator.visible = false;
@@ -74,7 +75,7 @@ class View {
       showWarningPanel('Ratio must be a positive number');
       return;
     } else {
-      const cmInPixels = (this.dpi ?? 96) / 2.54;
+      const cmInPixels = this.dpi / 2.54;
       const screenInCentimeters = window.screen.width / cmInPixels;
       const ratioWithoutZoom = (this.camera.width * 100) / screenInCentimeters;
       const zoomLevel = ratioWithoutZoom / ratioValue;
@@ -83,8 +84,14 @@ class View {
     }
   }
 
+  onDPIChange(dpi) {
+    const fac = this.dpi / dpi;
+    this.dpi = dpi;
+    this.zoomCameraTo(this.camera.zoom * fac);
+  }
+
   onZoomLevelChange(level) {
-    const cmInPixels = (this.dpi ?? 96) / 2.54;
+    const cmInPixels = this.dpi / 2.54;
     const worldWidthInMeters = this.camera.width / level;
     const indicatorWidthInMeters = worldWidthInMeters / (this.scene.width / this.ratioIndicator.width);
     const screenInCentimeters = window.screen.width / cmInPixels;
