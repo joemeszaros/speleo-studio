@@ -210,6 +210,19 @@ class Cave {
     this.visible = visible;
   }
 
+  validate() {
+    const errors = [];
+    if (!(typeof this.name === 'string' && this.name.trim().length > 0)) {
+      errors.push(`Cave name ('${this.name}') is empty`);
+    }
+
+    return errors;
+  }
+
+  isValid() {
+    return this.validate().length === 0;
+  }
+
   getStats() {
     var length = 0;
     var orphanLength = 0;
@@ -238,7 +251,10 @@ class Cave {
       });
     });
     const stations = [...this.stations.values()];
-    var minZ, maxZ, minZSplay, maxZSplay;
+    var minZ = 0,
+      maxZ = 0,
+      minZSplay = 0,
+      maxZSplay = 0;
 
     stations.forEach((ss) => {
       const zCoord = ss.position.z;

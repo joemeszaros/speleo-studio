@@ -175,7 +175,9 @@ class MyScene {
   }
 
   deleteSurvey(caveName, surveyName) {
-    this.caveObjects.get(caveName).delete(surveyName);
+    if (this.caveObjects.has(caveName) && this.caveObjects.get(caveName).has(surveyName)) {
+      this.caveObjects.get(caveName).delete(surveyName);
+    }
   }
 
   addSurvey(caveName, surveyName, entry) {

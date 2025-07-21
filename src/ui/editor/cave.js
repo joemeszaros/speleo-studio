@@ -1,7 +1,8 @@
 import * as U from '../../utils/utils.js';
-import { CaveMetadata } from '../../model/cave.js';
+import { CaveMetadata, Cave } from '../../model/cave.js';
 import { makeMovable, showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
+import { GeoData, EOVCoordinateWithElevation, CoordinateSytem, StationWithCoordinate } from '../../model/geo.js';
 
 class CaveEditor extends Editor {
   constructor(db, options, cave, scene, attributeDefs, panel) {
@@ -128,4 +129,176 @@ class CaveEditor extends Editor {
   }
 }
 
-export { CaveEditor };
+class NewCaveEditor {
+  constructor({ onCreate, onCancel, panel }) {
+    this.onCreate = onCreate;
+    this.onCancel = onCancel;
+    this.panel = panel;
+    this.caveData = {
+      name     : '',
+      metaData : {
+        settlement   : '',
+        catasterCode : '',
+        date         : ''
+      },
+      coordinates : [] // List of {stationName, y, x, elevation}
+    };
+  }
+
+  show() {
+    this.panel.innerHTML = '';
+    makeMovable(
+      this.panel,
+      'Create New Cave',
+      false,
+      () => this.close(),
+      () => {},
+      () => {}
+    );
+    this.#setupForm();
+    this.panel.style.display = 'block';
+  }
+
+  close() {
+    this.panel.style.display = 'none';
+    if (this.onCancel) this.onCancel();
+  }
+
+  #setupForm() {
+    const form = U.node`<form class="editor"></form>`;
+    const fields = [
+      { label: 'Name', id: 'name', type: 'text', required: true },
+      { label: 'Settlement', id: 'settlement', type: 'text' },
+      { label: 'Cataster code', id: 'catasterCode', type: 'text' },
+      { label: 'Date', id: 'date', type: 'date' }
+    ];
+    fields.forEach((f) => {
+      const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" ${f.required ? 'required' : ''}>`;
+      input.oninput = (e) => {
+        if (f.id === 'name') this.caveData.name = e.target.value;
+        else this.caveData.metaData[f.id] = e.target.value;
+      };
+      const label = U.node`<label for="${f.id}">${f.label}: </label>`;
+      label.appendChild(input);
+      form.appendChild(label);
+      form.appendChild(U.node`<br/>`);
+    });
+
+    // Coordinates section
+    const coordsDiv = U.node`<div class="coords-section"><b>EOV Coordinates (Station Name, Y, X, Elevation):</b></div>`;
+    const coordsList = U.node`<div class="coords-list"></div>`;
+    coordsDiv.appendChild(coordsList);
+    const addCoordBtn = U.node`<button type="button">Add coordinate</button>`;
+    addCoordBtn.onclick = (e) => {
+      e.preventDefault();
+      this.caveData.coordinates.push({ stationName: '', y: '', x: '', elevation: '' });
+      renderCoords();
+    };
+    coordsDiv.appendChild(addCoordBtn);
+    form.appendChild(coordsDiv);
+
+    const renderCoords = () => {
+      coordsList.innerHTML = '';
+      this.caveData.coordinates.forEach((coord, idx) => {
+        const nameInput = U.node`<input type="text" placeholder="Station Name" value="${coord.stationName}">`;
+        const yInput = U.node`<input type="number" step="any" placeholder="Y" value="${coord.y}">`;
+        const xInput = U.node`<input type="number" step="any" placeholder="X" value="${coord.x}">`;
+        const elevInput = U.node`<input type="number" step="any" placeholder="Elevation" value="${coord.elevation}">`;
+        nameInput.oninput = (e) => {
+          this.caveData.coordinates[idx].stationName = e.target.value;
+        };
+        yInput.oninput = (e) => {
+          this.caveData.coordinates[idx].y = e.target.value;
+        };
+        xInput.oninput = (e) => {
+          this.caveData.coordinates[idx].x = e.target.value;
+        };
+        elevInput.oninput = (e) => {
+          this.caveData.coordinates[idx].elevation = e.target.value;
+        };
+        const removeBtn = U.node`<button type="button">Remove</button>`;
+        removeBtn.onclick = (e) => {
+          e.preventDefault();
+          this.caveData.coordinates.splice(idx, 1);
+          renderCoords();
+        };
+        // Render all fields in a single row
+        const row = U.node`<div class="coord-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;"></div>`;
+        row.appendChild(nameInput);
+        row.appendChild(yInput);
+        row.appendChild(xInput);
+        row.appendChild(elevInput);
+        row.appendChild(removeBtn); // Ensure this is always appended and visible
+        coordsList.appendChild(row);
+      });
+    };
+    renderCoords();
+
+    const submitBtn = U.node`<button type="submit">Create Cave</button>`;
+    const cancelBtn = U.node`<button type="button">Cancel</button>`;
+    cancelBtn.onclick = (e) => {
+      e.preventDefault();
+      this.close();
+    };
+    form.appendChild(submitBtn);
+    form.appendChild(cancelBtn);
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      if (!this.caveData.name) {
+        showErrorPanel('Cave name is required!');
+        return;
+      }
+      // Validate coordinates
+      const coords = this.caveData.coordinates
+        .map((c) =>
+          c.stationName && !isNaN(Number(c.y)) && !isNaN(Number(c.x)) && !isNaN(Number(c.elevation))
+            ? new StationWithCoordinate(
+                c.stationName,
+                new EOVCoordinateWithElevation(Number(c.y), Number(c.x), Number(c.elevation))
+              )
+            : null
+        )
+        .filter((c) => c !== null);
+
+      // Collect validation errors for all coordinates
+      let errors = [];
+      this.caveData.coordinates.forEach((c) => {
+
+        const coord = new EOVCoordinateWithElevation(
+          U.parseMyFloat(c.y),
+          U.parseMyFloat(c.x),
+          U.parseMyFloat(c.elevation)
+        );
+        const coordErrors = coord.validate();
+        if (coordErrors.length > 0) {
+          errors.push(...coordErrors);
+        }
+        if (c.stationName == undefined || c.stationName.trim() === '') {
+          errors.push(`Station '${c.stationName}' is empty`);
+        }
+      });
+      if (errors.length > 0) {
+        showErrorPanel('Invalid coordinates:<br>' + errors.join('<br><br>'));
+        return;
+      }
+
+      const geoData = new GeoData(CoordinateSytem.EOV, coords);
+      if (this.onCreate) {
+        const cave = new Cave(
+          this.caveData.name,
+          new CaveMetadata(
+            this.caveData.metaData.settlement,
+            this.caveData.metaData.catasterCode,
+            this.caveData.metaData.date ? new Date(this.caveData.metaData.date) : undefined
+          ),
+          geoData
+        );
+        this.onCreate(cave);
+        this.close();
+      }
+    };
+    this.panel.appendChild(form);
+  }
+}
+
+export { CaveEditor, NewCaveEditor };

@@ -8,11 +8,12 @@ class NavigationBar {
    * @param {Map<String, Map>} options - Global project options, like global visibility of an object
    * @param {MyScene} scene - The 3D scene
    */
-  constructor(db, domElement, options, scene, interactive) {
+  constructor(db, domElement, options, scene, interactive, projectManager) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.interactive = interactive;
+    this.projectManager = projectManager;
     this.#buildNavbar(domElement);
     this.#addNavbarClickListener();
   }
@@ -22,6 +23,12 @@ class NavigationBar {
       {
         name     : 'File',
         elements : [
+          {
+            name  : 'New cave',
+            click : () => {
+              this.projectManager.addNewCave();
+            }
+          },
           {
             name  : 'Open TopoDroid file(s)',
             click : () => {

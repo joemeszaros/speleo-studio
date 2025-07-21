@@ -57,18 +57,18 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
       return typeof f === 'number' && f !== Infinity && !isNaN(f);
     };
 
-    [this.x, this.y, this.elevation].forEach((coord) => {
-      if (!isValidFloat(coord)) {
-        errors.push(`Coordinate '${coord}'is not a valid float number`);
+    ['x', 'y', 'elevation'].forEach((coord) => {
+      if (!isValidFloat(this[coord])) {
+        errors.push(`Coordinate ${coord}: '${this[coord]}'is not a valid float number`);
       }
     });
 
     if (this.x > 400_000 || this.x < 0) {
-      errors.push(`X coordinate '${this.x}' is out of bounds`);
+      errors.push(`X coordinate '${this.x}' is out of bounds (0-400000)`);
     }
 
     if (this.y < 400_000) {
-      errors.push(`Y coordinate '${this.y}' is out of bounds`);
+      errors.push(`Y coordinate '${this.y}' is out of bounds (400000-)`);
     }
 
     if (this.elevation < -3000 || this.elevation > 5000) {

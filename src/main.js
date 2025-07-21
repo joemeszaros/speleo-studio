@@ -36,7 +36,7 @@ class Main {
     const footer = new Footer(document.getElementById('footer'));
 
     const explorer = new ProjectExplorer(options, db, scene, attributeDefs, document.querySelector('#tree-panel'));
-    new ProjectManager(db, options, scene, explorer);
+    const projectManager = new ProjectManager(db, options, scene, explorer);
     const controls = addGui(options, scene, materials, document.getElementById('control-panel'));
     controls.close();
     const interaction = new SceneInteraction(
@@ -50,14 +50,14 @@ class Main {
       document.getElementById('infopanel'),
       document.getElementById('interactive')
     );
-    new NavigationBar(db, document.getElementById('navbarcontainer'), options, scene, interaction);
+    new NavigationBar(db, document.getElementById('navbarcontainer'), options, scene, interaction, projectManager);
 
     this.scene = scene;
     this.importers = {
-      topodroid : new TopodroidImporter(db, options, scene, explorer),
-      polygon   : new PolygonImporter(db, options, scene, explorer),
-      json      : new JsonImporter(db, options, scene, explorer, attributeDefs),
-      ply       : new PlySurfaceImporter(db, options, scene)
+      topodroid : new TopodroidImporter(db, options, scene, projectManager),
+      polygon   : new PolygonImporter(db, options, scene, projectManager),
+      json      : new JsonImporter(db, options, scene, projectManager, attributeDefs),
+      ply       : new PlySurfaceImporter(db, options, scene, projectManager)
     };
 
     this.#setupEventListeners();

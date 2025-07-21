@@ -44,61 +44,11 @@ class Importer {
  */
 class CaveImporter {
 
-  constructor(db, options, scene, explorer) {
+  constructor(db, options, scene, manager) {
     this.db = db;
     this.options = options;
     this.scene = scene;
-    this.explorer = explorer;
-  }
-
-  /**
-   * Adds a freshly importeed cave to the scene and to the database.
-   * @param {Cave} cave - The newly imported cave to be added.
-   */
-  addCave(cave) {
-    const cavesReallyFar = Importer.getFarCaves(this.db.caves, cave.startPosition);
-    if (this.db.caves.has(cave.name)) {
-      showErrorPanel(`Import of '${cave.name}' failed, cave has already been imported!`, 20);
-    } else if (cavesReallyFar.length > 0) {
-      const message = `Import of '${cave.name}' failed, the cave is too far from previously imported caves: ${cavesReallyFar.join(',')}`;
-      showWarningPanel(message, 20);
-    } else {
-      this.db.caves.set(cave.name, cave);
-
-      const lOptions = this.options.scene.caveLines;
-      let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
-
-      cave.surveys.forEach((s) => {
-        const [centerLineSegments, splaySegments] = SurveyHelper.getSegments(s, cave.stations);
-        const _3dobjects = this.scene.addToScene(
-          s,
-          cave,
-          centerLineSegments,
-          splaySegments,
-          true,
-          colorGradients.get(s.name)
-        );
-        this.scene.addSurvey(cave.name, s.name, _3dobjects);
-      });
-
-      cave.sectionAttributes.forEach((sa) => {
-        if (sa.visible) {
-          const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
-          this.scene.showSectionAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
-        }
-      });
-      cave.componentAttributes.forEach((ca) => {
-        if (ca.visible) {
-          const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
-          this.scene.showSectionAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
-        }
-      });
-
-      this.explorer.addCave(cave);
-      const boundingBox = this.scene.computeBoundingBox();
-      this.scene.grid.adjust(boundingBox);
-      this.scene.view.fitScreen(boundingBox);
-    }
+    this.manager = manager;
   }
 
   importFile(file, name, endcoding = 'utf8') {
@@ -123,8 +73,8 @@ class CaveImporter {
 
 class PolygonImporter extends CaveImporter {
 
-  constructor(db, options, scene, explorer) {
-    super(db, options, scene, explorer);
+  constructor(db, options, scene, manager) {
+    super(db, options, scene, manager);
   }
 
   #getShotsFromPolygon = function (iterator) {
@@ -303,14 +253,14 @@ class PolygonImporter extends CaveImporter {
 
   importText(wholeFileInText) {
     const cave = this.getCave(wholeFileInText);
-    this.addCave(cave);
+    this.manager.addCave(cave);
   }
 }
 
 class TopodroidImporter extends CaveImporter {
 
-  constructor(db, options, scene, explorer) {
-    super(db, options, scene, explorer);
+  constructor(db, options, scene, manager) {
+    super(db, options, scene, manager);
   }
 
   #getShotsAndAliasesFromCsv(csvTextData) {
@@ -367,13 +317,13 @@ class TopodroidImporter extends CaveImporter {
 
   importText(file, csvTextData) {
     const cave = this.getCave(file.name, csvTextData);
-    this.addCave(cave);
+    this.manager.addCave(cave);
   }
 }
 
 class JsonImporter extends CaveImporter {
-  constructor(db, options, scene, explorer, attributeDefs) {
-    super(db, options, scene, explorer);
+  constructor(db, options, scene, manager, attributeDefs) {
+    super(db, options, scene, manager);
     this.attributeDefs = attributeDefs;
   }
 
@@ -421,7 +371,7 @@ class JsonImporter extends CaveImporter {
         });
       }
     }
-    this.addCave(cave);
+    this.manager.addCave(cave);
   }
 }
 

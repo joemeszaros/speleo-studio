@@ -15,15 +15,22 @@ class SurveyHelper {
    * @param {aliases} - The connection points between different surveys
    * @returns The survey with updated properties
    */
-  static recalculateSurvey(index, es, surveyStations, aliases, coordinates) {
-    let startName, startPosition;
+  static recalculateSurvey(index, es, surveyStations, aliases, geoData) {
+    let startName, startPosition, startEov;
+
     if (index === 0) {
       //TODO: check if start station is still in shots
-      startName = es.start !== undefined ? es.start.name : es.shots[0].from;
-      startPosition = new Vector(0, 0, 0);
+      startName = es.start !== undefined ? es.start : es.shots[0].from;
+
+      if (geoData !== undefined) {
+        startEov = geoData.coordinates.find((c) => c.name === startName)?.coordinate;
+        startPosition = startEov.toVector();
+      } else {
+        startPosition = new Vector(0, 0, 0);
+      }
     }
 
-    SurveyHelper.calculateSurveyStations(es, surveyStations, aliases, startName, startPosition);
+    SurveyHelper.calculateSurveyStations(es, surveyStations, aliases, startName, startPosition, startEov);
     return es;
   }
 

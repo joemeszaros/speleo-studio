@@ -6,10 +6,11 @@ import { SurveyHelper } from '../survey.js';
 import { Color } from '../model.js';
 import { Survey } from '../model/survey.js';
 import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
-import { CaveEditor } from './editor/cave.js';
+import { CaveEditor, NewCaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
-import { showWarningPanel } from './popups.js';
+import { showErrorPanel, showWarningPanel } from './popups.js';
+import { SectionHelper } from '../section.js';
 
 class ProjectManager {
 
@@ -86,9 +87,9 @@ class ProjectManager {
   recalculateCave(cave) {
     let caveStations = new Map();
     const lOptions = this.options.scene.caveLines;
-
+    cave.stations = caveStations;
     cave.surveys.entries().forEach(([index, es]) => {
-      SurveyHelper.recalculateSurvey(index, es, caveStations, cave.aliases);
+      SurveyHelper.recalculateSurvey(index, es, caveStations, cave.aliases, cave.geoData);
       this.#emitSurveyRecalculated(cave, es);
     });
     cave.stations = caveStations;
@@ -128,6 +129,67 @@ class ProjectManager {
       }
     });
     document.dispatchEvent(event);
+  }
+
+  addNewCave() {
+    const panel = document.getElementById('caveeditor');
+    this.editor = new NewCaveEditor({
+      panel,
+      onCreate : (cave) => {
+        this.addCave(cave);
+        this.editor = null;
+      },
+      onCancel : () => {
+        this.editor = null;
+      }
+    });
+    this.editor.show();
+  }
+
+  addCave(cave) {
+    const cavesReallyFar = []; //this.constructor.getFarCaves(this.db.caves, cave.startPosition);
+    if (this.db.caves.has(cave.name)) {
+      showErrorPanel(`Import of '${cave.name}' failed, cave has already been imported!`, 20);
+    } else if (cavesReallyFar.length > 0) {
+      const message = `Import of '${cave.name}' failed, the cave is too far from previously imported caves: ${cavesReallyFar.join(',')}`;
+      showWarningPanel(message, 20);
+    } else {
+      this.db.caves.set(cave.name, cave);
+
+      const lOptions = this.options.scene.caveLines;
+      let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
+
+      cave.surveys.forEach((s) => {
+        const [centerLineSegments, splaySegments] = SurveyHelper.getSegments(s, cave.stations);
+        const _3dobjects = this.scene.addToScene(
+          s,
+          cave,
+          centerLineSegments,
+          splaySegments,
+          true,
+          colorGradients.get(s.name)
+        );
+        this.scene.addSurvey(cave.name, s.name, _3dobjects);
+      });
+
+      cave.sectionAttributes.forEach((sa) => {
+        if (sa.visible) {
+          const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
+          this.scene.showSectionAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
+        }
+      });
+      cave.componentAttributes.forEach((ca) => {
+        if (ca.visible) {
+          const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
+          this.scene.showSectionAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
+        }
+      });
+
+      this.explorer.addCave(cave);
+      const boundingBox = this.scene.computeBoundingBox();
+      this.scene.grid.adjust(boundingBox);
+      this.scene.view.fitScreen(boundingBox);
+    }
   }
 
 }
@@ -253,7 +315,7 @@ class ProjectExplorer {
       } else if (cave.surveys.find((s) => s.name === name) !== undefined) {
         showWarningPanel(`Survey with name '${name}' already exists!`);
       } else {
-        const newSurvey = new Survey(name, true, undefined, [], [], []);
+        const newSurvey = new Survey(name, true, undefined, '0', []);
         cave.surveys.push(newSurvey);
         this.addSurvey(cave, newSurvey);
         this.editor = new SurveyEditor(

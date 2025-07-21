@@ -225,7 +225,7 @@ class SurveyEditor extends Editor {
       length     : undefined,
       azimuth    : undefined,
       clino      : undefined,
-      type       : undefined,
+      type       : 'center',
       status     : 'incomplete',
       message    : 'Shot is newly created',
       attributes : [],
