@@ -5,13 +5,9 @@ import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { Color } from '../model.js';
 import { Survey } from '../model/survey.js';
-import {
-  SurveyEditor,
-  SurveySheetEditor,
-  CaveEditor,
-  SectionAttributeEditor,
-  ComponentAttributeEditor
-} from './editor.js';
+import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
+import { CaveEditor } from './editor/cave.js';
+import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
 import { showWarningPanel } from './popups.js';
 
