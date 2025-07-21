@@ -140,7 +140,7 @@ class PolygonImporter extends CaveImporter {
         (x) => x instanceof Date
       );
       const metaData = new CaveMetadata(settlement, catasterCode, date, madeBy);
-      let geoData, fixPointName;
+      let geoData, fixPointName, convergence;
       const surveys = [];
       const stations = new Map();
       var surveyName;
@@ -214,12 +214,14 @@ class PolygonImporter extends CaveImporter {
                 `Invalid Polygon survey, fix point ${fixPointName} != first shot's from value (${shots[0].from})`
               );
             }
-
+            //calculate convergence based on the first survey
+            if (startCoordinate !== undefined) {
+              convergence = MeridianConvergence.getConvergence(
+                startCoordinate.coordinate.y,
+                startCoordinate.coordinate.x
+              );
+            }
           }
-          const convergence =
-            startCoordinate !== undefined
-              ? MeridianConvergence.getConvergence(startCoordinate.coordinate.y, startCoordinate.coordinate.x)
-              : undefined;
 
           const metadata = new SurveyMetadata(
             surveyDate,
