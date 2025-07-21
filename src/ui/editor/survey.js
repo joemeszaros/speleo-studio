@@ -1,9 +1,9 @@
 import { OPTIONS } from '../../config.js';
 import { Declination } from '../../utils/geo.js';
 import { BaseEditor, Editor } from './base.js';
-import { SurveyMetadata } from '../../model/survey.js';
-import { Shot, StationAttribute } from '../../model.js';
+import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
 import { showErrorPanel, makeMovable } from '../../ui/popups.js';
+import { Shot, StationAttribute } from '../../model.js';
 import * as U from '../../utils/utils.js';
 
 class SurveyEditor extends Editor {
@@ -730,4 +730,192 @@ class SurveySheetEditor extends BaseEditor {
 
 }
 
-export { SurveyEditor, SurveySheetEditor };
+function renderListEditor({
+  container,
+  items,
+  fields,
+  onAdd,
+  onRemove,
+  onChange,
+  addButtonLabel = 'Add',
+  rowStyle = ''
+}) {
+  container.innerHTML = '';
+  items.forEach((item, idx) => {
+    const row = U.node`<div class="list-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;${rowStyle}"></div>`;
+    fields.forEach((f) => {
+      const input = U.node`<input type="${f.type}" placeholder="${f.placeholder}" value="${item[f.key]}" style="width: ${f.width || '100px'};">`;
+      input.oninput = (e) => onChange(idx, f.key, e.target.value);
+      row.appendChild(input);
+    });
+    const removeBtn = U.node`<button type="button">Remove</button>`;
+    removeBtn.onclick = (e) => {
+      e.preventDefault();
+      onRemove(idx);
+    };
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+  });
+  const addBtn = U.node`<button type="button">${addButtonLabel}</button>`;
+  addBtn.onclick = (e) => {
+    e.preventDefault();
+    onAdd();
+  };
+  container.appendChild(addBtn);
+}
+
+class NewSurveyEditor {
+  constructor({ survey, onSave, onCancel, panel }) {
+    this.survey = survey || new Survey('', true, new SurveyMetadata(), '');
+    this.onSave = onSave;
+    this.onCancel = onCancel;
+    this.panel = panel;
+    this.formData = {
+      name        : this.survey.name || '',
+      start       : this.survey.start || '',
+      date        : this.survey.metadata?.date ? U.formatDateISO(this.survey.metadata.date) : '',
+      declination : this.survey.metadata?.declination || '',
+      convergence : this.survey.metadata?.convergence || '',
+      team        : this.survey.metadata?.team?.name || '',
+      members     : (this.survey.metadata?.team?.members || []).map((m) => ({ name: m.name, role: m.role })),
+      instruments : (this.survey.metadata?.instruments || []).map((i) => ({ name: i.name, value: i.value }))
+    };
+    this.renderMembers = this.renderMembers.bind(this);
+    this.renderInstruments = this.renderInstruments.bind(this);
+  }
+
+  renderMembers() {
+    renderListEditor({
+      container : this.membersList,
+      items     : this.formData.members,
+      fields    : [
+        { key: 'name', placeholder: 'Name', type: 'text', width: '120px' },
+        { key: 'role', placeholder: 'Role', type: 'text', width: '100px' }
+      ],
+      onAdd : () => {
+        this.formData.members.push({ name: '', role: '' });
+        this.renderMembers();
+      },
+      onRemove : (idx) => {
+        this.formData.members.splice(idx, 1);
+        this.renderMembers();
+      },
+      onChange : (idx, key, value) => {
+        this.formData.members[idx][key] = value;
+      },
+      addButtonLabel : 'Add member'
+    });
+  }
+
+  renderInstruments() {
+    renderListEditor({
+      container : this.instrumentsList,
+      items     : this.formData.instruments,
+      fields    : [
+        { key: 'name', placeholder: 'Instrument Name', type: 'text', width: '140px' },
+        { key: 'value', placeholder: 'Value', type: 'text', width: '80px' }
+      ],
+      onAdd : () => {
+        this.formData.instruments.push({ name: '', value: '' });
+        this.renderInstruments();
+      },
+      onRemove : (idx) => {
+        this.formData.instruments.splice(idx, 1);
+        this.renderInstruments();
+      },
+      onChange : (idx, key, value) => {
+        this.formData.instruments[idx][key] = value;
+      },
+      addButtonLabel : 'Add instrument'
+    });
+  }
+
+  show() {
+    this.panel.innerHTML = '';
+    makeMovable(
+      this.panel,
+      'Edit Survey',
+      false,
+      () => this.close(),
+      () => {},
+      () => {}
+    );
+    this.#setupForm();
+    this.panel.style.display = 'block';
+  }
+
+  close() {
+    this.panel.style.display = 'none';
+    if (this.onCancel) this.onCancel();
+  }
+
+  #setupForm() {
+    const form = U.node`<form class="editor"></form>`;
+    const fields = [
+      { label: 'Survey Name', id: 'name', type: 'text', required: true },
+      { label: 'Start Station', id: 'start', type: 'text', required: true },
+      { label: 'Date', id: 'date', type: 'date', required: true },
+      { label: 'Declination', id: 'declination', type: 'number', step: 'any', required: true },
+      { label: 'Convergence', id: 'convergence', type: 'number', step: 'any' },
+      { label: 'Team Name', id: 'team', type: 'text', required: true }
+    ];
+    fields.forEach((f) => {
+      const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${this.formData[f.id] || ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
+      input.oninput = (e) => {
+        this.formData[f.id] = e.target.value;
+      };
+      const label = U.node`<label for="${f.id}">${f.label}: </label>`;
+      label.appendChild(input);
+      form.appendChild(label);
+      form.appendChild(U.node`<br/>`);
+    });
+
+    const membersDiv = U.node`<div class="team-members-section"><b>Team Members:</b></div>`;
+    this.membersList = U.node`<div class="members-list"></div>`;
+    membersDiv.appendChild(this.membersList);
+    form.appendChild(membersDiv);
+    this.renderMembers();
+
+    const instrumentsDiv = U.node`<div class="instruments-section"><b>Survey Instruments:</b></div>`;
+    this.instrumentsList = U.node`<div class="instruments-list"></div>`;
+    instrumentsDiv.appendChild(this.instrumentsList);
+    form.appendChild(instrumentsDiv);
+    this.renderInstruments();
+
+    const saveBtn = U.node`<button type="submit">Save</button>`;
+    const cancelBtn = U.node`<button type="button">Cancel</button>`;
+    cancelBtn.onclick = (e) => {
+      e.preventDefault();
+      this.close();
+    };
+    form.appendChild(saveBtn);
+    form.appendChild(cancelBtn);
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      if (!this.formData.name) {
+        showErrorPanel('Survey name is required!');
+        return;
+      }
+      if (!this.formData.start) {
+        showErrorPanel('Start station is required!');
+        return;
+      }
+      const teamMembers = this.formData.members.map((m) => new SurveyTeamMember(m.name, m.role));
+      const team = new SurveyTeam(this.formData.team, teamMembers);
+      const instruments = this.formData.instruments.map((i) => new SurveyInstrument(i.name, i.value));
+      const metadata = new SurveyMetadata(
+        this.formData.date ? new Date(this.formData.date) : undefined,
+        this.formData.declination ? parseFloat(this.formData.declination) : undefined,
+        this.formData.convergence ? parseFloat(this.formData.convergence) : undefined,
+        team,
+        instruments
+      );
+      const survey = new Survey(this.formData.name, true, metadata, this.formData.start);
+      if (this.onSave) this.onSave(survey);
+      this.close();
+    };
+    this.panel.appendChild(form);
+  }
+}
+
+export { SurveyEditor, SurveySheetEditor, NewSurveyEditor };

@@ -4,10 +4,9 @@ import { escapeHtml } from '../../dependencies/escape-html.js';
 import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { Color } from '../model.js';
-import { Survey } from '../model/survey.js';
 import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
 import { CaveEditor, NewCaveEditor } from './editor/cave.js';
-import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
+import { SurveyEditor, SurveySheetEditor, NewSurveyEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
 import { showErrorPanel, showWarningPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
@@ -137,10 +136,10 @@ class ProjectManager {
       panel,
       onCreate : (cave) => {
         this.addCave(cave);
-        this.editor = null;
+        this.editor = undefined;
       },
       onCancel : () => {
-        this.editor = null;
+        this.editor = undefined;
       }
     });
     this.editor.show();
@@ -309,25 +308,19 @@ class ProjectExplorer {
     const addSurvey = U.node`<li class="menu-option">Add survey</li>`;
     addSurvey.onclick = () => {
       this.contextMenuElement.style.display = 'none';
-      const name = prompt('Please enter the survey name');
-      if (name.length === 0) {
-        showWarningPanel('Survey name should not be empty!');
-      } else if (cave.surveys.find((s) => s.name === name) !== undefined) {
-        showWarningPanel(`Survey with name '${name}' already exists!`);
-      } else {
-        const newSurvey = new Survey(name, true, undefined, '0', []);
-        cave.surveys.push(newSurvey);
-        this.addSurvey(cave, newSurvey);
-        this.editor = new SurveyEditor(
-          cave,
-          newSurvey,
-          this.scene,
-          this.attributeDefs,
-          document.getElementById('surveyeditor')
-        );
-        this.editor.setupTable();
-        this.editor.show();
-      }
+      const panel = document.getElementById('surveyeditor');
+      this.editor = new NewSurveyEditor({
+        panel,
+        onSave : (newSurvey) => {
+          cave.surveys.push(newSurvey);
+          this.addSurvey(cave, newSurvey);
+          this.editor = undefined;
+        },
+        onCancel : () => {
+          this.editor = undefined;
+        }
+      });
+      this.editor.show();
     };
 
     const cycles = U.node`<li class="menu-option">Cycles</li>`;
