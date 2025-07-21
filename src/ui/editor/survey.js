@@ -541,10 +541,11 @@ class SurveyEditor extends Editor {
           } else {
             row.getElement().style.backgroundColor = '';
           }
-        } else {
-          //invalid, incomplete
+        } else if (rowData.status === 'invalid') {
           row.getElement().style.backgroundColor = '#b99922';
         }
+
+        // we do not set a new background for incomplete rows
       },
       columnDefaults : {
         headerSort     : false,
