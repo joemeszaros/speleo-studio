@@ -573,9 +573,8 @@ class SurveySheetEditor extends BaseEditor {
     this.cave = cave;
     this.survey = survey;
 
-    this.renderMembers = this.renderMembers.bind(this);
-    this.renderInstruments = this.renderInstruments.bind(this);
-
+    //this.renderMembers = this.renderMembers.bind(this);
+    //this.renderInstruments = this.renderInstruments.bind(this);
   }
 
   setupPanel() {
@@ -700,8 +699,6 @@ class SurveySheetEditor extends BaseEditor {
         team,
         instruments
       );
-      console.log('nameHasChanged', this.nameHasChanged);
-      console.log('surveyHasChanged', this.surveyHasChanged);
 
       if (this.survey !== undefined && this.nameHasChanged && this.formData.name !== this.survey.name) {
         if (this.cave.surveys.find((s) => s.name === this.formData.name) !== undefined) {
@@ -747,7 +744,7 @@ class SurveySheetEditor extends BaseEditor {
   }
 
   renderMembers() {
-    renderListEditor({
+    this.renderListEditor({
       container : this.membersList,
       items     : this.formData.members,
       fields    : [
@@ -765,17 +762,18 @@ class SurveySheetEditor extends BaseEditor {
         this.surveyHasChanged = true;
       },
       onChange : (idx, key, value) => {
-        this.formData.members[idx][key] = value;
         if (this.formData.members[idx][key] !== value) {
           this.surveyHasChanged = true;
         }
+        this.formData.members[idx][key] = value;
+
       },
       addButtonLabel : 'Add member'
     });
   }
 
   renderInstruments() {
-    renderListEditor({
+    this.renderListEditor({
       container : this.instrumentsList,
       items     : this.formData.instruments,
       fields    : [
@@ -793,10 +791,11 @@ class SurveySheetEditor extends BaseEditor {
         this.surveyHasChanged = true;
       },
       onChange : (idx, key, value) => {
-        this.formData.instruments[idx][key] = value;
         if (this.formData.instruments[idx][key] !== value) {
           this.surveyHasChanged = true;
         }
+        this.formData.instruments[idx][key] = value;
+
       },
       addButtonLabel : 'Add instrument'
     });
@@ -833,40 +832,6 @@ class SurveySheetEditor extends BaseEditor {
     document.dispatchEvent(event);
   }
 
-}
-
-function renderListEditor({
-  container,
-  items,
-  fields,
-  onAdd,
-  onRemove,
-  onChange,
-  addButtonLabel = 'Add',
-  rowStyle = ''
-}) {
-  container.innerHTML = '';
-  items.forEach((item, idx) => {
-    const row = U.node`<div class="list-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;${rowStyle}"></div>`;
-    fields.forEach((f) => {
-      const input = U.node`<input type="${f.type}" placeholder="${f.placeholder}" value="${item[f.key]}" style="width: ${f.width || '100px'};">`;
-      input.oninput = (e) => onChange(idx, f.key, e.target.value);
-      row.appendChild(input);
-    });
-    const removeBtn = U.node`<button type="button">Remove</button>`;
-    removeBtn.onclick = (e) => {
-      e.preventDefault();
-      onRemove(idx);
-    };
-    row.appendChild(removeBtn);
-    container.appendChild(row);
-  });
-  const addBtn = U.node`<button type="button">${addButtonLabel}</button>`;
-  addBtn.onclick = (e) => {
-    e.preventDefault();
-    onAdd();
-  };
-  container.appendChild(addBtn);
 }
 
 export { SurveyEditor, SurveySheetEditor };

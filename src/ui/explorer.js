@@ -5,7 +5,7 @@ import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { Color } from '../model.js';
 import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
-import { CaveEditor, NewCaveEditor } from './editor/cave.js';
+import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
 import { showErrorPanel, showWarningPanel } from './popups.js';
@@ -31,6 +31,12 @@ class ProjectManager {
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
     document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
+    document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
+  }
+
+  onCaveAdded(e) {
+    const cave = e.detail.cave;
+    this.addCave(cave);
   }
 
   onSurveyAdded(e) {
@@ -139,17 +145,16 @@ class ProjectManager {
   }
 
   addNewCave() {
-    const panel = document.getElementById('caveeditor');
-    this.editor = new NewCaveEditor({
-      panel,
-      onCreate : (cave) => {
-        this.addCave(cave);
-        this.editor = undefined;
-      },
-      onCancel : () => {
-        this.editor = undefined;
-      }
-    });
+    this.editor = new CaveEditor(
+      this.db,
+      this.options,
+      undefined,
+      this.scene,
+      this.attributeDefs,
+      document.getElementById('caveeditor')
+    );
+
+    this.editor.setupPanel();
     this.editor.show();
   }
 

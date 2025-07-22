@@ -23,6 +23,31 @@ class BaseEditor {
 
     this.panel.style.display = 'none';
   }
+
+  renderListEditor({ container, items, fields, onAdd, onRemove, onChange, addButtonLabel = 'Add', rowStyle = '' }) {
+    container.innerHTML = '';
+    items.forEach((item, idx) => {
+      const row = U.node`<div class="list-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;${rowStyle}"></div>`;
+      fields.forEach((f) => {
+        const input = U.node`<input type="${f.type}" placeholder="${f.placeholder}" value="${item[f.key]}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''} style="width: ${f.width || '100px'};">`;
+        input.oninput = (e) => onChange(idx, f.key, e.target.value);
+        row.appendChild(input);
+      });
+      const removeBtn = U.node`<button type="button">Remove</button>`;
+      removeBtn.onclick = (e) => {
+        e.preventDefault();
+        onRemove(idx);
+      };
+      row.appendChild(removeBtn);
+      container.appendChild(row);
+    });
+    const addBtn = U.node`<button type="button">${addButtonLabel}</button>`;
+    addBtn.onclick = (e) => {
+      e.preventDefault();
+      onAdd();
+    };
+    container.appendChild(addBtn);
+  }
 }
 
 class Editor extends BaseEditor {
@@ -321,6 +346,7 @@ class Editor extends BaseEditor {
       }
     }
   };
+
 }
 
 export { BaseEditor, Editor };
