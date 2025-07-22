@@ -1,5 +1,5 @@
 import { OPTIONS } from '../../config.js';
-import { Declination } from '../../utils/geo.js';
+import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor, Editor } from './base.js';
 import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
 import { showErrorPanel, makeMovable } from '../../ui/popups.js';
@@ -281,7 +281,7 @@ class SurveyEditor extends Editor {
       { id: 'redo', text: 'Redo', click: () => this.table.redo() },
       { break: true },
       {
-        id    : 'eov-toggle',
+        id    : 'xyz-toggle',
         text  : 'Toggle XYZ',
         click : () => {
           this.table.toggleColumn('x');
@@ -468,6 +468,7 @@ class SurveyEditor extends Editor {
       headerFilter       : 'input',
       formatter          : (cell) => this.baseTableFunctions.atrributesFormatter(cell, (cv) => cv.attributes),
       accessorClipboard  : (value) => this.baseTableFunctions.attributesToClipboard(value, (v) => v),
+      accessorDownload   : (value) => this.baseTableFunctions.attributesToClipboard(value, (v) => v),
       mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs),
       formatterClipboard : (cell) => this.baseTableFunctions.clipboardFormatter(cell, (v) => v.attributes),
       editor             : (cell, onRendered, success) =>
@@ -571,13 +572,17 @@ class SurveySheetEditor extends BaseEditor {
     this.db = db;
     this.cave = cave;
     this.survey = survey;
+
+    this.renderMembers = this.renderMembers.bind(this);
+    this.renderInstruments = this.renderInstruments.bind(this);
+
   }
 
   setupPanel() {
     this.panel.innerHTML = '';
     makeMovable(
       this.panel,
-      `Survey sheet editor: ${this.survey.name}`,
+      `Survey sheet editor: ${this.survey?.name || 'New survey'}`,
       false,
       () => this.closeEditor(),
       () => {},
@@ -587,128 +592,228 @@ class SurveySheetEditor extends BaseEditor {
   }
 
   #setupEditor() {
-    const editorFields = U.node`<div class="editor"></div>`;
 
-    [
-      { label: 'Name', id: 'name', field: 'name', type: 'text' },
-      {
-        label : 'Start station',
-        id    : 'start',
-        field : 'start',
-        type  : 'text'
-      },
-      {
-        label       : 'Declination',
-        id          : 'declination',
-        fieldSource : 'metadata',
-        field       : 'declination',
-        type        : 'text',
-        parser      : (v) => U.parseMyFloat(v)
-      },
-      {
-        label       : 'Mer. Convergence',
-        id          : 'convergence',
-        fieldSource : 'metadata',
-        field       : 'convergence',
-        type        : 'text',
-        parser      : (v) => U.parseMyFloat(v),
-        formatter   : (v) => v.toFixed(3),
-        disabled    : true
-      },
-      {
-        label : 'Declination (official)',
-        id    : 'declination-official',
-        type  : 'text',
-        value : ''
-      },
-      {
-        label       : 'Date',
-        id          : 'date',
-        fieldSource : 'metadata',
-        field       : 'date',
-        type        : 'date',
-        parser      : (value) => new Date(value),
-        formatter   : (value) => U.formatDateISO(value) // yyyy-mm-dd
+    this.formData = {
+      name        : this.survey?.name || '',
+      start       : this.survey?.start || '',
+      date        : this.survey?.metadata?.date ? U.formatDateISO(this.survey.metadata.date) : '',
+      declination : this.survey?.metadata?.declination || '',
+      convergence : this.survey?.metadata?.convergence || '',
+      team        : this.survey?.metadata?.team?.name || '',
+      members     : (this.survey?.metadata?.team?.members || []).map((m) => ({ name: m.name, role: m.role })),
+      instruments : (this.survey?.metadata?.instruments || []).map((i) => ({ name: i.name, value: i.value }))
+    };
+
+    const form = U.node`<form class="editor"></form>`;
+    const fields = [
+      { label: 'Survey Name', id: 'name', type: 'text', required: true },
+      { label: 'Start Station', id: 'start', type: 'text' },
+      { label: 'Date', id: 'date', type: 'date', required: true },
+      { label: 'Declination', id: 'declination', type: 'number', step: 'any', required: true },
+      { label: 'Team Name', id: 'team', type: 'text', required: true }
+    ];
+
+    this.surveyHasChanged = false;
+    this.nameHasChanged = false;
+
+    fields.forEach((f) => {
+      let value = this.formData[f.id];
+      if (value !== undefined && f.formatter !== undefined) {
+        value = f.formatter(value);
       }
-
-    ].forEach((i) => {
-      let value = i.value;
-      if (value === undefined) {
-        if (i.fieldSource === 'metadata' && this.survey.metadata !== undefined) {
-          value = this.survey.metadata[i.field];
-          if (value !== undefined && i.formatter !== undefined) {
-            value = i.formatter(value);
+      const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${value || ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
+      input.oninput = (e) => {
+        if (this.formData[f.id] !== e.target.value) {
+          this.surveyHasChanged = true;
+          if (f.id === 'name') {
+            this.nameHasChanged = true;
           }
-        } else {
-          if (i.formatter !== undefined) {
-            value = i.formatter(this.survey[i.field]);
-          } else {
-            value = this.survey[i.field];
-          }
+          this.formData[f.id] = e.target.value;
         }
-      }
-      const label = U.node`<label for="${i.id}">${i.label}: <input type="${i.type}" id="${i.id}" value="${value}"></label>`;
-
-      if (i.disabled === true) {
-        label.childNodes[1].setAttribute('disabled', 'true');
-      }
-
-      label.childNodes[1].onchange = (e) => {
-        const newValue = e.target.value;
-        if (i.fieldSource === 'metadata') {
-          const parser = i.parser === undefined ? (v) => v : i.parser;
-          if (this.survey.metadata === undefined) {
-            this.survey.metadata = new SurveyMetadata();
-          }
-          this.survey.metadata[i.field] = parser(newValue);
-        }
-
-        if (i.id === 'name') {
-          if (this.cave.surveys.find((s) => s.name === newValue) !== undefined) {
-            showErrorPanel(`Survey with name ${newValue} alreay exists, cannot rename!`);
-            e.target.value = this.survey.name;
-          } else {
-            const oldName = this.survey.name;
-            this.db.renameSurvey(this.cave, oldName, newValue);
-            this.#emitSurveyRenamed(this.cave, this.survey, oldName);
-          }
-        } else if (i.id === 'declination') {
-          this.#emitSurveyChanged();
-        }
-
       };
-      editorFields.appendChild(label);
-
+      const label = U.node`<label for="${f.id}">${f.label}: </label>`;
+      label.appendChild(input);
+      form.appendChild(label);
     });
 
-    const firstStation = this.cave.stations.get(this.survey.start);
-    const declinationInput = editorFields.querySelector('#declination-official');
-    declinationInput.setAttribute('disabled', 'true');
+    form.appendChild(U.node`<br/>`);
+    form.appendChild(U.node`<br/>`);
+    const columns = U.node`<div class="columns"></div>`;
+    form.appendChild(columns);
 
-    if (this.survey.metadata.declinationReal === undefined) {
-      if (firstStation.coordinates.wgs !== undefined) {
+    const membersDiv = U.node`<div class="team-members-section"><b>Team Members:</b><br/><br/></div>`;
+    this.membersList = U.node`<div class="members-list"></div>`;
+    membersDiv.appendChild(this.membersList);
+    columns.appendChild(membersDiv);
+    this.renderMembers();
+
+    const instrumentsDiv = U.node`<div class="instruments-section"><b>Survey Instruments:</b><br/><br/></div>`;
+    this.instrumentsList = U.node`<div class="instruments-list"></div>`;
+    instrumentsDiv.appendChild(this.instrumentsList);
+    columns.appendChild(instrumentsDiv);
+    this.renderInstruments();
+
+    const saveBtn = U.node`<button type="submit">Save</button>`;
+    const cancelBtn = U.node`<button type="button">Cancel</button>`;
+    cancelBtn.onclick = (e) => {
+      e.preventDefault();
+      this.closeEditor();
+    };
+    form.appendChild(saveBtn);
+    form.appendChild(cancelBtn);
+
+    form.appendChild(
+      U.node`<p>Meridian convergence: ${this.survey?.metadata?.convergence?.toFixed(3) || 'Not available'}</p>`
+    );
+    const declinationText = U.node`<p id="declination-official">Declination: unavailable</p>`;
+    form.appendChild(declinationText);
+
+    const firstStation = this.cave.stations.get(this.survey?.start);
+    const declinationPrefix = 'Declination at the given date for this geo location (from NOAA):';
+    if (this.survey?.metadata?.declinationReal === undefined) {
+      if (firstStation?.coordinates.wgs !== undefined) {
         Declination.getDeclination(
           firstStation.coordinates.wgs.lat,
           firstStation.coordinates.wgs.lon,
           this.survey.metadata.date
         ).then((declination) => {
           this.survey.metadata.declinationReal = declination;
-          declinationInput.value = declination;
+          declinationText.textContent = `${declinationPrefix} ${declination.toFixed(3)}`;
         });
       } else {
-        declinationInput.value = 'No WGS84 coordinates';
+        declinationText.textContent = `${declinationPrefix} No WGS84 coordinates`;
       }
     } else {
-      declinationInput.value = this.survey.metadata.declinationReal;
+      declinationText.textContent = `${declinationPrefix} ${this.survey.metadata.declinationReal.toFixed(3)}`;
     }
 
-    this.panel.appendChild(editorFields);
+    form.onsubmit = (e) => {
+      e.preventDefault();
 
-    this.panel.appendChild(U.node`<hr/>`);
+      const teamMembers = this.formData.members.map((m) => new SurveyTeamMember(m.name, m.role));
+      const team = new SurveyTeam(this.formData.team, teamMembers);
+      const instruments = this.formData.instruments.map((i) => new SurveyInstrument(i.name, i.value));
+      const metadata = new SurveyMetadata(
+        this.formData.date ? new Date(this.formData.date) : undefined,
+        this.formData.declination ? parseFloat(this.formData.declination) : undefined,
+        this.formData.convergence ? parseFloat(this.formData.convergence) : undefined,
+        team,
+        instruments
+      );
+      console.log('nameHasChanged', this.nameHasChanged);
+      console.log('surveyHasChanged', this.surveyHasChanged);
+
+      if (this.survey !== undefined && this.nameHasChanged && this.formData.name !== this.survey.name) {
+        if (this.cave.surveys.find((s) => s.name === this.formData.name) !== undefined) {
+          showErrorPanel(`Survey with name ${this.formData.name} alreay exists, cannot rename!`);
+          return;
+        } else {
+          const oldName = this.survey.name;
+          this.db.renameSurvey(this.cave, oldName, this.formData.name);
+          this.#emitSurveyRenamed(this.cave, this.survey, oldName);
+        }
+      }
+
+      if ((this.survey?.shots ?? []).length > 0) {
+        const hasStart = this.survey.shots.find((s) => s.from === this.formData.start || s.to === this.formData.start);
+        if (hasStart === undefined) {
+          showErrorPanel(`Start station ${this.formData.start} not found in shots!`);
+          return;
+        }
+      }
+
+      if (this.survey === undefined) {
+        // this is a new survey
+        if (this.cave.surveys.size > 0) {
+          // get convergence from first existing survey
+          metadata.convergence = this.cave.surveys.entries().next().value[1].metadata.convergence;
+        } else if (this.cave.geoData !== undefined && this.cave.geoData.coordinates.length > 0) {
+          //get convergence based on the first fix point of the cave
+          const fixPoint = this.cave.geoData.coordinates[0]; // this must be an eov coordinate
+          metadata.convergence = MeridianConvergence.getConvergence(fixPoint.coordinate.y, fixPoint.coordinate.x);
+        }
+        this.survey = new Survey(this.formData.name, true, metadata, this.formData.start);
+        this.#emitSurveyAdded();
+      } else if (this.surveyHasChanged) {
+        this.survey.metadata = metadata;
+        this.survey.start = this.formData.start;
+        this.#emitSurveyChanged();
+      }
+      //if (this.onSave) this.onSave(survey);
+      this.closeEditor();
+    };
+    this.panel.appendChild(form);
+
+  }
+
+  renderMembers() {
+    renderListEditor({
+      container : this.membersList,
+      items     : this.formData.members,
+      fields    : [
+        { key: 'name', placeholder: 'Name', type: 'text', width: '120px' },
+        { key: 'role', placeholder: 'Role', type: 'text', width: '100px' }
+      ],
+      onAdd : () => {
+        this.formData.members.push({ name: '', role: '' });
+        this.renderMembers();
+        this.surveyHasChanged = true;
+      },
+      onRemove : (idx) => {
+        this.formData.members.splice(idx, 1);
+        this.renderMembers();
+        this.surveyHasChanged = true;
+      },
+      onChange : (idx, key, value) => {
+        this.formData.members[idx][key] = value;
+        if (this.formData.members[idx][key] !== value) {
+          this.surveyHasChanged = true;
+        }
+      },
+      addButtonLabel : 'Add member'
+    });
+  }
+
+  renderInstruments() {
+    renderListEditor({
+      container : this.instrumentsList,
+      items     : this.formData.instruments,
+      fields    : [
+        { key: 'name', placeholder: 'Instrument Name', type: 'text', width: '140px' },
+        { key: 'value', placeholder: 'Value', type: 'text', width: '80px' }
+      ],
+      onAdd : () => {
+        this.formData.instruments.push({ name: '', value: '' });
+        this.renderInstruments();
+        this.surveyHasChanged = true;
+      },
+      onRemove : (idx) => {
+        this.formData.instruments.splice(idx, 1);
+        this.renderInstruments();
+        this.surveyHasChanged = true;
+      },
+      onChange : (idx, key, value) => {
+        this.formData.instruments[idx][key] = value;
+        if (this.formData.instruments[idx][key] !== value) {
+          this.surveyHasChanged = true;
+        }
+      },
+      addButtonLabel : 'Add instrument'
+    });
   }
 
   #emitSurveyChanged() {
     const event = new CustomEvent('surveyChanged', {
+      detail : {
+        cave   : this.cave,
+        survey : this.survey
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitSurveyAdded() {
+    const event = new CustomEvent('surveyAdded', {
       detail : {
         cave   : this.cave,
         survey : this.survey
@@ -764,158 +869,4 @@ function renderListEditor({
   container.appendChild(addBtn);
 }
 
-class NewSurveyEditor {
-  constructor({ survey, onSave, onCancel, panel }) {
-    this.survey = survey || new Survey('', true, new SurveyMetadata(), '');
-    this.onSave = onSave;
-    this.onCancel = onCancel;
-    this.panel = panel;
-    this.formData = {
-      name        : this.survey.name || '',
-      start       : this.survey.start || '',
-      date        : this.survey.metadata?.date ? U.formatDateISO(this.survey.metadata.date) : '',
-      declination : this.survey.metadata?.declination || '',
-      convergence : this.survey.metadata?.convergence || '',
-      team        : this.survey.metadata?.team?.name || '',
-      members     : (this.survey.metadata?.team?.members || []).map((m) => ({ name: m.name, role: m.role })),
-      instruments : (this.survey.metadata?.instruments || []).map((i) => ({ name: i.name, value: i.value }))
-    };
-    this.renderMembers = this.renderMembers.bind(this);
-    this.renderInstruments = this.renderInstruments.bind(this);
-  }
-
-  renderMembers() {
-    renderListEditor({
-      container : this.membersList,
-      items     : this.formData.members,
-      fields    : [
-        { key: 'name', placeholder: 'Name', type: 'text', width: '120px' },
-        { key: 'role', placeholder: 'Role', type: 'text', width: '100px' }
-      ],
-      onAdd : () => {
-        this.formData.members.push({ name: '', role: '' });
-        this.renderMembers();
-      },
-      onRemove : (idx) => {
-        this.formData.members.splice(idx, 1);
-        this.renderMembers();
-      },
-      onChange : (idx, key, value) => {
-        this.formData.members[idx][key] = value;
-      },
-      addButtonLabel : 'Add member'
-    });
-  }
-
-  renderInstruments() {
-    renderListEditor({
-      container : this.instrumentsList,
-      items     : this.formData.instruments,
-      fields    : [
-        { key: 'name', placeholder: 'Instrument Name', type: 'text', width: '140px' },
-        { key: 'value', placeholder: 'Value', type: 'text', width: '80px' }
-      ],
-      onAdd : () => {
-        this.formData.instruments.push({ name: '', value: '' });
-        this.renderInstruments();
-      },
-      onRemove : (idx) => {
-        this.formData.instruments.splice(idx, 1);
-        this.renderInstruments();
-      },
-      onChange : (idx, key, value) => {
-        this.formData.instruments[idx][key] = value;
-      },
-      addButtonLabel : 'Add instrument'
-    });
-  }
-
-  show() {
-    this.panel.innerHTML = '';
-    makeMovable(
-      this.panel,
-      'Edit Survey',
-      false,
-      () => this.close(),
-      () => {},
-      () => {}
-    );
-    this.#setupForm();
-    this.panel.style.display = 'block';
-  }
-
-  close() {
-    this.panel.style.display = 'none';
-    if (this.onCancel) this.onCancel();
-  }
-
-  #setupForm() {
-    const form = U.node`<form class="editor"></form>`;
-    const fields = [
-      { label: 'Survey Name', id: 'name', type: 'text', required: true },
-      { label: 'Start Station', id: 'start', type: 'text', required: true },
-      { label: 'Date', id: 'date', type: 'date', required: true },
-      { label: 'Declination', id: 'declination', type: 'number', step: 'any', required: true },
-      { label: 'Convergence', id: 'convergence', type: 'number', step: 'any' },
-      { label: 'Team Name', id: 'team', type: 'text', required: true }
-    ];
-    fields.forEach((f) => {
-      const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${this.formData[f.id] || ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
-      input.oninput = (e) => {
-        this.formData[f.id] = e.target.value;
-      };
-      const label = U.node`<label for="${f.id}">${f.label}: </label>`;
-      label.appendChild(input);
-      form.appendChild(label);
-      form.appendChild(U.node`<br/>`);
-    });
-
-    const membersDiv = U.node`<div class="team-members-section"><b>Team Members:</b></div>`;
-    this.membersList = U.node`<div class="members-list"></div>`;
-    membersDiv.appendChild(this.membersList);
-    form.appendChild(membersDiv);
-    this.renderMembers();
-
-    const instrumentsDiv = U.node`<div class="instruments-section"><b>Survey Instruments:</b></div>`;
-    this.instrumentsList = U.node`<div class="instruments-list"></div>`;
-    instrumentsDiv.appendChild(this.instrumentsList);
-    form.appendChild(instrumentsDiv);
-    this.renderInstruments();
-
-    const saveBtn = U.node`<button type="submit">Save</button>`;
-    const cancelBtn = U.node`<button type="button">Cancel</button>`;
-    cancelBtn.onclick = (e) => {
-      e.preventDefault();
-      this.close();
-    };
-    form.appendChild(saveBtn);
-    form.appendChild(cancelBtn);
-    form.onsubmit = (e) => {
-      e.preventDefault();
-      if (!this.formData.name) {
-        showErrorPanel('Survey name is required!');
-        return;
-      }
-      if (!this.formData.start) {
-        showErrorPanel('Start station is required!');
-        return;
-      }
-      const teamMembers = this.formData.members.map((m) => new SurveyTeamMember(m.name, m.role));
-      const team = new SurveyTeam(this.formData.team, teamMembers);
-      const instruments = this.formData.instruments.map((i) => new SurveyInstrument(i.name, i.value));
-      const metadata = new SurveyMetadata(
-        this.formData.date ? new Date(this.formData.date) : undefined,
-        this.formData.declination ? parseFloat(this.formData.declination) : undefined,
-        this.formData.convergence ? parseFloat(this.formData.convergence) : undefined,
-        team,
-        instruments
-      );
-      const survey = new Survey(this.formData.name, true, metadata, this.formData.start);
-      if (this.onSave) this.onSave(survey);
-      this.close();
-    };
-    this.panel.appendChild(form);
-  }
-}
-
-export { SurveyEditor, SurveySheetEditor, NewSurveyEditor };
+export { SurveyEditor, SurveySheetEditor };

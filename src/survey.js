@@ -3,7 +3,7 @@ import { SurveyStation as ST } from './model/survey.js';
 import { Vector } from './model.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
-import { EOVToWGS84Transformer, MeridianConvergence } from './utils/geo.js';
+import { EOVToWGS84Transformer } from './utils/geo.js';
 
 class SurveyHelper {
 
@@ -18,12 +18,13 @@ class SurveyHelper {
   static recalculateSurvey(index, es, surveyStations, aliases, geoData) {
     let startName, startPosition, startEov;
 
-    if (index === 0) {
-      //TODO: check if start station is still in shots
-      startName = es.start !== undefined ? es.start : es.shots[0].from;
+    //TODO: check if start station is still in shots
+    startName = es.start !== undefined ? es.start : es.shots[0].from;
 
-      if (geoData !== undefined) {
-        startEov = geoData.coordinates.find((c) => c.name === startName)?.coordinate;
+    if (index === 0) {
+      startEov = geoData?.coordinates.find((c) => c.name === startName)?.coordinate;
+
+      if (startEov !== undefined) {
         startPosition = startEov.toVector();
       } else {
         startPosition = new Vector(0, 0, 0);

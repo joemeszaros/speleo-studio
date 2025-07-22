@@ -6,7 +6,7 @@ import { SurveyHelper } from '../survey.js';
 import { Color } from '../model.js';
 import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
 import { CaveEditor, NewCaveEditor } from './editor/cave.js';
-import { SurveyEditor, SurveySheetEditor, NewSurveyEditor } from './editor/survey.js';
+import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
 import { showErrorPanel, showWarningPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
@@ -30,6 +30,14 @@ class ProjectManager {
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
+    document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
+  }
+
+  onSurveyAdded(e) {
+    const cave = e.detail.cave;
+    const newSurvey = e.detail.survey;
+    cave.surveys.push(newSurvey);
+    this.explorer.addSurvey(cave, newSurvey);
   }
 
   onSurveyChanged(e) {
@@ -308,18 +316,8 @@ class ProjectExplorer {
     const addSurvey = U.node`<li class="menu-option">Add survey</li>`;
     addSurvey.onclick = () => {
       this.contextMenuElement.style.display = 'none';
-      const panel = document.getElementById('surveyeditor');
-      this.editor = new NewSurveyEditor({
-        panel,
-        onSave : (newSurvey) => {
-          cave.surveys.push(newSurvey);
-          this.addSurvey(cave, newSurvey);
-          this.editor = undefined;
-        },
-        onCancel : () => {
-          this.editor = undefined;
-        }
-      });
+      this.editor = new SurveySheetEditor(this.db, cave, undefined, document.getElementById('surveyeditor'));
+      this.editor.setupPanel();
       this.editor.show();
     };
 

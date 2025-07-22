@@ -292,6 +292,14 @@ body {
   display: inline-block;
 }
 
+.columns {
+  display: flex;
+  gap: 20px; /* Optional: space between columns */
+}
+.columns > div {
+  flex: 1; /* Both columns take equal width */
+}
+
 .tabulator .tabulator-footer {
   color: white;
 }
@@ -482,6 +490,10 @@ body {
 }
 
 .editor input[type='text'] {
+  width: 50%;
+}
+
+.editor input[type='number'] {
   width: 50%;
 }
 
