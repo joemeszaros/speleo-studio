@@ -82,9 +82,10 @@
   color: #fff;
   text-align: center;
   border-radius: 6px;
+  border: 1px solid white;
   padding: 5px 0;
   position: absolute;
-  z-index: 1;
+  z-index: 200;
   top: 120%;
   left: 50%;
   margin-left: -70px;
@@ -98,7 +99,7 @@
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent #333 transparent;
+  border-color: transparent transparent white transparent;
 }
 
 .mytooltip:hover .mytooltiptext {
