@@ -69,6 +69,11 @@ export const OPTIONS = {
     },
     background : {
       color : new Color(0x000000)
+    },
+    startPoint : {
+      show   : true,
+      color  : new Color(0xffff00),
+      radius : 0.3
     }
   },
 

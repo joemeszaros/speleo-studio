@@ -1,0 +1,82 @@
+.iconbar {
+  width: 100%;
+  height: 48px;
+  font-family: Arial, Helvetica, sans-serif;
+  margin-top: 5px;
+}
+
+.iconbar a {
+  float: left;
+  font-size: 14px;
+  color: white;
+  text-align: center;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.iconbar img {
+  width: 20px;
+  height: 20px;
+}
+
+.iconbar a:hover {
+  border-radius: 20px;
+  background-color: #04aa6d;
+}
+
+.iconbar a img {
+  transition: all 0.3s linear;
+}
+
+a:hover img {
+  transform: scale(1.2);
+}
+
+.iconbar .selected {
+  border-radius: 20px;
+  background-color: #04aa6d;
+}
+
+.iconbar .icon-separator {
+  border-left: 2px solid white;
+  height: 20px;
+  margin-left: 5px;
+  margin-right: 5px;
+  float: left;
+  padding: 8px 1px;
+}
+
+.mytooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.mytooltip .mytooltiptext {
+  visibility: hidden;
+  width: 140px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: 120%;
+  left: 50%;
+  margin-left: -70px;
+}
+
+.mytooltip .mytooltiptext::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent #333 transparent;
+}
+
+.mytooltip:hover .mytooltiptext {
+  visibility: visible;
+}

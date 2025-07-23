@@ -13,6 +13,7 @@ class SurveyEditor extends Editor {
     this.survey = survey;
     this.table = undefined;
     this.surveyModified = false;
+    this.eovVisible = false;
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
     this.options = OPTIONS;
   }
@@ -249,19 +250,28 @@ class SurveyEditor extends Editor {
       }
     );
 
+    this.iconSelected = {
+      'xyz-toggle' : true,
+      'eov-toggle' : false,
+      'wgs-toggle' : false
+    };
+
+    const iconBar = U.node`<div class="iconbar">`;
+    this.panel.appendChild(iconBar);
     [
-      { id: 'centerlines', text: 'Hide splays', click: () => this.table.addFilter(showCenter) },
-      { id: 'sumCenterLines', text: 'Show orphans', click: () => this.table.addFilter(showOrphans) },
-      { id: 'hideorphan', text: 'Hide orphans', click: () => this.table.addFilter(hideOrphans) },
-      { id: 'clear-filter', text: 'Clear filters', click: () => this.table.clearFilter() },
-      { break: true },
-      { id: 'validate-shots', text: 'Validate shots', click: () => this.validateSurvey() },
-      { id: 'update-survey', text: 'Update survey', click: () => this.updateSurvey() },
-      { id: 'add-row', text: 'Add row to bottom', click: () => this.table.addRow(this.getEmptyRow()) },
+      { id: 'undo', icon: 'icons/undo.svg', tooltip: 'Undo', click: () => this.table.undo() },
+      { id: 'redo', icon: 'icons/redo.svg', tooltip: 'Redo', click: () => this.table.redo() },
       {
-        id    : 'delete-row',
-        text  : 'Delete active rows',
-        click : () => {
+        id      : 'add-row',
+        icon    : 'icons/add_white.svg',
+        tooltip : 'Add row end',
+        click   : () => this.table.addRow(this.getEmptyRow())
+      },
+      {
+        id      : 'delete-row',
+        tooltip : 'Delete active rows',
+        icon    : 'icons/trash_white.svg',
+        click   : () => {
           var ranges = this.table.getRanges();
           ranges.forEach((r) => {
             const rows = r.getRows();
@@ -271,57 +281,89 @@ class SurveyEditor extends Editor {
 
         }
       },
+      { separator: true },
       {
-        id    : 'export-to-csv',
-        text  : 'Export to CSV',
-        click : () => this.table.download('csv', this.cave.name + ' - ' + this.survey.name + '.csv', { delimiter: ';' })
+        id      : 'validate-shots',
+        tooltip : 'Validate shots',
+        icon    : 'icons/validate.svg',
+        click   : () => this.validateSurvey()
       },
-      { break: true },
-      { id: 'undo', text: 'Undo', click: () => this.table.undo() },
-      { id: 'redo', text: 'Redo', click: () => this.table.redo() },
-      { break: true },
+      { id: 'update-survey', tooltip: 'Update survey', icon: 'icons/update.svg', click: () => this.updateSurvey() },
+      { separator: true },
       {
-        id    : 'xyz-toggle',
-        text  : 'Toggle XYZ',
-        click : () => {
+        id      : 'splays-toggle',
+        tooltip : 'Show / hide splays',
+        icon    : 'icons/splay.svg',
+        click   : () => {
+          if (this.iconSelected['splays-toggle'] === true) {
+            this.table.addFilter(showOrphans);
+          } else if (this.iconSelected['splays-toggle'] === false) {
+            this.table.addFilter(hideOrphans);
+          }
+        }
+      },
+      { separator: true },
+      {
+        id      : 'xyz-toggle',
+        tooltip : 'Toggle XYZ',
+        icon    : 'icons/xyz.svg',
+        width   : 35,
+        click   : () => {
           this.table.toggleColumn('x');
           this.table.toggleColumn('y');
           this.table.toggleColumn('z');
         }
       },
       {
-        id    : 'eov-toggle',
-        text  : 'Toggle EOV',
-        click : () => {
+        id      : 'eov-toggle',
+        icon    : 'icons/eov.svg',
+        tooltip : 'Toggle EOV',
+        width   : 35,
+        click   : () => {
           this.table.toggleColumn('eovy');
           this.table.toggleColumn('eovx');
           this.table.toggleColumn('eove');
         }
       },
       {
-        id    : 'wgs-toggle',
-        text  : 'Toggle WGS84',
-        click : () => {
+        id      : 'wgs-toggle',
+        icon    : 'icons/wgs.svg',
+        tooltip : 'Toggle WGS84',
+        width   : 35,
+        click   : () => {
           this.table.toggleColumn('wgslat');
           this.table.toggleColumn('wgslon');
         }
       },
+      { separator: true },
       {
-        id    : 'comment-toggle',
-        text  : 'Toggle comment',
-        click : () => {
-          this.table.toggleColumn('comment');
-        }
+        id      : 'export-to-csv',
+        tooltip : 'Export to CSV',
+        icon    : 'icons/export.svg',
+        click   : () => this.table.download('csv', this.cave.name + ' - ' + this.survey.name + '.csv', { delimiter: ';' })
       }
 
     ].forEach((b) => {
-      if (b.break === true) {
-        this.panel.appendChild(document.createElement('br'));
+      let element;
+      if (b.separator) {
+        element = U.node`<span class="icon-separator"></span>`;
       } else {
-        const button = U.node`<button id="${b.id}">${b.text}</button>`;
-        button.onclick = b.click;
-        this.panel.appendChild(button);
+        if (b.icon) {
+          element = U.node`<a id="${b.id}" class="mytooltip ${this.iconSelected[b.id] ? 'selected' : ''}"><img src="${b.icon}" alt="${b.id}" ${b.width ? `style="width:${b.width}px"` : ''}><span class="mytooltiptext">${b.tooltip}</span></a>`;
+        } else {
+          element = U.node`<button id="${b.id}">${b.text}</button>`;
+        }
+        element.onclick = () => {
+          b.click();
+          if (this.iconSelected[b.id] !== undefined) {
+            this.iconSelected[b.id] = !this.iconSelected[b.id];
+            element.classList.toggle('selected');
+          }
+
+        };
       }
+      iconBar.appendChild(element);
+
     });
 
     this.panel.appendChild(U.node`<div id="surveydata"></div>`);
@@ -387,18 +429,22 @@ class SurveyEditor extends Editor {
           const message = cell.getData().message;
           return message === undefined ? 'No errors' : message;
         },
-        validator  : ['required'],
-        bottomCalc : this.baseTableFunctions.countBadRows
+        validator          : ['required'],
+        bottomCalc         : this.baseTableFunctions.countBadRows,
+        headerFilter       : 'list',
+        headerFilterParams : { valuesLookup: true, clearable: true }
       },
       {
-        width        : 25,
-        title        : 'Splay type',
-        field        : 'type',
-        editor       : 'list',
-        editorParams : { values: ['center', 'splay'] },
-        formatter    : typeIcon,
-        cellEdited   : typeEdited,
-        validator    : ['required']
+        width              : 25,
+        title              : 'Type',
+        field              : 'type',
+        editor             : 'list',
+        editorParams       : { values: ['center', 'splay'] },
+        formatter          : typeIcon,
+        cellEdited         : typeEdited,
+        validator          : ['required'],
+        headerFilter       : true,
+        headerFilterParams : { values: ['center', 'splay'] }
       },
       {
         title        : 'From',
