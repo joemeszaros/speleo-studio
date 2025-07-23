@@ -11,6 +11,7 @@ body {
   margin: 0;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 14px;
+  height: 100vh; /* since every element within the body is positioned absolute, the height of the body would be 0, causing problems in tabulator popup */
 }
 
 @media print {
