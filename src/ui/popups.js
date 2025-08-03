@@ -69,9 +69,22 @@ function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, sto
     pos2 = pos4 - e.clientY;
     pos3 = e.clientX;
     pos4 = e.clientY;
-    // set the element's new position:
-    elmnt.style.top = elmnt.offsetTop - pos2 + 'px';
-    elmnt.style.left = elmnt.offsetLeft - pos1 + 'px';
+
+    // Calculate new position
+    let newTop = elmnt.offsetTop - pos2;
+    let newLeft = elmnt.offsetLeft - pos1;
+
+    // Clamp to viewport
+    const minTop = 0;
+    const minLeft = 0;
+    const maxTop = window.innerHeight - elmnt.offsetHeight;
+    const maxLeft = window.innerWidth - elmnt.offsetWidth;
+
+    newTop = Math.max(minTop, Math.min(newTop, maxTop));
+    newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+
+    elmnt.style.top = newTop + 'px';
+    elmnt.style.left = newLeft + 'px';
   }
 
   function initDrag(e) {

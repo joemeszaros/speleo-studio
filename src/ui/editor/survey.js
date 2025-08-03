@@ -244,7 +244,10 @@ class SurveyEditor extends Editor {
       `Survey editor: ${this.survey.name}`,
       true,
       () => this.closeEditor(),
-      (_newWidth, newHeight) => this.table.setHeight(newHeight - 100),
+      (_newWidth, _newHeight) => {
+        this.table.setHeight(this.panel.offsetHeight - 100); // we cannot use newHeight, because it could be a higher value than max-height
+      },
+
       () => {
         this.table.redraw();
       }
@@ -289,19 +292,6 @@ class SurveyEditor extends Editor {
         click   : () => this.validateSurvey()
       },
       { id: 'update-survey', tooltip: 'Update survey', icon: 'icons/update.svg', click: () => this.updateSurvey() },
-      { separator: true },
-      {
-        id      : 'splays-toggle',
-        tooltip : 'Show / hide splays',
-        icon    : 'icons/splay.svg',
-        click   : () => {
-          if (this.iconSelected['splays-toggle'] === true) {
-            this.table.addFilter(showOrphans);
-          } else if (this.iconSelected['splays-toggle'] === false) {
-            this.table.addFilter(hideOrphans);
-          }
-        }
-      },
       { separator: true },
       {
         id      : 'xyz-toggle',
@@ -366,7 +356,7 @@ class SurveyEditor extends Editor {
 
     });
 
-    this.panel.appendChild(U.node`<div id="surveydata"></div>`);
+    this.panel.appendChild(U.node`<div id="surveydata" class="popup-content"></div>`);
 
     var isFloatNumber = function (_cell, value) {
       return U.isFloatStr(value);
@@ -403,18 +393,6 @@ class SurveyEditor extends Editor {
     const typeEdited = (cell) => {
       cell.getRow().reformat();
     };
-
-    function showCenter(data) {
-      return data.type === 'center';
-    }
-
-    function hideOrphans(data) {
-      return data.status !== 'orphan';
-    }
-
-    function showOrphans(data) {
-      return data.status === 'orphan';
-    }
 
     const columns = [
       {
@@ -564,10 +542,10 @@ class SurveyEditor extends Editor {
       clipboardPasteAction  : 'range',
 
       // pagination
-      pagination             : true,
-      paginationSize         : this.options.tabulator.paginationSize, // From config.js
-      paginationSizeSelector : [this.options.tabulator.paginationSize, 10, 25, 50, 100], // optional: shows the dropdown to select page size
-      paginationCounter      : 'rows', // optional: shows the current page size
+      // pagination             : true,
+      // paginationSize         : this.options.tabulator.paginationSize, // From config.js
+      // paginationSizeSelector : [this.options.tabulator.paginationSize, 10, 25, 50, 100], // optional: shows the dropdown to select page size
+      // paginationCounter      : 'rows', // optional: shows the current page size
 
       rowContextMenu : this.baseTableFunctions.getContextMenu(),
       rowHeader      : {
