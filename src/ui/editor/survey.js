@@ -244,7 +244,7 @@ class SurveyEditor extends Editor {
       `Survey editor: ${this.survey.name}`,
       true,
       () => this.closeEditor(),
-      (_newWidth, _newHeight) => {
+      () => {
         this.table.setHeight(this.panel.offsetHeight - 100); // we cannot use newHeight, because it could be a higher value than max-height
       },
 
@@ -584,6 +584,33 @@ class SurveyEditor extends Editor {
       console.log(' data changed ');
       this.surveyModified = true;
     });
+
+    // Prevent range selection keyboard events when editing cells
+    let isEditing = false;
+
+    this.table.on('cellEditing', () => {
+      isEditing = true;
+    });
+
+    this.table.on('cellEdited', () => {
+      isEditing = false;
+    });
+
+    this.table.on('cellEditCancelled', () => {
+      isEditing = false;
+    });
+
+    // Add event listener to prevent arrow key events from reaching range selection when editing
+    this.table.element.addEventListener(
+      'keydown',
+      (e) => {
+        if (isEditing && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+          // Stop the event from reaching Tabulator's keyboard binding system
+          e.stopImmediatePropagation();
+        }
+      },
+      true
+    ); // Use capture phase to intercept before Tabulator
 
   }
 }
