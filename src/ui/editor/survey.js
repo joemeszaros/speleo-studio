@@ -241,6 +241,7 @@ class SurveyEditor extends Editor {
 
   setupTable() {
     this.panel.innerHTML = '';
+
     makeMovable(
       this.panel,
       `Survey editor: ${this.survey.name}`,
@@ -257,12 +258,6 @@ class SurveyEditor extends Editor {
         this.table.redraw();
       }
     );
-
-    this.iconSelected = {
-      'xyz-toggle' : true,
-      'eov-toggle' : false,
-      'wgs-toggle' : false
-    };
 
     const iconBar = U.node`<div class="iconbar">`;
     this.panel.appendChild(iconBar);
@@ -299,35 +294,29 @@ class SurveyEditor extends Editor {
       { id: 'update-survey', tooltip: 'Update survey', icon: 'icons/update.svg', click: () => this.updateSurvey() },
       { separator: true },
       {
-        id      : 'xyz-toggle',
-        tooltip : 'Toggle XYZ',
-        icon    : 'icons/xyz.svg',
-        width   : 35,
-        click   : () => {
-          this.table.toggleColumn('x');
-          this.table.toggleColumn('y');
-          this.table.toggleColumn('z');
-        }
-      },
-      {
-        id      : 'eov-toggle',
-        icon    : 'icons/eov.svg',
-        tooltip : 'Toggle EOV',
-        width   : 35,
-        click   : () => {
-          this.table.toggleColumn('eovy');
-          this.table.toggleColumn('eovx');
-          this.table.toggleColumn('eove');
-        }
-      },
-      {
-        id      : 'wgs-toggle',
-        icon    : 'icons/wgs.svg',
-        tooltip : 'Toggle WGS84',
-        width   : 35,
-        click   : () => {
-          this.table.toggleColumn('wgslat');
-          this.table.toggleColumn('wgslon');
+        id      : 'toggle-column',
+        tooltip : 'Toggle columns',
+        icon    : 'icons/hamburger.svg',
+        click   : (e) => {
+          const menuDiv = document.getElementById('toogle-column-visibility-menu');
+          if (menuDiv.style.display === 'block') {
+            menuDiv.style.display = 'none';
+          } else {
+            menuDiv.style.display = 'block';
+
+            // Add click outside handler to close menu
+            const closeMenu = (event) => {
+              if (!menuDiv.contains(event.target) && !e.target.contains(event.target)) {
+                menuDiv.style.display = 'none';
+                document.removeEventListener('click', closeMenu);
+              }
+            };
+
+            // Use setTimeout to prevent immediate closure
+            setTimeout(() => {
+              document.addEventListener('click', closeMenu);
+            }, 100);
+          }
         }
       },
       { separator: true },
@@ -344,17 +333,12 @@ class SurveyEditor extends Editor {
         element = U.node`<span class="icon-separator"></span>`;
       } else {
         if (b.icon) {
-          element = U.node`<a id="${b.id}" class="mytooltip ${this.iconSelected[b.id] ? 'selected' : ''}"><img src="${b.icon}" alt="${b.id}" ${b.width ? `style="width:${b.width}px"` : ''}><span class="mytooltiptext">${b.tooltip}</span></a>`;
+          element = U.node`<a id="${b.id}" class="mytooltip"><img src="${b.icon}" alt="${b.id}" ${b.width ? `style="width:${b.width}px"` : ''}><span class="mytooltiptext">${b.tooltip}</span></a>`;
         } else {
           element = U.node`<button id="${b.id}">${b.text}</button>`;
         }
-        element.onclick = () => {
-          b.click();
-          if (this.iconSelected[b.id] !== undefined) {
-            this.iconSelected[b.id] = !this.iconSelected[b.id];
-            element.classList.toggle('selected');
-          }
-
+        element.onclick = (e) => {
+          b.click(e);
         };
       }
       iconBar.appendChild(element);
@@ -430,6 +414,7 @@ class SurveyEditor extends Editor {
         validator          : ['required'],
         headerFilter       : true,
         headerFilterParams : { values: [ShotType.CENTER, ShotType.SPLAY, ShotType.AUXILIARY] }
+
       },
       {
         title        : 'From',
@@ -622,6 +607,55 @@ class SurveyEditor extends Editor {
       true
     ); // Use capture phase to intercept before Tabulator
 
+    this.panel.appendChild(this.#buildToggleColumnMenu(columns));
+
+  }
+
+  #buildToggleColumnMenu(columns) {
+
+    const menuDiv = U.node`<div id="toogle-column-visibility-menu"></div>`;
+
+    for (let column of columns) {
+
+      if (column.field === 'status' || column.field === '') {
+        continue;
+      }
+
+      //create checkbox element using unicode characters
+      let icon = document.createElement('span');
+      icon.textContent = (column.visible ?? true) ? '☑' : '☐';
+      icon.style.fontSize = '16px';
+
+      //build label
+      let label = document.createElement('span');
+      let title = document.createElement('span');
+
+      title.textContent = ' ' + column.title;
+
+      label.appendChild(icon);
+      label.appendChild(title);
+      label.onclick = (e) => {
+
+        //prevent menu closing
+        e.stopPropagation();
+
+        //toggle current column visibility
+        this.table.toggleColumn(column.field);
+
+        //change menu item icon based on current visibility
+        const columnDef = this.table.getColumn(column.field);
+        if (columnDef && columnDef.isVisible()) {
+          icon.textContent = '☑';
+        } else {
+          icon.textContent = '☐';
+        }
+      };
+      const menuElementDiv = U.node`<div id="toogle-column-visibility-menu-element"></div>`;
+      menuElementDiv.appendChild(label);
+      menuDiv.appendChild(menuElementDiv);
+    }
+
+    return menuDiv;
   }
 }
 

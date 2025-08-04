@@ -569,7 +569,36 @@ body {
   max-width: 90%;
 }
 
-/*Drgable */
+#toogle-column-visibility-menu {
+  left: 210px;
+  top: 85px;
+  min-height: 200px;
+  height: 50%;
+  position: absolute;
+  z-index: 100;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  color: black;
+  font-size: 12px;
+  display: none;
+  overflow: auto;
+}
+
+#toogle-column-visibility-menu-element {
+  padding: 2px 8px;
+  cursor: pointer;
+  display: block;
+  text-align: left;
+  color: black;
+}
+
+#toogle-column-visibility-menu-element:hover {
+  background-color: #ddd;
+}
+
+/*Dragable */
 
 .popup {
   position: absolute;
