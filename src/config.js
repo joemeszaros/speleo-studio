@@ -83,6 +83,14 @@ export const OPTIONS = {
 
   screen : {
     DPI : 96
+  },
+  ui : {
+    editor : {
+      survey : {
+        height : 300,
+        width  : 700
+      }
+    }
   }
 };
 

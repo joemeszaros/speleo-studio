@@ -151,7 +151,7 @@ class ProjectManager {
       undefined,
       this.scene,
       this.attributeDefs,
-      document.getElementById('caveeditor')
+      document.getElementById('fixed-size-editor')
     );
 
     this.editor.setupPanel();
@@ -269,17 +269,24 @@ class ProjectExplorer {
     this.itree.updateNode(surveyNode, data);
   }
 
+  #hidePreviousEditor() {
+    if (this.editor !== undefined && !this.editor.closed) {
+      this.editor.closeEditor();
+    }
+  }
+
   showCaveContextMenu(cave) {
     const menu = U.node`<ul class="menu-options">`;
     const editCaveData = U.node`<li class="menu-option">Edit cave sheet</li>`;
     editCaveData.onclick = () => {
+      this.#hidePreviousEditor();
       this.editor = new CaveEditor(
         this.db,
         this.options,
         cave,
         this.scene,
         this.attributeDefs,
-        document.getElementById('caveeditor')
+        document.getElementById('fixed-size-editor')
       );
       this.editor.setupPanel();
       this.editor.show();
@@ -288,13 +295,14 @@ class ProjectExplorer {
 
     const editSectionAttributes = U.node`<li class="menu-option">Edit section attributes</li>`;
     editSectionAttributes.onclick = () => {
+      this.#hidePreviousEditor();
       this.editor = new SectionAttributeEditor(
         this.db,
         this.options,
         cave,
         this.scene,
         this.attributeDefs,
-        document.getElementById('caveeditor')
+        document.getElementById('resizable-editor')
       );
       this.editor.setupPanel();
       this.editor.show();
@@ -304,13 +312,14 @@ class ProjectExplorer {
 
     const editComponentAttributes = U.node`<li class="menu-option">Edit component attributes</li>`;
     editComponentAttributes.onclick = () => {
+      this.#hidePreviousEditor();
       this.editor = new ComponentAttributeEditor(
         this.db,
         this.options,
         cave,
         this.scene,
         this.attributeDefs,
-        document.getElementById('caveeditor')
+        document.getElementById('resizable-editor')
       );
       this.editor.setupPanel();
       this.editor.show();
@@ -320,14 +329,16 @@ class ProjectExplorer {
 
     const addSurvey = U.node`<li class="menu-option">Add survey</li>`;
     addSurvey.onclick = () => {
+      this.#hidePreviousEditor();
       this.contextMenuElement.style.display = 'none';
-      this.editor = new SurveySheetEditor(this.db, cave, undefined, document.getElementById('surveyeditor'));
+      this.editor = new SurveySheetEditor(this.db, cave, undefined, document.getElementById('fixed-size-editor'));
       this.editor.setupPanel();
       this.editor.show();
     };
 
     const cycles = U.node`<li class="menu-option">Cycles</li>`;
     cycles.onclick = () => {
+      this.#hidePreviousEditor();
       this.editor = new CyclePanel(document.querySelector('#cycle-panel'), this.scene, cave);
       this.editor.setupPanel();
       this.editor.show();
@@ -347,7 +358,8 @@ class ProjectExplorer {
     const menu = U.node`<ul class="menu-options">`;
     const editSurveySheet = U.node`<li class="menu-option">Edit survey sheet</li>`;
     editSurveySheet.onclick = () => {
-      this.editor = new SurveySheetEditor(this.db, cave, survey, document.getElementById('surveyeditor'));
+      this.#hidePreviousEditor();
+      this.editor = new SurveySheetEditor(this.db, cave, survey, document.getElementById('fixed-size-editor'));
       this.editor.setupPanel();
       this.editor.show();
       this.contextMenuElement.style.display = 'none';
@@ -364,6 +376,7 @@ class ProjectExplorer {
     if (!currentNode) {
       return;
     }
+
     const state = currentNode.state;
     if (state.nodeType === 'cave') {
       this.showCaveContextMenu(state.cave);
@@ -480,11 +493,12 @@ class ProjectExplorer {
 
       if (state.nodeType === 'survey') {
         this.editor = new SurveyEditor(
+          this.options,
           state.cave,
           state.survey,
           this.scene,
           this.attributeDefs,
-          document.getElementById('surveyeditor')
+          document.getElementById('resizable-editor')
         );
         this.editor.setupTable();
         this.editor.show();
@@ -496,7 +510,7 @@ class ProjectExplorer {
           state.cave,
           this.scene,
           this.attributeDefs,
-          document.getElementById('caveeditor')
+          document.getElementById('fixed-size-editor')
         );
         this.editor.setupPanel();
         this.editor.show();

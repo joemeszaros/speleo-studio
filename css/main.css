@@ -213,8 +213,8 @@ body {
   display: none;
 }
 
-#caveeditor {
-  width: 600px;
+#fixed-size-editor {
+  width: 700px;
   position: absolute;
   top: 80px;
   left: 300px;
@@ -225,8 +225,7 @@ body {
   display: none;
 }
 
-#surveyeditor {
-  width: 700px;
+#resizable-editor {
   position: absolute;
   top: 80px;
   left: 300px;

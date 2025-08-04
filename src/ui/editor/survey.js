@@ -8,8 +8,9 @@ import * as U from '../../utils/utils.js';
 
 class SurveyEditor extends Editor {
 
-  constructor(cave, survey, scene, attributeDefs, panel) {
+  constructor(options, cave, survey, scene, attributeDefs, panel) {
     super(panel, scene, cave, attributeDefs);
+    this.options = options;
     this.survey = survey;
     this.table = undefined;
     this.surveyModified = false;
@@ -244,8 +245,11 @@ class SurveyEditor extends Editor {
       `Survey editor: ${this.survey.name}`,
       true,
       () => this.closeEditor(),
-      () => {
-        this.table.setHeight(this.panel.offsetHeight - 100); // we cannot use newHeight, because it could be a higher value than max-height
+      (newWidth, _newHeight) => {
+        const h = this.panel.offsetHeight - 100;
+        this.options.ui.editor.survey.height = h;
+        this.options.ui.editor.survey.width = newWidth;
+        this.table.setHeight(h); // we cannot use newHeight, because it could be a higher value than max-height
       },
 
       () => {
@@ -512,10 +516,11 @@ class SurveyEditor extends Editor {
       headerFilter : 'input'
     });
 
+    this.panel.style.width = this.options.ui.editor.survey.width + 'px';
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
       history                   : true, //enable undo and redo
-      height                    : 300,
+      height                    : this.options.ui.editor.survey.height,
       data                      : this.#getTableData(this.survey, this.cave.stations),
       layout                    : 'fitDataStretch',
       validationMode            : 'highlight',
