@@ -1,6 +1,7 @@
 import * as U from './utils/utils.js';
 import { SurveyStation as ST } from './model/survey.js';
 import { Vector } from './model.js';
+import { ShotType } from './model/survey.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
 import { EOVToWGS84Transformer } from './utils/geo.js';
@@ -51,7 +52,7 @@ class SurveyHelper {
       }
       stations.set(
         startStationName,
-        new ST('center', startPosition, new StationCoordinates(new Vector(0, 0, 0), startEov, wgsCoord), survey)
+        new ST(ShotType.CENTER, startPosition, new StationCoordinates(new Vector(0, 0, 0), startEov, wgsCoord), survey)
       );
     }
 
@@ -174,10 +175,10 @@ class SurveyHelper {
         const fromPos = fromStation.position;
         const toPos = toStation.position;
         switch (sh.type) {
-          case 'splay':
+          case ShotType.SPLAY:
             splaySegments.push(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z);
             break;
-          case 'center':
+          case ShotType.CENTER:
             centerlineSegments.push(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z);
             break;
           default:
@@ -252,9 +253,9 @@ class SurveyHelper {
         if (fromDistance !== undefined && toDistance !== undefined) {
           const fc = startColor.add(colorDiff.mul(fromDistance / maxDistance));
           const tc = startColor.add(colorDiff.mul(toDistance / maxDistance));
-          if (sh.type === 'center') {
+          if (sh.type === ShotType.CENTER) {
             centerColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
-          } else if (sh.type === 'splay') {
+          } else if (sh.type === ShotType.SPLAY) {
             splayColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
           }
         }
@@ -308,9 +309,9 @@ class SurveyHelper {
         const toD = maxZ - toStation.position.z;
         const fc = startColor.add(colorDiff.mul(fromD / diffZ));
         const tc = startColor.add(colorDiff.mul(toD / diffZ));
-        if (sh.type === 'center') {
+        if (sh.type === ShotType.CENTER) {
           centerColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
-        } else if (sh.type === 'splay') {
+        } else if (sh.type === ShotType.SPLAY) {
           splayColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
         }
       }

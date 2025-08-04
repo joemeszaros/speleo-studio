@@ -1,5 +1,6 @@
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { Color } from '../model.js';
+import { ShotType } from '../model/survey.js';
 import * as THREE from 'three';
 
 export function addGui(options, scene, materials, element) {
@@ -138,7 +139,7 @@ export function addGui(options, scene, materials, element) {
     .step(0.1)
     .onChange(function (val) {
       s.splays.spheres.radius = val;
-      scene.changeStationSpheresRadius('splay');
+      scene.changeStationSpheresRadius(ShotType.SPLAY);
     });
 
   const labelsFolder = gui.addFolder('Text labels');

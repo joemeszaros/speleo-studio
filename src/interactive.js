@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { makeMovable, showErrorPanel } from './ui/popups.js';
 import { get3DCoordsStr, node } from './utils/utils.js';
 import { SectionHelper } from './section.js';
+import { ShotType } from './model/survey.js';
 
 class SceneInteraction {
 
@@ -113,9 +114,9 @@ class SceneInteraction {
 
   getMaterialForType(object) {
     switch (object.meta.type) {
-      case 'splay':
+      case ShotType.SPLAY:
         return this.materials.sphere.splay;
-      case 'center':
+      case ShotType.CENTER:
         return this.materials.sphere.centerLine;
       case 'surface':
         return this.materials.sphere.surface;

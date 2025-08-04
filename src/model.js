@@ -86,94 +86,6 @@ class Color {
   }
 }
 
-class Shot {
-  export_fields = ['id', 'type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
-
-  constructor(id, type, from, to, length, azimuth, clino, comment) {
-    this.id = id;
-    this.type = type;
-    this.from = from;
-    this.to = to;
-    this.length = length;
-    this.azimuth = azimuth;
-    this.clino = clino;
-    this.comment = comment;
-    this.processed = false;
-  }
-
-  isSplay() {
-    return this.type === 'splay';
-  }
-
-  isCenter() {
-    return this.type === 'center';
-  }
-
-  isValid() {
-    return this.validate().length === 0;
-  }
-
-  validate() {
-    const isValidFloat = (f) => {
-      return typeof f === 'number' && f !== Infinity && !isNaN(f);
-    };
-
-    const errors = [];
-    if (!(typeof this.id === 'number' && this.id == parseInt(this.id, 10))) {
-      errors.push(`Id (${this.id}, type=${typeof this.id}) is not valid integer number`);
-    }
-    if (!(typeof this.type === 'string' && ['center', 'splay'].includes(this.type))) {
-      errors.push(`Type (${this.type}) is not 'center' or 'splay'`);
-    }
-    if (!(typeof this.from === 'string' && this.from.length > 0)) {
-      errors.push(`From (${this.from}, type=${typeof this.from}) is not a string or empty`);
-    } else if (typeof this.to === 'string' && this.to.length > 0) {
-      if (this.from === this.to) {
-        errors.push(`From (${this.from}) and to (${this.to}) cannot be the same`);
-      }
-    }
-
-    if (isValidFloat(this.length) && this.length <= 0) {
-      errors.push(`Length must be greater than 0`);
-    }
-
-    if (isValidFloat(this.clino) && (this.clino > 90 || this.clino < -90)) {
-      errors.push(`Clino should be between -90 and 90.`);
-    }
-
-    if (isValidFloat(this.azimuth) && (this.azimuth > 360 || this.clino < -360)) {
-      errors.push(`Azimuth should be between -360 and 360.`);
-    }
-
-    ['length', 'azimuth', 'clino'].forEach((f) => {
-      if (!isValidFloat(this[f])) {
-        errors.push(`${f} (${this[f]}, type=${typeof this[f]}) is not a valid decimal number`);
-      }
-    });
-
-    return errors;
-
-  }
-
-  getEmptyFields() {
-    return this.export_fields
-      .filter((f) => f !== 'to' && f !== 'comment')
-      .filter((f) => this[f] === undefined || this[f] === null);
-  }
-
-  isComplete() {
-    return this.getEmptyFields().length === 0;
-  }
-
-  toExport() {
-    let newShot = {};
-    this.export_fields.forEach((fName) => {
-      newShot[fName] = this[fName];
-    });
-    return newShot;
-  }
-}
-
 class FragmentAttribute {
 
   constructor(id, attribute, format, color, visible) {
@@ -331,4 +243,4 @@ class Surface {
 
 }
 
-export { Vector, Color, Shot, StationAttribute, SectionAttribute, ComponentAttribute, Surface };
+export { Vector, Color, StationAttribute, SectionAttribute, ComponentAttribute, Surface };

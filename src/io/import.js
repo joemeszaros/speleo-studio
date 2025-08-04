@@ -3,7 +3,8 @@ import { SurveyHelper } from '../survey.js';
 import { SurfaceHelper } from '../surface.js';
 import { showErrorPanel, showWarningPanel } from '../ui/popups.js';
 import { CAVES_MAX_DISTANCE } from '../constants.js';
-import { Shot, Vector, Surface } from '../model.js';
+import { Shot, ShotType } from '../model/survey.js';
+import { Vector, Surface } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import {
   SurveyMetadata,
@@ -90,7 +91,7 @@ class PolygonImporter extends CaveImporter {
         shots.push(
           new Shot(
             i++,
-            'center',
+            ShotType.CENTER,
             parts[0],
             parts[1],
             U.parseMyFloat(parts[2]),
@@ -291,8 +292,8 @@ class TopodroidImporter extends CaveImporter {
       const distance = U.parseMyFloat(row[2]);
       const azimuth = U.parseMyFloat(row[3]);
       const clino = U.parseMyFloat(row[4]);
-      const type = to === '-' ? 'splay' : 'center';
-      const toName = type === 'splay' ? undefined : to;
+      const type = to === '-' ? ShotType.SPLAY : ShotType.CENTER;
+      const toName = type === ShotType.SPLAY ? undefined : to;
       shots.push(new Shot(i, type, from, toName, distance, azimuth, clino));
     }
     return [shots, aliases];

@@ -9,6 +9,7 @@ import { Grid } from './grid.js';
 import * as U from '../utils/utils.js';
 import { Options } from '../config.js';
 import { SECTION_LINE_MULTIPLIER } from '../constants.js';
+import { ShotType } from '../model/survey.js';
 
 import { SpatialView, PlanView, ProfileView } from './views.js';
 
@@ -162,7 +163,7 @@ class MyScene {
     if (type === 'centerLine') {
       spheres = this.getAllCenterLineStationSpheres();
       radius = this.options.scene.centerLines.spheres.radius;
-    } else if (type === 'splay') {
+    } else if (type === ShotType.SPLAY) {
       spheres = this.getAllSplaysStationSpheres();
       radius = this.options.scene.splays.spheres.radius;
     }
@@ -743,7 +744,7 @@ class MyScene {
 
     for (const [stationName, station] of cave.stations) {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
-      if (station.type === 'center') {
+      if (station.type === ShotType.CENTER) {
         this.addSphere(
           stationName,
           station.position,
@@ -757,7 +758,7 @@ class MyScene {
             coordinates : station.coordinates
           }
         );
-      } else if (station.type === 'splay') {
+      } else if (station.type === ShotType.SPLAY) {
         this.addSphere(
           stationName,
           station.position,

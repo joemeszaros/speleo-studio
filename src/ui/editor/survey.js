@@ -3,7 +3,8 @@ import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor, Editor } from './base.js';
 import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
 import { showErrorPanel, makeMovable } from '../../ui/popups.js';
-import { Shot, StationAttribute } from '../../model.js';
+import { Shot, ShotType } from '../../model/survey.js';
+import { StationAttribute } from '../../model.js';
 import * as U from '../../utils/utils.js';
 
 class SurveyEditor extends Editor {
@@ -227,7 +228,7 @@ class SurveyEditor extends Editor {
       length     : undefined,
       azimuth    : undefined,
       clino      : undefined,
-      type       : 'center',
+      type       : ShotType.CENTER,
       status     : 'incomplete',
       message    : 'Shot is newly created',
       attributes : [],
@@ -378,7 +379,7 @@ class SurveyEditor extends Editor {
       var sumLength = 0;
       data.forEach((value) => {
         if (value !== undefined && value.length !== undefined) {
-          sumLength += value.type === 'center' ? U.parseMyFloat(value.length) : 0;
+          sumLength += value.type === ShotType.CENTER ? U.parseMyFloat(value.length) : 0;
         }
       });
 
@@ -387,9 +388,9 @@ class SurveyEditor extends Editor {
 
     const typeIcon = (cell) => {
       const data = cell.getData();
-      if (data.type === 'center') {
+      if (data.type === ShotType.CENTER) {
         return '<div class="center-row"></div>';
-      } else if (data.type === 'splay') {
+      } else if (data.type === ShotType.SPLAY) {
         return '<div class="splay-row"></div>';
       }
     };
@@ -421,12 +422,12 @@ class SurveyEditor extends Editor {
         title              : 'Type',
         field              : 'type',
         editor             : 'list',
-        editorParams       : { values: ['center', 'splay'] },
+        editorParams       : { values: [ShotType.CENTER, ShotType.SPLAY] },
         formatter          : typeIcon,
         cellEdited         : typeEdited,
         validator          : ['required'],
         headerFilter       : true,
-        headerFilterParams : { values: ['center', 'splay'] }
+        headerFilterParams : { values: [ShotType.CENTER, ShotType.SPLAY] }
       },
       {
         title        : 'From',
@@ -566,7 +567,7 @@ class SurveyEditor extends Editor {
         if (rowData.status === 'orphan') {
           row.getElement().style.backgroundColor = '#7d4928';
         } else if (rowData.status === 'ok') {
-          if (rowData.type === 'splay') {
+          if (rowData.type === ShotType.SPLAY) {
             row.getElement().style.backgroundColor = '#012109';
           } else {
             row.getElement().style.backgroundColor = '';
