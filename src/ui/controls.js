@@ -27,6 +27,15 @@ export function addGui(options, scene, materials, element) {
     'station size'  : s.splays.spheres.radius
   };
 
+  const auxiliaryParam = {
+    'show auxiliary' : s.auxiliaries.segments.show,
+    'line color'     : s.auxiliaries.segments.color.hex(),
+    width            : s.auxiliaries.segments.width,
+    'show station'   : s.auxiliaries.spheres.show,
+    'station color'  : s.auxiliaries.spheres.color.hex(),
+    'station size'   : s.auxiliaries.spheres.radius
+  };
+
   const labelParam = {
     'font color' : s.labels.color.hex(),
     'font size'  : s.labels.size
@@ -140,6 +149,44 @@ export function addGui(options, scene, materials, element) {
     .onChange(function (val) {
       s.splays.spheres.radius = val;
       scene.changeStationSpheresRadius(ShotType.SPLAY);
+    });
+
+  const auxiliaryFolder = gui.addFolder('Auxiliary');
+
+  auxiliaryFolder.add(auxiliaryParam, 'show auxiliary').onChange(function (val) {
+    s.auxiliary.segments.show = val;
+    scene.setObjectsVisibility('auxiliary', val);
+  });
+
+  auxiliaryFolder.addColor(auxiliaryParam, 'line color').onChange(function (val) {
+    s.auxiliary.segments.color = new Color(val);
+    materials.segments.auxiliary.color = new THREE.Color(val);
+    scene.view.renderView();
+  });
+
+  auxiliaryFolder.add(auxiliaryParam, 'width', 1, 5).onChange(function (val) {
+    s.auxiliary.segments.width = val;
+    materials.segments.auxiliary.linewidth = s.auxiliary.segments.width;
+    materials.whiteLine.linewidth = s.auxiliary.segments.width;
+    scene.view.renderView();
+  });
+
+  auxiliaryFolder.add(auxiliaryParam, 'show station').onChange(function (val) {
+    s.auxiliary.spheres.show = val;
+    scene.setObjectsVisibility('auxiliarySpheres', val);
+  });
+
+  auxiliaryFolder.addColor(auxiliaryParam, 'station color').onChange(function (val) {
+    s.auxiliary.spheres.color = new Color(val);
+    scene.view.renderView();
+  });
+
+  auxiliaryFolder
+    .add(auxiliaryParam, 'station size', 0.1, 5)
+    .step(0.1)
+    .onChange(function (val) {
+      s.auxiliary.spheres.radius = val;
+      scene.changeStationSpheresRadius(ShotType.AUXILIARY);
     });
 
   const labelsFolder = gui.addFolder('Text labels');

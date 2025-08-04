@@ -392,6 +392,8 @@ class SurveyEditor extends Editor {
         return '<div class="center-row"></div>';
       } else if (data.type === ShotType.SPLAY) {
         return '<div class="splay-row"></div>';
+      } else if (data.type === ShotType.AUXILIARY) {
+        return '<div class="auxiliary-row"></div>';
       }
     };
 
@@ -422,12 +424,12 @@ class SurveyEditor extends Editor {
         title              : 'Type',
         field              : 'type',
         editor             : 'list',
-        editorParams       : { values: [ShotType.CENTER, ShotType.SPLAY] },
+        editorParams       : { values: [ShotType.CENTER, ShotType.SPLAY, ShotType.AUXILIARY] },
         formatter          : typeIcon,
         cellEdited         : typeEdited,
         validator          : ['required'],
         headerFilter       : true,
-        headerFilterParams : { values: [ShotType.CENTER, ShotType.SPLAY] }
+        headerFilterParams : { values: [ShotType.CENTER, ShotType.SPLAY, ShotType.AUXILIARY] }
       },
       {
         title        : 'From',
@@ -568,7 +570,9 @@ class SurveyEditor extends Editor {
           row.getElement().style.backgroundColor = '#7d4928';
         } else if (rowData.status === 'ok') {
           if (rowData.type === ShotType.SPLAY) {
-            row.getElement().style.backgroundColor = '#012109';
+            row.getElement().style.backgroundColor = '#6a9630';
+          } else if (rowData.type === ShotType.AUXILIARY) {
+            row.getElement().style.backgroundColor = '#1a0d3a';
           } else {
             row.getElement().style.backgroundColor = '';
           }

@@ -30,6 +30,18 @@ export const OPTIONS = {
         radius : 0.3
       }
     },
+    auxiliaries : {
+      segments : {
+        show  : true,
+        color : new Color(0xf0abff),
+        width : 1.5
+      },
+      spheres : {
+        show   : true,
+        color  : new Color(0xf0abff),
+        radius : 0.3
+      }
+    },
     boundingBox : {
       show : false
     },

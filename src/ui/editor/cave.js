@@ -222,6 +222,7 @@ class CaveEditor extends Editor {
       { id: 'length', label: 'Length', field: 'length', formatter: (v) => v.toFixed(2) },
       { id: 'orphanLength', label: 'Length (orphan)', field: 'orphanLength', formatter: (v) => v.toFixed(2) },
       { id: 'invalidLength', label: 'Length (invalid)', field: 'invalidLength', formatter: (v) => v.toFixed(2) },
+      { id: 'auxiliaryLength', label: 'Length (auxiliary)', field: 'auxiliaryLength', formatter: (v) => v.toFixed(2) },
       { break: true },
       { id: 'depth', label: 'Depth', field: 'depth', formatter: (v) => v.toFixed(2) },
       { id: 'height', label: 'Height', field: 'height', formatter: (v) => v.toFixed(2) },

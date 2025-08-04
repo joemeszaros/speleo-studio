@@ -102,6 +102,12 @@ class SurveyHelper {
         };
 
         if (fromStation !== undefined) {
+
+          // it is not possible to create center and splay shots from an auxiliary station
+          if (fromStation.isAuxiliary() && (sh.isCenter() || sh.isSplay())) {
+            return; // think of it like a continue statement in a for loop
+          }
+
           if (toStation === undefined) {
             // from = 1, to = 0
             const fp = fromStation.position;
@@ -110,10 +116,15 @@ class SurveyHelper {
             stations.set(stationName, newStation(st, fromStation, polarVector));
             repeat = true;
           } else {
-            //from = 1, to = 1
+            //from = 1, to = 1, nothing to do here
           }
           sh.processed = true;
         } else if (toStation !== undefined) {
+          // it is not possible to create center and splay shots from an auxiliary station
+          if (toStation.isAuxiliary() && (sh.isCenter() || sh.isSplay())) {
+            return; // think of it like a continue statement in a for loop
+          }
+
           // from = 0, to = 1
           const tp = toStation.position;
           const st = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
@@ -130,6 +141,10 @@ class SurveyHelper {
             const pairName = falias.getPair(sh.from);
             if (stations.has(pairName)) {
               const from = stations.get(pairName);
+              // it is not possible to create center and splay shots from an auxiliary station
+              if (from.isAuxiliary() && (sh.isCenter() || sh.isSplay())) {
+                return; // think of it like a continue statement in a for loop
+              }
               const fp = from.position;
               const to = new Vector(fp.x, fp.y, fp.z).add(polarVector);
               const toStationName = survey.getToStationName(sh);
@@ -144,6 +159,9 @@ class SurveyHelper {
             const pairName = talias.getPair(sh.to);
             if (stations.has(pairName)) {
               const to = stations.get(pairName);
+              if (to.isAuxiliary() && (sh.isCenter() || sh.isSplay())) {
+                return; // think of it like a continue statement in a for loop
+              }
               const tp = to.position;
               const from = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
               stations.set(sh.from, newStation(from, to, polarVector.neg()));
@@ -167,6 +185,7 @@ class SurveyHelper {
   static getSegments(survey, stations) {
     const splaySegments = [];
     const centerlineSegments = [];
+    const auxiliarySegments = [];
     survey.validShots.forEach((sh) => {
       const fromStation = stations.get(survey.getFromStationName(sh));
       const toStation = stations.get(survey.getToStationName(sh));
@@ -181,13 +200,16 @@ class SurveyHelper {
           case ShotType.CENTER:
             centerlineSegments.push(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z);
             break;
+          case ShotType.AUXILIARY:
+            auxiliarySegments.push(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z);
+            break;
           default:
             throw new Error(`Undefined segment type ${sh.type}`);
         }
       }
     });
 
-    return [centerlineSegments, splaySegments];
+    return [centerlineSegments, splaySegments, auxiliarySegments];
 
   }
 
@@ -245,6 +267,7 @@ class SurveyHelper {
     cave.surveys.forEach((s) => {
       const centerColors = [];
       const splayColors = [];
+      const auxiliaryColors = [];
 
       s.validShots.forEach((sh) => {
         const fromDistance = traverse.distances.get(s.getFromStationName(sh));
@@ -257,10 +280,12 @@ class SurveyHelper {
             centerColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
           } else if (sh.type === ShotType.SPLAY) {
             splayColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
+          } else if (sh.type === ShotType.AUXILIARY) {
+            auxiliaryColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
           }
         }
       });
-      result.set(s.name, { center: centerColors, splays: splayColors });
+      result.set(s.name, { center: centerColors, splays: splayColors, auxiliary: auxiliaryColors });
     });
 
     return result;
@@ -299,6 +324,7 @@ class SurveyHelper {
   static getColorGradientsByDepth(survey, stations, diffZ, maxZ, startColor, endColor) {
     const centerColors = [];
     const splayColors = [];
+    const auxiliaryColors = [];
     const colorDiff = endColor.sub(startColor);
     survey.validShots.forEach((sh) => {
       const fromStation = stations.get(survey.getFromStationName(sh));
@@ -313,10 +339,12 @@ class SurveyHelper {
           centerColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
         } else if (sh.type === ShotType.SPLAY) {
           splayColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
+        } else if (sh.type === ShotType.AUXILIARY) {
+          auxiliaryColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
         }
       }
     });
-    return { center: centerColors, splays: splayColors };
+    return { center: centerColors, splays: splayColors, auxiliary: auxiliaryColors };
   }
 }
 

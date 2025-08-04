@@ -226,6 +226,7 @@ class Cave {
   getStats() {
     var length = 0;
     var orphanLength = 0;
+    var auxiliaryLength = 0;
     var invalidLength = 0;
     var isolated = 0;
     var surveys = 0;
@@ -246,7 +247,11 @@ class Cave {
         if (survey.invalidShotIds.has(shot.id)) {
           invalidLength += shot.length;
         }
-        length += shot.length;
+        if (shot.isAuxiliary()) {
+          auxiliaryLength += shot.length;
+        } else {
+          length += shot.length;
+        }
 
       });
     });
@@ -287,6 +292,7 @@ class Cave {
       length              : length,
       orphanLength        : orphanLength,
       invalidLength       : invalidLength,
+      auxiliaryLength     : auxiliaryLength,
       depth               : minZ,
       height              : maxZ,
       vertical            : maxZ - minZ,

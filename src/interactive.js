@@ -118,6 +118,8 @@ class SceneInteraction {
         return this.materials.sphere.splay;
       case ShotType.CENTER:
         return this.materials.sphere.centerLine;
+      case ShotType.AUXILIARY:
+        return this.materials.sphere.auxiliary;
       case 'surface':
         return this.materials.sphere.surface;
       default:

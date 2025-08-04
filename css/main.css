@@ -353,6 +353,12 @@ body {
   background: no-repeat center/70% url(../icons/splay.svg);
 }
 
+.tabulator .auxiliary-row {
+  height: 20px;
+  width: 20px;
+  background: no-repeat center/70% url(../icons/auxiliary.svg);
+}
+
 .tabulator input[type='color'] {
   display: none;
 }

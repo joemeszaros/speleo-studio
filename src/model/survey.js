@@ -7,9 +7,10 @@ import { StationCoordinates } from './geo.js';
 class ShotType {
   static CENTER = 'center';
   static SPLAY = 'splay';
+  static AUXILIARY = 'auxiliary';
 
   static values() {
-    return [ShotType.CENTER, ShotType.SPLAY];
+    return [ShotType.CENTER, ShotType.SPLAY, ShotType.AUXILIARY];
   }
 
   static isValid(type) {
@@ -38,6 +39,10 @@ class Shot {
 
   isCenter() {
     return this.type === ShotType.CENTER;
+  }
+
+  isAuxiliary() {
+    return this.type === ShotType.AUXILIARY;
   }
 
   isValid() {
@@ -128,6 +133,10 @@ class SurveyStation {
     return this.type === ShotType.SPLAY;
   }
 
+  isAuxiliary() {
+    return this.type === ShotType.AUXILIARY;
+  }
+
   toExport() {
     return {
       type     : this.type,
@@ -209,6 +218,10 @@ class Survey {
 
   getSplayStationName(id) {
     return `splay-${id}@${this.name}`;
+  }
+
+  getAuxiliaryStationName(id) {
+    return `auxiliary-${id}@${this.name}`;
   }
 
   getFromStationName(shot) {

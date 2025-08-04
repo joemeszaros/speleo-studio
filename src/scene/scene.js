@@ -166,6 +166,9 @@ class MyScene {
     } else if (type === ShotType.SPLAY) {
       spheres = this.getAllSplaysStationSpheres();
       radius = this.options.scene.splays.spheres.radius;
+    } else if (type === ShotType.AUXILIARY) {
+      spheres = this.getAllAuxiliaryStationSpheres();
+      radius = this.options.scene.auxiliaries.spheres.radius;
     }
     const geometry = new THREE.SphereGeometry(radius, 5, 5);
     spheres.forEach((s) => {
@@ -202,6 +205,11 @@ class MyScene {
     return entries.flatMap((e) => e.splaysSpheres.children);
   }
 
+  getAllAuxiliaryStationSpheres() {
+    const entries = Array.from(this.#getCaveObjectsFlattened());
+    return entries.flatMap((e) => e.auxiliarySpheres.children);
+  }
+
   getBoundingClientRect() {
     return this.domElement.getBoundingClientRect();
   }
@@ -213,7 +221,11 @@ class MyScene {
   getStationSphere(stationName, caveName) {
     const clSpheres = this.getAllCenterLineStationSpheres();
     const splaySpheres = this.getAllSplaysStationSpheres();
-    return clSpheres.concat(splaySpheres).find((s) => s.name === stationName && s.meta.cave.name === caveName);
+    const auxiliarySpheres = this.getAllAuxiliaryStationSpheres();
+    return clSpheres
+      .concat(splaySpheres)
+      .concat(auxiliarySpheres)
+      .find((s) => s.name === stationName && s.meta.cave.name === caveName);
   }
 
   // this function is required because threejs canvas is 48 px from top
@@ -248,8 +260,9 @@ class MyScene {
     const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
     const clSpheres = this.getAllCenterLineStationSpheres();
     const splaySpheres = this.getAllSplaysStationSpheres();
+    const auxiliarySpheres = this.getAllAuxiliaryStationSpheres();
     this.raycaster.setFromCamera(pointer, this.view.camera);
-    const intersectedSpheres = this.raycaster.intersectObjects(clSpheres.concat(splaySpheres));
+    const intersectedSpheres = this.raycaster.intersectObjects(clSpheres.concat(splaySpheres).concat(auxiliarySpheres));
     if (intersectedSpheres.length) {
       return intersectedSpheres[0].object;
     } else {
@@ -460,6 +473,7 @@ class MyScene {
     const config = this.options.scene.caveLines.color.mode;
     const clConfig = this.options.scene.centerLines;
     const splayConfig = this.options.scene.splays;
+    const auxiliaryConfig = this.options.scene.auxiliaries;
 
     Options.rotateOptionChoice(config);
     console.log(config.value);
@@ -471,9 +485,11 @@ class MyScene {
           surveyEntrires.forEach((e, surveyName) => {
             e['centerLines'].material = this.materials.whiteLine;
             e['splays'].material = this.materials.whiteLine;
+            e['auxiliaries'].material = this.materials.whiteLine;
             const surveyColors = colors.get(caveName).get(surveyName);
             e['centerLines'].geometry.setColors(surveyColors.center);
             e['splays'].geometry.setColors(surveyColors.splays);
+            e['auxiliaries'].geometry.setColors(surveyColors.auxiliary);
           });
         });
         break;
@@ -484,7 +500,7 @@ class MyScene {
 
         this.caveObjects.forEach((surveyEntrires, caveName) => {
 
-          let newClMaterial, newSplayMaterial;
+          let newClMaterial, newSplayMaterial, newAuxiliaryMaterial;
           if (config.value === 'percave' && this.db.getCave(caveName).color !== undefined) {
             const color = this.db.getCave(caveName).color.hex();
             newClMaterial = new LineMaterial({
@@ -500,19 +516,28 @@ class MyScene {
               transparent : true,
               opacity     : clConfig.segments.opacity
             });
+            newAuxiliaryMaterial = new LineMaterial({
+              color       : color,
+              linewidth   : auxiliaryConfig.segments.width,
+              transparent : true,
+              opacity     : clConfig.segments.opacity
+            });
           }
 
           surveyEntrires.forEach((e, surveyName) => {
 
             e['centerLines'].geometry.setColors([]);
             e['splays'].geometry.setColors([]);
+            e['auxiliaries'].geometry.setColors([]);
 
             if (config.value === 'global' || (config.value === 'percave' && newClMaterial === undefined)) {
               e['centerLines'].material = this.materials.segments.centerLine;
               e['splays'].material = this.materials.segments.splay;
+              e['auxiliaries'].material = this.materials.segments.auxiliary;
             } else if (config.value === 'percave' && newClMaterial !== undefined) {
               e['centerLines'].material = newClMaterial;
               e['splays'].material = newSplayMaterial;
+              e['auxiliaries'].material = newAuxiliaryMaterial;
             } else if (config.value === 'persurvey') {
               const survey = this.db.getSurvey(caveName, surveyName);
               if (survey.color === undefined) return; // = continue
@@ -526,6 +551,12 @@ class MyScene {
               e['splays'].material = new LineMaterial({
                 color       : hexColor,
                 linewidth   : splayConfig.segments.width,
+                transparent : true,
+                opacity     : clConfig.segments.opacity
+              });
+              e['auxiliaries'].material = new LineMaterial({
+                color       : hexColor,
+                linewidth   : auxiliaryConfig.segments.width,
                 transparent : true,
                 opacity     : clConfig.segments.opacity
               });
@@ -695,13 +726,16 @@ class MyScene {
     return sphere;
   }
 
-  addToScene(survey, cave, polygonSegments, splaySegments, visibility, colorGradients) {
+  addToScene(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility, colorGradients) {
 
     const geometryStations = new LineSegmentsGeometry();
     geometryStations.setPositions(polygonSegments);
     const splaysGeometry = new LineSegmentsGeometry();
     splaysGeometry.setPositions(splaySegments);
-    let clLineMat, splayLineMat;
+    const auxiliaryGeometry = new LineSegmentsGeometry();
+    auxiliaryGeometry.setPositions(auxiliarySegments);
+
+    let clLineMat, splayLineMat, auxiliaryLineMat;
     const gradientMaterial = this.materials.whiteLine;
     if (gradientMaterial.linewidth === 0) {
       gradientMaterial.linewidth = this.materials.segments.centerLine.linewidth;
@@ -717,13 +751,21 @@ class MyScene {
           `Color gradients length ${colorGradients.splays.length} does not match splay segments length ${splaySegments.length} for survey ${survey.name}`
         );
       }
+      if (colorGradients.auxiliary.length !== auxiliarySegments.length) {
+        throw new Error(
+          `Color gradients length ${colorGradients.auxiliary.length} does not match auxiliary segments length ${auxiliarySegments.length} for survey ${survey.name}`
+        );
+      }
       geometryStations.setColors(colorGradients.center);
       splaysGeometry.setColors(colorGradients.splays);
+      auxiliaryGeometry.setColors(colorGradients.auxiliary);
       clLineMat = gradientMaterial;
       splayLineMat = gradientMaterial;
+      auxiliaryLineMat = gradientMaterial;
     } else {
       clLineMat = this.materials.segments.centerLine;
       splayLineMat = this.materials.segments.splay;
+      auxiliaryLineMat = this.materials.segments.auxiliary;
     }
 
     const lineSegmentsPolygon = new LineSegments2(geometryStations, clLineMat);
@@ -731,16 +773,23 @@ class MyScene {
 
     const lineSegmentsSplays = new LineSegments2(splaysGeometry, splayLineMat);
     lineSegmentsSplays.visible = visibility && this.options.scene.splays.segments.show;
+
+    const lineSegmentsAuxiliaries = new LineSegments2(auxiliaryGeometry, auxiliaryLineMat);
+    lineSegmentsAuxiliaries.visible = visibility && this.options.scene.auxiliaries.segments.show;
+
     const group = new THREE.Group();
 
     group.add(lineSegmentsPolygon);
     group.add(lineSegmentsSplays);
+    group.add(lineSegmentsAuxiliaries);
 
     const clStationSpheresGroup = new THREE.Group();
     const splayStationSpheresGroup = new THREE.Group();
+    const auxiliaryStationSpheresGroup = new THREE.Group();
 
     const clSphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 10, 10);
     const splaySphereGeo = new THREE.SphereGeometry(this.options.scene.splays.spheres.radius, 10, 10);
+    const auxiliarySphereGeo = new THREE.SphereGeometry(this.options.scene.auxiliaries.spheres.radius, 10, 10);
 
     for (const [stationName, station] of cave.stations) {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
@@ -772,13 +821,29 @@ class MyScene {
             coordinates : station.coordinates
           }
         );
+      } else if (station.type === ShotType.AUXILIARY) {
+        this.addSphere(
+          stationName,
+          station.position,
+          auxiliaryStationSpheresGroup,
+          auxiliarySphereGeo,
+          this.materials.sphere.auxiliary,
+          {
+            cave        : cave,
+            survey      : station.survey,
+            type        : station.type,
+            coordinates : station.coordinates
+          }
+        );
       }
     }
     clStationSpheresGroup.visible = visibility && this.options.scene.centerLines.spheres.show;
     splayStationSpheresGroup.visible = visibility && this.options.scene.splays.spheres.shows;
+    auxiliaryStationSpheresGroup.visible = visibility && this.options.scene.auxiliaries.spheres.show;
 
     group.add(clStationSpheresGroup);
     group.add(splayStationSpheresGroup);
+    group.add(auxiliaryStationSpheresGroup);
     this.caveObject3DGroup.add(group);
 
     return {
@@ -787,6 +852,8 @@ class MyScene {
       centerLinesSpheres : clStationSpheresGroup,
       splays             : lineSegmentsSplays,
       splaysSpheres      : splayStationSpheresGroup,
+      auxiliaries        : lineSegmentsAuxiliaries,
+      auxiliarySpheres   : auxiliaryStationSpheresGroup,
       group              : group
     };
   }
@@ -829,10 +896,13 @@ class MyScene {
   #disposeSurveyObjects(e) {
     e.centerLines.geometry.dispose();
     e.splays.geometry.dispose();
+    e.auxiliaries.geometry.dispose();
     e.centerLinesSpheres.children.forEach((c) => c.geometry.dispose()); // all stations spheres use the same geometry
     e.centerLinesSpheres.clear();
     e.splaysSpheres.children.forEach((c) => c.geometry.dispose()); // all stations spheres use the same geometry
     e.splaysSpheres.clear();
+    e.auxiliarySpheres.children.forEach((c) => c.geometry.dispose());
+    e.auxiliarySpheres.clear();
     e.group.clear();
     this.threejsScene.remove(e.group);
   }

@@ -115,13 +115,14 @@ class ProjectManager {
       this.scene.disposeSurvey(cave.name, es.name);
       this.scene.deleteSurvey(cave.name, es.name);
 
-      const [clSegments, splaySegments] = SurveyHelper.getSegments(es, caveStations);
+      const [clSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(es, caveStations);
       if (clSegments.length !== 0) {
         const _3dObjects = this.scene.addToScene(
           es,
           cave,
           clSegments,
           splaySegments,
+          auxiliarySegments,
           cave.visible && es.visible,
           colorGradients.get(es.name)
         );
@@ -172,12 +173,13 @@ class ProjectManager {
       let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
 
       cave.surveys.forEach((s) => {
-        const [centerLineSegments, splaySegments] = SurveyHelper.getSegments(s, cave.stations);
+        const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
         const _3dobjects = this.scene.addToScene(
           s,
           cave,
           centerLineSegments,
           splaySegments,
+          auxiliarySegments,
           true,
           colorGradients.get(s.name)
         );
