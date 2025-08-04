@@ -5,7 +5,18 @@ import { SectionHelper } from './section.js';
 
 class SceneInteraction {
 
-  constructor(db, options, footer, scene, materials, sceneDOMElement, contextMenu, infoPanel, locatePanel) {
+  constructor(
+    db,
+    options,
+    footer,
+    scene,
+    materials,
+    sceneDOMElement,
+    contextMenu,
+    infoPanel,
+    locatePanel,
+    editorElementIDs
+  ) {
     this.db = db;
     this.options = options;
     this.footer = footer;
@@ -20,10 +31,20 @@ class SceneInteraction {
     this.selectedStationForContext = undefined;
     this.pointedStation = undefined;
 
+    this.mouseOnEditor = false;
+
     document.addEventListener('pointermove', (event) => this.onPointerMove(event));
     sceneDOMElement.addEventListener('click', () => this.onClick(), false);
     sceneDOMElement.addEventListener('dblclick', () => this.onDoubleClick(), false);
     sceneDOMElement.addEventListener('mousedown', (event) => this.onMouseDown(event), false);
+    editorElementIDs.forEach((id) => {
+      document.getElementById(id).addEventListener('mouseenter', () => {
+        this.mouseOnEditor = true;
+      });
+      document.getElementById(id).addEventListener('mouseleave', () => {
+        this.mouseOnEditor = false;
+      });
+    });
 
     this.buildContextMenu();
   }
@@ -168,6 +189,9 @@ class SceneInteraction {
   }
 
   onPointerMove(event) {
+    if (this.mouseOnEditor) {
+      return;
+    }
     this.mouseCoordinates.x = event.clientX;
     this.mouseCoordinates.y = event.clientY;
     const hasPointedStationBefore = this.pointedStation !== undefined;

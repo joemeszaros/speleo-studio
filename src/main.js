@@ -48,7 +48,8 @@ class Main {
       scene.domElement,
       document.getElementById('station-context-menu'),
       document.getElementById('infopanel'),
-      document.getElementById('interactive')
+      document.getElementById('interactive'),
+      ['fixed-size-editor', 'resizable-editor']
     );
     new NavigationBar(db, document.getElementById('navbarcontainer'), options, scene, interaction, projectManager);
 
