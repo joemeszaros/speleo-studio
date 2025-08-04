@@ -558,10 +558,10 @@ body {
   border: 2px solid #d3d3d3;
   border-radius: 11px;
   text-align: center;
-  min-height: 150px;
+  min-height: 250px;
   min-width: 300px;
-  max-height: 80%;
-  max-width: 80%;
+  max-height: 90%;
+  max-width: 90%;
 }
 
 /*Drgable */
