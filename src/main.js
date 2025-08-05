@@ -90,6 +90,7 @@ class Main {
     this.#setupFileInputListener('jsonInput', this.importers.json);
     this.#setupFileInputListener('plyInput', this.importers.ply);
     this.#setupConfigFileInputListener();
+    this.#setupKeyboardShortcuts();
   }
 
   #setupFileInputListener(inputName, handler) {
@@ -170,6 +171,38 @@ class Main {
       }
     } else {
       this.scene.view.renderView();
+    }
+  }
+
+  #setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (event) => {
+      // F11 for fullscreen
+      if (event.key === 'F11') {
+        event.preventDefault();
+        this.#toggleFullscreen();
+      }
+    });
+  }
+
+  #toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+      } else if (document.documentElement.msRequestFullscreen) {
+        document.documentElement.msRequestFullscreen();
+      }
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
     }
   }
 }
