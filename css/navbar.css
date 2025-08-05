@@ -50,7 +50,7 @@
   background-color: #f9f9f9;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 100;
+  z-index: 300;
 }
 
 .mydropdown-content a {
@@ -60,6 +60,10 @@
   text-decoration: none;
   display: block;
   text-align: left;
+}
+
+.mydropdown-content .selected {
+  background-color: #ddd;
 }
 
 .mydropdown-content a:hover {
@@ -104,4 +108,9 @@
 
 .mytooltip:hover .mytooltiptext {
   visibility: visible;
+}
+
+/* Hide tooltip when dropdown is visible */
+.dropdown-open .mytooltiptext {
+  visibility: hidden !important;
 }

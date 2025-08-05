@@ -162,9 +162,21 @@ class NavigationBar {
         click   : () => this.scene.tooglePlaneFor('fault')
       },
       {
-        tooltip : 'Line color mode',
-        icon    : './icons/cl_color.svg',
-        click   : () => this.scene.rollCenterLineColor()
+        tooltip  : 'Line color mode',
+        icon     : './icons/cl_color.svg',
+        elements : [
+          { id: 'global', title: 'Global color' },
+          { id: 'gradientByZ', title: 'Gradient by Z' },
+          { id: 'gradientByDistance', title: 'Gradient by distance' },
+          { id: 'percave', title: 'Per cave' },
+          { id: 'persurvey', title: 'Per survey' }
+        ].map((e) => ({
+          name     : e.title,
+          selected : this.options.scene.caveLines.color.mode === e.id,
+          click    : () => {
+            this.options.scene.caveLines.color.mode = e.id;
+          }
+        }))
       },
       {
         tooltip : 'Grid position/visibility',
@@ -234,30 +246,78 @@ class NavigationBar {
       return d;
     };
 
-    const createIcon = (tooltip, icon, selectable, selected, click, width = 20, height = 20) => {
+    const createIcon = (tooltip, icon, selectable, selected, click, elements = [], width = 20, height = 20) => {
       const a = document.createElement('a');
+      const c = document.createElement('div');
+      c.setAttribute('class', 'mydropdown-content');
+      c.setAttribute('id', 'myDropdown');
+      c.style.left = '0px';
+      c.style.top = '47px';
+
+      if (elements.length > 0) {
+        elements.forEach((e) => {
+          const al = document.createElement('a');
+          if (e.selected) {
+            al.classList.add('selected');
+          }
+          al.appendChild(document.createTextNode(e.name));
+          al.onclick = () => {
+            al.parentNode.querySelectorAll('a').forEach((c) => c.classList.remove('selected'));
+            al.classList.add('selected');
+            e.click();
+          };
+          c.appendChild(al);
+        });
+      }
+      a.classList.add('mytooltip');
+      a.classList.add('dropbtn');
+
       a.onclick = (event) => {
-        if (a.hasAttribute('selectable')) {
-          a.parentNode.querySelectorAll('a[selectable="true"]').forEach((c) => c.classList.remove('selected'));
-          a.classList.add('selected');
+
+        if (elements.length > 0) {
+          c.classList.toggle('mydropdown-show');
+          // Add/remove class to parent to control tooltip visibility
+          if (c.classList.contains('mydropdown-show')) {
+            a.classList.add('dropdown-open');
+          } else {
+            a.classList.remove('dropdown-open');
+          }
+          document.querySelectorAll('.mydropdown-content').forEach((element) => {
+            if (element !== c) {
+              element.classList.remove('mydropdown-show'); // hide other visible menu elements
+              // Remove dropdown-open class from other elements
+              element.parentElement.classList.remove('dropdown-open');
+            }
+          });
+
+        } else {
+
+          if (a.hasAttribute('selectable')) {
+            a.parentNode.querySelectorAll('a[selectable="true"]').forEach((c) => c.classList.remove('selected'));
+            a.classList.add('selected');
+          }
+
+          click(event);
         }
-        click(event);
+
       };
 
       if (icon !== undefined) {
         const img = document.createElement('img');
+        img.setAttribute('class', 'dropbtn');
         img.setAttribute('src', icon);
         img.setAttribute('width', width);
         img.setAttribute('height', height);
         a.appendChild(img);
       }
 
+      a.appendChild(c);
+
       const t = document.createElement('span');
       t.setAttribute('class', 'mytooltiptext');
       t.appendChild(document.createTextNode(tooltip));
 
       a.appendChild(t);
-      a.setAttribute('class', 'mytooltip');
       if (selectable) {
         a.setAttribute('selectable', 'true');
       }
@@ -279,6 +339,7 @@ class NavigationBar {
             i.selectable,
             i.selected,
             i.click,
+            i.elements,
             i.width === undefined ? 20 : i.width,
             i.height === undefined ? 20 : i.height
           )

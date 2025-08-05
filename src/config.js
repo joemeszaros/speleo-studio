@@ -66,10 +66,7 @@ export const DEFAULT_OPTIONS = {
       color : {
         start : '#00ff2a',
         end   : '#0000ff',
-        mode  : {
-          value   : 'gradientByZ',
-          choices : ['global', 'gradientByZ', 'gradientByDistance', 'percave', 'persurvey']
-        }
+        mode  : 'gradientByZ'
       }
     },
     sectionAttributes : {
@@ -477,14 +474,6 @@ export class ConfigChanges {
         this.scene.view.renderView();
         break;
 
-      case 'scene.caveLines.color.start':
-        // Gradient start color changed - no immediate visual update needed
-        break;
-
-      case 'scene.caveLines.color.end':
-        // Gradient end color changed - no immediate visual update needed
-        break;
-
       case 'scene.centerLines.segments.width':
         this.materials.segments.centerLine.linewidth = newValue;
         this.materials.whiteLine.linewidth = newValue;
@@ -627,6 +616,14 @@ export class ConfigChanges {
     }
   }
 
+  handleCaveLineColorChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.caveLines.color.mode':
+        this.scene.changeCenterLineColorMode(newValue);
+        break;
+    }
+  }
+
   /**
    * Main onChange handler that routes to specific handlers
    */
@@ -634,12 +631,14 @@ export class ConfigChanges {
     console.log(`🔧 Config change: ${path} = ${newValue} (${oldValue})`);
 
     // Route to appropriate handler based on path
-    if (path.startsWith('scene.centerLines') || path.startsWith('scene.caveLines')) {
+    if (path.startsWith('scene.centerLines')) {
       this.handleCenterLineChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.splays')) {
       this.handleSplayChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.auxiliaries')) {
       this.handleAuxiliaryChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.caveLines.color')) {
+      this.handleCaveLineColorChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.labels')) {
       this.handleLabelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.background') || path.startsWith('scene.sectionAttributes')) {

@@ -470,15 +470,12 @@ class MyScene {
     this.view.renderView();
   }
 
-  rollCenterLineColor() {
-    const config = this.options.scene.caveLines.color.mode;
+  changeCenterLineColorMode(mode) {
     const clConfig = this.options.scene.centerLines;
     const splayConfig = this.options.scene.splays;
     const auxiliaryConfig = this.options.scene.auxiliaries;
 
-    Options.rotateOptionChoice(config);
-    console.log(config.value);
-    switch (config.value) {
+    switch (mode) {
       case 'gradientByZ':
       case 'gradientByDistance': {
         const colors = SurveyHelper.getColorGradientsForCaves(this.db.caves, this.options.scene.caveLines);
@@ -502,7 +499,7 @@ class MyScene {
         this.caveObjects.forEach((surveyEntrires, caveName) => {
 
           let newClMaterial, newSplayMaterial, newAuxiliaryMaterial;
-          if (config.value === 'percave' && this.db.getCave(caveName).color !== undefined) {
+          if (mode === 'percave' && this.db.getCave(caveName).color !== undefined) {
             const color = this.db.getCave(caveName).color.hex();
             newClMaterial = new LineMaterial({
               color        : color,
@@ -531,15 +528,15 @@ class MyScene {
             e['splays'].geometry.setColors([]);
             e['auxiliaries'].geometry.setColors([]);
 
-            if (config.value === 'global' || (config.value === 'percave' && newClMaterial === undefined)) {
+            if (mode === 'global' || (mode === 'percave' && newClMaterial === undefined)) {
               e['centerLines'].material = this.materials.segments.centerLine;
               e['splays'].material = this.materials.segments.splay;
               e['auxiliaries'].material = this.materials.segments.auxiliary;
-            } else if (config.value === 'percave' && newClMaterial !== undefined) {
+            } else if (mode === 'percave' && newClMaterial !== undefined) {
               e['centerLines'].material = newClMaterial;
               e['splays'].material = newSplayMaterial;
               e['auxiliaries'].material = newAuxiliaryMaterial;
-            } else if (config.value === 'persurvey') {
+            } else if (mode === 'persurvey') {
               const survey = this.db.getSurvey(caveName, surveyName);
               if (survey.color === undefined) return; // = continue
               const hexColor = survey.color.hex();
@@ -568,7 +565,7 @@ class MyScene {
         break;
       }
       default:
-        throw new Error(`unknown configuration for cave line colors: ${config.value}`);
+        throw new Error(`unknown configuration for cave line colors: ${mode}`);
     }
     this.view.renderView();
 

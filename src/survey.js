@@ -214,9 +214,9 @@ class SurveyHelper {
   }
 
   static getColorGradientsForCaves(caves, lOptions) {
-    if (lOptions.color.mode.value === 'gradientByZ') {
+    if (lOptions.color.mode === 'gradientByZ') {
       return SurveyHelper.getColorGradientsByDepthForCaves(caves, lOptions);
-    } else if (lOptions.color.mode.value === 'gradientByDistance') {
+    } else if (lOptions.color.mode === 'gradientByDistance') {
       const m = [...caves.entries()].map(([caveName, cave]) => {
         const colors = SurveyHelper.getColorGradientsByDistance(cave, lOptions);
         return [caveName, colors];
@@ -228,10 +228,10 @@ class SurveyHelper {
   }
 
   static getColorGradients(cave, lOptions) {
-    if (lOptions.color.mode.value === 'gradientByZ') {
+    if (lOptions.color.mode === 'gradientByZ') {
       const colorGradientsCaves = SurveyHelper.getColorGradientsByDepthForCaves([cave], lOptions);
       return colorGradientsCaves.get(cave.name);
-    } else if (lOptions.color.mode.value === 'gradientByDistance') {
+    } else if (lOptions.color.mode === 'gradientByDistance') {
       return SurveyHelper.getColorGradientsByDistance(cave, lOptions);
     } else {
       return new Map();
