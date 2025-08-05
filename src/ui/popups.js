@@ -144,6 +144,7 @@ function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, sto
     pos3 = 0,
     pos4 = 0;
   var startX, startY, startWidth, startHeight;
+  var pWidth, pHeight;
 
   var elmnt = null;
   var currentZIndex = 100;
@@ -207,16 +208,16 @@ function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, sto
   }
 
   const doDrag = (e) => {
-    const newHeight = startHeight + e.clientY - startY;
-    const newWidth = startWidth + e.clientX - startX;
-    elmnt.style.width = newWidth + 'px';
-    elmnt.style.height = newHeight + 'px';
-    doDragFn(newWidth, newHeight);
+    pHeight = startHeight + e.clientY - startY;
+    pWidth = startWidth + e.clientX - startX;
+    elmnt.style.width = pWidth + 'px';
+    elmnt.style.height = pHeight + 'px';
+    doDragFn(pWidth, pHeight);
 
   };
 
   const stopDrag = () => {
-    stopDragFn();
+    stopDragFn(pWidth, pHeight);
     document.documentElement.removeEventListener('mousemove', doDrag, false);
     document.documentElement.removeEventListener('mouseup', stopDrag, false);
   };

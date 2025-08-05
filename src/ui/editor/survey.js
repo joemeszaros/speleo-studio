@@ -247,12 +247,15 @@ class SurveyEditor extends Editor {
       () => this.closeEditor(),
       (newWidth, _newHeight) => {
         const h = this.panel.offsetHeight - 100;
-        this.options.ui.editor.survey.height = h;
-        this.options.ui.editor.survey.width = newWidth;
+        //this.options.ui.editor.survey.height = h;
+        //this.options.ui.editor.survey.width = newWidth;
         this.table.setHeight(h); // we cannot use newHeight, because it could be a higher value than max-height
       },
 
-      () => {
+      (newWidth, _newHeight) => {
+        const h = this.panel.offsetHeight - 100;
+        this.options.ui.editor.survey.height = h;
+        this.options.ui.editor.survey.width = newWidth;
         this.table.redraw();
       }
     );
@@ -502,6 +505,10 @@ class SurveyEditor extends Editor {
       headerFilter : 'input'
     });
 
+    columns.forEach((c) => {
+      c.visible = this.options.ui.editor.survey.columns.includes(c.field);
+    });
+
     this.panel.style.width = this.options.ui.editor.survey.width + 'px';
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
@@ -643,8 +650,17 @@ class SurveyEditor extends Editor {
         //change menu item icon based on current visibility
         const columnDef = this.table.getColumn(column.field);
         if (columnDef && columnDef.isVisible()) {
+          if (!this.options.ui.editor.survey.columns.includes(column.field)) {
+            this.options.ui.editor.survey.columns.push(column.field);
+          }
           icon.textContent = '☑';
         } else {
+          if (this.options.ui.editor.survey.columns.includes(column.field)) {
+            this.options.ui.editor.survey.columns.splice(
+              this.options.ui.editor.survey.columns.indexOf(column.field),
+              1
+            );
+          }
           icon.textContent = '☐';
         }
       };

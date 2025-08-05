@@ -145,7 +145,7 @@ class Exporter {
         lines.push(`Survey name: ${survey.name}`);
         lines.push(`Survey team: ${survey.metadata.team.name}`);
         for (let i = 0; i < 5; i++) {
-          lines.push(`${survey.metadata.team.members[i]?.name ?? ''}	`);
+          lines.push(`${survey.metadata.team.members[i]?.name ?? ''}	${survey.metadata.team.members[i]?.role ?? ''}`);
         }
         lines.push(`Survey date: ${toPolygonDate(survey.metadata.date)}`);
         lines.push(`Declination: ${survey.metadata.declination}`);
@@ -155,7 +155,7 @@ class Exporter {
         });
         lines.push(`Fix point: ${survey.start}`);
         const startSt = cave.stations.get(survey.start);
-        lines.push(`${startSt.position.x}	${startSt.position.y}	${startSt.position.z}	0	0	0	0`);
+        lines.push(`${startSt?.position?.x ?? 0}	${startSt?.position?.y ?? 0}	${startSt?.position?.z ?? 0}	0	0	0	0`);
         lines.push('Survey data');
         lines.push('From	To	Length	Azimuth	Vertical	Label	Left	Right	Up	Down	Note');
 

@@ -96,8 +96,9 @@ export const DEFAULT_OPTIONS = {
   ui : {
     editor : {
       survey : {
-        height : 300,
-        width  : 700
+        height  : 300,
+        width   : 700,
+        columns : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment']
       }
     }
   }
@@ -645,6 +646,8 @@ export class ConfigChanges {
       this.handleSceneChanges(path, oldValue, newValue);
     } else if (path.startsWith('screen.')) {
       this.handleScreenChanges(path, oldValue, newValue);
+    } else if (path.startsWith('ui.editor.survey.')) {
+      // do nothing, no action on survey editor changes
     } else {
       console.log(`⚠️ No handler for path: ${path}`);
     }

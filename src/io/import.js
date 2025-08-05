@@ -122,7 +122,9 @@ class PolygonImporter extends CaveImporter {
     }
     const result = processor(parts[1].trim());
     if (!validator(result)) {
-      throw new Error(`Invalid Polygon survey, invalid value at line ${nextLine.value[0]}`);
+      throw new Error(
+        `Invalid Polygon survey, invalid value at line ${nextLine.value[0]}: "${nextLine.value[1].substring(0, 15)}"`
+      );
     }
     return result;
   }
@@ -190,7 +192,12 @@ class PolygonImporter extends CaveImporter {
             }
           }
 
-          fixPointName = this.getNextLineValue(lineIterator, 'Fix point');
+          fixPointName = this.getNextLineValue(
+            lineIterator,
+            'Fix point',
+            (x) => x,
+            () => true
+          );
           let posLine = lineIterator.next();
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
           lineIterator.next(); //From To ...
