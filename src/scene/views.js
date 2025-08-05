@@ -17,6 +17,7 @@ class View {
     this.domElement = domElement;
     this.scene = scene;
     this.dpi = dpi;
+    this.isInteracting = false;
 
     this.ratioIndicator = this.#createRatioIndicator(ratioIndicatorWidth);
     this.ratioIndicator.visible = false;
@@ -324,6 +325,9 @@ class SpatialView extends View {
 
     this.control = new OrbitControls(this.camera, this.domElement);
     this.control.update();
+    this.control.addEventListener('start', () => {
+      this.isInteracting = true;
+    });
     this.control.addEventListener('end', () => {
       const newpos = this.camera.position.clone().sub(this.control.target);
       this.overviewCamera.position.copy(this.target.clone().add(newpos));
@@ -332,6 +336,7 @@ class SpatialView extends View {
       this.updateFrustumFrame();
       this.renderView();
       this.onZoomLevelChange(this.camera.zoom);
+      this.isInteracting = false;
     });
     this.control.addEventListener('change', () => {
       this.renderView();
@@ -433,6 +438,7 @@ class PlanView extends View {
 
   #handleControlChange(e) {
     if (e.detail.reason === 'rotate') {
+      this.isInteracting = true;
       const rotation = e.detail.value.rotation;
       this.compass.material.rotation = -rotation;
     }
@@ -441,6 +447,7 @@ class PlanView extends View {
       this.overviewCamera.rotation.z = this.camera.rotation.z;
       this.overviewCamera.updateProjectionMatrix();
       this.updateFrustumFrame();
+      this.isInteracting = false;
     }
 
     if (e.detail.reason === 'zoom') {
@@ -510,10 +517,15 @@ class ProfileView extends View {
 
   #handleControlChange(e) {
 
+    if (e.detail.reason === 'rotate') {
+      this.isInteracting = true;
+    }
+
     if (e.detail.reason === 'rotateEnd') {
       this.overviewCamera.rotation.y = this.camera.rotation.y;
       this.overviewCamera.updateProjectionMatrix();
       this.updateFrustumFrame();
+      this.isInteracting = false;
     }
 
     if (e.detail.reason === 'zoom') {

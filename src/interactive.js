@@ -192,7 +192,7 @@ class SceneInteraction {
   }
 
   onPointerMove(event) {
-    if (this.mouseOnEditor) {
+    if (this.mouseOnEditor || this.scene.view.isInteracting) {
       return;
     }
     this.mouseCoordinates.x = event.clientX;
