@@ -786,9 +786,9 @@ class MyScene {
     const splayStationSpheresGroup = new THREE.Group();
     const auxiliaryStationSpheresGroup = new THREE.Group();
 
-    const clSphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 10, 10);
-    const splaySphereGeo = new THREE.SphereGeometry(this.options.scene.splays.spheres.radius, 10, 10);
-    const auxiliarySphereGeo = new THREE.SphereGeometry(this.options.scene.auxiliaries.spheres.radius, 10, 10);
+    const clSphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 5, 5);
+    const splaySphereGeo = new THREE.SphereGeometry(this.options.scene.splays.spheres.radius, 5, 5);
+    const auxiliarySphereGeo = new THREE.SphereGeometry(this.options.scene.auxiliaries.spheres.radius, 5, 5);
 
     for (const [stationName, station] of cave.stations) {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey

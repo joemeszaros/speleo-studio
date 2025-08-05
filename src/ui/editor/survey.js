@@ -459,11 +459,11 @@ class SurveyEditor extends Editor {
       { field: 'x', title: 'X' },
       { field: 'y', title: 'Y' },
       { field: 'z', title: 'Z' },
-      { field: 'eovy', title: 'EOV Y', visible: false },
-      { field: 'eovx', title: 'EOV X', visible: false },
-      { field: 'eove', title: 'EOV Z', visible: false },
-      { field: 'wgslat', title: 'Lat', visible: false, decimals: 6 },
-      { field: 'wgslon', title: 'Lon', visible: false, decimals: 6 }
+      { field: 'eovy', title: 'EOV Y' },
+      { field: 'eovx', title: 'EOV X' },
+      { field: 'eove', title: 'EOV Z' },
+      { field: 'wgslat', title: 'Lat', decimals: 6 },
+      { field: 'wgslon', title: 'Lon', decimals: 6 }
     ];
 
     coordinateColumns.forEach((c) => {
@@ -472,8 +472,7 @@ class SurveyEditor extends Editor {
         field            : c.field,
         mutatorClipboard : this.baseTableFunctions.floatAccessor,
         formatter        : this.baseTableFunctions.floatFormatter('', c.decimals),
-        editor           : false,
-        visible          : c.visible
+        editor           : false
       });
     });
 
@@ -506,7 +505,7 @@ class SurveyEditor extends Editor {
     });
 
     columns.forEach((c) => {
-      c.visible = this.options.ui.editor.survey.columns.includes(c.field);
+      c.visible = c.field === 'status' || this.options.ui.editor.survey.columns.includes(c.field);
     });
 
     this.panel.style.width = this.options.ui.editor.survey.width + 'px';
@@ -776,13 +775,14 @@ class SurveySheetEditor extends BaseEditor {
     const declinationText = U.node`<p id="declination-official">Declination: unavailable</p>`;
     form.appendChild(declinationText);
 
-    const firstStation = this.cave.stations.get(this.survey?.start);
+    const startOrFirstStation =
+      this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1];
     const declinationPrefix = 'Declination at the given date for this geo location (from NOAA):';
     if (this.survey?.metadata?.declinationReal === undefined) {
-      if (firstStation?.coordinates.wgs !== undefined) {
+      if (startOrFirstStation?.coordinates.wgs !== undefined) {
         Declination.getDeclination(
-          firstStation.coordinates.wgs.lat,
-          firstStation.coordinates.wgs.lon,
+          startOrFirstStation.coordinates.wgs.lat,
+          startOrFirstStation.coordinates.wgs.lon,
           this.survey.metadata.date
         ).then((declination) => {
           this.survey.metadata.declinationReal = declination;

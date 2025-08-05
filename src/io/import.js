@@ -156,7 +156,12 @@ class PolygonImporter extends CaveImporter {
 
         if (surveyName !== undefined) {
           const surveyNameStr = surveyName.substring(13);
-          const surveyTeamName = this.getNextLineValue(lineIterator, 'Survey team');
+          const surveyTeamName = this.getNextLineValue(
+            lineIterator,
+            'Survey team',
+            (x) => x,
+            () => true
+          ); // we allow empty team name
 
           const members = [];
           for (let i = 0; i < 5; i++) {
@@ -196,7 +201,7 @@ class PolygonImporter extends CaveImporter {
             lineIterator,
             'Fix point',
             (x) => x,
-            () => true
+            () => true // we allow empty fix point name
           );
           let posLine = lineIterator.next();
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
