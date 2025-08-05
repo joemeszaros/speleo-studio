@@ -129,6 +129,10 @@ body {
   background-color: #251410;
 }
 
+.cautionpanel-success {
+  background-color: #0a2510;
+}
+
 .file-upload {
   position: absolute;
   bottom: 10px;

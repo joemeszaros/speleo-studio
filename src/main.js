@@ -2,14 +2,14 @@ import { Database } from './db.js';
 import { MyScene, SceneOverview } from './scene/scene.js';
 import { PlySurfaceImporter, PolygonImporter, TopodroidImporter, JsonImporter } from './io/import.js';
 import { SceneInteraction } from './interactive.js';
-import { OPTIONS } from './config.js';
+import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
 import { ProjectExplorer, ProjectManager } from './ui/explorer.js';
 import { NavigationBar } from './ui/navbar.js';
 import { Footer } from './ui/footer.js';
-import { addGui } from './ui/controls.js';
+import { Controls } from './ui/controls.js';
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
-import { showErrorPanel } from './ui/popups.js';
+import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
 
 class Main {
 
@@ -20,7 +20,11 @@ class Main {
     }
 
     const db = new Database();
-    const options = OPTIONS;
+    // Load saved configuration or use defaults
+    const loadedOptions = ConfigManager.loadOrDefaults();
+    const observer = new ObjectObserver();
+    const options = observer.watchObject(loadedOptions);
+
     const materials = new Materials(options).materials;
     const attributeDefs = new AttributesDefinitions(attributeDefintions);
     const sceneOverview = new SceneOverview(document.querySelector('#overview'));
@@ -33,12 +37,19 @@ class Main {
       sceneOverview
     );
 
+    observer.watchChanges(new ConfigChanges(options, scene, materials).getOnChangeHandler());
+
     const footer = new Footer(document.getElementById('footer'));
+
+    this.scene = scene;
+    this.options = options;
 
     const explorer = new ProjectExplorer(options, db, scene, attributeDefs, document.querySelector('#tree-panel'));
     const projectManager = new ProjectManager(db, options, scene, explorer);
-    const controls = addGui(options, scene, materials, document.getElementById('control-panel'));
-    controls.close();
+
+    this.controls = new Controls(options, document.getElementById('control-panel'));
+    this.controls.close();
+
     const interaction = new SceneInteraction(
       db,
       options,
@@ -51,9 +62,16 @@ class Main {
       document.getElementById('interactive'),
       ['fixed-size-editor', 'resizable-editor']
     );
-    new NavigationBar(db, document.getElementById('navbarcontainer'), options, scene, interaction, projectManager);
+    new NavigationBar(
+      db,
+      document.getElementById('navbarcontainer'),
+      options,
+      scene,
+      interaction,
+      projectManager,
+      this.controls
+    );
 
-    this.scene = scene;
     this.importers = {
       topodroid : new TopodroidImporter(db, options, scene, projectManager),
       polygon   : new PolygonImporter(db, options, scene, projectManager),
@@ -63,6 +81,7 @@ class Main {
 
     this.#setupEventListeners();
     this.#loadCaveFromUrl();
+
   }
 
   #setupEventListeners() {
@@ -70,7 +89,7 @@ class Main {
     this.#setupFileInputListener('polygonInput', this.importers.polygon);
     this.#setupFileInputListener('jsonInput', this.importers.json);
     this.#setupFileInputListener('plyInput', this.importers.ply);
-
+    this.#setupConfigFileInputListener();
   }
 
   #setupFileInputListener(inputName, handler) {
@@ -89,6 +108,41 @@ class Main {
 
         input.value = '';
       });
+  }
+
+  #setupConfigFileInputListener() {
+    const input = document.getElementById('configInput');
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonString = event.target.result;
+          const loadedConfig = ConfigManager.getConfigObject(jsonString);
+
+          if (loadedConfig) {
+            ConfigManager.deepMerge(this.options, loadedConfig);
+            this.controls.reload();
+            console.log('✅ Configuration loaded successfully from file');
+            showSuccessPanel(`Configuration loaded successfully from ${file.name}`);
+          } else {
+            throw new Error('Invalid configuration file format');
+          }
+        } catch (error) {
+          console.error('Failed to load configuration:', error);
+          showErrorPanel(`Failed to load configuration from ${file.name}: ${error.message}`);
+        }
+      };
+
+      reader.onerror = () => {
+        showErrorPanel(`Failed to read file ${file.name}`);
+      };
+
+      reader.readAsText(file);
+      input.value = '';
+    });
   }
 
   #loadCaveFromUrl() {

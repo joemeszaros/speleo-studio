@@ -58,6 +58,11 @@ class Grid {
         break;
     }
     this.scene.view.renderView();
+
+    // Save configuration after changing grid mode
+    if (this.scene.saveConfig) {
+      this.scene.saveConfig();
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import * as U from './utils/utils.js';
 import { SurveyStation as ST } from './model/survey.js';
-import { Vector } from './model.js';
+import { Vector, Color } from './model.js';
 import { ShotType } from './model/survey.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
@@ -321,10 +321,14 @@ class SurveyHelper {
     return colorGradients;
   }
 
-  static getColorGradientsByDepth(survey, stations, diffZ, maxZ, startColor, endColor) {
+  static getColorGradientsByDepth(survey, stations, diffZ, maxZ, startColorHex, endColorHex) {
     const centerColors = [];
     const splayColors = [];
     const auxiliaryColors = [];
+
+    const startColor = new Color(startColorHex);
+    const endColor = new Color(endColorHex);
+
     const colorDiff = endColor.sub(startColor);
     survey.validShots.forEach((sh) => {
       const fromStation = stations.get(survey.getFromStationName(sh));

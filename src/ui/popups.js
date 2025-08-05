@@ -2,17 +2,35 @@ import { node } from '../utils/utils.js';
 
 function showCautionPanel(message, seconds, errorOrWarning) {
   let cautionPanel = document.getElementById('cautionpanel');
+
+  // Remove all existing classes
+  cautionPanel.classList.remove('cautionpanel-error', 'cautionpanel-warning', 'cautionpanel-success');
+
+  // Add appropriate class based on type
   if (errorOrWarning === 'error') {
     cautionPanel.classList.add('cautionpanel-error');
-    cautionPanel.classList.remove('cautionpanel-warning');
-  } else {
+  } else if (errorOrWarning === 'warning') {
     cautionPanel.classList.add('cautionpanel-warning');
-    cautionPanel.classList.remove('cautionpanel-error');
+  } else if (errorOrWarning === 'success') {
+    cautionPanel.classList.add('cautionpanel-success');
+  }
+
+  // Set appropriate icon and color based on type
+  let icon, color;
+  if (errorOrWarning === 'error') {
+    icon = '⚠';
+    color = '#8a1a12';
+  } else if (errorOrWarning === 'warning') {
+    icon = '⚠';
+    color = '#8a1a12';
+  } else if (errorOrWarning === 'success') {
+    icon = '✅';
+    color = '#1a8a12';
   }
 
   cautionPanel.style.display = 'block';
   cautionPanel.querySelector('#content').innerHTML =
-    '<strong style="color:#8a1a12">⚠ ' + errorOrWarning.toUpperCase() + '</strong> ' + message;
+    `<strong style="color:${color}">${icon} ${errorOrWarning.toUpperCase()}</strong> ${message}`;
   setTimeout(function () {
     cautionPanel.style.display = 'none';
   }, seconds * 1000);
@@ -24,6 +42,10 @@ function showErrorPanel(message, seconds = 6) {
 
 function showWarningPanel(message, seconds = 6) {
   showCautionPanel(message, seconds, 'warning');
+}
+
+function showSuccessPanel(message, seconds = 4) {
+  showCautionPanel(message, seconds, 'success');
 }
 
 function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, stopDragFn) {
@@ -144,4 +166,4 @@ function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, sto
   }
 }
 
-export { showErrorPanel, showWarningPanel, makeMovable };
+export { showErrorPanel, showWarningPanel, showSuccessPanel, makeMovable };

@@ -9,7 +9,7 @@ class Materials {
     this.materials = {
       segments : {
         centerLine : new LineMaterial({
-          color           : this.config.centerLines.segments.color.hex(),
+          color           : this.config.centerLines.segments.color,
           linewidth       : this.config.centerLines.segments.width,
           worldUnits      : false,
           vertexColors    : false,
@@ -18,14 +18,14 @@ class Materials {
           opacity         : this.config.centerLines.segments.opacity
         }),
         splay : new LineMaterial({
-          color           : this.config.splays.segments.color.hex(),
+          color           : this.config.splays.segments.color,
           linewidth       : this.config.splays.segments.width,
           worldUnits      : false,
           vertexColors    : false,
           alphaToCoverage : false
         }),
         auxiliary : new LineMaterial({
-          color           : this.config.auxiliaries.segments.color.hex(),
+          color           : this.config.auxiliaries.segments.color,
           linewidth       : this.config.auxiliaries.segments.width,
           worldUnits      : false,
           vertexColors    : false,
@@ -34,9 +34,9 @@ class Materials {
       },
       text   : new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),
       sphere : {
-        centerLine         : new THREE.MeshBasicMaterial({ color: this.config.centerLines.spheres.color.hex() }),
-        splay              : new THREE.MeshBasicMaterial({ color: this.config.splays.spheres.color.hex() }),
-        auxiliary          : new THREE.MeshBasicMaterial({ color: this.config.auxiliaries.spheres.color.hex() }),
+        centerLine         : new THREE.MeshBasicMaterial({ color: this.config.centerLines.spheres.color }),
+        splay              : new THREE.MeshBasicMaterial({ color: this.config.splays.spheres.color }),
+        auxiliary          : new THREE.MeshBasicMaterial({ color: this.config.auxiliaries.spheres.color }),
         surface            : new THREE.MeshBasicMaterial({ color: 0xa0a0ff }),
         selected           : new THREE.MeshBasicMaterial({ color: 0xf00fff }),
         selectedForContext : new THREE.MeshBasicMaterial({ color: 0x20ff3d })

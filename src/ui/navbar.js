@@ -1,3 +1,4 @@
+import { ConfigManager } from '../config.js';
 import { Exporter } from '../io/export.js';
 
 class NavigationBar {
@@ -8,12 +9,13 @@ class NavigationBar {
    * @param {Map<String, Map>} options - Global project options, like global visibility of an object
    * @param {MyScene} scene - The 3D scene
    */
-  constructor(db, domElement, options, scene, interactive, projectManager) {
+  constructor(db, domElement, options, scene, interactive, projectManager, controls) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.interactive = interactive;
     this.projectManager = projectManager;
+    this.controls = controls;
     this.#buildNavbar(domElement);
     this.#addNavbarClickListener();
   }
@@ -50,7 +52,18 @@ class NavigationBar {
           { name: 'Export JSON', click: () => Exporter.exportCaves(this.db.caves) },
           { name: 'Export PNG', click: () => Exporter.exportPNG(this.scene) },
           { name: 'Export DXF', click: () => Exporter.exportDXF(this.db.caves) },
-          { name: 'Export Polygon', click: () => Exporter.exportPolygon(this.db.caves) }
+          { name: 'Export Polygon', click: () => Exporter.exportPolygon(this.db.caves) },
+          { name: 'Download configuration', click: () => ConfigManager.downloadConfig(this.options) },
+          { name: 'Load configuration', click: () => document.getElementById('configInput').click() },
+          {
+            name  : 'Reset configuration',
+            click : () => {
+              ConfigManager.clear();
+              const loadedConfig = ConfigManager.loadOrDefaults();
+              ConfigManager.deepMerge(this.options, loadedConfig);
+              this.controls.reload();
+            }
+          }
         ]
       },
       {

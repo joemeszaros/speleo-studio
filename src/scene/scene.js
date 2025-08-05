@@ -77,7 +77,7 @@ class MyScene {
     };
 
     this.threejsScene = new THREE.Scene();
-    this.threejsScene.background = new THREE.Color(this.options.scene.background.color.hex());
+    this.threejsScene.background = new THREE.Color(this.options.scene.background.color);
 
     this.grid = new Grid(this.options, this);
 
@@ -357,6 +357,7 @@ class MyScene {
       }
     }
     this.view.renderView();
+
   }
 
   showSegments(id, segments, color, caveName) {
@@ -570,6 +571,7 @@ class MyScene {
         throw new Error(`unknown configuration for cave line colors: ${config.value}`);
     }
     this.view.renderView();
+
   }
 
   rollSurface() {

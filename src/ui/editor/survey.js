@@ -1,4 +1,3 @@
-import { OPTIONS } from '../../config.js';
 import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor, Editor } from './base.js';
 import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
@@ -17,7 +16,6 @@ class SurveyEditor extends Editor {
     this.surveyModified = false;
     this.eovVisible = false;
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
-    this.options = OPTIONS;
   }
 
   #emitSurveyChanged() {
