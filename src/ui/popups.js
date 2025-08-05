@@ -1,7 +1,48 @@
 import { node } from '../utils/utils.js';
 
+// Global state to track active panel and messages
+let activePanelState = {
+  isVisible : false,
+  messages  : [],
+  timeoutId : null,
+  type      : null
+};
+
 function showCautionPanel(message, seconds, errorOrWarning) {
   let cautionPanel = document.getElementById('cautionpanel');
+
+  // Check if panel is already visible
+  if (activePanelState.isVisible) {
+    // If same type, merge messages
+    if (activePanelState.type === errorOrWarning) {
+      activePanelState.messages.push(message);
+
+      // Clear existing timeout
+      if (activePanelState.timeoutId) {
+        clearTimeout(activePanelState.timeoutId);
+      }
+
+      // Update display with merged messages
+      updatePanelDisplay(cautionPanel, activePanelState.messages, errorOrWarning);
+
+      // Set new timeout
+      if (seconds !== undefined && seconds > 0) {
+        activePanelState.timeoutId = setTimeout(() => {
+          hidePanel(cautionPanel);
+        }, seconds * 1000);
+      }
+
+      return;
+    } else {
+      // Different type - hide current panel and show new one
+      hidePanel(cautionPanel);
+    }
+  }
+
+  // Start fresh panel
+  activePanelState.isVisible = true;
+  activePanelState.messages = [message];
+  activePanelState.type = errorOrWarning;
 
   // Remove all existing classes
   cautionPanel.classList.remove('cautionpanel-error', 'cautionpanel-warning', 'cautionpanel-success');
@@ -15,6 +56,18 @@ function showCautionPanel(message, seconds, errorOrWarning) {
     cautionPanel.classList.add('cautionpanel-success');
   }
 
+  // Update display
+  updatePanelDisplay(cautionPanel, activePanelState.messages, errorOrWarning);
+
+  // Set timeout
+  if (seconds !== undefined && seconds > 0) {
+    activePanelState.timeoutId = setTimeout(() => {
+      hidePanel(cautionPanel);
+    }, seconds * 1000);
+  }
+}
+
+function updatePanelDisplay(cautionPanel, messages, errorOrWarning) {
   // Set appropriate icon and color based on type
   let icon, color;
   if (errorOrWarning === 'error') {
@@ -29,12 +82,46 @@ function showCautionPanel(message, seconds, errorOrWarning) {
   }
 
   cautionPanel.style.display = 'block';
-  cautionPanel.querySelector('#content').innerHTML =
-    `<strong style="color:${color}">${icon} ${errorOrWarning.toUpperCase()}</strong> ${message}`;
-  setTimeout(function () {
-    cautionPanel.style.display = 'none';
-  }, seconds * 1000);
+
+  // Add close button
+  let messageContent = `<span class="caution-close-btn" onclick="closeCautionPanel()">×</span>`;
+
+  // Create merged message content
+  messageContent += `<strong style="color:${color}">${icon} ${errorOrWarning.toUpperCase()}</strong>`;
+
+  if (messages.length === 1) {
+    messageContent += ` ${messages[0]}`;
+  } else {
+    messageContent += ` (${messages.length} messages):<br>`;
+    messages.forEach((msg, index) => {
+      messageContent += `• ${msg}`;
+      if (index < messages.length - 1) {
+        messageContent += '<br>';
+      }
+    });
+  }
+
+  cautionPanel.innerHTML = messageContent;
 }
+
+function hidePanel(cautionPanel) {
+  cautionPanel.style.display = 'none';
+  activePanelState.isVisible = false;
+  activePanelState.messages = [];
+  activePanelState.type = null;
+  if (activePanelState.timeoutId) {
+    clearTimeout(activePanelState.timeoutId);
+    activePanelState.timeoutId = null;
+  }
+}
+
+// Global function to close caution panel (accessible from onclick)
+window.closeCautionPanel = function () {
+  const cautionPanel = document.getElementById('cautionpanel');
+  if (cautionPanel) {
+    hidePanel(cautionPanel);
+  }
+};
 
 function showErrorPanel(message, seconds = 6) {
   showCautionPanel(message, seconds, 'error');

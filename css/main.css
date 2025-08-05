@@ -133,6 +133,21 @@ body {
   background-color: #0a2510;
 }
 
+.caution-close-btn {
+  float: right;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 32px;
+  color: #ac1717;
+  margin-left: 10px;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.caution-close-btn:hover {
+  color: #895050;
+}
+
 .file-upload {
   position: absolute;
   bottom: 10px;

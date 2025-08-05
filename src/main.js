@@ -97,9 +97,9 @@ class Main {
     const input = document.getElementById(inputName);
     input
       .addEventListener('change', (e) => {
-
         for (const file of e.target.files) {
           try {
+            console.log('🚧 Importing file', file.name);
             handler.importFile(file);
           } catch (error) {
             showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);

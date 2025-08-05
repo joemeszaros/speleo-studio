@@ -55,17 +55,19 @@ class CaveImporter {
   importFile(file, name, endcoding = 'utf8') {
     if (file) {
       const reader = new FileReader();
+      const nameToUse = name ?? file.name;
+      const errorMessage = `Import of ${nameToUse.substring(nameToUse.lastIndexOf('/') + 1)} failed`;
       reader.onload = (event) => {
         try {
           this.importText(event.target.result);
         } catch (e) {
-          console.error(e);
-          showErrorPanel(`Import of ${name.substring(name.lastIndexOf('/') + 1)} failed: ${e.message}`, 10);
+          console.error(errorMessage, e);
+          showErrorPanel(`${errorMessage}: ${e.message}`, 0);
         }
       };
       reader.onerror = (error) => {
-        console.error(error);
-        showErrorPanel(`Import of ${name.substring(name.lastIndexOf('/') + 1)} failed: ${error}`, 10);
+        console.error(errorMessage, error);
+        showErrorPanel(`${errorMessage}: ${error}`, 0);
       };
       reader.readAsText(file, endcoding);
     }
