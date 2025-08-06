@@ -16,6 +16,7 @@ export class ProjectPanel {
     this.panel.innerHTML = `
       <div class="project-panel-header">
         <h3>Project Manager</h3>
+        <button id="new-project-btn" class="project-btn">New Project</button>
         <button class="project-panel-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
       </div>
       
@@ -25,13 +26,6 @@ export class ProjectPanel {
           <div id="current-project-info">
             <p>No project loaded</p>
           </div>
-        </div>
-        
-        <div class="project-actions-section">
-          <h4>Project Actions</h4>
-          <button id="new-project-btn" class="project-btn">New Project</button>
-          <button id="save-project-btn" class="project-btn" disabled>Save Project</button>
-          <button id="export-project-btn" class="project-btn" disabled>Export Project</button>
         </div>
         
         <div class="recent-projects-section">
@@ -52,13 +46,9 @@ export class ProjectPanel {
 
   setupEventListeners() {
     const newProjectBtn = this.panel.querySelector('#new-project-btn');
-    const saveProjectBtn = this.panel.querySelector('#save-project-btn');
-    const exportProjectBtn = this.panel.querySelector('#export-project-btn');
     const projectSearch = this.panel.querySelector('#project-search');
 
     newProjectBtn.addEventListener('click', () => this.showNewProjectDialog());
-    saveProjectBtn.addEventListener('click', () => this.saveCurrentProject());
-    exportProjectBtn.addEventListener('click', () => this.exportCurrentProject());
     projectSearch.addEventListener('input', () => this.filterProjects());
   }
 
@@ -89,11 +79,15 @@ export class ProjectPanel {
 
       currentProjectInfo.innerHTML = `
         <div class="project-info">
-          <h5>${currentProject.name}</h5>
-          <p><strong>Caves:</strong> ${caveCount}</p>
-          <p><strong>Created:</strong> ${new Date(currentProject.createdAt).toLocaleDateString()}</p>
-          <p><strong>Modified:</strong> ${lastModified}</p>
-          ${currentProject.description ? `<p><strong>Description:</strong> ${currentProject.description}</p>` : ''}
+          <div class="current-project-header">
+            <span class="current-project-name">${currentProject.name}</span>
+            <span class="current-project-meta">${caveCount} caves • ${lastModified}</span>
+          </div>
+          ${currentProject.description ? `<div class="current-project-description">${currentProject.description}</div>` : ''}
+          <div class="current-project-actions">
+            <button id="save-project-btn" class="project-btn">Save Project</button>
+            <button id="export-project-btn" class="project-btn">Export Project</button>
+          </div>
         </div>
       `;
     } else {
