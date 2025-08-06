@@ -31,14 +31,14 @@ class CaveImporter {
     this.manager = manager;
   }
 
-  importFile(file, name, endcoding = 'utf8') {
+  importFile(file, name, onCaveLoad, endcoding = 'utf8') {
     if (file) {
       const reader = new FileReader();
       const nameToUse = name ?? file.name;
       const errorMessage = `Import of ${nameToUse.substring(nameToUse.lastIndexOf('/') + 1)} failed`;
       reader.onload = (event) => {
         try {
-          this.importText(event.target.result);
+          this.importText(event.target.result, onCaveLoad);
         } catch (e) {
           console.error(errorMessage, e);
           showErrorPanel(`${errorMessage}: ${e.message}`, 0);
@@ -244,13 +244,13 @@ class PolygonImporter extends CaveImporter {
     }
   }
 
-  importFile(file, name, endcoding = 'iso_8859-2') {
-    super.importFile(file, name, endcoding);
+  importFile(file, name, onCaveLoad, endcoding = 'iso_8859-2') {
+    super.importFile(file, name, onCaveLoad, endcoding);
   }
 
-  importText(wholeFileInText) {
+  importText(wholeFileInText, onCaveLoad) {
     const cave = this.getCave(wholeFileInText);
-    this.manager.addCave(cave);
+    onCaveLoad(cave);
   }
 }
 
@@ -304,17 +304,17 @@ class TopodroidImporter extends CaveImporter {
     return new Cave(fileName, undefined, undefined, stations, [survey], aliases);
   }
 
-  importFile(file) {
+  importFile(file, onCaveLoad) {
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => this.importText(file, event.target.result);
+      reader.onload = (event) => this.importText(file, event.target.result, onCaveLoad);
       reader.readAsText(file);
     }
   }
 
-  importText(file, csvTextData) {
+  importText(file, csvTextData, onCaveLoad) {
     const cave = this.getCave(file.name, csvTextData);
-    this.manager.addCave(cave);
+    onCaveLoad(cave);
   }
 }
 
@@ -324,23 +324,23 @@ class JsonImporter extends CaveImporter {
     this.attributeDefs = attributeDefs;
   }
 
-  importFile(file) {
+  importFile(file, onCaveLoad) {
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => this.importJson(event.target.result);
+      reader.onload = (event) => this.importJson(event.target.result, onCaveLoad);
       reader.readAsText(file);
     }
   }
-  importText(wholeFileInText) {
-    return this.importJson(wholeFileInText);
+  importText(wholeFileInText, onCaveLoad) {
+    return this.importJson(wholeFileInText, onCaveLoad);
   }
 
-  importJson(json) {
+  importJson(json, onCaveLoad) {
     const parsedCave = JSON.parse(json);
     const cave = Cave.fromPure(parsedCave, this.attributeDefs);
 
     [...cave.surveys.entries()]
-      .forEach(([index, es]) => SurveyHelper.recalculateSurvey(index, es, cave.stations, cave.aliases));
+      .forEach(([index, es]) => SurveyHelper.recalculateSurvey(index, es, cave.stations, cave.aliases, cave.geoData));
 
     if (cave.sectionAttributes.length > 0 || cave.componentAttributes.length > 0) {
       const g = SectionHelper.getGraph(cave);
@@ -368,7 +368,8 @@ class JsonImporter extends CaveImporter {
         });
       }
     }
-    this.manager.addCave(cave);
+
+    onCaveLoad(cave);
   }
 }
 

@@ -945,7 +945,6 @@ class MyScene {
   deleteCave(caveName) {
     this.caveObjects.delete(caveName);
   }
-
 }
 
 export { MyScene, SceneOverview };

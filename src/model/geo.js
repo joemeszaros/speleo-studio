@@ -113,13 +113,13 @@ class StationWithCoordinate {
 
   toExport() {
     return {
-      name : this.name,
-      eov  : this.coordinate.toExport()
+      name       : this.name,
+      coordinate : this.coordinate.toExport()
     };
   }
 
   static fromPure(pure) {
-    pure.eov = EOVCoordinateWithElevation.fromPure(pure.eov);
+    pure.coordinate = EOVCoordinateWithElevation.fromPure(pure.coordinate);
     return Object.assign(new StationWithCoordinate(), pure);
   }
 }
@@ -151,6 +151,7 @@ class GeoData {
   }
 
   static fromPure(pure) {
+    pure.coordinates = pure.coordinates.map((c) => StationWithCoordinate.fromPure(c));
     return Object.assign(new GeoData(), pure);
   }
 }

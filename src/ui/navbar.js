@@ -67,6 +67,35 @@ class NavigationBar {
         ]
       },
       {
+        name     : 'Project',
+        elements : [
+          {
+            name  : 'New Project',
+            click : () => {
+              window.projectPanel.showNewProjectDialog();
+            }
+          },
+          {
+            name  : 'Project Manager',
+            click : () => {
+              window.projectPanel.show();
+            }
+          },
+          {
+            name  : 'Save Project',
+            click : () => {
+              window.projectPanel.saveCurrentProject();
+            }
+          },
+          {
+            name  : 'Export Project',
+            click : () => {
+              window.projectPanel.exportCurrentProject();
+            }
+          }
+        ]
+      },
+      {
         name     : 'Surface',
         elements : [
           {

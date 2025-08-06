@@ -8,7 +8,7 @@ import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attri
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
-import { showErrorPanel, showWarningPanel } from './popups.js';
+import { showErrorPanel, showWarningPanel, showSuccessPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
 
 class ProjectManager {
@@ -19,11 +19,12 @@ class ProjectManager {
    * @param {MyScene} scene - The 3D scene
    * @param {ProjectExplorer} explorer - The project explorer that displays caves and surveys in a tree view
    */
-  constructor(db, options, scene, explorer) {
+  constructor(db, options, scene, explorer, projectSystem = null) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.explorer = explorer;
+    this.projectSystem = projectSystem;
     document.addEventListener('surveyChanged', (e) => this.onSurveyChanged(e));
     document.addEventListener('attributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
@@ -32,6 +33,7 @@ class ProjectManager {
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
     document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
+    document.addEventListener('currentProjectChanged', (e) => this.onCurrentProjectChanged(e));
   }
 
   onCaveAdded(e) {
@@ -50,6 +52,7 @@ class ProjectManager {
     //TODO : consider survey here and only recalculate following surveys
     const cave = e.detail.cave;
     this.recalculateCave(cave);
+    this.reloadOnScene(cave);
     this.scene.view.renderView();
     this.explorer.updateCave(cave, (n) => n.name === cave.name);
   }
@@ -66,6 +69,7 @@ class ProjectManager {
     this.scene.disposeSurvey(caveName, surveyName);
     const cave = this.db.getCave(caveName);
     this.recalculateCave(cave);
+    this.reloadOnScene(cave);
     this.scene.view.renderView();
     this.explorer.deleteSurvey(caveName, surveyName);
     this.explorer.updateCave(cave, (n) => n.name === cave.name);
@@ -90,16 +94,40 @@ class ProjectManager {
 
   onCaveDeleted(e) {
     const caveName = e.detail.cave;
+    this.deleteCave(caveName);
+  }
+
+  deleteCave(caveName) {
     this.scene.disposeCave(caveName);
     this.scene.deleteCave(caveName);
     this.scene.view.renderView();
     this.explorer.deleteCave(caveName);
+    this.projectSystem.getCurrentProject().deleteCave(caveName);
     this.explorer.closeEditors(caveName);
+  }
+
+  onCurrentProjectChanged(e) {
+    const project = e.detail.project;
+
+    if (project) {
+      this.db.getAllCaves().forEach((cave) => {
+        this.deleteCave(cave.name);
+      });
+
+      this.db.clear();
+      this.scene.view.renderView();
+
+      project.getAllCaves().forEach((cave) => {
+        this.recalculateCave(cave);
+        this.addCave(cave);
+      });
+      this.projectSystem.setCurrentProject(project);
+      showSuccessPanel(`Project "${project.name}" loaded successfully`);
+    }
   }
 
   recalculateCave(cave) {
     let caveStations = new Map();
-    const lOptions = this.options.scene.caveLines;
     cave.stations = caveStations;
     cave.surveys.entries().forEach(([index, es]) => {
       SurveyHelper.recalculateSurvey(index, es, caveStations, cave.aliases, cave.geoData);
@@ -107,6 +135,11 @@ class ProjectManager {
     });
     cave.stations = caveStations;
     //TODO: should recalculate section attributes
+  }
+
+  reloadOnScene(cave) {
+    const caveStations = cave.stations;
+    const lOptions = this.options.scene.caveLines;
 
     // get color gradients after recalculation
     const colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
@@ -202,6 +235,7 @@ class ProjectManager {
       });
 
       this.explorer.addCave(cave);
+
       const boundingBox = this.scene.computeBoundingBox();
       this.scene.grid.adjust(boundingBox);
       this.scene.view.fitScreen(boundingBox);
@@ -548,6 +582,12 @@ class ProjectExplorer {
         const result = confirm(`Do you want to delete cave '${state.cave.name}'?`);
         if (result) {
           this.db.deleteCave(state.cave.name);
+          const event = new CustomEvent('caveDeleted', {
+            detail : {
+              cave : state.cave.name
+            }
+          });
+          document.dispatchEvent(event);
         }
       }
     } else if (event.target.id.startsWith('color-picker')) {

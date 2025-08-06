@@ -10,6 +10,8 @@ import { Footer } from './ui/footer.js';
 import { Controls } from './ui/controls.js';
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
+import { ProjectSystem, ProjectNotFoundError } from './project-system.js';
+import { ProjectPanel } from './ui/project-panel.js';
 
 class Main {
 
@@ -24,6 +26,22 @@ class Main {
     const loadedOptions = ConfigManager.loadOrDefaults();
     const observer = new ObjectObserver();
     const options = observer.watchObject(loadedOptions);
+
+    // Initialize project system
+    const projectSystem = new ProjectSystem();
+    this.projectSystem = projectSystem;
+
+    // Initialize the application
+    this.#initializeApp(db, options, observer);
+  }
+
+  async #initializeApp(db, options, observer) {
+    try {
+      await this.projectSystem.init();
+    } catch (error) {
+      console.error('Failed to initialize project system:', error);
+      showErrorPanel('Failed to initialize project system');
+    }
 
     const materials = new Materials(options).materials;
     const attributeDefs = new AttributesDefinitions(attributeDefintions);
@@ -45,7 +63,7 @@ class Main {
     this.options = options;
 
     const explorer = new ProjectExplorer(options, db, scene, attributeDefs, document.querySelector('#tree-panel'));
-    const projectManager = new ProjectManager(db, options, scene, explorer);
+    this.projectManager = new ProjectManager(db, options, scene, explorer, this.projectSystem);
 
     this.controls = new Controls(options, document.getElementById('control-panel'));
     this.controls.close();
@@ -68,19 +86,30 @@ class Main {
       options,
       scene,
       interaction,
-      projectManager,
+      this.projectManager,
       this.controls
     );
 
     this.importers = {
-      topodroid : new TopodroidImporter(db, options, scene, projectManager),
-      polygon   : new PolygonImporter(db, options, scene, projectManager),
-      json      : new JsonImporter(db, options, scene, projectManager, attributeDefs),
-      ply       : new PlySurfaceImporter(db, options, scene, projectManager)
+      topodroid : new TopodroidImporter(db, options, scene, this.projectManager),
+      polygon   : new PolygonImporter(db, options, scene, this.projectManager),
+      json      : new JsonImporter(db, options, scene, this.projectManager, attributeDefs),
+      ply       : new PlySurfaceImporter(db, options, scene, this.projectManager)
     };
 
+    // Initialize project panel
+    this.projectPanel = new ProjectPanel(this.projectSystem);
+    document.body.appendChild(this.projectPanel.createPanel());
+    window.projectPanel = this.projectPanel; // Make it globally accessible for onclick handlers
+
     this.#setupEventListeners();
-    this.#loadCaveFromUrl();
+    const urlParams = new URLSearchParams(window.location.search);
+    this.#loadProjectFromUrl(urlParams)
+      .then(() => this.#loadCaveFromUrl(urlParams))
+      .catch((error) => {
+        console.error('Failed to load project or cave from URL:', error);
+        showErrorPanel(`Failed to load project or cave from URL: ${error.message}`);
+      });
 
   }
 
@@ -100,7 +129,12 @@ class Main {
         for (const file of e.target.files) {
           try {
             console.log('🚧 Importing file', file.name);
-            handler.importFile(file);
+            handler.importFile(file, file.name, (cave) => {
+              this.projectSystem.getCurrentProject().addCave(cave);
+              this.projectManager.addCave(cave);
+              this.projectSystem.saveCurrentProject();
+              console.log(`Added cave: ${cave.name} to project: ${this.projectSystem.getCurrentProject().name}`);
+            });
           } catch (error) {
             showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);
             console.error(error);
@@ -146,10 +180,33 @@ class Main {
     });
   }
 
-  #loadCaveFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
+  async #loadProjectFromUrl(urlParams) {
+
+    if (urlParams.has('project')) {
+      const projectName = urlParams.get('project');
+      const loadedProject = await this.projectSystem.loadProjectOrCreateByName(projectName);
+      this.projectSystem.setCurrentProject(loadedProject);
+      loadedProject.getAllCaves().forEach((cave) => {
+        this.projectManager.recalculateCave(cave);
+        this.projectManager.addCave(cave);
+        //TODO: initialize section attributes, like in import.js somwehere
+      });
+      console.log(`🚧 Loaded project: ${loadedProject.name}`);
+
+    }
+  }
+
+  async #loadCaveFromUrl(urlParams) {
+
     if (urlParams.has('cave')) {
       const caveNameUrl = urlParams.get('cave');
+
+      const loadedProject = this.projectSystem.getCurrentProject();
+
+      if (!loadedProject) {
+        throw new Error('Probably the project URL parameter is missing');
+      }
+
       let importer;
 
       if (caveNameUrl.includes('.cave')) {
@@ -163,7 +220,13 @@ class Main {
       if (importer !== undefined) {
         fetch(caveNameUrl)
           .then((data) => data.blob())
-          .then((res) => importer.importFile(res, caveNameUrl))
+          .then((res) => {
+            importer.importFile(res, caveNameUrl, (cave) => {
+              loadedProject.addCave(cave);
+              this.projectManager.addCave(cave);
+              this.projectSystem.saveCurrentProject();
+            });
+          })
           .catch((error) => {
             showErrorPanel(`Unable to import file ${caveNameUrl}: ${error.message}`);
             console.error(error);

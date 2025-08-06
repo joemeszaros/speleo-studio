@@ -31,6 +31,10 @@ class Database {
     return this.caves.values().flatMap((c) => c.surveys);
   }
 
+  getAllCaves() {
+    return [...this.caves.values()];
+  }
+
   getStationNames(caveName) {
     return [...(this.caves.get(caveName)?.stations?.keys() ?? [])];
   }
@@ -109,13 +113,12 @@ class Database {
   deleteCave(caveName) {
     if (this.caves.has(caveName)) {
       this.caves.delete(caveName);
-      const event = new CustomEvent('caveDeleted', {
-        detail : {
-          cave : caveName
-        }
-      });
-      document.dispatchEvent(event);
     }
+  }
+
+  clear() {
+    this.caves.clear();
+    this.surfaces.clear();
   }
 
 }
