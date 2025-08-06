@@ -9,12 +9,13 @@ class NavigationBar {
    * @param {Map<String, Map>} options - Global project options, like global visibility of an object
    * @param {MyScene} scene - The 3D scene
    */
-  constructor(db, domElement, options, scene, interactive, projectManager, controls) {
+  constructor(db, domElement, options, scene, interactive, projectManager, projectPanel, controls) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.interactive = interactive;
     this.projectManager = projectManager;
+    this.projectPanel = projectPanel;
     this.controls = controls;
     this.#buildNavbar(domElement);
     this.#addNavbarClickListener();
@@ -72,25 +73,25 @@ class NavigationBar {
           {
             name  : 'New Project',
             click : () => {
-              window.projectPanel.showNewProjectDialog();
+              this.projectPanel.showNewProjectDialog();
             }
           },
           {
             name  : 'Project Manager',
             click : () => {
-              window.projectPanel.show();
+              this.projectPanel.show();
             }
           },
           {
             name  : 'Save Project',
             click : () => {
-              window.projectPanel.saveCurrentProject();
+              this.projectPanel.saveCurrentProject();
             }
           },
           {
             name  : 'Export Project',
             click : () => {
-              window.projectPanel.exportCurrentProject();
+              this.projectPanel.exportCurrentProject();
             }
           }
         ]

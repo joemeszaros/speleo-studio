@@ -1,4 +1,5 @@
 import { showErrorPanel, showSuccessPanel } from './popups.js';
+import * as U from '../utils/utils.js';
 
 export class ProjectPanel {
   constructor(projectSystem) {
@@ -87,9 +88,28 @@ export class ProjectPanel {
           <div class="current-project-actions">
             <button id="save-project-btn" class="project-btn">Save Project</button>
             <button id="export-project-btn" class="project-btn">Export Project</button>
+            <button id="rename-project-btn" class="project-btn">Rename</button>
           </div>
         </div>
       `;
+
+      // Add event listeners for the dynamically created buttons
+      const saveProjectBtn = currentProjectInfo.querySelector('#save-project-btn');
+      const exportProjectBtn = currentProjectInfo.querySelector('#export-project-btn');
+      const renameProjectBtn = currentProjectInfo.querySelector('#rename-project-btn');
+
+      if (saveProjectBtn) {
+        saveProjectBtn.addEventListener('click', () => this.saveCurrentProject());
+      }
+      if (exportProjectBtn) {
+        exportProjectBtn.addEventListener('click', () => this.exportCurrentProject());
+      }
+      if (renameProjectBtn) {
+        renameProjectBtn.addEventListener('click', () => {
+          this.renameProject(currentProject.id);
+          this.projectSystem.setCurrentProject(currentProject);
+        });
+      }
     } else {
       currentProjectInfo.innerHTML = '<p>No project loaded</p>';
     }
@@ -106,7 +126,7 @@ export class ProjectPanel {
         return;
       }
 
-      const projectsHtml = projects
+      const projectListItems = projects
         .map((project) => {
           const caves = project.getAllCaves();
           const caveCount = caves.length;
@@ -114,7 +134,7 @@ export class ProjectPanel {
           const isCurrent = this.projectSystem.getCurrentProject()?.id === project.id;
           const caveNames = caves.map((cave) => cave.name).join(', ');
 
-          return `
+          const panel = U.node`
              <div class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">
                <div class="project-item-header">
                  <div class="project-item-info">
@@ -128,15 +148,24 @@ export class ProjectPanel {
                  </div>
                </div>
                <div class="project-item-actions">
-                 <button class="project-action-btn" onclick="window.projectPanel.openProject('${project.id}')">Open</button>
-                 <button class="project-action-btn delete" onclick="window.projectPanel.deleteProject('${project.id}')">Delete</button>
+                 <button id="open-project-btn" class="project-action-btn" project-id="${project.id}">Open</button>
+                 <button id="delete-project-btn" class="project-action-btn delete" onclick="window.projectPanel.deleteProject('${project.id}')">Delete</button>
+                 <button id="rename-project-btn" class="project-action-btn rename" onclick="window.projectPanel.renameProject('${project.id}')">Rename</button>
                </div>
              </div>
            `;
-        })
-        .join('');
 
-      recentProjectsList.innerHTML = projectsHtml;
+          panel.querySelector('#open-project-btn').onclick = () => this.openProject(project.id);
+          panel.querySelector('#delete-project-btn').onclick = () => this.deleteProject(project.id);
+          panel.querySelector('#rename-project-btn').onclick = () => this.renameProject(project.id);
+          return panel;
+        });
+
+      recentProjectsList.innerHTML = '';
+      projectListItems.forEach((item) => {
+        recentProjectsList.appendChild(item);
+      });
+
     } catch (error) {
       recentProjectsList.innerHTML = '<p>Error loading projects</p>';
       console.error('Error loading projects:', error);
@@ -253,6 +282,48 @@ export class ProjectPanel {
       showSuccessPanel(`Project "${currentProject.name}" exported successfully`);
     } catch (error) {
       showErrorPanel(`Failed to export project: ${error.message}`);
+    }
+  }
+
+  async renameProject(projectId) {
+    const project = await this.projectSystem.loadProjectById(projectId);
+
+    if (!project) {
+      showErrorPanel('No project to rename');
+      return;
+    }
+
+    const newName = prompt('Enter new project name:', project.name);
+    if (!newName || newName.trim() === '') {
+      return;
+    }
+
+    const trimmedName = newName.trim();
+    if (trimmedName === project.name) {
+      return; // No change
+    }
+
+    try {
+      // Check if name already exists
+      const nameExists = await this.projectSystem.checkProjectExists(trimmedName);
+
+      if (nameExists) {
+        showErrorPanel(`A project with the name "${trimmedName}" already exists`);
+        return;
+      }
+
+      // Update project name
+      project.name = trimmedName;
+      project.updatedAt = new Date().toISOString();
+      // Save the updated project
+      await this.projectSystem.saveProject(project);
+
+      // Update display
+      this.updateDisplay();
+
+      showSuccessPanel(`Project renamed to "${trimmedName}" successfully`);
+    } catch (error) {
+      showErrorPanel(`Failed to rename project: ${error.message}`);
     }
   }
 

@@ -65,6 +65,10 @@ class Main {
     const explorer = new ProjectExplorer(options, db, scene, attributeDefs, document.querySelector('#tree-panel'));
     this.projectManager = new ProjectManager(db, options, scene, explorer, this.projectSystem);
 
+    // Initialize project panel
+    this.projectPanel = new ProjectPanel(this.projectSystem);
+    document.body.appendChild(this.projectPanel.createPanel());
+
     this.controls = new Controls(options, document.getElementById('control-panel'));
     this.controls.close();
 
@@ -80,6 +84,7 @@ class Main {
       document.getElementById('interactive'),
       ['fixed-size-editor', 'resizable-editor']
     );
+
     new NavigationBar(
       db,
       document.getElementById('navbarcontainer'),
@@ -87,6 +92,7 @@ class Main {
       scene,
       interaction,
       this.projectManager,
+      this.projectPanel,
       this.controls
     );
 
@@ -96,11 +102,6 @@ class Main {
       json      : new JsonImporter(db, options, scene, this.projectManager, attributeDefs),
       ply       : new PlySurfaceImporter(db, options, scene, this.projectManager)
     };
-
-    // Initialize project panel
-    this.projectPanel = new ProjectPanel(this.projectSystem);
-    document.body.appendChild(this.projectPanel.createPanel());
-    window.projectPanel = this.projectPanel; // Make it globally accessible for onclick handlers
 
     this.#setupEventListeners();
     const urlParams = new URLSearchParams(window.location.search);

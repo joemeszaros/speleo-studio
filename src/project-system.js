@@ -119,6 +119,20 @@ export class ProjectSystem {
     };
   }
 
+  async checkProjectExists(projectName) {
+    return new Promise((resolve, reject) => {
+      const request = this.#getStoreRO().index('name').count(projectName);
+
+      request.onsuccess = () => {
+        resolve(request.result > 0);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to check project existence'));
+      };
+    });
+  }
+
   async getAllProjects() {
     return new Promise((resolve, reject) => {
       const request = this.#getStoreRO().getAll();
