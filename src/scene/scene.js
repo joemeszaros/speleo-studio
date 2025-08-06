@@ -8,7 +8,6 @@ import { SurveyHelper } from '../survey.js';
 import { Grid } from './grid.js';
 import * as U from '../utils/utils.js';
 import { Options } from '../config.js';
-import { SECTION_LINE_MULTIPLIER } from '../constants.js';
 import { ShotType } from '../model/survey.js';
 
 import { SpatialView, PlanView, ProfileView } from './views.js';
@@ -367,7 +366,7 @@ class MyScene {
       geometry.computeBoundingBox();
       const material = new LineMaterial({
         color        : color.hex(),
-        linewidth    : this.options.scene.centerLines.segments.width * SECTION_LINE_MULTIPLIER,
+        linewidth    : this.options.scene.centerLines.segments.width * this.options.scene.sectionLineMultiplier,
         worldUnits   : false,
         vertexColors : false
       });
@@ -401,7 +400,7 @@ class MyScene {
       geometry.computeBoundingBox();
       const material = new LineMaterial({
         color        : color.hex(),
-        linewidth    : this.options.scene.centerLines.segments.width * SECTION_LINE_MULTIPLIER,
+        linewidth    : this.options.scene.centerLines.segments.width * this.options.scene.sectionLineMultiplier,
         worldUnits   : false,
         vertexColors : false
       });
@@ -631,14 +630,14 @@ class MyScene {
 
   updateSegmentsWidth(width) {
     this.sectionAttributes.forEach((e) => {
-      e.segments.material.linewidth = width * SECTION_LINE_MULTIPLIER;
+      e.segments.material.linewidth = width * this.options.scene.sectionLineMultiplier;
     });
     this.view.renderView();
   }
 
   updateCenterLinesOpacity(width) {
     this.sectionAttributes.forEach((e) => {
-      e.segments.material.linewidth = width * SECTION_LINE_MULTIPLIER;
+      e.segments.material.linewidth = width * this.options.scene.sectionLineMultiplier;
     });
     this.view.renderView();
   }

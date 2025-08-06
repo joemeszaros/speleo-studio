@@ -3,9 +3,9 @@ import * as THREE from 'three';
 export const DEFAULT_OPTIONS = {
   scene : {
 
-    zoomStep : 0.1,
-
-    centerLines : {
+    zoomStep              : 0.1,
+    sectionLineMultiplier : 2,
+    centerLines           : {
       segments : {
         show    : true,
         color   : '#ff0000',
