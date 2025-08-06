@@ -49,6 +49,13 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
     return this.validate().length === 0;
   }
 
+  distanceTo(v) {
+    const dx = this.x - v.x,
+      dy = this.y - v.y,
+      de = this.elevation - v.elevation;
+    return Math.sqrt(dx * dx + dy * dy + de * de);
+  }
+
   validate() {
 
     const errors = [];

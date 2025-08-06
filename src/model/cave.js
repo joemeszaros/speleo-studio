@@ -223,6 +223,10 @@ class Cave {
     return this.validate().length === 0;
   }
 
+  getFirstStation() {
+    return this.stations.get(this.surveys[0].start);
+  }
+
   getStats() {
     var length = 0;
     var orphanLength = 0;

@@ -101,6 +101,9 @@ export const DEFAULT_OPTIONS = {
         columns : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment']
       }
     }
+  },
+  import : {
+    cavesMaxDistance : 2000
   }
 };
 

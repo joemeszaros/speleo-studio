@@ -160,7 +160,9 @@ class ProjectManager {
   }
 
   addCave(cave) {
-    const cavesReallyFar = []; //this.constructor.getFarCaves(this.db.caves, cave.startPosition);
+
+    const cavesReallyFar = this.getFarCaves(this.db.caves, cave.getFirstStation().coordinates.eov);
+
     if (this.db.caves.has(cave.name)) {
       showErrorPanel(`Import of '${cave.name}' failed, cave has already been imported!`, 20);
     } else if (cavesReallyFar.length > 0) {
@@ -204,6 +206,24 @@ class ProjectManager {
       this.scene.grid.adjust(boundingBox);
       this.scene.view.fitScreen(boundingBox);
     }
+  }
+
+  /**
+   * Get a list of caves that are farther than a specified distance from a given position.
+   *
+   * @param {Map<string, Cave>} caves - A map of cave objects, where each key is a cave identifier and each value is a cave object.
+   * @param {Vector} position - The position to measure the distance from.
+   * @returns {Array<string>} An array of strings, each representing a cave name and its distance from the position, formatted as "caveName - distance m".
+   */
+  getFarCaves(caves, eovCoordinate) {
+    return Array.from(caves.values()).reduce((acc, c) => {
+      const firstStation = c.getFirstStation();
+      const distanceBetweenCaves = firstStation.coordinates.eov.distanceTo(eovCoordinate);
+      if (distanceBetweenCaves > this.options.import.cavesMaxDistance) {
+        acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
+      }
+      return acc;
+    }, []);
   }
 
 }

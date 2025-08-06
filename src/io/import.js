@@ -2,7 +2,6 @@ import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { SurfaceHelper } from '../surface.js';
 import { showErrorPanel, showWarningPanel } from '../ui/popups.js';
-import { CAVES_MAX_DISTANCE } from '../constants.js';
 import { Shot, ShotType } from '../model/survey.js';
 import { Vector, Surface } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
@@ -19,26 +18,6 @@ import { EOVCoordinateWithElevation, StationWithCoordinate, GeoData, CoordinateS
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
 import { SectionHelper } from '../section.js';
-
-class Importer {
-
-  /**
-   * Get a list of caves that are farther than a specified distance from a given position.
-   *
-   * @param {Map<string, Cave>} caves - A map of cave objects, where each key is a cave identifier and each value is a cave object.
-   * @param {Vector} position - The position to measure the distance from.
-   * @returns {Array<string>} An array of strings, each representing a cave name and its distance from the position, formatted as "caveName - distance m".
-   */
-  static getFarCaves(caves, position) {
-    return Array.from(caves.values()).reduce((acc, c) => {
-      const distanceBetweenCaves = c.startPosition.distanceTo(position);
-      if (distanceBetweenCaves > CAVES_MAX_DISTANCE) {
-        acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
-      }
-      return acc;
-    }, []);
-  }
-}
 
 /**
  * Base class for cave importerers
@@ -110,20 +89,21 @@ class PolygonImporter extends CaveImporter {
 
   getNextLineValue(iterator, start, processor = (x) => x, validator = (x) => x.length > 0) {
     if (iterator.done) {
-      throw new Error(`Invalid Polygon survey, reached end of file`);
+      throw new Error(`Invalid survey, reached end of file`);
     }
     const nextLine = iterator.next();
+    const lineNr = nextLine.value[0] + 1;
     if (!nextLine.value[1].startsWith(start)) {
-      throw new Error(`Invalid Polygon survey, expected ${start} at line ${nextLine.value[0]}`);
+      throw new Error(`Invalid survey, expected ${start} at line ${lineNr}`);
     }
     const parts = nextLine.value[1].split(':');
     if (parts.length !== 2) {
-      throw new Error(`Invalid Polygon survey, expected value separated by : at line ${nextLine.value[0]}`);
+      throw new Error(`Invalid survey, expected value separated by : at line ${lineNr}`);
     }
     const result = processor(parts[1].trim());
     if (!validator(result)) {
       throw new Error(
-        `Invalid Polygon survey, invalid value at line ${nextLine.value[0]}: "${nextLine.value[1].substring(0, 15)}"`
+        `Invalid survey, value at line ${lineNr}: "${nextLine.value[1].substring(0, 15)}" is not valid accoring to : ${validator.toString()}`
       );
     }
     return result;
@@ -183,7 +163,7 @@ class PolygonImporter extends CaveImporter {
             lineIterator,
             'Declination',
             (x) => U.parseMyFloat(x),
-            (x) => x > 0 && x < 10
+            (x) => x > 0 && x < 20
           );
           U.iterateUntil(lineIterator, (v) => !v.startsWith('Instruments'));
           const instruments = [];
