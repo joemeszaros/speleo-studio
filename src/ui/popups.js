@@ -123,15 +123,15 @@ window.closeCautionPanel = function () {
   }
 };
 
-function showErrorPanel(message, seconds = 6) {
+function showErrorPanel(message, seconds = 0) {
   showCautionPanel(message, seconds, 'error');
 }
 
-function showWarningPanel(message, seconds = 6) {
+function showWarningPanel(message, seconds = 0) {
   showCautionPanel(message, seconds, 'warning');
 }
 
-function showSuccessPanel(message, seconds = 4) {
+function showSuccessPanel(message, seconds = 0) {
   showCautionPanel(message, seconds, 'success');
 }
 

@@ -1,12 +1,5 @@
 import { Cave } from '../model/cave.js';
 
-export class CaveLoadError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'CaveLoadError';
-  }
-}
-
 export class CaveNotFoundError extends Error {
   constructor(caveName) {
     super(`Cave '${caveName}' not found`);
@@ -61,7 +54,7 @@ export class CaveSystem {
     };
 
     request.onerror = () => {
-      reject(new CaveLoadError('Failed to load cave'));
+      reject(new Error('Failed to load cave'));
     };
   }
 

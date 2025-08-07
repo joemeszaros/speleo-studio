@@ -19,12 +19,14 @@ class ProjectManager {
    * @param {MyScene} scene - The 3D scene
    * @param {ProjectExplorer} explorer - The project explorer that displays caves and surveys in a tree view
    */
-  constructor(db, options, scene, explorer, projectSystem = null) {
+  constructor(db, options, scene, explorer, projectSystem, editorStateSystem) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.explorer = explorer;
     this.projectSystem = projectSystem;
+    this.editorStateSystem = editorStateSystem;
+    this.firstEdit = true;
     document.addEventListener('surveyChanged', (e) => this.onSurveyChanged(e));
     document.addEventListener('attributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
@@ -32,6 +34,8 @@ class ProjectManager {
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
     document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
+    document.addEventListener('surveyDataEdited', (e) => this.onSurveyDataEdited(e));
+    document.addEventListener('surveyDataUpdated', (e) => this.onSurveyDataUpdated(e));
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('currentProjectChanged', (e) => this.onCurrentProjectChanged(e));
     document.addEventListener('currentProjectDeleted', (e) => this.onCurrentProjectDeleted(e));
@@ -47,6 +51,35 @@ class ProjectManager {
     const newSurvey = e.detail.survey;
     cave.surveys.push(newSurvey);
     this.explorer.addSurvey(cave, newSurvey);
+  }
+
+  beforeUnloadHandler = (event) => {
+    // Recommended
+    event.preventDefault();
+    // Included for legacy support, e.g. Chrome/Edge < 119
+    event.returnValue = true;
+  };
+
+  async onSurveyDataEdited(e) {
+    if (this.firstEdit) {
+      window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+    this.firstEdit = false;
+    const data = e.detail.data;
+    const surveyName = e.detail.survey.name;
+    const caveName = e.detail.cave.name;
+    const projectId = this.projectSystem.getCurrentProject().id;
+    await this.editorStateSystem.saveState(projectId, data, {
+      surveyName : surveyName,
+      caveName   : caveName
+    });
+  }
+
+  async onSurveyDataUpdated() {
+    this.firstEdit = true;
+    window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+    const projectId = this.projectSystem.getCurrentProject().id;
+    await this.editorStateSystem.deleteState(projectId);
   }
 
   async onSurveyChanged(e) {
@@ -134,6 +167,25 @@ class ProjectManager {
     });
     this.scene.view.renderView();
     this.projectSystem.setCurrentProject(project);
+
+    const editorState = await this.editorStateSystem.loadState(project.id);
+    if (editorState) {
+      const cave = this.db.getCave(editorState.metadata.caveName);
+      const survey = cave.surveys.find((s) => s.name === editorState.metadata.surveyName);
+      this.editor = new SurveyEditor(
+        this.options,
+        cave,
+        survey,
+        this.scene,
+        this.attributeDefs,
+        document.getElementById('resizable-editor'),
+        editorState.state
+      );
+      this.editor.setupPanel();
+      this.editor.show();
+      showWarningPanel(`Opened survey editor because you have unsaved changes for cave ${cave.name} / ${survey.name}`);
+    }
+    console.log(`🚧 Loaded project: ${project.name}`);
   }
 
   async onCurrentProjectDeleted() {
@@ -575,7 +627,7 @@ class ProjectExplorer {
           this.attributeDefs,
           document.getElementById('resizable-editor')
         );
-        this.editor.setupTable();
+        this.editor.setupPanel();
         this.editor.show();
       } else if (state.nodeType === 'cave') {
 

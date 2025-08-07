@@ -10,8 +10,9 @@ import { Footer } from './ui/footer.js';
 import { Controls } from './ui/controls.js';
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
-import { ProjectSystem, ProjectNotFoundError } from './storage/project-system.js';
+import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
+import { EditorStateSystem } from './storage/editor-states.js';
 import { DatabaseManager } from './storage/database-manager.js';
 import { ProjectPanel } from './ui/project-panel.js';
 
@@ -33,6 +34,7 @@ class Main {
     this.databaseManager = new DatabaseManager();
     this.caveSystem = new CaveSystem(this.databaseManager);
     this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
+    this.editorStateSystem = new EditorStateSystem(this.databaseManager);
 
     // Initialize the application
     this.#initializeApp(db, options, observer);
@@ -66,7 +68,7 @@ class Main {
     this.options = options;
 
     const explorer = new ProjectExplorer(options, db, scene, attributeDefs, document.querySelector('#tree-panel'));
-    this.projectManager = new ProjectManager(db, options, scene, explorer, this.projectSystem);
+    this.projectManager = new ProjectManager(db, options, scene, explorer, this.projectSystem, this.editorStateSystem);
 
     // Initialize project panel
     this.projectPanel = new ProjectPanel(this.projectSystem);
@@ -108,9 +110,10 @@ class Main {
     };
 
     this.#setupEventListeners();
+
     const urlParams = new URLSearchParams(window.location.search);
     this.#loadProjectFromUrl(urlParams)
-      .then(() => this.#loadCaveFromUrl(urlParams))
+      .then((project) => this.#loadCaveFromUrl(urlParams, project))
       .catch((error) => {
         console.error('Failed to load project or cave from URL:', error);
         showErrorPanel(`Failed to load project or cave from URL: ${error.message}`);
@@ -196,32 +199,30 @@ class Main {
     if (urlParams.has('project')) {
       const projectName = urlParams.get('project');
       const loadedProject = await this.projectSystem.loadProjectOrCreateByName(projectName);
-      this.projectSystem.setCurrentProject(loadedProject);
-      const caves = await this.projectSystem.getCavesForProject(loadedProject.id);
-      caves.forEach((cave) => {
-        this.projectManager.recalculateCave(cave);
-        this.projectManager.addCave(cave);
-        //TODO: initialize section attributes, like in import.js somwehere
-      });
-      console.log(`🚧 Loaded project: ${loadedProject.name}`);
 
+      document.dispatchEvent(
+        new CustomEvent('currentProjectChanged', {
+          detail : {
+            project : loadedProject
+          }
+        })
+      );
+      return loadedProject;
     }
   }
 
-  async #loadCaveFromUrl(urlParams) {
+  async #loadCaveFromUrl(urlParams, project) {
 
     if (urlParams.has('cave')) {
       const caveNameUrl = urlParams.get('cave');
 
-      const loadedProject = this.projectSystem.getCurrentProject();
-
-      if (!loadedProject) {
+      if (!project) {
         throw new Error('Probably the project URL parameter is missing');
       }
 
       this.projectPanel.hide();
 
-      const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(loadedProject.id);
+      const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(project.id);
 
       let importer;
 
@@ -241,7 +242,7 @@ class Main {
               if (cavesNamesInProject.includes(cave.name)) {
                 showErrorPanel(`'${cave.name}' has already been imported to this project!`);
               } else {
-                await this.projectSystem.addCaveToProject(loadedProject, cave);
+                await this.projectSystem.addCaveToProject(project, cave);
                 this.projectManager.addCave(cave);
               }
             });

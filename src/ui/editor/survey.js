@@ -8,34 +8,15 @@ import * as U from '../../utils/utils.js';
 
 class SurveyEditor extends Editor {
 
-  constructor(options, cave, survey, scene, attributeDefs, panel) {
+  constructor(options, cave, survey, scene, attributeDefs, panel, unsavedChanges) {
     super(panel, scene, cave, attributeDefs);
     this.options = options;
     this.survey = survey;
     this.table = undefined;
     this.surveyModified = false;
     this.eovVisible = false;
+    this.unsavedChanges = unsavedChanges;
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
-  }
-
-  #emitSurveyChanged() {
-    const event = new CustomEvent('surveyChanged', {
-      detail : {
-        cave   : this.cave,
-        survey : this.survey
-      }
-    });
-    document.dispatchEvent(event);
-  }
-
-  #emitAttribuesChanged() {
-    const event = new CustomEvent('attributesChanged', {
-      detail : {
-        cave   : this.cave,
-        survey : this.survey
-      }
-    });
-    document.dispatchEvent(event);
   }
 
   onSurveyRecalculated(e) {
@@ -166,6 +147,9 @@ class SurveyEditor extends Editor {
         this.surveyModified = false;
       }
     }
+
+    this.unsavedChanges = undefined;
+    this.#emitSurveyDataUpdated();
   }
 
   closeEditor() {
@@ -174,6 +158,11 @@ class SurveyEditor extends Editor {
   }
 
   #getTableData(survey, stations) {
+
+    if (this.unsavedChanges !== undefined) {
+      return this.unsavedChanges;
+    }
+
     const rows = survey.shots.map((sh) => {
       const stationAttributes = survey.attributes
         .filter((a) => a.name === sh.to)
@@ -232,12 +221,17 @@ class SurveyEditor extends Editor {
       attributes : [],
       x          : undefined,
       y          : undefined,
-      z          : undefined
+      z          : undefined,
+      eovy       : undefined,
+      eovx       : undefined,
+      eove       : undefined,
+      wgslat     : undefined,
+      wgslon     : undefined
     };
 
   }
 
-  setupTable() {
+  setupPanel() {
     this.panel.innerHTML = '';
 
     makeMovable(
@@ -582,6 +576,7 @@ class SurveyEditor extends Editor {
     this.table.on('dataChanged', () => {
       console.log(' data changed ');
       this.surveyModified = true;
+      this.#emitSurveyDataEdited();
     });
 
     // Prevent range selection keyboard events when editing cells
@@ -613,6 +608,46 @@ class SurveyEditor extends Editor {
 
     this.panel.appendChild(this.#buildToggleColumnMenu(columns));
 
+  }
+
+  #emitSurveyDataUpdated() {
+    const event = new CustomEvent('surveyDataUpdated', {
+      detail : {
+        survey : this.survey
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitSurveyChanged() {
+    const event = new CustomEvent('surveyChanged', {
+      detail : {
+        cave   : this.cave,
+        survey : this.survey
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitAttribuesChanged() {
+    const event = new CustomEvent('attributesChanged', {
+      detail : {
+        cave   : this.cave,
+        survey : this.survey
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitSurveyDataEdited() {
+    const event = new CustomEvent('surveyDataEdited', {
+      detail : {
+        survey : this.survey,
+        cave   : this.cave,
+        data   : this.table.getData()
+      }
+    });
+    document.dispatchEvent(event);
   }
 
   #buildToggleColumnMenu(columns) {

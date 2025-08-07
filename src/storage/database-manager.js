@@ -15,6 +15,10 @@ export class DatabaseManager {
       caves : {
         keyPath : 'id',
         indexes : [{ name: 'projectId', keyPath: 'projectId', options: { unique: false } }]
+      },
+      surveyEditorStates : {
+        keyPath : 'id',
+        indexes : [{ name: 'projectId', keyPath: 'projectId', options: { unique: false } }]
       }
     };
   }
