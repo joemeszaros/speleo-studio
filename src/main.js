@@ -11,6 +11,8 @@ import { Controls } from './ui/controls.js';
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
 import { ProjectSystem, ProjectNotFoundError } from './project-system.js';
+import { CaveSystem } from './cave-system.js';
+import { DatabaseManager } from './database-manager.js';
 import { ProjectPanel } from './ui/project-panel.js';
 
 class Main {
@@ -27,9 +29,10 @@ class Main {
     const observer = new ObjectObserver();
     const options = observer.watchObject(loadedOptions);
 
-    // Initialize project system
-    const projectSystem = new ProjectSystem();
-    this.projectSystem = projectSystem;
+    // Initialize database and project systems
+    this.databaseManager = new DatabaseManager();
+    this.caveSystem = new CaveSystem(this.databaseManager);
+    this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
 
     // Initialize the application
     this.#initializeApp(db, options, observer);
@@ -37,10 +40,10 @@ class Main {
 
   async #initializeApp(db, options, observer) {
     try {
-      await this.projectSystem.init();
+      await this.databaseManager.init();
     } catch (error) {
-      console.error('Failed to initialize project system:', error);
-      showErrorPanel('Failed to initialize project system');
+      console.error('Failed to initialize database:', error);
+      showErrorPanel('Failed to initialize database');
     }
 
     const materials = new Materials(options).materials;
@@ -130,11 +133,17 @@ class Main {
         for (const file of e.target.files) {
           try {
             console.log('🚧 Importing file', file.name);
-            handler.importFile(file, file.name, (cave) => {
-              this.projectSystem.getCurrentProject().addCave(cave);
-              this.projectManager.addCave(cave);
-              this.projectSystem.saveCurrentProject();
-              console.log(`Added cave: ${cave.name} to project: ${this.projectSystem.getCurrentProject().name}`);
+            handler.importFile(file, file.name, async (cave) => {
+              const currentProject = this.projectSystem.getCurrentProject();
+              const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(currentProject.id);
+
+              if (!cavesNamesInProject.includes(cave.name)) {
+                await this.projectSystem.addCaveToProject(currentProject, cave);
+                this.projectManager.addCave(cave);
+              } else {
+                throw Error(`Cave ${cave.name} has already been imported`);
+              }
+
             });
           } catch (error) {
             showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);
@@ -187,7 +196,8 @@ class Main {
       const projectName = urlParams.get('project');
       const loadedProject = await this.projectSystem.loadProjectOrCreateByName(projectName);
       this.projectSystem.setCurrentProject(loadedProject);
-      loadedProject.getAllCaves().forEach((cave) => {
+      const caves = await this.projectSystem.getCavesForProject(loadedProject.id);
+      caves.forEach((cave) => {
         this.projectManager.recalculateCave(cave);
         this.projectManager.addCave(cave);
         //TODO: initialize section attributes, like in import.js somwehere
@@ -208,6 +218,8 @@ class Main {
         throw new Error('Probably the project URL parameter is missing');
       }
 
+      const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(loadedProject.id);
+
       let importer;
 
       if (caveNameUrl.includes('.cave')) {
@@ -222,10 +234,13 @@ class Main {
         fetch(caveNameUrl)
           .then((data) => data.blob())
           .then((res) => {
-            importer.importFile(res, caveNameUrl, (cave) => {
-              loadedProject.addCave(cave);
-              this.projectManager.addCave(cave);
-              this.projectSystem.saveCurrentProject();
+            importer.importFile(res, caveNameUrl, async (cave) => {
+              if (cavesNamesInProject.includes(cave.name)) {
+                showErrorPanel(`'${cave.name}' has already been imported to this project!`);
+              } else {
+                await this.projectSystem.addCaveToProject(loadedProject, cave);
+                this.projectManager.addCave(cave);
+              }
             });
           })
           .catch((error) => {

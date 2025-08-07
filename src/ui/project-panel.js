@@ -75,7 +75,8 @@ export class ProjectPanel {
     const currentProject = this.projectSystem.getCurrentProject();
 
     if (currentProject) {
-      const caveCount = currentProject.getAllCaves().length;
+      const caveNames = await this.projectSystem.getCaveNamesForProject(currentProject.id);
+      const caveCount = caveNames.length;
       const lastModified = new Date(currentProject.updatedAt).toLocaleString();
 
       currentProjectInfo.innerHTML = `
@@ -126,40 +127,41 @@ export class ProjectPanel {
         return;
       }
 
-      const projectListItems = projects
-        .map((project) => {
-          const caves = project.getAllCaves();
+      const projectListItems = await Promise.all(
+        projects.map(async (project) => {
+          const caves = await this.projectSystem.getCavesForProject(project.id);
           const caveCount = caves.length;
           const lastModified = new Date(project.updatedAt).toLocaleDateString();
           const isCurrent = this.projectSystem.getCurrentProject()?.id === project.id;
           const caveNames = caves.map((cave) => cave.name).join(', ');
 
           const panel = U.node`
-             <div class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">
-               <div class="project-item-header">
-                 <div class="project-item-info">
-                   <span class="project-name">${project.name}</span>
-                   ${project.description ? `<span class="project-description">• ${project.description}</span>` : ''}
-                   ${caveNames ? `<span class="project-caves">• ${caveNames}</span>` : ''}
-                 </div>
-                 <div class="project-item-meta">
-                   <span class="project-meta-text">${caveCount} caves • ${lastModified}</span>
-                   ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
-                 </div>
+           <div class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">
+             <div class="project-item-header">
+               <div class="project-item-info">
+                 <span class="project-name">${project.name}</span>
+                 ${project.description ? `<span class="project-description">• ${project.description}</span>` : ''}
+                 ${caveNames ? `<span class="project-caves">• ${caveNames}</span>` : ''}
                </div>
-               <div class="project-item-actions">
-                 <button id="open-project-btn" class="project-action-btn" project-id="${project.id}">Open</button>
-                 <button id="delete-project-btn" class="project-action-btn delete" onclick="window.projectPanel.deleteProject('${project.id}')">Delete</button>
-                 <button id="rename-project-btn" class="project-action-btn rename" onclick="window.projectPanel.renameProject('${project.id}')">Rename</button>
+               <div class="project-item-meta">
+                 <span class="project-meta-text">${caveCount} caves • ${lastModified}</span>
+                 ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
                </div>
              </div>
-           `;
+             <div class="project-item-actions">
+               <button id="open-project-btn" class="project-action-btn" project-id="${project.id}">Open</button>
+               <button id="delete-project-btn" class="project-action-btn delete" onclick="window.projectPanel.deleteProject('${project.id}')">Delete</button>
+               <button id="rename-project-btn" class="project-action-btn rename" onclick="window.projectPanel.renameProject('${project.id}')">Rename</button>
+             </div>
+           </div>
+         `;
 
           panel.querySelector('#open-project-btn').onclick = () => this.openProject(project.id);
           panel.querySelector('#delete-project-btn').onclick = () => this.deleteProject(project.id);
           panel.querySelector('#rename-project-btn').onclick = () => this.renameProject(project.id);
           return panel;
-        });
+        })
+      );
 
       recentProjectsList.innerHTML = '';
       projectListItems.forEach((item) => {
@@ -193,7 +195,7 @@ export class ProjectPanel {
 
       this.#emitCurrentProjectChanged(project);
 
-      this.updateDisplay();
+      this.hide();
       showSuccessPanel(`Project "${name}" created successfully`);
     } catch (error) {
       showErrorPanel(`Failed to create project: ${error.message}`);
@@ -239,7 +241,6 @@ export class ProjectPanel {
 
       this.#emitCurrentProjectChanged(project);
 
-      this.updateDisplay();
       showSuccessPanel(`Project "${project.name}" loaded successfully`);
 
       // Close the panel after successful project opening

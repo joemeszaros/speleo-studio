@@ -1,0 +1,154 @@
+import { Cave } from './model/cave.js';
+
+export class CaveLoadError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CaveLoadError';
+  }
+}
+
+export class CaveNotFoundError extends Error {
+  constructor(caveName) {
+    super(`Cave '${caveName}' not found`);
+    this.name = 'CaveNotFoundError';
+  }
+}
+
+export class CaveSystem {
+  constructor(databaseManager) {
+    this.storeName = 'caves';
+    this.dbManager = databaseManager;
+  }
+
+  async saveCave(cave, projectId) {
+    return new Promise((resolve, reject) => {
+      const caveData = {
+        ...cave.toExport(),
+        projectId : projectId,
+        createdAt : cave.createdAt || new Date().toISOString(),
+        updatedAt : new Date().toISOString()
+      };
+
+      const request = this.dbManager.getReadWriteStore(this.storeName).put(caveData);
+
+      request.onsuccess = () => {
+        resolve(cave);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to save cave'));
+      };
+    });
+  }
+
+  async loadCave(caveId) {
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadOnlyStore(this.storeName).get(caveId);
+      this.#loadCave(request, resolve, reject, caveId);
+    });
+  }
+
+  async #loadCave(request, resolve, reject, caveId) {
+    request.onsuccess = () => {
+      if (request.result) {
+        const cave = Cave.fromPure(request.result);
+        cave.createdAt = request.result.createdAt;
+        cave.updatedAt = request.result.updatedAt;
+        resolve(cave);
+      } else {
+        reject(new CaveNotFoundError(caveId));
+      }
+    };
+
+    request.onerror = () => {
+      reject(new CaveLoadError('Failed to load cave'));
+    };
+  }
+
+  async getCaveNamesByProjectId(projectId) {
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAll(projectId);
+
+      request.onsuccess = () => {
+        const caveNames = request.result.map((data) => data.name);
+        resolve(caveNames);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to load cave names for project'));
+      };
+    });
+  }
+
+  async getCavesByProjectId(projectId) {
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAll(projectId);
+
+      request.onsuccess = () => {
+        const caves = request.result.map((data) => {
+          const cave = Cave.fromPure(data);
+          cave.createdAt = data.createdAt;
+          cave.updatedAt = data.updatedAt;
+          return cave;
+        });
+        resolve(caves);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to load caves for project'));
+      };
+    });
+  }
+
+  async deleteCave(caveId) {
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadWriteStore(this.storeName).delete(caveId);
+
+      request.onsuccess = () => {
+        resolve();
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to delete cave'));
+      };
+    });
+  }
+
+  async deleteCavesByProjectId(projectId) {
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAllKeys(projectId);
+
+      request.onsuccess = () => {
+        const caveIds = request.result;
+        if (caveIds.length === 0) {
+          resolve();
+          return;
+        }
+
+        const transaction = this.dbManager.getReadWriteStore(this.storeName);
+        let completed = 0;
+        let hasError = false;
+
+        caveIds.forEach((caveId) => {
+          const deleteRequest = transaction.delete(caveId);
+
+          deleteRequest.onsuccess = () => {
+            completed++;
+            if (completed === caveIds.length && !hasError) {
+              resolve();
+            }
+          };
+
+          deleteRequest.onerror = () => {
+            hasError = true;
+            reject(new Error(`Failed to delete cave: ${caveId}`));
+          };
+        });
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to get caves for deletion'));
+      };
+    });
+  }
+}

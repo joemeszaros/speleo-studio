@@ -199,6 +199,7 @@ class Cave {
     componentAttributes = [],
     visible = true
   ) {
+    this.id = this.#generateId();
     this.name = name;
     this.metaData = metaData;
     this.geoData = geoData;
@@ -208,6 +209,10 @@ class Cave {
     this.sectionAttributes = sectionAttributes;
     this.componentAttributes = componentAttributes;
     this.visible = visible;
+  }
+
+  #generateId() {
+    return 'cave_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
   }
 
   validate() {
@@ -306,6 +311,7 @@ class Cave {
 
   toExport() {
     return {
+      id                  : this.id,
       name                : this.name,
       metaData            : this.metaData.toExport(),
       geoData             : this.geoData.toExport(),
@@ -332,7 +338,11 @@ class Cave {
       pure.componentAttributes === undefined
         ? []
         : pure.componentAttributes.map((ca) => ComponentAttribute.fromPure(ca, attributeDefs));
-    return Object.assign(new Cave(), pure);
+    const cave = Object.assign(new Cave(), pure);
+    if (!cave.id) {
+      cave.id = cave.#generateId();
+    }
+    return cave;
   }
 }
 

@@ -1,34 +1,34 @@
-import { Cave } from './cave.js';
-import { Database } from '../db.js';
-
 export class Project {
-  constructor(name, id = null, createdAt = null, updatedAt = null, db = new Database()) {
-    this.db = db;
-    this.id = id || this.generateId();
+  constructor(name, id = null, createdAt = null, updatedAt = null) {
+    this.id = id || this.#generateId();
     this.name = name;
     this.createdAt = createdAt || new Date().toISOString();
     this.updatedAt = updatedAt || new Date().toISOString();
     this.description = '';
+    this.caveIds = []; // Array of cave names (IDs)
   }
 
-  generateId() {
-    return 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  #generateId() {
+    return 'project_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
   }
 
-  addCave(cave) {
-    if (cave) {
-      this.db.addCave(cave);
+  addCaveId(caveId) {
+    if (caveId && !this.caveIds.includes(caveId)) {
+      this.caveIds.push(caveId);
+      this.updatedAt = new Date().toISOString();
     }
-    this.updatedAt = new Date().toISOString();
   }
 
-  deleteCave(caveName) {
-    this.db.deleteCave(caveName);
-    this.updatedAt = new Date().toISOString();
+  removeCaveId(caveId) {
+    const index = this.caveIds.indexOf(caveId);
+    if (index !== -1) {
+      this.caveIds.splice(index, 1);
+      this.updatedAt = new Date().toISOString();
+    }
   }
 
-  getAllCaves() {
-    return this.db.getAllCaves();
+  getCaveIds() {
+    return [...this.caveIds];
   }
 
   toJSON() {
@@ -37,7 +37,7 @@ export class Project {
       name        : this.name,
       createdAt   : this.createdAt,
       updatedAt   : this.updatedAt,
-      caves       : this.db.getAllCaves().map((c) => c.toExport()),
+      caveIds     : this.caveIds,
       description : this.description
     };
   }
@@ -45,15 +45,7 @@ export class Project {
   static fromJSON(data) {
     const project = new Project(data.name, data.id, data.createdAt, data.updatedAt);
     project.description = data.description || '';
-
-    if (data.caves) {
-      data.caves
-        .map((c) => Cave.fromPure(c))
-        .forEach((c) => {
-          project.addCave(c);
-        });
-    }
-
+    project.caveIds = data.caveIds || [];
     return project;
   }
 }

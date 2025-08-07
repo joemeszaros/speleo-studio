@@ -18,43 +18,13 @@ export class ProjectNotFoundError extends Error {
 export class ProjectSystem {
 
   static DEFAULT_PROJECT_NAME = 'default-project';
-  static DEFAULT_DB_NAME = 'SpeleoStudioDB';
   static DEFAULT_PROJECT_STORE_NAME = 'projects';
-  static DB_VERSION = 1;
 
-  constructor() {
-    this.dbName = ProjectSystem.DEFAULT_DB_NAME;
+  constructor(databaseManager, caveSystem) {
     this.storeName = ProjectSystem.DEFAULT_PROJECT_STORE_NAME;
-    this.dbVersion = ProjectSystem.DB_VERSION;
-    this.indexedDb = null;
+    this.dbManager = databaseManager;
     this.currentProject = null;
-  }
-
-  async init() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
-
-      request.onerror = () => {
-        reject(new Error('Failed to open IndexedDB'));
-      };
-
-      request.onsuccess = () => {
-        this.indexedDb = request.result;
-        resolve();
-      };
-
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-
-        // Create projects store
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
-          store.createIndex('name', 'name', { unique: false });
-          store.createIndex('createdAt', 'createdAt', { unique: false });
-          store.createIndex('updatedAt', 'updatedAt', { unique: false });
-        }
-      };
-    });
+    this.caveSystem = caveSystem;
   }
 
   async createProject(name, description = '') {
@@ -67,7 +37,7 @@ export class ProjectSystem {
   async saveProject(project) {
     return new Promise((resolve, reject) => {
 
-      const request = this.#getStoreRW().put(project.toJSON());
+      const request = this.dbManager.getReadWriteStore(this.storeName).put(project.toJSON());
 
       request.onsuccess = () => {
         resolve(project);
@@ -92,14 +62,14 @@ export class ProjectSystem {
 
   async loadProjectById(projectId) {
     return new Promise((resolve, reject) => {
-      const request = this.#getStoreRO().get(projectId);
+      const request = this.dbManager.getReadOnlyStore(this.storeName).get(projectId);
       this.#loadProject(request, resolve, reject, projectId);
     });
   }
 
   async loadProjectByName(projectName) {
     return new Promise((resolve, reject) => {
-      const request = this.#getStoreRO().index('name').get(projectName);
+      const request = this.dbManager.getReadOnlyStore(this.storeName).index('name').get(projectName);
       this.#loadProject(request, resolve, reject, projectName);
     });
   }
@@ -121,7 +91,7 @@ export class ProjectSystem {
 
   async checkProjectExists(projectName) {
     return new Promise((resolve, reject) => {
-      const request = this.#getStoreRO().index('name').count(projectName);
+      const request = this.dbManager.getReadOnlyStore(this.storeName).index('name').count(projectName);
 
       request.onsuccess = () => {
         resolve(request.result > 0);
@@ -135,7 +105,7 @@ export class ProjectSystem {
 
   async getAllProjects() {
     return new Promise((resolve, reject) => {
-      const request = this.#getStoreRO().getAll();
+      const request = this.dbManager.getReadOnlyStore(this.storeName).getAll();
 
       request.onsuccess = () => {
         const projects = request.result.map((data) => Project.fromJSON(data));
@@ -148,31 +118,6 @@ export class ProjectSystem {
         reject(new Error('Failed to load projects'));
       };
     });
-  }
-
-  async deleteProject(projectId) {
-    return new Promise((resolve, reject) => {
-      const request = this.#getStoreRW().delete(projectId);
-
-      request.onsuccess = () => {
-        resolve();
-      };
-
-      request.onerror = () => {
-        reject(new Error('Failed to delete project'));
-      };
-    });
-  }
-
-  #getStoreRW() {
-    const transaction = this.indexedDb.transaction([this.storeName], 'readwrite');
-    return transaction.objectStore(this.storeName);
-  }
-
-  #getStoreRO() {
-    const transaction = this.indexedDb.transaction([this.storeName], 'readonly');
-    return transaction.objectStore(this.storeName);
-
   }
 
   async updateProject(project) {
@@ -195,4 +140,63 @@ export class ProjectSystem {
     }
   }
 
+  // Cave management methods
+  async addCaveToProject(project, cave) {
+    if (!project) {
+      throw new Error('Project not found');
+    }
+
+    // Save cave to cave store
+    await this.caveSystem.saveCave(cave, project.id);
+
+    // Add cave ID to project
+    project.addCaveId(cave.id);
+    await this.saveProject(project);
+
+    return cave;
+  }
+
+  async removeCaveFromProject(projectId, caveId) {
+    const project = await this.loadProjectById(projectId);
+    if (!project) {
+      throw new Error('Project not found');
+    }
+
+    // Remove cave from cave store
+    await this.caveSystem.deleteCave(caveId);
+
+    // Remove cave ID from project
+    project.removeCaveId(caveId);
+    await this.saveProject(project);
+  }
+
+  async getCavesForProject(projectId) {
+    return await this.caveSystem.getCavesByProjectId(projectId);
+  }
+
+  async getCaveNamesForProject(projectId) {
+    return await this.caveSystem.getCaveNamesByProjectId(projectId);
+  }
+
+  async saveCaveInProject(projectId, cave) {
+    return await this.caveSystem.saveCave(cave, projectId);
+  }
+
+  async deleteProject(projectId) {
+    // First delete all caves associated with this project
+    await this.caveSystem.deleteCavesByProjectId(projectId);
+
+    // Then delete the project
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadWriteStore(this.storeName).delete(projectId);
+
+      request.onsuccess = () => {
+        resolve();
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to delete project'));
+      };
+    });
+  }
 }

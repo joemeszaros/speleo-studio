@@ -93,34 +93,45 @@ class ProjectManager {
   }
 
   onCaveDeleted(e) {
-    const caveName = e.detail.cave;
-    this.deleteCave(caveName);
+    const caveName = e.detail.name;
+    const id = e.detail.id;
+    this.deleteCave(caveName, id);
   }
 
-  deleteCave(caveName) {
+  disposeCave(caveName) {
     this.scene.disposeCave(caveName);
     this.scene.deleteCave(caveName);
     this.scene.view.renderView();
     this.explorer.deleteCave(caveName);
-    this.projectSystem.getCurrentProject().deleteCave(caveName);
     this.explorer.closeEditors(caveName);
   }
 
-  onCurrentProjectChanged(e) {
+  async deleteCave(caveName, id) {
+    this.disposeCave(caveName);
+
+    const currentProject = this.projectSystem.getCurrentProject();
+    if (currentProject) {
+      await this.projectSystem.removeCaveFromProject(currentProject.id, id);
+    }
+
+  }
+
+  async onCurrentProjectChanged(e) {
     const project = e.detail.project;
 
     if (project) {
       this.db.getAllCaves().forEach((cave) => {
-        this.deleteCave(cave.name);
+        this.disposeCave(cave.name, cave.id);
       });
 
       this.db.clear();
-      this.scene.view.renderView();
 
-      project.getAllCaves().forEach((cave) => {
+      const caves = await this.projectSystem.getCavesForProject(project.id);
+      caves.forEach((cave) => {
         this.recalculateCave(cave);
         this.addCave(cave);
       });
+      this.scene.view.renderView();
       this.projectSystem.setCurrentProject(project);
       showSuccessPanel(`Project "${project.name}" loaded successfully`);
     }
@@ -584,7 +595,8 @@ class ProjectExplorer {
           this.db.deleteCave(state.cave.name);
           const event = new CustomEvent('caveDeleted', {
             detail : {
-              cave : state.cave.name
+              name : state.cave.name,
+              id   : state.cave.id
             }
           });
           document.dispatchEvent(event);
