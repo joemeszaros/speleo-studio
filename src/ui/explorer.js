@@ -8,7 +8,7 @@ import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attri
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
-import { showErrorPanel, showWarningPanel, showSuccessPanel } from './popups.js';
+import { showErrorPanel, showWarningPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
 
 class ProjectManager {
@@ -49,13 +49,14 @@ class ProjectManager {
     this.explorer.addSurvey(cave, newSurvey);
   }
 
-  onSurveyChanged(e) {
+  async onSurveyChanged(e) {
     //TODO : consider survey here and only recalculate following surveys
     const cave = e.detail.cave;
     this.recalculateCave(cave);
     this.reloadOnScene(cave);
     this.scene.view.renderView();
     this.explorer.updateCave(cave, (n) => n.name === cave.name);
+    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
   onAttributesChanged(e) {
@@ -133,8 +134,6 @@ class ProjectManager {
     });
     this.scene.view.renderView();
     this.projectSystem.setCurrentProject(project);
-    showSuccessPanel(`Project "${project.name}" loaded successfully`);
-
   }
 
   async onCurrentProjectDeleted() {

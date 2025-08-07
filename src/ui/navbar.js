@@ -24,7 +24,6 @@ class NavigationBar {
   }
 
   setFileMenuDisabled(disabled) {
-    // Find the File menu button by its text content and enable it since we now have a project loaded
     const fileMenuButton = Array.from(document.querySelectorAll('.mydropdown .dropbtn'))
       .find((button) => button.textContent === 'File');
     if (fileMenuButton) {

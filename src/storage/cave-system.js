@@ -1,4 +1,4 @@
-import { Cave } from './model/cave.js';
+import { Cave } from '../model/cave.js';
 
 export class CaveLoadError extends Error {
   constructor(message) {

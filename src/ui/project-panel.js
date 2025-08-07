@@ -219,11 +219,7 @@ export class ProjectPanel {
     try {
       const project = await this.projectSystem.loadProjectById(projectId);
       this.projectSystem.setCurrentProject(project);
-
       this.#emitCurrentProjectChanged(project);
-
-      showSuccessPanel(`Project "${project.name}" loaded successfully`);
-
       // Close the panel after successful project opening
       this.hide();
     } catch (error) {

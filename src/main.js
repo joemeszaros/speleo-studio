@@ -10,9 +10,9 @@ import { Footer } from './ui/footer.js';
 import { Controls } from './ui/controls.js';
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
-import { ProjectSystem, ProjectNotFoundError } from './project-system.js';
-import { CaveSystem } from './cave-system.js';
-import { DatabaseManager } from './database-manager.js';
+import { ProjectSystem, ProjectNotFoundError } from './storage/project-system.js';
+import { CaveSystem } from './storage/cave-system.js';
+import { DatabaseManager } from './storage/database-manager.js';
 import { ProjectPanel } from './ui/project-panel.js';
 
 class Main {
