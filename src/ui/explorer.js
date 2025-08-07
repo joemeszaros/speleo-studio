@@ -34,6 +34,7 @@ class ProjectManager {
     document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('currentProjectChanged', (e) => this.onCurrentProjectChanged(e));
+    document.addEventListener('currentProjectDeleted', (e) => this.onCurrentProjectDeleted(e));
   }
 
   onCaveAdded(e) {
@@ -119,22 +120,30 @@ class ProjectManager {
   async onCurrentProjectChanged(e) {
     const project = e.detail.project;
 
-    if (project) {
-      this.db.getAllCaves().forEach((cave) => {
-        this.disposeCave(cave.name, cave.id);
-      });
+    this.db.getAllCaves().forEach((cave) => {
+      this.disposeCave(cave.name, cave.id);
+    });
 
-      this.db.clear();
+    this.db.clear();
 
-      const caves = await this.projectSystem.getCavesForProject(project.id);
-      caves.forEach((cave) => {
-        this.recalculateCave(cave);
-        this.addCave(cave);
-      });
-      this.scene.view.renderView();
-      this.projectSystem.setCurrentProject(project);
-      showSuccessPanel(`Project "${project.name}" loaded successfully`);
-    }
+    const caves = await this.projectSystem.getCavesForProject(project.id);
+    caves.forEach((cave) => {
+      this.recalculateCave(cave);
+      this.addCave(cave);
+    });
+    this.scene.view.renderView();
+    this.projectSystem.setCurrentProject(project);
+    showSuccessPanel(`Project "${project.name}" loaded successfully`);
+
+  }
+
+  async onCurrentProjectDeleted() {
+    this.db.getAllCaves().forEach((cave) => {
+      this.disposeCave(cave.name, cave.id);
+    });
+
+    this.db.clear();
+    this.scene.view.renderView();
   }
 
   recalculateCave(cave) {

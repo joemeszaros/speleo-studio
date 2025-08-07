@@ -19,12 +19,24 @@ class NavigationBar {
     this.controls = controls;
     this.#buildNavbar(domElement);
     this.#addNavbarClickListener();
+    document.addEventListener('currentProjectChanged', () => this.setFileMenuDisabled(false));
+    document.addEventListener('currentProjectDeleted', () => this.setFileMenuDisabled(true));
+  }
+
+  setFileMenuDisabled(disabled) {
+    // Find the File menu button by its text content and enable it since we now have a project loaded
+    const fileMenuButton = Array.from(document.querySelectorAll('.mydropdown .dropbtn'))
+      .find((button) => button.textContent === 'File');
+    if (fileMenuButton) {
+      fileMenuButton.disabled = disabled;
+    }
   }
 
   #getMenus() {
     return [
       {
         name     : 'File',
+        disabled : true,
         elements : [
           {
             name  : 'New cave',
@@ -250,7 +262,7 @@ class NavigationBar {
   }
 
   #buildNavbar(navbarHtmlElement) {
-    const createMenu = (name, elements) => {
+    const createMenu = (name, elements, disabled = false) => {
       const c = document.createElement('div');
       c.setAttribute('class', 'mydropdown-content');
       c.setAttribute('id', 'myDropdown');
@@ -266,6 +278,8 @@ class NavigationBar {
       d.setAttribute('class', 'mydropdown');
       const b = document.createElement('button');
       b.setAttribute('class', 'dropbtn');
+      b.disabled = disabled;
+
       b.onclick = function () {
         c.classList.toggle('mydropdown-show');
         document.querySelectorAll('.mydropdown-content').forEach((element) => {
@@ -363,7 +377,7 @@ class NavigationBar {
     };
 
     navbarHtmlElement.innerHTML = '';
-    this.#getMenus().forEach((m) => navbarHtmlElement.appendChild(createMenu(m.name, m.elements)));
+    this.#getMenus().forEach((m) => navbarHtmlElement.appendChild(createMenu(m.name, m.elements, m.disabled)));
     this.#getIcons()
       .forEach((i) => {
         navbarHtmlElement.appendChild(

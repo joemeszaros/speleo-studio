@@ -67,7 +67,6 @@ export class ProjectPanel {
   async updateDisplay() {
     await this.updateCurrentProjectInfo();
     await this.updateRecentProjectsList();
-    this.updateButtonStates();
   }
 
   async updateCurrentProjectInfo() {
@@ -149,16 +148,16 @@ export class ProjectPanel {
                </div>
              </div>
              <div class="project-item-actions">
-               <button id="open-project-btn" class="project-action-btn" project-id="${project.id}">Open</button>
-               <button id="delete-project-btn" class="project-action-btn delete" onclick="window.projectPanel.deleteProject('${project.id}')">Delete</button>
-               <button id="rename-project-btn" class="project-action-btn rename" onclick="window.projectPanel.renameProject('${project.id}')">Rename</button>
+               <button id="open-project-btn" class="project-action-btn">Open</button>
+               <button id="delete-project-btn" class="project-action-btn delete">Delete</button>
+               <button id="rename-project-btn" class="project-action-btn rename">Rename</button>
              </div>
            </div>
          `;
 
-          panel.querySelector('#open-project-btn').onclick = () => this.openProject(project.id);
-          panel.querySelector('#delete-project-btn').onclick = () => this.deleteProject(project.id);
-          panel.querySelector('#rename-project-btn').onclick = () => this.renameProject(project.id);
+          panel.querySelector('#open-project-btn').addEventListener('click', () => this.openProject(project.id));
+          panel.querySelector('#delete-project-btn').addEventListener('click', () => this.deleteProject(project.id));
+          panel.querySelector('#rename-project-btn').addEventListener('click', () => this.renameProject(project.id));
           return panel;
         })
       );
@@ -172,15 +171,6 @@ export class ProjectPanel {
       recentProjectsList.innerHTML = '<p>Error loading projects</p>';
       console.error('Error loading projects:', error);
     }
-  }
-
-  updateButtonStates() {
-    const currentProject = this.projectSystem.getCurrentProject();
-    const saveProjectBtn = this.panel.querySelector('#save-project-btn');
-    const exportProjectBtn = this.panel.querySelector('#export-project-btn');
-
-    saveProjectBtn.disabled = !currentProject;
-    exportProjectBtn.disabled = !currentProject;
   }
 
   async showNewProjectDialog() {
@@ -200,15 +190,6 @@ export class ProjectPanel {
     } catch (error) {
       showErrorPanel(`Failed to create project: ${error.message}`);
     }
-  }
-
-  #emitCurrentProjectChanged(project) {
-    const event = new CustomEvent('currentProjectChanged', {
-      detail : {
-        project : project
-      }
-    });
-    document.dispatchEvent(event);
   }
 
   filterProjects() {
@@ -329,11 +310,7 @@ export class ProjectPanel {
   }
 
   async deleteProject(projectId) {
-    const project = await this.projectSystem.loadProjectById(projectId);
-    const confirmed = confirm(
-      `Are you sure you want to delete project "${project.name}"? This action cannot be undone.`
-    );
-
+    const confirmed = confirm(`Are you sure you want to delete this project? This action cannot be undone.`);
     if (!confirmed) return;
 
     try {
@@ -341,14 +318,33 @@ export class ProjectPanel {
 
       // If we're deleting the current project, clear it
       if (this.projectSystem.getCurrentProject()?.id === projectId) {
-        this.projectSystem.setCurrentProject(null);
-        this.#emitCurrentProjectChanged(null);
+        this.projectSystem.clearCurrentProject();
+        this.#emitCurrentProjectDeleted(projectId);
       }
 
       this.updateDisplay();
-      showSuccessPanel(`Project "${project.name}" deleted successfully`);
+      showSuccessPanel(`Project deleted successfully`);
     } catch (error) {
+      console.error('Failed to delete project', error);
       showErrorPanel(`Failed to delete project: ${error.message}`);
     }
+  }
+
+  #emitCurrentProjectChanged(project) {
+    const event = new CustomEvent('currentProjectChanged', {
+      detail : {
+        project : project
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCurrentProjectDeleted(projectId) {
+    const event = new CustomEvent('currentProjectDeleted', {
+      detail : {
+        projectId : projectId
+      }
+    });
+    document.dispatchEvent(event);
   }
 }

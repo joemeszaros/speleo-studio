@@ -71,6 +71,7 @@ class Main {
     // Initialize project panel
     this.projectPanel = new ProjectPanel(this.projectSystem);
     document.body.appendChild(this.projectPanel.createPanel());
+    this.projectPanel.show();
 
     this.controls = new Controls(options, document.getElementById('control-panel'));
     this.controls.close();
@@ -217,6 +218,8 @@ class Main {
       if (!loadedProject) {
         throw new Error('Probably the project URL parameter is missing');
       }
+
+      this.projectPanel.hide();
 
       const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(loadedProject.id);
 

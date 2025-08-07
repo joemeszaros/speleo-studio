@@ -125,6 +125,10 @@ export class ProjectSystem {
     return this.saveProject(project);
   }
 
+  clearCurrentProject() {
+    this.currentProject = null;
+  }
+
   setCurrentProject(project) {
     document.title = `Speleo Studio - ${project.name}`;
     this.currentProject = project;
@@ -194,7 +198,8 @@ export class ProjectSystem {
         resolve();
       };
 
-      request.onerror = () => {
+      request.onerror = (e) => {
+        console.error('Failed to delete project', e);
         reject(new Error('Failed to delete project'));
       };
     });

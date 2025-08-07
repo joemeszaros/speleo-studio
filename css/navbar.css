@@ -22,6 +22,11 @@
   overflow: hidden;
 }
 
+.mydropdown .dropbtn:disabled {
+  color: rgb(92, 90, 90);
+  cursor: not-allowed;
+}
+
 .mydropdown .dropbtn {
   cursor: pointer;
   font-size: 14px;
@@ -34,8 +39,8 @@
   margin: 0;
 }
 
-.topnavbar a:hover,
-.mydropdown:hover .dropbtn,
+.topnavbar a:hover:not([disabled]),
+.mydropdown:hover .dropbtn:not([disabled]),
 .dropbtn:focus {
   background-color: #04aa6d;
 }
