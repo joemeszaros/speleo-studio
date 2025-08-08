@@ -169,8 +169,22 @@ class CaveEditor extends Editor {
             this.#emitCaveRenamed(oldName, this.cave);
           }
 
+          const oldGeoData = this.cave.geoData;
           this.cave.metaData = caveMetadata;
           this.cave.geoData = geoData;
+
+          // deleting an eov coordinate will change the survey data
+          if (!this.cave.geoData.isEqual(oldGeoData) && this.cave.surveys.length > 0) {
+            document.dispatchEvent(
+              new CustomEvent('surveyChanged', {
+                detail : {
+                  cave   : this.cave,
+                  survey : this.cave.surveys[0]
+                }
+              })
+            );
+          }
+
         }
       }
       this.closeEditor();

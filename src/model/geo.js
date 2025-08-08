@@ -85,6 +85,10 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
     return errors;
   }
 
+  isEqual(other) {
+    return this.y === other.y && this.x === other.x && this.elevation === other.elevation;
+  }
+
   toExport() {
     return {
       y         : this.y,
@@ -103,12 +107,20 @@ class WGS84Coordinate {
     this.lat = lat;
     this.lon = lon;
   }
+
+  isEqual(other) {
+    return this.lat === other.lat && this.lon === other.lon;
+  }
 }
 
 class StationWithCoordinate {
   constructor(name, coordinate) {
     this.name = name;
     this.coordinate = coordinate;
+  }
+
+  isEqual(other) {
+    return this.name === other.name && this.coordinate.isEqual(other.coordinate);
   }
 
   toExport() {
@@ -141,6 +153,12 @@ class GeoData {
   constructor(coordinateSystem, coordinates = []) {
     this.coordinateSystem = coordinateSystem;
     this.coordinates = coordinates;
+  }
+
+  isEqual(other) {
+    return this.coordinateSystem === other.coordinateSystem &&
+      this.coordinates.length === other.coordinates.length &&
+      this.coordinates.every((c, i) => c.isEqual(other.coordinates[i]));
   }
 
   toExport() {

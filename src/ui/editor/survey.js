@@ -557,6 +557,8 @@ class SurveyEditor extends Editor {
       selectableRangeRows       : true,
       selectableRangeClearCells : true,
 
+      movableRows : true,
+
       //change edit trigger mode to make cell navigation smoother
       editTriggerEvent : 'dblclick',
 
@@ -616,6 +618,12 @@ class SurveyEditor extends Editor {
 
     this.table.on('dataChanged', () => {
       console.log(' data changed ');
+      this.surveyModified = true;
+      this.#emitSurveyDataEdited();
+    });
+
+    this.table.on('rowMoved', () => {
+      console.log('row moved');
       this.surveyModified = true;
       this.#emitSurveyDataEdited();
     });
@@ -726,15 +734,17 @@ class SurveyEditor extends Editor {
         const columnDef = this.table.getColumn(column.field);
         if (columnDef && columnDef.isVisible()) {
           if (!this.options.ui.editor.survey.columns.includes(column.field)) {
-            this.options.ui.editor.survey.columns.push(column.field);
+            console.log('pushing column', column.field);
+            // columns.push(column.field) does not trigger a config change event
+            const newColumns = [...this.options.ui.editor.survey.columns, column.field];
+            this.options.ui.editor.survey.columns = newColumns;
           }
           icon.textContent = '☑';
         } else {
           if (this.options.ui.editor.survey.columns.includes(column.field)) {
-            this.options.ui.editor.survey.columns.splice(
-              this.options.ui.editor.survey.columns.indexOf(column.field),
-              1
-            );
+            const newColumns = [...this.options.ui.editor.survey.columns.filter((c) => c !== column.field)];
+            // direct splice does not trigger a config change event
+            this.options.ui.editor.survey.columns = newColumns;
           }
           icon.textContent = '☐';
         }

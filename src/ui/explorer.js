@@ -84,6 +84,7 @@ class ProjectManager {
 
   async onSurveyChanged(e) {
     //TODO : consider survey here and only recalculate following surveys
+    // If eov coordinates are changed, the first survey is passed in the event
     const cave = e.detail.cave;
     this.recalculateCave(cave);
     this.reloadOnScene(cave);
