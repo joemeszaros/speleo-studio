@@ -42,10 +42,20 @@
     <div id="interactive" class="popup editor"></div>
 
     <div id="welcome-panel">
-      <img src="images/logo.png" /><br /><br />Welcome to Speleo Studio.<br />
-      <button onclick="this.parentNode.style.display='none'; localStorage.setItem('welcome', 'false'); ">
-        Let's get started
-      </button>
+      <div class="welcome-container">
+        <img src="images/logo.png" alt="Speleo Studio Logo" class="welcome-logo" />
+        <h1 class="welcome-title">Welcome to Speleo Studio</h1>
+        <p class="welcome-subtitle">
+          Your comprehensive cave visualization and survey management platform.<br />
+          Explore, analyze, and visualize cave systems with professional tools.
+        </p>
+        <button
+          class="welcome-button"
+          onclick="this.closest('#welcome-panel').style.display='none'; localStorage.setItem('welcome', 'false');"
+        >
+          Let's Get Started
+        </button>
+      </div>
     </div>
     <div id="fixed-size-editor" class="popup"> </div>
     <div id="resizable-editor" class="popup"></div>
