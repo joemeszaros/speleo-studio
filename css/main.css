@@ -103,49 +103,166 @@ body {
 }
 
 .cautionpanel {
-  position: absolute;
-  z-index: 110;
+  position: fixed;
+  z-index: 1100;
   display: none;
-  left: 25%;
-  top: 50%;
-  width: 50%;
-  margin-top: -50px;
-  margin-left: -50px;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
+  min-width: 300px;
+  max-width: 600px;
   color: white;
-  padding: 10px;
-  border-style: solid;
-  border-color: white;
-  border-width: 3px;
-  border-radius: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
   font-size: 14px;
-  text-align: center;
+  text-align: left;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  animation: slideInDown 0.3s ease-out;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes slideOutUp {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+}
+
+.cautionpanel.hiding {
+  animation: slideOutUp 0.3s ease-in;
 }
 
 .cautionpanel-error {
-  background-color: black;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  border-left: 4px solid #fecaca;
 }
 
 .cautionpanel-warning {
-  background-color: #251410;
+  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
+  border-left: 4px solid #fed7aa;
 }
 
 .cautionpanel-success {
-  background-color: #0a2510;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border-left: 4px solid #a7f3d0;
+}
+
+.cautionpanel-info {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-left: 4px solid #bfdbfe;
+}
+
+.cautionpanel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cautionpanel-icon {
+  font-size: 20px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+.cautionpanel-title {
+  font-weight: 600;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-grow: 1;
+}
+
+.cautionpanel-content {
+  padding: 16px 20px 20px 20px;
+  line-height: 1.5;
+}
+
+.cautionpanel-message {
+  margin-bottom: 8px;
+}
+
+.cautionpanel-message:last-child {
+  margin-bottom: 0;
+}
+
+.cautionpanel-message-list {
+  margin-top: 8px;
+}
+
+.cautionpanel-message-list .message-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  backdrop-filter: blur(5px);
+}
+
+.cautionpanel-message-list .message-item:last-child {
+  margin-bottom: 0;
+}
+
+.cautionpanel-message-list .message-bullet {
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 8px;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .caution-close-btn {
-  float: right;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 32px;
-  color: #ac1717;
-  margin-left: 10px;
-  transition: color 0.2s ease;
+  font-weight: 300;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
 }
 
 .caution-close-btn:hover {
-  color: #895050;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.caution-close-btn:active {
+  transform: scale(0.95);
 }
 
 .file-upload {
@@ -182,7 +299,7 @@ body {
   transform: translate(-50%, -50%);
   position: absolute;
   text-align: center;
-  z-index: 100;
+  z-index: 1000;
   color: azure;
   background: rgb(40, 40, 40);
   border: solid 1px white;

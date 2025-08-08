@@ -8,7 +8,7 @@ import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attri
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
-import { showErrorPanel, showWarningPanel } from './popups.js';
+import { showErrorPanel, showWarningPanel, showInfoPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
 
 class ProjectManager {
@@ -32,11 +32,11 @@ class ProjectManager {
     document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
+    document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
     document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
     document.addEventListener('surveyDataEdited', (e) => this.onSurveyDataEdited(e));
     document.addEventListener('surveyDataUpdated', (e) => this.onSurveyDataUpdated(e));
-    document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('currentProjectChanged', (e) => this.onCurrentProjectChanged(e));
     document.addEventListener('currentProjectDeleted', (e) => this.onCurrentProjectDeleted(e));
   }
@@ -183,7 +183,7 @@ class ProjectManager {
       );
       this.editor.setupPanel();
       this.editor.show();
-      showWarningPanel(`Opened survey editor because you have unsaved changes for cave ${cave.name} / ${survey.name}`);
+      showInfoPanel(`Opened survey editor because you have unsaved changes for cave ${cave.name} / ${survey.name}`);
     }
     console.log(`🚧 Loaded project: ${project.name}`);
   }

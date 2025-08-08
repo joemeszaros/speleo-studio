@@ -45,7 +45,12 @@ function showCautionPanel(message, seconds, errorOrWarning) {
   activePanelState.type = errorOrWarning;
 
   // Remove all existing classes
-  cautionPanel.classList.remove('cautionpanel-error', 'cautionpanel-warning', 'cautionpanel-success');
+  cautionPanel.classList.remove(
+    'cautionpanel-error',
+    'cautionpanel-warning',
+    'cautionpanel-success',
+    'cautionpanel-info'
+  );
 
   // Add appropriate class based on type
   if (errorOrWarning === 'error') {
@@ -54,6 +59,8 @@ function showCautionPanel(message, seconds, errorOrWarning) {
     cautionPanel.classList.add('cautionpanel-warning');
   } else if (errorOrWarning === 'success') {
     cautionPanel.classList.add('cautionpanel-success');
+  } else if (errorOrWarning === 'info') {
+    cautionPanel.classList.add('cautionpanel-info');
   }
 
   // Update display
@@ -68,51 +75,72 @@ function showCautionPanel(message, seconds, errorOrWarning) {
 }
 
 function updatePanelDisplay(cautionPanel, messages, errorOrWarning) {
-  // Set appropriate icon and color based on type
-  let icon, color;
+  // Set appropriate icon and title based on type
+  let icon, title;
   if (errorOrWarning === 'error') {
-    icon = '⚠';
-    color = '#8a1a12';
+    icon = '⚠️';
+    title = 'Error';
   } else if (errorOrWarning === 'warning') {
-    icon = '⚠';
-    color = '#8a1a12';
+    icon = '⚠️';
+    title = 'Warning';
   } else if (errorOrWarning === 'success') {
     icon = '✅';
-    color = '#1a8a12';
+    title = 'Success';
+  } else if (errorOrWarning === 'info') {
+    icon = 'ℹ️';
+    title = 'Info';
   }
 
   cautionPanel.style.display = 'block';
 
-  // Add close button
-  let messageContent = `<span class="caution-close-btn" onclick="closeCautionPanel()">×</span>`;
-
-  // Create merged message content
-  messageContent += `<strong style="color:${color}">${icon} ${errorOrWarning.toUpperCase()}</strong>`;
+  // Create structured HTML with header and content
+  let html = `
+    <div class="cautionpanel-header">
+      <div style="display: flex; align-items: center;">
+        <div class="cautionpanel-icon">${icon}</div>
+        <div class="cautionpanel-title">${title}</div>
+      </div>
+      <div class="caution-close-btn" onclick="closeCautionPanel()">×</div>
+    </div>
+    <div class="cautionpanel-content">
+  `;
 
   if (messages.length === 1) {
-    messageContent += ` ${messages[0]}`;
+    html += `<div class="cautionpanel-message">${messages[0]}</div>`;
   } else {
-    messageContent += ` (${messages.length} messages):<br>`;
-    messages.forEach((msg, index) => {
-      messageContent += `• ${msg}`;
-      if (index < messages.length - 1) {
-        messageContent += '<br>';
-      }
+    html += `<div class="cautionpanel-message">${messages.length} messages:</div>`;
+    html += `<div class="cautionpanel-message-list">`;
+    messages.forEach((msg) => {
+      html += `
+        <div class="message-item">
+          <div class="message-bullet">•</div>
+          <div>${msg}</div>
+        </div>
+      `;
     });
+    html += `</div>`;
   }
 
-  cautionPanel.innerHTML = messageContent;
+  html += `</div>`;
+  cautionPanel.innerHTML = html;
 }
 
 function hidePanel(cautionPanel) {
-  cautionPanel.style.display = 'none';
-  activePanelState.isVisible = false;
-  activePanelState.messages = [];
-  activePanelState.type = null;
-  if (activePanelState.timeoutId) {
-    clearTimeout(activePanelState.timeoutId);
-    activePanelState.timeoutId = null;
-  }
+  // Add exit animation class
+  cautionPanel.classList.add('hiding');
+
+  // Wait for animation to complete before hiding
+  setTimeout(() => {
+    cautionPanel.style.display = 'none';
+    cautionPanel.classList.remove('hiding');
+    activePanelState.isVisible = false;
+    activePanelState.messages = [];
+    activePanelState.type = null;
+    if (activePanelState.timeoutId) {
+      clearTimeout(activePanelState.timeoutId);
+      activePanelState.timeoutId = null;
+    }
+  }, 300); // Match the animation duration
 }
 
 // Global function to close caution panel (accessible from onclick)
@@ -133,6 +161,10 @@ function showWarningPanel(message, seconds = 0) {
 
 function showSuccessPanel(message, seconds = 0) {
   showCautionPanel(message, seconds, 'success');
+}
+
+function showInfoPanel(message, seconds = 0) {
+  showCautionPanel(message, seconds, 'info');
 }
 
 function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, stopDragFn) {
@@ -254,4 +286,4 @@ function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, sto
   }
 }
 
-export { showErrorPanel, showWarningPanel, showSuccessPanel, makeMovable };
+export { showErrorPanel, showWarningPanel, showSuccessPanel, showInfoPanel, makeMovable };
