@@ -465,6 +465,260 @@ body {
   }
 }
 
+/* About Dialog Styles */
+.about-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  z-index: 2000;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(40, 40, 40, 0.9) 100%);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.about-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 700px);
+  max-width: 700px;
+  min-width: 320px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideInUp 0.4s ease-out 0.1s both;
+}
+
+.about-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30px 40px 20px 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.about-logo {
+  width: 60px;
+  height: 60px;
+  margin-right: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.about-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  flex-grow: 1;
+}
+
+.about-close-btn {
+  cursor: pointer;
+  font-weight: 300;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  backdrop-filter: blur(5px);
+}
+
+.about-close-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.about-close-btn:active {
+  transform: scale(0.95);
+}
+
+.about-content {
+  padding: 30px 40px 40px 40px;
+  color: #ffffff;
+  line-height: 1.6;
+}
+
+.about-description {
+  font-size: 16px;
+  color: #cccccc;
+  margin-bottom: 30px;
+  text-align: justify;
+}
+
+.about-features {
+  margin-bottom: 30px;
+}
+
+.about-features h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 15px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.about-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.about-features li {
+  padding: 8px 0;
+  color: #cccccc;
+  position: relative;
+  padding-left: 25px;
+}
+
+.about-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #04aa6d;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.about-technologies {
+  margin-bottom: 30px;
+}
+
+.about-technologies h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 15px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.about-technologies p {
+  color: #cccccc;
+  font-size: 16px;
+}
+
+.about-links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.about-link {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, rgba(4, 170, 109, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+  border: 1px solid rgba(4, 170, 109, 0.3);
+  border-radius: 12px;
+  color: #04aa6d;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.about-link:hover {
+  background: linear-gradient(135deg, rgba(4, 170, 109, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+  border-color: rgba(4, 170, 109, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(4, 170, 109, 0.2);
+}
+
+.about-link:active {
+  transform: translateY(0);
+}
+
+.about-link-icon {
+  font-size: 20px;
+  margin-right: 12px;
+  display: inline-block;
+}
+
+/* Responsive adjustments for about dialog */
+@media (max-width: 768px) {
+  .about-container {
+    width: 95vw;
+    padding: 0;
+  }
+
+  .about-header {
+    padding: 25px 25px 15px 25px;
+  }
+
+  .about-logo {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+  }
+
+  .about-title {
+    font-size: 24px;
+  }
+
+  .about-content {
+    padding: 25px 25px 30px 25px;
+  }
+
+  .about-description {
+    font-size: 15px;
+  }
+
+  .about-features h3,
+  .about-technologies h3 {
+    font-size: 18px;
+  }
+
+  .about-features li {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-container {
+    width: 98vw;
+  }
+
+  .about-header {
+    padding: 20px 20px 15px 20px;
+  }
+
+  .about-logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
+  }
+
+  .about-title {
+    font-size: 20px;
+  }
+
+  .about-content {
+    padding: 20px 20px 25px 20px;
+  }
+
+  .about-link {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
 #station-context-menu {
   position: absolute;
   z-index: 100;

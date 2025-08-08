@@ -146,6 +146,15 @@ class NavigationBar {
             click : () => this.#toggleFullscreen()
           }
         ]
+      },
+      {
+        name     : 'Help',
+        elements : [
+          {
+            name  : 'About Speleo Studio',
+            click : () => this.#showAboutDialog()
+          }
+        ]
       }
     ];
   }
@@ -423,6 +432,57 @@ class NavigationBar {
         document.msExitFullscreen();
       }
     }
+  }
+
+  #showAboutDialog() {
+    // Create about dialog if it doesn't exist
+    let aboutDialog = document.getElementById('about-dialog');
+    if (!aboutDialog) {
+      aboutDialog = document.createElement('div');
+      aboutDialog.id = 'about-dialog';
+      aboutDialog.className = 'about-dialog';
+      aboutDialog.innerHTML = `
+        <div class="about-container">
+          <div class="about-header">
+            <img src="images/logo.png" alt="Speleo Studio Logo" class="about-logo" />
+            <h2 class="about-title">Speleo Studio</h2>
+            <button class="about-close-btn" onclick="this.closest('.about-dialog').style.display='none'">×</button>
+          </div>
+          <div class="about-content">
+            <p class="about-description">
+              A comprehensive web application for cave visualization and survey management. 
+              Speleo Studio provides professional tools for exploring, analyzing, and visualizing cave systems in 3D.
+            </p>
+            <div class="about-features">
+              <h3>Key Features:</h3>
+              <ul>
+                <li>3D cave visualization with Three.js</li>
+                <li>Survey data import from TopoDroid, Polygon, and JSON formats</li>
+                <li>Interactive 3D scene navigation</li>
+                <li>Survey data editing and validation</li>
+                <li>Multiple export formats (PNG, DXF, Polygon, JSON)</li>
+                <li>Project management and data persistence</li>
+                <li>Surface mesh visualization (PLY format)</li>
+              </ul>
+            </div>
+            <div class="about-links">
+              <a href="https://github.com/joemeszaros/speleo-studio/" target="_blank" class="about-link">
+                <span class="about-link-icon">📂</span>
+                View Source Code on GitHub
+              </a>
+              <a href="https://joemeszaros.github.io/speleo-studio/" target="_blank" class="about-link">
+                <span class="about-link-icon">🌐</span>
+                Live Application
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(aboutDialog);
+    }
+
+    // Show the dialog
+    aboutDialog.style.display = 'block';
   }
 }
 
