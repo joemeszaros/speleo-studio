@@ -245,7 +245,7 @@ class SurveyHelper {
     let startStationName;
     [...cave.surveys.entries()].forEach(([index, s]) => {
       if (index === 0) {
-        startStationName = s.start !== undefined ? s.start.name : s.shots[0].from;
+        startStationName = s.start !== undefined ? s.start : s.shots[0].from;
       }
       s.validShots.forEach((sh) => {
         const fromName = s.getFromStationName(sh);
@@ -260,8 +260,8 @@ class SurveyHelper {
 
     const traverse = g.traverse(startStationName);
     const maxDistance = Math.max(...Array.from(traverse.distances.values()));
-    const startColor = clOptions.color.start;
-    const endColor = clOptions.color.end;
+    const startColor = new Color(clOptions.color.start);
+    const endColor = new Color(clOptions.color.end);
     const colorDiff = endColor.sub(startColor);
     const result = new Map();
     cave.surveys.forEach((s) => {

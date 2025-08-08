@@ -169,7 +169,7 @@ class ProjectManager {
     this.projectSystem.setCurrentProject(project);
 
     const editorState = await this.editorStateSystem.loadState(project.id);
-    if (editorState) {
+    if (editorState !== undefined) {
       const cave = this.db.getCave(editorState.metadata.caveName);
       const survey = cave.surveys.find((s) => s.name === editorState.metadata.surveyName);
       this.editor = new SurveyEditor(
