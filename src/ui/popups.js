@@ -217,10 +217,10 @@ function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, sto
     let newLeft = elmnt.offsetLeft - pos1;
 
     // Clamp to viewport
-    const minTop = 48;
+    const minTop = 48; // navbar
     const minLeft = 0;
-    const maxTop = window.innerHeight - elmnt.offsetHeight;
-    const maxLeft = window.innerWidth - elmnt.offsetWidth;
+    const maxTop = window.innerHeight - elmnt.offsetHeight - 30; // 30 is the footer height
+    const maxLeft = window.innerWidth - elmnt.offsetWidth - 30; // 30 is the footer width
 
     newTop = Math.max(minTop, Math.min(newTop, maxTop));
     newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));

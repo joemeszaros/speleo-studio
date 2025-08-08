@@ -255,15 +255,54 @@ class SurveyEditor extends Editor {
     );
 
     const iconBar = U.node`<div class="iconbar">`;
+    const getIndex = () => {
+      const ranges = this.table.getRanges();
+      if (ranges.length > 0) {
+        const rows = ranges[0].getRows();
+        if (rows.length > 0) {
+          return rows[0].getIndex();
+        }
+      }
+      return -1;
+    };
+
     this.panel.appendChild(iconBar);
     [
       { id: 'undo', icon: 'icons/undo.svg', tooltip: 'Undo', click: () => this.table.undo() },
       { id: 'redo', icon: 'icons/redo.svg', tooltip: 'Redo', click: () => this.table.redo() },
       {
+        id      : 'add-row-before',
+        icon    : 'icons/add_before.svg',
+        tooltip : 'Add row before',
+        click   : () => {
+          const index = getIndex();
+          if (index > 0) {
+            this.table.addRow(this.getEmptyRow(), true, index);
+          }
+        }
+      },
+      {
+        id      : 'add-row-after',
+        icon    : 'icons/add_after.svg',
+        tooltip : 'Add row after',
+        click   : () => {
+          const index = getIndex();
+          if (index > 0) {
+            this.table.addRow(this.getEmptyRow(), false, index);
+          }
+        }
+      },
+      {
         id      : 'add-row',
         icon    : 'icons/add_white.svg',
         tooltip : 'Add row end',
-        click   : () => this.table.addRow(this.getEmptyRow())
+        click   : () => {
+          this.table.addRow(this.getEmptyRow()).then((row) => {
+            row.scrollTo('nearest', false).catch((err) => {
+              console.warn('Failed to scroll to new row:', err);
+            });
+          });
+        }
       },
       {
         id      : 'delete-row',
@@ -501,6 +540,8 @@ class SurveyEditor extends Editor {
     columns.forEach((c) => {
       c.visible = c.field === 'status' || this.options.ui.editor.survey.columns.includes(c.field);
     });
+
+    //TODO: downsize if the table is too wide (settings > viewport)
 
     this.panel.style.width = this.options.ui.editor.survey.width + 'px';
     // eslint-disable-next-line no-undef

@@ -57,7 +57,17 @@ class FragmentAttributeEditor extends CaveEditor {
       { break: true },
       { id: 'validate-rows', text: 'Validate rows', click: () => this.validateRows() },
       { id: 'update-section-attributes', text: 'Update attributes', click: () => this.setCaveSectionAttributes() },
-      { id: 'add-row', text: 'Add row to bottom', click: () => this.table.addRow(this.getEmptyRow()) },
+      {
+        id    : 'add-row',
+        text  : 'Add row to bottom',
+        click : () => {
+          this.table.addRow(this.getEmptyRow()).then((row) => {
+            row.scrollTo('nearest', false).catch((err) => {
+              console.warn('Failed to scroll to new row:', err);
+            });
+          });
+        }
+      },
       {
         id    : 'delete-row',
         text  : 'Delete active rows',
