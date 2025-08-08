@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { makeMovable, showErrorPanel } from './ui/popups.js';
-import { get3DCoordsStr, node } from './utils/utils.js';
+import { get3DCoordsStr, node, degreesToRads, fromPolar } from './utils/utils.js';
 import { SectionHelper } from './section.js';
 import { ShotType } from './model/survey.js';
 import { StrikeDipCalculator } from './utils/geo.js';
@@ -373,21 +373,45 @@ class SceneInteraction {
       () => {}
     );
 
-    const coordInputDivs = [0, 1, 2].map((i) => {
-      return node`
-       <div>
-        <input type="number" step="0.01" placeholder="X" class="coord-input" data-point="${i}" data-coord="x" />
-        <input type="number" step="0.01" placeholder="Y" class="coord-input" data-point="${i}" data-coord="y" />
-        <input type="number" step="0.01" placeholder="Z" class="coord-input" data-point="${i}" data-coord="z" />
-      </div>`;
-    });
     const container = node`
     <div id="dip-strike-calculator-container">
-      <div>Enter 3D coordinates for three points:</div>
+      <div>Input Method:</div>
+      <div>
+        <label><input type="radio" name="input-method" value="coordinates" checked /> 3D Coordinates</label>
+        <label><input type="radio" name="input-method" value="survey" /> Survey Measurements</label>
+      </div>
+      
+      <div id="coordinates-input" style="display: block;">
+        <div>Enter 3D coordinates for three points:</div>
+        ${[0, 1, 2]
+          .map(
+            (i) => `
+          <div>
+            <input type="number" step="0.01" placeholder="X" class="coord-input" data-point="${i}" data-coord="x" />
+            <input type="number" step="0.01" placeholder="Y" class="coord-input" data-point="${i}" data-coord="y" />
+            <input type="number" step="0.01" placeholder="Z" class="coord-input" data-point="${i}" data-coord="z" />
+          </div>
+        `
+          )
+          .join('')}
+      </div>
+      
+      <div id="survey-input" style="display: none;">
+        <div>Enter measurements from reference point:</div>
+        ${[0, 1, 2]
+          .map(
+            (i) => `
+          <div>
+            <input type="number" step="0.01" placeholder="Length" class="survey-input" data-point="${i}" data-field="length" />
+            <input type="number" step="0.1" placeholder="Azimuth" class="survey-input" data-point="${i}" data-field="azimuth" />
+            <input type="number" step="0.1" placeholder="Clino" class="survey-input" data-point="${i}" data-field="clino" />
+          </div>
+        `
+          )
+          .join('')}
+      </div>
     </div>`;
-    coordInputDivs.forEach((input) => {
-      container.appendChild(input);
-    });
+
     const calculateBtn = node`<button id="calculate-btn">Calculate</button>`;
     const clearBtn = node`<button id="clear-btn">Clear</button>`;
 
@@ -415,43 +439,110 @@ class SceneInteraction {
       errorSection.style.display = 'block';
     };
 
+    // Setup input method toggle
+    const inputMethodRadios = container.querySelectorAll('input[name="input-method"]');
+    const coordinatesInput = container.querySelector('#coordinates-input');
+    const surveyInput = container.querySelector('#survey-input');
+
+    inputMethodRadios.forEach((radio) => {
+      radio.onchange = () => {
+        if (radio.value === 'coordinates') {
+          coordinatesInput.style.display = 'block';
+          surveyInput.style.display = 'none';
+        } else {
+          coordinatesInput.style.display = 'none';
+          surveyInput.style.display = 'block';
+        }
+        // Clear results when switching methods
+        resultSection.style.display = 'none';
+        errorSection.style.display = 'none';
+      };
+    });
+
     // Setup event listeners
     const coordInputs = container.querySelectorAll('.coord-input');
+    const surveyInputs = container.querySelectorAll('.survey-input');
     const points = [null, null, null];
+    const surveyData = [null, null, null];
 
     calculateBtn.onclick = () => {
-      // Check if all points are defined
-      const allPointsDefined = points.every((point) => point !== null);
-      if (!allPointsDefined) {
-        showCalculatorError('Please enter coordinates for all three points.');
-        return;
-      }
+      const selectedMethod = container.querySelector('input[name="input-method"]:checked').value;
 
-      // Check if points define a valid plane
-      if (!StrikeDipCalculator.isValidPlane(points[0], points[1], points[2])) {
-        showCalculatorError('The three points do not define a valid plane.');
-        return;
-      }
+      if (selectedMethod === 'coordinates') {
+        // Check if all points are defined
+        const allPointsDefined = points.every((point) => point !== null);
+        if (!allPointsDefined) {
+          showCalculatorError('Please enter coordinates for all three points.');
+          return;
+        }
 
-      try {
-        const result = StrikeDipCalculator.calculateStrikeDip(points[0], points[1], points[2]);
-        errorSection.style.display = 'none';
-        resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
-        resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
-        resultSection.querySelector('#normal-vector-result').textContent =
-          `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
+        // Check if points define a valid plane
+        if (!StrikeDipCalculator.isValidPlane(points[0], points[1], points[2])) {
+          showCalculatorError('The three points do not define a valid plane.');
+          return;
+        }
 
-        // Show results section
-        resultSection.style.display = 'block';
+        try {
+          const result = StrikeDipCalculator.calculateStrikeDip(points[0], points[1], points[2]);
+          errorSection.style.display = 'none';
+          resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
+          resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
+          resultSection.querySelector('#normal-vector-result').textContent =
+            `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
 
-      } catch (error) {
-        showCalculatorError(`Calculation error: ${error.message}`);
+          resultSection.style.display = 'block';
+        } catch (error) {
+          showCalculatorError(`Calculation error: ${error.message}`);
+        }
+      } else {
+        // Survey method
+        const allSurveyDataDefined = surveyData.every(
+          (data) => data !== null && data.length !== undefined && data.azimuth !== undefined && data.clino !== undefined
+        );
+        if (!allSurveyDataDefined) {
+          showCalculatorError('Please enter length, azimuth, and clino for all three points.');
+          return;
+        }
+
+        try {
+          // Convert survey measurements to 3D coordinates
+          const convertedPoints = surveyData.map((data) => {
+            const azimuthRad = degreesToRads(data.azimuth);
+            const clinoRad = degreesToRads(data.clino);
+            return fromPolar(data.length, azimuthRad, clinoRad);
+          });
+
+          // Check if points define a valid plane
+          if (!StrikeDipCalculator.isValidPlane(convertedPoints[0], convertedPoints[1], convertedPoints[2])) {
+            showCalculatorError('The three points do not define a valid plane.');
+            return;
+          }
+
+          const result = StrikeDipCalculator.calculateStrikeDip(
+            convertedPoints[0],
+            convertedPoints[1],
+            convertedPoints[2]
+          );
+          errorSection.style.display = 'none';
+          resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
+          resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
+          resultSection.querySelector('#normal-vector-result').textContent =
+            `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
+
+          resultSection.style.display = 'block';
+        } catch (error) {
+          showCalculatorError(`Calculation error: ${error.message}`);
+        }
       }
     };
 
     clearBtn.onclick = () => {
       points.fill(null);
+      surveyData.fill(null);
       coordInputs.forEach((input) => {
+        input.value = '';
+      });
+      surveyInputs.forEach((input) => {
         input.value = '';
       });
       resultSection.style.display = 'none';
@@ -469,6 +560,20 @@ class SceneInteraction {
         }
 
         points[pointIndex][coord] = value;
+      };
+    });
+
+    surveyInputs.forEach((input) => {
+      input.oninput = () => {
+        const pointIndex = parseInt(input.dataset.point);
+        const field = input.dataset.field;
+        const value = parseFloat(input.value) || 0;
+
+        if (!surveyData[pointIndex]) {
+          surveyData[pointIndex] = {};
+        }
+
+        surveyData[pointIndex][field] = value;
       };
     });
 
