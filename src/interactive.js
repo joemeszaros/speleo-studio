@@ -3,6 +3,8 @@ import { makeMovable, showErrorPanel } from './ui/popups.js';
 import { get3DCoordsStr, node } from './utils/utils.js';
 import { SectionHelper } from './section.js';
 import { ShotType } from './model/survey.js';
+import { StrikeDipCalculator } from './utils/geo.js';
+import { Vector } from './model.js';
 
 class SceneInteraction {
 
@@ -353,6 +355,122 @@ class SceneInteraction {
       }
 
     };
+
+    this.locatePanel.appendChild(container);
+    this.locatePanel.style.display = 'block';
+  }
+
+  showDipStrikeCalculatorPanel() {
+    this.locatePanel.innerHTML = '';
+    makeMovable(
+      this.locatePanel,
+      'Dip & Strike Calculator',
+      false,
+      () => {
+        this.locatePanel.style.display = 'none';
+      },
+      () => {},
+      () => {}
+    );
+
+    const coordInputDivs = [0, 1, 2].map((i) => {
+      return node`
+       <div>
+        <input type="number" step="0.01" placeholder="X" class="coord-input" data-point="${i}" data-coord="x" />
+        <input type="number" step="0.01" placeholder="Y" class="coord-input" data-point="${i}" data-coord="y" />
+        <input type="number" step="0.01" placeholder="Z" class="coord-input" data-point="${i}" data-coord="z" />
+      </div>`;
+    });
+    const container = node`
+    <div id="dip-strike-calculator-container">
+      <div>Enter 3D coordinates for three points:</div>
+    </div>`;
+    coordInputDivs.forEach((input) => {
+      container.appendChild(input);
+    });
+    const calculateBtn = node`<button id="calculate-btn">Calculate</button>`;
+    const clearBtn = node`<button id="clear-btn">Clear</button>`;
+
+    container.appendChild(calculateBtn);
+    container.appendChild(clearBtn);
+
+    const resultSection = node`
+      <div id="results-section" style="display: none;">
+        <div>Strike: <span id="strike-result">-</span></div>
+        <div>Dip: <span id="dip-result">-</span></div>
+        <div>Normal: <span id="normal-vector-result">-</span></div>
+      </div>`;
+    container.appendChild(resultSection);
+
+    const errorSection = node`
+      <div id="error-section" style="display: none;">
+        <div id="error-message" style="color: #ff6b6b;"></div>
+      </div>`;
+    container.appendChild(errorSection);
+
+    const showCalculatorError = (message) => {
+      const errorMessage = errorSection.querySelector('#error-message');
+      resultSection.style.display = 'none';
+      errorMessage.textContent = message;
+      errorSection.style.display = 'block';
+    };
+
+    // Setup event listeners
+    const coordInputs = container.querySelectorAll('.coord-input');
+    const points = [null, null, null];
+
+    calculateBtn.onclick = () => {
+      // Check if all points are defined
+      const allPointsDefined = points.every((point) => point !== null);
+      if (!allPointsDefined) {
+        showCalculatorError('Please enter coordinates for all three points.');
+        return;
+      }
+
+      // Check if points define a valid plane
+      if (!StrikeDipCalculator.isValidPlane(points[0], points[1], points[2])) {
+        showCalculatorError('The three points do not define a valid plane.');
+        return;
+      }
+
+      try {
+        const result = StrikeDipCalculator.calculateStrikeDip(points[0], points[1], points[2]);
+        errorSection.style.display = 'none';
+        resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
+        resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
+        resultSection.querySelector('#normal-vector-result').textContent =
+          `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
+
+        // Show results section
+        resultSection.style.display = 'block';
+
+      } catch (error) {
+        showCalculatorError(`Calculation error: ${error.message}`);
+      }
+    };
+
+    clearBtn.onclick = () => {
+      points.fill(null);
+      coordInputs.forEach((input) => {
+        input.value = '';
+      });
+      resultSection.style.display = 'none';
+      errorSection.style.display = 'none';
+    };
+
+    coordInputs.forEach((input) => {
+      input.oninput = () => {
+        const pointIndex = parseInt(input.dataset.point);
+        const coord = input.dataset.coord;
+        const value = parseFloat(input.value) || 0;
+
+        if (!points[pointIndex]) {
+          points[pointIndex] = new Vector(0, 0, 0);
+        }
+
+        points[pointIndex][coord] = value;
+      };
+    });
 
     this.locatePanel.appendChild(container);
     this.locatePanel.style.display = 'block';

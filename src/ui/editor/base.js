@@ -145,7 +145,7 @@ class Editor extends BaseEditor {
     panel.addEventListener('keydown', (e) => {
       if (e.keyCode === 9) {
         e.stopPropagation(); // when a user clicks or tabs out of a cell the edit is cancelled and and the user is navigated to the next row
-        this.dispatch('cell-value-changed', this);
+        this.table.dispatch('cell-value-changed', this);
       }
       if (e.key === 'Escape') {
         if (extraValidators(attributes) === true) {

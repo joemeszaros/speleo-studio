@@ -771,7 +771,7 @@ body {
   display: none;
 }
 
-#interactive {
+#tool-panel {
   text-align: left;
   font-size: 12px;
   position: absolute;
@@ -785,17 +785,17 @@ body {
   left: 650px;
 }
 
-#interactive button {
+#tool-panel button {
   margin-top: 20px;
   text-align: center;
 }
 
-#interactive div {
+#tool-panel div {
   margin-bottom: 5px;
   text-align: center;
 }
 
-#interactive select {
+#tool-panel select {
   background: #333;
   color: azure;
   border-top-width: 0px;
@@ -804,6 +804,12 @@ body {
   border-bottom-width: 2px;
   width: 160px;
   margin-left: 10px;
+}
+
+#tool-panel input.coord-input {
+  width: 60px;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 .footer {
@@ -1046,7 +1052,6 @@ body {
   border-right-width: 0px;
   border-left-width: 0px;
   display: inline-block;
-  float: right;
 }
 
 .editor input[type='text'] {

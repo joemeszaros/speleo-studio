@@ -313,8 +313,8 @@ class Cave {
     return {
       id                  : this.id,
       name                : this.name,
-      metaData            : this.metaData.toExport(),
-      geoData             : this.geoData.toExport(),
+      metaData            : this?.metaData?.toExport(),
+      geoData             : this?.geoData?.toExport(),
       aliases             : this.aliases.map((a) => a.toExport()),
       sectionAttributes   : this.sectionAttributes.map((sa) => sa.toExport()),
       componentAttributes : this.componentAttributes.map((ca) => ca.toExport()),

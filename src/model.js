@@ -31,6 +31,24 @@ class Vector {
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
 
+  dot(v) {
+    return this.x * v.x + this.y * v.y + this.z * v.z;
+  }
+
+  cross(v) {
+    return new Vector(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
+  }
+
+  magnitude() {
+    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+  }
+
+  normalize() {
+    const mag = this.magnitude();
+    if (mag === 0) return new Vector(0, 0, 0);
+    return new Vector(this.x / mag, this.y / mag, this.z / mag);
+  }
+
   toExport() {
     return {
       x : this.x,

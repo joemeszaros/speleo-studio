@@ -23,7 +23,7 @@ class SurveyHelper {
     startName = es.start !== undefined ? es.start : es.shots[0].from;
 
     if (index === 0) {
-      startEov = geoData?.coordinates.find((c) => c.name === startName)?.coordinate;
+      startEov = geoData?.coordinates?.find((c) => c.name === startName)?.coordinate;
 
       if (startEov !== undefined) {
         startPosition = startEov.toVector();

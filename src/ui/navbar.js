@@ -31,6 +31,10 @@ class NavigationBar {
     }
   }
 
+  showDipStrikeCalculator() {
+    this.interactive.showDipStrikeCalculatorPanel();
+  }
+
   #getMenus() {
     return [
       {
@@ -144,6 +148,17 @@ class NavigationBar {
           {
             name  : 'Enter / exit fullscreen',
             click : () => this.#toggleFullscreen()
+          }
+        ]
+      },
+      {
+        name     : 'Tools',
+        elements : [
+          {
+            name  : 'Dip & Strike Calculator',
+            click : () => {
+              this.showDipStrikeCalculator();
+            }
           }
         ]
       },

@@ -217,7 +217,7 @@ function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, sto
     let newLeft = elmnt.offsetLeft - pos1;
 
     // Clamp to viewport
-    const minTop = 0;
+    const minTop = 48;
     const minLeft = 0;
     const maxTop = window.innerHeight - elmnt.offsetHeight;
     const maxLeft = window.innerWidth - elmnt.offsetWidth;

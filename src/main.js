@@ -30,17 +30,19 @@ class Main {
     const observer = new ObjectObserver();
     const options = observer.watchObject(loadedOptions);
 
+    const attributeDefs = new AttributesDefinitions(attributeDefintions);
+
     // Initialize database and project systems
     this.databaseManager = new DatabaseManager();
-    this.caveSystem = new CaveSystem(this.databaseManager);
+    this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
     this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
     this.editorStateSystem = new EditorStateSystem(this.databaseManager);
 
     // Initialize the application
-    this.#initializeApp(db, options, observer);
+    this.#initializeApp(db, options, observer, attributeDefs);
   }
 
-  async #initializeApp(db, options, observer) {
+  async #initializeApp(db, options, observer, attributeDefs) {
     try {
       await this.databaseManager.init();
     } catch (error) {
@@ -49,7 +51,7 @@ class Main {
     }
 
     const materials = new Materials(options).materials;
-    const attributeDefs = new AttributesDefinitions(attributeDefintions);
+
     const sceneOverview = new SceneOverview(document.querySelector('#overview'));
     const scene = new MyScene(
       options,
@@ -87,7 +89,7 @@ class Main {
       scene.domElement,
       document.getElementById('station-context-menu'),
       document.getElementById('infopanel'),
-      document.getElementById('interactive'),
+      document.getElementById('tool-panel'),
       ['fixed-size-editor', 'resizable-editor']
     );
 
@@ -114,6 +116,9 @@ class Main {
     const urlParams = new URLSearchParams(window.location.search);
     this.#loadProjectFromUrl(urlParams)
       .then((project) => this.#loadCaveFromUrl(urlParams, project))
+      .then(() => {
+        this.projectPanel.hide();
+      })
       .catch((error) => {
         console.error('Failed to load project or cave from URL:', error);
         showErrorPanel(`Failed to load project or cave from URL: ${error.message}`);
@@ -236,7 +241,12 @@ class Main {
 
       if (importer !== undefined) {
         fetch(caveNameUrl)
-          .then((data) => data.blob())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Failed to download file: ${response.statusText} (HTTP ${response.status})`);
+            }
+            return response.blob();
+          })
           .then((res) => {
             importer.importFile(res, caveNameUrl, async (cave) => {
               if (cavesNamesInProject.includes(cave.name)) {

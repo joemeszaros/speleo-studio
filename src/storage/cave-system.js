@@ -8,9 +8,10 @@ export class CaveNotFoundError extends Error {
 }
 
 export class CaveSystem {
-  constructor(databaseManager) {
+  constructor(databaseManager, attributeDefs) {
     this.storeName = 'caves';
     this.dbManager = databaseManager;
+    this.attributeDefs = attributeDefs;
   }
 
   async saveCave(cave, projectId) {
@@ -18,7 +19,7 @@ export class CaveSystem {
       const caveData = {
         ...cave.toExport(),
         projectId : projectId,
-        createdAt : cave.createdAt || new Date().toISOString(),
+        createdAt : cave?.createdAt ?? new Date().toISOString(),
         updatedAt : new Date().toISOString()
       };
 
@@ -44,7 +45,7 @@ export class CaveSystem {
   async #loadCave(request, resolve, reject, caveId) {
     request.onsuccess = () => {
       if (request.result) {
-        const cave = Cave.fromPure(request.result);
+        const cave = Cave.fromPure(request.result, this.attributeDefs);
         cave.createdAt = request.result.createdAt;
         cave.updatedAt = request.result.updatedAt;
         resolve(cave);
@@ -79,7 +80,7 @@ export class CaveSystem {
 
       request.onsuccess = () => {
         const caves = request.result.map((data) => {
-          const cave = Cave.fromPure(data);
+          const cave = Cave.fromPure(data, this.attributeDefs);
           cave.createdAt = data.createdAt;
           cave.updatedAt = data.updatedAt;
           return cave;

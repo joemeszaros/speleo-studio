@@ -1,4 +1,5 @@
 import { degreesToRads, radsToDegrees } from './utils.js';
+import { Vector } from '../model.js';
 
 class MeridianConvergence {
 
@@ -193,4 +194,78 @@ class EOVToWGS84Transformer {
   }
 }
 
-export { Declination, EOVToWGS84Transformer, MeridianConvergence };
+/**
+ * Calculates strike and dip of a plane from 3 3D coordinates.
+ * This is commonly used in structural geology and 3D modeling.
+ *
+ * Strike: The direction of the horizontal line in the plane (0-360° from North)
+ * Dip: The angle between the plane and horizontal (0-90°)
+ *
+ * @param {Vector} point1 - Vector object representing first point
+ * @param {Vector} point2 - Vector object representing second point
+ * @param {Vector} point3 - Vector object representing third point
+ * @returns {Object} Object containing strike and dip in degrees
+ */
+class StrikeDipCalculator {
+
+  /**
+   * Calculate strike and dip from 3 3D points
+   * @param {Vector} point1 - Vector object
+   * @param {Vector} point2 - Vector object
+   * @param {Vector} point3 - Vector object
+   * @returns {Object} {strike: number, dip: number, normal: Vector} in degrees
+   */
+  static calculateStrikeDip(point1, point2, point3) {
+    // Calculate two vectors in the plane using Vector operations
+    const v1 = point2.sub(point1);
+    const v2 = point3.sub(point1);
+
+    // Calculate normal vector using cross product
+    const normal = v1.cross(v2);
+
+    // Normalize the normal vector
+    const normalizedNormal = normal.normalize();
+
+    // Calculate strike (direction of horizontal line in plane)
+    // Strike is perpendicular to the normal vector's horizontal projection
+    const strike = Math.atan2(-normalizedNormal.y, normalizedNormal.x);
+
+    // Convert to degrees and adjust to geological convention (0-360° from North)
+    let strikeDegrees = radsToDegrees(strike);
+    if (strikeDegrees < 0) {
+      strikeDegrees += 360;
+    }
+
+    // Calculate dip (angle between plane and horizontal)
+    // Dip is the angle between the normal vector and vertical
+    const dip = Math.acos(Math.abs(normalizedNormal.z));
+    const dipDegrees = radsToDegrees(dip);
+
+    return {
+      strike : strikeDegrees,
+      dip    : dipDegrees,
+      normal : normalizedNormal
+    };
+  }
+
+  /**
+   * Validate that three points define a valid plane
+   * @param {Vector} point1 - Vector object
+   * @param {Vector} point2 - Vector object
+   * @param {Vector} point3 - Vector object
+   * @returns {boolean} True if points define a valid plane
+   */
+  static isValidPlane(point1, point2, point3) {
+    // Check if points are collinear (would result in zero normal vector)
+    const v1 = point2.sub(point1);
+    const v2 = point3.sub(point1);
+    const normal = v1.cross(v2);
+
+    const magnitude = normal.magnitude();
+
+    // If magnitude is very small, points are collinear or coincident
+    return magnitude > 1e-10;
+  }
+}
+
+export { Declination, EOVToWGS84Transformer, MeridianConvergence, StrikeDipCalculator };

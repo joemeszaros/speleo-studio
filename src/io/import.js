@@ -38,7 +38,7 @@ class CaveImporter {
       const errorMessage = `Import of ${nameToUse.substring(nameToUse.lastIndexOf('/') + 1)} failed`;
       reader.onload = (event) => {
         try {
-          this.importText(event.target.result, onCaveLoad);
+          this.importText(event.target.result, onCaveLoad, nameToUse);
         } catch (e) {
           console.error(errorMessage, e);
           showErrorPanel(`${errorMessage}: ${e.message}`, 0);
@@ -304,16 +304,12 @@ class TopodroidImporter extends CaveImporter {
     return new Cave(fileName, undefined, undefined, stations, [survey], aliases);
   }
 
-  importFile(file, onCaveLoad) {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => this.importText(file, event.target.result, onCaveLoad);
-      reader.readAsText(file);
-    }
+  importFile(file, name, onCaveLoad) {
+    super.importFile(file, name, onCaveLoad);
   }
 
-  importText(file, csvTextData, onCaveLoad) {
-    const cave = this.getCave(file.name, csvTextData);
+  importText(csvTextData, onCaveLoad, name) {
+    const cave = this.getCave(name, csvTextData);
     onCaveLoad(cave);
   }
 }
