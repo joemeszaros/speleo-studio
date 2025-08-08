@@ -82,6 +82,7 @@
 .mytooltip {
   position: relative;
   display: inline-block;
+  z-index: 200;
 }
 
 .mytooltip .mytooltiptext {
@@ -98,6 +99,20 @@
   top: 120%;
   left: 50%;
   margin-left: -70px;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  /* Ensure tooltip is always on top */
+  transform: translateZ(0);
+  will-change: opacity, visibility;
+}
+
+/* Alternative positioning for problematic containers */
+.mytooltip .mytooltiptext.fixed {
+  position: fixed;
+  z-index: 99999;
 }
 
 .mytooltip .mytooltiptext::after {
@@ -113,6 +128,13 @@
 
 .mytooltip:hover .mytooltiptext {
   visibility: visible;
+  opacity: 1;
+}
+
+/* Force tooltip visibility for debugging */
+.mytooltip .mytooltiptext.show {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Hide tooltip when dropdown is visible */
