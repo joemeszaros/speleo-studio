@@ -21,15 +21,13 @@ export class Controls {
     const gui = new GUI({ title: 'Control panel', container: this.element });
 
     const centerLineParam = {
-      'show center lines'    : s.centerLines.segments.show,
-      'line color'           : s.centerLines.segments.color,
-      'gradient start color' : s.caveLines.color.start,
-      'gradient end color'   : s.caveLines.color.end,
-      width                  : s.centerLines.segments.width,
-      opacity                : s.centerLines.segments.opacity,
-      'show station'         : s.centerLines.spheres.show,
-      'station color'        : s.centerLines.spheres.color,
-      'station size'         : s.centerLines.spheres.radius
+      'show center lines' : s.centerLines.segments.show,
+      'line color'        : s.centerLines.segments.color,
+      width               : s.centerLines.segments.width,
+      opacity             : s.centerLines.segments.opacity,
+      'show station'      : s.centerLines.spheres.show,
+      'station color'     : s.centerLines.spheres.color,
+      'station size'      : s.centerLines.spheres.radius
     };
 
     const splayParam = {
@@ -66,6 +64,53 @@ export class Controls {
       DPI : this.options.screen.DPI
     };
 
+    // Multi-color gradient controls
+    const gradientFolder = gui.addFolder('Color gradient');
+
+    // Add gradient color controls
+    const addGradientColor = () => {
+      const maxDepth = Math.max(...s.caveLines.color.gradientColors.map((gc) => gc.depth));
+      const newColor = { depth: Math.min(maxDepth + 25, 100), color: '#ffffff' };
+      s.caveLines.color.gradientColors = [...s.caveLines.color.gradientColors, newColor]; // trigger a change event
+      this.reload();
+    };
+
+    const removeGradientColor = (index) => {
+      if (s.caveLines.color.gradientColors.length > 2) {
+        s.caveLines.color.gradientColors.splice(index, 1);
+        s.caveLines.color.gradientColors = [...s.caveLines.color.gradientColors]; // trigger a change event
+        this.reload();
+      }
+    };
+
+    gradientFolder.add({ 'Add Color Stop': addGradientColor }, 'Add Color Stop');
+
+    // Create controls for each gradient color
+    s.caveLines.color.gradientColors.forEach((gradientColor, index) => {
+      const colorFolder = gradientFolder.addFolder(`Color Stop ${index + 1}`);
+
+      colorFolder
+        .add(gradientColor, 'depth', 0, 100)
+        .step(1)
+        .name('Relative Depth')
+        .onFinishChange(() => {
+          // Sort gradient colors by depth
+          s.caveLines.color.gradientColors.sort((a, b) => a.depth - b.depth);
+          // Trigger scene update by changing the gradientColors array
+          s.caveLines.color.gradientColors = [...s.caveLines.color.gradientColors];
+          this.reload();
+        });
+
+      colorFolder.addColor(gradientColor, 'color').onFinishChange(() => {
+        // Trigger scene update by changing the gradientColors array
+        s.caveLines.color.gradientColors = [...s.caveLines.color.gradientColors];
+      });
+
+      if (s.caveLines.color.gradientColors.length > 2) {
+        colorFolder.add({ Remove: () => removeGradientColor(index) }, 'Remove');
+      }
+    });
+
     const centerLineFolder = gui.addFolder('Center lines');
 
     centerLineFolder.add(centerLineParam, 'show center lines').onFinishChange(function (val) {
@@ -74,14 +119,6 @@ export class Controls {
 
     centerLineFolder.addColor(centerLineParam, 'line color').onChange(function (val) {
       s.centerLines.segments.color = val;
-    });
-
-    centerLineFolder.addColor(centerLineParam, 'gradient start color').onChange(function (val) {
-      s.caveLines.color.start = val;
-    });
-
-    centerLineFolder.addColor(centerLineParam, 'gradient end color').onChange(function (val) {
-      s.caveLines.color.end = val;
     });
 
     centerLineFolder

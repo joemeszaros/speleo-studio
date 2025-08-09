@@ -64,9 +64,13 @@ export const DEFAULT_OPTIONS = {
     },
     caveLines : {
       color : {
-        start : '#00ff2a',
-        end   : '#0000ff',
-        mode  : 'gradientByZ'
+        mode           : 'gradientByZ',
+        gradientColors : [
+          { depth: 0, color: '#e1ff00' }, // 0 = highest point
+          { depth: 30, color: '#c20534' },
+          { depth: 40, color: '#2de51f' },
+          { depth: 70, color: '#1c38a6' } // 100 = deepest point
+        ]
       }
     },
     sectionAttributes : {
@@ -439,7 +443,7 @@ export class ConfigManager {
 
     for (const [key, value] of Object.entries(target)) {
       if (value && typeof value === 'object' && !Array.isArray(value)) {
-        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        if (!source[key] || (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key]))) {
           this.deepMerge(source[key], value);
         } else {
           source[key] = value;
@@ -457,11 +461,10 @@ export class ConfigManager {
  * Centralizes all the onChange logic from GUI controls
  */
 export class ConfigChanges {
-  constructor(watchedConfig, scene, materials, options) {
+  constructor(watchedConfig, scene, materials) {
     this.watchedConfig = watchedConfig;
     this.scene = scene;
     this.materials = materials;
-    this.options = options;
   }
 
   /**
@@ -624,6 +627,12 @@ export class ConfigChanges {
     switch (path) {
       case 'scene.caveLines.color.mode':
         this.scene.changeCenterLineColorMode(newValue);
+        break;
+      case 'scene.caveLines.color.gradientColors':
+        if (this.watchedConfig.scene.caveLines.color.mode === 'gradientByZ') {
+          // Update the scene with new gradient colors
+          this.scene.changeCenterLineColorMode('gradientByZ');
+        }
         break;
     }
   }

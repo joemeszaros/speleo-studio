@@ -313,32 +313,35 @@ class SurveyHelper {
       c.surveys.forEach((s) => {
         sm.set(
           s.name,
-          SurveyHelper.getColorGradientsByDepth(s, c.stations, diffZ, maxZ, clOptions.color.start, clOptions.color.end)
+          SurveyHelper.getColorGradientsByDepthMultiColor(s, c.stations, diffZ, maxZ, clOptions.color.gradientColors)
         );
+
       });
 
     });
     return colorGradients;
   }
 
-  static getColorGradientsByDepth(survey, stations, diffZ, maxZ, startColorHex, endColorHex) {
+  static getColorGradientsByDepthMultiColor(survey, stations, diffZ, maxZ, gradientColors) {
     const centerColors = [];
     const splayColors = [];
     const auxiliaryColors = [];
 
-    const startColor = new Color(startColorHex);
-    const endColor = new Color(endColorHex);
+    // Sort gradient colors by depth
+    const sortedColors = [...gradientColors].sort((a, b) => a.depth - b.depth);
 
-    const colorDiff = endColor.sub(startColor);
     survey.validShots.forEach((sh) => {
       const fromStation = stations.get(survey.getFromStationName(sh));
       const toStation = stations.get(survey.getToStationName(sh));
 
       if (fromStation !== undefined && toStation !== undefined) {
-        const fromD = maxZ - fromStation.position.z;
-        const toD = maxZ - toStation.position.z;
-        const fc = startColor.add(colorDiff.mul(fromD / diffZ));
-        const tc = startColor.add(colorDiff.mul(toD / diffZ));
+        // Convert absolute Z coordinates to relative depth (0-100)
+        const fromRelativeDepth = diffZ === 0 ? 0 : ((maxZ - fromStation.position.z) / diffZ) * 100;
+        const toRelativeDepth = diffZ === 0 ? 0 : ((maxZ - toStation.position.z) / diffZ) * 100;
+
+        const fc = SurveyHelper.interpolateColorByDepth(fromRelativeDepth, sortedColors);
+        const tc = SurveyHelper.interpolateColorByDepth(toRelativeDepth, sortedColors);
+
         if (sh.type === ShotType.CENTER) {
           centerColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
         } else if (sh.type === ShotType.SPLAY) {
@@ -349,6 +352,42 @@ class SurveyHelper {
       }
     });
     return { center: centerColors, splays: splayColors, auxiliary: auxiliaryColors };
+  }
+
+  // gradient colors must be sorted by depth
+  static interpolateColorByDepth(relativeDepth, sortedColors) {
+    if (sortedColors.length < 2) {
+      throw new Error('At least 2 gradient colors are required');
+    }
+    // Find the two colors to interpolate between
+    let lowerColor = sortedColors[0];
+    let upperColor = sortedColors[sortedColors.length - 1];
+
+    for (let i = 0; i < sortedColors.length - 1; i++) {
+      if (relativeDepth >= sortedColors[i].depth && relativeDepth <= sortedColors[i + 1].depth) {
+        lowerColor = sortedColors[i];
+        upperColor = sortedColors[i + 1];
+        break;
+      }
+    }
+
+    // If depth is outside the range, clamp to the nearest color
+    if (relativeDepth < lowerColor.depth) {
+      return new Color(lowerColor.color);
+    }
+    if (relativeDepth > upperColor.depth) {
+      return new Color(upperColor.color);
+    }
+
+    // Interpolate between the two colors
+    const range = upperColor.depth - lowerColor.depth;
+    const factor = range === 0 ? 0 : (relativeDepth - lowerColor.depth) / range;
+
+    const startColor = new Color(lowerColor.color);
+    const endColor = new Color(upperColor.color);
+    const colorDiff = endColor.sub(startColor);
+
+    return startColor.add(colorDiff.mul(factor));
   }
 }
 

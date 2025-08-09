@@ -159,12 +159,16 @@ class Exporter {
         lines.push('Survey data');
         lines.push('From	To	Length	Azimuth	Vertical	Label	Left	Right	Up	Down	Note');
 
-        survey.shots.forEach((shot) => {
-          lines.push(
-            [shot.from, shot.to, shot.length, shot.azimuth, shot.clino, '', '0', '0', '0', '0', shot.comment].join('\t')
-          );
+        survey.shots
+          .filter((sh) => sh.isCenter()) // do not save splays and auxiliary shots
+          .forEach((shot) => {
+            lines.push(
+              [shot.from, shot.to, shot.length, shot.azimuth, shot.clino, '', '0', '0', '0', '0', shot.comment].join(
+                '\t'
+              )
+            );
 
-        });
+          });
         lines.push('');
       });
     });
