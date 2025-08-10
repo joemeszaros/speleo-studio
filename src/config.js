@@ -633,6 +633,10 @@ export class ConfigChanges {
           // Update the scene with new gradient colors
           this.scene.changeCenterLineColorMode(this.watchedConfig.scene.caveLines.color.mode);
         }
+
+        if (this.scene.views.profile) {
+          this.scene.views.profile.updateVerticalRuler();
+        }
         break;
     }
   }

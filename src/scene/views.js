@@ -8,6 +8,7 @@ import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
+import { formatDistance } from '../utils/utils.js';
 
 class View {
 
@@ -58,7 +59,7 @@ class View {
     const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
     const sprite = new THREE.Sprite(material);
     sprite.center.set(0.5, 0.5);
-    sprite.scale.set(width, (width / 755) * 36, 1);
+    sprite.scale.set(width, (width / 755) * 36, 1); // 755 is the width of the image, 36 is the height of the image
     sprite.position.set(0, -this.scene.height / 2 + 20, 1); // bottom right
     sprite.width = width; // custom property
     return sprite;
@@ -97,9 +98,7 @@ class View {
     const indicatorWidthInMeters = worldWidthInMeters / (this.scene.width / this.ratioIndicator.width);
     const screenInCentimeters = window.screen.width / cmInPixels;
     this.ratio = Math.floor((worldWidthInMeters * 100) / screenInCentimeters);
-    const indicatorWidthFormatted =
-      indicatorWidthInMeters <= 15 ? indicatorWidthInMeters.toFixed(1) : Math.ceil(indicatorWidthInMeters);
-    const ratioText = `${indicatorWidthFormatted} m - M 1:${this.ratio}`;
+    const ratioText = `${formatDistance(indicatorWidthInMeters)} - M 1:${this.ratio}`;
     this.ratioText.update(`${ratioText}`);
   }
 
@@ -298,6 +297,7 @@ class View {
       this.frustumFrame.visible = true;
       this.ratioIndicator.visible = true;
       this.ratioText.sprite.visible = true;
+
     }
 
     this.renderView();
@@ -497,7 +497,7 @@ class PlanView extends View {
 
 class ProfileView extends View {
 
-  constructor(scene, domElement) {
+  constructor(scene, domElement, verticalRatioIndicatorHeight = 300) {
     super('profileView', View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
@@ -506,13 +506,32 @@ class ProfileView extends View {
 
     this.control = new SimpleOrbitControl(this.camera, domElement, COORDINATE_INDEX.Y);
 
+    // Add vertical ruler
+    this.verticalRatioIndicatorHeight = verticalRatioIndicatorHeight;
+    this.verticalRuler = this.#createVerticalRuler();
+    this.verticalRuler.visible = false;
+    scene.sprites3DGroup.add(this.verticalRuler);
+
+    // Add vertical ratio text
+    this.verticalRatioText = this.#createVerticalRatioText();
+    this.verticalRatioText.sprite.visible = false;
+    const verticalRatioTextSprite = this.verticalRatioText.getSprite();
+    scene.sprites3DGroup.add(verticalRatioTextSprite);
+
     this.initiated = false;
     this.enabled = false;
+
     this.addListener('orbitChange', (e) => this.#handleControlChange(e));
     this.addListener('pointermove', (e) => this.control.onMove(e));
     this.addListener('pointerdown', (e) => this.control.onDown(e));
     this.addListener('pointerup', () => this.control.onUp());
     this.addListener('wheel', (e) => this.control.onWheel(e));
+  }
+
+  onResize(width, height) {
+    this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
+    this.verticalRatioText.getSprite().position.set(this.scene.width / 2 - 80, 0, 1);
+    super.onResize(width, height);
   }
 
   #handleControlChange(e) {
@@ -540,10 +559,131 @@ class ProfileView extends View {
     this.renderView();
   }
 
+  onZoomLevelChange(level) {
+    super.onZoomLevelChange(level);
+    const worldHeightInMeters = this.camera.height / level;
+    const verticalIndicatorHeightInMeters =
+      worldHeightInMeters / (this.scene.height / this.verticalRatioIndicatorHeight);
+    this.verticalRatioText.update(`${formatDistance(verticalIndicatorHeightInMeters)}`);
+
+  }
+
   getCameraRelativePosition(target) {
     return new THREE.Vector3(target.x, target.y - 1, target.z);
   }
 
+  #createVerticalRuler() {
+    // Create a canvas to draw the vertical gradient ruler
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const width = 15;
+    const height = this.verticalRatioIndicatorHeight;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // Get gradient colors from config
+    const gradientColors = this.scene.options.scene.caveLines.color.gradientColors;
+
+    // Create vertical gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+
+    // Sort colors by depth and add to gradient
+    const sortedColors = [...gradientColors].sort((a, b) => a.depth - b.depth);
+    sortedColors.forEach((colorData, index) => {
+      const stop = index / (sortedColors.length - 1);
+      gradient.addColorStop(stop, colorData.color);
+    });
+
+    // Fill with gradient
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Add tick marks and labels
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'left';
+
+    // Add tick marks every 50px
+    for (let i = 0; i <= height; i += 50) {
+      const y = height - i; // Invert Y so 0 is at bottom
+      ctx.fillRect(0, y, width, 1);
+
+      // Add depth label
+      const depth = Math.round((i / height) * 100);
+      ctx.fillText(`${depth}m`, width + 2, y + 3);
+    }
+
+    // Create texture from canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    // Create sprite material and sprite
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const sprite = new THREE.Sprite(material);
+
+    // Initial position will be set in onResize
+    sprite.position.set(this.scene.width / 2 - 30, 0, 1);
+    sprite.scale.set(width, height, 1);
+
+    return sprite;
+
+  }
+
+  #createVerticalRatioText() {
+    // Create vertical ratio text similar to horizontal ratio text
+    const position = new THREE.Vector3(this.scene.width / 2 - 80, 0, 1);
+    return new TextSprite('0', position, { size: 35, family: 'Helvetica Neue', strokeColor: 'black' }, 0.5);
+  }
+
+  updateVerticalRuler() {
+    // Recreate the vertical ruler with updated gradient colors
+    if (this.verticalRuler) {
+      // Remove old ruler
+      this.scene.sprites3DGroup.remove(this.verticalRuler);
+      //this.verticalRuler.dispose();
+
+      // Create new ruler
+      this.verticalRuler = this.#createVerticalRuler();
+      this.verticalRuler.visible = this.enabled;
+      this.scene.sprites3DGroup.add(this.verticalRuler);
+      this.renderView();
+
+      // // Update position
+      // if (this.scene.width && this.scene.height) {
+      //   this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
+      // }
+    }
+
+    // // Also recreate vertical ratio text if needed
+    // if (this.verticalRatioText) {
+    //   this.scene.sprites3DGroup.remove(this.verticalRatioText.sprite);
+    //   this.verticalRatioText.sprite.dispose();
+
+    //   // Create new vertical ratio text
+    //   this.verticalRatioText = this.#createVerticalRatioText();
+    //   this.verticalRatioText.sprite.visible = this.enabled;
+    //   const verticalRatioTextSprite = this.verticalRatioText.getSprite();
+    //   this.scene.sprites3DGroup.add(verticalRatioTextSprite);
+
+    //   // Update position
+    //   if (this.scene.width && this.scene.height) {
+    //     this.verticalRatioText.getSprite().position.set(this.scene.width / 2 - 5, 0, 1);
+    //   }
+    // }
+  }
+
+  activate() {
+    super.activate();
+    this.verticalRuler.visible = true;
+    this.verticalRatioText.sprite.visible = true;
+  }
+
+  deactivate() {
+    super.deactivate();
+    this.verticalRuler.visible = false;
+    this.verticalRatioText.sprite.visible = false;
+  }
 }
 
 export { SpatialView, PlanView, ProfileView };

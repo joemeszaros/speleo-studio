@@ -110,9 +110,10 @@ function formatDistance(distanceInMeters, decimals = 2) {
   if (distanceInMeters >= 1000) {
     const distanceInKm = distanceInMeters / 1000.0;
     return `${distanceInKm.toFixed(decimals)} km`;
-
+  } else if (distanceInMeters < 15) {
+    return `${distanceInMeters.toFixed(1)} m`;
   } else {
-    return `${distanceInMeters.toFixed(decimals)} m`;
+    return `${Math.round(distanceInMeters)} m`;
 
   }
 }
