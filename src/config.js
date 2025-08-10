@@ -629,9 +629,9 @@ export class ConfigChanges {
         this.scene.changeCenterLineColorMode(newValue);
         break;
       case 'scene.caveLines.color.gradientColors':
-        if (this.watchedConfig.scene.caveLines.color.mode === 'gradientByZ') {
+        if (['gradientByZ', 'gradientByDistance'].includes(this.watchedConfig.scene.caveLines.color.mode)) {
           // Update the scene with new gradient colors
-          this.scene.changeCenterLineColorMode('gradientByZ');
+          this.scene.changeCenterLineColorMode(this.watchedConfig.scene.caveLines.color.mode);
         }
         break;
     }

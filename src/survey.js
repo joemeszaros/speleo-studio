@@ -234,12 +234,11 @@ class SurveyHelper {
     } else if (lOptions.color.mode === 'gradientByDistance') {
       return SurveyHelper.getColorGradientsByDistance(cave, lOptions);
     } else {
-      return new Map();
+      throw new Error(`Undefined color mode ${lOptions.color.mode}`);
     }
   }
 
   static getColorGradientsByDistance(cave, clOptions) {
-
     const g = new Graph();
     [...cave.stations.keys()].forEach((k) => g.addVertex(k));
     let startStationName;
@@ -260,10 +259,24 @@ class SurveyHelper {
 
     const traverse = g.traverse(startStationName);
     const maxDistance = Math.max(...Array.from(traverse.distances.values()));
-    const startColor = new Color(clOptions.color.start);
-    const endColor = new Color(clOptions.color.end);
-    const colorDiff = endColor.sub(startColor);
+
+    return SurveyHelper.getColorGradientsByDistanceMultiColor(
+      cave,
+      traverse,
+      maxDistance,
+      clOptions.color.gradientColors
+    );
+  }
+
+  static getColorGradientsByDistanceMultiColor(cave, traverse, maxDistance, gradientColors) {
     const result = new Map();
+
+    // Convert gradient colors to use distance instead of depth
+    const distanceGradientColors = gradientColors.map((gc) => ({
+      distance : gc.depth, // Map depth to distance for consistency
+      color    : gc.color
+    }));
+
     cave.surveys.forEach((s) => {
       const centerColors = [];
       const splayColors = [];
@@ -274,8 +287,13 @@ class SurveyHelper {
         const toDistance = traverse.distances.get(s.getToStationName(sh));
 
         if (fromDistance !== undefined && toDistance !== undefined) {
-          const fc = startColor.add(colorDiff.mul(fromDistance / maxDistance));
-          const tc = startColor.add(colorDiff.mul(toDistance / maxDistance));
+          // Convert absolute distances to relative values (0-100)
+          const fromRelativeValue = maxDistance === 0 ? 0 : (fromDistance / maxDistance) * 100;
+          const toRelativeValue = maxDistance === 0 ? 0 : (toDistance / maxDistance) * 100;
+
+          const fc = SurveyHelper.interpolateColorByValue(fromRelativeValue, distanceGradientColors, 'distance');
+          const tc = SurveyHelper.interpolateColorByValue(toRelativeValue, distanceGradientColors, 'distance');
+
           if (sh.type === ShotType.CENTER) {
             centerColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
           } else if (sh.type === ShotType.SPLAY) {
@@ -339,8 +357,8 @@ class SurveyHelper {
         const fromRelativeDepth = diffZ === 0 ? 0 : ((maxZ - fromStation.position.z) / diffZ) * 100;
         const toRelativeDepth = diffZ === 0 ? 0 : ((maxZ - toStation.position.z) / diffZ) * 100;
 
-        const fc = SurveyHelper.interpolateColorByDepth(fromRelativeDepth, sortedColors);
-        const tc = SurveyHelper.interpolateColorByDepth(toRelativeDepth, sortedColors);
+        const fc = SurveyHelper.interpolateColorByValue(fromRelativeDepth, sortedColors, 'depth');
+        const tc = SurveyHelper.interpolateColorByValue(toRelativeDepth, sortedColors, 'depth');
 
         if (sh.type === ShotType.CENTER) {
           centerColors.push(fc.r, fc.g, fc.b, tc.r, tc.g, tc.b);
@@ -354,34 +372,33 @@ class SurveyHelper {
     return { center: centerColors, splays: splayColors, auxiliary: auxiliaryColors };
   }
 
-  // gradient colors must be sorted by depth
-  static interpolateColorByDepth(relativeDepth, sortedColors) {
+  static interpolateColorByValue(value, sortedColors, valueKey = 'depth') {
     if (sortedColors.length < 2) {
       throw new Error('At least 2 gradient colors are required');
     }
-    // Find the two colors to interpolate between
+
     let lowerColor = sortedColors[0];
     let upperColor = sortedColors[sortedColors.length - 1];
 
     for (let i = 0; i < sortedColors.length - 1; i++) {
-      if (relativeDepth >= sortedColors[i].depth && relativeDepth <= sortedColors[i + 1].depth) {
+      if (value >= sortedColors[i][valueKey] && value <= sortedColors[i + 1][valueKey]) {
         lowerColor = sortedColors[i];
         upperColor = sortedColors[i + 1];
         break;
       }
     }
 
-    // If depth is outside the range, clamp to the nearest color
-    if (relativeDepth < lowerColor.depth) {
+    // If value is outside the range, clamp to the nearest color
+    if (value < lowerColor[valueKey]) {
       return new Color(lowerColor.color);
     }
-    if (relativeDepth > upperColor.depth) {
+    if (value > upperColor[valueKey]) {
       return new Color(upperColor.color);
     }
 
     // Interpolate between the two colors
-    const range = upperColor.depth - lowerColor.depth;
-    const factor = range === 0 ? 0 : (relativeDepth - lowerColor.depth) / range;
+    const range = upperColor[valueKey] - lowerColor[valueKey];
+    const factor = range === 0 ? 0 : (value - lowerColor[valueKey]) / range;
 
     const startColor = new Color(lowerColor.color);
     const endColor = new Color(upperColor.color);

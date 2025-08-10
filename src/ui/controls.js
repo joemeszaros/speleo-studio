@@ -92,7 +92,7 @@ export class Controls {
       colorFolder
         .add(gradientColor, 'depth', 0, 100)
         .step(1)
-        .name('Relative Depth')
+        .name('Relative depth')
         .onFinishChange(() => {
           // Sort gradient colors by depth
           s.caveLines.color.gradientColors.sort((a, b) => a.depth - b.depth);
