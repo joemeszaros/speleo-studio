@@ -22,7 +22,7 @@ import { SectionHelper } from '../section.js';
 /**
  * Base class for cave importerers
  */
-class CaveImporter {
+class Importer {
 
   constructor(db, options, scene, manager) {
     this.db = db;
@@ -31,14 +31,14 @@ class CaveImporter {
     this.manager = manager;
   }
 
-  importFile(file, name, onCaveLoad, endcoding = 'utf8') {
+  importFile(file, name, onLoadFn, endcoding = 'utf8') {
     if (file) {
       const reader = new FileReader();
       const nameToUse = name ?? file.name;
       const errorMessage = `Import of ${nameToUse.substring(nameToUse.lastIndexOf('/') + 1)} failed`;
       reader.onload = async (event) => {
         try {
-          await this.importText(event.target.result, onCaveLoad, nameToUse);
+          await this.importText(event.target.result, onLoadFn, nameToUse);
         } catch (e) {
           console.error(errorMessage, e);
           showErrorPanel(`${errorMessage}: ${e.message}`, 0);
@@ -53,7 +53,7 @@ class CaveImporter {
   }
 }
 
-class PolygonImporter extends CaveImporter {
+class PolygonImporter extends Importer {
 
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
@@ -254,35 +254,32 @@ class PolygonImporter extends CaveImporter {
   }
 }
 
-class TopodroidImporter extends CaveImporter {
+class TopodroidImporter extends Importer {
 
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
   }
 
-  #getShotsAndAliasesFromCsv(csvTextData) {
-    const aliases = [];
+  #getShotsAndName(csvTextData) {
     const shots = [];
-
     const lines = csvTextData.split(/\r\n|\n/);
+    let name;
 
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i] === null || lines[i] === undefined || lines[i].startsWith('#')) continue;
+      if (lines[i] === null || lines[i] === undefined) continue;
 
-      const row = lines[i].split(',');
-      if (row.length < 3) {
+      if (lines[i].startsWith('#') && lines[i].includes('name:')) {
+        const parts = lines[i].split('name:');
+        name = parts[1].trim();
         continue;
       }
-
-      if (row[0] === 'alias') {
-        aliases.push(new SurveyAlias(row[1], row[2]));
-      }
+      const row = lines[i].split(',');
 
       if (row.length != 8) {
         continue;
       }
-      const from = row[0];
-      const to = row[1];
+      const from = row[0].split('@')[0];
+      const to = row[1].split('@')[0];
       const distance = U.parseMyFloat(row[2]);
       const azimuth = U.parseMyFloat(row[3]);
       const clino = U.parseMyFloat(row[4]);
@@ -290,31 +287,27 @@ class TopodroidImporter extends CaveImporter {
       const toName = type === ShotType.SPLAY ? undefined : to;
       shots.push(new Shot(i, type, from, toName, distance, azimuth, clino));
     }
-    return [shots, aliases];
+    return [shots, name];
   }
 
-  getCave(fileName, csvTextData) {
-    const [shots, aliases] = this.#getShotsAndAliasesFromCsv(csvTextData);
-    const stations = new Map();
-    const surveyName = 'polygon';
+  getSurvey(csvTextData) {
+    const [shots, name] = this.#getShotsAndName(csvTextData);
     //TODO: add metadata
     const startStation = shots[0].from;
-    const survey = new Survey(surveyName, true, new SurveyMetadata(), startStation, shots);
-    SurveyHelper.calculateSurveyStations(survey, stations, aliases, startStation, new Vector(0, 0, 0));
-    return new Cave(fileName, undefined, undefined, stations, [survey], aliases);
+    return new Survey(name, true, new SurveyMetadata(), startStation, shots);
   }
 
-  importFile(file, name, onCaveLoad) {
-    super.importFile(file, name, onCaveLoad);
+  importFile(file, name, onSurveyLoad) {
+    super.importFile(file, name, onSurveyLoad);
   }
 
-  importText(csvTextData, onCaveLoad, name) {
-    const cave = this.getCave(name, csvTextData);
-    onCaveLoad(cave);
+  async importText(csvTextData, onSurveyLoad, name) {
+    const survey = this.getSurvey(csvTextData);
+    await onSurveyLoad(survey);
   }
 }
 
-class JsonImporter extends CaveImporter {
+class JsonImporter extends Importer {
   constructor(db, options, scene, manager, attributeDefs) {
     super(db, options, scene, manager);
     this.attributeDefs = attributeDefs;

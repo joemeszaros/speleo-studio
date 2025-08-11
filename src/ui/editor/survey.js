@@ -198,6 +198,12 @@ class SurveyEditor extends Editor {
       row.status = 'orphan';
       row.message = 'Row is orphan';
     });
+    survey.duplicateShotIds.forEach((id) => {
+      const row = rows[rows.findIndex((r) => r.id === id)];
+      row.status = 'duplicate';
+      row.message = 'Row is duplicate';
+    });
+
     const rowsToUpdate = this.getValidationUpdates(rows);
     rowsToUpdate.forEach((u) => (rows[rows.findIndex((r) => r.id === u.id)] = u));
 
@@ -856,14 +862,14 @@ class SurveySheetEditor extends BaseEditor {
     const declinationText = U.node`<p id="declination-official">Declination: unavailable</p>`;
     form.appendChild(declinationText);
 
-    const startOrFirstStation =
+    const startOrRandomStation =
       this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1];
     const declinationPrefix = 'Declination at the given date for this geo location (from NOAA):';
     if (this.survey?.metadata?.declinationReal === undefined) {
-      if (startOrFirstStation?.coordinates.wgs !== undefined) {
+      if (startOrRandomStation?.coordinates?.wgs !== undefined && this.survey?.metadata?.date !== undefined) {
         Declination.getDeclination(
-          startOrFirstStation.coordinates.wgs.lat,
-          startOrFirstStation.coordinates.wgs.lon,
+          startOrRandomStation.coordinates.wgs.lat,
+          startOrRandomStation.coordinates.wgs.lon,
           this.survey.metadata.date
         ).then((declination) => {
           this.survey.metadata.declinationReal = declination;

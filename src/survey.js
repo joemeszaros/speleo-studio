@@ -50,6 +50,7 @@ class SurveyHelper {
         const [lat, lon, h] = eovToWgs84Transformer.eovTOwgs84(startEov.y, startEov.x);
         wgsCoord = new WGS84Coordinate(lat, lon);
       }
+      // this is only set for the first survey
       stations.set(
         startStationName,
         new ST(ShotType.CENTER, startPosition, new StationCoordinates(new Vector(0, 0, 0), startEov, wgsCoord), survey)
@@ -68,6 +69,20 @@ class SurveyHelper {
     const convergence = survey?.metadata?.convergence ?? 0.0;
 
     var repeat = true;
+
+    const duplicateShotIds = new Set();
+
+    const tryAddStation = (name, st, sh) => {
+      if (stations.has(name)) {
+        // this should never happen
+        throw new Error(`Conflicting shot (${sh.from} -> ${sh.to})!`);
+      } else {
+        stations.set(name, st);
+        sh.processed = true;
+
+      }
+
+    };
 
     // the basics of this algorithm came from Topodroid cave surveying software by Marco Corvi
     while (repeat) {
@@ -113,12 +128,13 @@ class SurveyHelper {
             const fp = fromStation.position;
             const st = new Vector(fp.x, fp.y, fp.z).add(polarVector);
             const stationName = survey.getToStationName(sh);
-            stations.set(stationName, newStation(st, fromStation, polarVector));
+            tryAddStation(stationName, newStation(st, fromStation, polarVector), sh);
             repeat = true;
           } else {
-            //from = 1, to = 1, nothing to do here
+            //from = 1, to = 1
+            duplicateShotIds.add(sh.id);
           }
-          sh.processed = true;
+
         } else if (toStation !== undefined) {
           // it is not possible to create center and splay shots from an auxiliary station
           if (toStation.isAuxiliary() && (sh.isCenter() || sh.isSplay())) {
@@ -128,8 +144,7 @@ class SurveyHelper {
           // from = 0, to = 1
           const tp = toStation.position;
           const st = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-          stations.set(sh.from, newStation(st, toStation, polarVector.neg()));
-          sh.processed = true;
+          tryAddStation(sh.from, newStation(st, toStation, polarVector.neg()), sh);
           repeat = true;
         } else {
           //from = 0, to = 0, look for aliases
@@ -148,8 +163,7 @@ class SurveyHelper {
               const fp = from.position;
               const to = new Vector(fp.x, fp.y, fp.z).add(polarVector);
               const toStationName = survey.getToStationName(sh);
-              stations.set(toStationName, newStation(to, from, polarVector));
-              sh.processed = true;
+              tryAddStation(toStationName, newStation(to, from, polarVector), sh);
               repeat = true;
               sh.fromAlias = pairName;
             }
@@ -164,8 +178,7 @@ class SurveyHelper {
               }
               const tp = to.position;
               const from = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-              stations.set(sh.from, newStation(from, to, polarVector.neg()));
-              sh.processed = true;
+              tryAddStation(sh.from, newStation(from, to, polarVector.neg()), sh);
               repeat = true;
               sh.toAlias = pairName;
             }
@@ -179,6 +192,7 @@ class SurveyHelper {
     const processedCount = survey.shots.filter((sh) => sh.processed).length;
 
     survey.orphanShotIds = unprocessedShots;
+    survey.duplicateShotIds = duplicateShotIds;
     survey.isolated = processedCount === 0;
   }
 

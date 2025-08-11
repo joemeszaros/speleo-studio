@@ -25,6 +25,7 @@ class Main {
     }
 
     const db = new Database();
+    this.db = db;
     // Load saved configuration or use defaults
     const loadedOptions = ConfigManager.loadOrDefaults();
     const observer = new ObjectObserver();
@@ -135,41 +136,36 @@ class Main {
   }
 
   #setupEventListeners() {
-    this.#setupUnifiedFileInputListener();
+    this.#setupCaveFileInputListener();
+    this.#setupSurveyFileInputListener();
     this.#setupConfigFileInputListener();
     this.#setupKeyboardShortcuts();
   }
 
-  #setupUnifiedFileInputListener() {
-    const input = document.getElementById('caveInput');
+  #setupFileInputListener(config) {
+    const { inputId, handlers, validationMethod } = config;
+
+    const input = document.getElementById(inputId);
     input.addEventListener('change', async (e) => {
       for (const file of e.target.files) {
         try {
-          console.log('🚧 Importing unified file', file.name);
+          console.log(`🚧 Importing file ${file.name}`);
 
           // Determine the appropriate importer based on file extension
           let handler;
           const extension = file.name.toLowerCase().split('.').pop();
 
-          switch (extension) {
-            case 'csv':
-              handler = this.importers.topodroid;
-              break;
-            case 'cave':
-              handler = this.importers.polygon;
-              break;
-            case 'json':
-              handler = this.importers.json;
-              break;
-            default:
-              throw new Error(`Unsupported file type: ${extension}`);
+          handler = handlers.get(extension);
+
+          if (handler === undefined) {
+            throw new Error(`Unsupported file type: ${extension}`);
           }
 
           // Create a promise-based wrapper for the importFile callback
           await new Promise((resolve, reject) => {
-            handler.importFile(file, file.name, async (cave) => {
+            handler.importFile(file, file.name, async (importedData) => {
               try {
-                await this.#tryAddCave(cave);
+                await validationMethod(importedData);
                 resolve();
               } catch (error) {
                 reject(error);
@@ -184,6 +180,42 @@ class Main {
 
       input.value = '';
     });
+  }
+
+  #setupCaveFileInputListener() {
+    this.#setupFileInputListener({
+      inputId : 'caveInput',
+
+      handlers : new Map([
+        ['cave', this.importers.polygon],
+        ['json', this.importers.json]
+      ]),
+      validationMethod : async (data) => await this.#tryAddCave(data)
+    });
+  }
+
+  #setupSurveyFileInputListener() {
+    this.#setupFileInputListener({
+      inputId          : 'surveyInput',
+      handlers         : new Map([['csv', this.importers.topodroid]]),
+      validationMethod : async (data) => await this.#tryAddSurvey(data)
+    });
+  }
+
+  async #tryAddSurvey(survey) {
+
+    if (survey.name === undefined) {
+      showErrorPanel('Survey name is undefined, please set a name in the file');
+      return;
+    }
+
+    const caveName = document.getElementById('surveyInput').caveName; // custom property
+    if (this.db.getSurvey(caveName, survey.name) !== undefined) {
+      showErrorPanel(`Survey ${survey.name} already exists in cave ${caveName}`);
+      return;
+    }
+
+    await this.projectManager.addSurvey(caveName, survey);
   }
 
   async #tryAddCave(cave) {

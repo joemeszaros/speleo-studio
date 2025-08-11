@@ -86,6 +86,10 @@ class ProjectManager {
     //TODO : consider survey here and only recalculate following surveys
     // If eov coordinates are changed, the first survey is passed in the event
     const cave = e.detail.cave;
+    await this.reloadCave(cave);
+  }
+
+  async reloadCave(cave) {
     this.recalculateCave(cave);
     this.reloadOnScene(cave);
     this.scene.view.renderView();
@@ -281,6 +285,13 @@ class ProjectManager {
 
   }
 
+  async addSurvey(caveName, survey) {
+    const cave = this.db.getCave(caveName);
+    cave.surveys.push(survey);
+    this.explorer.addSurvey(cave, survey);
+    await this.reloadCave(cave);
+  }
+
   addCave(cave) {
     this.db.caves.set(cave.name, cave);
 
@@ -470,13 +481,22 @@ class ProjectExplorer {
 
     };
 
-    const addSurvey = U.node`<li class="menu-option">Add survey</li>`;
+    const addSurvey = U.node`<li class="menu-option">New survey</li>`;
     addSurvey.onclick = () => {
       this.#hidePreviousEditor();
       this.contextMenuElement.style.display = 'none';
       this.editor = new SurveySheetEditor(this.db, cave, undefined, document.getElementById('fixed-size-editor'));
       this.editor.setupPanel();
       this.editor.show();
+    };
+
+    const importSurvey = U.node`<li class="menu-option">Import survey</li>`;
+    importSurvey.onclick = () => {
+      this.#hidePreviousEditor();
+      this.contextMenuElement.style.display = 'none';
+      const surveyInput = document.getElementById('surveyInput');
+      surveyInput.caveName = cave.name;
+      surveyInput.click();
     };
 
     const cycles = U.node`<li class="menu-option">Cycles</li>`;
@@ -492,6 +512,7 @@ class ProjectExplorer {
     menu.appendChild(editSectionAttributes);
     menu.appendChild(editComponentAttributes);
     menu.appendChild(addSurvey);
+    menu.appendChild(importSurvey);
     menu.appendChild(cycles);
     this.contextMenuElement.innerHTML = '';
     this.contextMenuElement.appendChild(menu);
