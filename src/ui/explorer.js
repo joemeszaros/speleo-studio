@@ -324,9 +324,13 @@ class ProjectManager {
   getFarCaves(caves, eovCoordinate) {
     return Array.from(caves.values()).reduce((acc, c) => {
       const firstStation = c.getFirstStation();
-      const distanceBetweenCaves = firstStation.coordinates.eov.distanceTo(eovCoordinate);
-      if (distanceBetweenCaves > this.options.import.cavesMaxDistance) {
+      const distanceBetweenCaves = firstStation?.coordinates.eov?.distanceTo(eovCoordinate);
+      if (distanceBetweenCaves !== undefined && distanceBetweenCaves > this.options.import.cavesMaxDistance) {
         acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
+      }
+
+      if (eovCoordinate !== undefined && distanceBetweenCaves === undefined) {
+        acc.push(`${c.name} - Unknown distance, no EOV coordinates`);
       }
       return acc;
     }, []);

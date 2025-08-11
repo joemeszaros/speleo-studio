@@ -167,7 +167,14 @@ function showInfoPanel(message, seconds = 0) {
   showCautionPanel(message, seconds, 'info');
 }
 
-function makeMovable(panel, headerText, resizable = true, closeFn, doDragFn, stopDragFn) {
+function makeMovable(
+  panel,
+  headerText,
+  resizable = true,
+  closeFn = () => {},
+  doDragFn = () => {},
+  stopDragFn = () => {}
+) {
 
   //https://codepen.io/jkasun/pen/QrLjXP
 

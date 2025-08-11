@@ -771,6 +771,22 @@ body {
   display: none;
 }
 
+#export-panel {
+  width: 300px;
+  position: absolute;
+  top: 80px;
+  left: 300px;
+  text-align: center;
+  z-index: 100;
+  color: azure;
+  background: rgb(40, 40, 40);
+  display: none;
+}
+
+#export-panel .popup-content div {
+  padding: 10px;
+}
+
 #tool-panel {
   text-align: left;
   font-size: 12px;

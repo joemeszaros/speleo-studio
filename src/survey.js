@@ -234,7 +234,7 @@ class SurveyHelper {
     } else if (lOptions.color.mode === 'gradientByDistance') {
       return SurveyHelper.getColorGradientsByDistance(cave, lOptions);
     } else {
-      throw new Error(`Undefined color mode ${lOptions.color.mode}`);
+      return new Map();
     }
   }
 

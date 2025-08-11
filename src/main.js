@@ -100,7 +100,9 @@ class Main {
       scene,
       interaction,
       this.projectManager,
+      this.projectSystem,
       this.projectPanel,
+      document.getElementById('export-panel'),
       this.controls
     );
 
@@ -115,11 +117,12 @@ class Main {
 
     const urlParams = new URLSearchParams(window.location.search);
     this.#loadProjectFromUrl(urlParams)
-      .then((project) => this.#loadCaveFromUrl(urlParams, project))
-      .then(() => {
-        this.projectPanel.hide();
-      })
-      .catch((error) => {
+      .then((project) => {
+        if (project) {
+          this.projectPanel.hide();
+          this.#loadCaveFromUrl(urlParams, project);
+        }
+      }).catch((error) => {
         console.error('Failed to load project or cave from URL:', error);
         showErrorPanel(`Failed to load project or cave from URL: ${error.message}`);
       });
@@ -127,41 +130,55 @@ class Main {
   }
 
   #setupEventListeners() {
-    this.#setupFileInputListener('topodroidInput', this.importers.topodroid);
-    this.#setupFileInputListener('polygonInput', this.importers.polygon);
-    this.#setupFileInputListener('jsonInput', this.importers.json);
-    this.#setupFileInputListener('plyInput', this.importers.ply);
+    this.#setupUnifiedFileInputListener();
     this.#setupConfigFileInputListener();
     this.#setupKeyboardShortcuts();
   }
 
-  #setupFileInputListener(inputName, handler) {
-    const input = document.getElementById(inputName);
-    input
-      .addEventListener('change', (e) => {
-        for (const file of e.target.files) {
-          try {
-            console.log('🚧 Importing file', file.name);
-            handler.importFile(file, file.name, async (cave) => {
-              const currentProject = this.projectSystem.getCurrentProject();
-              const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(currentProject.id);
+  #setupUnifiedFileInputListener() {
+    const input = document.getElementById('caveInput');
+    input.addEventListener('change', (e) => {
+      for (const file of e.target.files) {
+        try {
+          console.log('🚧 Importing unified file', file.name);
 
-              if (!cavesNamesInProject.includes(cave.name)) {
-                await this.projectSystem.addCaveToProject(currentProject, cave);
-                this.projectManager.addCave(cave);
-              } else {
-                throw Error(`Cave ${cave.name} has already been imported`);
-              }
+          // Determine the appropriate importer based on file extension
+          let handler;
+          const extension = file.name.toLowerCase().split('.').pop();
 
-            });
-          } catch (error) {
-            showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);
-            console.error(error);
+          switch (extension) {
+            case 'csv':
+              handler = this.importers.topodroid;
+              break;
+            case 'cave':
+              handler = this.importers.polygon;
+              break;
+            case 'json':
+              handler = this.importers.json;
+              break;
+            default:
+              throw new Error(`Unsupported file type: ${extension}`);
           }
-        }
 
-        input.value = '';
-      });
+          handler.importFile(file, file.name, async (cave) => {
+            const currentProject = this.projectSystem.getCurrentProject();
+            const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(currentProject.id);
+
+            if (!cavesNamesInProject.includes(cave.name)) {
+              await this.projectSystem.addCaveToProject(currentProject, cave);
+              this.projectManager.addCave(cave);
+            } else {
+              throw Error(`Cave ${cave.name} has already been imported`);
+            }
+          });
+        } catch (error) {
+          showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);
+          console.error(error);
+        }
+      }
+
+      input.value = '';
+    });
   }
 
   #setupConfigFileInputListener() {

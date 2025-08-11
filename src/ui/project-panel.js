@@ -148,14 +148,14 @@ export class ProjectPanel {
                </div>
              </div>
              <div class="project-item-actions">
-               <button id="open-project-btn" class="project-action-btn">Open</button>
+               ${!isCurrent ? '<button id="open-project-btn" class="project-action-btn">Open</button>' : ''}
                <button id="delete-project-btn" class="project-action-btn delete">Delete</button>
                <button id="rename-project-btn" class="project-action-btn rename">Rename</button>
              </div>
            </div>
          `;
 
-          panel.querySelector('#open-project-btn').addEventListener('click', () => this.openProject(project.id));
+          panel.querySelector('#open-project-btn')?.addEventListener('click', () => this.openProject(project.id));
           panel.querySelector('#delete-project-btn').addEventListener('click', () => this.deleteProject(project.id));
           panel.querySelector('#rename-project-btn').addEventListener('click', () => this.renameProject(project.id));
           return panel;

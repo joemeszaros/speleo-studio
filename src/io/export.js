@@ -1,8 +1,9 @@
-import { toAscii, textToIso88592Bytes, toPolygonDate } from '../utils/utils.js';
+import { toAscii, textToIso88592Bytes, toPolygonDate, node } from '../utils/utils.js';
+import { makeMovable, showErrorPanel } from '../ui/popups.js';
 
 class Exporter {
 
-  static exportAsJson = (obj, filename) => {
+  static exportObjectAsJson = (obj, filename) => {
     const blob = new Blob([JSON.stringify(obj, null, 2)], {
       type : 'application/json'
     });
@@ -14,23 +15,23 @@ class Exporter {
     URL.revokeObjectURL(url);
   };
 
-  static exportCaves(caves) {
+  static exportJSON(caves, fileName) {
     caves.forEach((cave) => {
-      Exporter.exportAsJson(cave.toExport(), cave.name);
+      Exporter.exportObjectAsJson(cave.toExport(), `${fileName}_${cave.name}`);
     });
   }
 
-  static exportPNG(scene) {
+  static exportPNG(scene, fileName) {
     scene.view.renderView();
     //TODO: include compass and ratio
     const base64 = scene.domElement.toDataURL('image/png');
     let a = document.createElement('a'); // Create a temporary anchor.
     a.href = base64;
-    a.download = 'export.png';
+    a.download = `${fileName}.png`;
     a.click();
   }
 
-  static exportDXF(caves) {
+  static exportDXF(caves, fileName) {
     const lines = [];
     var handle = 1;
 
@@ -112,12 +113,12 @@ class Exporter {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `speleo-studio-export.dxf`;
+    a.download = `${fileName}.dxf`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  static exportPolygon(caves) {
+  static exportPolygon(caves, fileName) {
     const lines = [];
 
     lines.push('POLYGON Cave Surveying Software');
@@ -188,9 +189,81 @@ class Exporter {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `polygon-export.cave`;
+    a.download = `${fileName}.cave`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  static showExportDialog(caves, project, scene, panel) {
+    // Create the export dialog HTML if it doesn't exist
+    panel.innerHTML = '';
+    makeMovable(panel, `Export cave(s)`, false, () => (panel.style.display = 'none'));
+    const content = node`
+        <div class="popup-content">
+          <div class="form-group">
+            <label for="export-format">Export Format:</label>
+            <select id="export-format">
+              <option value="json">JSON</option>
+              <option value="png">PNG Image</option>
+              <option value="dxf">DXF</option>
+              <option value="polygon">Polygon (.cave)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="export-project-name">Base name:</label>
+            <input type="text" id="export-project-name" placeholder="Base name (without extension)" />
+          </div>
+          <div class="export-options">
+              <input type="checkbox" id="export-per-cave" />
+              <label for="export-per-cave">Export per cave</label>
+          </div>
+          <div class="popup-actions">
+            <button class="btn btn-primary">Export</button>
+          </div>
+        </div>
+      `;
+    panel.appendChild(content);
+    panel
+      .querySelector('button.btn-primary')
+      .addEventListener('click', () => Exporter.executeExport(caves, scene, panel));
+
+    const projectNameInput = panel.querySelector('#export-project-name');
+    // Set default filename
+    projectNameInput.value = project?.name ?? 'cave-export';
+    panel.style.display = 'block';
+  }
+
+  static executeExport(caves, scene, panel) {
+
+    const formatSelect = panel.querySelector('#export-format');
+    const filenameInput = panel.querySelector('#export-project-name');
+
+    const format = formatSelect.value;
+    const filename = filenameInput.value.trim();
+
+    try {
+      switch (format) {
+        case 'json':
+          Exporter.exportJSON(caves, filename);
+          break;
+        case 'png':
+          Exporter.exportPNG(scene, filename);
+          break;
+        case 'dxf':
+          Exporter.exportDXF(caves, filename);
+          break;
+        case 'polygon':
+          Exporter.exportPolygon(caves, filename);
+          break;
+        default:
+          throw new Error(`Unsupported export format: ${format}`);
+      }
+
+      panel.style.display = 'none';
+    } catch (error) {
+      console.error('Export failed:', error);
+      showErrorPanel(`Export failed: ${error.message}`);
+    }
   }
 }
 

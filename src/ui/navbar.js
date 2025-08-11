@@ -9,13 +9,26 @@ class NavigationBar {
    * @param {Map<String, Map>} options - Global project options, like global visibility of an object
    * @param {MyScene} scene - The 3D scene
    */
-  constructor(db, domElement, options, scene, interactive, projectManager, projectPanel, controls) {
+  constructor(
+    db,
+    domElement,
+    options,
+    scene,
+    interactive,
+    projectManager,
+    projectSystem,
+    projectPanel,
+    exportPanel,
+    controls
+  ) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.interactive = interactive;
     this.projectManager = projectManager;
+    this.projectSystem = projectSystem;
     this.projectPanel = projectPanel;
+    this.exportPanel = exportPanel;
     this.controls = controls;
     this.#buildNavbar(domElement);
     this.#addNavbarClickListener();
@@ -48,27 +61,21 @@ class NavigationBar {
             }
           },
           {
-            name  : 'Open TopoDroid file(s)',
-            click : () => {
-              document.getElementById('topodroidInput').click();
+            name  : 'Open cave(s)',
+            click : function () {
+              document.getElementById('caveInput').click();
             }
           },
           {
-            name  : 'Open Polygon file(s)',
-            click : function () {
-              document.getElementById('polygonInput').click();
-            }
+            name  : 'Export cave(s)',
+            click : () =>
+              Exporter.showExportDialog(
+                this.db.getAllCaves(),
+                this.projectSystem.getCurrentProject(),
+                this.scene,
+                this.exportPanel
+              )
           },
-          {
-            name  : 'Open JSON file(s)',
-            click : function () {
-              document.getElementById('jsonInput').click();
-            }
-          },
-          { name: 'Export JSON', click: () => Exporter.exportCaves(this.db.caves) },
-          { name: 'Export PNG', click: () => Exporter.exportPNG(this.scene) },
-          { name: 'Export DXF', click: () => Exporter.exportDXF(this.db.caves) },
-          { name: 'Export Polygon', click: () => Exporter.exportPolygon(this.db.caves) },
           { name: 'Download configuration', click: () => ConfigManager.downloadConfig(this.options) },
           { name: 'Load configuration', click: () => document.getElementById('configInput').click() },
           {
@@ -98,26 +105,9 @@ class NavigationBar {
             }
           },
           {
-            name  : 'Save Project',
-            click : () => {
-              this.projectPanel.saveCurrentProject();
-            }
-          },
-          {
             name  : 'Export Project',
             click : () => {
               this.projectPanel.exportCurrentProject();
-            }
-          }
-        ]
-      },
-      {
-        name     : 'Surface',
-        elements : [
-          {
-            name  : 'Open PLY file',
-            click : function () {
-              document.getElementById('plyInput').click();
             }
           }
         ]
