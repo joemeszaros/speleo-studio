@@ -773,13 +773,8 @@ class SurveySheetEditor extends BaseEditor {
 
   setupPanel() {
     this.panel.innerHTML = '';
-    makeMovable(
-      this.panel,
-      `Survey sheet editor: ${this.survey?.name || 'New survey'}`,
-      false,
-      () => this.closeEditor(),
-      () => {},
-      () => {}
+    makeMovable(this.panel, `Survey sheet editor: ${this.survey?.name || 'New survey'}`, false, () =>
+      this.closeEditor()
     );
     this.#setupEditor();
   }
@@ -946,6 +941,7 @@ class SurveySheetEditor extends BaseEditor {
         { key: 'name', placeholder: 'Name', type: 'text', width: '120px' },
         { key: 'role', placeholder: 'Role', type: 'text', width: '100px' }
       ],
+      nodes : [],
       onAdd : () => {
         this.formData.members.push({ name: '', role: '' });
         this.renderMembers();
@@ -975,6 +971,7 @@ class SurveySheetEditor extends BaseEditor {
         { key: 'name', placeholder: 'Instrument Name', type: 'text', width: '140px' },
         { key: 'value', placeholder: 'Value', type: 'text', width: '80px' }
       ],
+      nodes : [],
       onAdd : () => {
         this.formData.instruments.push({ name: '', value: '' });
         this.renderInstruments();

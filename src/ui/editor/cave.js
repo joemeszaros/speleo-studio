@@ -3,6 +3,7 @@ import { CaveMetadata, Cave } from '../../model/cave.js';
 import { makeMovable, showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
 import { GeoData, EOVCoordinateWithElevation, CoordinateSytem, StationWithCoordinate } from '../../model/geo.js';
+import { SurveyAlias } from '../../model/survey.js';
 
 class CaveEditor extends Editor {
   constructor(db, options, cave, scene, attributeDefs, panel) {
@@ -63,7 +64,15 @@ class CaveEditor extends Editor {
             x         : c.coordinate.x,
             elevation : c.coordinate.elevation
           };
-        }) ?? [] // List of {stationName, y, x, elevation}
+        }) ?? [],
+      aliases:
+        this.cave?.aliases?.map((a) => {
+          return {
+            from : a.from,
+            to   : a.to
+          };
+        }) ?? []
+
     };
 
     const form = U.node`<form class="editor"></form>`;
@@ -102,6 +111,21 @@ class CaveEditor extends Editor {
     coordsDiv.appendChild(this.coordsList);
     form.appendChild(coordsDiv);
     this.renderCoords();
+
+    const getStationOptions = () => {
+      const stationNames = this.db.getStationNames(this.caveData.name);
+      return stationNames
+        .map((name) => `<option station="${name}" value="${name}">`)
+        .join('');
+    };
+
+    this.aliasesDiv = U.node`<div class="aliases-section"><b>Survey aliases:</b><br/><br/></div>`;
+    this.aliasesList = U.node`<div class="aliases-list" style="display: inline-block;"></div>`;
+    const dataList = U.node`<datalist id="station-names">${getStationOptions()}</datalist>`;
+    this.aliasesDiv.appendChild(this.aliasesList);
+    this.aliasesDiv.appendChild(dataList);
+    form.appendChild(this.aliasesDiv);
+    this.renderAliases();
 
     const saveBtn = U.node`<button type="submit">Save</button>`;
     const cancelBtn = U.node`<button type="button">Cancel</button>`;
@@ -158,8 +182,26 @@ class CaveEditor extends Editor {
           return;
         }
 
+        const aliases = this.caveData.aliases.map((a) => new SurveyAlias(a.from, a.to));
+
+        errors = [];
+        aliases.forEach((a) => {
+
+          if (a.from === a.to && a.from !== undefined && a.from !== '') {
+            errors.push(`Alias from and to cannot be the same: ${a.from} -> ${a.to}`);
+          }
+
+        });
+
+        if (errors.length > 0) {
+          errors = [...new Set(errors)];
+          showErrorPanel('Invalid aliases:<br>' + errors.join('<br>'));
+          return;
+        }
+
         if (this.cave === undefined) {
           this.cave = new Cave(this.caveData.name, caveMetadata, geoData);
+          this.cave.aliases = aliases;
           this.#emitCaveAdded();
 
         } else {
@@ -168,6 +210,8 @@ class CaveEditor extends Editor {
             this.db.renameCave(oldName, this.caveData.name);
             this.#emitCaveRenamed(oldName, this.cave);
           }
+
+          this.cave.aliases = aliases;
 
           const oldGeoData = this.cave.geoData;
           this.cave.metaData = caveMetadata;
@@ -193,6 +237,42 @@ class CaveEditor extends Editor {
     this.panel.appendChild(form);
   }
 
+  renderAliases() {
+    this.renderListEditor({
+      container : this.aliasesList,
+      items     : this.caveData.aliases,
+      fields    : [],
+      nodes     : [
+        {
+          key  : 'from',
+          node : '<input required placeholder="From" type="search" list="station-names" id="station-alias-from" style="width: 100px;"/>'
+        },
+        {
+          key  : 'to',
+          node : '<input required placeholder="To" type="search" list="station-names" id="station-alias-to" style="width: 100px;"/>'
+        }
+      ],
+      onAdd : () => {
+        this.caveData.aliases.push({ from: '', to: '' });
+        this.renderAliases();
+        this.caveHasChanged = true;
+      },
+      onRemove : (idx) => {
+        this.caveData.aliases.splice(idx, 1);
+        this.renderAliases();
+        this.caveHasChanged = true;
+      },
+      onChange : (idx, key, value) => {
+
+        if (this.caveData.aliases[idx][key] !== value) {
+          this.caveHasChanged = true;
+        }
+        this.caveData.aliases[idx][key] = value;
+      },
+      addButtonLabel : 'Add alias'
+    });
+  }
+
   renderCoords() {
     this.renderListEditor({
       container : this.coordsList,
@@ -203,6 +283,7 @@ class CaveEditor extends Editor {
         { key: 'x', placeholder: 'X coordinate', type: 'number', step: '0.01', width: '100px', required: true },
         { key: 'elevation', placeholder: 'Elevation', type: 'number', step: '0.01', width: '100px', required: true }
       ],
+      nodes : [],
       onAdd : () => {
         this.caveData.coordinates.push({ name: '', y: '', x: '', elevation: '' });
         this.renderCoords();

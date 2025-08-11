@@ -39,7 +39,8 @@ class Materials {
         auxiliary          : new THREE.MeshBasicMaterial({ color: this.config.auxiliaries.spheres.color }),
         surface            : new THREE.MeshBasicMaterial({ color: 0xa0a0ff }),
         selected           : new THREE.MeshBasicMaterial({ color: 0xf00fff }),
-        selectedForContext : new THREE.MeshBasicMaterial({ color: 0x20ff3d })
+        selectedForContext : new THREE.MeshBasicMaterial({ color: 0x20ff3d }),
+        startPoint         : new THREE.MeshBasicMaterial({ color: this.config.startPoint.color })
       },
 
       distanceLine : new THREE.LineDashedMaterial({ color: 0xffffff, linewidth: 2, scale: 2, dashSize: 1, gapSize: 1 }),

@@ -117,7 +117,7 @@ export class Controls {
       s.centerLines.segments.show = val;
     });
 
-    centerLineFolder.addColor(centerLineParam, 'line color').onChange(function (val) {
+    centerLineFolder.addColor(centerLineParam, 'line color').onFinishChange(function (val) {
       s.centerLines.segments.color = val;
     });
 
@@ -139,7 +139,7 @@ export class Controls {
       s.centerLines.spheres.show = val;
     });
 
-    centerLineFolder.addColor(centerLineParam, 'station color').onChange(function (val) {
+    centerLineFolder.addColor(centerLineParam, 'station color').onFinishChange(function (val) {
       s.centerLines.spheres.color = val;
     });
 
@@ -156,7 +156,7 @@ export class Controls {
       s.splays.segments.show = val;
     });
 
-    splaysFolder.addColor(splayParam, 'line color').onChange(function (val) {
+    splaysFolder.addColor(splayParam, 'line color').onFinishChange(function (val) {
       s.splays.segments.color = val;
     });
 
@@ -168,7 +168,7 @@ export class Controls {
       s.splays.spheres.show = val;
     });
 
-    splaysFolder.addColor(splayParam, 'station color').onChange(function (val) {
+    splaysFolder.addColor(splayParam, 'station color').onFinishChange(function (val) {
       s.splays.spheres.color = val;
     });
 
@@ -185,7 +185,7 @@ export class Controls {
       s.auxiliaries.segments.show = val;
     });
 
-    auxiliaryFolder.addColor(auxiliaryParam, 'line color').onChange(function (val) {
+    auxiliaryFolder.addColor(auxiliaryParam, 'line color').onFinishChange(function (val) {
       s.auxiliaries.segments.color = val;
     });
 
@@ -197,7 +197,7 @@ export class Controls {
       s.auxiliaries.spheres.show = val;
     });
 
-    auxiliaryFolder.addColor(auxiliaryParam, 'station color').onChange(function (val) {
+    auxiliaryFolder.addColor(auxiliaryParam, 'station color').onFinishChange(function (val) {
       s.auxiliaries.spheres.color = val;
     });
 
@@ -208,9 +208,32 @@ export class Controls {
         s.auxiliaries.spheres.radius = val;
       });
 
+    const startPointParam = {
+      'show starting points' : s.startPoint.show,
+      color                  : s.startPoint.color,
+      radius                 : s.startPoint.radius
+    };
+
+    const startPointFolder = gui.addFolder('Starting Points');
+
+    startPointFolder.add(startPointParam, 'show starting points').onFinishChange(function (val) {
+      s.startPoint.show = val;
+    });
+
+    startPointFolder.addColor(startPointParam, 'color').onFinishChange(function (val) {
+      s.startPoint.color = val;
+    });
+
+    startPointFolder
+      .add(startPointParam, 'radius', 0.1, 10.0)
+      .step(0.1)
+      .onFinishChange(function (val) {
+        s.startPoint.radius = val;
+      });
+
     const labelsFolder = gui.addFolder('Text labels');
 
-    labelsFolder.addColor(labelParam, 'font color').onChange(function (val) {
+    labelsFolder.addColor(labelParam, 'font color').onFinishChange(function (val) {
       s.labels.color = val;
     });
 
@@ -223,13 +246,13 @@ export class Controls {
 
     const sceneFolder = gui.addFolder('Scene');
 
-    sceneFolder.addColor(sceneParam, 'background color').onChange(function (val) {
+    sceneFolder.addColor(sceneParam, 'background color').onFinishChange(function (val) {
       s.background.color = val;
     });
 
     const sectionAttrFolder = gui.addFolder('Section attrbiutes');
 
-    sectionAttrFolder.addColor(sectionAttributeParam, 'color').onChange(function (val) {
+    sectionAttrFolder.addColor(sectionAttributeParam, 'color').onFinishChange(function (val) {
       s.sectionAttributes.color = val;
     });
 

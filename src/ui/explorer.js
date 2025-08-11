@@ -8,7 +8,7 @@ import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attri
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
-import { showErrorPanel, showWarningPanel, showInfoPanel } from './popups.js';
+import { showInfoPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
 
 class ProjectManager {
@@ -234,6 +234,10 @@ class ProjectManager {
         this.scene.addSurvey(cave.name, es.name, _3dObjects);
       }
     });
+
+    // Update starting point position after recalculation
+    this.scene.addStartingPoint(cave);
+
     this.scene.updateVisiblePlanes();
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
@@ -296,6 +300,9 @@ class ProjectManager {
       );
       this.scene.addSurvey(cave.name, s.name, _3dobjects);
     });
+
+    // Add starting point for the cave
+    this.scene.addStartingPoint(cave);
 
     cave.sectionAttributes.forEach((sa) => {
       if (sa.visible) {

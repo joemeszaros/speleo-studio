@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ShotType } from './model/survey.js';
 
 export const DEFAULT_OPTIONS = {
   scene : {
@@ -86,7 +87,7 @@ export const DEFAULT_OPTIONS = {
     startPoint : {
       show   : true,
       color  : '#ffff00',
-      radius : 0.3
+      radius : 1
     }
   },
 
@@ -504,7 +505,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.centerLines.spheres.radius':
-        this.scene.changeStationSpheresRadius('centerLine');
+        this.scene.changeStationSpheresRadius(ShotType.CENTER);
         break;
     }
   }
@@ -538,7 +539,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.splays.spheres.radius':
-        this.scene.changeStationSpheresRadius('SPLAY');
+        this.scene.changeStationSpheresRadius(ShotType.SPLAY);
         break;
     }
   }
@@ -549,32 +550,50 @@ export class ConfigChanges {
   handleAuxiliaryChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.auxiliaries.segments.show':
-        this.scene.setObjectsVisibility('auxiliary', newValue);
+        this.scene.setObjectsVisibility('auxiliaries', newValue);
         break;
 
       case 'scene.auxiliaries.segments.color':
         this.materials.segments.auxiliary.color = new THREE.Color(newValue);
-        this.scene.view.renderView();
         break;
 
       case 'scene.auxiliaries.segments.width':
-        this.materials.segments.auxiliary.linewidth = newValue;
-        this.materials.whiteLine.linewidth = newValue;
-        this.scene.view.renderView();
+        this.scene.updateSegmentsWidth(newValue);
         break;
 
       case 'scene.auxiliaries.spheres.show':
-        this.scene.setObjectsVisibility('auxiliarySpheres', newValue);
+        this.scene.setObjectsVisibility('auxiliaries', newValue);
         break;
 
       case 'scene.auxiliaries.spheres.color':
-        this.scene.view.renderView();
+        this.materials.sphere.auxiliary.color = new THREE.Color(newValue);
         break;
 
       case 'scene.auxiliaries.spheres.radius':
-        this.scene.changeStationSpheresRadius('AUXILIARY');
+        this.scene.changeStationSpheresRadius(ShotType.AUXILIARY);
         break;
     }
+  }
+
+  /**
+   * Handle starting point configuration changes
+   */
+  handleStartingPointChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.startPoint.show':
+        this.scene.setStartingPointsVisibility(newValue);
+        break;
+
+      case 'scene.startPoint.color':
+        this.materials.sphere.startPoint.color = new THREE.Color(newValue);
+        break;
+
+      case 'scene.startPoint.radius':
+        this.scene.updateStartingPointRadius(newValue);
+        break;
+    }
+
+    this.scene.view.renderView();
   }
 
   /**
@@ -654,6 +673,8 @@ export class ConfigChanges {
       this.handleSplayChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.auxiliaries')) {
       this.handleAuxiliaryChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.startPoint')) {
+      this.handleStartingPointChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.caveLines.color')) {
       this.handleCaveLineColorChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.labels')) {

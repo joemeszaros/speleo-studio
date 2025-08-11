@@ -24,7 +24,17 @@ class BaseEditor {
     this.panel.style.display = 'none';
   }
 
-  renderListEditor({ container, items, fields, onAdd, onRemove, onChange, addButtonLabel = 'Add', rowStyle = '' }) {
+  renderListEditor({
+    container,
+    items,
+    fields,
+    nodes,
+    onAdd,
+    onRemove,
+    onChange,
+    addButtonLabel = 'Add',
+    rowStyle = ''
+  }) {
     container.innerHTML = '';
     items.forEach((item, idx) => {
       const row = U.node`<div class="list-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;${rowStyle}"></div>`;
@@ -33,6 +43,14 @@ class BaseEditor {
         input.oninput = (e) => onChange(idx, f.key, e.target.value);
         row.appendChild(input);
       });
+
+      nodes.forEach((n) => {
+        const el = U.node(n.node);
+        el.value = item[n.key];
+        el.oninput = (e) => onChange(idx, n.key, e.target.value);
+        row.appendChild(el);
+      });
+
       const removeBtn = U.node`<button type="button">Remove</button>`;
       removeBtn.onclick = (e) => {
         e.preventDefault();

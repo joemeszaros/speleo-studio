@@ -250,6 +250,10 @@ class Cave {
       }
       survey.shots.forEach((shot) => {
 
+        if (shot.length === undefined || shot.length === null || shot.length.isNaN) {
+          return;
+        }
+
         if (survey.orphanShotIds.has(shot.id)) {
           orphanLength += shot.length;
         }

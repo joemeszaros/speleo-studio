@@ -213,10 +213,6 @@ class Exporter {
             <label for="export-project-name">Base name:</label>
             <input type="text" id="export-project-name" placeholder="Base name (without extension)" />
           </div>
-          <div class="export-options">
-              <input type="checkbox" id="export-per-cave" />
-              <label for="export-per-cave">Export per cave</label>
-          </div>
           <div class="popup-actions">
             <button class="btn btn-primary">Export</button>
           </div>

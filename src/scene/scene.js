@@ -48,6 +48,8 @@ class MyScene {
     this.surfaceObject3DGroup = new THREE.Group();
     this.sectionAttributes3DGroup = new THREE.Group();
     this.segments3DGroup = new THREE.Group();
+    this.startPoints3DGroup = new THREE.Group();
+    this.startPointObjects = new Map(); // Map to store starting point objects for each cave
     this.stationFont = undefined;
     const loader = new FontLoader();
     loader.load('fonts/helvetiker_regular.typeface.json', (font) => this.setFont(font));
@@ -84,6 +86,7 @@ class MyScene {
     this.threejsScene.add(this.surfaceObject3DGroup);
     this.threejsScene.add(this.sectionAttributes3DGroup);
     this.threejsScene.add(this.segments3DGroup);
+    this.threejsScene.add(this.startPoints3DGroup);
 
     this.boundingBox = undefined;
     this.planeMeshes = new Map();
@@ -159,7 +162,7 @@ class MyScene {
 
   changeStationSpheresRadius(type) {
     let spheres, radius;
-    if (type === 'centerLine') {
+    if (type === ShotType.CENTER) {
       spheres = this.getAllCenterLineStationSpheres();
       radius = this.options.scene.centerLines.spheres.radius;
     } else if (type === ShotType.SPLAY) {
@@ -719,9 +722,76 @@ class MyScene {
     sphere.position.y = position.y;
     sphere.position.z = position.z;
     sphere.name = name;
+    sphere.type = meta.type; // custom property
     sphere.meta = meta; // custom property
     sphereGroup.add(sphere);
-    return sphere;
+  }
+
+  addStartingPoint(cave) {
+    // Remove existing starting point if it exists
+    if (this.startPointObjects.has(cave.name)) {
+      this.removeStartingPoint(cave.name);
+    }
+
+    // Get the first station of the first survey
+    const firstStation = cave.getFirstStation();
+    if (!firstStation) return;
+
+    // Create a sphere geometry for the starting point
+    const startPointGeo = new THREE.SphereGeometry(this.options.scene.startPoint.radius, 7, 7);
+
+    // Create the starting point mesh
+    const startPoint = new THREE.Mesh(startPointGeo, this.materials.sphere.startPoint);
+    startPoint.position.copy(firstStation.position);
+    startPoint.name = `startPoint_${cave.name}`;
+
+    // Set visibility based on configuration
+    startPoint.visible = this.options.scene.startPoint.show;
+
+    // Add to the starting points group
+    this.startPoints3DGroup.add(startPoint);
+
+    // Store reference for later management
+    this.startPointObjects.set(cave.name, {
+      mesh     : startPoint,
+      geometry : startPointGeo,
+      material : this.materials.sphere.startPoint
+    });
+
+    return startPoint;
+  }
+
+  removeStartingPoint(caveName) {
+    const startPointObj = this.startPointObjects.get(caveName);
+    if (startPointObj) {
+      this.startPoints3DGroup.remove(startPointObj.mesh);
+      startPointObj.geometry.dispose();
+      startPointObj.material.dispose();
+      this.startPointObjects.delete(caveName);
+    }
+  }
+
+  setStartingPointsVisibility(visible) {
+    this.startPoints3DGroup.visible = visible;
+    // Also update individual objects for consistency
+    this.startPointObjects.forEach((obj) => {
+      obj.mesh.visible = visible;
+    });
+  }
+
+  updateStartingPointColor(color) {
+    this.startPointObjects.forEach((obj) => {
+      obj.material.color.setHex(color);
+    });
+  }
+
+  updateStartingPointRadius(radius) {
+    this.startPointObjects.forEach((obj) => {
+      // Create new geometry with new radius
+      const newGeometry = new THREE.SphereGeometry(radius, 7, 7);
+      obj.mesh.geometry.dispose();
+      obj.mesh.geometry = newGeometry;
+    });
   }
 
   addToScene(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility, colorGradients) {
@@ -923,6 +993,15 @@ class MyScene {
     this.caveObjects.delete(oldName);
     this.caveObjects.set(newName, surveyObjects);
     this.sectionAttributes.forEach((sa) => (sa.caveName = newName)); //TODO: what to do with component attributes here?
+
+    // Update starting point for renamed cave
+    if (this.startPointObjects.has(oldName)) {
+      const startPointObj = this.startPointObjects.get(oldName);
+      this.startPointObjects.delete(oldName);
+      this.startPointObjects.set(newName, startPointObj);
+      startPointObj.mesh.name = `startPoint_${newName}`;
+      startPointObj.meta.cave = newName;
+    }
   }
 
   renameSurvey(oldName, newName, caveName) {
@@ -937,8 +1016,17 @@ class MyScene {
   }
 
   disposeCave(caveName) {
-    const surveyObjectList = this.caveObjects.get(caveName);
-    surveyObjectList.forEach((c) => this.#disposeSurveyObjects(c));
+    if (this.caveObjects.has(caveName)) {
+      const caveObject = this.caveObjects.get(caveName);
+      caveObject.forEach((surveyObject) => {
+        this.#disposeSurveyObjects(surveyObject);
+      });
+    }
+
+    // Remove starting point for this cave
+    this.removeStartingPoint(caveName);
+
+    // Dispose section attributes for this cave
     this.#dipostSectionAttributes(caveName);
   }
 
