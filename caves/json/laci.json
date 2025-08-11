@@ -1,116 +1,31 @@
 {
   "name": "Laci-zsomboly",
-  "metaData": {
+  "metadata": {
     "settlement": "Csobánka",
     "catasterCode": "4820-41",
     "date": 1643414400000
   },
-  "startPosition": {
-    "x": 0,
-    "y": 0,
-    "z": 0
+  "geoData": {
+    "coordinateSystem": "eov",
+    "coordinates": [
+      {
+        "name": "0",
+        "coordinate": {
+          "y": 644741,
+          "x": 255551,
+          "elevation": 270
+        }
+      }
+    ]
   },
   "aliases": [],
-  "sectionAttributes": [
-    {
-      "id": "szzqbv",
-      "section": {
-        "from": "Fo43",
-        "to": "F60"
-      },
-      "attribute": {
-        "id": 4,
-        "name": "rope",
-        "type": "static"
-      },
-      "color": "#ff0059",
-      "visible": false
-    },
-    {
-      "id": "gyfuta",
-      "section": {
-        "from": "14",
-        "to": "PPF8"
-      },
-      "attribute": {
-        "id": 4,
-        "name": "rope",
-        "type": "static"
-      },
-      "color": "#00ff2a",
-      "visible": false
-    }
-  ],
-  "componentAttributes": [
-    {
-      "id": "saaqbv",
-      "component": {
-        "start": "Padf22",
-        "termination": ["Padf21", "Lapi43"]
-      },
-      "attribute": {
-        "id": 14,
-        "name": "co",
-        "value": 2
-      },
-      "format": "${name}",
-      "color": "#ff00ff",
-      "visible": true
-    },
-    {
-      "id": "sbrqbv",
-      "component": {
-        "start": "34z7",
-        "termination": ["34z6"]
-      },
-      "attribute": {
-        "id": 14,
-        "name": "exploration",
-        "year": 2018
-      },
-      "format": "${name}(${year})",
-      "color": "#00ffaf",
-      "visible": true
-    }
-  ],
+  "sectionAttributes": [],
+  "componentAttributes": [],
   "surveys": [
     {
       "name": "Laci-zsomboly",
-      "start": {
-        "name": "0",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          }
-        }
-      },
-      "attributes": [
-        {
-          "name": "1",
-          "attribute": {
-            "id": 2,
-            "name": "bedding",
-            "azimuth": 190,
-            "dip": 80,
-            "width": 10,
-            "height": 40
-          }
-        },
-        {
-          "name": "1",
-          "attribute": {
-            "id": 2,
-            "name": "bedding",
-            "azimuth": 190,
-            "dip": 80,
-            "width": 10,
-            "height": 40
-          }
-        }
-      ],
+      "start": "0",
+      "attributes": [],
       "shots": [
         {
           "id": 0,
@@ -119,7 +34,8 @@
           "to": "1",
           "length": 5.1,
           "azimuth": 166.8,
-          "clino": -54.6
+          "clino": -54.6,
+          "comment": "akna középről fel 0ra"
         },
         {
           "id": 1,
@@ -128,7 +44,8 @@
           "to": "2",
           "length": 7.08,
           "azimuth": 245.3,
-          "clino": -80.5
+          "clino": -80.5,
+          "comment": "bebújás felett"
         },
         {
           "id": 2,
@@ -137,7 +54,8 @@
           "to": "4",
           "length": 1.44,
           "azimuth": 173.4,
-          "clino": 12
+          "clino": 12,
+          "comment": "bebújás sál szemben kint"
         },
         {
           "id": 3,
@@ -146,7 +64,8 @@
           "to": "5",
           "length": 2.39,
           "azimuth": 358.9,
-          "clino": -31.8
+          "clino": -31.8,
+          "comment": "bebújás után jobb fal"
         },
         {
           "id": 4,
@@ -155,7 +74,8 @@
           "to": "6",
           "length": 3.07,
           "azimuth": 61.7,
-          "clino": -19.5
+          "clino": -19.5,
+          "comment": "első új terem jobb fel továbbmentel előtt"
         },
         {
           "id": 5,
@@ -164,7 +84,8 @@
           "to": "7",
           "length": 2.92,
           "azimuth": 94.8,
-          "clino": -34.2
+          "clino": -34.2,
+          "comment": "1. Y mellett"
         },
         {
           "id": 6,
@@ -173,7 +94,8 @@
           "to": "8",
           "length": 7.52,
           "azimuth": 2.5,
-          "clino": -25.5
+          "clino": -25.5,
+          "comment": "Elosztó Y mellett"
         },
         {
           "id": 7,
@@ -182,7 +104,8 @@
           "to": "9",
           "length": 6.37,
           "azimuth": 44.7,
-          "clino": -40.9
+          "clino": -40.9,
+          "comment": "Tomi lyuka bal fal"
         },
         {
           "id": 8,
@@ -191,7 +114,8 @@
           "to": "10",
           "length": 4.97,
           "azimuth": 91,
-          "clino": 14.4
+          "clino": 14.4,
+          "comment": "Tomi lyukában kukában jobb fal"
         },
         {
           "id": 9,
@@ -227,7 +151,8 @@
           "to": "14",
           "length": 1.45,
           "azimuth": 85.3,
-          "clino": -25.2
+          "clino": -25.2,
+          "comment": "belövés"
         },
         {
           "id": 13,
@@ -236,7 +161,8 @@
           "to": "15",
           "length": 3.5,
           "azimuth": 180.7,
-          "clino": -51.8
+          "clino": -51.8,
+          "comment": "következő Y "
         },
         {
           "id": 14,
@@ -245,7 +171,8 @@
           "to": "16",
           "length": 1.81,
           "azimuth": 313.3,
-          "clino": -61.9
+          "clino": -61.9,
+          "comment": "szembe vp. "
         },
         {
           "id": 15,
@@ -254,7 +181,8 @@
           "to": "17",
           "length": 2.05,
           "azimuth": 110.9,
-          "clino": -61.5
+          "clino": -61.5,
+          "comment": "1. elhúzásnál közeli falon"
         },
         {
           "id": 16,
@@ -263,7 +191,8 @@
           "to": "18",
           "length": 4.95,
           "azimuth": 244.5,
-          "clino": -68.4
+          "clino": -68.4,
+          "comment": "beszorult nagy kövek földön"
         },
         {
           "id": 17,
@@ -272,7 +201,8 @@
           "to": "19",
           "length": 3.83,
           "azimuth": 177,
-          "clino": -52.4
+          "clino": -52.4,
+          "comment": "hídnál lévő Y mellett "
         },
         {
           "id": 18,
@@ -281,7 +211,8 @@
           "to": "20",
           "length": 14.05,
           "azimuth": 100.7,
-          "clino": -66.1
+          "clino": -66.1,
+          "comment": "nagyterem jobb fal kitüremkedés"
         },
         {
           "id": 19,
@@ -290,7 +221,8 @@
           "to": "21",
           "length": 8.11,
           "azimuth": 346.6,
-          "clino": 0.7
+          "clino": 0.7,
+          "comment": "hasadék bejárat jobb fal"
         },
         {
           "id": 20,
@@ -299,7 +231,8 @@
           "to": "22",
           "length": 4.47,
           "azimuth": 278.8,
-          "clino": 35.7
+          "clino": 35.7,
+          "comment": "hasadék végén bubor"
         },
         {
           "id": 21,
@@ -308,7 +241,8 @@
           "to": "23",
           "length": 1.38,
           "azimuth": 275.4,
-          "clino": 46.4
+          "clino": 46.4,
+          "comment": "hasadék vége fel vp"
         },
         {
           "id": 22,
@@ -317,7 +251,8 @@
           "to": "25",
           "length": 9.89,
           "azimuth": 72.5,
-          "clino": -18.4
+          "clino": -18.4,
+          "comment": "felmászás jobb oldal"
         },
         {
           "id": 23,
@@ -326,7 +261,8 @@
           "to": "26",
           "length": 7.44,
           "azimuth": 266.5,
-          "clino": 16.1
+          "clino": 16.1,
+          "comment": "keskeny hasadék vp"
         },
         {
           "id": 24,
@@ -335,7 +271,8 @@
           "to": "27",
           "length": 6.49,
           "azimuth": 304.3,
-          "clino": -24.9
+          "clino": -24.9,
+          "comment": "elágazás bal sarok"
         },
         {
           "id": 25,
@@ -344,7 +281,8 @@
           "to": "28",
           "length": 1.41,
           "azimuth": 42.2,
-          "clino": 6.3
+          "clino": 6.3,
+          "comment": "sátor rúd "
         },
         {
           "id": 26,
@@ -353,7 +291,8 @@
           "to": "29",
           "length": 8.57,
           "azimuth": 35,
-          "clino": -14.1
+          "clino": -14.1,
+          "comment": "teremvég"
         },
         {
           "id": 27,
@@ -362,7 +301,8 @@
           "to": "30",
           "length": 7.45,
           "azimuth": 268.4,
-          "clino": -9.3
+          "clino": -9.3,
+          "comment": "kukacjárat eleje jobb fal"
         },
         {
           "id": 28,
@@ -371,7 +311,8 @@
           "to": "31",
           "length": 3.71,
           "azimuth": 256.1,
-          "clino": -2.1
+          "clino": -2.1,
+          "comment": "kukacjárat bal fal"
         },
         {
           "id": 29,
@@ -380,7 +321,8 @@
           "to": "32",
           "length": 4.65,
           "azimuth": 262.1,
-          "clino": -2.3
+          "clino": -2.3,
+          "comment": "jobb fal"
         },
         {
           "id": 30,
@@ -389,7 +331,8 @@
           "to": "33",
           "length": 5.23,
           "azimuth": 230.5,
-          "clino": 1
+          "clino": 1,
+          "comment": "elágazásnál bal fal"
         },
         {
           "id": 31,
@@ -398,7 +341,8 @@
           "to": "34",
           "length": 5.14,
           "azimuth": 274.1,
-          "clino": 3.7
+          "clino": 3.7,
+          "comment": "kimászás tövében jobb fal"
         },
         {
           "id": 32,
@@ -407,7 +351,8 @@
           "to": "35",
           "length": 8.01,
           "azimuth": 111.8,
-          "clino": -1
+          "clino": -1,
+          "comment": "jobb fal kiálló taréj"
         },
         {
           "id": 33,
@@ -416,7 +361,8 @@
           "to": "36",
           "length": 4.01,
           "azimuth": 92.2,
-          "clino": 43.6
+          "clino": 43.6,
+          "comment": "plafon"
         },
         {
           "id": 34,
@@ -425,7 +371,8 @@
           "to": "37",
           "length": 2.23,
           "azimuth": 97.1,
-          "clino": -51.9
+          "clino": -51.9,
+          "comment": "lemászásnál bal fal"
         },
         {
           "id": 35,
@@ -434,7 +381,8 @@
           "to": "38",
           "length": 2.8,
           "azimuth": 204.6,
-          "clino": -59.6
+          "clino": -59.6,
+          "comment": "lemászás vp"
         },
         {
           "id": 36,
@@ -443,7 +391,8 @@
           "to": "39",
           "length": 4.28,
           "azimuth": 103.1,
-          "clino": 28.1
+          "clino": 28.1,
+          "comment": "köves befolyás felé vp"
         },
         {
           "id": 37,
@@ -452,7 +401,8 @@
           "to": "40",
           "length": 2.71,
           "azimuth": 330.8,
-          "clino": 48.4
+          "clino": 48.4,
+          "comment": "kereszthasadék alatt jobb fal"
         },
         {
           "id": 38,
@@ -461,7 +411,8 @@
           "to": "41",
           "length": 4.59,
           "azimuth": 150.5,
-          "clino": 70.4
+          "clino": 70.4,
+          "comment": "kereszthasadékba vp"
         },
         {
           "id": 39,
@@ -470,7 +421,8 @@
           "to": "42",
           "length": 14.22,
           "azimuth": 84.5,
-          "clino": 42.8
+          "clino": 42.8,
+          "comment": "felmászás teteje bal fal"
         },
         {
           "id": 40,
@@ -479,7 +431,8 @@
           "to": "43",
           "length": 3.82,
           "azimuth": 89.1,
-          "clino": -0.2
+          "clino": -0.2,
+          "comment": "szűkület kinti fele"
         },
         {
           "id": 41,
@@ -488,7 +441,8 @@
           "to": "44",
           "length": 3.14,
           "azimuth": 91.3,
-          "clino": -15.7
+          "clino": -15.7,
+          "comment": "bal fal"
         },
         {
           "id": 42,
@@ -506,7 +460,8 @@
           "to": "46",
           "length": 6.93,
           "azimuth": 107.9,
-          "clino": -34.9
+          "clino": -34.9,
+          "comment": "25ös pont"
         },
         {
           "id": 44,
@@ -515,7 +470,8 @@
           "to": "47",
           "length": 3.48,
           "azimuth": 301.9,
-          "clino": -0.4
+          "clino": -0.4,
+          "comment": "bal oldali sárbefolyás"
         },
         {
           "id": 45,
@@ -524,7 +480,8 @@
           "to": "48",
           "length": 1.8,
           "azimuth": 301.6,
-          "clino": 14.8
+          "clino": 14.8,
+          "comment": "sárbefolyás"
         },
         {
           "id": 46,
@@ -533,7 +490,8 @@
           "to": "49",
           "length": 2.05,
           "azimuth": 289.7,
-          "clino": 25.4
+          "clino": 25.4,
+          "comment": "sárbefolyás"
         },
         {
           "id": 47,
@@ -542,7 +500,8 @@
           "to": "50",
           "length": 1.86,
           "azimuth": 30.4,
-          "clino": 54
+          "clino": 54,
+          "comment": "sárbefolyás - záródik"
         },
         {
           "id": 48,
@@ -551,7 +510,8 @@
           "to": "51",
           "length": 4.46,
           "azimuth": 71.5,
-          "clino": 38.8
+          "clino": 38.8,
+          "comment": "bal fal"
         },
         {
           "id": 49,
@@ -560,7 +520,8 @@
           "to": "52",
           "length": 1.23,
           "azimuth": 131.8,
-          "clino": 23.8
+          "clino": 23.8,
+          "comment": "jobb fal cseppkő felett"
         },
         {
           "id": 50,
@@ -569,7 +530,8 @@
           "to": "53",
           "length": 2.47,
           "azimuth": 43.9,
-          "clino": 35.2
+          "clino": 35.2,
+          "comment": "balra kicsi járat jobb fal"
         },
         {
           "id": 51,
@@ -578,7 +540,8 @@
           "to": "54",
           "length": 2.12,
           "azimuth": 11.6,
-          "clino": 5.7
+          "clino": 5.7,
+          "comment": "belövés kicsi járat a vp"
         },
         {
           "id": 52,
@@ -587,7 +550,8 @@
           "to": "55",
           "length": 2.03,
           "azimuth": 60.2,
-          "clino": -30.6
+          "clino": -30.6,
+          "comment": "átbújást után bal fal"
         },
         {
           "id": 53,
@@ -596,7 +560,8 @@
           "to": "56",
           "length": 6.47,
           "azimuth": 55.6,
-          "clino": 4.7
+          "clino": 4.7,
+          "comment": "terem közepe bal fal"
         },
         {
           "id": 54,
@@ -605,7 +570,8 @@
           "to": "57",
           "length": 7.27,
           "azimuth": 352.7,
-          "clino": -6
+          "clino": -6,
+          "comment": "átbújásnál jobb fal"
         },
         {
           "id": 55,
@@ -614,7 +580,8 @@
           "to": "58",
           "length": 6.26,
           "azimuth": 2.1,
-          "clino": 31.2
+          "clino": 31.2,
+          "comment": "kis járat elágazás a bal fal"
         },
         {
           "id": 56,
@@ -623,7 +590,8 @@
           "to": "59",
           "length": 1.36,
           "azimuth": 234.3,
-          "clino": 0.2
+          "clino": 0.2,
+          "comment": "kis járat bal plafon"
         },
         {
           "id": 57,
@@ -632,7 +600,8 @@
           "to": "60",
           "length": 1.18,
           "azimuth": 307.8,
-          "clino": -40.2
+          "clino": -40.2,
+          "comment": "kis járat bal fal"
         },
         {
           "id": 58,
@@ -641,7 +610,8 @@
           "to": "61",
           "length": 4.03,
           "azimuth": 346.9,
-          "clino": -20.9
+          "clino": -20.9,
+          "comment": "kis terem cseppkő vp"
         },
         {
           "id": 59,
@@ -650,7 +620,8 @@
           "to": "62",
           "length": 2.76,
           "azimuth": 78.8,
-          "clino": 22.3
+          "clino": 22.3,
+          "comment": "homokos felfelé jobb fal"
         },
         {
           "id": 60,
@@ -659,16 +630,8 @@
           "to": "63",
           "length": 3.82,
           "azimuth": 353.9,
-          "clino": 43.4
-        },
-        {
-          "id": 581,
-          "type": "center",
-          "from": "61",
-          "to": "63",
-          "length": 7.63,
-          "azimuth": 270,
-          "clino": -20.9
+          "clino": 43.4,
+          "comment": "belövés vp"
         },
         {
           "id": 61,
@@ -677,7 +640,8 @@
           "to": "64",
           "length": 1.4,
           "azimuth": 289,
-          "clino": 65.3
+          "clino": 65.3,
+          "comment": "kötél mellett balra"
         },
         {
           "id": 62,
@@ -686,7 +650,8 @@
           "to": "66",
           "length": 3.89,
           "azimuth": 158.9,
-          "clino": 72.3
+          "clino": 72.3,
+          "comment": "köteles felmászás Y mellett"
         },
         {
           "id": 63,
@@ -695,7 +660,8 @@
           "to": "67",
           "length": 1,
           "azimuth": 87.2,
-          "clino": 22.4
+          "clino": 22.4,
+          "comment": "köteles felmászás"
         },
         {
           "id": 64,
@@ -704,7 +670,8 @@
           "to": "68",
           "length": 3.12,
           "azimuth": 73.6,
-          "clino": 80.8
+          "clino": 80.8,
+          "comment": "köteles felmászás belövés vp"
         },
         {
           "id": 65,
@@ -713,7 +680,8 @@
           "to": "69",
           "length": 2.44,
           "azimuth": 282,
-          "clino": 3.3
+          "clino": 3.3,
+          "comment": "hídkötél túlfele bal fal"
         },
         {
           "id": 66,
@@ -749,7 +717,8 @@
           "to": "73",
           "length": 0.99,
           "azimuth": 140.7,
-          "clino": -58.6
+          "clino": -58.6,
+          "comment": "54es pont mellett"
         },
         {
           "id": 70,
@@ -758,7 +727,8 @@
           "to": "74",
           "length": 3.22,
           "azimuth": 13.2,
-          "clino": 57.9
+          "clino": 57.9,
+          "comment": "kötél híd után felfelé vp"
         },
         {
           "id": 71,
@@ -767,36 +737,15 @@
           "to": "75",
           "length": 2.67,
           "azimuth": 149.4,
-          "clino": -71.4
+          "clino": -71.4,
+          "comment": "hasadék vége lefelé vp"
         }
       ]
     },
     {
       "name": "Fogadalom-ág",
-      "start": {
-        "name": "18",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644747,
-            "y": 255562,
-            "z": -35.4
-          }
-        }
-      },
-      "attributes": [
-        {
-          "name": "Fo19",
-          "attribute": {
-            "id": 2,
-            "name": "bedding",
-            "azimuth": 10,
-            "dip": 10,
-            "width": 10,
-            "height": 40
-          }
-        }
-      ],
+      "start": "18",
+      "attributes": [],
       "shots": [
         {
           "id": 0,
@@ -805,7 +754,8 @@
           "to": "Fo19",
           "length": 10.39,
           "azimuth": 222.8,
-          "clino": 5.3
+          "clino": 5.3,
+          "comment": "fehér lefolyásos kő felett jobbra"
         },
         {
           "id": 1,
@@ -814,7 +764,8 @@
           "to": "Fo20",
           "length": 5.33,
           "azimuth": 161.2,
-          "clino": 30.6
+          "clino": 30.6,
+          "comment": "bal oldal kő földön"
         },
         {
           "id": 2,
@@ -823,7 +774,8 @@
           "to": "Fo21",
           "length": 3.35,
           "azimuth": 244.2,
-          "clino": 23.9
+          "clino": 23.9,
+          "comment": "átbújásnál törött cseppkőnél"
         },
         {
           "id": 3,
@@ -832,7 +784,8 @@
           "to": "Fo22",
           "length": 10.45,
           "azimuth": 226.5,
-          "clino": 31.6
+          "clino": 31.6,
+          "comment": "felmászás után jobb fal"
         },
         {
           "id": 4,
@@ -841,7 +794,8 @@
           "to": "Fo23",
           "length": 5.96,
           "azimuth": 164.2,
-          "clino": 56.3
+          "clino": 56.3,
+          "comment": "beesett nagy kő felett bal fal"
         },
         {
           "id": 5,
@@ -850,7 +804,8 @@
           "to": "Fo24",
           "length": 9.88,
           "azimuth": 220.2,
-          "clino": 28.2
+          "clino": 28.2,
+          "comment": "Kagylós kő mellett"
         },
         {
           "id": 6,
@@ -859,7 +814,8 @@
           "to": "Fo25",
           "length": 4.5,
           "azimuth": 219,
-          "clino": 42
+          "clino": 42,
+          "comment": "Sárkányfej alatt"
         },
         {
           "id": 7,
@@ -868,7 +824,8 @@
           "to": "Fo26",
           "length": 7.29,
           "azimuth": 130.8,
-          "clino": 53.7
+          "clino": 53.7,
+          "comment": "Sárkány kürtője"
         },
         {
           "id": 8,
@@ -877,7 +834,8 @@
           "to": "Fo27",
           "length": 2.16,
           "azimuth": 38.5,
-          "clino": 25.5
+          "clino": 25.5,
+          "comment": "Sk-ban elágazásnál jobbra"
         },
         {
           "id": 9,
@@ -886,7 +844,8 @@
           "to": "Fo28",
           "length": 5.34,
           "azimuth": 53.1,
-          "clino": 85.6
+          "clino": 85.6,
+          "comment": "Sk-ban megosztás felett jobbra"
         },
         {
           "id": 10,
@@ -895,7 +854,8 @@
           "to": "Fo29",
           "length": 2.83,
           "azimuth": 105.7,
-          "clino": 68.9
+          "clino": 68.9,
+          "comment": "Sk-ban Y-nál balra"
         },
         {
           "id": 11,
@@ -904,7 +864,8 @@
           "to": "Fo30",
           "length": 2.38,
           "azimuth": 146,
-          "clino": 57.2
+          "clino": 57.2,
+          "comment": "Sk-ban jobb végpont vp"
         },
         {
           "id": 12,
@@ -913,7 +874,8 @@
           "to": "Fo31",
           "length": 0.65,
           "azimuth": 138.7,
-          "clino": 32.7
+          "clino": 32.7,
+          "comment": "Sk-ban Y felett"
         },
         {
           "id": 13,
@@ -922,7 +884,8 @@
           "to": "Fo32",
           "length": 1.93,
           "azimuth": 348.6,
-          "clino": 44
+          "clino": 44,
+          "comment": "Sk-ban bal végpont"
         },
         {
           "id": 14,
@@ -931,7 +894,8 @@
           "to": "Fo33",
           "length": 1.65,
           "azimuth": 175.5,
-          "clino": -8.6
+          "clino": -8.6,
+          "comment": "Sk-ban sáros kürtő vp"
         },
         {
           "id": 15,
@@ -940,7 +904,8 @@
           "to": "Fo34",
           "length": 10.46,
           "azimuth": 230.2,
-          "clino": 19.3
+          "clino": 19.3,
+          "comment": "Ion kürtő alja"
         },
         {
           "id": 16,
@@ -949,7 +914,8 @@
           "to": "Fo35",
           "length": 4.96,
           "azimuth": 349.3,
-          "clino": 61.3
+          "clino": 61.3,
+          "comment": "Ik-ban kötél mellett jobbra"
         },
         {
           "id": 17,
@@ -958,7 +924,8 @@
           "to": "Fo36",
           "length": 5.45,
           "azimuth": 178.3,
-          "clino": 81.1
+          "clino": 81.1,
+          "comment": "Ik-ban kicsi áthajlás alja"
         },
         {
           "id": 18,
@@ -967,7 +934,8 @@
           "to": "Fo37",
           "length": 2.07,
           "azimuth": 212.8,
-          "clino": 28.9
+          "clino": 28.9,
+          "comment": "nagy cseppkő után kicsi perem jobbra"
         },
         {
           "id": 19,
@@ -976,7 +944,8 @@
           "to": "Fo38",
           "length": 2.7,
           "azimuth": 58.3,
-          "clino": 61.9
+          "clino": 61.9,
+          "comment": "szem terem alja"
         },
         {
           "id": 20,
@@ -985,7 +954,8 @@
           "to": "Fo52",
           "length": 2.51,
           "azimuth": 217.37,
-          "clino": 58
+          "clino": 58,
+          "comment": "szem ureg teteje, tuskezes"
         },
         {
           "id": 21,
@@ -994,7 +964,8 @@
           "to": "Fo39",
           "length": 4.84,
           "azimuth": 227.8,
-          "clino": -0.5
+          "clino": -0.5,
+          "comment": "kiöblösödésnél belógó csücsök bal fal"
         },
         {
           "id": 22,
@@ -1003,7 +974,8 @@
           "to": "Fo40",
           "length": 3.42,
           "azimuth": 256,
-          "clino": 7.1
+          "clino": 7.1,
+          "comment": "lapos átbújás előtt jobbra"
         },
         {
           "id": 23,
@@ -1012,7 +984,8 @@
           "to": "Fo41",
           "length": 0.28,
           "azimuth": 223.3,
-          "clino": -73.7
+          "clino": -73.7,
+          "comment": "lapos átbújás előtt jobbra lejjebb"
         },
         {
           "id": 24,
@@ -1021,7 +994,8 @@
           "to": "Fo42",
           "length": 2.03,
           "azimuth": 161.2,
-          "clino": 8.8
+          "clino": 8.8,
+          "comment": "lapos átbújás után csücsök"
         },
         {
           "id": 25,
@@ -1030,7 +1004,8 @@
           "to": "Fo43",
           "length": 4.22,
           "azimuth": 253.9,
-          "clino": 14
+          "clino": 14,
+          "comment": "bal kanyarnál plafon"
         },
         {
           "id": 26,
@@ -1039,7 +1014,8 @@
           "to": "Fo44",
           "length": 4.89,
           "azimuth": 205.2,
-          "clino": -31.5
+          "clino": -31.5,
+          "comment": "kristályok felett bal fal "
         },
         {
           "id": 27,
@@ -1048,7 +1024,8 @@
           "to": "Fo45",
           "length": 1.59,
           "azimuth": 302.2,
-          "clino": -32.1
+          "clino": -32.1,
+          "comment": "jobb fal"
         },
         {
           "id": 28,
@@ -1057,7 +1034,8 @@
           "to": "Fo46",
           "length": 2.18,
           "azimuth": 244.7,
-          "clino": -11.7
+          "clino": -11.7,
+          "comment": "kapu jobb oldal"
         },
         {
           "id": 29,
@@ -1066,7 +1044,8 @@
           "to": "Fo47",
           "length": 1.98,
           "azimuth": 128.6,
-          "clino": 8.6
+          "clino": 8.6,
+          "comment": "szűk oldalág szemben"
         },
         {
           "id": 30,
@@ -1075,7 +1054,8 @@
           "to": "Fo48",
           "length": 2.64,
           "azimuth": 192.8,
-          "clino": -85.7
+          "clino": -85.7,
+          "comment": "szűk oldalág lefele vp"
         },
         {
           "id": 31,
@@ -1084,7 +1064,8 @@
           "to": "Fo49",
           "length": 0.5,
           "azimuth": 193,
-          "clino": 6.8
+          "clino": 6.8,
+          "comment": "kapu bal oldal"
         },
         {
           "id": 32,
@@ -1093,7 +1074,8 @@
           "to": "Fo50",
           "length": 1.83,
           "azimuth": 243.1,
-          "clino": -12.1
+          "clino": -12.1,
+          "comment": "fütyoforma szikla vége"
         },
         {
           "id": 33,
@@ -1102,23 +1084,14 @@
           "to": "Fo51",
           "length": 7.17,
           "azimuth": 238.5,
-          "clino": 15.1
+          "clino": 15.1,
+          "comment": "járat vége jobbra fent"
         }
       ]
     },
     {
       "name": "Agyagtornyokon túl",
-      "start": {
-        "name": "34",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644732,
-            "y": 255570,
-            "z": -57.9
-          }
-        }
-      },
+      "start": "34",
       "attributes": [],
       "shots": [
         {
@@ -1137,7 +1110,8 @@
           "to": "34m2",
           "length": 2.36,
           "azimuth": 284.3,
-          "clino": -6.2
+          "clino": -6.2,
+          "comment": "kötél ég alatt oszlop csőjárat bejárat"
         },
         {
           "id": 2,
@@ -1146,7 +1120,8 @@
           "to": "34m3",
           "length": 1.91,
           "azimuth": 313.4,
-          "clino": -32.2
+          "clino": -32.2,
+          "comment": "csőjárat letörés főte"
         },
         {
           "id": 3,
@@ -1155,7 +1130,8 @@
           "to": "34m4",
           "length": 2.99,
           "azimuth": 282.1,
-          "clino": -32.9
+          "clino": -32.9,
+          "comment": "jobb fal"
         },
         {
           "id": 4,
@@ -1164,7 +1140,8 @@
           "to": "34m5",
           "length": 2,
           "azimuth": 232,
-          "clino": -11.1
+          "clino": -11.1,
+          "comment": "lőcs középen"
         },
         {
           "id": 5,
@@ -1173,7 +1150,8 @@
           "to": "34m6",
           "length": 3.56,
           "azimuth": 280.5,
-          "clino": -0.9
+          "clino": -0.9,
+          "comment": "kőlap"
         },
         {
           "id": 6,
@@ -1182,7 +1160,8 @@
           "to": "34m7",
           "length": 2.84,
           "azimuth": 309.9,
-          "clino": 14.2
+          "clino": 14.2,
+          "comment": "falba fúrt kijelölés vég jobb fal"
         },
         {
           "id": 7,
@@ -1200,7 +1179,8 @@
           "to": "34m9",
           "length": 1.81,
           "azimuth": 273.5,
-          "clino": 22.8
+          "clino": 22.8,
+          "comment": "cseppkőcsúcs bal fal kanyar"
         },
         {
           "id": 9,
@@ -1209,7 +1189,8 @@
           "to": "34m10",
           "length": 3.05,
           "azimuth": 33.1,
-          "clino": 35.1
+          "clino": 35.1,
+          "comment": "jobb fal"
         },
         {
           "id": 10,
@@ -1218,7 +1199,8 @@
           "to": "34m12",
           "length": 1.28,
           "azimuth": 290.4,
-          "clino": 42.5
+          "clino": 42.5,
+          "comment": "bal cseppkőlefolyásos fal"
         },
         {
           "id": 11,
@@ -1227,23 +1209,14 @@
           "to": "34m13",
           "length": 4.9,
           "azimuth": 49.8,
-          "clino": 37.6
+          "clino": 37.6,
+          "comment": "szűk felmászás előtt jobb"
         }
       ]
     },
     {
       "name": "Óvóhely",
-      "start": {
-        "name": "34m13",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644712,
-            "y": 255576,
-            "z": -53.1
-          }
-        }
-      },
+      "start": "34m13",
       "attributes": [],
       "shots": [
         {
@@ -1253,7 +1226,8 @@
           "to": "34m14",
           "length": 9.6,
           "azimuth": 46.5,
-          "clino": 47.9
+          "clino": 47.9,
+          "comment": "felmászás előtt jobb fal"
         },
         {
           "id": 1,
@@ -1262,7 +1236,8 @@
           "to": "34m15",
           "length": 2.84,
           "azimuth": 33.3,
-          "clino": -30.6
+          "clino": -30.6,
+          "comment": "felmászás tetején jobb fal"
         },
         {
           "id": 2,
@@ -1271,7 +1246,8 @@
           "to": "34m16",
           "length": 1.34,
           "azimuth": 17.8,
-          "clino": 16.9
+          "clino": 16.9,
+          "comment": "derékszögű kanyar bal perem"
         },
         {
           "id": 3,
@@ -1280,7 +1256,8 @@
           "to": "34m17",
           "length": 3.77,
           "azimuth": 56.6,
-          "clino": 73.5
+          "clino": 73.5,
+          "comment": "omladék felé fellövés vp"
         },
         {
           "id": 4,
@@ -1289,7 +1266,8 @@
           "to": "34m18",
           "length": 3.78,
           "azimuth": 270.2,
-          "clino": -1.5
+          "clino": -1.5,
+          "comment": "kerített rész előtt bal fal"
         },
         {
           "id": 5,
@@ -1298,7 +1276,8 @@
           "to": "34m19",
           "length": 4.99,
           "azimuth": 63,
-          "clino": 41.8
+          "clino": 41.8,
+          "comment": "omladék felé fellövés vp"
         },
         {
           "id": 6,
@@ -1307,7 +1286,8 @@
           "to": "34m20",
           "length": 7.67,
           "azimuth": 269.6,
-          "clino": -4.8
+          "clino": -4.8,
+          "comment": "jobb fal omladék után"
         },
         {
           "id": 7,
@@ -1316,7 +1296,8 @@
           "to": "34m21",
           "length": 2,
           "azimuth": 263.8,
-          "clino": -12.8
+          "clino": -12.8,
+          "comment": "bal fal, has alja"
         },
         {
           "id": 8,
@@ -1325,7 +1306,8 @@
           "to": "34m22",
           "length": 2.27,
           "azimuth": 323.6,
-          "clino": 13.4
+          "clino": 13.4,
+          "comment": "agyagbefolyásba vp"
         },
         {
           "id": 9,
@@ -1334,7 +1316,8 @@
           "to": "34m23",
           "length": 2.54,
           "azimuth": 269.6,
-          "clino": -13
+          "clino": -13,
+          "comment": "szűkület bal csücsök"
         },
         {
           "id": 10,
@@ -1343,7 +1326,8 @@
           "to": "34m24",
           "length": 3.9,
           "azimuth": 298.3,
-          "clino": 4.3
+          "clino": 4.3,
+          "comment": "jobb oldal belógó csücsök"
         },
         {
           "id": 11,
@@ -1352,7 +1336,8 @@
           "to": "34m25",
           "length": 4.93,
           "azimuth": 238.7,
-          "clino": -2.5
+          "clino": -2.5,
+          "comment": "kis terem bal oldal"
         },
         {
           "id": 12,
@@ -1361,7 +1346,8 @@
           "to": "34m26",
           "length": 2.82,
           "azimuth": 271.6,
-          "clino": 16.6
+          "clino": 16.6,
+          "comment": "kuszoda végén hasadék vp"
         },
         {
           "id": 13,
@@ -1370,7 +1356,8 @@
           "to": "34m27",
           "length": 6.18,
           "azimuth": 308.4,
-          "clino": 64.4
+          "clino": 64.4,
+          "comment": "megosztás után jobbra fent"
         },
         {
           "id": 14,
@@ -1379,7 +1366,8 @@
           "to": "34m28",
           "length": 2.62,
           "azimuth": 72.5,
-          "clino": 66.8
+          "clino": 66.8,
+          "comment": "Óvóhely bemászással szemben jobbra fel"
         },
         {
           "id": 15,
@@ -1388,7 +1376,8 @@
           "to": "34m29",
           "length": 0.76,
           "azimuth": 125.9,
-          "clino": 0.8
+          "clino": 0.8,
+          "comment": "felmászás alatt - eltűnt"
         },
         {
           "id": 16,
@@ -1397,7 +1386,8 @@
           "to": "34m30",
           "length": 3.33,
           "azimuth": 294.6,
-          "clino": 3.4
+          "clino": 3.4,
+          "comment": "szép rész vp"
         },
         {
           "id": 17,
@@ -1406,7 +1396,8 @@
           "to": "34m31",
           "length": 1.11,
           "azimuth": 154.6,
-          "clino": 41.6
+          "clino": 41.6,
+          "comment": "felmászás alatt vp"
         },
         {
           "id": 18,
@@ -1415,7 +1406,8 @@
           "to": "34m32",
           "length": 4.01,
           "azimuth": 102.9,
-          "clino": 65.9
+          "clino": 65.9,
+          "comment": "híd után jobb fal"
         },
         {
           "id": 19,
@@ -1424,7 +1416,8 @@
           "to": "34m33",
           "length": 3.26,
           "azimuth": 69.4,
-          "clino": 73.3
+          "clino": 73.3,
+          "comment": "kötél felett bal fal homorulatban"
         },
         {
           "id": 20,
@@ -1433,7 +1426,8 @@
           "to": "34m34",
           "length": 1.4,
           "azimuth": 180.4,
-          "clino": 13.4
+          "clino": 13.4,
+          "comment": "kötél után jobbra hason fent"
         },
         {
           "id": 21,
@@ -1442,7 +1436,8 @@
           "to": "34m35",
           "length": 2.93,
           "azimuth": 210.2,
-          "clino": 9.5
+          "clino": 9.5,
+          "comment": "befolyásból legurult kő vp"
         },
         {
           "id": 22,
@@ -1451,7 +1446,8 @@
           "to": "34m36",
           "length": 3.44,
           "azimuth": 272.8,
-          "clino": 43.6
+          "clino": 43.6,
+          "comment": "belövés a befolyásba vp"
         },
         {
           "id": 23,
@@ -1460,7 +1456,8 @@
           "to": "34m37",
           "length": 2,
           "azimuth": 186.2,
-          "clino": 0.1
+          "clino": 0.1,
+          "comment": "szűk átbújás plafon"
         },
         {
           "id": 24,
@@ -1469,7 +1466,8 @@
           "to": "34m37a",
           "length": 4.04,
           "azimuth": 231.3,
-          "clino": 11.8
+          "clino": 11.8,
+          "comment": "oszloponszerűségen"
         },
         {
           "id": 25,
@@ -1478,7 +1476,8 @@
           "to": "34m38",
           "length": 2.63,
           "azimuth": 225.6,
-          "clino": 39.4
+          "clino": 39.4,
+          "comment": "elágazásnál jobbra plafon"
         },
         {
           "id": 26,
@@ -1487,7 +1486,8 @@
           "to": "34m38a",
           "length": 2.52,
           "azimuth": 130.7,
-          "clino": -30.4
+          "clino": -30.4,
+          "comment": "kalcitdarabos szűkület bal fal vp?"
         },
         {
           "id": 27,
@@ -1496,7 +1496,8 @@
           "to": "34m39",
           "length": 0.92,
           "azimuth": 186.6,
-          "clino": 11.5
+          "clino": 11.5,
+          "comment": "kalcitdarabos hasadék bal fal vp"
         },
         {
           "id": 28,
@@ -1505,7 +1506,8 @@
           "to": "34m40",
           "length": 3.13,
           "azimuth": 238.3,
-          "clino": 47.2
+          "clino": 47.2,
+          "comment": "belövés a végére a cseppkövekre vp"
         },
         {
           "id": 29,
@@ -1514,7 +1516,8 @@
           "to": "34m41",
           "length": 0.91,
           "azimuth": 250.1,
-          "clino": -3.8
+          "clino": -3.8,
+          "comment": "jobb oldali végpont felé szűkület bal perem"
         },
         {
           "id": 30,
@@ -1523,7 +1526,8 @@
           "to": "34m42",
           "length": 2.51,
           "azimuth": 242.4,
-          "clino": 21.1
+          "clino": 21.1,
+          "comment": "belövés a végére vp"
         },
         {
           "id": 31,
@@ -1532,7 +1536,8 @@
           "to": "34m43",
           "length": 6.48,
           "azimuth": 62.8,
-          "clino": -17.1
+          "clino": -17.1,
+          "comment": "jelölés vége felett jobb perem"
         },
         {
           "id": 32,
@@ -1541,23 +1546,14 @@
           "to": "34m44",
           "length": 6.11,
           "azimuth": 59.7,
-          "clino": 1.9
+          "clino": 1.9,
+          "comment": "szép részbe belövés vp"
         }
       ]
     },
     {
       "name": "Zacsis eleje",
-      "start": {
-        "name": "34m12",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644708,
-            "y": 255574,
-            "z": -55.3
-          }
-        }
-      },
+      "start": "34m12",
       "attributes": [],
       "shots": [
         {
@@ -1585,7 +1581,8 @@
           "to": "34z3",
           "length": 2.39,
           "azimuth": 202.7,
-          "clino": -62.8
+          "clino": -62.8,
+          "comment": "kötél alatt nagy kő fenti csücsök"
         },
         {
           "id": 3,
@@ -1594,7 +1591,8 @@
           "to": "34z4",
           "length": 1.94,
           "azimuth": 3.7,
-          "clino": -38
+          "clino": -38,
+          "comment": "dupla kötél alatt elág"
         },
         {
           "id": 4,
@@ -1603,7 +1601,8 @@
           "to": "34z5",
           "length": 3.85,
           "azimuth": 258,
-          "clino": -6.1
+          "clino": -6.1,
+          "comment": "oldalág vége"
         },
         {
           "id": 5,
@@ -1657,7 +1656,8 @@
           "to": "34z11",
           "length": 3.09,
           "azimuth": 214.5,
-          "clino": -56.7
+          "clino": -56.7,
+          "comment": "hasadék lent jobb fal"
         },
         {
           "id": 11,
@@ -1684,23 +1684,14 @@
           "to": "34z14",
           "length": 3.59,
           "azimuth": 210.4,
-          "clino": 67.6
+          "clino": 67.6,
+          "comment": "hasadék utáni kő felett jobbra"
         }
       ]
     },
     {
       "name": "Frodó",
-      "start": {
-        "name": "34z14",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644693,
-            "y": 255554,
-            "z": -52.2
-          }
-        }
-      },
+      "start": "34z14",
       "attributes": [],
       "shots": [
         {
@@ -1737,7 +1728,8 @@
           "to": "F4",
           "length": 3.14,
           "azimuth": 190.7,
-          "clino": 27.5
+          "clino": 27.5,
+          "comment": "kötél alatt bal fal"
         },
         {
           "id": 4,
@@ -1746,7 +1738,8 @@
           "to": "F5",
           "length": 5.97,
           "azimuth": 294,
-          "clino": 77.1
+          "clino": 77.1,
+          "comment": "kötél felett balra"
         },
         {
           "id": 5,
@@ -1755,7 +1748,8 @@
           "to": "F6",
           "length": 2.84,
           "azimuth": 86,
-          "clino": 45.3
+          "clino": 45.3,
+          "comment": "szemben nagy kő"
         },
         {
           "id": 6,
@@ -1764,7 +1758,8 @@
           "to": "F7",
           "length": 2.37,
           "azimuth": 15.4,
-          "clino": -19.9
+          "clino": -19.9,
+          "comment": "jobb fal elágazásnál"
         },
         {
           "id": 7,
@@ -1800,7 +1795,8 @@
           "to": "F11",
           "length": 2.72,
           "azimuth": 245.2,
-          "clino": 33
+          "clino": 33,
+          "comment": "huzatoló végpont VP"
         },
         {
           "id": 11,
@@ -1836,7 +1832,8 @@
           "to": "F15",
           "length": 1.54,
           "azimuth": 199.4,
-          "clino": 37.9
+          "clino": 37.9,
+          "comment": "kötelek 2 végénél bal fal"
         },
         {
           "id": 15,
@@ -1854,7 +1851,8 @@
           "to": "F17",
           "length": 2.61,
           "azimuth": 181.1,
-          "clino": 54.4
+          "clino": 54.4,
+          "comment": "kötél teteje TKval szembe falon"
         },
         {
           "id": 17,
@@ -1863,7 +1861,8 @@
           "to": "F18",
           "length": 3.09,
           "azimuth": 33.9,
-          "clino": 37.7
+          "clino": 37.7,
+          "comment": "csőjárat VP"
         },
         {
           "id": 18,
@@ -1872,7 +1871,8 @@
           "to": "F19",
           "length": 2.01,
           "azimuth": 234.3,
-          "clino": 16.7
+          "clino": 16.7,
+          "comment": "travi túlfele"
         },
         {
           "id": 19,
@@ -1890,7 +1890,8 @@
           "to": "F23",
           "length": 8.6,
           "azimuth": 216,
-          "clino": 6
+          "clino": 6,
+          "comment": "fenti tágulatnál bal fal fent "
         },
         {
           "id": 21,
@@ -1899,7 +1900,8 @@
           "to": "F24",
           "length": 2.11,
           "azimuth": 240,
-          "clino": -21.7
+          "clino": -21.7,
+          "comment": "jobb fal kukacnyomnál"
         },
         {
           "id": 22,
@@ -1989,7 +1991,8 @@
           "to": "F34",
           "length": 3.87,
           "azimuth": 265.9,
-          "clino": 36.8
+          "clino": 36.8,
+          "comment": "kötélen lógva jobb fal"
         },
         {
           "id": 32,
@@ -1998,7 +2001,8 @@
           "to": "F35",
           "length": 4.37,
           "azimuth": 251.3,
-          "clino": 40.1
+          "clino": 40.1,
+          "comment": "felmászás vége plafon"
         },
         {
           "id": 33,
@@ -2007,7 +2011,8 @@
           "to": "F36",
           "length": 2.76,
           "azimuth": 342.1,
-          "clino": -18.2
+          "clino": -18.2,
+          "comment": "oldalfülke felett nagy kő fölött"
         },
         {
           "id": 34,
@@ -2016,7 +2021,8 @@
           "to": "F37",
           "length": 2.17,
           "azimuth": 106.6,
-          "clino": -71.2
+          "clino": -71.2,
+          "comment": "visszaforduló lefolyás VP"
         },
         {
           "id": 35,
@@ -2088,7 +2094,8 @@
           "to": "F45",
           "length": 8.44,
           "azimuth": 128.9,
-          "clino": -41.9
+          "clino": -41.9,
+          "comment": "mosott rész felett"
         },
         {
           "id": 43,
@@ -2097,7 +2104,8 @@
           "to": "F46",
           "length": 1.1,
           "azimuth": 162.5,
-          "clino": -12.3
+          "clino": -12.3,
+          "comment": "bal nyúlvány jobb fal"
         },
         {
           "id": 44,
@@ -2106,7 +2114,8 @@
           "to": "F47",
           "length": 1.87,
           "azimuth": 243.7,
-          "clino": -14.3
+          "clino": -14.3,
+          "comment": "cápanyél"
         },
         {
           "id": 45,
@@ -2142,7 +2151,8 @@
           "to": "F51",
           "length": 2.25,
           "azimuth": 157.1,
-          "clino": -25.9
+          "clino": -25.9,
+          "comment": "átbújás plafon"
         },
         {
           "id": 49,
@@ -2151,7 +2161,8 @@
           "to": "F52",
           "length": 2.2,
           "azimuth": 151.9,
-          "clino": 4.1
+          "clino": 4.1,
+          "comment": "terembe benyúló sziklanyelv"
         },
         {
           "id": 50,
@@ -2160,7 +2171,8 @@
           "to": "F53",
           "length": 4.83,
           "azimuth": 116.2,
-          "clino": -21.6
+          "clino": -21.6,
+          "comment": "Y alatt 2-3 méterrel jobb fal"
         },
         {
           "id": 51,
@@ -2169,7 +2181,8 @@
           "to": "F54",
           "length": 0.32,
           "azimuth": 125.1,
-          "clino": -74.5
+          "clino": -74.5,
+          "comment": "kicsit lejjebb VP"
         },
         {
           "id": 52,
@@ -2178,7 +2191,8 @@
           "to": "F55",
           "length": 4.43,
           "azimuth": 138.4,
-          "clino": -73
+          "clino": -73,
+          "comment": "kötél alja"
         },
         {
           "id": 53,
@@ -2187,7 +2201,8 @@
           "to": "F56",
           "length": 5.54,
           "azimuth": 109.1,
-          "clino": -6.4
+          "clino": -6.4,
+          "comment": "terem közepén nagy kő"
         },
         {
           "id": 54,
@@ -2196,7 +2211,8 @@
           "to": "F57",
           "length": 4.14,
           "azimuth": 92,
-          "clino": 3
+          "clino": 3,
+          "comment": "plafon hasadék jobb oldala plafon"
         },
         {
           "id": 55,
@@ -2205,7 +2221,8 @@
           "to": "F58",
           "length": 6.87,
           "azimuth": 98.7,
-          "clino": -42.3
+          "clino": -42.3,
+          "comment": "lejtő alján jobb kanyar előtt"
         },
         {
           "id": 56,
@@ -2214,7 +2231,8 @@
           "to": "F59",
           "length": 2.73,
           "azimuth": 180.5,
-          "clino": -20.4
+          "clino": -20.4,
+          "comment": "kiöblösödés előtt"
         },
         {
           "id": 57,
@@ -2223,7 +2241,8 @@
           "to": "F60",
           "length": 6.46,
           "azimuth": 79.8,
-          "clino": -7.9
+          "clino": -7.9,
+          "comment": "bal fal magasan travizva elérhető"
         },
         {
           "id": 58,
@@ -2250,7 +2269,8 @@
           "to": "F63",
           "length": 2.32,
           "azimuth": 72.9,
-          "clino": 1.9
+          "clino": 1.9,
+          "comment": "gömbfülke jobbra szemben"
         },
         {
           "id": 61,
@@ -2259,7 +2279,8 @@
           "to": "F62a",
           "length": 2.69,
           "azimuth": 100.5,
-          "clino": -47.7
+          "clino": -47.7,
+          "comment": "bontott hasadékban jobb fal"
         },
         {
           "id": 62,
@@ -2268,7 +2289,8 @@
           "to": "F62b",
           "length": 2.13,
           "azimuth": 97.4,
-          "clino": -34.4
+          "clino": -34.4,
+          "comment": "belövés az agyagra VP"
         },
         {
           "id": 63,
@@ -2319,17 +2341,7 @@
     },
     {
       "name": "Paludárium",
-      "start": {
-        "name": "21",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644751,
-            "y": 255565,
-            "z": -51.1
-          }
-        }
-      },
+      "start": "21",
       "attributes": [],
       "shots": [
         {
@@ -2339,7 +2351,8 @@
           "to": "Pa1",
           "length": 6.2,
           "azimuth": 137.4,
-          "clino": -11.9
+          "clino": -11.9,
+          "comment": "bebújás felett kőcsücsök"
         },
         {
           "id": 1,
@@ -2348,7 +2361,8 @@
           "to": "Pa2",
           "length": 1.37,
           "azimuth": 110.2,
-          "clino": -44.9
+          "clino": -44.9,
+          "comment": "bebújás bal fal"
         },
         {
           "id": 2,
@@ -2357,7 +2371,8 @@
           "to": "Pa3",
           "length": 1.45,
           "azimuth": 197.4,
-          "clino": -15.5
+          "clino": -15.5,
+          "comment": "kőfogó melletti kő jobbra"
         },
         {
           "id": 3,
@@ -2366,7 +2381,8 @@
           "to": "Pa4",
           "length": 1.57,
           "azimuth": 171.6,
-          "clino": -39.8
+          "clino": -39.8,
+          "comment": "átbújás plafon"
         },
         {
           "id": 4,
@@ -2375,7 +2391,8 @@
           "to": "Pa5",
           "length": 1.69,
           "azimuth": 233.2,
-          "clino": -13.5
+          "clino": -13.5,
+          "comment": "behajló kő alja jobbra"
         },
         {
           "id": 5,
@@ -2384,7 +2401,8 @@
           "to": "Pa6",
           "length": 1.52,
           "azimuth": 209.6,
-          "clino": -5.5
+          "clino": -5.5,
+          "comment": "kő kanyarban jobbra"
         },
         {
           "id": 6,
@@ -2393,7 +2411,8 @@
           "to": "Pa7",
           "length": 2.65,
           "azimuth": 127.1,
-          "clino": -24.4
+          "clino": -24.4,
+          "comment": "lemászásnál jobb agyagos fal"
         },
         {
           "id": 7,
@@ -2402,7 +2421,8 @@
           "to": "Pa8",
           "length": 2.75,
           "azimuth": 75.8,
-          "clino": -13.6
+          "clino": -13.6,
+          "comment": "bal fal, enyhe élen"
         },
         {
           "id": 8,
@@ -2411,7 +2431,8 @@
           "to": "Pa9",
           "length": 5.21,
           "azimuth": 110.1,
-          "clino": -24.4
+          "clino": -24.4,
+          "comment": "csepkköves átlépés feletti fogáson"
         },
         {
           "id": 9,
@@ -2420,7 +2441,8 @@
           "to": "Pa10",
           "length": 4.94,
           "azimuth": 84.3,
-          "clino": -9.2
+          "clino": -9.2,
+          "comment": "bal fal hasszerű íven"
         },
         {
           "id": 10,
@@ -2429,7 +2451,8 @@
           "to": "Pa11",
           "length": 4.27,
           "azimuth": 88.6,
-          "clino": 17.3
+          "clino": 17.3,
+          "comment": "körtő alatt bal fal él"
         },
         {
           "id": 11,
@@ -2438,7 +2461,8 @@
           "to": "Pa12",
           "length": 2.27,
           "azimuth": 119.8,
-          "clino": -21.4
+          "clino": -21.4,
+          "comment": "behajló kőpenge"
         },
         {
           "id": 12,
@@ -2447,7 +2471,8 @@
           "to": "Pa13",
           "length": 2.57,
           "azimuth": 111.4,
-          "clino": -6.6
+          "clino": -6.6,
+          "comment": "belövés a kutyaólba VP"
         },
         {
           "id": 13,
@@ -2456,7 +2481,8 @@
           "to": "Pa14",
           "length": 3.4,
           "azimuth": 139.5,
-          "clino": 71
+          "clino": 71,
+          "comment": "cseppköves átlépés felett magasan plafon"
         },
         {
           "id": 14,
@@ -2465,23 +2491,14 @@
           "to": "Pa15",
           "length": 8.85,
           "azimuth": 170.9,
-          "clino": 13.1
+          "clino": 13.1,
+          "comment": "cseppkőlefolyás felett bal plafon"
         }
       ]
     },
     {
       "name": "Párazáró",
-      "start": {
-        "name": "Pa15",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644763,
-            "y": 255543,
-            "z": -54
-          }
-        }
-      },
+      "start": "Pa15",
       "attributes": [],
       "shots": [
         {
@@ -2605,17 +2622,7 @@
     },
     {
       "name": "Paludárium-Felső",
-      "start": {
-        "name": "Pa14",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644762,
-            "y": 255551,
-            "z": -56
-          }
-        }
-      },
+      "start": "Pa14",
       "attributes": [],
       "shots": [
         {
@@ -3063,17 +3070,7 @@
     },
     {
       "name": "Felhő-ág",
-      "start": {
-        "name": "F56",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644705,
-            "y": 255522,
-            "z": -67.1
-          }
-        }
-      },
+      "start": "F56",
       "attributes": [],
       "shots": [
         {
@@ -3092,7 +3089,8 @@
           "to": "Ka2",
           "length": 3.79,
           "azimuth": 228.8,
-          "clino": -53.3
+          "clino": -53.3,
+          "comment": "lemászás kacitos falon"
         },
         {
           "id": 2,
@@ -3101,7 +3099,8 @@
           "to": "Ka3",
           "length": 2.3,
           "azimuth": 134.3,
-          "clino": -4.9
+          "clino": -4.9,
+          "comment": "átbújás bal fal"
         },
         {
           "id": 3,
@@ -3155,7 +3154,8 @@
           "to": "Ka9",
           "length": 5.08,
           "azimuth": 118.8,
-          "clino": 67.4
+          "clino": 67.4,
+          "comment": "kötél felett plafon"
         },
         {
           "id": 9,
@@ -3173,7 +3173,8 @@
           "to": "Ka11",
           "length": 5.03,
           "azimuth": 67.7,
-          "clino": 49.5
+          "clino": 49.5,
+          "comment": "feltravi felett"
         },
         {
           "id": 11,
@@ -3182,7 +3183,8 @@
           "to": "Ka12",
           "length": 5.98,
           "azimuth": 268,
-          "clino": 3
+          "clino": 3,
+          "comment": "átmászás után bal fal"
         },
         {
           "id": 12,
@@ -3191,7 +3193,8 @@
           "to": "Ka13",
           "length": 3.36,
           "azimuth": 277.7,
-          "clino": 7.4
+          "clino": 7.4,
+          "comment": "második szűkület bal, oldal"
         },
         {
           "id": 13,
@@ -3200,7 +3203,8 @@
           "to": "Ka14",
           "length": 8.46,
           "azimuth": 274.5,
-          "clino": 0.3
+          "clino": 0.3,
+          "comment": "terem végén a kanyarnál"
         },
         {
           "id": 14,
@@ -3209,7 +3213,8 @@
           "to": "Ka15",
           "length": 2.31,
           "azimuth": 9.5,
-          "clino": 39.1
+          "clino": 39.1,
+          "comment": "felbújással szemben"
         },
         {
           "id": 15,
@@ -3218,23 +3223,14 @@
           "to": "Ka16",
           "length": 2.99,
           "azimuth": 252,
-          "clino": 7.9
+          "clino": 7.9,
+          "comment": "repedés terem végén VP"
         }
       ]
     },
     {
       "name": "Paludárium_Tejfel-kürto",
-      "start": {
-        "name": "Pa7",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644754,
-            "y": 255554,
-            "z": -56.4
-          }
-        }
-      },
+      "start": "Pa7",
       "attributes": [],
       "shots": [
         {
@@ -3277,17 +3273,7 @@
     },
     {
       "name": "Paludárium_Buzogányos-kürto",
-      "start": {
-        "name": "Padf3-a",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644777,
-            "y": 255545,
-            "z": -56.1
-          }
-        }
-      },
+      "start": "Padf3-a",
       "attributes": [],
       "shots": [
         {
@@ -3297,7 +3283,8 @@
           "to": "PB1",
           "length": 5.62,
           "azimuth": 174.2,
-          "clino": 86.6
+          "clino": 86.6,
+          "comment": "megosztás mellett kicsi álló cseppkő jelölés nélkü"
         },
         {
           "id": 1,
@@ -3306,7 +3293,8 @@
           "to": "PB2",
           "length": 3.66,
           "azimuth": 350.8,
-          "clino": 64.2
+          "clino": 64.2,
+          "comment": "kerek cseppkőplatócska jelölés nélkül"
         },
         {
           "id": 2,
@@ -3315,7 +3303,8 @@
           "to": "PB3",
           "length": 2.74,
           "azimuth": 300.7,
-          "clino": 63.9
+          "clino": 63.9,
+          "comment": "kerek cseppkőplatócska jelölés nélkül"
         },
         {
           "id": 3,
@@ -3324,7 +3313,8 @@
           "to": "PB4",
           "length": 2.23,
           "azimuth": 296.3,
-          "clino": 60.7
+          "clino": 60.7,
+          "comment": "bal fal sziklacsücsök"
         },
         {
           "id": 4,
@@ -3333,7 +3323,8 @@
           "to": "PB5",
           "length": 2.14,
           "azimuth": 182,
-          "clino": 51.9
+          "clino": 51.9,
+          "comment": "kereszthasadék jobb dudor"
         },
         {
           "id": 5,
@@ -3342,23 +3333,14 @@
           "to": "PB6",
           "length": 0.16,
           "azimuth": 171.4,
-          "clino": 65.3
+          "clino": 65.3,
+          "comment": "a kötél kikötési hídjáról cseppköves fülkében vp"
         }
       ]
     },
     {
       "name": "Lapidárium",
-      "start": {
-        "name": "Padf24",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644801,
-            "y": 255521,
-            "z": -47.2
-          }
-        }
-      },
+      "start": "Padf24",
       "attributes": [],
       "shots": [
         {
@@ -3377,7 +3359,8 @@
           "to": "Lapi2",
           "length": 2.92,
           "azimuth": 344,
-          "clino": -71.4
+          "clino": -71.4,
+          "comment": "Lebújásnál a kő amire lepunk, a továbbhaladást fel"
         },
         {
           "id": 2,
@@ -3386,7 +3369,8 @@
           "to": "Lapi3",
           "length": 3.88,
           "azimuth": 197,
-          "clino": -0.5
+          "clino": -0.5,
+          "comment": "Akna beszallasa előtti bal fal csucsok "
         },
         {
           "id": 3,
@@ -3395,7 +3379,8 @@
           "to": "Lapi4",
           "length": 3.75,
           "azimuth": 215.2,
-          "clino": -17.1
+          "clino": -17.1,
+          "comment": "Hasadékba jobbra lefolyáson"
         },
         {
           "id": 4,
@@ -3404,7 +3389,8 @@
           "to": "Lapi5",
           "length": 8.22,
           "azimuth": 239.4,
-          "clino": 14.8
+          "clino": 14.8,
+          "comment": "vesztett pont jobbra hasadek szukjébe"
         },
         {
           "id": 5,
@@ -3413,7 +3399,8 @@
           "to": "Lapi6",
           "length": 8.99,
           "azimuth": 40.5,
-          "clino": -86.1
+          "clino": -86.1,
+          "comment": "aknatalp"
         },
         {
           "id": 6,
@@ -3422,7 +3409,8 @@
           "to": "Lapi7",
           "length": 2.88,
           "azimuth": 348.3,
-          "clino": 40
+          "clino": 40,
+          "comment": "Aknatalptol visszafelé hasadékban bal fal"
         },
         {
           "id": 7,
@@ -3431,7 +3419,8 @@
           "to": "Lapi8",
           "length": 3.93,
           "azimuth": 7.5,
-          "clino": -67.4
+          "clino": -67.4,
+          "comment": "atbumas utan balra egesz lent"
         },
         {
           "id": 8,
@@ -3467,7 +3456,8 @@
           "to": "Lapi12",
           "length": 2.7,
           "azimuth": 173.1,
-          "clino": 44.7
+          "clino": 44.7,
+          "comment": "Felmaszas utan jobbra kb 30cm magasan"
         },
         {
           "id": 12,
@@ -3494,7 +3484,8 @@
           "to": "Lapi15",
           "length": 1.89,
           "azimuth": 22.8,
-          "clino": -25.5
+          "clino": -25.5,
+          "comment": "Befordulas utan jobbra kiálló pont végén "
         },
         {
           "id": 15,
@@ -3503,7 +3494,8 @@
           "to": "Lapi16",
           "length": 2.83,
           "azimuth": 6.6,
-          "clino": -25.6
+          "clino": -25.6,
+          "comment": "Nagy kő felett balra kiálló ponton"
         },
         {
           "id": 16,
@@ -3512,7 +3504,8 @@
           "to": "Lapi17",
           "length": 5.23,
           "azimuth": 4.8,
-          "clino": 71.9
+          "clino": 71.9,
+          "comment": "Vesztett pont a kürtő tetején "
         },
         {
           "id": 17,
@@ -3521,7 +3514,8 @@
           "to": "Lapi18",
           "length": 2.43,
           "azimuth": 127.7,
-          "clino": -47.3
+          "clino": -47.3,
+          "comment": "jobbra le, jobb oldali falon"
         },
         {
           "id": 18,
@@ -3539,7 +3533,8 @@
           "to": "Lapi20",
           "length": 5.27,
           "azimuth": 192.6,
-          "clino": 33.7
+          "clino": 33.7,
+          "comment": "Bebujas után jobbra fel a nagy kőzettőmbön"
         },
         {
           "id": 20,
@@ -3575,7 +3570,8 @@
           "to": "Lapi24",
           "length": 3.73,
           "azimuth": 197.4,
-          "clino": -2.8
+          "clino": -2.8,
+          "comment": "Szukulet előtt plafonon a kocsucson"
         },
         {
           "id": 24,
@@ -3584,7 +3580,8 @@
           "to": "Lapi25",
           "length": 0.82,
           "azimuth": 203,
-          "clino": 5.2
+          "clino": 5.2,
+          "comment": "Szukulet tetején V-ben"
         },
         {
           "id": 25,
@@ -3611,7 +3608,8 @@
           "to": "Lapi28",
           "length": 2.9,
           "azimuth": 336.4,
-          "clino": -1.7
+          "clino": -1.7,
+          "comment": "Elosztóban a lefelé tartó felett a tuloldalon bal "
         },
         {
           "id": 28,
@@ -3629,7 +3627,8 @@
           "to": "Lapi30",
           "length": 4.12,
           "azimuth": 197.2,
-          "clino": -59.7
+          "clino": -59.7,
+          "comment": "Lemászásnal, tovabbmaszas elott kb 1,5 m magasan b"
         },
         {
           "id": 30,
@@ -3638,7 +3637,8 @@
           "to": "Lapi31",
           "length": 1.94,
           "azimuth": 307,
-          "clino": -7.4
+          "clino": -7.4,
+          "comment": "Szép ág eleje jobb fal"
         },
         {
           "id": 31,
@@ -3647,7 +3647,8 @@
           "to": "Lapi32",
           "length": 1.05,
           "azimuth": 336.4,
-          "clino": -74.5
+          "clino": -74.5,
+          "comment": "Lebujas bal oldala"
         },
         {
           "id": 32,
@@ -3656,7 +3657,8 @@
           "to": "Lapi33",
           "length": 3.26,
           "azimuth": 195.9,
-          "clino": -64.2
+          "clino": -64.2,
+          "comment": "Került kő jobb oldalán (balra)"
         },
         {
           "id": 33,
@@ -3674,7 +3676,8 @@
           "to": "Lapi35",
           "length": 0.94,
           "azimuth": 185.1,
-          "clino": -21.3
+          "clino": -21.3,
+          "comment": "Segédpont"
         },
         {
           "id": 35,
@@ -3683,7 +3686,8 @@
           "to": "Lapi36",
           "length": 1.45,
           "azimuth": 182.7,
-          "clino": 22.4
+          "clino": 22.4,
+          "comment": "kis köteles akna felett balra"
         },
         {
           "id": 36,
@@ -3701,7 +3705,8 @@
           "to": "Lapi38",
           "length": 2.6,
           "azimuth": 184.7,
-          "clino": -38.6
+          "clino": -38.6,
+          "comment": "Pelenterem bebujas elotti bal fal"
         },
         {
           "id": 38,
@@ -3710,7 +3715,8 @@
           "to": "Lapi39",
           "length": 4.96,
           "azimuth": 252,
-          "clino": -29.4
+          "clino": -29.4,
+          "comment": "Pele terem (Ossarium) jelolt resz bal oldalt kialő"
         },
         {
           "id": 39,
@@ -3719,7 +3725,8 @@
           "to": "Lapi40",
           "length": 3.19,
           "azimuth": 272.6,
-          "clino": -31.4
+          "clino": -31.4,
+          "comment": "átjaro jobb oldalán még fent"
         },
         {
           "id": 40,
@@ -3755,7 +3762,8 @@
           "to": "Lapi44",
           "length": 3.24,
           "azimuth": 277,
-          "clino": -2.3
+          "clino": -2.3,
+          "comment": "Beszukülo részén bal alul"
         },
         {
           "id": 44,
@@ -3764,7 +3772,8 @@
           "to": "Lapi45",
           "length": 4.1,
           "azimuth": 182.9,
-          "clino": 85.6
+          "clino": 85.6,
+          "comment": "akna tetején élen"
         },
         {
           "id": 45,
@@ -3836,23 +3845,14 @@
           "to": "Lapi55",
           "length": 2.41,
           "azimuth": 245,
-          "clino": -8.4
+          "clino": -8.4,
+          "comment": "55. vesztett pont"
         }
       ]
     },
     {
       "name": "Plöm plöm hasadék",
-      "start": {
-        "name": "Lapi46",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644801,
-            "y": 255521,
-            "z": -47.2
-          }
-        }
-      },
+      "start": "Lapi46",
       "attributes": [],
       "shots": [
         {
@@ -3871,7 +3871,8 @@
           "to": "Plm2",
           "length": 0.89,
           "azimuth": 333.9,
-          "clino": -43.5
+          "clino": -43.5,
+          "comment": "Plömplöm bebujassal szemben falon"
         },
         {
           "id": 2,
@@ -4075,17 +4076,7 @@
     },
     {
       "name": "Bigyó-ág",
-      "start": {
-        "name": "Lapi40",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644801,
-            "y": 255521,
-            "z": -47.2
-          }
-        }
-      },
+      "start": "Lapi40",
       "attributes": [],
       "shots": [
         {
@@ -4713,17 +4704,7 @@
     },
     {
       "name": "Neptun-kürtő",
-      "start": {
-        "name": "Lapi41",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644801,
-            "y": 255521,
-            "z": -47.2
-          }
-        }
-      },
+      "start": "Lapi41",
       "attributes": [],
       "shots": [
         {
@@ -4751,7 +4732,8 @@
           "to": "U3",
           "length": 3.21,
           "azimuth": 96.3,
-          "clino": 4.4
+          "clino": 4.4,
+          "comment": "elagazasnal felfele jobb fal"
         },
         {
           "id": 3,
@@ -4793,17 +4775,7 @@
     },
     {
       "name": "Paszuly-kürtő, Felszínkarcoló",
-      "start": {
-        "name": "MSz55",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644801,
-            "y": 255521,
-            "z": -47.2
-          }
-        }
-      },
+      "start": "MSz55",
       "attributes": [],
       "shots": [
         {
@@ -5056,7 +5028,8 @@
           "to": "MO21",
           "length": 3.63,
           "azimuth": 221,
-          "clino": 4.2
+          "clino": 4.2,
+          "comment": "bebujas utan fosszil cseppko dudor"
         },
         {
           "id": 28,
@@ -5065,23 +5038,14 @@
           "to": "MO22",
           "length": 3.18,
           "azimuth": 230,
-          "clino": 56.4
+          "clino": 56.4,
+          "comment": "tormelekben felfele vesztett pont"
         }
       ]
     },
     {
       "name": "Octopus",
-      "start": {
-        "name": "MSz70",
-        "station": {
-          "type": "center",
-          "position": {
-            "x": 644801,
-            "y": 255521,
-            "z": -47.2
-          }
-        }
-      },
+      "start": "MSz70",
       "attributes": [],
       "shots": [
         {
@@ -5100,7 +5064,8 @@
           "to": "Octp2",
           "length": 2.19,
           "azimuth": 189.4,
-          "clino": 43
+          "clino": 43,
+          "comment": "csúszda után alsó bütyök "
         },
         {
           "id": 2,
@@ -5145,7 +5110,8 @@
           "to": "Octp7",
           "length": 5.45,
           "azimuth": 234,
-          "clino": -74.3
+          "clino": -74.3,
+          "comment": "7-es aknatalpon kő "
         },
         {
           "id": 7,
@@ -5253,7 +5219,8 @@
           "to": "Octp19",
           "length": 4.74,
           "azimuth": 113,
-          "clino": -17.3
+          "clino": -17.3,
+          "comment": "átbújsnal balra"
         },
         {
           "id": 19,
@@ -5287,24 +5254,15 @@
           "type": "center",
           "from": "Octp22",
           "to": "Octp23",
-          "length": 0.29,
-          "azimuth": 0,
-          "clino": 0.1
+          "length": 0.6,
+          "azimuth": 289.4,
+          "clino": 39.2
         },
         {
           "id": 23,
           "type": "center",
           "from": "Octp23",
           "to": "Octp24",
-          "length": 2.85,
-          "azimuth": 277.1,
-          "clino": -22.5
-        },
-        {
-          "id": 581,
-          "type": "center",
-          "from": "Octp24",
-          "to": "Octp2",
           "length": 2.85,
           "azimuth": 277.1,
           "clino": -22.5
@@ -5514,7 +5472,8 @@
           "to": "Octp48",
           "length": 3.46,
           "azimuth": 188,
-          "clino": 22.2
+          "clino": 22.2,
+          "comment": "közepén kövön "
         },
         {
           "id": 47,
@@ -5532,7 +5491,8 @@
           "to": "Octp50",
           "length": 3.72,
           "azimuth": 170.1,
-          "clino": -15
+          "clino": -15,
+          "comment": "bal fal befelé "
         },
         {
           "id": 49,
