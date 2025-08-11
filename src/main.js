@@ -117,10 +117,15 @@ class Main {
 
     const urlParams = new URLSearchParams(window.location.search);
     this.#loadProjectFromUrl(urlParams)
-      .then((project) => {
+      .then(async (project) => {
         if (project) {
           this.projectPanel.hide();
-          this.#loadCaveFromUrl(urlParams, project);
+          try {
+            await this.#loadCaveFromUrl(urlParams, project);
+          } catch (error) {
+            console.error('Failed to load cave from URL:', error);
+            showErrorPanel(`Failed to load cave from URL: ${error.message}`);
+          }
         }
       }).catch((error) => {
         console.error('Failed to load project or cave from URL:', error);
@@ -137,7 +142,7 @@ class Main {
 
   #setupUnifiedFileInputListener() {
     const input = document.getElementById('caveInput');
-    input.addEventListener('change', (e) => {
+    input.addEventListener('change', async (e) => {
       for (const file of e.target.files) {
         try {
           console.log('🚧 Importing unified file', file.name);
@@ -160,16 +165,16 @@ class Main {
               throw new Error(`Unsupported file type: ${extension}`);
           }
 
-          handler.importFile(file, file.name, async (cave) => {
-            const currentProject = this.projectSystem.getCurrentProject();
-            const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(currentProject.id);
-
-            if (!cavesNamesInProject.includes(cave.name)) {
-              await this.projectSystem.addCaveToProject(currentProject, cave);
-              this.projectManager.addCave(cave);
-            } else {
-              throw Error(`Cave ${cave.name} has already been imported`);
-            }
+          // Create a promise-based wrapper for the importFile callback
+          await new Promise((resolve, reject) => {
+            handler.importFile(file, file.name, async (cave) => {
+              try {
+                await this.#tryAddCave(cave);
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+            });
           });
         } catch (error) {
           showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);
@@ -179,6 +184,23 @@ class Main {
 
       input.value = '';
     });
+  }
+
+  async #tryAddCave(cave) {
+    const currentProject = this.projectSystem.getCurrentProject();
+    const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(currentProject.id);
+
+    if (!cavesNamesInProject.includes(cave.name)) {
+      const errorMessage = this.projectManager.validateBeforeAdd(cave);
+      if (errorMessage) {
+        showErrorPanel(errorMessage);
+        return;
+      }
+      await this.projectSystem.addCaveToProject(currentProject, cave);
+      this.projectManager.addCave(cave);
+    } else {
+      throw Error(`Cave ${cave.name} has already been imported`);
+    }
   }
 
   #setupConfigFileInputListener() {
@@ -244,8 +266,6 @@ class Main {
 
       this.projectPanel.hide();
 
-      const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(project.id);
-
       let importer;
 
       if (caveNameUrl.includes('.cave')) {
@@ -265,13 +285,15 @@ class Main {
             return response.blob();
           })
           .then((res) => {
-            importer.importFile(res, caveNameUrl, async (cave) => {
-              if (cavesNamesInProject.includes(cave.name)) {
-                showErrorPanel(`'${cave.name}' has already been imported to this project!`);
-              } else {
-                await this.projectSystem.addCaveToProject(project, cave);
-                this.projectManager.addCave(cave);
-              }
+            return new Promise((resolve, reject) => {
+              importer.importFile(res, caveNameUrl, async (cave) => {
+                try {
+                  await this.#tryAddCave(cave);
+                  resolve();
+                } catch (error) {
+                  reject(error);
+                }
+              });
             });
           })
           .catch((error) => {

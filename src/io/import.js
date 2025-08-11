@@ -36,9 +36,9 @@ class CaveImporter {
       const reader = new FileReader();
       const nameToUse = name ?? file.name;
       const errorMessage = `Import of ${nameToUse.substring(nameToUse.lastIndexOf('/') + 1)} failed`;
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         try {
-          this.importText(event.target.result, onCaveLoad, nameToUse);
+          await this.importText(event.target.result, onCaveLoad, nameToUse);
         } catch (e) {
           console.error(errorMessage, e);
           showErrorPanel(`${errorMessage}: ${e.message}`, 0);
@@ -248,9 +248,9 @@ class PolygonImporter extends CaveImporter {
     super.importFile(file, name, onCaveLoad, endcoding);
   }
 
-  importText(wholeFileInText, onCaveLoad) {
+  async importText(wholeFileInText, onCaveLoad) {
     const cave = this.getCave(wholeFileInText);
-    onCaveLoad(cave);
+    await onCaveLoad(cave);
   }
 }
 

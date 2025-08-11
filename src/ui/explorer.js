@@ -264,54 +264,58 @@ class ProjectManager {
     this.editor.show();
   }
 
-  addCave(cave) {
-
+  validateBeforeAdd(cave) {
     const cavesReallyFar = this.getFarCaves(this.db.caves, cave.getFirstStation().coordinates.eov);
 
     if (this.db.caves.has(cave.name)) {
-      showErrorPanel(`Import of '${cave.name}' failed, cave has already been imported!`, 20);
+      return `Cave '${cave.name}' has already been added!`;
     } else if (cavesReallyFar.length > 0) {
-      const message = `Import of '${cave.name}' failed, the cave is too far from previously imported caves: ${cavesReallyFar.join(',')}`;
-      showWarningPanel(message, 20);
-    } else {
-      this.db.caves.set(cave.name, cave);
-
-      const lOptions = this.options.scene.caveLines;
-      let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
-
-      cave.surveys.forEach((s) => {
-        const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
-        const _3dobjects = this.scene.addToScene(
-          s,
-          cave,
-          centerLineSegments,
-          splaySegments,
-          auxiliarySegments,
-          true,
-          colorGradients.get(s.name)
-        );
-        this.scene.addSurvey(cave.name, s.name, _3dobjects);
-      });
-
-      cave.sectionAttributes.forEach((sa) => {
-        if (sa.visible) {
-          const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
-          this.scene.showSectionAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
-        }
-      });
-      cave.componentAttributes.forEach((ca) => {
-        if (ca.visible) {
-          const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
-          this.scene.showSectionAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
-        }
-      });
-
-      this.explorer.addCave(cave);
-
-      const boundingBox = this.scene.computeBoundingBox();
-      this.scene.grid.adjust(boundingBox);
-      this.scene.view.fitScreen(boundingBox);
+      return `'${cave.name}' is too far from previously imported caves: ${cavesReallyFar.join(',')}`;
     }
+
+    return undefined;
+
+  }
+
+  addCave(cave) {
+    this.db.caves.set(cave.name, cave);
+
+    const lOptions = this.options.scene.caveLines;
+    let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
+
+    cave.surveys.forEach((s) => {
+      const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
+      const _3dobjects = this.scene.addToScene(
+        s,
+        cave,
+        centerLineSegments,
+        splaySegments,
+        auxiliarySegments,
+        true,
+        colorGradients.get(s.name)
+      );
+      this.scene.addSurvey(cave.name, s.name, _3dobjects);
+    });
+
+    cave.sectionAttributes.forEach((sa) => {
+      if (sa.visible) {
+        const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
+        this.scene.showSectionAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
+      }
+    });
+    cave.componentAttributes.forEach((ca) => {
+      if (ca.visible) {
+        const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
+        this.scene.showSectionAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
+      }
+    });
+
+    this.explorer.addCave(cave);
+
+    const boundingBox = this.scene.computeBoundingBox();
+    this.scene.grid.adjust(boundingBox);
+    this.scene.view.fitScreen(boundingBox);
+
   }
 
   /**
