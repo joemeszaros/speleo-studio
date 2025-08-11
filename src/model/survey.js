@@ -104,7 +104,9 @@ class Shot {
   toExport() {
     let newShot = {};
     this.export_fields.forEach((fName) => {
-      newShot[fName] = this[fName];
+      if (this[fName] !== undefined && this[fName] !== null) {
+        newShot[fName] = this[fName];
+      }
     });
     return newShot;
   }

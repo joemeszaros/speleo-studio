@@ -78,7 +78,7 @@ class PolygonImporter extends CaveImporter {
             U.parseMyFloat(parts[2]),
             U.parseMyFloat(parts[3]),
             U.parseMyFloat(parts[4]),
-            parts[10]
+            parts[10] === '' ? undefined : parts[10]
           )
         );
       }
@@ -320,7 +320,7 @@ class JsonImporter extends CaveImporter {
     this.attributeDefs = attributeDefs;
   }
 
-  importFile(file, name, onCaveLoad, endcoding = 'iso_8859-2') {
+  importFile(file, name, onCaveLoad, endcoding = 'utf8') {
     super.importFile(file, name, onCaveLoad, endcoding);
   }
 
