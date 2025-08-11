@@ -117,23 +117,15 @@ class NavigationBar {
         elements : [
           {
             name  : 'Cave explorer',
-            click : () => this.#toggleVisibility('#tree-panel')
+            click : () => (this.options.ui.panels.explorer.show = !this.options.ui.panels.explorer.show)
           },
           {
             name  : 'Control panel',
-            click : () => this.#toggleVisibility('#control-panel')
-          },
-          {
-            name  : 'Footer',
-            click : () => this.#toggleVisibility('#footer')
-          },
-          {
-            name  : 'Welcome panel',
-            click : () => this.#toggleVisibility('#welcome-panel')
+            click : () => (this.options.ui.panels.settings.show = !this.options.ui.panels.settings.show)
           },
           {
             name  : 'Scene overwiew',
-            click : () => this.#toggleVisibility('#overview')
+            click : () => (this.options.ui.panels.sceneOverview.show = !this.options.ui.panels.sceneOverview.show)
           },
           {
             name  : 'Enter / exit fullscreen',
@@ -406,15 +398,6 @@ class NavigationBar {
           )
         );
       });
-  }
-
-  #toggleVisibility(name) {
-    let style = document.querySelector(name).style;
-    if (style.display !== 'none') {
-      style.display = 'none';
-    } else {
-      style.display = 'block';
-    }
   }
 
   #toggleFullscreen() {

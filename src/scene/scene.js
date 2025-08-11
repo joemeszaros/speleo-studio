@@ -13,7 +13,7 @@ import { ShotType } from '../model/survey.js';
 import { SpatialView, PlanView, ProfileView } from './views.js';
 
 class SceneOverview {
-  constructor(container) {
+  constructor(options, container) {
     this.container = container;
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -22,6 +22,11 @@ class SceneOverview {
     container.appendChild(this.domElement);
     this.width = container.offsetWidth;
     this.height = container.offsetHeight;
+    if (options.ui.panels.sceneOverview.show) {
+      this.container.style.display = 'block';
+    } else {
+      this.container.style.display = 'none';
+    }
   }
 
 }

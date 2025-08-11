@@ -5,6 +5,12 @@ export class Controls {
     this.options = options;
     this.element = element;
     this.gui = this.#createGui();
+
+    if (this.options.ui.panels.settings.show) {
+      this.element.style.display = 'block';
+    } else {
+      this.element.style.display = 'none';
+    }
   }
 
   close() {

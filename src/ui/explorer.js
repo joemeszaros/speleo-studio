@@ -39,6 +39,7 @@ class ProjectManager {
     document.addEventListener('surveyDataUpdated', (e) => this.onSurveyDataUpdated(e));
     document.addEventListener('currentProjectChanged', (e) => this.onCurrentProjectChanged(e));
     document.addEventListener('currentProjectDeleted', (e) => this.onCurrentProjectDeleted(e));
+
   }
 
   onCaveAdded(e) {
@@ -375,6 +376,12 @@ class ProjectExplorer {
     window.addEventListener('click', () => {
       this.contextMenuElement.style.display = 'none';
     });
+
+    if (this.options.ui.panels.explorer.show) {
+      this.panel.style.display = 'block';
+    } else {
+      this.panel.style.display = 'none';
+    }
   }
 
   deleteSurvey(caveName, surveyName) {

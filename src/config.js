@@ -105,6 +105,17 @@ export const DEFAULT_OPTIONS = {
         width   : 700,
         columns : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment']
       }
+    },
+    panels : {
+      sceneOverview : {
+        show : true
+      },
+      explorer : {
+        show : true
+      },
+      settings : {
+        show : true
+      }
     }
   },
   import : {
@@ -660,6 +671,30 @@ export class ConfigChanges {
     }
   }
 
+  handlePanelChanges(path, oldValue, newValue) {
+
+    const toggleVisibility = (name) => {
+      let style = document.querySelector(name).style;
+      if (style.display !== 'none') {
+        style.display = 'none';
+      } else {
+        style.display = 'block';
+      }
+    };
+
+    switch (path) {
+      case 'ui.panels.sceneOverview.show':
+        toggleVisibility('#scene-overview');
+        break;
+      case 'ui.panels.explorer.show':
+        toggleVisibility('#tree-panel');
+        break;
+      case 'ui.panels.settings.show':
+        toggleVisibility('#control-panel');
+        break;
+    }
+  }
+
   /**
    * Main onChange handler that routes to specific handlers
    */
@@ -685,6 +720,8 @@ export class ConfigChanges {
       this.handleScreenChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.editor.survey.')) {
       // do nothing, no action on survey editor changes
+    } else if (path.startsWith('ui.panels.')) {
+      this.handlePanelChanges(path, oldValue, newValue);
     } else {
       console.log(`⚠️ No handler for path: ${path}`);
     }
