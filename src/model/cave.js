@@ -182,7 +182,7 @@ class Cave {
   /**
    *
    * @param {string} name - The name of the cave
-   * @param {CaveMetadata} metaData - Additional information about the cave, like the settlement
+   * @param {CaveMetadata} metadata - Additional information about the cave, like the settlement
    * @param {Map<string, SurveyStation>} stations - The merged map of all survey stations
    * @param {Survey[]} surveys - The surveys associated to a cave
    * @param {SurveyAlias[]} - Mapping of connection point between surveys
@@ -190,7 +190,7 @@ class Cave {
    */
   constructor(
     name,
-    metaData,
+    metadata,
     geoData,
     stations = new Map(),
     surveys = [],
@@ -201,7 +201,7 @@ class Cave {
   ) {
     this.id = this.#generateId();
     this.name = name;
-    this.metaData = metaData;
+    this.metadata = metadata;
     this.geoData = geoData;
     this.stations = stations;
     this.surveys = surveys;
@@ -317,7 +317,7 @@ class Cave {
     return {
       id                  : this.id,
       name                : this.name,
-      metaData            : this?.metaData?.toExport(),
+      metadata            : this?.metadata?.toExport(),
       geoData             : this?.geoData?.toExport(),
       aliases             : this.aliases.map((a) => a.toExport()),
       sectionAttributes   : this.sectionAttributes.map((sa) => sa.toExport()),
@@ -327,8 +327,8 @@ class Cave {
   }
 
   static fromPure(pure, attributeDefs) {
-    if (pure.metaData !== undefined) {
-      pure.metaData = CaveMetadata.fromPure(pure.metaData);
+    if (pure.metadata !== undefined) {
+      pure.metadata = CaveMetadata.fromPure(pure.metadata);
     }
     pure.geoData = pure.geoData === undefined ? [] : GeoData.fromPure(pure.geoData);
     pure.surveys = pure.surveys.map((s) => Survey.fromPure(s, attributeDefs));
@@ -343,9 +343,6 @@ class Cave {
         ? []
         : pure.componentAttributes.map((ca) => ComponentAttribute.fromPure(ca, attributeDefs));
     const cave = Object.assign(new Cave(), pure);
-    if (!cave.id) {
-      cave.id = cave.#generateId();
-    }
     return cave;
   }
 }

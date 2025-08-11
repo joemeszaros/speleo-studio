@@ -17,7 +17,9 @@ class Exporter {
 
   static exportJSON(caves, fileName) {
     caves.forEach((cave) => {
-      Exporter.exportObjectAsJson(cave.toExport(), `${fileName}_${cave.name}`);
+      const exportData = cave.toExport();
+      delete exportData.id; // id is not needed in the export
+      Exporter.exportObjectAsJson(exportData, `${fileName}_${cave.name}`);
     });
   }
 
@@ -132,10 +134,10 @@ class Exporter {
 
       lines.push('*** Project ***');
       lines.push(`Project name: ${cave.name}`);
-      lines.push(`Project place: ${cave.metaData.settlement}`);
-      lines.push(`Project code: ${cave.metaData.catasterCode}`);
-      lines.push(`Made by: ${cave.metaData.creator}`);
-      lines.push(`Made date: ${toPolygonDate(cave.metaData.date)}`);
+      lines.push(`Project place: ${cave.metadata.settlement}`);
+      lines.push(`Project code: ${cave.metadata.catasterCode}`);
+      lines.push(`Made by: ${cave.metadata.creator}`);
+      lines.push(`Made date: ${toPolygonDate(cave.metadata.date)}`);
       lines.push('Last modi: 0');
       lines.push('AutoCorrect: 0');
       lines.push('AutoSize: 12,0');

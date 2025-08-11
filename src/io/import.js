@@ -124,7 +124,7 @@ class PolygonImporter extends CaveImporter {
         (x) => U.getPolygonDate(U.parseMyFloat(x)),
         (x) => x instanceof Date
       );
-      const metaData = new CaveMetadata(settlement, catasterCode, date, madeBy);
+      const metadata = new CaveMetadata(settlement, catasterCode, date, madeBy);
       let geoData, fixPointName, convergence;
       const surveys = [];
       const stations = new Map();
@@ -240,7 +240,7 @@ class PolygonImporter extends CaveImporter {
         }
       } while (surveyName !== undefined);
 
-      return new Cave(projectName, metaData, geoData, stations, surveys);
+      return new Cave(projectName, metadata, geoData, stations, surveys);
     }
   }
 
@@ -320,18 +320,16 @@ class JsonImporter extends CaveImporter {
     this.attributeDefs = attributeDefs;
   }
 
-  importFile(file, onCaveLoad) {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => this.importJson(event.target.result, onCaveLoad);
-      reader.readAsText(file);
-    }
-  }
-  importText(wholeFileInText, onCaveLoad) {
-    return this.importJson(wholeFileInText, onCaveLoad);
+  importFile(file, name, onCaveLoad, endcoding = 'iso_8859-2') {
+    super.importFile(file, name, onCaveLoad, endcoding);
   }
 
-  importJson(json, onCaveLoad) {
+  async importText(wholeFileInText, onCaveLoad) {
+    const cave = this.importJson(wholeFileInText, onCaveLoad);
+    await onCaveLoad(cave);
+  }
+
+  importJson(json) {
     const parsedCave = JSON.parse(json);
     const cave = Cave.fromPure(parsedCave, this.attributeDefs);
 
@@ -364,8 +362,7 @@ class JsonImporter extends CaveImporter {
         });
       }
     }
-
-    onCaveLoad(cave);
+    return cave;
   }
 }
 

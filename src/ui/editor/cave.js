@@ -51,10 +51,10 @@ class CaveEditor extends Editor {
 
     this.caveData = {
       name     : this.cave?.name ?? '',
-      metaData : {
-        settlement   : this.cave?.metaData?.settlement ?? '',
-        catasterCode : this.cave?.metaData?.catasterCode ?? '',
-        date         : this.cave?.metaData?.date ? U.formatDateISO(this.cave.metaData.date) : ''
+      metadata : {
+        settlement   : this.cave?.metadata?.settlement ?? '',
+        catasterCode : this.cave?.metadata?.catasterCode ?? '',
+        date         : this.cave?.metadata?.date ? U.formatDateISO(this.cave.metadata.date) : ''
       },
       coordinates :
         this.cave?.geoData?.coordinates.map((c) => {
@@ -83,7 +83,7 @@ class CaveEditor extends Editor {
       { label: 'Date', id: 'date', type: 'date', required: true }
     ];
     fields.forEach((f) => {
-      const value = f.id === 'name' ? this.caveData.name : this.caveData.metaData[f.id];
+      const value = f.id === 'name' ? this.caveData.name : this.caveData.metadata[f.id];
       const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${value}" ${f.required ? 'required' : ''}>`;
       input.oninput = (e) => {
         if (f.id === 'name') {
@@ -93,10 +93,10 @@ class CaveEditor extends Editor {
 
           this.caveData.name = e.target.value;
         } else {
-          if (this.caveData.metaData[f.id] !== e.target.value) {
+          if (this.caveData.metadata[f.id] !== e.target.value) {
             this.caveHasChanged = true;
           }
-          this.caveData.metaData[f.id] = e.target.value;
+          this.caveData.metadata[f.id] = e.target.value;
         }
       };
       const label = U.node`<label for="${f.id}">${f.label}: </label>`;
@@ -151,9 +151,9 @@ class CaveEditor extends Editor {
         }
 
         const caveMetadata = new CaveMetadata(
-          this.caveData.metaData.settlement,
-          this.caveData.metaData.catasterCode,
-          new Date(this.caveData.metaData.date)
+          this.caveData.metadata.settlement,
+          this.caveData.metadata.catasterCode,
+          new Date(this.caveData.metadata.date)
         );
         const geoData = new GeoData(
           CoordinateSytem.EOV,
@@ -214,7 +214,7 @@ class CaveEditor extends Editor {
           this.cave.aliases = aliases;
 
           const oldGeoData = this.cave.geoData;
-          this.cave.metaData = caveMetadata;
+          this.cave.metadata = caveMetadata;
           this.cave.geoData = geoData;
 
           // deleting an eov coordinate will change the survey data
