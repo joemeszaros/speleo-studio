@@ -50,6 +50,9 @@ class SceneInteraction {
       });
     });
 
+    // Handle window resize to keep panels within bounds
+    window.addEventListener('resize', () => this.handleWindowResize());
+
     this.buildContextMenu();
   }
 
@@ -684,9 +687,10 @@ class SceneInteraction {
   }
 
   showContextMenu(left, top) {
-    this.contextMenu.style.left = left + 'px';
-    this.contextMenu.style.top = top + 'px';
     this.contextMenu.style.display = 'block';
+    const adjustedPosition = this.#ensurePanelInViewport(left, top, this.contextMenu);
+    this.contextMenu.style.left = adjustedPosition.left + 'px';
+    this.contextMenu.style.top = adjustedPosition.top + 'px';
   }
 
   hideContextMenu() {
@@ -712,9 +716,6 @@ class SceneInteraction {
       });
     });
 
-    this.infoPanel.style.left = left + 'px';
-    this.infoPanel.style.top = top + 'px';
-    this.infoPanel.style.display = 'block';
     const fp = from.position;
     const formatCoords = (a) => a.map((x) => x.toFixed(2)).join(',');
     const tp = to.position;
@@ -729,6 +730,12 @@ class SceneInteraction {
         ${i18n.t('ui.panels.distance.spatial')}: ${diffVector.length()}
         `;
     this.infoPanel.appendChild(content);
+    this.infoPanel.style.display = 'block';
+    const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
+
+    this.infoPanel.style.left = adjustedPosition.left + 'px';
+    this.infoPanel.style.top = adjustedPosition.top + 'px';
+
   }
 
   showStationDetailsPanel(station, left, top) {
@@ -761,9 +768,6 @@ class SceneInteraction {
       })
       .join('<br>');
 
-    this.infoPanel.style.left = left + 'px';
-    this.infoPanel.style.top = top + 'px';
-    this.infoPanel.style.display = 'block';
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
         ${i18n.t('common.name')}: ${station.name}<br><br>
@@ -779,6 +783,97 @@ class SceneInteraction {
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br>
         `;
     this.infoPanel.appendChild(content);
+
+    this.infoPanel.style.display = 'block';
+    const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
+    this.infoPanel.style.left = adjustedPosition.left + 'px';
+    this.infoPanel.style.top = adjustedPosition.top + 'px';
+
+  }
+
+  /**
+   * Ensures the panel position stays within the viewport bounds
+   * @param {number} left - Left position in pixels
+   * @param {number} top - Top position in pixels
+   * @param {number} panelWidth - Width of the panel in pixels
+   * @param {number} panelHeight - Height of the panel in pixels
+   * @returns {Object} Adjusted left and top positions
+   */
+  #ensurePanelInViewport(left, top, panel) {
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+    let panelWidth = panel.offsetWidth;
+    let panelHeight = panel.offsetHeight;
+
+    // Ensure we have valid dimensions
+    if (panelWidth <= 0) {
+      console.warn('panelWidth is 0');
+      panelWidth = 350;
+    }
+    if (panelHeight <= 0) {
+      console.warn('panelHeight is 0');
+      panelHeight = 250;
+    }
+
+    // Ensure panel doesn't go off the right edge
+    if (left + panelWidth > viewportWidth) {
+      left = Math.max(10, viewportWidth - panelWidth - 10); // 10px margin from edge
+    }
+
+    // Ensure panel doesn't go off the left edge
+    if (left < 10) {
+      left = 10;
+    }
+
+    // Ensure panel doesn't go off the bottom edge
+    if (top + panelHeight + 30 > viewportHeight) {
+      top = Math.max(48, viewportHeight - panelHeight - 30); // 10px margin from edge
+    }
+
+    // Ensure panel doesn't go off the top edge
+    if (top < 48) {
+      top = 48;
+    }
+
+    // Final safety check - ensure panel is completely visible
+    if (left + panelWidth > viewportWidth) {
+      left = viewportWidth - panelWidth - 5;
+    }
+    if (top + panelHeight > viewportHeight) {
+      top = viewportHeight - panelHeight - 5;
+    }
+
+    // Ensure minimum margins from edges
+    left = Math.max(5, Math.min(left, viewportWidth - panelWidth - 5));
+    top = Math.max(5, Math.min(top, viewportHeight - panelHeight - 5));
+
+    return { left, top };
+  }
+
+  /**
+   * Handles window resize events to ensure open panels stay within bounds
+   */
+  handleWindowResize() {
+    // Check if infoPanel is visible and reposition if needed
+    if (this.infoPanel.style.display === 'block') {
+      const currentLeft = parseInt(this.infoPanel.style.left) || 0;
+      const currentTop = parseInt(this.infoPanel.style.top) || 0;
+      const adjustedPosition = this.#ensurePanelInViewport(currentLeft, currentTop, this.infoPanel);
+
+      this.infoPanel.style.left = adjustedPosition.left + 'px';
+      this.infoPanel.style.top = adjustedPosition.top + 'px';
+    }
+
+    // Check if contextMenu is visible and reposition if needed
+    if (this.contextMenu.style.display === 'block') {
+      const currentLeft = parseInt(this.contextMenu.style.left) || 0;
+      const currentTop = parseInt(this.contextMenu.style.top) || 0;
+      const adjustedPosition = this.#ensurePanelInViewport(currentLeft, currentTop, this.contextMenu);
+
+      this.contextMenu.style.left = adjustedPosition.left + 'px';
+      this.contextMenu.style.top = adjustedPosition.top + 'px';
+    }
   }
 }
 
