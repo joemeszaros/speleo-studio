@@ -5,6 +5,7 @@ import { SectionHelper } from './section.js';
 import { ShotType } from './model/survey.js';
 import { StrikeDipCalculator } from './utils/geo.js';
 import { Vector } from './model.js';
+import { i18n } from './i18n/i18n.js';
 
 class SceneInteraction {
 
@@ -55,7 +56,7 @@ class SceneInteraction {
   buildContextMenu() {
     [
       {
-        name    : 'Station details',
+        name    : i18n.t('menu.station.details'),
         onclick : (event) => {
           const rect = this.scene.getBoundingClientRect();
           this.showStationDetailsPanel(
@@ -65,8 +66,11 @@ class SceneInteraction {
           );
         }
       },
-      { name: 'Distance from here', onclick: (event) => this.calcualteDistanceListener(event, 'from') },
-      { name: 'Distance to here', onclick: (event) => this.calcualteDistanceListener(event, 'to') }
+      {
+        name    : i18n.t('menu.station.distanceFromHere'),
+        onclick : (event) => this.calcualteDistanceListener(event, 'from')
+      },
+      { name: i18n.t('menu.station.distanceToHere'), onclick: (event) => this.calcualteDistanceListener(event, 'to') }
 
     ].forEach((item) => {
       const button = node`<button id="station-context-menu-${item.name.toLowerCase().replace(' ', '-')}">${item.name}</button>`;
@@ -85,7 +89,7 @@ class SceneInteraction {
     const top = event.clientY - rect.top;
 
     if (this.selectedStation === undefined) {
-      showErrorPanel('You should select the starting point for distance measurement');
+      showErrorPanel(i18n.t('ui.panels.distance.error.noStartingPoint'));
     } else {
       let from, to;
       if (direction === 'to') {
@@ -361,13 +365,23 @@ class SceneInteraction {
   }
 
   showDipStrikeCalculatorPanel() {
+    this.buildDipStrikeCalculatorPanel();
+    document.addEventListener('languageChanged', () => {
+      this.buildDipStrikeCalculatorPanel();
+    });
+  }
+
+  buildDipStrikeCalculatorPanel() {
     this.locatePanel.innerHTML = '';
     makeMovable(
       this.locatePanel,
-      'Dip & Strike Calculator',
+      i18n.t('ui.panels.dipStrikeCalculator.title'),
       false,
       () => {
         this.locatePanel.style.display = 'none';
+        document.removeEventListener('languageChanged', () => {
+          this.buildDipStrikeCalculatorPanel();
+        });
       },
       () => {},
       () => {}
@@ -375,14 +389,14 @@ class SceneInteraction {
 
     const container = node`
     <div id="dip-strike-calculator-container">
-      <div>Input Method:</div>
+      <div>${i18n.t('ui.panels.dipStrikeCalculator.inputMethod')}:</div>
       <div>
-        <label><input type="radio" name="input-method" value="coordinates" checked /> 3D Coordinates</label>
-        <label><input type="radio" name="input-method" value="survey" /> Survey Measurements</label>
+        <label><input type="radio" name="input-method" value="coordinates" checked /> ${i18n.t('ui.panels.dipStrikeCalculator.coordinates')}</label>
+        <label><input type="radio" name="input-method" value="survey" /> ${i18n.t('ui.panels.dipStrikeCalculator.survey')}</label>
       </div>
       
       <div id="coordinates-input" style="display: block;">
-        <div>Enter 3D coordinates for three points:</div>
+        <div>${i18n.t('ui.panels.dipStrikeCalculator.enterCoordinates')}:</div>
         ${[0, 1, 2]
           .map(
             (i) => `
@@ -397,14 +411,14 @@ class SceneInteraction {
       </div>
       
       <div id="survey-input" style="display: none;">
-        <div>Enter measurements from reference point:</div>
+        <div>${i18n.t('ui.panels.dipStrikeCalculator.enterSurvey')}:</div>
         ${[0, 1, 2]
           .map(
             (i) => `
           <div>
-            <input type="number" step="0.01" placeholder="Length" class="survey-input" data-point="${i}" data-field="length" />
-            <input type="number" step="0.1" placeholder="Azimuth" class="survey-input" data-point="${i}" data-field="azimuth" />
-            <input type="number" step="0.1" placeholder="Clino" class="survey-input" data-point="${i}" data-field="clino" />
+            <input type="number" step="0.01" placeholder="${i18n.t('ui.panels.dipStrikeCalculator.length')}" class="survey-input" data-point="${i}" data-field="length" />
+            <input type="number" step="0.1" placeholder="${i18n.t('ui.panels.dipStrikeCalculator.azimuth')}" class="survey-input" data-point="${i}" data-field="azimuth" />
+            <input type="number" step="0.1" placeholder="${i18n.t('ui.panels.dipStrikeCalculator.clino')}" class="survey-input" data-point="${i}" data-field="clino" />
           </div>
         `
           )
@@ -412,17 +426,17 @@ class SceneInteraction {
       </div>
     </div>`;
 
-    const calculateBtn = node`<button id="calculate-btn">Calculate</button>`;
-    const clearBtn = node`<button id="clear-btn">Clear</button>`;
+    const calculateBtn = node`<button id="calculate-btn">${i18n.t('ui.panels.dipStrikeCalculator.calculate')}</button>`;
+    const clearBtn = node`<button id="clear-btn">${i18n.t('common.clear')}</button>`;
 
     container.appendChild(calculateBtn);
     container.appendChild(clearBtn);
 
     const resultSection = node`
       <div id="results-section" style="display: none;">
-        <div>Strike: <span id="strike-result">-</span></div>
-        <div>Dip: <span id="dip-result">-</span></div>
-        <div>Normal: <span id="normal-vector-result">-</span></div>
+        <div>${i18n.t('ui.panels.dipStrikeCalculator.strike')}: <span id="strike-result">-</span></div>
+        <div>${i18n.t('ui.panels.dipStrikeCalculator.dip')}: <span id="dip-result">-</span></div>
+        <div>${i18n.t('ui.panels.dipStrikeCalculator.normal')}: <span id="normal-vector-result">-</span></div>
       </div>`;
     container.appendChild(resultSection);
 
@@ -472,13 +486,13 @@ class SceneInteraction {
         // Check if all points are defined
         const allPointsDefined = points.every((point) => point !== null);
         if (!allPointsDefined) {
-          showCalculatorError('Please enter coordinates for all three points.');
+          showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.allPointsDefined'));
           return;
         }
 
         // Check if points define a valid plane
         if (!StrikeDipCalculator.isValidPlane(points[0], points[1], points[2])) {
-          showCalculatorError('The three points do not define a valid plane.');
+          showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.validPlane'));
           return;
         }
 
@@ -492,7 +506,9 @@ class SceneInteraction {
 
           resultSection.style.display = 'block';
         } catch (error) {
-          showCalculatorError(`Calculation error: ${error.message}`);
+          showCalculatorError(
+            `${i18n.t('ui.panels.dipStrikeCalculator.error.calculationError', { error: error.message })}`
+          );
         }
       } else {
         // Survey method
@@ -500,7 +516,7 @@ class SceneInteraction {
           (data) => data !== null && data.length !== undefined && data.azimuth !== undefined && data.clino !== undefined
         );
         if (!allSurveyDataDefined) {
-          showCalculatorError('Please enter length, azimuth, and clino for all three points.');
+          showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.allSurveyDataDefined'));
           return;
         }
 
@@ -514,7 +530,7 @@ class SceneInteraction {
 
           // Check if points define a valid plane
           if (!StrikeDipCalculator.isValidPlane(convertedPoints[0], convertedPoints[1], convertedPoints[2])) {
-            showCalculatorError('The three points do not define a valid plane.');
+            showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.validPlane'));
             return;
           }
 
@@ -531,7 +547,9 @@ class SceneInteraction {
 
           resultSection.style.display = 'block';
         } catch (error) {
-          showCalculatorError(`Calculation error: ${error.message}`);
+          showCalculatorError(
+            `${i18n.t('ui.panels.dipStrikeCalculator.error.calculationError', { error: error.message })}`
+          );
         }
       }
     };
@@ -582,24 +600,32 @@ class SceneInteraction {
   }
 
   showShortestPathPanel() {
+    this.buildShortestPathPanel();
+    document.addEventListener('languageChanged', () => {
+      this.buildShortestPathPanel();
+    });
+  }
+
+  buildShortestPathPanel() {
     const segmentsId = 'shortest-path-segments';
 
     const addStationSelectors = (caveName) => {
-      const container = node`<div id="container-shortest-path"></div>`;
+      const form = node`<form id="container-shortest-path"></form>`;
       const stNames = this.db.getStationNames(caveName);
       const options = stNames.map((n) => `<option value="${n}">`).join('');
       const datalist = node`<datalist id="stations">${options}</datalist>`;
-      const button = node`<button id="find-shortest-path">Find shortest path</button>`;
-      const fromL = node`<label for="point-from">From:<input type="search" list="stations" id="point-from"></label>`;
-      const toL = node`<label for="point-to">To:<input type="search" list="stations" id="point-to"></label>`;
+      const button = node`<button type="submit">${i18n.t('ui.panels.shortestPath.find')}</button>`;
+      const fromL = node`<label for="point-from">${i18n.t('common.from')}:<input required type="search" list="stations" id="point-from"></label>`;
+      const toL = node`<label for="point-to">${i18n.t('common.to')}:<input required type="search" list="stations" id="point-to"></label>`;
 
-      container.appendChild(datalist);
-      container.appendChild(fromL);
-      container.appendChild(toL);
-      container.appendChild(button);
-      this.locatePanel.appendChild(container);
+      form.appendChild(datalist);
+      form.appendChild(fromL);
+      form.appendChild(toL);
+      form.appendChild(button);
+      this.locatePanel.appendChild(form);
 
-      button.onclick = () => {
+      form.onsubmit = (e) => {
+        e.preventDefault();
 
         this.scene.disposeSegments(segmentsId);
         const cave = this.db.getCave(caveName);
@@ -612,12 +638,12 @@ class SceneInteraction {
           if (section !== undefined) {
             const segments = SectionHelper.getSectionSegments(section, cave.stations);
             this.scene.showSegments(segmentsId, segments, this.options.scene.sectionAttributes.color, caveName);
-            label = node`<div id="shortest-path-label">From: ${from} To: ${to} Length: ${section.distance.toFixed(2)}</div>`;
+            label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.from')}: ${from} ${i18n.t('ui.panels.shortestPath.to')}: ${to} ${i18n.t('ui.panels.shortestPath.length')}: ${section.distance.toFixed(2)}</div>`;
           } else {
-            label = node`<div id="shortest-path-label">Cannot find path between '${from}' and '${to}'</div>`;
+            label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.cannotFindPath', { from, to })}</div>`;
           }
         } else {
-          label = node`<div id="shortest-path-label">Cannot find stations '${from}' or '${to}'</div>`;
+          label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.cannotFindStations', { from, to })}</div>`;
         }
         this.locatePanel.appendChild(label);
 
@@ -626,22 +652,15 @@ class SceneInteraction {
 
     this.locatePanel.style.display = 'none'; //shown previously
     this.locatePanel.innerHTML = '';
-    makeMovable(
-      this.locatePanel,
-      `Shortest path`,
-      false,
-      () => {
-        this.scene.disposeSegments(segmentsId);
-        this.locatePanel.style.display = 'none';
-      },
-      () => {},
-      () => {}
-    );
+    makeMovable(this.locatePanel, i18n.t('ui.panels.shortestPath.title'), false, () => {
+      this.scene.disposeSegments(segmentsId);
+      this.locatePanel.style.display = 'none';
+    });
 
     const cNames = this.db.getAllCaveNames();
     if (cNames.length > 1) {
       const optionCaveNames = cNames.map((n) => `<option value="${n}">${n}</option>`).join('');
-      const caveNamesL = node`<label for="cave-names">Cave: <select id="cave-names" name="cave-names">${optionCaveNames}</select></label>`;
+      const caveNamesL = node`<label for="cave-names">${i18n.t('common.cave')}: <select id="cave-names" name="cave-names">${optionCaveNames}</select></label>`;
       const caveNames = caveNamesL.childNodes[1];
 
       this.locatePanel.appendChild(caveNamesL);
@@ -675,35 +694,62 @@ class SceneInteraction {
   }
 
   showDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
-    this.infoPanel.children.namedItem('close').onclick = () => {
-      lineRemoveFn();
+    this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
+    document.addEventListener('languageChanged', () => {
+      this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
+    });
+  }
+
+  buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
+    this.infoPanel.innerHTML = '';
+
+    makeMovable(this.infoPanel, i18n.t('ui.panels.distance.title'), false, () => {
       this.infoPanel.style.display = 'none';
-      return false;
-    };
+      lineRemoveFn();
+
+      document.removeEventListener('languageChanged', () => {
+        this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
+      });
+    });
+
     this.infoPanel.style.left = left + 'px';
     this.infoPanel.style.top = top + 'px';
     this.infoPanel.style.display = 'block';
     const fp = from.position;
     const formatCoords = (a) => a.map((x) => x.toFixed(2)).join(',');
     const tp = to.position;
-    this.infoPanel.children.namedItem('content').innerHTML = `
-        From: ${from.name} (${formatCoords([fp.x, fp.y, fp.z])})<br>
-        To: ${to.name} (${formatCoords([tp.x, tp.y, tp.z])})<br>
-        X distance: ${diffVector.x}<br>
-        Y distance: ${diffVector.y}<br>
-        Z distance: ${diffVector.z}<br>
-        Horizontal distance: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2))}<br>
-        Spatial distance: ${diffVector.length()}
+    const content = node`<div class="infopanel-content"></div>`;
+    content.innerHTML = `
+        ${i18n.t('common.from')}: ${from.name} (${formatCoords([fp.x, fp.y, fp.z])})<br>
+        ${i18n.t('common.to')}: ${to.name} (${formatCoords([tp.x, tp.y, tp.z])})<br>
+        ${i18n.t('ui.panels.distance.x')}: ${diffVector.x}<br>
+        ${i18n.t('ui.panels.distance.y')}: ${diffVector.y}<br>
+        ${i18n.t('ui.panels.distance.z')}: ${diffVector.z}<br>
+        ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2))}<br>
+        ${i18n.t('ui.panels.distance.spatial')}: ${diffVector.length()}
         `;
+    this.infoPanel.appendChild(content);
   }
 
   showStationDetailsPanel(station, left, top) {
-    this.infoPanel.children.namedItem('close').onclick = () => {
+    this.buildStationDetailsPanel(station, left, top);
+    document.addEventListener('languageChanged', () => {
+      this.buildStationDetailsPanel(station, left, top);
+    });
+  }
+
+  buildStationDetailsPanel(station, left, top) {
+    this.infoPanel.innerHTML = '';
+
+    makeMovable(this.infoPanel, i18n.t('ui.panels.stationDetails.title'), false, () => {
       this.infoPanel.style.display = 'none';
       this.#clearSelectedForContext();
       this.scene.view.renderView();
-      return false;
-    };
+
+      document.removeEventListener('languageChanged', () => {
+        this.buildStationDetailsPanel(station, left, top);
+      });
+    });
 
     const shots = station.meta.cave.surveys.flatMap((s) =>
       s.shots.filter((s) => s.from === station.name || s.to === station.name)
@@ -718,19 +764,21 @@ class SceneInteraction {
     this.infoPanel.style.left = left + 'px';
     this.infoPanel.style.top = top + 'px';
     this.infoPanel.style.display = 'block';
-    this.infoPanel.children.namedItem('content').innerHTML = `
-        Name: ${station.name}<br><br>
+    const content = node`<div class="infopanel-content"></div>`;
+    content.innerHTML = `
+        ${i18n.t('common.name')}: ${station.name}<br><br>
         X: ${station.position.x.toFixed(3)}<br>
         Y: ${station.position.y.toFixed(3)}<br>
         Z: ${station.position.z.toFixed(3)}<br>
-        Type: ${station.meta.type}<br>
-        Survey: ${station.meta.survey.name}<br>
-        Cave: ${station.meta.cave.name}<br>
-        Local coordinates: ${get3DCoordsStr(station.meta.coordinates.local)}<br>
-        EOV coordinates: ${station.meta.coordinates.eov === undefined ? 'not available' : get3DCoordsStr(station.meta.coordinates.eov, ['y', 'x', 'elevation'])}<br>
-        WGS84 coordinates: ${station.meta.coordinates.wgs === undefined ? 'not available' : get3DCoordsStr(station.meta.coordinates.wgs, ['lat', 'lon'], 6)}<br>
-        <br>Shots:<br>${shotDetails}<br>
+        ${i18n.t('common.type')}: ${i18n.t(`params.shotType.${station.meta.type}`)}<br>
+        ${i18n.t('common.survey')}: ${station.meta.survey.name}<br>
+        ${i18n.t('common.cave')}: ${station.meta.cave.name}<br>
+        ${i18n.t('ui.panels.stationDetails.localCoordinates')}: ${get3DCoordsStr(station.meta.coordinates.local)}<br>
+        ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${station.meta.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.eov, ['y', 'x', 'elevation'])}<br>
+        ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${station.meta.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.wgs, ['lat', 'lon'], 6)}<br>
+        <br>${i18n.t('common.shots')}:<br>${shotDetails}<br>
         `;
+    this.infoPanel.appendChild(content);
   }
 }
 

@@ -83,8 +83,8 @@
     "explorer": {
       "menu": {
         "editCaveData": "Adatlap szerkesztése",
-        "editSectionAttributes": "Szakasz attribútumok szerkesztése",
-        "editComponentAttributes": "Komponens attribútumok szerkesztése",
+        "editSectionAttributes": "Szakasz attribútumok",
+        "editComponentAttributes": "Komponens attribútumok",
         "newSurvey": "Új felmérés",
         "importSurvey": "Felmérés importálása",
         "cycles": "Hurkok",
@@ -121,6 +121,54 @@
         "projectNameAlreadyExists": "A \"{name}\" nevű projekt már létezik",
         "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
         "caves": "barlang"
+      },
+      "dipStrikeCalculator": {
+        "title": "Dőlés és irány számító",
+        "inputMethod": "Bemeneti mód",
+        "coordinates": "3D koordináták",
+        "survey": "Felmérési adatok",
+        "enterCoordinates": "3D koordináták beírása",
+        "enterSurvey": "Felmérési adatok beírása",
+        "length": "Hossz",
+        "azimuth": "Irány",
+        "clino": "Dőlés",
+        "calculate": "Számítás",
+        "strike": "Irány",
+        "dip": "Dőlés",
+        "normal": "Normál vektor",
+        "error": {
+          "allPointsDefined": "Kérem, adja meg a három pont 3D koordinátáit.",
+          "validPlane": "A három pont nem határoz meg érvényes síkot.",
+          "allSurveyDataDefined": "Kérem, adja meg a hossz, irány és dőlés értékeit a három pontnál.",
+          "calculationError": "Számítási hiba: {error}"
+        }
+      },
+      "shortestPath": {
+        "title": "Legrövidebb út",
+        "from": "Ponttól",
+        "to": "Pontig",
+        "find": "Legrövidebb út keresése",
+        "length": "Hossz",
+        "cannotFindPath": "Nem található út a(z) {from} és a(z) {to} között",
+        "cannotFindStations": "Nem található pont a(z) {from} vagy a(z) {to}"
+      },
+      "stationDetails": {
+        "title": "Pont részletei",
+        "localCoordinates": "Helyi koordináták",
+        "eovCoordinates": "EOV koordináták",
+        "wgs84Coordinates": "WGS84 koordináták",
+        "notAvailable": "Nem elérhető"
+      },
+      "distance": {
+        "title": "Távolság",
+        "x": "X távolság",
+        "y": "Y távolság",
+        "z": "Z távolság",
+        "horizontal": "Vízszintes távolság",
+        "spatial": "Térbeli távolság",
+        "error": {
+          "noStartingPoint": "A távolság méréséhez válasszon ki egy kezdőpontot"
+        }
       }
     },
     "editors": {
@@ -180,6 +228,7 @@
       },
       "surveySheet": {
         "title": "Felmérés adatlap: {name}",
+        "titleNew": "Új felmérés",
         "fields": {
           "name": "Felmérés neve",
           "start": "Induló pont",
@@ -242,6 +291,20 @@
       }
     }
   },
+  "menu": {
+    "station": {
+      "details": "Pont részletei",
+      "distanceFromHere": "Távolság innen",
+      "distanceToHere": "Távolság ide"
+    }
+  },
+  "params": {
+    "shotType": {
+      "center": "Közép",
+      "auxiliary": "Segéd",
+      "splay": "Tüske"
+    }
+  },
   "validation": {
     "shot": {
       "invalidId": "Id ({id}, típus={type}) érvénytelen egész szám",
@@ -267,10 +330,17 @@
     "close": "Bezárás",
     "project": "Projekt",
     "cave": "Barlang",
+    "shots": "Mérések",
+    "survey": "Felmérés",
+    "type": "Típus",
+    "from": "Ponttól",
+    "to": "Pontig",
+    "name": "Név",
     "caves": "Barlangok",
     "current": "Jelenlegi",
     "open": "Megnyitás",
     "undo": "Visszavonás",
-    "redo": "Újra"
+    "redo": "Újra",
+    "clear": "Törlés"
   }
 }

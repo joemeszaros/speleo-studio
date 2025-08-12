@@ -90,16 +90,16 @@ body {
 }
 
 #infopanel {
-  padding: 10px;
-  position: absolute;
+  text-align: left;
   display: none;
   color: azure;
-  width: 300px;
-  border-style: solid;
-  border-color: coral;
-  border-width: 1px;
-  background-color: rgb(63, 53, 53);
+  width: 350px;
+  background: #333;
   z-index: 100;
+}
+
+#infopanel .infopanel-content {
+  padding: 10px;
 }
 
 .cautionpanel {

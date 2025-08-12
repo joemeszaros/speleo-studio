@@ -121,6 +121,52 @@
         "projectNameAlreadyExists": "A project with the name \"{name}\" already exists",
         "deleteProjectConfirmation": "Are you sure you want to delete this project? This action cannot be undone.",
         "caves": "caves"
+      },
+      "dipStrikeCalculator": {
+        "title": "Dip & Strike Calculator",
+        "inputMethod": "Input Method",
+        "coordinates": "3D Coordinates",
+        "survey": "Survey Measurements",
+        "enterCoordinates": "Enter 3D coordinates for three points",
+        "enterSurvey": "Enter measurements from reference point",
+        "length": "Length",
+        "azimuth": "Azimuth",
+        "clino": "Clino",
+        "calculate": "Calculate",
+        "strike": "Strike",
+        "dip": "Dip",
+        "normal": "Normal",
+        "error": {
+          "allPointsDefined": "Please enter coordinates for all three points.",
+          "validPlane": "The three points do not define a valid plane.",
+          "allSurveyDataDefined": "Please enter length, azimuth, and clino for all three points.",
+          "calculationError": "Calculation error: {error}"
+        }
+      },
+      "shortestPath": {
+        "title": "Shortest path",
+        "find": "Find shortest path",
+        "length": "Length",
+        "cannotFindPath": "Cannot find path between '{from}' and '{to}'",
+        "cannotFindStations": "Cannot find stations '{from}' or '{to}'"
+      },
+      "stationDetails": {
+        "title": "Station details",
+        "localCoordinates": "Local coordinates",
+        "eovCoordinates": "EOV coordinates",
+        "wgs84Coordinates": "WGS84 coordinates",
+        "notAvailable": "Not available"
+      },
+      "distance": {
+        "title": "Distance",
+        "x": "X distance",
+        "y": "Y distance",
+        "z": "Z distance",
+        "horizontal": "Horizontal distance",
+        "spatial": "Spatial distance",
+        "error": {
+          "noStartingPoint": "You should select the starting point for distance measurement"
+        }
       }
     },
     "editors": {
@@ -180,6 +226,7 @@
       },
       "surveySheet": {
         "title": "Survey sheet editor: {name}",
+        "titleNew": "New survey",
         "fields": {
           "name": "Survey name",
           "start": "Start station",
@@ -242,6 +289,13 @@
       }
     }
   },
+  "menu": {
+    "station": {
+      "details": "Station details",
+      "distanceFromHere": "Distance from here",
+      "distanceToHere": "Distance to here"
+    }
+  },
   "validation": {
     "shot": {
       "invalidId": "Id ({id}, type={type}) is not valid integer number`",
@@ -253,6 +307,13 @@
       "invalidClino": "Clino should be between -90 and 90",
       "invalidAzimuth": "Azimuth should be between -360 and 360",
       "invalidDecimal": "({field}: {value}, type={type}) is not a valid decimal number"
+    }
+  },
+  "params": {
+    "shotType": {
+      "center": "Center",
+      "auxiliary": "Auxiliary",
+      "splay": "Splay"
     }
   },
   "common": {
@@ -269,9 +330,16 @@
     "project": "Project",
     "cave": "Cave",
     "caves": "Caves",
+    "type": "Type",
+    "name": "Name",
+    "survey": "Survey",
+    "from": "From",
+    "to": "To",
+    "shots": "Shots",
     "current": "Current",
     "open": "Open",
     "undo": "Undo",
-    "redo": "Redo"
+    "redo": "Redo",
+    "clear": "Clear"
   }
 }

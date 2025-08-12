@@ -835,7 +835,7 @@ class SurveySheetEditor extends BaseEditor {
     this.panel.innerHTML = '';
     makeMovable(
       this.panel,
-      i18n.t('ui.editors.surveySheet.title', { name: this.survey?.name || 'New survey' }),
+      i18n.t('ui.editors.surveySheet.title', { name: this.survey?.name || i18n.t('ui.editors.surveySheet.titleNew') }),
       false,
       () => this.closeEditor()
     );

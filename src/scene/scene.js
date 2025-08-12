@@ -373,7 +373,7 @@ class MyScene {
       geometry.setPositions(segments);
       geometry.computeBoundingBox();
       const material = new LineMaterial({
-        color        : color.hex(),
+        color        : new THREE.Color(color),
         linewidth    : this.options.scene.centerLines.segments.width * this.options.scene.sectionLineMultiplier,
         worldUnits   : false,
         vertexColors : false
