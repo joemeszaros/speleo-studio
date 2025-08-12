@@ -19,10 +19,7 @@ class I18nManager {
   async init() {
     await this.detectPreferredLanguage();
     await this.loadTranslations(this.currentLanguage);
-    // Dispatch event that i18n is ready
-    document.dispatchEvent(new CustomEvent('i18nReady'));
     this.initialzed = true;
-    console.log('I18n initialized');
   }
 
   async detectPreferredLanguage() {
@@ -56,9 +53,10 @@ class I18nManager {
       }
       this.translations[language] = await response.json();
       console.log(`${this.#getFlagEmoji(language)} Translations loaded for ${language}`);
-    } catch {
-      console.warn(`Could not load translations for ${language}, falling back to ${this.fallbackLanguage}`);
+    } catch (error) {
+      console.error(`Could not load translations for ${language}, falling back to ${this.fallbackLanguage}`, error);
       if (language !== this.fallbackLanguage) {
+        this.currentLanguage = this.fallbackLanguage;
         await this.loadTranslations(this.fallbackLanguage);
       }
     }
@@ -112,7 +110,7 @@ class I18nManager {
    * @returns {string} Interpolated string
    */
   interpolateTemplate(template, params) {
-    return template.replace(/\{\{(\w+)\}\}/g, (match, param) => {
+    return template.replace(/\{(\w+)\}/g, (match, param) => {
       return params[param] !== undefined ? params[param] : match;
     });
   }
@@ -127,8 +125,9 @@ class I18nManager {
 
     await this.loadTranslations(language);
     this.currentLanguage = language;
-    localStorage.setItem('preferred-language', language);
+    console.log(`Language changed to ${language}`);
 
+    localStorage.setItem('preferred-language', language);
     document.dispatchEvent(
       new CustomEvent('languageChanged', {
         detail : { language: language }

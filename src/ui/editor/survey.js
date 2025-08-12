@@ -5,6 +5,7 @@ import { showErrorPanel, makeMovable } from '../../ui/popups.js';
 import { Shot, ShotType } from '../../model/survey.js';
 import { StationAttribute } from '../../model.js';
 import * as U from '../../utils/utils.js';
+import { i18n } from '../../i18n/i18n.js';
 
 class SurveyEditor extends Editor {
 
@@ -37,14 +38,23 @@ class SurveyEditor extends Editor {
       if (invalidShotIds.size > 0 || survey.orphanShotIds.size > 0) {
         let invalidMessage = '';
         if (invalidShotIds.size > 0) {
-          invalidMessage = `${invalidShotIds.size} row(s) are invalid: ${invalidShotIdsArray.slice(0, 15).join(',')}<br>`;
+          invalidMessage = i18n.t('ui.editors.survey.message.invalidRowWithIds', {
+            nrBadRows : invalidShotIds.size,
+            badRowIds : invalidShotIdsArray.slice(0, 15).join(',')
+          });
         }
         let orphanMessage = '';
         if (survey.orphanShotIds.size > 0) {
           const first15Ids = [...survey.orphanShotIds.values()].slice(0, 15);
-          orphanMessage = `${survey.orphanShotIds.size} row(s) are orphan: ${first15Ids.join(',')}<br>`;
+          orphanMessage = i18n.t('ui.editors.survey.message.orphanRowWithIds', {
+            nrOrphanRows : survey.orphanShotIds.size,
+            orphanRowIds : first15Ids.join(',')
+          });
         }
-        this.showAlert(`${invalidMessage}${orphanMessage}Check warning icon for details.`, 7);
+        this.showAlert(
+          `${invalidMessage}<br>${orphanMessage}<br>${i18n.t('ui.editors.survey.message.checkWarningIcon')}`,
+          7
+        );
       }
 
       this.table.replaceData(tableRows);
@@ -72,10 +82,15 @@ class SurveyEditor extends Editor {
       this.table.updateData(rowsToUpdated);
       const badRowIds = rowsToUpdated
         .filter((r) => ['invalid', 'invalidAttributes', 'invalidShot', 'incomplete'].includes(r.status))
-        .map((r) => r.id + 1);
+        .map((r) => `id: ${r.id + 1} (${r.from} -> ${r.to})`);
       if (badRowIds.length > 0 && showAlert) {
         this.showAlert(
-          `${badRowIds.length} row(s) with the following ids are invalid: ${badRowIds.slice(0, 15)}<br>Click on the warning icon for details.`,
+          i18n.t('ui.editors.survey.message.invalidRowWithIds', {
+            nrBadRows : badRowIds.length,
+            badRowIds : badRowIds.slice(0, 15).join(', ')
+          }) +
+            '<br>' +
+            i18n.t('ui.editors.survey.message.checkWarningIcon'),
           4
         );
       }
@@ -93,10 +108,10 @@ class SurveyEditor extends Editor {
       if (emptyFields.length > 0) {
         const newRow = { ...r };
         newRow.status = 'incomplete';
-        newRow.message = `Row has missing fields: ${emptyFields.join(',')}`;
+        newRow.message = i18n.t('ui.editors.survey.message.missingFields', { fields: emptyFields.join(',') });
         rowsToUpdated.push(newRow);
       } else {
-        const shotErrors = shot.validate();
+        const shotErrors = shot.validate(i18n);
         const attributeErrors = this.getAttributeErrors(r);
         validationErrors.push(...shotErrors);
         validationErrors.push(...attributeErrors);
@@ -112,7 +127,7 @@ class SurveyEditor extends Editor {
 
           const newRow = { ...r };
           newRow.status = status;
-          newRow.message = `Row is invalid: <br>${validationErrors.join('<br>')}`;
+          newRow.message = i18n.t('ui.editors.survey.status.invalid', { errors: validationErrors.join('<br>') });
           rowsToUpdated.push(newRow);
         }
       }
@@ -179,7 +194,7 @@ class SurveyEditor extends Editor {
         comment    : sh.comment,
         type       : sh.type,
         status     : 'ok',
-        message    : 'No errors',
+        message    : i18n.t('ui.editors.survey.status.ok'),
         attributes : stationAttributes,
         x          : toStation?.position?.x,
         y          : toStation?.position?.y,
@@ -196,12 +211,12 @@ class SurveyEditor extends Editor {
     survey.orphanShotIds.forEach((id) => {
       const row = rows[rows.findIndex((r) => r.id === id)];
       row.status = 'orphan';
-      row.message = 'Row is orphan';
+      row.message = i18n.t('ui.editors.survey.status.orphan');
     });
     survey.duplicateShotIds.forEach((id) => {
       const row = rows[rows.findIndex((r) => r.id === id)];
       row.status = 'duplicate';
-      row.message = 'Row is duplicate';
+      row.message = i18n.t('ui.editors.survey.status.duplicate');
     });
 
     const rowsToUpdate = this.getValidationUpdates(rows);
@@ -223,7 +238,7 @@ class SurveyEditor extends Editor {
       clino      : undefined,
       type       : ShotType.CENTER,
       status     : 'incomplete',
-      message    : 'Shot is newly created',
+      message    : i18n.t('ui.editors.survey.message.incomplete'),
       attributes : [],
       x          : undefined,
       y          : undefined,
@@ -278,7 +293,7 @@ class SurveyEditor extends Editor {
 
     makeMovable(
       this.panel,
-      `Survey editor: ${this.survey.name}`,
+      i18n.t('ui.editors.survey.title', { name: this.survey.name }),
       true,
       () => this.closeEditor(),
       (newWidth, _newHeight) => {
@@ -310,12 +325,12 @@ class SurveyEditor extends Editor {
 
     this.panel.appendChild(iconBar);
     [
-      { id: 'undo', icon: 'icons/undo.svg', tooltip: 'Undo', click: () => this.table.undo() },
-      { id: 'redo', icon: 'icons/redo.svg', tooltip: 'Redo', click: () => this.table.redo() },
+      { id: 'undo', icon: 'icons/undo.svg', tooltip: i18n.t('common.undo'), click: () => this.table.undo() },
+      { id: 'redo', icon: 'icons/redo.svg', tooltip: i18n.t('common.redo'), click: () => this.table.redo() },
       {
         id      : 'add-row-before',
         icon    : 'icons/add_before.svg',
-        tooltip : 'Add row before',
+        tooltip : i18n.t('ui.editors.common.addRowBefore'),
         click   : () => {
           const index = getIndex();
           if (index > 0) {
@@ -326,7 +341,7 @@ class SurveyEditor extends Editor {
       {
         id      : 'add-row-after',
         icon    : 'icons/add_after.svg',
-        tooltip : 'Add row after',
+        tooltip : i18n.t('ui.editors.common.addRowAfter'),
         click   : () => {
           const index = getIndex();
           if (index > 0) {
@@ -337,7 +352,7 @@ class SurveyEditor extends Editor {
       {
         id      : 'add-row',
         icon    : 'icons/add_white.svg',
-        tooltip : 'Add row end',
+        tooltip : i18n.t('ui.editors.common.addRowToEnd'),
         click   : () => {
           this.table.addRow(this.getEmptyRow()).then((row) => {
             row.scrollTo('nearest', false).catch((err) => {
@@ -348,7 +363,7 @@ class SurveyEditor extends Editor {
       },
       {
         id      : 'delete-row',
-        tooltip : 'Delete active rows',
+        tooltip : i18n.t('ui.editors.common.deleteActiveRows'),
         icon    : 'icons/trash_white.svg',
         click   : () => {
           var ranges = this.table.getRanges();
@@ -363,15 +378,20 @@ class SurveyEditor extends Editor {
       { separator: true },
       {
         id      : 'validate-shots',
-        tooltip : 'Validate shots',
+        tooltip : i18n.t('ui.editors.common.validateShots'),
         icon    : 'icons/validate.svg',
         click   : () => this.validateSurvey()
       },
-      { id: 'update-survey', tooltip: 'Update survey', icon: 'icons/update.svg', click: () => this.updateSurvey() },
+      {
+        id      : 'update-survey',
+        tooltip : i18n.t('ui.editors.survey.buttons.update'),
+        icon    : 'icons/update.svg',
+        click   : () => this.updateSurvey()
+      },
       { separator: true },
       {
         id      : 'toggle-column',
-        tooltip : 'Toggle columns',
+        tooltip : i18n.t('ui.editors.common.toggleColumns'),
         icon    : 'icons/hamburger.svg',
         click   : (e) => {
           const menuDiv = document.getElementById('toogle-column-visibility-menu');
@@ -398,7 +418,7 @@ class SurveyEditor extends Editor {
       { separator: true },
       {
         id      : 'export-to-csv',
-        tooltip : 'Export to CSV',
+        tooltip : i18n.t('ui.editors.common.exportToCsv'),
         icon    : 'icons/export.svg',
         click   : () => this.table.download('csv', this.cave.name + ' - ' + this.survey.name + '.csv', { delimiter: ';' })
       }
@@ -472,7 +492,7 @@ class SurveyEditor extends Editor {
         formatter         : this.baseTableFunctions.statusIcon,
         clickPopup        : function (x, cell) {
           const message = cell.getData().message;
-          return message === undefined ? 'No errors' : message;
+          return message === undefined ? i18n.t('ui.editors.survey.status.ok') : message;
         },
         validator          : ['required'],
         bottomCalc         : this.baseTableFunctions.countBadRows,
@@ -481,7 +501,7 @@ class SurveyEditor extends Editor {
       },
       {
         width              : 25,
-        title              : 'Type',
+        title              : i18n.t('ui.editors.survey.columns.type'),
         field              : 'type',
         editor             : 'list',
         editorParams       : { values: [ShotType.CENTER, ShotType.SPLAY, ShotType.AUXILIARY] },
@@ -493,7 +513,7 @@ class SurveyEditor extends Editor {
 
       },
       {
-        title        : 'From',
+        title        : i18n.t('ui.editors.survey.columns.from'),
         field        : 'from',
         editor       : true,
         validator    : ['required'],
@@ -501,14 +521,14 @@ class SurveyEditor extends Editor {
         bottomCalc   : countLines
       },
       {
-        title        : 'To',
+        title        : i18n.t('ui.editors.survey.columns.to'),
         field        : 'to',
         editor       : true,
         validator    : ['required'],
         headerFilter : 'input'
       },
       {
-        title      : 'Length',
+        title      : i18n.t('ui.editors.survey.columns.length'),
         field      : 'length',
         editor     : true,
         accessor   : this.baseTableFunctions.floatAccessor,
@@ -516,14 +536,14 @@ class SurveyEditor extends Editor {
         bottomCalc : sumCenterLines
       },
       {
-        title     : 'Azimuth',
+        title     : i18n.t('ui.editors.survey.columns.azimuth'),
         field     : 'azimuth',
         editor    : true,
         accessor  : this.baseTableFunctions.floatAccessor,
         validator : ['required', 'min:-360', 'max:360', customValidator]
       },
       {
-        title     : 'Clino',
+        title     : i18n.t('ui.editors.survey.columns.clino'),
         field     : 'clino',
         editor    : true,
         accessor  : this.baseTableFunctions.floatAccessor,
@@ -552,7 +572,7 @@ class SurveyEditor extends Editor {
     });
 
     columns.push({
-      title              : 'Attributes',
+      title              : i18n.t('ui.editors.survey.columns.attributes'),
       field              : 'attributes',
       visible            : true,
       headerFilterFunc   : this.baseTableFunctions.attributeHeaderFilter,
@@ -573,7 +593,7 @@ class SurveyEditor extends Editor {
         )
     });
     columns.push({
-      title        : 'Comment',
+      title        : i18n.t('ui.editors.survey.columns.comment'),
       field        : 'comment',
       editor       : true,
       headerFilter : 'input'
@@ -776,7 +796,6 @@ class SurveyEditor extends Editor {
         const columnDef = this.table.getColumn(column.field);
         if (columnDef && columnDef.isVisible()) {
           if (!this.options.ui.editor.survey.columns.includes(column.field)) {
-            console.log('pushing column', column.field);
             // columns.push(column.field) does not trigger a config change event
             const newColumns = [...this.options.ui.editor.survey.columns, column.field];
             this.options.ui.editor.survey.columns = newColumns;

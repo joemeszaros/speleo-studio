@@ -122,6 +122,61 @@
         "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
         "caves": "barlang"
       }
+    },
+    "editors": {
+      "common": {
+        "addRowBefore": "Sor hozzáadása előtte",
+        "addRowAfter": "Sor hozzáadása utána",
+        "addRowToEnd": "Sor hozzáadása végéhez",
+        "deleteActiveRows": "Aktív sorok törlése",
+        "validateShots": "Mérések validálása",
+        "toggleColumns": "Oszlopok láthatósága",
+        "exportToCsv": "Exportálás CSV-be"
+      },
+      "survey": {
+        "title": "Felmérés szerkesztő: {name}",
+        "message": {
+          "missingFields": "Sor hiányzó mezői: {fields}",
+          "invalidAttributes": "Sor érvénytelen attribútumokkal",
+          "invalidShot": "Sor érvénytelen méréssel",
+          "incomplete": "Hiányos sor",
+          "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
+          "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}",
+          "checkWarningIcon": "Kattints a figyelmeztető ikonra a részletekért."
+        },
+        "status": {
+          "ok": "Nincs hiba",
+          "orphan": "Árva sor",
+          "duplicate": "Duplikált sor",
+          "invalid": "Érvénytelen sor: {errors}"
+        },
+        "columns": {
+          "type": "Típus",
+          "from": "Ponttól",
+          "to": "Pontig",
+          "length": "Hossz",
+          "azimuth": "Irány",
+          "clino": "Dőlés",
+          "attributes": "Attribútumok",
+          "comment": "Megjegyzés"
+        },
+        "buttons": {
+          "update": "Felmérés frissítése"
+        }
+      }
+    }
+  },
+  "validation": {
+    "shot": {
+      "invalidId": "Id ({id}, típus={type}) érvénytelen egész szám",
+      "invalidShotType": "Mérés típusa ({type}) érvénytelen",
+      "invalidFrom": "Ponttól ({from}, típus={type}) érvénytelen szöveg vagy üres",
+      "invalidTo": "Pontig ({to}, típus={type}) érvénytelen szöveg vagy üres",
+      "invalidFromTo": "Ponttól ({from}) és pontig ({to}) nem lehet ugyanaz",
+      "invalidLength": "Hossznak 0-nál nagyobbnak kell lennie",
+      "invalidClino": "Dőlés -90 és 90 között kell legyen",
+      "invalidAzimuth": "Irány -360 és 360 között kell legyen",
+      "invalidDecimal": "({field}: {value}, típus={type}) érvénytelen decimális szám"
     }
   },
   "common": {
@@ -131,12 +186,15 @@
     "cancel": "Mégse",
     "save": "Mentés",
     "delete": "Törlés",
+    "rename": "Átnevezés",
     "edit": "Szerkesztés",
     "close": "Bezárás",
     "project": "Projekt",
     "cave": "Barlang",
     "caves": "Barlangok",
     "current": "Jelenlegi",
-    "open": "Megnyitás"
+    "open": "Megnyitás",
+    "undo": "Visszavonás",
+    "redo": "Újra"
   }
 }

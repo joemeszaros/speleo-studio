@@ -49,41 +49,49 @@ class Shot {
     return this.validate().length === 0;
   }
 
-  validate() {
+  validate(i18n) {
     const isValidFloat = (f) => {
       return typeof f === 'number' && f !== Infinity && !isNaN(f);
+    };
+    // when someone calls .isValid() we do not need to make the translations
+    const t = (key, params) => {
+      if (i18n) {
+        return i18n.t(key, params);
+      } else {
+        return key;
+      }
     };
 
     const errors = [];
     if (!(typeof this.id === 'number' && this.id == parseInt(this.id, 10))) {
-      errors.push(`Id (${this.id}, type=${typeof this.id}) is not valid integer number`);
+      errors.push(t('validation.shot.invalidId', { id: this.id, type: typeof this.id }));
     }
     if (!(typeof this.type === 'string' && ShotType.isValid(this.type))) {
-      errors.push(`Type (${this.type}) is not a valid shot type`);
+      errors.push(t('validation.shot.invalidShotType', { type: this.type }));
     }
     if (!(typeof this.from === 'string' && this.from.length > 0)) {
-      errors.push(`From (${this.from}, type=${typeof this.from}) is not a string or empty`);
+      errors.push(t('validation.shot.invalidFrom', { from: this.from, type: typeof this.from }));
     } else if (typeof this.to === 'string' && this.to.length > 0) {
       if (this.from === this.to) {
-        errors.push(`From (${this.from}) and to (${this.to}) cannot be the same`);
+        errors.push(t('validation.shot.invalidFromTo', { from: this.from, to: this.to }));
       }
     }
 
     if (isValidFloat(this.length) && this.length <= 0) {
-      errors.push(`Length must be greater than 0`);
+      errors.push(t('validation.shot.invalidLength'));
     }
 
     if (isValidFloat(this.clino) && (this.clino > 90 || this.clino < -90)) {
-      errors.push(`Clino should be between -90 and 90.`);
+      errors.push(t('validation.shot.invalidClino'));
     }
 
     if (isValidFloat(this.azimuth) && (this.azimuth > 360 || this.clino < -360)) {
-      errors.push(`Azimuth should be between -360 and 360.`);
+      errors.push(t('validation.shot.invalidAzimuth'));
     }
 
     ['length', 'azimuth', 'clino'].forEach((f) => {
       if (!isValidFloat(this[f])) {
-        errors.push(`${f} (${this[f]}, type=${typeof this[f]}) is not a valid decimal number`);
+        errors.push(t('validation.shot.invalidDecimal', { field: f, value: this[f], type: typeof this[f] }));
       }
     });
 

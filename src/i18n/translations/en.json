@@ -122,6 +122,61 @@
         "deleteProjectConfirmation": "Are you sure you want to delete this project? This action cannot be undone.",
         "caves": "caves"
       }
+    },
+    "editors": {
+      "common": {
+        "addRowBefore": "Add row before",
+        "addRowAfter": "Add row after",
+        "addRowToEnd": "Add row to end",
+        "deleteActiveRows": "Delete active rows",
+        "validateShots": "Validate shots",
+        "toggleColumns": "Columns visibility",
+        "exportToCsv": "Export to CSV"
+      },
+      "survey": {
+        "title": "Survey editor: {name}",
+        "message": {
+          "missingFields": "Row has missing fields: {fields}",
+          "invalidAttributes": "Row has invalid attributes",
+          "invalidShot": "Row has invalid shot",
+          "incomplete": "Row is incomplete",
+          "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
+          "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}",
+          "checkWarningIcon": "Click on the warning icon for details."
+        },
+        "status": {
+          "ok": "No errors",
+          "orphan": "Row is orphan",
+          "duplicate": "Row is duplicate",
+          "invalid": "Row is invalid: {errors}"
+        },
+        "columns": {
+          "type": "Type",
+          "from": "From",
+          "to": "To",
+          "azimuth": "Azimuth",
+          "clino": "Clino",
+          "length": "Length",
+          "attributes": "Attributes",
+          "comment": "Comment"
+        },
+        "buttons": {
+          "update": "Update survey"
+        }
+      }
+    }
+  },
+  "validation": {
+    "shot": {
+      "invalidId": "Id ({id}, type={type}) is not valid integer number`",
+      "invalidShotType": "Shot type ({type}) is not valid",
+      "invalidFrom": "From ({from}, type={type}) is not a string or empty",
+      "invalidTo": "To ({to}, type={type}) is not a string or empty",
+      "invalidFromTo": "From ({from}) and to ({to}) cannot be the same",
+      "invalidLength": "Length must be greater than 0",
+      "invalidClino": "Clino should be between -90 and 90",
+      "invalidAzimuth": "Azimuth should be between -360 and 360",
+      "invalidDecimal": "({field}: {value}, type={type}) is not a valid decimal number"
     }
   },
   "common": {
@@ -139,6 +194,8 @@
     "cave": "Cave",
     "caves": "Caves",
     "current": "Current",
-    "open": "Open"
+    "open": "Open",
+    "undo": "Undo",
+    "redo": "Redo"
   }
 }
