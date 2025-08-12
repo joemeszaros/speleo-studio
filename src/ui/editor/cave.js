@@ -211,6 +211,9 @@ class CaveEditor extends Editor {
             this.#emitCaveRenamed(oldName, this.cave);
           }
 
+          const aliasesHasChanged =
+            this.cave.aliases.length !== aliases.length || this.cave.aliases.some((a, i) => !a.isEqual(aliases[i]));
+
           this.cave.aliases = aliases;
 
           const oldGeoData = this.cave.geoData;
@@ -218,7 +221,8 @@ class CaveEditor extends Editor {
           this.cave.geoData = geoData;
 
           // deleting an eov coordinate will change the survey data
-          if (!this.cave.geoData.isEqual(oldGeoData) && this.cave.surveys.length > 0) {
+          // an alias can change survey data
+          if ((aliasesHasChanged || !this.cave.geoData.isEqual(oldGeoData)) && this.cave.surveys.length > 0) {
             document.dispatchEvent(
               new CustomEvent('surveyChanged', {
                 detail : {

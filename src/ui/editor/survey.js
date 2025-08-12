@@ -237,6 +237,42 @@ class SurveyEditor extends Editor {
 
   }
 
+  invertRow(row) {
+    const data = row.getData();
+
+    // Swap from and to
+    const tempFrom = data.from;
+    data.from = data.to;
+    data.to = tempFrom;
+
+    // Invert azimuth (add 180 degrees and normalize to 0-360)
+    if (data.azimuth !== undefined && data.azimuth !== null) {
+      data.azimuth = (data.azimuth + 180) % 360;
+      if (data.azimuth < 0) data.azimuth += 360;
+    }
+
+    // Invert clino (negate the value)
+    if (data.clino !== undefined && data.clino !== null) {
+      data.clino = -data.clino;
+    }
+
+    // Update the row data
+    row.update(data);
+
+  }
+
+  getSurveyContextMenu() {
+    return [
+      ...this.baseTableFunctions.getContextMenu(),
+      {
+        label  : '<span class="invert-row"></span><span>Invert row<span/> ',
+        action : (e, row) => {
+          this.invertRow(row);
+        }
+      }
+    ];
+  }
+
   setupPanel() {
     this.panel.innerHTML = '';
 
@@ -587,7 +623,7 @@ class SurveyEditor extends Editor {
       // paginationSizeSelector : [this.options.tabulator.paginationSize, 10, 25, 50, 100], // optional: shows the dropdown to select page size
       // paginationCounter      : 'rows', // optional: shows the current page size
 
-      rowContextMenu : this.baseTableFunctions.getContextMenu(),
+      rowContextMenu : this.getSurveyContextMenu(),
       rowHeader      : {
         formatter : 'rownum',
         hozAlign  : 'center',

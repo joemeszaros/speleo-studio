@@ -313,6 +313,10 @@ class SurveyAlias {
     }
   }
 
+  isEqual(other) {
+    return this.from === other.from && this.to === other.to;
+  }
+
   toExport() {
     return {
       from : this.from,

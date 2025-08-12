@@ -40,14 +40,14 @@ class BaseEditor {
       const row = U.node`<div class="list-row" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;${rowStyle}"></div>`;
       fields.forEach((f) => {
         const input = U.node`<input type="${f.type}" placeholder="${f.placeholder}" value="${item[f.key]}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''} style="width: ${f.width || '100px'};">`;
-        input.oninput = (e) => onChange(idx, f.key, e.target.value);
+        input.onchange = (e) => onChange(idx, f.key, e.target.value);
         row.appendChild(input);
       });
 
       nodes.forEach((n) => {
         const el = U.node(n.node);
         el.value = item[n.key];
-        el.oninput = (e) => onChange(idx, n.key, e.target.value);
+        el.onchange = (e) => onChange(idx, n.key, e.target.value);
         row.appendChild(el);
       });
 

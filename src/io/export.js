@@ -134,29 +134,33 @@ class Exporter {
 
       lines.push('*** Project ***');
       lines.push(`Project name: ${cave.name}`);
-      lines.push(`Project place: ${cave.metadata.settlement}`);
-      lines.push(`Project code: ${cave.metadata.catasterCode}`);
-      lines.push(`Made by: ${cave.metadata.creator}`);
-      lines.push(`Made date: ${toPolygonDate(cave.metadata.date)}`);
+      lines.push(`Project place: ${cave?.metadata?.settlement ?? ''}`);
+      lines.push(`Project code: ${cave?.metadata?.catasterCode ?? ''}`);
+      lines.push(`Made by: ${cave?.metadata?.creator ?? ''}`);
+      lines.push(`Made date: ${cave?.metadata?.date ? toPolygonDate(cave.metadata.date) : ''}`);
       lines.push('Last modi: 0');
       lines.push('AutoCorrect: 0');
       lines.push('AutoSize: 12,0');
       lines.push('');
       lines.push('*** Surveys ***');
 
+      const aliasesMap = new Map(cave.aliases.map((a) => [a.to, a.from]));
       cave.surveys.forEach((survey) => {
         lines.push(`Survey name: ${survey.name}`);
-        lines.push(`Survey team: ${survey.metadata.team.name}`);
+        lines.push(`Survey team: ${survey?.metadata?.team?.name ?? ''}`);
         for (let i = 0; i < 5; i++) {
-          lines.push(`${survey.metadata.team.members[i]?.name ?? ''}	${survey.metadata.team.members[i]?.role ?? ''}`);
+          lines.push(
+            `${survey?.metadata?.team?.members[i]?.name ?? ''}	${survey?.metadata?.team?.members[i]?.role ?? ''}`
+          );
         }
-        lines.push(`Survey date: ${toPolygonDate(survey.metadata.date)}`);
-        lines.push(`Declination: ${survey.metadata.declination}`);
+        lines.push(`Survey date: ${survey.metadata?.date ? toPolygonDate(survey.metadata.date) : ''}`);
+        lines.push(`Declination: ${survey?.metadata?.declination ?? ''}`);
         lines.push('Instruments: ');
-        survey.metadata.instruments.forEach((instrument) => {
-          lines.push(`${instrument.name}	${instrument.value}`);
-        });
-        lines.push(`Fix point: ${survey.start}`);
+        // For the polygon fromat, there 3 lines are required, otherwise it will ignore the first 3 shots
+        for (let i = 0; i < 3; i++) {
+          lines.push(`${survey?.metadata?.instruments[i]?.name ?? ''}	${survey?.metadata?.instruments[i]?.value ?? ''}`);
+        }
+        lines.push(`Fix point: ${survey?.start ?? ''}`);
         const startSt = cave.stations.get(survey.start);
         lines.push(`${startSt?.position?.x ?? 0}	${startSt?.position?.y ?? 0}	${startSt?.position?.z ?? 0}	0	0	0	0`);
         lines.push('Survey data');
@@ -165,10 +169,12 @@ class Exporter {
         survey.shots
           .filter((sh) => sh.isCenter()) // do not save splays and auxiliary shots
           .forEach((shot) => {
+            // if we import a survey to a cave from Topodroid, the shot comes with it's original name
+            // we need to replace it with the alias name if it exists
+            const from = aliasesMap.get(shot.from) ?? shot.from;
+            const to = aliasesMap.get(shot.to) ?? shot.to;
             lines.push(
-              [shot.from, shot.to, shot.length, shot.azimuth, shot.clino, '', '0', '0', '0', '0', shot.comment].join(
-                '\t'
-              )
+              [from, to, shot.length, shot.azimuth, shot.clino, '', '0', '0', '0', '0', shot.comment].join('\t')
             );
 
           });

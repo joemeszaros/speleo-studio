@@ -1057,6 +1057,12 @@ body {
   background: no-repeat center/80% url(../icons/add_white.svg);
 }
 
+.tabulator-menu .invert-row {
+  padding: 5px 10px;
+  margin-right: 3px;
+  position: relative;
+  background: no-repeat center/80% url(../icons/invert.svg);
+}
 .cave-stats {
   margin-top: 15px;
   font-size: 12px;
