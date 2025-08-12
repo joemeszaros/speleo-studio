@@ -1,0 +1,144 @@
+{
+  "ui": {
+    "navbar": {
+      "menu": {
+        "file": {
+          "name": "File",
+          "new": "New cave",
+          "open": "Open cave(s)",
+          "export": "Export cave(s)",
+          "downloadConfig": "Download configuration",
+          "loadConfig": "Load configuration",
+          "resetConfig": "Reset configuration"
+        },
+        "project": {
+          "name": "Project",
+          "new": "New Project",
+          "manager": "Project Manager",
+          "export": "Export Project"
+        },
+        "view": {
+          "name": "View",
+          "explorer": "Cave explorer",
+          "controlPanel": "Control panel",
+          "sceneOverview": "Scene overview",
+          "fullscreen": "Enter / exit fullscreen"
+        },
+        "tools": {
+          "name": "Tools",
+          "dipStrike": "Dip & Strike Calculator"
+        },
+        "help": {
+          "name": "Help",
+          "about": "About Speleo Studio"
+        }
+      },
+      "tooltips": {
+        "print": "Print",
+        "zoomFit": "Zoom to fit",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "plan": "Plan",
+        "profile": "Profile",
+        "3d": "3D",
+        "boundingBox": "Bounding box",
+        "beddings": "Show beddings",
+        "faults": "Show faults",
+        "lineColor": "Line color mode",
+        "grid": "Grid position/visibility",
+        "surface": "Surface visibility",
+        "locate": "Locate point",
+        "shortestPath": "Shortest path"
+      },
+      "lineColorModes": {
+        "global": "Global color",
+        "gradientByZ": "Gradient by Z",
+        "gradientByDistance": "Gradient by distance",
+        "percave": "Per cave",
+        "persurvey": "Per survey"
+      }
+    },
+    "about": {
+      "title": "Speleo Studio",
+      "description": "A comprehensive web application for cave visualization and survey management. Speleo Studio provides professional tools for exploring, analyzing, and visualizing cave systems in 3D.",
+      "keyFeatures": "Key Features:",
+      "features": {
+        "3d": "3D cave visualization with Three.js",
+        "survey": "Survey data import from TopoDroid, Polygon, and JSON formats",
+        "navigation": "Interactive 3D scene navigation",
+        "editing": "Survey data editing and validation",
+        "export": "Multiple export formats (PNG, DXF, Polygon, JSON)",
+        "management": "Project management and data persistence",
+        "surface": "Surface mesh visualization (PLY format)"
+      },
+      "links": {
+        "github": "View Source Code on GitHub",
+        "live": "Live Application"
+      }
+    },
+    "footer": {
+      "project": "Project",
+      "noProjectLoaded": "No project loaded"
+    },
+    "explorer": {
+      "menu": {
+        "editCaveData": "Edit cave sheet",
+        "editSectionAttributes": "Edit section attributes",
+        "editComponentAttributes": "Edit component attributes",
+        "newSurvey": "New survey",
+        "importSurvey": "Import survey",
+        "cycles": "Cycles",
+        "editSurveySheet": "Edit survey sheet"
+      }
+    },
+    "panels": {
+      "projectManager": {
+        "title": "Project Manager",
+        "new": "New Project",
+        "current": "Current Project",
+        "noProject": "No project found",
+        "noProjectsFound": "No projects found",
+        "recentProjects": "Recent Projects",
+        "searchProjects": "Search Projects",
+        "noRecentProjects": "No recent projects",
+        "errorLoadingProjects": "Error loading projects",
+        "enterProjectName": "Enter project name:",
+        "enterProjectDescription": "Enter project description (optional):",
+        "projectCreated": "Project \"{name}\" created successfully",
+        "projectCreationFailed": "Failed to create project: {error}",
+        "projectOpenFailed": "Failed to open project: {error}",
+        "projectSaveFailed": "Failed to save project: {error}",
+        "projectSaved": "Project saved successfully",
+        "projectExported": "Project \"{name}\" exported successfully",
+        "projectExportFailed": "Failed to export project: {error}",
+        "projectRenamed": "Project renamed to \"{name}\" successfully",
+        "projectRenameFailed": "Failed to rename project: {error}",
+        "projectDeleted": "Project deleted successfully",
+        "projectDeletionFailed": "Failed to delete project: {error}",
+        "noProjectToExport": "No project to export",
+        "noProjectToRename": "No project to rename",
+        "enterNewProjectName": "Enter new project name: {name}",
+        "projectNameAlreadyExists": "A project with the name \"{name}\" already exists",
+        "deleteProjectConfirmation": "Are you sure you want to delete this project? This action cannot be undone.",
+        "caves": "caves"
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "export": "Export",
+    "delete": "Delete",
+    "rename": "Rename",
+    "edit": "Edit",
+    "close": "Close",
+    "project": "Project",
+    "cave": "Cave",
+    "caves": "Caves",
+    "current": "Current",
+    "open": "Open"
+  }
+}

@@ -1,48 +1,47 @@
 import { showErrorPanel, showSuccessPanel } from './popups.js';
 import * as U from '../utils/utils.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class ProjectPanel {
-  constructor(projectSystem) {
+  constructor(panel, projectSystem) {
+    this.panel = panel;
     this.projectSystem = projectSystem;
-    this.panel = null;
     this.isVisible = false;
+
+    document.addEventListener('languageChanged', () => {
+      this.setupPanel();
+    });
   }
 
-  createPanel() {
-    this.panel = document.createElement('div');
-    this.panel.id = 'project-panel';
-    this.panel.className = 'project-panel';
-    this.panel.style.display = 'none';
-
+  setupPanel() {
     this.panel.innerHTML = `
       <div class="project-panel-header">
-        <h3>Project Manager</h3>
-        <button id="new-project-btn" class="project-btn">New Project</button>
+        <h3>${i18n.t('ui.panels.projectManager.title')}</h3>
+        <button id="new-project-btn" class="project-btn">${i18n.t('ui.panels.projectManager.new')}</button>
         <button class="project-panel-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
       </div>
       
       <div class="project-panel-content">
         <div class="current-project-section">
-          <h4>Current Project</h4>
+          <h4>${i18n.t('ui.panels.projectManager.current')}</h4>
           <div id="current-project-info">
-            <p>No project loaded</p>
+            <p>${i18n.t('ui.panels.projectManager.noProject')}</p>
           </div>
         </div>
         
         <div class="recent-projects-section">
-          <h4>Recent Projects</h4>
+          <h4>${i18n.t('ui.panels.projectManager.recentProjects')}</h4>
           <div class="project-search-container">
-            <input type="text" id="project-search" placeholder="Search projects..." class="project-search-input">
+            <input type="text" id="project-search" placeholder="${i18n.t('ui.panels.projectManager.searchProjects')}" class="project-search-input">
           </div>
           <div id="recent-projects-list">
-            <p>No recent projects</p>
+            <p>${i18n.t('ui.panels.projectManager.noRecentProjects')}</p>
           </div>
         </div>
       </div>
     `;
 
     this.setupEventListeners();
-    return this.panel;
   }
 
   setupEventListeners() {
@@ -82,13 +81,13 @@ export class ProjectPanel {
         <div class="project-info">
           <div class="current-project-header">
             <span class="current-project-name">${currentProject.name}</span>
-            <span class="current-project-meta">${caveCount} caves • ${lastModified}</span>
+            <span class="current-project-meta">${caveCount} ${i18n.t('ui.panels.projectManager.caves')} • ${lastModified}</span>
           </div>
           ${currentProject.description ? `<div class="current-project-description">${currentProject.description}</div>` : ''}
           <div class="current-project-actions">
-            <button id="save-project-btn" class="project-btn">Save Project</button>
-            <button id="export-project-btn" class="project-btn">Export Project</button>
-            <button id="rename-project-btn" class="project-btn">Rename</button>
+            <button id="save-project-btn" class="project-btn">${i18n.t('common.save')}</button>
+            <button id="export-project-btn" class="project-btn">${i18n.t('common.export')}</button>
+            <button id="rename-project-btn" class="project-btn">${i18n.t('common.rename')}</button>
           </div>
         </div>
       `;
@@ -111,7 +110,7 @@ export class ProjectPanel {
         });
       }
     } else {
-      currentProjectInfo.innerHTML = '<p>No project loaded</p>';
+      currentProjectInfo.innerHTML = `<p>${i18n.t('ui.panels.projectManager.noProject')}</p>`;
     }
   }
 
@@ -122,7 +121,7 @@ export class ProjectPanel {
       const projects = await this.projectSystem.getAllProjects();
 
       if (projects.length === 0) {
-        recentProjectsList.innerHTML = '<p>No projects found</p>';
+        recentProjectsList.innerHTML = `<p>${i18n.t('ui.panels.projectManager.noProjectsFound')}</p>`;
         return;
       }
 
@@ -143,14 +142,14 @@ export class ProjectPanel {
                  ${caveNames ? `<span class="project-caves">• ${caveNames}</span>` : ''}
                </div>
                <div class="project-item-meta">
-                 <span class="project-meta-text">${caveCount} caves • ${lastModified}</span>
-                 ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
+                 <span class="project-meta-text">${caveCount} ${i18n.t('ui.panels.projectManager.caves')} • ${lastModified}</span>
+                 ${isCurrent ? `<span class="current-badge">${i18n.t('common.current')}</span>` : ''}
                </div>
              </div>
              <div class="project-item-actions">
-               ${!isCurrent ? '<button id="open-project-btn" class="project-action-btn">Open</button>' : ''}
-               <button id="delete-project-btn" class="project-action-btn delete">Delete</button>
-               <button id="rename-project-btn" class="project-action-btn rename">Rename</button>
+               ${!isCurrent ? `<button id="open-project-btn" class="project-action-btn">${i18n.t('common.open')}</button>` : ''}
+               <button id="delete-project-btn" class="project-action-btn delete">${i18n.t('common.delete')}</button>
+               <button id="rename-project-btn" class="project-action-btn rename">${i18n.t('common.rename')}</button>
              </div>
            </div>
          `;
@@ -168,16 +167,17 @@ export class ProjectPanel {
       });
 
     } catch (error) {
-      recentProjectsList.innerHTML = '<p>Error loading projects</p>';
-      console.error('Error loading projects:', error);
+      const errorMessage = i18n.t('ui.panels.projectManager.errorLoadingProjects');
+      recentProjectsList.innerHTML = `<p>${errorMessage}</p>`;
+      console.error(errorMessage, error);
     }
   }
 
   async showNewProjectDialog() {
-    const name = prompt('Enter project name:');
+    const name = prompt(i18n.t('ui.panels.projectManager.enterProjectName'));
     if (!name) return;
 
-    const description = prompt('Enter project description (optional):');
+    const description = prompt(i18n.t('ui.panels.projectManager.enterProjectDescription'));
 
     try {
       const project = await this.projectSystem.createProject(name, description);
@@ -186,9 +186,9 @@ export class ProjectPanel {
       this.#emitCurrentProjectChanged(project);
 
       this.hide();
-      showSuccessPanel(`Project "${name}" created successfully`);
+      showSuccessPanel(i18n.t('ui.panels.projectManager.projectCreated', { name }));
     } catch (error) {
-      showErrorPanel(`Failed to create project: ${error.message}`);
+      showErrorPanel(i18n.t('ui.panels.projectManager.projectCreationFailed', { error: error.message }));
     }
   }
 
@@ -223,7 +223,7 @@ export class ProjectPanel {
       // Close the panel after successful project opening
       this.hide();
     } catch (error) {
-      showErrorPanel(`Failed to load project: ${error.message}`);
+      showErrorPanel(i18n.t('ui.panels.projectManager.projectOpenFailed', { error: error.message }));
     }
   }
 
@@ -231,16 +231,16 @@ export class ProjectPanel {
     try {
       await this.projectSystem.saveCurrentProject();
       this.updateDisplay();
-      showSuccessPanel('Project saved successfully');
+      showSuccessPanel(i18n.t('ui.panels.projectManager.projectSaved'));
     } catch (error) {
-      showErrorPanel(`Failed to save project: ${error.message}`);
+      showErrorPanel(i18n.t('ui.panels.projectManager.projectSaveFailed', { error: error.message }));
     }
   }
 
   async exportCurrentProject() {
     const currentProject = this.projectSystem.getCurrentProject();
     if (!currentProject) {
-      showErrorPanel('No project to export');
+      showErrorPanel(i18n.t('ui.panels.projectManager.noProjectToExport'));
       return;
     }
 
@@ -257,9 +257,9 @@ export class ProjectPanel {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      showSuccessPanel(`Project "${currentProject.name}" exported successfully`);
+      showSuccessPanel(i18n.t('ui.panels.projectManager.projectExported', { name: currentProject.name }));
     } catch (error) {
-      showErrorPanel(`Failed to export project: ${error.message}`);
+      showErrorPanel(i18n.t('ui.panels.projectManager.projectExportFailed', { error: error.message }));
     }
   }
 
@@ -267,11 +267,11 @@ export class ProjectPanel {
     const project = await this.projectSystem.loadProjectById(projectId);
 
     if (!project) {
-      showErrorPanel('No project to rename');
+      showErrorPanel(i18n.t('ui.panels.projectManager.noProjectToRename'));
       return;
     }
 
-    const newName = prompt('Enter new project name:', project.name);
+    const newName = prompt(i18n.t('ui.panels.projectManager.enterNewProjectName', { name: project.name }));
     if (!newName || newName.trim() === '') {
       return;
     }
@@ -286,7 +286,7 @@ export class ProjectPanel {
       const nameExists = await this.projectSystem.checkProjectExists(trimmedName);
 
       if (nameExists) {
-        showErrorPanel(`A project with the name "${trimmedName}" already exists`);
+        showErrorPanel(i18n.t('ui.panels.projectManager.projectNameAlreadyExists', { name: trimmedName }));
         return;
       }
 
@@ -299,14 +299,14 @@ export class ProjectPanel {
       // Update display
       this.updateDisplay();
 
-      showSuccessPanel(`Project renamed to "${trimmedName}" successfully`);
+      showSuccessPanel(i18n.t('ui.panels.projectManager.projectRenamed', { name: trimmedName }));
     } catch (error) {
-      showErrorPanel(`Failed to rename project: ${error.message}`);
+      showErrorPanel(i18n.t('ui.panels.projectManager.projectRenameFailed', { error: error.message }));
     }
   }
 
   async deleteProject(projectId) {
-    const confirmed = confirm(`Are you sure you want to delete this project? This action cannot be undone.`);
+    const confirmed = confirm(i18n.t('ui.panels.projectManager.deleteProjectConfirmation'));
     if (!confirmed) return;
 
     try {
@@ -319,10 +319,9 @@ export class ProjectPanel {
       }
 
       this.updateDisplay();
-      showSuccessPanel(`Project deleted successfully`);
+      showSuccessPanel(i18n.t('ui.panels.projectManager.projectDeleted'));
     } catch (error) {
-      console.error('Failed to delete project', error);
-      showErrorPanel(`Failed to delete project: ${error.message}`);
+      showErrorPanel(i18n.t('ui.panels.projectManager.projectDeletionFailed', { error: error.message }));
     }
   }
 

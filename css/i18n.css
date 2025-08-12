@@ -1,0 +1,63 @@
+/* Language Selector Styles */
+.language-selector {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  margin-right: 10px;
+  padding: 5px;
+  position: relative;
+  z-index: 1000;
+}
+
+.language-select {
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+  min-width: 120px;
+}
+
+.language-select:hover {
+  border-color: #777;
+}
+
+.language-select:focus {
+  border-color: #999;
+}
+
+.language-select option {
+  background: #333;
+  color: #fff;
+  padding: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .language-selector {
+    margin-left: 10px;
+    margin-right: 5px;
+  }
+
+  .language-select {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+/* Dark theme compatibility */
+.language-select {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.language-select:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.language-select:focus {
+  background-color: rgba(0, 0, 0, 0.7);
+}

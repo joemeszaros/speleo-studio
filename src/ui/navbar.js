@@ -1,5 +1,6 @@
 import { ConfigManager } from '../config.js';
 import { Exporter } from '../io/export.js';
+import { i18n } from '../i18n/i18n.js';
 
 class NavigationBar {
 
@@ -30,15 +31,20 @@ class NavigationBar {
     this.projectPanel = projectPanel;
     this.exportPanel = exportPanel;
     this.controls = controls;
-    this.#buildNavbar(domElement);
     this.#addNavbarClickListener();
     document.addEventListener('currentProjectChanged', () => this.setFileMenuDisabled(false));
     document.addEventListener('currentProjectDeleted', () => this.setFileMenuDisabled(true));
+
+    // Listen for language changes and refresh navbar
+    document.addEventListener('languageChanged', () => {
+      this.#buildNavbar(domElement);
+    });
+    this.#buildNavbar(domElement);
   }
 
   setFileMenuDisabled(disabled) {
     const fileMenuButton = Array.from(document.querySelectorAll('.mydropdown .dropbtn'))
-      .find((button) => button.textContent === 'File');
+      .find((button) => button.textContent === i18n.t('ui.navbar.menu.file.name'));
     if (fileMenuButton) {
       fileMenuButton.disabled = disabled;
     }
@@ -51,23 +57,23 @@ class NavigationBar {
   #getMenus() {
     return [
       {
-        name     : 'File',
+        name     : i18n.t('ui.navbar.menu.file.name'),
         disabled : true,
         elements : [
           {
-            name  : 'New cave',
+            name  : i18n.t('ui.navbar.menu.file.new'),
             click : () => {
               this.projectManager.addNewCave();
             }
           },
           {
-            name  : 'Open cave(s)',
+            name  : i18n.t('ui.navbar.menu.file.open'),
             click : function () {
               document.getElementById('caveInput').click();
             }
           },
           {
-            name  : 'Export cave(s)',
+            name  : i18n.t('ui.navbar.menu.file.export'),
             click : () =>
               Exporter.showExportDialog(
                 this.db.getAllCaves(),
@@ -76,10 +82,16 @@ class NavigationBar {
                 this.exportPanel
               )
           },
-          { name: 'Download configuration', click: () => ConfigManager.downloadConfig(this.options) },
-          { name: 'Load configuration', click: () => document.getElementById('configInput').click() },
           {
-            name  : 'Reset configuration',
+            name  : i18n.t('ui.navbar.menu.file.downloadConfig'),
+            click : () => ConfigManager.downloadConfig(this.options)
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.file.loadConfig'),
+            click : () => document.getElementById('configInput').click()
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.file.resetConfig'),
             click : () => {
               ConfigManager.clear();
               const loadedConfig = ConfigManager.loadOrDefaults();
@@ -90,22 +102,22 @@ class NavigationBar {
         ]
       },
       {
-        name     : 'Project',
+        name     : i18n.t('ui.navbar.menu.project.name'),
         elements : [
           {
-            name  : 'New Project',
+            name  : i18n.t('ui.navbar.menu.project.new'),
             click : () => {
               this.projectPanel.showNewProjectDialog();
             }
           },
           {
-            name  : 'Project Manager',
+            name  : i18n.t('ui.navbar.menu.project.manager'),
             click : () => {
               this.projectPanel.show();
             }
           },
           {
-            name  : 'Export Project',
+            name  : i18n.t('ui.navbar.menu.project.export'),
             click : () => {
               this.projectPanel.exportCurrentProject();
             }
@@ -113,31 +125,31 @@ class NavigationBar {
         ]
       },
       {
-        name     : 'View',
+        name     : i18n.t('ui.navbar.menu.view.name'),
         elements : [
           {
-            name  : 'Cave explorer',
+            name  : i18n.t('ui.navbar.menu.view.explorer'),
             click : () => (this.options.ui.panels.explorer.show = !this.options.ui.panels.explorer.show)
           },
           {
-            name  : 'Control panel',
+            name  : i18n.t('ui.navbar.menu.view.controlPanel'),
             click : () => (this.options.ui.panels.settings.show = !this.options.ui.panels.settings.show)
           },
           {
-            name  : 'Scene overwiew',
+            name  : i18n.t('ui.navbar.menu.view.sceneOverview'),
             click : () => (this.options.ui.panels.sceneOverview.show = !this.options.ui.panels.sceneOverview.show)
           },
           {
-            name  : 'Enter / exit fullscreen',
+            name  : i18n.t('ui.navbar.menu.view.fullscreen'),
             click : () => this.#toggleFullscreen()
           }
         ]
       },
       {
-        name     : 'Tools',
+        name     : i18n.t('ui.navbar.menu.tools.name'),
         elements : [
           {
-            name  : 'Dip & Strike Calculator',
+            name  : i18n.t('ui.navbar.menu.tools.dipStrike'),
             click : () => {
               this.showDipStrikeCalculator();
             }
@@ -145,10 +157,10 @@ class NavigationBar {
         ]
       },
       {
-        name     : 'Help',
+        name     : i18n.t('ui.navbar.menu.help.name'),
         elements : [
           {
-            name  : 'About Speleo Studio',
+            name  : i18n.t('ui.navbar.menu.help.about'),
             click : () => this.#showAboutDialog()
           }
         ]
@@ -159,68 +171,68 @@ class NavigationBar {
   #getIcons() {
     return [
       {
-        tooltip : 'Print',
+        tooltip : i18n.t('ui.navbar.tooltips.print'),
         icon    : './icons/print.svg',
         click   : () => window.print()
       },
       {
-        tooltip : 'Zoom to fit',
+        tooltip : i18n.t('ui.navbar.tooltips.zoomFit'),
         icon    : './icons/zoom_fit.svg',
         click   : () => this.scene.view.fitScreen(this.scene.computeBoundingBox())
       },
       {
-        tooltip : 'Zoom in',
+        tooltip : i18n.t('ui.navbar.tooltips.zoomIn'),
         icon    : './icons/zoom_in.svg',
         click   : () => this.scene.view.zoomIn()
       },
       {
-        tooltip : 'Zoom out',
+        tooltip : i18n.t('ui.navbar.tooltips.zoomOut'),
         icon    : './icons/zoom_out.svg',
         click   : () => this.scene.view.zoomOut()
       },
       {
-        tooltip    : 'Plan',
+        tooltip    : i18n.t('ui.navbar.tooltips.plan'),
         selectable : true,
         icon       : './icons/plan.svg',
         click      : () => this.scene.changeView('plan')
       },
       {
-        tooltip    : 'Profile',
+        tooltip    : i18n.t('ui.navbar.tooltips.profile'),
         selectable : true,
         icon       : './icons/profile.svg',
         click      : () => this.scene.changeView('profile')
       },
       {
-        tooltip    : '3D',
+        tooltip    : i18n.t('ui.navbar.tooltips.3d'),
         selectable : true,
         selected   : true,
         icon       : './icons/3d.svg',
         click      : () => this.scene.changeView('spatial')
       },
       {
-        tooltip : 'Bounding box',
+        tooltip : i18n.t('ui.navbar.tooltips.boundingBox'),
         icon    : './icons/bounding_box.svg',
         click   : () => this.scene.toogleBoundingBox()
       },
       {
-        tooltip : 'Show beddings',
+        tooltip : i18n.t('ui.navbar.tooltips.beddings'),
         icon    : './icons/bedding.svg',
         click   : () => this.scene.tooglePlaneFor('bedding')
       },
       {
-        tooltip : 'Show faults',
+        tooltip : i18n.t('ui.navbar.tooltips.faults'),
         icon    : './icons/fault.svg',
         click   : () => this.scene.tooglePlaneFor('fault')
       },
       {
-        tooltip  : 'Line color mode',
+        tooltip  : i18n.t('ui.navbar.tooltips.lineColor'),
         icon     : './icons/cl_color.svg',
         elements : [
-          { id: 'global', title: 'Global color' },
-          { id: 'gradientByZ', title: 'Gradient by Z' },
-          { id: 'gradientByDistance', title: 'Gradient by distance' },
-          { id: 'percave', title: 'Per cave' },
-          { id: 'persurvey', title: 'Per survey' }
+          { id: 'global', title: i18n.t('ui.navbar.lineColorModes.global') },
+          { id: 'gradientByZ', title: i18n.t('ui.navbar.lineColorModes.gradientByZ') },
+          { id: 'gradientByDistance', title: i18n.t('ui.navbar.lineColorModes.gradientByDistance') },
+          { id: 'percave', title: i18n.t('ui.navbar.lineColorModes.percave') },
+          { id: 'persurvey', title: i18n.t('ui.navbar.lineColorModes.persurvey') }
         ].map((e) => ({
           name     : e.title,
           selected : this.options.scene.caveLines.color.mode === e.id,
@@ -230,22 +242,22 @@ class NavigationBar {
         }))
       },
       {
-        tooltip : 'Grid position/visibility',
+        tooltip : i18n.t('ui.navbar.tooltips.grid'),
         icon    : './icons/grid.svg',
         click   : () => this.scene.grid.roll()
       },
       {
-        tooltip : 'Surface visibility',
+        tooltip : i18n.t('ui.navbar.tooltips.surface'),
         icon    : './icons/surface.svg',
         click   : () => this.scene.rollSurface()
       },
       {
-        tooltip : 'Locate point',
+        tooltip : i18n.t('ui.navbar.tooltips.locate'),
         icon    : './icons/locate.svg',
         click   : (event) => this.interactive.showLocateStationPanel(event.clientX)
       },
       {
-        tooltip : 'Shortest path',
+        tooltip : i18n.t('ui.navbar.tooltips.shortestPath'),
         icon    : './icons/shortest_path.svg',
         click   : (event) => this.interactive.showShortestPathPanel(event.clientX)
       }
@@ -398,6 +410,7 @@ class NavigationBar {
           )
         );
       });
+    navbarHtmlElement.appendChild(i18n.getLanguageSelector());
   }
 
   #toggleFullscreen() {
@@ -423,51 +436,49 @@ class NavigationBar {
   }
 
   #showAboutDialog() {
-    // Create about dialog if it doesn't exist
     let aboutDialog = document.getElementById('about-dialog');
     if (!aboutDialog) {
       aboutDialog = document.createElement('div');
-      aboutDialog.id = 'about-dialog';
-      aboutDialog.className = 'about-dialog';
-      aboutDialog.innerHTML = `
+      document.body.appendChild(aboutDialog);
+    }
+    aboutDialog.id = 'about-dialog';
+    aboutDialog.className = 'about-dialog';
+    aboutDialog.innerHTML = `
         <div class="about-container">
           <div class="about-header">
             <img src="images/logo.png" alt="Speleo Studio Logo" class="about-logo" />
-            <h2 class="about-title">Speleo Studio</h2>
+            <h2 class="about-title">${i18n.t('ui.about.title')}</h2>
             <button class="about-close-btn" onclick="this.closest('.about-dialog').style.display='none'">×</button>
           </div>
           <div class="about-content">
             <p class="about-description">
-              A comprehensive web application for cave visualization and survey management. 
-              Speleo Studio provides professional tools for exploring, analyzing, and visualizing cave systems in 3D.
+              ${i18n.t('ui.about.description')}
             </p>
             <div class="about-features">
-              <h3>Key Features:</h3>
+              <h3>${i18n.t('ui.about.keyFeatures')}</h3>
               <ul>
-                <li>3D cave visualization with Three.js</li>
-                <li>Survey data import from TopoDroid, Polygon, and JSON formats</li>
-                <li>Interactive 3D scene navigation</li>
-                <li>Survey data editing and validation</li>
-                <li>Multiple export formats (PNG, DXF, Polygon, JSON)</li>
-                <li>Project management and data persistence</li>
-                <li>Surface mesh visualization (PLY format)</li>
+                <li>${i18n.t('ui.about.features.3d')}</li>
+                <li>${i18n.t('ui.about.features.survey')}</li>
+                <li>${i18n.t('ui.about.features.navigation')}</li>
+                <li>${i18n.t('ui.about.features.editing')}</li>
+                <li>${i18n.t('ui.about.features.export')}</li>
+                <li>${i18n.t('ui.about.features.management')}</li>
+                <li>${i18n.t('ui.about.features.surface')}</li>
               </ul>
             </div>
             <div class="about-links">
               <a href="https://github.com/joemeszaros/speleo-studio/" target="_blank" class="about-link">
                 <span class="about-link-icon">📂</span>
-                View Source Code on GitHub
+                ${i18n.t('ui.about.links.github')}
               </a>
               <a href="https://joemeszaros.github.io/speleo-studio/" target="_blank" class="about-link">
                 <span class="about-link-icon">🌐</span>
-                Live Application
+                ${i18n.t('ui.about.links.live')}
               </a>
             </div>
           </div>
         </div>
       `;
-      document.body.appendChild(aboutDialog);
-    }
 
     // Show the dialog
     aboutDialog.style.display = 'block';

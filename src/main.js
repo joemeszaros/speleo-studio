@@ -16,32 +16,36 @@ import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
 import { DatabaseManager } from './storage/database-manager.js';
 import { ProjectPanel } from './ui/project-panel.js';
+import { i18n } from './i18n/i18n.js';
 
 class Main {
 
   constructor() {
 
-    if (localStorage.getItem('welcome') === null) {
-      document.querySelector('#welcome-panel').style.display = 'block';
-    }
+    i18n.init().then(() => {
 
-    const db = new Database();
-    this.db = db;
-    // Load saved configuration or use defaults
-    const loadedOptions = ConfigManager.loadOrDefaults();
-    const observer = new ObjectObserver();
-    const options = observer.watchObject(loadedOptions);
+      if (localStorage.getItem('welcome') === null) {
+        document.querySelector('#welcome-panel').style.display = 'block';
+      }
 
-    const attributeDefs = new AttributesDefinitions(attributeDefintions);
+      const db = new Database();
+      this.db = db;
+      // Load saved configuration or use defaults
+      const loadedOptions = ConfigManager.loadOrDefaults();
+      const observer = new ObjectObserver();
+      const options = observer.watchObject(loadedOptions);
 
-    // Initialize database and project systems
-    this.databaseManager = new DatabaseManager();
-    this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
-    this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
-    this.editorStateSystem = new EditorStateSystem(this.databaseManager);
+      const attributeDefs = new AttributesDefinitions(attributeDefintions);
 
-    // Initialize the application
-    this.#initializeApp(db, options, observer, attributeDefs);
+      // Initialize database and project systems
+      this.databaseManager = new DatabaseManager();
+      this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
+      this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
+      this.editorStateSystem = new EditorStateSystem(this.databaseManager);
+
+      // Initialize the application
+      this.#initializeApp(db, options, observer, attributeDefs);
+    });
   }
 
   async #initializeApp(db, options, observer, attributeDefs) {
@@ -75,8 +79,8 @@ class Main {
     this.projectManager = new ProjectManager(db, options, scene, explorer, this.projectSystem, this.editorStateSystem);
 
     // Initialize project panel
-    this.projectPanel = new ProjectPanel(this.projectSystem);
-    document.body.appendChild(this.projectPanel.createPanel());
+    this.projectPanel = new ProjectPanel(document.getElementById('project-panel'), this.projectSystem);
+    this.projectPanel.setupPanel();
     this.projectPanel.show();
 
     this.controls = new Controls(options, document.getElementById('control-panel'));

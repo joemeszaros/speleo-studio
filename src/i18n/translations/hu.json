@@ -1,0 +1,142 @@
+{
+  "ui": {
+    "navbar": {
+      "menu": {
+        "file": {
+          "name": "Fájl",
+          "new": "Új barlang",
+          "open": "Barlang(ok) megnyitása",
+          "export": "Barlang(ok) exportálása",
+          "downloadConfig": "Konfiguráció letöltése",
+          "loadConfig": "Konfiguráció betöltése",
+          "resetConfig": "Konfiguráció visszaállítása"
+        },
+        "project": {
+          "name": "Projekt",
+          "new": "Új projekt",
+          "manager": "Projekt kezelő",
+          "export": "Projekt exportálása"
+        },
+        "view": {
+          "name": "Nézet",
+          "explorer": "Böngésző",
+          "controlPanel": "Vezérlőpanel",
+          "sceneOverview": "Áttekintő",
+          "fullscreen": "Teljes képernyő be/kikapcsolása"
+        },
+        "tools": {
+          "name": "Eszközök",
+          "dipStrike": "Dőlés és irány számító"
+        },
+        "help": {
+          "name": "Súgó",
+          "about": "A Speleo Studio-ról"
+        }
+      },
+      "tooltips": {
+        "print": "Nyomtatás",
+        "zoomFit": "Nagyítás illesztése",
+        "zoomIn": "Nagyítás",
+        "zoomOut": "Kicsinyítés",
+        "plan": "Terv",
+        "profile": "Profil",
+        "3d": "3D",
+        "boundingBox": "Határoló doboz",
+        "beddings": "Rétegek megjelenítése",
+        "faults": "Törések megjelenítése",
+        "lineColor": "Vonal szín mód",
+        "grid": "Rács pozíció/láthatóság",
+        "surface": "Felszín láthatóság",
+        "locate": "Pont megkeresése",
+        "shortestPath": "Legrövidebb út"
+      },
+      "lineColorModes": {
+        "global": "Globális",
+        "gradientByZ": "Mélység szerint",
+        "gradientByDistance": "Távolság szerint",
+        "percave": "Barlangonként",
+        "persurvey": "Felmérésenként"
+      }
+    },
+    "about": {
+      "title": "Speleo Studio",
+      "description": "Átfogó webes alkalmazás barlang vizualizációhoz és felmérés kezeléséhez. A Speleo Studio professzionális eszközöket biztosít a barlangrendszerek 3D-s feltárásához, elemzéséhez és vizualizálásához.",
+      "keyFeatures": "Főbb funkciók:",
+      "features": {
+        "3d": "3D barlang vizualizáció Three.js-sel",
+        "survey": "Felmérési adatok importálása TopoDroid, Polygon és JSON formátumokból",
+        "navigation": "Interaktív 3D jelenet navigáció",
+        "editing": "Felmérési adatok szerkesztése és validálása",
+        "export": "Több export formátum (PNG, DXF, Polygon, JSON)",
+        "management": "Projekt kezelés és adat megőrzés",
+        "surface": "Felszín háló vizualizáció (PLY formátum)"
+      },
+      "links": {
+        "github": "Forráskód megtekintése GitHub-on",
+        "live": "Speleo Studio alkalmazás"
+      }
+    },
+    "footer": {
+      "project": "Projekt",
+      "noProjectLoaded": "Nincs betöltött projekt"
+    },
+    "explorer": {
+      "menu": {
+        "editCaveData": "Adatlap szerkesztése",
+        "editSectionAttributes": "Szakasz attribútumok szerkesztése",
+        "editComponentAttributes": "Komponens attribútumok szerkesztése",
+        "newSurvey": "Új felmérés",
+        "importSurvey": "Felmérés importálása",
+        "cycles": "Hurkok",
+        "editSurveySheet": "Adatlap szerkesztése"
+      }
+    },
+    "panels": {
+      "projectManager": {
+        "title": "Projekt kezelő",
+        "new": "Új projekt",
+        "current": "Jelenlegi projekt",
+        "noProject": "Nincs projekt betöltve",
+        "noProjectsFound": "Nincs projekt",
+        "recentProjects": "Legutóbbi projektek",
+        "searchProjects": "Projekt keresése",
+        "noRecentProjects": "Nincs legutóbbi projekt",
+        "errorLoadingProjects": "Hiba történt a projektek betöltésekor",
+        "enterProjectName": "Projekt neve:",
+        "enterProjectDescription": "Projekt leírása (opcionális):",
+        "projectCreated": "Projekt \"{name}\" létrehozva",
+        "projectCreationFailed": "Hiba történt a projekt létrehozása során: {error}",
+        "projectOpenFailed": "Hiba történt a projekt megnyitása során: {error}",
+        "projectSaveFailed": "Hiba történt a projekt mentése során: {error}",
+        "projectSaved": "Projekt mentve",
+        "projectExported": "Projekt \"{name}\" exportálva",
+        "projectExportFailed": "Hiba történt a projekt exportálása során: {error}",
+        "projectRenamed": "Projekt átnevezve \"{name}\" sikeresen",
+        "projectRenameFailed": "Hiba történt a projekt átnevezése során: {error}",
+        "projectDeleted": "Projekt törölve",
+        "projectDeletionFailed": "Hiba történt a projekt törlése során: {error}",
+        "noProjectToExport": "Nincs projekt a kiválasztott projekt exportálásához",
+        "noProjectToRename": "Nincs projekt a kiválasztott projekt átnevezéséhez",
+        "enterNewProjectName": "Új projekt neve: {name}",
+        "projectNameAlreadyExists": "A \"{name}\" nevű projekt már létezik",
+        "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
+        "caves": "barlang"
+      }
+    }
+  },
+  "common": {
+    "loading": "Betöltés...",
+    "error": "Hiba",
+    "success": "Sikeres",
+    "cancel": "Mégse",
+    "save": "Mentés",
+    "delete": "Törlés",
+    "edit": "Szerkesztés",
+    "close": "Bezárás",
+    "project": "Projekt",
+    "cave": "Barlang",
+    "caves": "Barlangok",
+    "current": "Jelenlegi",
+    "open": "Megnyitás"
+  }
+}

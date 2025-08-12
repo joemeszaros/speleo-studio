@@ -7,6 +7,7 @@ import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attri
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
+import { i18n } from '../i18n/i18n.js';
 
 class ProjectExplorer {
 
@@ -85,7 +86,7 @@ class ProjectExplorer {
 
   showCaveContextMenu(cave) {
     const menu = U.node`<ul class="menu-options">`;
-    const editCaveData = U.node`<li class="menu-option">Edit cave sheet</li>`;
+    const editCaveData = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.editCaveData')}</li>`;
     editCaveData.onclick = () => {
       this.#hidePreviousEditor();
       this.editor = new CaveEditor(
@@ -101,7 +102,7 @@ class ProjectExplorer {
       this.contextMenuElement.style.display = 'none';
     };
 
-    const editSectionAttributes = U.node`<li class="menu-option">Edit section attributes</li>`;
+    const editSectionAttributes = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.editSectionAttributes')}</li>`;
     editSectionAttributes.onclick = () => {
       this.#hidePreviousEditor();
       this.editor = new SectionAttributeEditor(
@@ -118,7 +119,7 @@ class ProjectExplorer {
 
     };
 
-    const editComponentAttributes = U.node`<li class="menu-option">Edit component attributes</li>`;
+    const editComponentAttributes = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.editComponentAttributes')}</li>`;
     editComponentAttributes.onclick = () => {
       this.#hidePreviousEditor();
       this.editor = new ComponentAttributeEditor(
@@ -135,7 +136,7 @@ class ProjectExplorer {
 
     };
 
-    const addSurvey = U.node`<li class="menu-option">New survey</li>`;
+    const addSurvey = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.newSurvey')}</li>`;
     addSurvey.onclick = () => {
       this.#hidePreviousEditor();
       this.contextMenuElement.style.display = 'none';
@@ -144,7 +145,7 @@ class ProjectExplorer {
       this.editor.show();
     };
 
-    const importSurvey = U.node`<li class="menu-option">Import survey</li>`;
+    const importSurvey = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.importSurvey')}</li>`;
     importSurvey.onclick = () => {
       this.#hidePreviousEditor();
       this.contextMenuElement.style.display = 'none';
@@ -153,7 +154,7 @@ class ProjectExplorer {
       surveyInput.click();
     };
 
-    const cycles = U.node`<li class="menu-option">Cycles</li>`;
+    const cycles = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.cycles')}</li>`;
     cycles.onclick = () => {
       this.#hidePreviousEditor();
       this.editor = new CyclePanel(document.querySelector('#cycle-panel'), this.scene, cave);
@@ -174,7 +175,7 @@ class ProjectExplorer {
 
   showSurveyContextMenu(cave, survey) {
     const menu = U.node`<ul class="menu-options">`;
-    const editSurveySheet = U.node`<li class="menu-option">Edit survey sheet</li>`;
+    const editSurveySheet = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.editSurveySheet')}</li>`;
     editSurveySheet.onclick = () => {
       this.#hidePreviousEditor();
       this.editor = new SurveySheetEditor(this.db, cave, survey, document.getElementById('fixed-size-editor'));

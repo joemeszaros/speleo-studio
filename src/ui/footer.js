@@ -1,4 +1,5 @@
 import { node } from '../utils/utils.js';
+import { i18n } from '../i18n/i18n.js';
 
 class Footer {
 
@@ -16,18 +17,22 @@ class Footer {
     element.appendChild(this.messagesContainer);
 
     this.message = undefined;
+    this.project = undefined;
+    this.updateProjectInfo(this.project);
 
     // Listen for project changes
     document.addEventListener('currentProjectChanged', (e) => this.updateProjectInfo(e.detail.project));
     document.addEventListener('currentProjectDeleted', () => this.updateProjectInfo(null));
+    document.addEventListener('languageChanged', () => this.updateProjectInfo(this.project));
 
   }
 
   updateProjectInfo(project) {
+    this.project = project;
     if (project) {
-      this.projectInfoContainer.innerHTML = `Project: <span class="project-name">${project.name}</span>`;
+      this.projectInfoContainer.innerHTML = `${i18n.t('ui.footer.project')}: <span class="project-name">${project.name}</span>`;
     } else {
-      this.projectInfoContainer.innerHTML = 'No project loaded';
+      this.projectInfoContainer.innerHTML = i18n.t('ui.footer.noProjectLoaded');
     }
   }
 
