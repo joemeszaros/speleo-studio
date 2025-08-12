@@ -73,7 +73,7 @@
       },
       "links": {
         "github": "Forráskód megtekintése GitHub-on",
-        "live": "Speleo Studio alkalmazás"
+        "live": "Speleo Studio publikus alkalmazás"
       }
     },
     "footer": {
@@ -133,8 +133,84 @@
         "toggleColumns": "Oszlopok láthatósága",
         "exportToCsv": "Exportálás CSV-be"
       },
+      "caveSheet": {
+        "title": "Barlang adatlap: {name}",
+        "titleNew": "Új barlang",
+        "fields": {
+          "name": "Barlang neve",
+          "settlement": "Település",
+          "catasterCode": "Kataszter szám",
+          "date": "Dátum",
+          "eovCoordinates": "EOV koordináták",
+          "surveyAliases": "Felmérés aliasok",
+          "stationName": "Pont neve",
+          "eovy": "Y koordináta",
+          "eovx": "X koordináta",
+          "eovelevation": "Magasság"
+        },
+        "stats": {
+          "stations": "Pontok",
+          "surveys": "Felmérések",
+          "isolated": "Izolált felmérések",
+          "attributes": "Pont attribútumok",
+          "length": "Hossz",
+          "orphanLength": "Hossz (árva)",
+          "invalidLength": "Hossz (érvénytelen)",
+          "auxiliaryLength": "Hossz (segéd)",
+          "depth": "Mélység",
+          "height": "Magasság",
+          "vertical": "Vertikális kiterjedés",
+          "minZ": "Legmélyebb pont",
+          "maxZ": "Legmagasabb pont",
+          "verticalWithSplays": "Vertikális kiterjedés (tüskékkel)"
+        },
+        "messages": {
+          "caveNameAlreadyExists": "A(z) {name} nevű barlang már létezik, nem lehet átnevezni!"
+        },
+        "errors": {
+          "invalidCoordinates": "Érvénytelen koordináták",
+          "emptyStationName": "A(z) {name} pont nincs megadva",
+          "aliasFromToSame": "Az alias kezdő és végpontja nem lehet ugyanaz: {from} -> {to}",
+          "invalidAliases": "Érvénytelen aliasok"
+        },
+        "buttons": {
+          "addAlias": "Alias hozzáadása",
+          "addCoordinate": "Pont hozzáadása"
+        }
+      },
+      "surveySheet": {
+        "title": "Felmérés adatlap: {name}",
+        "fields": {
+          "name": "Felmérés neve",
+          "start": "Induló pont",
+          "date": "Dátum",
+          "declination": "Deklináció",
+          "convergence": "Meridián konvergencia",
+          "team": "Csapat neve",
+          "teamMembers": "Csapat tagok",
+          "instruments": "Mérőeszközök",
+          "memberName": "Név",
+          "memberRole": "Szerep",
+          "instrumentName": "Mérőeszköz neve",
+          "instrumentValue": "Érték"
+        },
+        "messages": {
+          "declinationPrefix": "Deklináció a megadott dátumon és helyen (NOAA-tól):",
+          "surveyNameAlreadyExists": "A(z) {name} nevű felmérés már létezik, nem lehet átnevezni!",
+          "startStationNotFound": "A(z) {start} pont nem található a mérések között!"
+        },
+        "errors": {
+          "unavailable": "nem elérhető",
+          "notAvailable": "Nem elérhető",
+          "noWgs84Coordinates": "Nincs WGS84 koordináta"
+        },
+        "buttons": {
+          "addMember": "Tag hozzáadása",
+          "addInstrument": "Mérőeszköz hozzáadása"
+        }
+      },
       "survey": {
-        "title": "Felmérés szerkesztő: {name}",
+        "title": "Felmérés: {name}",
         "message": {
           "missingFields": "Sor hiányzó mezői: {fields}",
           "invalidAttributes": "Sor érvénytelen attribútumokkal",

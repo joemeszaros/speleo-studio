@@ -18,6 +18,7 @@ class SurveyEditor extends Editor {
     this.eovVisible = false;
     this.unsavedChanges = unsavedChanges;
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
+    document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
   onSurveyRecalculated(e) {
@@ -827,15 +828,16 @@ class SurveySheetEditor extends BaseEditor {
     this.db = db;
     this.cave = cave;
     this.survey = survey;
-
-    //this.renderMembers = this.renderMembers.bind(this);
-    //this.renderInstruments = this.renderInstruments.bind(this);
+    document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
   setupPanel() {
     this.panel.innerHTML = '';
-    makeMovable(this.panel, `Survey sheet editor: ${this.survey?.name || 'New survey'}`, false, () =>
-      this.closeEditor()
+    makeMovable(
+      this.panel,
+      i18n.t('ui.editors.surveySheet.title', { name: this.survey?.name || 'New survey' }),
+      false,
+      () => this.closeEditor()
     );
     this.#setupEditor();
   }
@@ -855,11 +857,17 @@ class SurveySheetEditor extends BaseEditor {
 
     const form = U.node`<form class="editor"></form>`;
     const fields = [
-      { label: 'Survey Name', id: 'name', type: 'text', required: true },
-      { label: 'Start Station', id: 'start', type: 'text' },
-      { label: 'Date', id: 'date', type: 'date', required: true },
-      { label: 'Declination', id: 'declination', type: 'number', step: 'any', required: true },
-      { label: 'Team Name', id: 'team', type: 'text', required: true }
+      { label: i18n.t('ui.editors.surveySheet.fields.name'), id: 'name', type: 'text', required: true },
+      { label: i18n.t('ui.editors.surveySheet.fields.start'), id: 'start', type: 'text' },
+      { label: i18n.t('ui.editors.surveySheet.fields.date'), id: 'date', type: 'date', required: true },
+      {
+        label    : i18n.t('ui.editors.surveySheet.fields.declination'),
+        id       : 'declination',
+        type     : 'number',
+        step     : 'any',
+        required : true
+      },
+      { label: i18n.t('ui.editors.surveySheet.fields.team'), id: 'team', type: 'text', required: true }
     ];
 
     this.surveyHasChanged = false;
@@ -890,20 +898,20 @@ class SurveySheetEditor extends BaseEditor {
     const columns = U.node`<div class="columns"></div>`;
     form.appendChild(columns);
 
-    const membersDiv = U.node`<div class="team-members-section"><b>Team Members:</b><br/><br/></div>`;
+    const membersDiv = U.node`<div class="team-members-section"><b>${i18n.t('ui.editors.surveySheet.fields.teamMembers')}:</b><br/><br/></div>`;
     this.membersList = U.node`<div class="members-list"></div>`;
     membersDiv.appendChild(this.membersList);
     columns.appendChild(membersDiv);
     this.renderMembers();
 
-    const instrumentsDiv = U.node`<div class="instruments-section"><b>Survey Instruments:</b><br/><br/></div>`;
+    const instrumentsDiv = U.node`<div class="instruments-section"><b>${i18n.t('ui.editors.surveySheet.fields.instruments')}:</b><br/><br/></div>`;
     this.instrumentsList = U.node`<div class="instruments-list"></div>`;
     instrumentsDiv.appendChild(this.instrumentsList);
     columns.appendChild(instrumentsDiv);
     this.renderInstruments();
 
-    const saveBtn = U.node`<button type="submit">Save</button>`;
-    const cancelBtn = U.node`<button type="button">Cancel</button>`;
+    const saveBtn = U.node`<button type="submit">${i18n.t('common.save')}</button>`;
+    const cancelBtn = U.node`<button type="button">${i18n.t('common.cancel')}</button>`;
     cancelBtn.onclick = (e) => {
       e.preventDefault();
       this.closeEditor();
@@ -912,14 +920,14 @@ class SurveySheetEditor extends BaseEditor {
     form.appendChild(cancelBtn);
 
     form.appendChild(
-      U.node`<p>Meridian convergence: ${this.survey?.metadata?.convergence?.toFixed(3) || 'Not available'}</p>`
+      U.node`<p>${i18n.t('ui.editors.surveySheet.fields.convergence')}: ${this.survey?.metadata?.convergence?.toFixed(3) || i18n.t('ui.editors.surveySheet.errors.notAvailable')}</p>`
     );
-    const declinationText = U.node`<p id="declination-official">Declination: unavailable</p>`;
+    const declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
     form.appendChild(declinationText);
 
     const startOrRandomStation =
       this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1];
-    const declinationPrefix = 'Declination at the given date for this geo location (from NOAA):';
+    const declinationPrefix = i18n.t('ui.editors.surveySheet.messages.declinationPrefix');
     if (this.survey?.metadata?.declinationReal === undefined) {
       if (startOrRandomStation?.coordinates?.wgs !== undefined && this.survey?.metadata?.date !== undefined) {
         Declination.getDeclination(
@@ -931,7 +939,7 @@ class SurveySheetEditor extends BaseEditor {
           declinationText.textContent = `${declinationPrefix} ${declination.toFixed(3)}`;
         });
       } else {
-        declinationText.textContent = `${declinationPrefix} No WGS84 coordinates`;
+        declinationText.textContent = `${declinationPrefix} ${i18n.t('ui.editors.surveySheet.errors.noWgs84Coordinates')}`;
       }
     } else {
       declinationText.textContent = `${declinationPrefix} ${this.survey.metadata.declinationReal.toFixed(3)}`;
@@ -953,7 +961,9 @@ class SurveySheetEditor extends BaseEditor {
 
       if (this.survey !== undefined && this.nameHasChanged && this.formData.name !== this.survey.name) {
         if (this.cave.surveys.find((s) => s.name === this.formData.name) !== undefined) {
-          showErrorPanel(`Survey with name ${this.formData.name} alreay exists, cannot rename!`);
+          showErrorPanel(
+            i18n.t('ui.editors.surveySheet.messages.surveyNameAlreadyExists', { name: this.formData.name })
+          );
           return;
         } else {
           const oldName = this.survey.name;
@@ -965,7 +975,9 @@ class SurveySheetEditor extends BaseEditor {
       if ((this.survey?.shots ?? []).length > 0) {
         const hasStart = this.survey.shots.find((s) => s.from === this.formData.start || s.to === this.formData.start);
         if (hasStart === undefined) {
-          showErrorPanel(`Start station ${this.formData.start} not found in shots!`);
+          showErrorPanel(
+            i18n.t('ui.editors.surveySheet.messages.startStationNotFound', { start: this.formData.start })
+          );
           return;
         }
       }
@@ -999,8 +1011,8 @@ class SurveySheetEditor extends BaseEditor {
       container : this.membersList,
       items     : this.formData.members,
       fields    : [
-        { key: 'name', placeholder: 'Name', type: 'text', width: '120px' },
-        { key: 'role', placeholder: 'Role', type: 'text', width: '100px' }
+        { key: 'name', placeholder: i18n.t('ui.editors.surveySheet.fields.memberName'), type: 'text', width: '120px' },
+        { key: 'role', placeholder: i18n.t('ui.editors.surveySheet.fields.memberRole'), type: 'text', width: '100px' }
       ],
       nodes : [],
       onAdd : () => {
@@ -1020,7 +1032,7 @@ class SurveySheetEditor extends BaseEditor {
         this.formData.members[idx][key] = value;
 
       },
-      addButtonLabel : 'Add member'
+      addButtonLabel : i18n.t('ui.editors.surveySheet.buttons.addMember')
     });
   }
 
@@ -1029,8 +1041,18 @@ class SurveySheetEditor extends BaseEditor {
       container : this.instrumentsList,
       items     : this.formData.instruments,
       fields    : [
-        { key: 'name', placeholder: 'Instrument Name', type: 'text', width: '140px' },
-        { key: 'value', placeholder: 'Value', type: 'text', width: '80px' }
+        {
+          key         : 'name',
+          placeholder : i18n.t('ui.editors.surveySheet.fields.instrumentName'),
+          type        : 'text',
+          width       : '140px'
+        },
+        {
+          key         : 'value',
+          placeholder : i18n.t('ui.editors.surveySheet.fields.instrumentValue'),
+          type        : 'text',
+          width       : '80px'
+        }
       ],
       nodes : [],
       onAdd : () => {
@@ -1050,7 +1072,7 @@ class SurveySheetEditor extends BaseEditor {
         this.formData.instruments[idx][key] = value;
 
       },
-      addButtonLabel : 'Add instrument'
+      addButtonLabel : i18n.t('ui.editors.surveySheet.buttons.addInstrument')
     });
   }
 

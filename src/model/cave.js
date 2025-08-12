@@ -269,10 +269,10 @@ class Cave {
       });
     });
     const stations = [...this.stations.values()];
-    var minZ = 0,
-      maxZ = 0,
-      minZSplay = 0,
-      maxZSplay = 0;
+    var minZ = undefined,
+      maxZ = undefined,
+      minZSplay = undefined,
+      maxZSplay = undefined;
 
     stations.forEach((ss) => {
       const zCoord = ss.position.z;
@@ -296,6 +296,7 @@ class Cave {
     });
 
     const verticalSplays = maxZSplay - minZSplay;
+    const firstStationZ = this.getFirstStation()?.position?.z;
 
     return {
       stations            : stations.filter((ss) => ss.isCenter()).length,
@@ -306,10 +307,12 @@ class Cave {
       orphanLength        : orphanLength,
       invalidLength       : invalidLength,
       auxiliaryLength     : auxiliaryLength,
-      depth               : minZ,
-      height              : maxZ,
-      vertical            : maxZ - minZ,
-      vertiicalWithSplays : isNaN(verticalSplays) ? 0 : verticalSplays
+      depth               : minZ === undefined || firstStationZ === undefined ? 0 : firstStationZ - minZ,
+      height              : maxZ === undefined || firstStationZ === undefined ? 0 : maxZ - firstStationZ,
+      vertical            : maxZ === undefined || minZ === undefined ? 0 : maxZ - minZ,
+      vertiicalWithSplays : isNaN(verticalSplays) ? 0 : verticalSplays,
+      minZ                : minZ === undefined ? 0 : minZ,
+      maxZ                : maxZ === undefined ? 0 : maxZ
     };
   }
 

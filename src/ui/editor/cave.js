@@ -4,6 +4,7 @@ import { makeMovable, showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
 import { GeoData, EOVCoordinateWithElevation, CoordinateSytem, StationWithCoordinate } from '../../model/geo.js';
 import { SurveyAlias } from '../../model/survey.js';
+import { i18n } from '../../i18n/i18n.js';
 
 class CaveEditor extends Editor {
   constructor(db, options, cave, scene, attributeDefs, panel) {
@@ -11,6 +12,7 @@ class CaveEditor extends Editor {
     this.db = db;
     this.options = options;
     this.graph = undefined; // sort of a lazy val
+    document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
   #emitCaveAdded() {
@@ -36,7 +38,7 @@ class CaveEditor extends Editor {
     this.panel.innerHTML = '';
     makeMovable(
       this.panel,
-      `Cave sheet editor: ${this.cave?.name ?? 'New cave'}`,
+      i18n.t('ui.editors.caveSheet.title', { name: this.cave?.name ?? i18n.t('ui.editors.caveSheet.titleNew') }),
       false,
       () => this.closeEditor(),
       () => {},
@@ -77,10 +79,10 @@ class CaveEditor extends Editor {
 
     const form = U.node`<form class="editor"></form>`;
     const fields = [
-      { label: 'Name', id: 'name', type: 'text', required: true },
-      { label: 'Settlement', id: 'settlement', type: 'text', required: true },
-      { label: 'Cataster code', id: 'catasterCode', type: 'text', required: true },
-      { label: 'Date', id: 'date', type: 'date', required: true }
+      { label: i18n.t('ui.editors.caveSheet.fields.name'), id: 'name', type: 'text', required: true },
+      { label: i18n.t('ui.editors.caveSheet.fields.settlement'), id: 'settlement', type: 'text', required: true },
+      { label: i18n.t('ui.editors.caveSheet.fields.catasterCode'), id: 'catasterCode', type: 'text', required: true },
+      { label: i18n.t('ui.editors.caveSheet.fields.date'), id: 'date', type: 'date', required: true }
     ];
     fields.forEach((f) => {
       const value = f.id === 'name' ? this.caveData.name : this.caveData.metadata[f.id];
@@ -106,7 +108,7 @@ class CaveEditor extends Editor {
     form.appendChild(U.node`<br/>`);
     form.appendChild(U.node`<br/>`);
 
-    const coordsDiv = U.node`<div class="coords-section"><b>EOV coordinates:</b><br/><br/></div>`;
+    const coordsDiv = U.node`<div class="coords-section"><b>${i18n.t('ui.editors.caveSheet.fields.eovCoordinates')}:</b><br/><br/></div>`;
     this.coordsList = U.node`<div class="coords-list"></div>`;
     coordsDiv.appendChild(this.coordsList);
     form.appendChild(coordsDiv);
@@ -119,7 +121,7 @@ class CaveEditor extends Editor {
         .join('');
     };
 
-    this.aliasesDiv = U.node`<div class="aliases-section"><b>Survey aliases:</b><br/><br/></div>`;
+    this.aliasesDiv = U.node`<div class="aliases-section"><b>${i18n.t('ui.editors.caveSheet.fields.surveyAliases')}:</b><br/><br/></div>`;
     this.aliasesList = U.node`<div class="aliases-list" style="display: inline-block;"></div>`;
     const dataList = U.node`<datalist id="station-names">${getStationOptions()}</datalist>`;
     this.aliasesDiv.appendChild(this.aliasesList);
@@ -127,8 +129,8 @@ class CaveEditor extends Editor {
     form.appendChild(this.aliasesDiv);
     this.renderAliases();
 
-    const saveBtn = U.node`<button type="submit">Save</button>`;
-    const cancelBtn = U.node`<button type="button">Cancel</button>`;
+    const saveBtn = U.node`<button type="submit">${i18n.t('common.save')}</button>`;
+    const cancelBtn = U.node`<button type="button">${i18n.t('common.cancel')}</button>`;
     cancelBtn.onclick = (e) => {
       e.preventDefault();
       this.closeEditor();
@@ -147,7 +149,7 @@ class CaveEditor extends Editor {
           nameHasChanged &&
           this.caveData.name !== this.cave?.name
         ) {
-          showErrorPanel(`Cave with name ${this.caveData.name} alreay exists, cannot rename or add!`);
+          showErrorPanel(i18n.t('ui.editors.caveSheet.messages.caveNameAlreadyExists', { name: this.caveData.name }));
         }
 
         const caveMetadata = new CaveMetadata(
@@ -174,11 +176,11 @@ class CaveEditor extends Editor {
             errors.push(...coordErrors);
           }
           if (coord.name == undefined || coord.name.trim() === '') {
-            errors.push(`Station '${coord.name}' is empty`);
+            errors.push(i18n.t('ui.editors.caveSheet.errors.emptyStationName', { name: coord.name }));
           }
         });
         if (errors.length > 0) {
-          showErrorPanel('Invalid coordinates:<br>' + errors.join('<br><br>'));
+          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.invalidCoordinates') + '<br>' + errors.join('<br><br>'));
           return;
         }
 
@@ -188,14 +190,14 @@ class CaveEditor extends Editor {
         aliases.forEach((a) => {
 
           if (a.from === a.to && a.from !== undefined && a.from !== '') {
-            errors.push(`Alias from and to cannot be the same: ${a.from} -> ${a.to}`);
+            errors.push(i18n.t('ui.editors.caveSheet.errors.aliasFromToSame', { from: a.from, to: a.to }));
           }
 
         });
 
         if (errors.length > 0) {
           errors = [...new Set(errors)];
-          showErrorPanel('Invalid aliases:<br>' + errors.join('<br>'));
+          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.invalidAliases') + '<br>' + errors.join('<br>'));
           return;
         }
 
@@ -273,7 +275,7 @@ class CaveEditor extends Editor {
         }
         this.caveData.aliases[idx][key] = value;
       },
-      addButtonLabel : 'Add alias'
+      addButtonLabel : i18n.t('ui.editors.caveSheet.buttons.addAlias')
     });
   }
 
@@ -282,10 +284,37 @@ class CaveEditor extends Editor {
       container : this.coordsList,
       items     : this.caveData.coordinates,
       fields    : [
-        { key: 'name', placeholder: 'Station name', type: 'text', width: '120px', required: true },
-        { key: 'y', placeholder: 'Y coordinate', type: 'number', step: '0.01', width: '100px', required: true },
-        { key: 'x', placeholder: 'X coordinate', type: 'number', step: '0.01', width: '100px', required: true },
-        { key: 'elevation', placeholder: 'Elevation', type: 'number', step: '0.01', width: '100px', required: true }
+        {
+          key         : 'name',
+          placeholder : i18n.t('ui.editors.caveSheet.fields.stationName'),
+          type        : 'text',
+          width       : '120px',
+          required    : true
+        },
+        {
+          key         : 'y',
+          placeholder : i18n.t('ui.editors.caveSheet.fields.eovy'),
+          type        : 'number',
+          step        : '0.01',
+          width       : '100px',
+          required    : true
+        },
+        {
+          key         : 'x',
+          placeholder : i18n.t('ui.editors.caveSheet.fields.eovx'),
+          type        : 'number',
+          step        : '0.01',
+          width       : '100px',
+          required    : true
+        },
+        {
+          key         : 'elevation',
+          placeholder : i18n.t('ui.editors.caveSheet.fields.eovelevation'),
+          type        : 'number',
+          step        : '0.01',
+          width       : '100px',
+          required    : true
+        }
       ],
       nodes : [],
       onAdd : () => {
@@ -304,7 +333,7 @@ class CaveEditor extends Editor {
         }
         this.caveData.coordinates[idx][key] = value;
       },
-      addButtonLabel : 'Add coordinate'
+      addButtonLabel : i18n.t('ui.editors.caveSheet.buttons.addCoordinate')
     });
   }
 
@@ -313,24 +342,84 @@ class CaveEditor extends Editor {
     const stats = this.cave?.getStats();
 
     [
-      { id: 'stations', label: 'Stations', field: 'stations', formatter: (v) => v },
-      { id: 'surveys', label: 'Surveys', field: 'surveys', formatter: (v) => v },
-      { id: 'isolated', label: 'Isolated surveys', field: 'isolated', formatter: (v) => v },
-      { id: 'attributes', label: 'Station attributes', field: 'attributes', formatter: (v) => v },
+      {
+        id        : 'length',
+        label     : i18n.t('ui.editors.caveSheet.stats.length'),
+        field     : 'length',
+        bold      : true,
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'depth',
+        label     : i18n.t('ui.editors.caveSheet.stats.depth'),
+        field     : 'depth',
+        bold      : true,
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'height',
+        label     : i18n.t('ui.editors.caveSheet.stats.height'),
+        field     : 'height',
+        bold      : true,
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'vertical',
+        label     : i18n.t('ui.editors.caveSheet.stats.vertical'),
+        field     : 'vertical',
+        bold      : true,
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+
       { break: true },
-      { id: 'length', label: 'Length', field: 'length', formatter: (v) => v.toFixed(2) },
-      { id: 'orphanLength', label: 'Length (orphan)', field: 'orphanLength', formatter: (v) => v.toFixed(2) },
-      { id: 'invalidLength', label: 'Length (invalid)', field: 'invalidLength', formatter: (v) => v.toFixed(2) },
-      { id: 'auxiliaryLength', label: 'Length (auxiliary)', field: 'auxiliaryLength', formatter: (v) => v.toFixed(2) },
       { break: true },
-      { id: 'depth', label: 'Depth', field: 'depth', formatter: (v) => v.toFixed(2) },
-      { id: 'height', label: 'Height', field: 'height', formatter: (v) => v.toFixed(2) },
-      { id: 'vertical', label: 'Vertical extent', field: 'vertical', formatter: (v) => v.toFixed(2) },
+
+      { id: 'stations', label: i18n.t('ui.editors.caveSheet.stats.stations'), field: 'stations', formatter: (v) => v },
+      { id: 'surveys', label: i18n.t('ui.editors.caveSheet.stats.surveys'), field: 'surveys', formatter: (v) => v },
+      { id: 'isolated', label: i18n.t('ui.editors.caveSheet.stats.isolated'), field: 'isolated', formatter: (v) => v },
+      {
+        id        : 'attributes',
+        label     : i18n.t('ui.editors.caveSheet.stats.attributes'),
+        field     : 'attributes',
+        formatter : (v) => v
+      },
+      { break: true },
+      {
+        id        : 'orphanLength',
+        label     : i18n.t('ui.editors.caveSheet.stats.orphanLength'),
+        field     : 'orphanLength',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'invalidLength',
+        label     : i18n.t('ui.editors.caveSheet.stats.invalidLength'),
+        field     : 'invalidLength',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'auxiliaryLength',
+        label     : i18n.t('ui.editors.caveSheet.stats.auxiliaryLength'),
+        field     : 'auxiliaryLength',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      { break: true },
+      {
+        id        : 'minZ',
+        label     : i18n.t('ui.editors.caveSheet.stats.minZ'),
+        field     : 'minZ',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'maxZ',
+        label     : i18n.t('ui.editors.caveSheet.stats.maxZ'),
+        field     : 'maxZ',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
       {
         id        : 'vertiicalWithSplays',
-        label     : 'Vertical extent (splays)',
+        label     : i18n.t('ui.editors.caveSheet.stats.verticalWithSplays'),
         field     : 'vertiicalWithSplays',
-        formatter : (v) => v.toFixed(2)
+        formatter : (v) => v.toFixed(2) + ' m'
       }
     ].forEach((s) => {
       let node;
@@ -338,7 +427,7 @@ class CaveEditor extends Editor {
         node = U.node`<br>`;
       } else {
         const value = s.formatter(stats?.[s.field] ?? 0);
-        node = U.node`<span id="${s.id}">${s.label} : ${value}</span>"`;
+        node = U.node`<span style="${s.bold ? 'font-weight: bold;' : ''}">${s.label} : ${value}</span>"`;
       }
       statFields.appendChild(node);
     });

@@ -133,6 +133,82 @@
         "toggleColumns": "Columns visibility",
         "exportToCsv": "Export to CSV"
       },
+      "caveSheet": {
+        "title": "Cave sheet editor: {name}",
+        "titleNew": "New cave",
+        "fields": {
+          "name": "Name",
+          "settlement": "Settlement",
+          "catasterCode": "Cataster code",
+          "date": "Date",
+          "eovCoordinates": "EOV coordinates",
+          "surveyAliases": "Survey aliases",
+          "stationName": "Station name",
+          "eovy": "Y coordinate",
+          "eovx": "X coordinate",
+          "eovelevation": "Elevation"
+        },
+        "stats": {
+          "stations": "Stations",
+          "surveys": "Surveys",
+          "isolated": "Isolated surveys",
+          "attributes": "Station attributes",
+          "length": "Length",
+          "orphanLength": "Length (orphan)",
+          "invalidLength": "Length (invalid)",
+          "auxiliaryLength": "Length (auxiliary)",
+          "depth": "Depth",
+          "height": "Height",
+          "vertical": "Vertical extent",
+          "minZ": "Deepest point",
+          "maxZ": "Highest point",
+          "verticalWithSplays": "Vertical extent (splays)"
+        },
+        "messages": {
+          "caveNameAlreadyExists": "Cave with name {name} already exists, cannot rename!"
+        },
+        "errors": {
+          "invalidCoordinates": "Invalid coordinates",
+          "emptyStationName": "Station {name} is empty",
+          "aliasFromToSame": "Alias from and to cannot be the same: {from} -> {to}",
+          "invalidAliases": "Invalid aliases"
+        },
+        "buttons": {
+          "addAlias": "Add alias",
+          "addCoordinate": "Add coordinate"
+        }
+      },
+      "surveySheet": {
+        "title": "Survey sheet editor: {name}",
+        "fields": {
+          "name": "Survey name",
+          "start": "Start station",
+          "date": "Date",
+          "declination": "Declination",
+          "convergence": "Meridian convergence",
+          "team": "Team Name",
+          "teamMembers": "Team Members",
+          "instruments": "Survey Instruments",
+          "memberName": "Name",
+          "memberRole": "Role",
+          "instrumentName": "Instrument Name",
+          "instrumentValue": "Value"
+        },
+        "messages": {
+          "declinationPrefix": "Declination at the given date for this geo location (from NOAA):",
+          "surveyNameAlreadyExists": "Survey with name {name} already exists, cannot rename!",
+          "startStationNotFound": "Start station {start} not found in shots!"
+        },
+        "errors": {
+          "unavailable": "unavailable",
+          "notAvailable": "Not available",
+          "noWgs84Coordinates": "No WGS84 coordinates"
+        },
+        "buttons": {
+          "addMember": "Add member",
+          "addInstrument": "Add instrument"
+        }
+      },
       "survey": {
         "title": "Survey editor: {name}",
         "message": {
