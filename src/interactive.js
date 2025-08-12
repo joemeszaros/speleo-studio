@@ -143,8 +143,8 @@ class SceneInteraction {
     } else {
       stLabel = st.name;
     }
-    //, local: ${get3DCoordsStr(st.meta.coordinates.local)}, eov: ${get3DCoordsStr(st.meta.coordinates.eov, ['y', 'x', 'elevation'])}
-    return `${stLabel} selected, type: ${st.meta.type}`;
+
+    return stLabel;
   }
 
   getPointedStationDetails(st) {
@@ -313,17 +313,17 @@ class SceneInteraction {
   }
 
   showLocateStationPanel() {
+    this.buildLocateStationPanel();
+    document.addEventListener('languageChanged', () => {
+      this.buildLocateStationPanel();
+    });
+  }
+
+  buildLocateStationPanel() {
     this.locatePanel.innerHTML = '';
-    makeMovable(
-      this.locatePanel,
-      `Locate station`,
-      false,
-      () => {
-        this.locatePanel.style.display = 'none';
-      },
-      () => {},
-      () => {}
-    );
+    makeMovable(this.locatePanel, i18n.t('ui.panels.locateStation.title'), false, () => {
+      this.locatePanel.style.display = 'none';
+    });
     const stNames = this.db.getAllStationNames();
     const multipleCaves = this.db.getAllCaveNames().length > 1;
     const optionValue = (x) => (multipleCaves ? `${x.name} (${x.cave})` : x.name);
@@ -332,10 +332,10 @@ class SceneInteraction {
       .join('');
 
     const container = node`<div id="container-locate-station">
-        <label for="pointtolocate">Station: <input type="search" list="stations" id="pointtolocate"/></label>
+        <label for="pointtolocate">${i18n.t('common.station')}: <input type="search" list="stations" id="pointtolocate"/></label>
         <datalist id="stations">${options}</datalist>
-        <div><label for="forContext">For context<input type="checkbox" id="forContext" /></label></div>
-        <button id="locate-button">Locate point</button>
+        <div><label for="forContext">${i18n.t('ui.panels.locateStation.forContext')}<input type="checkbox" id="forContext" /></label></div>
+        <button id="locate-button">${i18n.t('ui.panels.locateStation.locate')}</button>
       </div>`;
     const input = container.querySelector('#pointtolocate');
 

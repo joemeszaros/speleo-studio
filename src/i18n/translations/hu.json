@@ -169,6 +169,17 @@
         "error": {
           "noStartingPoint": "A távolság méréséhez válasszon ki egy kezdőpontot"
         }
+      },
+      "locateStation": {
+        "title": "Pont megkeresése",
+        "forContext": "Horgonypontnak",
+        "locate": "Keresése"
+      },
+      "export": {
+        "title": "Barlang(ok) exportálása",
+        "format": "Formátum",
+        "baseName": "Előtag",
+        "baseNamePlaceholder": "Előtag (kiterjesztés nélkül)"
       }
     },
     "editors": {
@@ -179,7 +190,11 @@
         "deleteActiveRows": "Aktív sorok törlése",
         "validateShots": "Mérések validálása",
         "toggleColumns": "Oszlopok láthatósága",
-        "exportToCsv": "Exportálás CSV-be"
+        "exportToCsv": "Exportálás CSV-be",
+        "error": {
+          "invalidRows": "{nrRows} sor érvénytelen",
+          "checkWarningIcon": "Kattints a figyelmeztető ikonra a részletekért."
+        }
       },
       "caveSheet": {
         "title": "Barlang adatlap: {name}",
@@ -245,7 +260,7 @@
         },
         "messages": {
           "declinationPrefix": "Deklináció a megadott dátumon és helyen (NOAA-tól):",
-          "surveyNameAlreadyExists": "A(z) {name} nevű felmérés már létezik, nem lehet átnevezni!",
+          "surveyNameAlreadyExists": "A(z) {name} nevű felmérés már létezik!",
           "startStationNotFound": "A(z) {start} pont nem található a mérések között!"
         },
         "errors": {
@@ -266,8 +281,7 @@
           "invalidShot": "Sor érvénytelen méréssel",
           "incomplete": "Hiányos sor",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
-          "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}",
-          "checkWarningIcon": "Kattints a figyelmeztető ikonra a részletekért."
+          "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}"
         },
         "status": {
           "ok": "Nincs hiba",
@@ -341,6 +355,8 @@
     "open": "Megnyitás",
     "undo": "Visszavonás",
     "redo": "Újra",
-    "clear": "Törlés"
+    "clear": "Törlés",
+    "station": "Pont",
+    "export": "Exportálás"
   }
 }

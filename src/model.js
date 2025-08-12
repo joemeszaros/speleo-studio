@@ -134,7 +134,7 @@ class FragmentAttribute {
       errors.push(`Visible '${this.visible}' is not a valid boolean`);
     }
 
-    if (!(this.color instanceof Color)) {
+    if (typeof this.color !== 'string' && !this.color.startsWith('#')) {
       errors.push(`Color '${this.color}' is not a valid color`);
     }
 

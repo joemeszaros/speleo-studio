@@ -228,6 +228,10 @@ class Cave {
     return this.validate().length === 0;
   }
 
+  hasSurvey(name) {
+    return this.surveys.find((s) => s.name === name) !== undefined;
+  }
+
   getFirstStation() {
     return this.stations.get(this.surveys[0].start);
   }

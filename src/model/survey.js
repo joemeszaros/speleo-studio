@@ -212,6 +212,7 @@ class Survey {
     start = undefined,
     shots = [],
     orphanShotIds = new Set(),
+    duplicateShotIds = new Set(),
     attributes = []
   ) {
     this.name = name;
@@ -220,6 +221,7 @@ class Survey {
     this.start = start;
     this.shots = shots;
     this.orphanShotIds = orphanShotIds;
+    this.duplicateShotIds = duplicateShotIds;
     this.attributes = attributes;
     this.isolated = false;
     this.validShots = this.getValidShots();

@@ -1,10 +1,11 @@
-import * as U from '../../utils/utils.js';
-import { Color, SectionAttribute, ComponentAttribute } from '../../model.js';
+import { SectionAttribute, ComponentAttribute } from '../../model.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
 import { randomAlphaNumbericString } from '../../utils/utils.js';
 import { makeMovable } from '../popups.js';
 import { CaveEditor } from './cave.js';
+import { i18n } from '../../i18n/i18n.js';
+import { IconBar } from './iconbar.js';
 
 class FragmentAttributeEditor extends CaveEditor {
 
@@ -32,7 +33,10 @@ class FragmentAttributeEditor extends CaveEditor {
       const badRows = rowsToUpdated
         .filter((r) => ['invalid', 'incomplete'].includes(r.status));
       if (badRows.length > 0 && showAlert) {
-        this.showAlert(`${badRows.length} row(s) are invalid.<br>Click on the warning icon for details.`, 4);
+        this.showAlert(
+          `${i18n.t('ui.editors.common.error.invalidRows', { nrRows: badRows.length })}<br>${i18n.t('ui.editors.common.error.checkWarningIcon')}`,
+          4
+        );
       }
     }
   }
@@ -47,51 +51,38 @@ class FragmentAttributeEditor extends CaveEditor {
       (_newWidth, newHeight) => this.table.setHeight(newHeight - 140),
       () => this.table.redraw()
     );
-    this.#setupButtons();
-    this.#setupTable();
+    this.setupButtons();
+    this.setupTable();
   }
 
-  #setupButtons() {
-    [
-      { id: 'clear-filter', text: 'Clear filters', click: () => this.table.clearFilter() },
-      { break: true },
-      { id: 'validate-rows', text: 'Validate rows', click: () => this.validateRows() },
-      { id: 'update-section-attributes', text: 'Update attributes', click: () => this.setCaveSectionAttributes() },
-      {
-        id    : 'add-row',
-        text  : 'Add row to bottom',
-        click : () => {
-          this.table.addRow(this.getEmptyRow()).then((row) => {
-            row.scrollTo('nearest', false).catch((err) => {
-              console.warn('Failed to scroll to new row:', err);
-            });
-          });
-        }
-      },
-      {
-        id    : 'delete-row',
-        text  : 'Delete active rows',
-        click : () => {
-          var ranges = this.table.getRanges();
-          ranges.forEach((r) => {
-            const rows = r.getRows();
-            rows.forEach((r) => r.delete());
-            r.remove();
-          });
-        }
-      }
-    ].forEach((b) => {
-      if (b.break === true) {
-        this.panel.appendChild(document.createElement('br'));
-      } else {
-        const button = U.node`<button id="${b.id}">${b.text}</button>`;
-        button.onclick = b.click;
-        this.panel.appendChild(button);
-      }
+  setupButtons() {
+    // Create iconbar with common buttons
+    this.iconBar = new IconBar(this.panel);
+
+    // Add common buttons (undo, redo, add row, delete row)
+    const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      getEmptyRow : () => this.getEmptyRow()
     });
+    commonButtons.forEach((button) => this.iconBar.addButton(button));
+
+    // Add separator
+    //this.iconBar.addSeparator();
+
+    const specificButtons = IconBar.getAttributesButtons(
+      () => this.validateRows(),
+      () => this.setCaveSectionAttributes()
+    );
+    specificButtons.forEach((button) => this.iconBar.addButton(button));
+
+    //this.iconBar.addSeparator();
+
+    // Add export button
+    const exportButton = IconBar.getExportButton(() => this.table, this.cave.name + ' - attributes.csv');
+    exportButton.forEach((button) => this.iconBar.addButton(button));
+
   }
 
-  #setupTable() {
+  setupTable() {
 
     const tableDiv = document.createElement('div');
     tableDiv.setAttribute('id', 'sectionattributes');
@@ -123,8 +114,8 @@ class FragmentAttributeEditor extends CaveEditor {
         title             : 'Color',
         field             : 'color',
         formatter         : this.baseTableFunctions.colorIcon,
-        accessorClipboard : (color) => color.hexString(),
-        mutatorClipboard  : (hex) => new Color(hex),
+        accessorClipboard : (color) => color,
+        mutatorClipboard  : (v) => v,
         width             : 45,
         cellClick         : (_e, cell) => this.baseTableFunctions.changeColor(_e, cell)
       },
@@ -173,6 +164,7 @@ class FragmentAttributeEditor extends CaveEditor {
 
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#sectionattributes', {
+      history                   : true, //enable undo and redo
       height                    : this.panel.style.height - 140,
       autoResize                : false,
       data                      : this.getTableData(),
@@ -183,6 +175,8 @@ class FragmentAttributeEditor extends CaveEditor {
       selectableRangeColumns    : true,
       selectableRangeRows       : true,
       selectableRangeClearCells : true,
+
+      movableRows : true,
 
       //change edit trigger mode to make cell navigation smoother
       editTriggerEvent : 'dblclick',
@@ -217,7 +211,6 @@ class FragmentAttributeEditor extends CaveEditor {
           row.getElement().style.backgroundColor = '#b99922';
         }
       },
-      addRowPos      : 'bottom',
       columnDefaults : {
         headerSort     : false,
         headerHozAlign : 'center',
@@ -284,6 +277,31 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   constructor(db, options, cave, scene, attributeDefs, panel) {
     super(db, options, cave, scene, attributeDefs, panel);
     this.title = `Component  attribute editor: ${this.cave.name}`;
+  }
+
+  setupButtons() {
+    // Create iconbar with common buttons
+    this.iconBar = new IconBar(this.panel);
+
+    // Add common buttons (undo, redo, add row, delete row)
+    const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      getEmptyRow : () => this.getEmptyRow()
+    });
+    commonButtons.forEach((button) => this.iconBar.addButton(button));
+
+    // Add separator
+    this.iconBar.addSeparator();
+
+    // Add validate button
+    const validateButton = IconBar.getValidateButton(() => this.validateRows());
+    validateButton.forEach((button) => this.iconBar.addButton(button));
+
+    // Add update attributes button
+    const updateButton = IconBar.getUpdateAttributesButton(
+      () => this.setCaveComponentAttributes(),
+      'Update attributes'
+    );
+    updateButton.forEach((button) => this.iconBar.addButton(button));
   }
 
   closeEditor() {
@@ -460,7 +478,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     toggleVisibility : (ev, cell) => {
       const data = cell.getData();
       if (data.status !== 'ok') {
-        this.showAlert('Component attribute has missing arguments or is invalid. <br>Cannot change visibility!', 4);
+        this.showAlert('Component attribute has missing arguments or is invalid. <br>Cannot change visibility!');
         return;
       }
 
@@ -515,7 +533,6 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       } else {
         this.showAlert(
           `Unable to traverse graph from ${data.from}.<br>Restoring previous value (${cell.getOldValue()}).`,
-          7,
           () => {
             cell.setValue(cell.getOldValue());
           }
@@ -666,7 +683,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     toggleVisibility : (ev, cell) => {
       const data = cell.getData();
       if (data.status !== 'ok') {
-        this.showAlert('Section attribute has missing arguments or is invalid. <br>Cannot change visibility!', 4);
+        this.showAlert('Section attribute has missing arguments or is invalid. <br>Cannot change visibility!');
         return;
       }
 
@@ -721,7 +738,6 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         } else {
           this.showAlert(
             `Unable to find path between ${data.from} -> ${data.to}.<br>Restoring previous value (${cell.getOldValue()}).`,
-            7,
             () => {
               cell.setValue(cell.getOldValue());
             }
@@ -731,7 +747,6 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       } else {
         this.showAlert(
           `From and to cannot be the same (${data.from})!<br>Restoring previous value (${cell.getOldValue()}).`,
-          6,
           () => {
             cell.setValue(cell.getOldValue());
           }

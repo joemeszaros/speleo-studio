@@ -1,5 +1,6 @@
 import { toAscii, textToIso88592Bytes, toPolygonDate, node } from '../utils/utils.js';
 import { makeMovable, showErrorPanel } from '../ui/popups.js';
+import { i18n } from '../i18n/i18n.js';
 
 class Exporter {
 
@@ -203,13 +204,21 @@ class Exporter {
   }
 
   static showExportDialog(caves, project, scene, panel) {
+    this.buildExportDialog(caves, project, scene, panel);
+    document.addEventListener('languageChanged', () => {
+      this.buildExportDialog(caves, project, scene, panel);
+    });
+  }
+
+  static buildExportDialog(caves, project, scene, panel) {
     // Create the export dialog HTML if it doesn't exist
     panel.innerHTML = '';
-    makeMovable(panel, `Export cave(s)`, false, () => (panel.style.display = 'none'));
-    const content = node`
-        <div class="popup-content">
+    makeMovable(panel, i18n.t('common.export'), false, () => (panel.style.display = 'none'));
+
+    const form = node`
+        <form class="popup-content">
           <div class="form-group">
-            <label for="export-format">Export Format:</label>
+            <label for="export-format">${i18n.t('ui.panels.export.format')}:</label>
             <select id="export-format">
               <option value="json">JSON</option>
               <option value="png">PNG Image</option>
@@ -218,18 +227,19 @@ class Exporter {
             </select>
           </div>
           <div class="form-group">
-            <label for="export-project-name">Base name:</label>
-            <input type="text" id="export-project-name" placeholder="Base name (without extension)" />
+            <label for="export-project-name">${i18n.t('ui.panels.export.baseName')}:</label>
+            <input type="text" id="export-project-name" placeholder="${i18n.t('ui.panels.export.baseNamePlaceholder')}" />
           </div>
           <div class="popup-actions">
-            <button class="btn btn-primary">Export</button>
+            <button class="btn btn-primary" type="submit">${i18n.t('common.export')}</button>
           </div>
-        </div>
+        </form>
       `;
-    panel.appendChild(content);
-    panel
-      .querySelector('button.btn-primary')
-      .addEventListener('click', () => Exporter.executeExport(caves, scene, panel));
+    panel.appendChild(form);
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      Exporter.executeExport(caves, scene, panel);
+    };
 
     const projectNameInput = panel.querySelector('#export-project-name');
     // Set default filename

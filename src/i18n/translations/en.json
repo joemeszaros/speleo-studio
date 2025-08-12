@@ -167,6 +167,17 @@
         "error": {
           "noStartingPoint": "You should select the starting point for distance measurement"
         }
+      },
+      "locateStation": {
+        "title": "Locate station",
+        "forContext": "For context",
+        "locate": "Locate point"
+      },
+      "export": {
+        "title": "Export cave(s)",
+        "format": "Format",
+        "baseName": "Base name",
+        "baseNamePlaceholder": "Base name (without extension)"
       }
     },
     "editors": {
@@ -177,7 +188,11 @@
         "deleteActiveRows": "Delete active rows",
         "validateShots": "Validate shots",
         "toggleColumns": "Columns visibility",
-        "exportToCsv": "Export to CSV"
+        "exportToCsv": "Export to CSV",
+        "error": {
+          "invalidRows": "{nrRows} row(s) are invalid.",
+          "checkWarningIcon": "Click on the warning icon for details."
+        }
       },
       "caveSheet": {
         "title": "Cave sheet editor: {name}",
@@ -243,7 +258,7 @@
         },
         "messages": {
           "declinationPrefix": "Declination at the given date for this geo location (from NOAA):",
-          "surveyNameAlreadyExists": "Survey with name {name} already exists, cannot rename!",
+          "surveyNameAlreadyExists": "Survey with name {name} already exists",
           "startStationNotFound": "Start station {start} not found in shots!"
         },
         "errors": {
@@ -264,8 +279,7 @@
           "invalidShot": "Row has invalid shot",
           "incomplete": "Row is incomplete",
           "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
-          "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}",
-          "checkWarningIcon": "Click on the warning icon for details."
+          "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}"
         },
         "status": {
           "ok": "No errors",
@@ -335,6 +349,7 @@
     "survey": "Survey",
     "from": "From",
     "to": "To",
+    "station": "Station",
     "shots": "Shots",
     "current": "Current",
     "open": "Open",

@@ -1,0 +1,227 @@
+import * as U from '../../utils/utils.js';
+import { i18n } from '../../i18n/i18n.js';
+
+export class IconBar {
+
+  constructor(container, options = {}) {
+    this.container = container;
+    this.options = options;
+    this.element = U.node`<div class="iconbar">`;
+    this.container.appendChild(this.element);
+  }
+
+  addButton(config) {
+    let element;
+    if (config.separator) {
+      element = U.node`<span class="icon-separator"></span>`;
+    } else {
+      if (config.icon) {
+        element = U.node`<a id="${config.id}" class="mytooltip"><img src="${config.icon}" alt="${config.id}" ${config.width ? `style="width:${config.width}px"` : ''}><span class="mytooltiptext">${config.tooltip}</span></a>`;
+      } else {
+        element = U.node`<button id="${config.id}">${config.text}</button>`;
+      }
+      element.onclick = (e) => {
+        config.click(e);
+      };
+    }
+    this.element.appendChild(element);
+    return element;
+  }
+
+  addSeparator() {
+    return this.addButton({ separator: true });
+  }
+
+  // Common button configurations
+  // at the time of this function call this.table is undefined therefore we need to pass a function that returns the table
+  static getCommonButtons(getTable, options = {}) {
+    const getIndex = () => {
+      if (!getTable()) return undefined;
+      const ranges = getTable().getRanges();
+      if (ranges.length > 0) {
+        const rows = ranges[0].getRows();
+        if (rows.length > 0) {
+          return rows[0].getIndex();
+        }
+      }
+      return undefined;
+    };
+
+    return [
+      {
+        id      : 'undo',
+        icon    : 'icons/undo.svg',
+        tooltip : i18n.t('common.undo'),
+        click   : () => getTable()?.undo?.()
+      },
+      {
+        id      : 'redo',
+        icon    : 'icons/redo.svg',
+        tooltip : i18n.t('common.redo'),
+        click   : () => getTable()?.redo?.()
+      },
+      {
+        id      : 'add-row-before',
+        icon    : 'icons/add_before.svg',
+        tooltip : i18n.t('ui.editors.common.addRowBefore'),
+        click   : () => {
+          const index = getIndex();
+          if (index !== undefined && options.getEmptyRow) {
+            getTable().addRow(options.getEmptyRow(), true, index);
+          }
+        }
+      },
+      {
+        id      : 'add-row-after',
+        icon    : 'icons/add_after.svg',
+        tooltip : i18n.t('ui.editors.common.addRowAfter'),
+        click   : () => {
+          const index = getIndex();
+          if (index !== undefined && options.getEmptyRow) {
+            getTable().addRow(options.getEmptyRow(), false, index);
+          }
+        }
+      },
+      {
+        id      : 'add-row',
+        icon    : 'icons/add_white.svg',
+        tooltip : i18n.t('ui.editors.common.addRowToEnd'),
+        click   : () => {
+          if (options.getEmptyRow) {
+            getTable()
+              .addRow(options.getEmptyRow())
+              .then((row) => {
+                row.scrollTo('nearest', false).catch((err) => {
+                  console.warn('Failed to scroll to new row:', err);
+                });
+              });
+          }
+        }
+      },
+      {
+        id      : 'delete-row',
+        tooltip : i18n.t('ui.editors.common.deleteActiveRows'),
+        icon    : 'icons/trash_white.svg',
+        click   : () => {
+          if (getTable()) {
+            var ranges = getTable().getRanges();
+            ranges.forEach((r) => {
+              const rows = r.getRows();
+              rows.forEach((r) => r.delete());
+              r.remove();
+            });
+          }
+        }
+      }
+    ];
+  }
+
+  // Survey-specific buttons
+  static getSurveyButtons(validateSurvey, updateSurvey) {
+    return [
+      { separator: true },
+      {
+        id      : 'validate-shots',
+        tooltip : i18n.t('ui.editors.common.validateShots'),
+        icon    : 'icons/validate.svg',
+        click   : () => validateSurvey?.()
+      },
+      {
+        id      : 'update-survey',
+        tooltip : i18n.t('ui.editors.survey.buttons.update'),
+        icon    : 'icons/update.svg',
+        click   : () => updateSurvey?.()
+      }
+    ];
+  }
+
+  // Attribute editor-specific buttons
+  static getAttributesButtons(validateAttributes, updateAttributes) {
+    return [
+      { separator: true },
+      {
+        id      : 'validate-attributes',
+        tooltip : i18n.t('ui.editors.common.validateShots'),
+        icon    : 'icons/validate.svg',
+        click   : () => validateAttributes?.()
+      },
+      {
+        id      : 'update-addtributes',
+        tooltip : i18n.t('ui.editors.attributes.buttons.update'),
+        icon    : 'icons/update.svg',
+        click   : () => updateAttributes?.()
+      }
+    ];
+  }
+
+  // Export button
+  static getExportButton(getTable, filename) {
+    return [
+      { separator: true },
+      {
+        id      : 'export-to-csv',
+        tooltip : i18n.t('ui.editors.common.exportToCsv'),
+        icon    : 'icons/export.svg',
+        click   : () => getTable()?.download?.('csv', filename, { delimiter: ';' })
+      }
+    ];
+  }
+
+  // Column visibility toggle
+  static getColumnToggleButton() {
+    return [
+      { separator: true },
+      {
+        id      : 'toggle-column',
+        tooltip : i18n.t('ui.editors.common.toggleColumns'),
+        icon    : 'icons/hamburger.svg',
+        click   : (e) => {
+          const menuDiv = document.getElementById('toogle-column-visibility-menu');
+          if (menuDiv.style.display === 'block') {
+            menuDiv.style.display = 'none';
+          } else {
+            menuDiv.style.display = 'block';
+
+            // Add click outside handler to close menu
+            const closeMenu = (event) => {
+              if (!menuDiv.contains(event.target) && !e.target.contains(event.target)) {
+                menuDiv.style.display = 'none';
+                document.removeEventListener('click', closeMenu);
+              }
+            };
+
+            // Use setTimeout to prevent immediate closure
+            setTimeout(() => {
+              document.addEventListener('click', closeMenu);
+            }, 100);
+          }
+        }
+      }
+    ];
+  }
+
+  // Validate button
+  static getValidateButton(validateFunction) {
+    return [
+      { separator: true },
+      {
+        id      : 'validate-rows',
+        tooltip : i18n.t('ui.editors.common.validateShots'),
+        icon    : 'icons/validate.svg',
+        click   : () => validateFunction?.()
+      }
+    ];
+  }
+
+  // Update attributes button
+  static getUpdateAttributesButton(updateFunction, buttonText) {
+    return [
+      {
+        id      : 'update-attributes',
+        tooltip : buttonText || 'Update attributes',
+        icon    : 'icons/update.svg',
+        click   : () => updateFunction?.()
+      }
+    ];
+  }
+}

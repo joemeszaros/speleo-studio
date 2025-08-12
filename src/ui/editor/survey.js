@@ -6,6 +6,7 @@ import { Shot, ShotType } from '../../model/survey.js';
 import { StationAttribute } from '../../model.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
+import { IconBar } from './iconbar.js';
 
 class SurveyEditor extends Editor {
 
@@ -53,7 +54,7 @@ class SurveyEditor extends Editor {
           });
         }
         this.showAlert(
-          `${invalidMessage}<br>${orphanMessage}<br>${i18n.t('ui.editors.survey.message.checkWarningIcon')}`,
+          `${invalidMessage}<br>${orphanMessage}<br>${i18n.t('ui.editors.common.error.checkWarningIcon')}`,
           7
         );
       }
@@ -91,8 +92,7 @@ class SurveyEditor extends Editor {
             badRowIds : badRowIds.slice(0, 15).join(', ')
           }) +
             '<br>' +
-            i18n.t('ui.editors.survey.message.checkWarningIcon'),
-          4
+            i18n.t('ui.editors.common.error.checkWarningIcon')
         );
       }
     }
@@ -312,135 +312,29 @@ class SurveyEditor extends Editor {
       }
     );
 
-    const iconBar = U.node`<div class="iconbar">`;
-    const getIndex = () => {
-      const ranges = this.table.getRanges();
-      if (ranges.length > 0) {
-        const rows = ranges[0].getRows();
-        if (rows.length > 0) {
-          return rows[0].getIndex();
-        }
-      }
-      return -1;
-    };
+    // Create iconbar with common buttons
+    this.iconBar = new IconBar(this.panel);
 
-    this.panel.appendChild(iconBar);
-    [
-      { id: 'undo', icon: 'icons/undo.svg', tooltip: i18n.t('common.undo'), click: () => this.table.undo() },
-      { id: 'redo', icon: 'icons/redo.svg', tooltip: i18n.t('common.redo'), click: () => this.table.redo() },
-      {
-        id      : 'add-row-before',
-        icon    : 'icons/add_before.svg',
-        tooltip : i18n.t('ui.editors.common.addRowBefore'),
-        click   : () => {
-          const index = getIndex();
-          if (index > 0) {
-            this.table.addRow(this.getEmptyRow(), true, index);
-          }
-        }
-      },
-      {
-        id      : 'add-row-after',
-        icon    : 'icons/add_after.svg',
-        tooltip : i18n.t('ui.editors.common.addRowAfter'),
-        click   : () => {
-          const index = getIndex();
-          if (index > 0) {
-            this.table.addRow(this.getEmptyRow(), false, index);
-          }
-        }
-      },
-      {
-        id      : 'add-row',
-        icon    : 'icons/add_white.svg',
-        tooltip : i18n.t('ui.editors.common.addRowToEnd'),
-        click   : () => {
-          this.table.addRow(this.getEmptyRow()).then((row) => {
-            row.scrollTo('nearest', false).catch((err) => {
-              console.warn('Failed to scroll to new row:', err);
-            });
-          });
-        }
-      },
-      {
-        id      : 'delete-row',
-        tooltip : i18n.t('ui.editors.common.deleteActiveRows'),
-        icon    : 'icons/trash_white.svg',
-        click   : () => {
-          var ranges = this.table.getRanges();
-          ranges.forEach((r) => {
-            const rows = r.getRows();
-            rows.forEach((r) => r.delete());
-            r.remove();
-          });
-
-        }
-      },
-      { separator: true },
-      {
-        id      : 'validate-shots',
-        tooltip : i18n.t('ui.editors.common.validateShots'),
-        icon    : 'icons/validate.svg',
-        click   : () => this.validateSurvey()
-      },
-      {
-        id      : 'update-survey',
-        tooltip : i18n.t('ui.editors.survey.buttons.update'),
-        icon    : 'icons/update.svg',
-        click   : () => this.updateSurvey()
-      },
-      { separator: true },
-      {
-        id      : 'toggle-column',
-        tooltip : i18n.t('ui.editors.common.toggleColumns'),
-        icon    : 'icons/hamburger.svg',
-        click   : (e) => {
-          const menuDiv = document.getElementById('toogle-column-visibility-menu');
-          if (menuDiv.style.display === 'block') {
-            menuDiv.style.display = 'none';
-          } else {
-            menuDiv.style.display = 'block';
-
-            // Add click outside handler to close menu
-            const closeMenu = (event) => {
-              if (!menuDiv.contains(event.target) && !e.target.contains(event.target)) {
-                menuDiv.style.display = 'none';
-                document.removeEventListener('click', closeMenu);
-              }
-            };
-
-            // Use setTimeout to prevent immediate closure
-            setTimeout(() => {
-              document.addEventListener('click', closeMenu);
-            }, 100);
-          }
-        }
-      },
-      { separator: true },
-      {
-        id      : 'export-to-csv',
-        tooltip : i18n.t('ui.editors.common.exportToCsv'),
-        icon    : 'icons/export.svg',
-        click   : () => this.table.download('csv', this.cave.name + ' - ' + this.survey.name + '.csv', { delimiter: ';' })
-      }
-
-    ].forEach((b) => {
-      let element;
-      if (b.separator) {
-        element = U.node`<span class="icon-separator"></span>`;
-      } else {
-        if (b.icon) {
-          element = U.node`<a id="${b.id}" class="mytooltip"><img src="${b.icon}" alt="${b.id}" ${b.width ? `style="width:${b.width}px"` : ''}><span class="mytooltiptext">${b.tooltip}</span></a>`;
-        } else {
-          element = U.node`<button id="${b.id}">${b.text}</button>`;
-        }
-        element.onclick = (e) => {
-          b.click(e);
-        };
-      }
-      iconBar.appendChild(element);
-
+    // Add common buttons (undo, redo, add row, delete row)
+    const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      getEmptyRow : () => this.getEmptyRow()
     });
+    commonButtons.forEach((button) => this.iconBar.addButton(button));
+
+    // Add survey-specific buttons
+    const surveyButtons = IconBar.getSurveyButtons(
+      () => this.validateSurvey(),
+      () => this.updateSurvey()
+    );
+    surveyButtons.forEach((button) => this.iconBar.addButton(button));
+
+    // Add column toggle button
+    const columnToggleButton = IconBar.getColumnToggleButton();
+    columnToggleButton.forEach((button) => this.iconBar.addButton(button));
+
+    // Add export button
+    const exportButton = IconBar.getExportButton(() => this.table, this.cave.name + ' - ' + this.survey.name + '.csv');
+    exportButton.forEach((button) => this.iconBar.addButton(button));
 
     this.panel.appendChild(U.node`<div id="surveydata" class="popup-content"></div>`);
 
@@ -867,7 +761,7 @@ class SurveySheetEditor extends BaseEditor {
         step     : 'any',
         required : true
       },
-      { label: i18n.t('ui.editors.surveySheet.fields.team'), id: 'team', type: 'text', required: true }
+      { label: i18n.t('ui.editors.surveySheet.fields.team'), id: 'team', type: 'text', required: false }
     ];
 
     this.surveyHasChanged = false;
@@ -884,6 +778,11 @@ class SurveySheetEditor extends BaseEditor {
           this.surveyHasChanged = true;
           if (f.id === 'name') {
             this.nameHasChanged = true;
+            if (this.cave.hasSurvey(e.target.value)) {
+              showErrorPanel(
+                i18n.t('ui.editors.surveySheet.messages.surveyNameAlreadyExists', { name: e.target.value })
+              );
+            }
           }
           this.formData[f.id] = e.target.value;
         }
@@ -960,7 +859,7 @@ class SurveySheetEditor extends BaseEditor {
       );
 
       if (this.survey !== undefined && this.nameHasChanged && this.formData.name !== this.survey.name) {
-        if (this.cave.surveys.find((s) => s.name === this.formData.name) !== undefined) {
+        if (this.cave.hasSurvey(this.formData.name)) {
           showErrorPanel(
             i18n.t('ui.editors.surveySheet.messages.surveyNameAlreadyExists', { name: this.formData.name })
           );
@@ -983,6 +882,15 @@ class SurveySheetEditor extends BaseEditor {
       }
 
       if (this.survey === undefined) {
+
+        if (this.cave.hasSurvey(this.formData.name)) {
+          showErrorPanel(
+            'Cannot add new survey: ' +
+              i18n.t('ui.editors.surveySheet.messages.surveyNameAlreadyExists', { name: this.formData.name })
+          );
+          return;
+        }
+
         // this is a new survey
         if (this.cave.surveys.size > 0) {
           // get convergence from first existing survey

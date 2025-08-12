@@ -78,13 +78,16 @@ class Editor extends BaseEditor {
     this.attributesModified = false;
   }
 
-  showAlert(msg, timeoutSec = 5, postAction = () => {}) {
+  showAlert(msg, postAction = () => {}) {
     if (this.table === undefined) return;
-    this.table.alert(msg);
-    setTimeout(() => {
+    const closingButton = U.node`<button style="position: absolute; right: 4px; top: 4px; cursor: pointer; border: none; background: none; font-size: 1.5em; color: #666;">✕</button>`;
+    closingButton.onclick = () => {
       this.table.clearAlert();
       postAction();
-    }, timeoutSec * 1000);
+    };
+    const div = U.node`<div style="position: relative; padding:10px;"><div style="margin-right: 30px;">${msg}</div></div>`;
+    div.appendChild(closingButton);
+    this.table.alert(div);
   }
 
   getAttributeEditorDiv(a, attributes, index) {
@@ -276,7 +279,7 @@ class Editor extends BaseEditor {
     },
     colorIcon : (cell) => {
       const data = cell.getData();
-      const color = data.color.hexString();
+      const color = data.color;
       const style = `style="background: ${color}"`;
       return `<input type="color" id="color-picker-${data.id}" value="${color}"><label id="color-picker-${data.id}-label" for="color-picker-${data.id}" ${style}></label>`;
     },
@@ -358,7 +361,7 @@ class Editor extends BaseEditor {
       }
       const result = this.attributeDefs.getAttributesFromString(value);
       if (result.errors.length > 0) {
-        this.showAlert(result.errors.join('<br>'), 6);
+        this.showAlert(result.errors.join('<br>'));
       } else if (result.attributes.length > 0) {
         return converter(result.attributes);
       }
