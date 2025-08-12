@@ -4,7 +4,8 @@ import { PlySurfaceImporter, PolygonImporter, TopodroidImporter, JsonImporter } 
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
-import { ProjectExplorer, ProjectManager } from './ui/explorer.js';
+import { ProjectExplorer } from './ui/explorer.js';
+import { ProjectManager } from './ui/manager.js';
 import { NavigationBar } from './ui/navbar.js';
 import { Footer } from './ui/footer.js';
 import { Controls } from './ui/controls.js';
