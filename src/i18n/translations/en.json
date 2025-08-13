@@ -319,19 +319,24 @@
           "format": "Format",
           "start": "Start",
           "termination": "Termination"
+        },
+        "errors": {
+          "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)"
         }
       },
       "sectionAttributes": {
-        "title": "Section attributes: {name}"
+        "title": "Section attributes: {name}",
+        "errors": {
+          "sectionAttributeMissingArguments": "Section attribute has missing arguments or is invalid. <br>Cannot change visibility!",
+          "unableToFindPath": "Unable to find path between {from} -> {to}.<br>Restoring previous value ({oldValue})."
+        }
       },
       "componentAttributes": {
-        "title": "Component attributes: {name}"
-      },
-      "errors": {
-        "invalidAttributes": "Invalid attributes",
-        "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",
-        "componentAttributeMissingArguments": "Component attribute has missing arguments or is invalid. <br>Cannot change visibility!",
-        "unableToTraverseGraph": "Unable to traverse graph from {from}.<br>Restoring previous value ({oldValue})."
+        "title": "Component attributes: {name}",
+        "errors": {
+          "componentAttributeMissingArguments": "Component attribute has missing arguments or is invalid. <br>Cannot change visibility!",
+          "unableToTraverseGraph": "Unable to traverse graph from {from}.<br>Restoring previous value ({oldValue})."
+        }
       }
     }
   },
@@ -364,6 +369,17 @@
       "invalidVisible": "Visible '{visible}' is not a valid boolean",
       "invalidColor": "Color '{color}' is not a valid color",
       "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
+    },
+    "caveSectionOrComponent": {
+      "fromInvalid": "From ({from}, type={type}) is not a string or empty",
+      "terminationInvalid": "Termination ({termination}, type={type}) is not a string or empty",
+      "terminationNotArray": "Termination ({termination}) is not an array",
+      "distanceInvalid": "Distance ({distance}, type={type}) is not a valid decimal number",
+      "pathNotArray": "Path ({path}) is not an array",
+      "pathEmpty": "Path should not be an empty array",
+      "distanceGreaterThanZero": "Distance must be greater than 0",
+      "toInvalid": "To ({to}, type={type}) is not a string or empty",
+      "fromToSame": "From ({from}) and to ({to}) cannot be the same"
     },
     "attribute": {
       "valueMin": "Value should not be less than {min}",

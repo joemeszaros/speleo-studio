@@ -37,38 +37,45 @@ class CaveComponent {
     return this.validate().length === 0;
   }
 
-  validate() {
+  validate(i18n) {
+
+    const t = i18n === undefined ? (s) => s : (key, params) => i18n.t(key, params);
+
     const isValidFloat = (f) => {
       return typeof f === 'number' && f !== Infinity && !isNaN(f);
     };
 
     const errors = [];
     if (!(typeof this.start === 'string' && this.start.length > 0)) {
-      errors.push(`From (${this.from}, type=${typeof this.start}) is not a string or empty`);
+      errors.push(t('validation.caveSectionOrComponent.fromInvalid', { from: this.start, type: typeof this.start }));
     }
 
     if (Array.isArray(this.termination)) {
-      this.termination.forEach((t) => {
-        if (!(typeof t === 'string' && t.length > 0)) {
-          errors.push(`Termination node (${t}, type=${typeof t}) is not a string or empty`);
+      this.termination.forEach((term) => {
+        if (!(typeof term === 'string' && term.length > 0)) {
+          errors.push(
+            t('validation.caveSectionOrComponent.terminationInvalid', { termination: term, type: typeof term })
+          );
         }
       });
     } else {
-      errors.push(`Termination nodes '${this.termination}' is not an array`);
+      errors.push(t('validation.caveSectionOrComponent.terminationNotArray', { termination: this.termination }));
     }
 
     if (!isValidFloat(this.distance)) {
-      errors.push(`Distance (${this.distance}, type=${typeof this.distance}) is not a valid decimal number`);
+      errors.push(
+        t('validation.caveSectionOrComponent.distanceInvalid', { distance: this.distance, type: typeof this.distance })
+      );
     }
 
     if (!Array.isArray(this.path)) {
-      errors.push(`Path (${this.path}) is not an array`);
+      errors.push(t('validation.caveSectionOrComponent.pathNotArray', { path: this.path }));
     } else if (this.path.length === 0) {
-      errors.push(`Path should not be an empty array`);
+      errors.push(t('validation.caveSectionOrComponent.pathEmpty'));
     }
 
     if (isValidFloat(this.distance) && this.distance <= 0) {
-      errors.push(`Distance must be greater than 0`);
+      errors.push(t('validation.caveSectionOrComponent.distanceGreaterThanZero'));
     }
     return errors;
   }
@@ -108,36 +115,41 @@ class CaveSection {
     return this.validate().length === 0;
   }
 
-  validate() {
+  validate(i18n) {
+
+    const t = i18n === undefined ? (s) => s : (key, params) => i18n.t(key, params);
+
     const isValidFloat = (f) => {
       return typeof f === 'number' && f !== Infinity && !isNaN(f);
     };
 
     const errors = [];
     if (!(typeof this.from === 'string' && this.from.length > 0)) {
-      errors.push(`From (${this.from}, type=${typeof this.from}) is not a string or empty`);
+      errors.push(t('validation.caveSectionOrComponent.fromInvalid', { from: this.from, type: typeof this.from }));
     }
 
     if (!(typeof this.to === 'string' && this.to.length > 0)) {
-      errors.push(`To (${this.to}, type=${typeof this.to}) is not a string or empty`);
+      errors.push(t('validation.caveSectionOrComponent.toInvalid', { to: this.to, type: typeof this.to }));
     }
 
     if (this.from === this.to) {
-      errors.push(`From (${this.from}) and to (${this.to}) cannot be the same`);
+      errors.push(t('validation.caveSectionOrComponent.fromToSame', { from: this.from, to: this.to }));
     }
 
     if (!isValidFloat(this.distance)) {
-      errors.push(`Distance (${this.distance}, type=${typeof this.distance}) is not a valid decimal number`);
+      errors.push(
+        t('validation.caveSectionOrComponent.distanceInvalid', { distance: this.distance, type: typeof this.distance })
+      );
     }
 
     if (!Array.isArray(this.path)) {
-      errors.push(`Path (${this.path}) is not an array`);
+      errors.push(t('validation.caveSectionOrComponent.pathNotArray', { path: this.path }));
     } else if (this.path.length === 0) {
-      errors.push(`Path should not be an empty array`);
+      errors.push(t('validation.caveSectionOrComponent.pathEmpty'));
     }
 
     if (isValidFloat(this.distance) && this.distance <= 0) {
-      errors.push(`Distance must be greater than 0`);
+      errors.push(t('validation.caveSectionOrComponent.distanceGreaterThanZero'));
     }
     return errors;
   }

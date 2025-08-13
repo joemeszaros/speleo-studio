@@ -324,10 +324,18 @@
         }
       },
       "sectionAttributes": {
-        "title": "Szakasz attribútumok: {name}"
+        "title": "Szakasz attribútumok: {name}",
+        "errors": {
+          "unableToFindPath": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue}).",
+          "sectionAttributeMissingArguments": "A szakasz attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!"
+        }
       },
       "componentAttributes": {
-        "title": "Komponens attribútumok: {name}"
+        "title": "Komponens attribútumok: {name}",
+        "errors": {
+          "componentAttributeMissingArguments": "A komponens attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!",
+          "unableToTraverseGraph": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue})."
+        }
       },
       "errors": {
         "invalidAttributes": "Érvénytelen attribútumok",
@@ -368,6 +376,17 @@
     },
     "componentAttribute": {
       "invalidComponent": "Érvénytelen komponens: {error}"
+    },
+    "caveSectionOrComponent": {
+      "fromInvalid": "Ponttól ({from}, típus={type}) érvénytelen szöveg vagy üres",
+      "terminationInvalid": "Végpont ({termination}, típus={type}) érvénytelen szöveg vagy üres",
+      "terminationNotArray": "Végpont ({termination}) nem tömb",
+      "distanceInvalid": "Távolság ({distance}, típus={type}) érvénytelen tört szám",
+      "pathNotArray": "Út ({path}) nem tömb",
+      "pathEmpty": "Út nem lehet üres tömb",
+      "distanceGreaterThanZero": "Távolság 0-nál nagyobbnak kell lennie",
+      "toInvalid": "Pontig ({to}, típus={type}) érvénytelen szöveg vagy üres",
+      "fromToSame": "Ponttól ({from}) és pontig ({to}) nem lehet ugyanaz"
     },
     "fragmentAttribute": {
       "invalidVisible": "Láthatóság '{visible}' érvénytelen logikai érték",

@@ -269,7 +269,9 @@ class FragmentAttributeEditor extends CaveEditor {
 
     checkAttributesLength : (attributes) => {
       if (attributes.length > 1) {
-        this.showAlert(i18n.t('ui.editors.errors.onlyOneAttributeAllowed', { nrAttributes: attributes.length - 1 }));
+        this.showAlert(
+          i18n.t('ui.editors.attributes.errors.onlyOneAttributeAllowed', { nrAttributes: attributes.length - 1 })
+        );
         return false;
       } else {
         return true;
@@ -288,31 +290,6 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     document.addEventListener('languageChanged', () => {
       this.title = i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
     });
-  }
-
-  setupButtons() {
-    // Create iconbar with common buttons
-    this.iconBar = new IconBar(this.panel);
-
-    // Add common buttons (undo, redo, add row, delete row)
-    const commonButtons = IconBar.getCommonButtons(() => this.table, {
-      getEmptyRow : () => this.getEmptyRow()
-    });
-    commonButtons.forEach((button) => this.iconBar.addButton(button));
-
-    // Add separator
-    this.iconBar.addSeparator();
-
-    // Add validate button
-    const validateButton = IconBar.getValidateButton(() => this.validateRows());
-    validateButton.forEach((button) => this.iconBar.addButton(button));
-
-    // Add update attributes button
-    const updateButton = IconBar.getUpdateAttributesButton(
-      () => this.setCaveComponentAttributes(),
-      i18n.t('ui.editors.attributes.buttons.update')
-    );
-    updateButton.forEach((button) => this.iconBar.addButton(button));
   }
 
   closeEditor() {
@@ -499,7 +476,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     toggleVisibility : (ev, cell) => {
       const data = cell.getData();
       if (data.status !== 'ok' && !data.visible) {
-        this.showAlert(i18n.t('ui.editors.errors.componentAttributeMissingArguments'));
+        this.showAlert(i18n.t('ui.editors.componentAttributes.errors.componentAttributeMissingArguments'));
         return;
       }
 
@@ -553,7 +530,10 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         }
       } else {
         this.showAlert(
-          i18n.t('ui.editors.errors.unableToTraverseGraph', { from: data.from, oldValue: cell.getOldValue() }),
+          i18n.t('ui.editors.componentAttributes.errors.unableToTraverseGraph', {
+            from     : data.from,
+            oldValue : cell.getOldValue()
+          }),
           () => {
             cell.setValue(cell.getOldValue());
           }
@@ -701,7 +681,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   getColumns() {
     return [
       {
-        title        : 'From',
+        title        : i18n.t('common.from'),
         field        : 'from',
         editor       : 'list',
         editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
@@ -710,7 +690,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         cellEdited   : this.functions.fromOrToEdited
       },
       {
-        title        : 'To',
+        title        : i18n.t('common.to'),
         field        : 'to',
         editor       : 'list',
         editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
@@ -726,8 +706,8 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
     toggleVisibility : (ev, cell) => {
       const data = cell.getData();
-      if (data.status !== 'ok') {
-        this.showAlert('Section attribute has missing arguments or is invalid. <br>Cannot change visibility!');
+      if (data.status !== 'ok' && !data.visible) {
+        this.showAlert(i18n.t('ui.editors.sectionAttributes.errors.sectionAttributeMissingArguments'));
         return;
       }
 
@@ -781,21 +761,17 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
           }
         } else {
           this.showAlert(
-            `Unable to find path between ${data.from} -> ${data.to}.<br>Restoring previous value (${cell.getOldValue()}).`,
+            i18n.t('ui.editors.sectionAttributes.errors.unableToFindPath', {
+              from     : data.from,
+              to       : data.to,
+              oldValue : cell.getOldValue()
+            }),
             () => {
               cell.setValue(cell.getOldValue());
             }
           );
 
         }
-      } else {
-        this.showAlert(
-          `From and to cannot be the same (${data.from})!<br>Restoring previous value (${cell.getOldValue()}).`,
-          () => {
-            cell.setValue(cell.getOldValue());
-          }
-        );
-
       }
     }
   };
