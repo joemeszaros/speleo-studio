@@ -399,6 +399,13 @@
       "splay": "Splay"
     }
   },
+  "attributes": {
+    "names": {
+      "speleotheme": "Speleotheme",
+      "bedding": "Bedding",
+      "fault": "Fault"
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",

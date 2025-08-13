@@ -145,12 +145,10 @@
       },
       "shortestPath": {
         "title": "Legrövidebb út",
-        "from": "Ponttól",
-        "to": "Pontig",
         "find": "Legrövidebb út keresése",
         "length": "Hossz",
-        "cannotFindPath": "Nem található út a(z) {from} és a(z) {to} között",
-        "cannotFindStations": "Nem található pont a(z) {from} vagy a(z) {to}"
+        "cannotFindPath": "Nem található út a(z) '{from}' és a(z) '{to}' között",
+        "cannotFindStations": "Nem található pont a(z) '{from}' vagy a(z) '{to}'"
       },
       "stationDetails": {
         "title": "Pont részletei",
@@ -293,9 +291,9 @@
           "type": "Típus",
           "from": "Ponttól",
           "to": "Pontig",
-          "length": "Hossz",
           "azimuth": "Irány",
           "clino": "Dőlés",
+          "length": "Hossz",
           "attributes": "Attribútumok",
           "comment": "Megjegyzés"
         },
@@ -321,13 +319,16 @@
           "format": "Formátum",
           "start": "Induló pont",
           "termination": "Végpont"
+        },
+        "errors": {
+          "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot"
         }
       },
       "sectionAttributes": {
         "title": "Szakasz attribútumok: {name}",
         "errors": {
-          "unableToFindPath": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue}).",
-          "sectionAttributeMissingArguments": "A szakasz attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!"
+          "sectionAttributeMissingArguments": "A szakasz attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!",
+          "unableToFindPath": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue})."
         }
       },
       "componentAttributes": {
@@ -336,12 +337,6 @@
           "componentAttributeMissingArguments": "A komponens attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!",
           "unableToTraverseGraph": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue})."
         }
-      },
-      "errors": {
-        "invalidAttributes": "Érvénytelen attribútumok",
-        "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot",
-        "componentAttributeMissingArguments": "A komponens attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!",
-        "unableToTraverseGraph": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue})."
       }
     }
   },
@@ -350,13 +345,6 @@
       "details": "Pont részletei",
       "distanceFromHere": "Távolság innen",
       "distanceToHere": "Távolság ide"
-    }
-  },
-  "params": {
-    "shotType": {
-      "center": "Közép",
-      "auxiliary": "Segéd",
-      "splay": "Tüske"
     }
   },
   "validation": {
@@ -377,6 +365,11 @@
     "componentAttribute": {
       "invalidComponent": "Érvénytelen komponens: {error}"
     },
+    "fragmentAttribute": {
+      "invalidVisible": "Láthatóság '{visible}' érvénytelen logikai érték",
+      "invalidColor": "Érvénytelen szín: '{color}'",
+      "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
+    },
     "caveSectionOrComponent": {
       "fromInvalid": "Ponttól ({from}, típus={type}) érvénytelen szöveg vagy üres",
       "terminationInvalid": "Végpont ({termination}, típus={type}) érvénytelen szöveg vagy üres",
@@ -387,11 +380,6 @@
       "distanceGreaterThanZero": "Távolság 0-nál nagyobbnak kell lennie",
       "toInvalid": "Pontig ({to}, típus={type}) érvénytelen szöveg vagy üres",
       "fromToSame": "Ponttól ({from}) és pontig ({to}) nem lehet ugyanaz"
-    },
-    "fragmentAttribute": {
-      "invalidVisible": "Láthatóság '{visible}' érvénytelen logikai érték",
-      "invalidColor": "Érvénytelen szín: '{color}'",
-      "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
     },
     "attribute": {
       "valueMin": "Az érték nem lehet kisebb, mint {min}",
@@ -404,31 +392,45 @@
       "notOneOf": "Az érték ({value}) nem egyike a következőknek: {values}"
     }
   },
+  "params": {
+    "shotType": {
+      "center": "Közép",
+      "auxiliary": "Segéd",
+      "splay": "Tüske"
+    }
+  },
+  "attributes": {
+    "names": {
+      "speleotheme": "Szpeleotémák",
+      "bedding": "Rétegek",
+      "fault": "Törések"
+    }
+  },
   "common": {
     "loading": "Betöltés...",
     "error": "Hiba",
     "success": "Sikeres",
     "cancel": "Mégse",
     "save": "Mentés",
+    "export": "Exportálás",
     "delete": "Törlés",
     "rename": "Átnevezés",
     "edit": "Szerkesztés",
     "close": "Bezárás",
     "project": "Projekt",
     "cave": "Barlang",
-    "shots": "Mérések",
-    "survey": "Felmérés",
+    "caves": "Barlangok",
     "type": "Típus",
+    "name": "Név",
+    "survey": "Felmérés",
     "from": "Ponttól",
     "to": "Pontig",
-    "name": "Név",
-    "caves": "Barlangok",
+    "station": "Pont",
+    "shots": "Mérések",
     "current": "Jelenlegi",
     "open": "Megnyitás",
     "undo": "Visszavonás",
     "redo": "Újra",
-    "clear": "Törlés",
-    "station": "Pont",
-    "export": "Exportálás"
+    "clear": "Törlés"
   }
 }
