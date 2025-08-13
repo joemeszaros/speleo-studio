@@ -127,20 +127,25 @@ class FragmentAttribute {
     return this.validate().length === 0;
   }
 
-  validate() {
+  validate(i18n) {
+
+    const t = i18n === undefined ? (msg) => msg : (key, params) => i18n.t(key, params);
+
     const errors = [];
 
     if (typeof this.visible !== 'boolean' && ![true, false].includes(this.visible)) {
-      errors.push(`Visible '${this.visible}' is not a valid boolean`);
+      errors.push(t('validation.fragmentAttribute.invalidVisible', { visible: this.visible }));
     }
 
     if (typeof this.color !== 'string' && !this.color.startsWith('#')) {
-      errors.push(`Color '${this.color}' is not a valid color`);
+      errors.push(t('validation.fragmentAttribute.invalidColor', { color: this.color }));
     }
 
-    const paramErrors = this.attribute.validate();
+    const paramErrors = this.attribute.validate(false, i18n);
     paramErrors.forEach((error, paramName) => {
-      errors.push(`Invalid attribute '${this.attribute.name}' field ${paramName}: ${error}`);
+      errors.push(
+        t('validation.fragmentAttribute.invalidAttribute', { attribute: this.attribute.name, paramName, error })
+      );
     });
     return errors;
 
@@ -160,11 +165,14 @@ class SectionAttribute extends FragmentAttribute {
     return super.isComplete() && this.section.isComplete();
   }
 
-  validate() {
+  validate(i18n) {
+
+    const t = i18n === undefined ? (msg) => msg : (key, params) => i18n.t(key, params);
+
     const errors = [];
-    errors.push(...super.validate());
-    this.section.validate().forEach((error) => {
-      errors.push(`Invalid section: ${error}`);
+    errors.push(...super.validate(i18n));
+    this.section.validate(i18n).forEach((error) => {
+      errors.push(t('validation.sectionAttribute.invalidSection', { error }));
     });
     return errors;
   }
@@ -201,11 +209,14 @@ class ComponentAttribute extends FragmentAttribute {
     return super.isComplete() && this.component.isComplete();
   }
 
-  validate() {
+  validate(i18n) {
+
+    const t = i18n === undefined ? (msg) => msg : (key, params) => i18n.t(key, params);
+
     const errors = [];
-    errors.push(...super.validate());
-    this.component.validate().forEach((error) => {
-      errors.push(`Invalid component: ${error}`);
+    errors.push(...super.validate(i18n));
+    this.component.validate(i18n).forEach((error) => {
+      errors.push(t('validation.componentAttribute.invalidComponent', { error }));
     });
     return errors;
   }

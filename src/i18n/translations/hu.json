@@ -302,6 +302,32 @@
         "buttons": {
           "update": "Felmérés frissítése"
         }
+      },
+      "attributes": {
+        "buttons": {
+          "update": "Attribútumok frissítése"
+        },
+        "status": {
+          "new": "Új sor",
+          "ok": "Nincs hiba",
+          "invalid": "Sor érvénytelen: {errors}",
+          "incomplete": "Sor hiányzó mezői: {fields}"
+        },
+        "columns": {
+          "name": "Név",
+          "color": "Szín",
+          "distance": "Távolság",
+          "attribute": "Attribútum",
+          "format": "Formátum",
+          "start": "Induló pont",
+          "termination": "Végpont"
+        }
+      },
+      "sectionAttributes": {
+        "title": "Szakasz attribútumok: {name}"
+      },
+      "componentAttributes": {
+        "title": "Komponens attribútumok: {name}"
       }
     }
   },
@@ -330,6 +356,27 @@
       "invalidClino": "Dőlés -90 és 90 között kell legyen",
       "invalidAzimuth": "Irány -360 és 360 között kell legyen",
       "invalidDecimal": "({field}: {value}, típus={type}) érvénytelen decimális szám"
+    },
+    "sectionAttribute": {
+      "invalidSection": "Érvénytelen szakasz: {error}"
+    },
+    "componentAttribute": {
+      "invalidComponent": "Érvénytelen komponens: {error}"
+    },
+    "fragmentAttribute": {
+      "invalidVisible": "Láthatóság '{visible}' érvénytelen logikai érték",
+      "invalidColor": "Érvénytelen szín: '{color}'",
+      "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
+    },
+    "attribute": {
+      "valueMin": "Az érték nem lehet kisebb, mint {min}",
+      "valueMax": "Az érték nem lehet nagyobb, mint {max}",
+      "required": "A kötelező mező üres",
+      "typeMismatch": "Az érték ({value}) típusa ({type}) és nem ({expectedType})",
+      "notInteger": "Az érték ({value}) nem érvényes egész szám",
+      "notFloat": "Az érték ({value}) nem érvényes tört szám",
+      "nanOrInfinity": "Az érték NaN vagy végtelen",
+      "notOneOf": "Az érték ({value}) nem egyike a következőknek: {values}"
     }
   },
   "common": {

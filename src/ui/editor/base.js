@@ -3,6 +3,7 @@ import { AttributesDefinitions } from '../../attributes.js';
 import { Color } from '../../model.js';
 import { SectionHelper } from '../../section.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
+import { i18n } from '../../i18n/i18n.js';
 
 class BaseEditor {
   constructor(panel) {
@@ -133,7 +134,7 @@ class Editor extends BaseEditor {
       param.onchange = (e) => {
         this.attributesModified = true;
         const newValue = e.target.value === '' ? undefined : e.target.value;
-        const errors = a.validateFieldValue(paramName, newValue, true);
+        const errors = a.validateFieldValue(paramName, newValue, true, false, i18n);
         if (errors.length > 0) {
           param.classList.remove('requiredInput');
           param.classList.add('invalidInput');

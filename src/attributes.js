@@ -264,7 +264,9 @@ class Attribute {
     return this;
   }
 
-  validateFieldValue(paramName, value, validateAsString = false, skipEmptyCheck = false) {
+  validateFieldValue(paramName, value, validateAsString = false, skipEmptyCheck = false, i18n) {
+
+    const t = i18n === undefined ? (msg) => msg : (key, params) => i18n.t(key, params);
 
     const runFieldValidators = (paramDef, v) => {
       const e = [];
@@ -272,11 +274,11 @@ class Attribute {
       if (paramDef.validators !== undefined && !falsy(v)) {
 
         if ('min' in paramDef.validators && v < paramDef.validators['min']) {
-          e.push(`Value should not be less than ${paramDef.validators['min']} `);
+          e.push(t('validation.attribute.valueMin', { min: paramDef.validators['min'] }));
         }
 
         if ('max' in paramDef.validators && v > paramDef.validators['max']) {
-          e.push(`Value should not be greater than ${paramDef.validators['max']} `);
+          e.push(t('validation.attribute.valueMax', { max: paramDef.validators['max'] }));
         }
       }
       return e;
@@ -286,7 +288,7 @@ class Attribute {
     const errors = [];
 
     if (!skipEmptyCheck && (paramDef.required ?? false) && falsy(value)) {
-      errors.push('Required value is empty');
+      errors.push(t('validation.attribute.required'));
     }
     if (value !== undefined) {
 
@@ -304,14 +306,16 @@ class Attribute {
         }
 
         if (!typeMatch) {
-          errors.push(`Value '${value}' is a ${typeof value} and not ${paramDef.type}`);
+          errors.push(
+            t('validation.attribute.typeMismatch', { value, type: typeof value, expectedType: paramDef.type })
+          );
         } else {
           if (paramDef.type === 'int' && !Number.isInteger(value)) {
-            errors.push(`Value '${value}' is not a valid integer`);
+            errors.push(t('validation.attribute.notInteger', { value }));
           }
 
           if (paramDef.type === 'float' && (isNaN(value) || Infinity === value || -Infinity === value)) {
-            errors.push(`Value is NaN or Infinity`);
+            errors.push(t('validation.attribute.nanOrInfinity'));
           }
 
           errors.push(...runFieldValidators(paramDef, value));
@@ -323,7 +327,7 @@ class Attribute {
           switch (paramDef.type) {
             case 'int':
               if (!Number.isInteger(parseInt(value, 10))) {
-                errors.push(`Value '${value}' is not a valid integer`);
+                errors.push(t('validation.attribute.notInteger', { value }));
               } else {
                 validForType = true;
                 parsedValue = parseInt(value, 10);
@@ -331,7 +335,7 @@ class Attribute {
               break;
             case 'float':
               if (!isFloatStr(value)) {
-                errors.push(`Value '${value}' is not a valid float`);
+                errors.push(t('validation.attribute.notFloat', { value }));
               } else {
                 validForType = true;
                 parsedValue = parseMyFloat(value);
@@ -351,7 +355,7 @@ class Attribute {
 
       if (paramDef.type === 'string') {
         if ((paramDef.values?.length ?? 0) > 0 && !paramDef.values.includes(value)) {
-          errors.push(`Value is not one of ${paramDef.values.join(', ')}`);
+          errors.push(t('validation.attribute.notOneOf', { value, values: paramDef.values.join(', ') }));
         }
       }
 
@@ -360,11 +364,11 @@ class Attribute {
 
   }
 
-  validate(validateAsString = false) {
+  validate(validateAsString = false, i18n) {
     const errors = new Map();
 
     this.paramNames.forEach((n) => {
-      const fieldErrors = this.validateFieldValue(n, this[n], validateAsString);
+      const fieldErrors = this.validateFieldValue(n, this[n], validateAsString, false, i18n);
       if (fieldErrors.length > 0) {
         errors.set(n, fieldErrors);
       }

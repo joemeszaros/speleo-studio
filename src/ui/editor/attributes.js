@@ -34,20 +34,27 @@ class FragmentAttributeEditor extends CaveEditor {
         .filter((r) => ['invalid', 'incomplete'].includes(r.status));
       if (badRows.length > 0 && showAlert) {
         this.showAlert(
-          `${i18n.t('ui.editors.common.error.invalidRows', { nrRows: badRows.length })}<br>${i18n.t('ui.editors.common.error.checkWarningIcon')}`,
-          4
+          `${i18n.t('ui.editors.common.error.invalidRows', { nrRows: badRows.length })}<br>${i18n.t('ui.editors.common.error.checkWarningIcon')}`
         );
       }
     }
   }
 
   setupPanel() {
+    this.buildPanel();
+    document.addEventListener('languageChanged', () => this.buildPanel());
+  }
+
+  buildPanel() {
     this.panel.innerHTML = '';
     makeMovable(
       this.panel,
       this.title,
       true,
-      () => this.closeEditor(),
+      () => {
+        document.removeEventListener('languageChanged', () => this.buildPanel());
+        this.closeEditor();
+      },
       (_newWidth, newHeight) => this.table.setHeight(newHeight - 140),
       () => this.table.redraw()
     );
@@ -111,7 +118,7 @@ class FragmentAttributeEditor extends CaveEditor {
         mutatorClipboard : (str) => (str === 'true' ? true : false) //TODO:better parser here that considers other values (like 0, 1)
       },
       {
-        title             : 'Color',
+        title             : i18n.t('ui.editors.attributes.columns.color'),
         field             : 'color',
         formatter         : this.baseTableFunctions.colorIcon,
         accessorClipboard : (color) => color,
@@ -120,14 +127,14 @@ class FragmentAttributeEditor extends CaveEditor {
         cellClick         : (_e, cell) => this.baseTableFunctions.changeColor(_e, cell)
       },
       {
-        title            : 'Distance',
+        title            : i18n.t('ui.editors.attributes.columns.distance'),
         field            : 'distance',
         editor           : false,
         mutatorClipboard : this.baseTableFunctions.floatAccessor,
         formatter        : this.baseTableFunctions.floatFormatter('0')
       },
       {
-        title            : 'Attribute',
+        title            : i18n.t('ui.editors.attributes.columns.attribute'),
         field            : 'attribute',
         headerFilterFunc : this.baseTableFunctions.attributeHeaderFilter,
         headerFilter     : 'input',
@@ -154,7 +161,7 @@ class FragmentAttributeEditor extends CaveEditor {
           )
       },
       {
-        title  : 'Format',
+        title  : i18n.t('ui.editors.attributes.columns.format'),
         field  : 'format',
         editor : 'input'
       }
@@ -262,7 +269,7 @@ class FragmentAttributeEditor extends CaveEditor {
 
     checkAttributesLength : (attributes) => {
       if (attributes.length > 1) {
-        this.showAlert(`Only a single attribute is allowed here!<br>Delete ${attributes.length - 1} attribute(s)`);
+        this.showAlert(i18n.t('ui.editors.errors.onlyOneAttributeAllowed', { nrAttributes: attributes.length - 1 }));
         return false;
       } else {
         return true;
@@ -276,7 +283,11 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
     super(db, options, cave, scene, attributeDefs, panel);
-    this.title = `Component  attribute editor: ${this.cave.name}`;
+    this.title = i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
+
+    document.addEventListener('languageChanged', () => {
+      this.title = i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
+    });
   }
 
   setupButtons() {
@@ -299,7 +310,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     // Add update attributes button
     const updateButton = IconBar.getUpdateAttributesButton(
       () => this.setCaveComponentAttributes(),
-      'Update attributes'
+      i18n.t('ui.editors.attributes.buttons.update')
     );
     updateButton.forEach((button) => this.iconBar.addButton(button));
   }
@@ -346,13 +357,14 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     if (emptyFields.length > 0) {
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = `Row has missing fields: ${emptyFields.join(',')}`;
+      newRow.message = i18n.t('ui.editors.attributes.status.incomplete', { fields: emptyFields.join(',') });
     } else {
-      const errors = sa.validate();
+      const errors = sa.validate(i18n);
       if (errors.length > 0) {
+        validationErrors.push(...errors);
         newRow = { ...r };
         newRow.status = 'invalid';
-        newRow.message = `Row is invalid: <br>${errors.join('<br>')}`;
+        newRow.message = i18n.t('ui.editors.attributes.status.invalid', { errors: errors.join('<br>') });
       }
     }
     if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
@@ -376,7 +388,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       attribute   : undefined,
       format      : '${name}',
       status      : 'incomplete',
-      message     : 'New row'
+      message     : i18n.t('ui.editors.attributes.status.new')
     };
 
   }
@@ -395,7 +407,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         attribute   : r.attribute,
         format      : r.format === undefined ? '${name}' : r.format,
         status      : 'ok',
-        message     : 'No errors'
+        message     : i18n.t('ui.editors.attributes.status.ok')
       };
     });
 
@@ -442,7 +454,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
 
     return [
       {
-        title        : 'Start',
+        title        : i18n.t('ui.editors.attributes.columns.start'),
         field        : 'start',
         editor       : 'list',
         editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
@@ -451,7 +463,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         cellEdited   : this.functions.startOrTerminationEdited
       },
       {
-        title            : 'Termination',
+        title            : i18n.t('ui.editors.attributes.columns.termination'),
         field            : 'termination',
         editor           : editor,
         mutatorClipboard : (value) => {
@@ -478,7 +490,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     toggleVisibility : (ev, cell) => {
       const data = cell.getData();
       if (data.status !== 'ok') {
-        this.showAlert('Component attribute has missing arguments or is invalid. <br>Cannot change visibility!');
+        this.showAlert(i18n.t('ui.editors.errors.componentAttributeMissingArguments'));
         return;
       }
 
@@ -532,7 +544,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         }
       } else {
         this.showAlert(
-          `Unable to traverse graph from ${data.from}.<br>Restoring previous value (${cell.getOldValue()}).`,
+          i18n.t('ui.editors.errors.unableToTraverseGraph', { from: data.from, oldValue: cell.getOldValue() }),
           () => {
             cell.setValue(cell.getOldValue());
           }
@@ -549,7 +561,11 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
     super(db, options, cave, scene, attributeDefs, panel);
-    this.title = `Section attribute editor: ${this.cave.name}`;
+    this.title = i18n.t('ui.editors.sectionAttributes.title', { name: this.cave.name });
+
+    document.addEventListener('languageChanged', () => {
+      this.title = i18n.t('ui.editors.sectionAttributes.title', { name: this.cave.name });
+    });
 
   }
 
@@ -595,13 +611,14 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     if (emptyFields.length > 0) {
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = `Row has missing fields: ${emptyFields.join(',')}`;
+      newRow.message = i18n.t('ui.editors.attributes.status.incomplete', { fields: emptyFields.join(',') });
     } else {
-      const errors = sa.validate();
+      const errors = sa.validate(i18n);
       if (errors.length > 0) {
+        validationErrors.push(...errors);
         newRow = { ...r };
         newRow.status = 'invalid';
-        newRow.message = `Row is invalid: <br>${errors.join('<br>')}`;
+        newRow.message = i18n.t('ui.editors.attributes.status.invalid', { errors: errors.join('<br>') });
       }
     }
     if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
@@ -625,7 +642,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       attribute : undefined,
       format    : '${name}',
       status    : 'incomplete',
-      message   : 'New row'
+      message   : i18n.t('ui.editors.attributes.status.new')
     };
 
   }
@@ -644,7 +661,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         attribute : r.attribute,
         format    : r.format === undefined ? '${name}' : r.format,
         status    : 'ok',
-        message   : 'No errors'
+        message   : i18n.t('ui.editors.attributes.status.ok')
       };
     });
 

@@ -300,6 +300,38 @@
         "buttons": {
           "update": "Update survey"
         }
+      },
+      "attributes": {
+        "buttons": {
+          "update": "Update attributes"
+        },
+        "status": {
+          "new": "New row",
+          "ok": "No errors",
+          "invalid": "Row is invalid: {errors}",
+          "incomplete": "Row has missing fields: {fields}"
+        },
+        "columns": {
+          "name": "Name",
+          "color": "Color",
+          "distance": "Distance",
+          "attribute": "Attribute",
+          "format": "Format",
+          "start": "Start",
+          "termination": "Termination"
+        }
+      },
+      "sectionAttributes": {
+        "title": "Section attributes: {name}"
+      },
+      "componentAttributes": {
+        "title": "Component attributes: {name}"
+      },
+      "errors": {
+        "invalidAttributes": "Invalid attributes",
+        "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",
+        "componentAttributeMissingArguments": "Component attribute has missing arguments or is invalid. <br>Cannot change visibility!",
+        "unableToTraverseGraph": "Unable to traverse graph from {from}.<br>Restoring previous value ({oldValue})."
       }
     }
   },
@@ -321,6 +353,27 @@
       "invalidClino": "Clino should be between -90 and 90",
       "invalidAzimuth": "Azimuth should be between -360 and 360",
       "invalidDecimal": "({field}: {value}, type={type}) is not a valid decimal number"
+    },
+    "sectionAttribute": {
+      "invalidSection": "Invalid section: {error}"
+    },
+    "componentAttribute": {
+      "invalidComponent": "Invalid component: {error}"
+    },
+    "fragmentAttribute": {
+      "invalidVisible": "Visible '{visible}' is not a valid boolean",
+      "invalidColor": "Color '{color}' is not a valid color",
+      "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
+    },
+    "attribute": {
+      "valueMin": "Value should not be less than {min}",
+      "valueMax": "Value should not be greater than {max}",
+      "required": "Required value is empty",
+      "typeMismatch": "Value '{value}' is a {type} and not {expectedType}",
+      "notInteger": "Value '{value}' is not a valid integer",
+      "notFloat": "Value '{value}' is not a valid float",
+      "nanOrInfinity": "Value is NaN or Infinity",
+      "notOneOf": "Value '{value}' is not one of {values}"
     }
   },
   "params": {
