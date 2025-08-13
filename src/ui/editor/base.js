@@ -91,12 +91,12 @@ class Editor extends BaseEditor {
     this.table.alert(div);
   }
 
-  getAttributeEditorDiv(a, attributes, index) {
+  getAttributeEditorDiv(a, attributes, index, i18n) {
     const attributeNode = U.node`<div class="attribute-editor" id="attribute-editor-${index}"></div>`;
     //const warning = U.node`<div class="warning" id="attribute-editor-${index}-warning">hel</div>`;
     //attributeNode.appendChild(warning);
     //warning.style.display = 'none'; TODO: somehow show the warning div
-    const name = U.node`<span>${a.name}(</span>`;
+    const name = U.node`<span>${i18n.t(`attributes.names.${a.name}`)}(</span>`;
     const del = U.node`<span class="delete-row">`;
     del.onclick = () => {
       const indexToDelete = attributes.indexOf(a);
@@ -112,7 +112,7 @@ class Editor extends BaseEditor {
     paramNames.forEach((paramName) => {
       const value = a[paramName] === undefined ? '' : a[paramName];
       const paramDef = a.params[paramName];
-      const errors = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check
+      const errors = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check, no localization
       let underScoreClass;
       const requiredField = paramDef.required ?? false;
       if (errors.length > 0) {
@@ -130,7 +130,7 @@ class Editor extends BaseEditor {
       }
       const inputType = datalist === undefined ? 'text' : 'search';
       const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
-      const param = U.node`<input placeholder="${paramName}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
+      const param = U.node`<input placeholder="${i18n.t(`attributes.params.${paramName}`)}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
       param.onchange = (e) => {
         this.attributesModified = true;
         const newValue = e.target.value === '' ? undefined : e.target.value;
@@ -139,7 +139,9 @@ class Editor extends BaseEditor {
           param.classList.remove('requiredInput');
           param.classList.add('invalidInput');
           a[paramName] = newValue; // set the invalid value
-          this.showAlert(`Invalid '${paramName}': ${errors.join('<br>')}`);
+          this.showAlert(
+            i18n.t('common.invalid') + ` '${i18n.t(`attributes.params.${paramName}`)}': ${errors.join('<br>')}`
+          );
         } else {
           param.classList.remove('invalidInput');
           param.classList.add(requiredField ? 'requiredInput' : 'optionalInput');
@@ -160,7 +162,7 @@ class Editor extends BaseEditor {
     return attributeNode;
   }
 
-  attributesEditor(cell, onRendered, success, extractor, mutator, extraValidators) {
+  attributesEditor(cell, onRendered, success, extractor, mutator, extraValidators, i18n) {
     const attributes = extractor(cell.getData());
 
     const panel = U.node`<div tabindex="0" id="attributes-editor" class="attributes-editor"></div>`;
@@ -180,28 +182,38 @@ class Editor extends BaseEditor {
 
     var index = 0;
     attributes.forEach((a) => {
-      const attributeNode = this.getAttributeEditorDiv(a, attributes, index);
+      const attributeNode = this.getAttributeEditorDiv(a, attributes, index, i18n);
       panel.appendChild(attributeNode);
       index += 1;
     });
 
-    const aNames = this.attributeDefs.getAttributeNames();
-    const options = aNames.map((n) => `<option value="${n}">`).join('');
+    const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
+    const options = aNamesWithIds
+      .map((n) => `<option id="${n.id}" originalName="${n.originalName}" shortName="${n.shortName}" value="${n.name}">`)
+      .join('');
 
-    const add = U.node`<div><label>New attribute: </label><input placeholder="attribute name" type="search" class="longInput requiredInput" list="attributeNames" id="new-attribute-value"><datalist id="attributeNames">${options}</datalist><span class="add-row"></span></div>`;
-    add.childNodes[3].onclick = () => {
+    const add = U.node`<div>
+       <label>${i18n.t('ui.editors.attributes.newAttribute')}: </label>
+       <input placeholder="${i18n.t('ui.editors.attributes.placeHolderName')}" type="search" class="longInput requiredInput" list="attributeNames" id="new-attribute-value">
+       <datalist id="attributeNames">${options}</datalist>
+       <span class="add-row"></span>
+    </div>`;
+    const addButton = add.querySelector('.add-row');
+    addButton.onclick = () => {
       const input = add.querySelector('#new-attribute-value');
+      const selectedOption = add.querySelector(`#attributeNames option[value="${input.value}"]`);
+      const originalName = selectedOption.getAttribute('originalName');
       const aName = input.value;
-      if (aNames.includes(aName)) {
-        const newAttribute = this.attributeDefs.createByName(input.value)();
-        const attributeNode = this.getAttributeEditorDiv(newAttribute, attributes, index);
+      if (aNamesWithIds.find((a) => a.name === aName)) {
+        const newAttribute = this.attributeDefs.createByName(originalName)();
+        const attributeNode = this.getAttributeEditorDiv(newAttribute, attributes, index, i18n);
         panel.insertBefore(attributeNode, add);
         attributes.push(newAttribute);
         input.value = '';
       } else if (aName === '') {
-        this.showAlert(`No attribute name is selected`);
+        this.showAlert(i18n.t('ui.editors.attributes.errors.noNameSelected'));
       } else {
-        this.showAlert(`Cannot find attribute with name '${aName}'`);
+        this.showAlert(i18n.t('ui.editors.attributes.errors.noAttributeWithName', { name: aName }));
       }
     };
 
@@ -210,13 +222,13 @@ class Editor extends BaseEditor {
     return panel;
   }
 
-  getAttributeErrors(row) {
+  getAttributeErrors(row, i18n) {
     const errors = [];
 
     row.attributes.forEach((a) => {
       const paramErrors = a.validate();
       paramErrors.forEach((error, paramName) => {
-        errors.push(`Invalid attribute '${a.name}' field ${paramName}: ${error}`);
+        errors.push(i18n.t('ui.editors.attributes.errors.invalidAttribute', { attribute: a.name, paramName, error }));
       });
     });
 
@@ -314,14 +326,14 @@ class Editor extends BaseEditor {
         };
       }
     },
-    atrributesFormatter : (cell, extractor) => {
+    atrributesFormatter : (cell, extractor, i18n) => {
       const attrs = extractor(cell.getData());
       if (attrs === undefined) {
         return undefined;
       }
 
       if (Array.isArray(attrs) && attrs.length > 0) {
-        return AttributesDefinitions.getAttributesAsString(attrs);
+        return AttributesDefinitions.getAttributesAsString(attrs, i18n);
       } else {
         return undefined;
       }

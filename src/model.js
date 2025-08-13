@@ -143,8 +143,15 @@ class FragmentAttribute {
 
     const paramErrors = this.attribute.validate(false, i18n);
     paramErrors.forEach((error, paramName) => {
+      const nameOrTranslated =
+        i18n === undefined ? this.attribute.name : i18n.t(`attributes.names.${this.attribute.name}`);
+      const paramNameOrTranslated = i18n === undefined ? paramName : i18n.t(`attributes.params.${paramName}`);
       errors.push(
-        t('validation.fragmentAttribute.invalidAttribute', { attribute: this.attribute.name, paramName, error })
+        t('validation.fragmentAttribute.invalidAttribute', {
+          attribute : nameOrTranslated,
+          paramName : paramNameOrTranslated,
+          error
+        })
       );
     });
     return errors;

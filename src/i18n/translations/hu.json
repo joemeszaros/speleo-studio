@@ -302,6 +302,8 @@
         }
       },
       "attributes": {
+        "placeHolderName": "Attribútum neve",
+        "newAttribute": "Új attribútum",
         "buttons": {
           "update": "Attribútumok frissítése"
         },
@@ -321,7 +323,10 @@
           "termination": "Végpont"
         },
         "errors": {
-          "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot"
+          "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot",
+          "noNameSelected": "Nincs attribútum neve kiválasztva",
+          "noAttributeWithName": "Nincs '{name}' nevű attribútum",
+          "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
         }
       },
       "sectionAttributes": {
@@ -401,9 +406,26 @@
   },
   "attributes": {
     "names": {
-      "speleotheme": "Szpeleotémák",
-      "bedding": "Rétegek",
-      "fault": "Törések"
+      "speleotheme": "szpeleotéma",
+      "bedding": "rétegdőlés",
+      "fault": "vető",
+      "rope": "horgony",
+      "co": "co",
+      "label": "címke",
+      "exploration": "felfedezés"
+    },
+    "params": {
+      "dip": "dőlés",
+      "strike": "irány",
+      "azimuth": "irány",
+      "width": "szélesség",
+      "height": "magasság",
+      "type": "típus",
+      "description": "leírás",
+      "value": "érték",
+      "year": "év",
+      "month": "hónap",
+      "day": "nap"
     }
   },
   "common": {
@@ -431,6 +453,7 @@
     "open": "Megnyitás",
     "undo": "Visszavonás",
     "redo": "Újra",
-    "clear": "Törlés"
+    "clear": "Törlés",
+    "invalid": "Érvénytelen"
   }
 }

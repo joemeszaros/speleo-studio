@@ -1,7 +1,7 @@
 import { falsy, parseMyFloat, isFloatStr } from './utils/utils.js';
 
 const attributeDefintions = {
-  verion : '1.0',
+  verion : '1.0.0',
   types  : [
     {
       id   : 1,
@@ -189,6 +189,15 @@ class AttributesDefinitions {
     return this.defs.definitions.map((d) => d.name);
   }
 
+  getLocalizedAttributeNamesWitdId(i18n) {
+    return this.defs.definitions.map((d) => ({
+      id           : d.id,
+      name         : i18n.t(`attributes.names.${d.name}`),
+      shortName    : i18n.t(`attributes.shortNames.${d.name}`),
+      originalName : d.name
+    }));
+  }
+
   getAttributesFromString(str) {
     const attrs = [];
     const errors = [];
@@ -206,12 +215,13 @@ class AttributesDefinitions {
     return { errors: errors, attributes: attrs };
   }
 
-  static getAttributesAsString(attrs) {
+  static getAttributesAsString(attrs, i18n) {
     return attrs
       .map((a) => {
+        const nameOrTranslated = i18n === undefined ? a.name : i18n.t(`attributes.names.${a.name}`);
         const paramNames = Object.keys(a.params);
         const paramValues = paramNames.map((n) => a[n]).join(',');
-        return `${a.name}(${paramValues})`;
+        return `${nameOrTranslated}(${paramValues})`;
       })
       .join('|');
   }

@@ -484,7 +484,8 @@ class SurveyEditor extends Editor {
           success,
           (cv) => cv.attributes,
           (attrs) => attrs,
-          () => true
+          () => true,
+          i18n
         )
     });
     columns.push({

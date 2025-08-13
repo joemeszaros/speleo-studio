@@ -139,7 +139,11 @@ class FragmentAttributeEditor extends CaveEditor {
         headerFilterFunc : this.baseTableFunctions.attributeHeaderFilter,
         headerFilter     : 'input',
         formatter        : (cell) =>
-          this.baseTableFunctions.atrributesFormatter(cell, (cv) => (cv.attribute === undefined ? [] : [cv.attribute])),
+          this.baseTableFunctions.atrributesFormatter(
+            cell,
+            (cv) => (cv.attribute === undefined ? [] : [cv.attribute]),
+            i18n
+          ),
         accessorClipboard : (value) =>
           this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
             attribute === undefined ? undefined : [attribute]
@@ -157,7 +161,8 @@ class FragmentAttributeEditor extends CaveEditor {
             (attrs) => {
               return attrs.lenth === 0 ? undefined : attrs[0];
             },
-            this.tableFunctions.checkAttributesLength
+            this.tableFunctions.checkAttributesLength,
+            i18n
           )
       },
       {

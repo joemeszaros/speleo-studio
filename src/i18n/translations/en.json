@@ -302,6 +302,9 @@
         }
       },
       "attributes": {
+        "placeHolderName": "Attribute name",
+        "newAttribute": "New attribute",
+
         "buttons": {
           "update": "Update attributes"
         },
@@ -321,7 +324,10 @@
           "termination": "Termination"
         },
         "errors": {
-          "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)"
+          "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",
+          "noNameSelected": "No attribute name is selected",
+          "noAttributeWithName": "No attribute with name '{name}'",
+          "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
         }
       },
       "sectionAttributes": {
@@ -401,9 +407,26 @@
   },
   "attributes": {
     "names": {
-      "speleotheme": "Speleotheme",
-      "bedding": "Bedding",
-      "fault": "Fault"
+      "speleotheme": "speleotheme",
+      "bedding": "bedding",
+      "fault": "fault",
+      "rope": "rope",
+      "co": "co",
+      "label": "label",
+      "exploration": "exploration"
+    },
+    "params": {
+      "dip": "dip",
+      "strike": "strike",
+      "azimuth": "azimuth",
+      "width": "width",
+      "height": "height",
+      "type": "type",
+      "description": "description",
+      "value": "value",
+      "year": "year",
+      "month": "month",
+      "day": "day"
     }
   },
   "common": {
@@ -431,6 +454,7 @@
     "open": "Open",
     "undo": "Undo",
     "redo": "Redo",
-    "clear": "Clear"
+    "clear": "Clear",
+    "invalid": "Invalid"
   }
 }
