@@ -328,6 +328,12 @@
       },
       "componentAttributes": {
         "title": "Komponens attribútumok: {name}"
+      },
+      "errors": {
+        "invalidAttributes": "Érvénytelen attribútumok",
+        "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot",
+        "componentAttributeMissingArguments": "A komponens attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!",
+        "unableToTraverseGraph": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue})."
       }
     }
   },

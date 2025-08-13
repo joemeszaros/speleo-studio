@@ -22,7 +22,7 @@ class ProjectManager {
     this.editorStateSystem = editorStateSystem;
     this.firstEdit = true;
     document.addEventListener('surveyChanged', (e) => this.onSurveyChanged(e));
-    document.addEventListener('attributesChanged', (e) => this.onAttributesChanged(e));
+    document.addEventListener('stationAttributesChanged', (e) => this.onStationAttributesChanged(e));
     document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
@@ -33,6 +33,8 @@ class ProjectManager {
     document.addEventListener('surveyDataUpdated', (e) => this.onSurveyDataUpdated(e));
     document.addEventListener('currentProjectChanged', (e) => this.onCurrentProjectChanged(e));
     document.addEventListener('currentProjectDeleted', (e) => this.onCurrentProjectDeleted(e));
+    document.addEventListener('sectionAttributesChanged', (e) => this.onFragmentAttributesChanged(e));
+    document.addEventListener('componentAttributesChanged', (e) => this.onFragmentAttributesChanged(e));
 
   }
 
@@ -92,10 +94,17 @@ class ProjectManager {
     await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
-  onAttributesChanged(e) {
+  async onFragmentAttributesChanged(e) {
     const cave = e.detail.cave;
+    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+  }
+
+  async onStationAttributesChanged(e) {
+    const cave = e.detail.cave;
+    this.scene.updateVisiblePlanes();
     this.scene.view.renderView();
-    this.explorer.updateCave(cave, (n) => n.name === cave.name);
+    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+    //this.explorer.updateCave(cave, (n) => n.name === cave.name);
   }
 
   onSurveyDeleted(e) {
@@ -163,6 +172,7 @@ class ProjectManager {
     const caves = await this.projectSystem.getCavesForProject(project.id);
     caves.forEach((cave) => {
       this.recalculateCave(cave);
+      this.calculateFragmentAttributes(cave);
       this.addCave(cave);
     });
     this.scene.view.renderView();
@@ -195,6 +205,35 @@ class ProjectManager {
 
     this.db.clear();
     this.scene.view.renderView();
+  }
+
+  calculateFragmentAttributes(cave) {
+    if (cave.sectionAttributes.length > 0 || cave.componentAttributes.length > 0) {
+      const g = SectionHelper.getGraph(cave);
+
+      if (cave.sectionAttributes.length > 0) {
+        cave.sectionAttributes.forEach((sa) => {
+          const cs = SectionHelper.getSection(g, sa.section.from, sa.section.to);
+          if (cs !== undefined) {
+            sa.section = cs;
+          } else {
+            //TODO: show error
+          }
+
+        });
+      }
+      if (cave.componentAttributes.length > 0) {
+        cave.componentAttributes.forEach((ca) => {
+          const cs = SectionHelper.getComponent(g, ca.component.start, ca.component.termination);
+          if (cs !== undefined) {
+            ca.component = cs;
+          } else {
+            //TODO: show error
+          }
+
+        });
+      }
+    }
   }
 
   recalculateCave(cave) {

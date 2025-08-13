@@ -5,19 +5,11 @@ import { showErrorPanel, showWarningPanel } from '../ui/popups.js';
 import { Shot, ShotType } from '../model/survey.js';
 import { Vector, Surface } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
-import {
-  SurveyMetadata,
-  Survey,
-  SurveyAlias,
-  SurveyTeamMember,
-  SurveyTeam,
-  SurveyInstrument
-} from '../model/survey.js';
+import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument } from '../model/survey.js';
 import { MeridianConvergence } from '../utils/geo.js';
 import { EOVCoordinateWithElevation, StationWithCoordinate, GeoData, CoordinateSytem } from '../model/geo.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
-import { SectionHelper } from '../section.js';
 
 /**
  * Base class for cave importerers
@@ -329,32 +321,6 @@ class JsonImporter extends Importer {
     [...cave.surveys.entries()]
       .forEach(([index, es]) => SurveyHelper.recalculateSurvey(index, es, cave.stations, cave.aliases, cave.geoData));
 
-    if (cave.sectionAttributes.length > 0 || cave.componentAttributes.length > 0) {
-      const g = SectionHelper.getGraph(cave);
-
-      if (cave.sectionAttributes.length > 0) {
-        cave.sectionAttributes.forEach((sa) => {
-          const cs = SectionHelper.getSection(g, sa.section.from, sa.section.to);
-          if (cs !== undefined) {
-            sa.section = cs;
-          } else {
-            //TODO: show error
-          }
-
-        });
-      }
-      if (cave.componentAttributes.length > 0) {
-        cave.componentAttributes.forEach((ca) => {
-          const cs = SectionHelper.getComponent(g, ca.component.start, ca.component.termination);
-          if (cs !== undefined) {
-            ca.component = cs;
-          } else {
-            //TODO: show error
-          }
-
-        });
-      }
-    }
     return cave;
   }
 }

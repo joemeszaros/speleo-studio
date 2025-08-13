@@ -321,7 +321,16 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   }
 
   setCaveComponentAttributes() {
-    this.cave.componentAttributes = this.getNewComponentAttributes();
+    const newAttributes = this.getNewComponentAttributes();
+    const oldAttributes = this.cave.componentAttributes;
+    const isEqual =
+      newAttributes.length === oldAttributes.length &&
+      newAttributes.every((element, index) => element.isEqual(oldAttributes[index]));
+
+    if (!isEqual) {
+      this.cave.componentAttributes = newAttributes;
+      this.#emitComponentAttributesChanged();
+    }
   }
 
   getNewComponentAttributes() {
@@ -442,7 +451,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       //when the value has been set, trigger the cell to update
       function successFunc() {
         const value = editor.value;
-        success(value.split(','));
+        success(value.split(',').filter((f) => f.length > 0));
       }
 
       editor.addEventListener('change', successFunc);
@@ -467,7 +476,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         field            : 'termination',
         editor           : editor,
         mutatorClipboard : (value) => {
-          return value.split(',');
+          return value.split(',').filter((f) => f.length > 0);
         },
         accessorClipboard : (value) => {
           return value.join(',');
@@ -489,7 +498,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   functions = {
     toggleVisibility : (ev, cell) => {
       const data = cell.getData();
-      if (data.status !== 'ok') {
+      if (data.status !== 'ok' && !data.visible) {
         this.showAlert(i18n.t('ui.editors.errors.componentAttributeMissingArguments'));
         return;
       }
@@ -555,6 +564,15 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     }
   };
 
+  #emitComponentAttributesChanged() {
+    const event = new CustomEvent('componentAttributesChanged', {
+      detail : {
+        cave : this.cave
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
 }
 
 class SectionAttributeEditor extends FragmentAttributeEditor {
@@ -575,7 +593,16 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   }
 
   setCaveSectionAttributes() {
-    this.cave.sectionAttributes = this.getNewSectionAttributes();
+    const newAttributes = this.getNewSectionAttributes();
+    const oldAttributes = this.cave.sectionAttributes;
+    const isEqual =
+      newAttributes.length === oldAttributes.length &&
+      newAttributes.every((element, index) => element.isEqual(oldAttributes[index]));
+
+    if (!isEqual) {
+      this.cave.sectionAttributes = newAttributes;
+      this.#emitSectionAttributesChanged();
+    }
   }
 
   getNewSectionAttributes() {
@@ -772,6 +799,15 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       }
     }
   };
+
+  #emitSectionAttributesChanged() {
+    const event = new CustomEvent('sectionAttributesChanged', {
+      detail : {
+        cave : this.cave
+      }
+    });
+    document.dispatchEvent(event);
+  }
 
 }
 

@@ -1,13 +1,14 @@
 import { CaveComponent, CaveCycle, CaveSection } from './model/cave.js';
 import { Graph } from './utils/graph.js';
 import { randomAlphaNumbericString } from './utils/utils.js';
+import { ShotType } from './model/survey.js';
 
 class SectionHelper {
 
   static getSection(graph, from, to) {
     const path = graph.findShortestPath(from, to);
     if (path !== undefined) {
-      return new CaveSection(from, to, path.path, path.distance);
+      return new CaveSection(from, to, path.path, path.distance === 'Infinity' ? 0 : path.distance);
     } else {
       return undefined;
     }
@@ -16,7 +17,7 @@ class SectionHelper {
   static getComponent(graph, start, termination) {
     const result = graph.traverse(start, termination);
     if (result !== undefined) {
-      return new CaveComponent(start, termination, result.path, result.distance);
+      return new CaveComponent(start, termination, result.path, result.distance === 'Infinity' ? 0 : result.distance);
     } else {
       return undefined;
     }
@@ -83,6 +84,9 @@ class SectionHelper {
     [...cave.stations.keys()].forEach((k) => g.addVertex(k));
     cave.surveys.forEach((s) => {
       s.validShots.forEach((sh) => {
+        if (sh.type !== ShotType.CENTER) {
+          return;
+        }
         const fromName = s.getFromStationName(sh);
         const from = cave.stations.get(fromName);
         const toStationName = s.getToStationName(sh);

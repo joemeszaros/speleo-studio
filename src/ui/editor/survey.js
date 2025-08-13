@@ -636,7 +636,7 @@ class SurveyEditor extends Editor {
   }
 
   #emitAttribuesChanged() {
-    const event = new CustomEvent('attributesChanged', {
+    const event = new CustomEvent('stationAttributesChanged', {
       detail : {
         cave   : this.cave,
         survey : this.survey
