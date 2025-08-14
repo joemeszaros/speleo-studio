@@ -62,7 +62,7 @@ class FragmentAttributeEditor extends CaveEditor {
     this.setupTable();
   }
 
-  setupButtons() {
+  setupCommonButtons() {
     // Create iconbar with common buttons
     this.iconBar = new IconBar(this.panel);
 
@@ -74,12 +74,6 @@ class FragmentAttributeEditor extends CaveEditor {
 
     // Add separator
     //this.iconBar.addSeparator();
-
-    const specificButtons = IconBar.getAttributesButtons(
-      () => this.validateRows(),
-      () => this.setCaveSectionAttributes()
-    );
-    specificButtons.forEach((button) => this.iconBar.addButton(button));
 
     //this.iconBar.addSeparator();
 
@@ -300,6 +294,15 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   closeEditor() {
     this.setCaveComponentAttributes();
     super.closeEditor();
+  }
+
+  setupButtons() {
+    super.setupCommonButtons(); // sets this.iconbar
+    const specificButtons = IconBar.getAttributesButtons(
+      () => this.validateRows(),
+      () => this.setCaveComponentAttributes()
+    );
+    specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
 
   setCaveComponentAttributes() {
@@ -575,6 +578,15 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   closeEditor() {
     this.setCaveSectionAttributes();
     super.closeEditor();
+  }
+
+  setupButtons() {
+    super.setupCommonButtons(); // sets this.iconbar
+    const specificButtons = IconBar.getAttributesButtons(
+      () => this.validateRows(),
+      () => this.setCaveSectionAttributes()
+    );
+    specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
 
   setCaveSectionAttributes() {

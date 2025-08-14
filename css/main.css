@@ -969,15 +969,39 @@ body {
   overflow: visible;
 }
 
+/* Force Tabulator containers to allow overflow for the editor */
+.tabulator .tabulator-cell.tabulator-editing {
+  overflow: visible !important;
+}
+
+.tabulator .tabulator-row.tabulator-editing {
+  overflow: visible !important;
+}
+
+.tabulator .tabulator-tableholder {
+  overflow: visible !important;
+}
+
+.tabulator .tabulator-body {
+  overflow: visible !important;
+}
+
 .tabulator .tabulator-cell .attributes-editor {
   font-size: 12px;
   position: absolute;
   z-index: 100;
   min-width: 300px;
-  right: 0px;
+  right: 0;
+  top: 0;
+  /* Add some offset to ensure it's not hidden behind other elements */
+  margin-top: -5px;
   background: rgb(40, 40, 40);
   border: 2px solid white;
   padding: 5px 5px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  /* Ensure the editor is not clipped by parent containers */
+  transform: translateZ(0);
 }
 
 .tabulator .tabulator-cell .attributes-editor input {

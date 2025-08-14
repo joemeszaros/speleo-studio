@@ -193,7 +193,6 @@ class AttributesDefinitions {
     return this.defs.definitions.map((d) => ({
       id           : d.id,
       name         : i18n.t(`attributes.names.${d.name}`),
-      shortName    : i18n.t(`attributes.shortNames.${d.name}`),
       originalName : d.name
     }));
   }

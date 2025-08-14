@@ -189,7 +189,7 @@ class Editor extends BaseEditor {
 
     const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
     const options = aNamesWithIds
-      .map((n) => `<option id="${n.id}" originalName="${n.originalName}" shortName="${n.shortName}" value="${n.name}">`)
+      .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
       .join('');
 
     const add = U.node`<div>

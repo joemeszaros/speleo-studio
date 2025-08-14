@@ -189,7 +189,8 @@ class SectionAttribute extends FragmentAttribute {
       this.visible === other.visible &&
       this.color === other.color &&
       this.format === other.format &&
-      this.attribute.isEqual(other.attribute) &&
+      ((this.attribute === undefined && other.attribute === undefined) ||
+        (this.attribute !== undefined && this.attribute.isEqual(other.attribute))) &&
       this.section.from === other.section.from &&
       this.section.to === other.section.to;
   }
@@ -198,7 +199,7 @@ class SectionAttribute extends FragmentAttribute {
     return {
       id        : this.id,
       section   : this.section.toExport(),
-      attribute : this.attribute.toExport(),
+      attribute : this.attribute?.toExport(),
       format    : this.format,
       color     : this.color,
       visible   : this.visible
@@ -206,7 +207,7 @@ class SectionAttribute extends FragmentAttribute {
   }
 
   static fromPure(pure, attributeDefs) {
-    pure.attribute = attributeDefs.createFromPure(pure.attribute);
+    pure.attribute = pure.attribute === undefined ? undefined : attributeDefs.createFromPure(pure.attribute);
     pure.section = CaveSection.fromPure(pure.section);
     return Object.assign(new SectionAttribute(), pure);
   }
@@ -242,7 +243,8 @@ class ComponentAttribute extends FragmentAttribute {
       this.visible === other.visible &&
       this.color === other.color &&
       this.format === other.format &&
-      this.attribute.isEqual(other.attribute) &&
+      ((this.attribute === undefined && other.attribute === undefined) ||
+        (this.attribute !== undefined && this.attribute.isEqual(other.attribute))) &&
       this.component.start === other.component.start &&
       this.component.termination.every((t, i) => t === other.component.termination[i]);
   }
@@ -251,7 +253,7 @@ class ComponentAttribute extends FragmentAttribute {
     return {
       id        : this.id,
       component : this.component.toExport(),
-      attribute : this.attribute.toExport(),
+      attribute : this.attribute?.toExport(),
       format    : this.format,
       color     : this.color,
       visible   : this.visible
@@ -259,7 +261,7 @@ class ComponentAttribute extends FragmentAttribute {
   }
 
   static fromPure(pure, attributeDefs) {
-    pure.attribute = attributeDefs.createFromPure(pure.attribute);
+    pure.attribute = pure.attribute === undefined ? undefined : attributeDefs.createFromPure(pure.attribute);
     pure.component = CaveComponent.fromPure(pure.component);
     return Object.assign(new ComponentAttribute(), pure);
   }
