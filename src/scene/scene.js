@@ -47,11 +47,13 @@ class MyScene {
     this.caveObjects = new Map(); // for centerlines, splays ... for a cave
     this.surfaceObjects = new Map();
     this.sectionAttributes = new Map();
+    this.stationAttributes = new Map();
     this.segments = new Map(); // for shortest path segments
     this.caveObject3DGroup = new THREE.Group();
     this.sprites3DGroup = new THREE.Group();
     this.surfaceObject3DGroup = new THREE.Group();
     this.sectionAttributes3DGroup = new THREE.Group();
+    this.stationAttributes3DGroup = new THREE.Group();
     this.segments3DGroup = new THREE.Group();
     this.startPoints3DGroup = new THREE.Group();
     this.startPointObjects = new Map(); // Map to store starting point objects for each cave
@@ -90,11 +92,11 @@ class MyScene {
     this.threejsScene.add(this.caveObject3DGroup);
     this.threejsScene.add(this.surfaceObject3DGroup);
     this.threejsScene.add(this.sectionAttributes3DGroup);
+    this.threejsScene.add(this.stationAttributes3DGroup);
     this.threejsScene.add(this.segments3DGroup);
     this.threejsScene.add(this.startPoints3DGroup);
 
     this.boundingBox = undefined;
-    this.planeMeshes = new Map();
 
     this.raycaster = new THREE.Raycaster();
 
@@ -451,30 +453,37 @@ class MyScene {
     }
   }
 
-  showPlaneFor(attributeName) {
-    const planes = [];
-    this.db.caves.forEach((cave) => {
-      cave.surveys.forEach((s) => {
-        const matchingAttributes = s.getAttributesWithPositionsByName(cave.stations, attributeName);
-        if (matchingAttributes.length === 0) return;
-        matchingAttributes.forEach((ma) => {
-          const [position, firstAttribute] = ma;
-          const geometry = new THREE.PlaneGeometry(firstAttribute.width, firstAttribute.height, 10, 10);
-          const plane = new THREE.Mesh(geometry, this.materials.planes.get(attributeName));
-          plane.position.set(0, 0, 0);
-          const dir = U.normal(U.degreesToRads(firstAttribute.azimuth), U.degreesToRads(firstAttribute.dip));
-          plane.lookAt(dir.x, dir.y, dir.z);
-          const v = new THREE.Vector3(position.x, position.y, position.z);
-          plane.position.copy(v);
-          planes.push(plane);
-          this.threejsScene.add(plane);
-        });
+  showPlaneFor(id, station, attribute) {
+    if (!this.stationAttributes.has(id)) {
+      const position = station.position;
+      const geometry = new THREE.PlaneGeometry(attribute.width, attribute.height, 10, 10);
+      const plane = new THREE.Mesh(geometry, this.materials.planes.get(attribute.name));
+      plane.position.set(0, 0, 0);
+      const dir = U.normal(U.degreesToRads(attribute.azimuth), U.degreesToRads(attribute.dip));
+      plane.lookAt(dir.x, dir.y, dir.z);
+      const v = new THREE.Vector3(position.x, position.y, position.z);
+      plane.position.copy(v);
 
+      this.stationAttributes3DGroup.add(plane);
+
+      this.stationAttributes.set(id, {
+        plane     : plane,
+        station   : station,
+        attribute : attribute
       });
-    });
+      this.view.renderView();
+    }
+  }
 
-    this.planeMeshes.set(attributeName, planes); // even set if planes is emptry
-    this.view.renderView();
+  disposePlaneFor(id) {
+    if (this.stationAttributes.has(id)) {
+      const e = this.stationAttributes.get(id);
+      const plane = e.plane;
+      plane.geometry.dispose();
+      this.stationAttributes3DGroup.remove(plane);
+      this.stationAttributes.delete(id);
+      this.view.renderView();
+    }
   }
 
   changeCenterLineColorMode(mode) {
@@ -599,33 +608,6 @@ class MyScene {
     }
     this.view.renderView();
 
-  }
-
-  disposePlaneFor(attributeName, shouldDelete = true) {
-    const planes = this.planeMeshes.get(attributeName);
-    planes.forEach((p) => {
-      p.geometry.dispose();
-      this.threejsScene.remove(p);
-    });
-    if (shouldDelete) {
-      this.planeMeshes.delete(attributeName);
-    }
-
-    this.view.renderView();
-  }
-
-  tooglePlaneFor(attributeName) {
-    if (!this.planeMeshes.has(attributeName)) {
-      this.showPlaneFor(attributeName);
-    } else {
-      this.disposePlaneFor(attributeName);
-    }
-
-  }
-
-  updateVisiblePlanes() {
-    this.planeMeshes.keys().forEach((k) => this.disposePlaneFor(k, false));
-    this.planeMeshes.keys().forEach((k) => this.showPlaneFor(k));
   }
 
   changeView(viewName) {

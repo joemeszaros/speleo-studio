@@ -1,16 +1,20 @@
-import { SectionAttribute, ComponentAttribute } from '../../model.js';
+import { SectionAttribute, ComponentAttribute, StationAttribute } from '../../model.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
 import { randomAlphaNumbericString } from '../../utils/utils.js';
 import { makeMovable } from '../popups.js';
-import { CaveEditor } from './cave.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
+import { Editor } from './base.js';
+import * as U from '../../utils/utils.js';
 
-class FragmentAttributeEditor extends CaveEditor {
+class BaseAttributeEditor extends Editor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
-    super(db, options, cave, scene, attributeDefs, panel);
+    super(panel, scene, cave, attributeDefs);
+    this.db = db;
+    this.options = options;
+    this.attributeDefs = attributeDefs;
   }
 
   getValidationUpdates(data) {
@@ -89,84 +93,7 @@ class FragmentAttributeEditor extends CaveEditor {
     tableDiv.setAttribute('id', 'sectionattributes');
     this.panel.appendChild(tableDiv);
 
-    const columns = [
-      {
-        width      : 25,
-        title      : '',
-        field      : 'status',
-        editor     : false,
-        formatter  : this.baseTableFunctions.statusIcon,
-        clickPopup : function (x, cell) {
-          const message = cell.getData().message;
-          return message === undefined ? 'No errors' : message;
-        },
-        validator  : ['required'],
-        bottomCalc : this.baseTableFunctions.countBadRows
-      },
-
-      {
-        width            : 25,
-        field            : 'visible',
-        formatter        : 'tickCross',
-        cellClick        : this.functions.toggleVisibility,
-        mutatorClipboard : (str) => (str === 'true' ? true : false) //TODO:better parser here that considers other values (like 0, 1)
-      },
-      {
-        title             : i18n.t('ui.editors.attributes.columns.color'),
-        field             : 'color',
-        formatter         : this.baseTableFunctions.colorIcon,
-        accessorClipboard : (color) => color,
-        mutatorClipboard  : (v) => v,
-        width             : 45,
-        cellClick         : (_e, cell) => this.baseTableFunctions.changeColor(_e, cell)
-      },
-      {
-        title            : i18n.t('ui.editors.attributes.columns.distance'),
-        field            : 'distance',
-        editor           : false,
-        mutatorClipboard : this.baseTableFunctions.floatAccessor,
-        formatter        : this.baseTableFunctions.floatFormatter('0')
-      },
-      {
-        title            : i18n.t('ui.editors.attributes.columns.attribute'),
-        field            : 'attribute',
-        headerFilterFunc : this.baseTableFunctions.attributeHeaderFilter,
-        headerFilter     : 'input',
-        formatter        : (cell) =>
-          this.baseTableFunctions.atrributesFormatter(
-            cell,
-            (cv) => (cv.attribute === undefined ? [] : [cv.attribute]),
-            i18n
-          ),
-        accessorClipboard : (value) =>
-          this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
-            attribute === undefined ? undefined : [attribute]
-          ),
-        mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs[0]),
-        formatterClipboard : (cell) =>
-          this.baseTableFunctions.clipboardFormatter(cell, (cv) => (cv.attribute === undefined ? [] : [cv.attribute])),
-
-        editor : (cell, onRendered, success) =>
-          this.attributesEditor(
-            cell,
-            onRendered,
-            success,
-            (cv) => (cv.attribute === undefined ? [] : [cv.attribute]),
-            (attrs) => {
-              return attrs.lenth === 0 ? undefined : attrs[0];
-            },
-            this.tableFunctions.checkAttributesLength,
-            i18n
-          )
-      },
-      {
-        title  : i18n.t('ui.editors.attributes.columns.format'),
-        field  : 'format',
-        editor : 'input'
-      }
-    ];
-
-    columns.splice(3, 0, ...this.getColumns());
+    const columns = this.getColumns();
 
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#sectionattributes', {
@@ -264,6 +191,150 @@ class FragmentAttributeEditor extends CaveEditor {
 
   }
 
+  getAttributeEditorDiv(a, attributes, index, i18n) {
+    const attributeNode = U.node`<div class="attribute-editor" id="attribute-editor-${index}"></div>`;
+    //const warning = U.node`<div class="warning" id="attribute-editor-${index}-warning">hel</div>`;
+    //attributeNode.appendChild(warning);
+    //warning.style.display = 'none'; TODO: somehow show the warning div
+    const name = U.node`<span>${i18n.t(`attributes.names.${a.name}`)}(</span>`;
+    const del = U.node`<span class="delete-row">`;
+    del.onclick = () => {
+      const indexToDelete = attributes.indexOf(a);
+      if (indexToDelete !== -1) {
+        attributes.splice(indexToDelete, 1);
+        attributeNode.parentNode.removeChild(attributeNode); // funny self destruction :-)
+      }
+    };
+
+    attributeNode.appendChild(name);
+    const paramNames = Object.keys(a.params);
+    var paramIndex = 0;
+    paramNames.forEach((paramName) => {
+      const value = a[paramName] === undefined ? '' : a[paramName];
+      const paramDef = a.params[paramName];
+      const errors = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check, no localization
+      let underScoreClass;
+      const requiredField = paramDef.required ?? false;
+      if (errors.length > 0) {
+        underScoreClass = 'invalidInput';
+      } else if (requiredField) {
+        underScoreClass = 'requiredInput';
+      } else {
+        underScoreClass = 'optionalInput';
+      }
+      const classes = [['int', 'float'].includes(paramDef.type) ? 'shortInput' : 'longInput', underScoreClass];
+
+      let datalist;
+      if ((paramDef.values ?? []).length > 0) {
+        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.values.map((n) => '<option value="' + n + '">').join('')}</datalist>`;
+      }
+      const inputType = datalist === undefined ? 'text' : 'search';
+      const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
+      const param = U.node`<input placeholder="${i18n.t(`attributes.params.${paramName}`)}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
+      param.onchange = (e) => {
+        this.attributesModified = true;
+        const newValue = e.target.value === '' ? undefined : e.target.value;
+        const errors = a.validateFieldValue(paramName, newValue, true, false, i18n);
+        if (errors.length > 0) {
+          param.classList.remove('requiredInput');
+          param.classList.add('invalidInput');
+          a[paramName] = newValue; // set the invalid value
+          this.showAlert(
+            i18n.t('common.invalid') + ` '${i18n.t(`attributes.params.${paramName}`)}': ${errors.join('<br>')}`
+          );
+        } else {
+          param.classList.remove('invalidInput');
+          param.classList.add(requiredField ? 'requiredInput' : 'optionalInput');
+          a.setParamFromString(paramName, newValue);
+        }
+      };
+      if (paramIndex !== 0) {
+        attributeNode.appendChild(document.createTextNode(','));
+      }
+      attributeNode.appendChild(param);
+      if (datalist !== undefined) {
+        attributeNode.appendChild(datalist);
+      }
+      paramIndex += 1;
+    });
+    attributeNode.appendChild(document.createTextNode(')'));
+    attributeNode.appendChild(del);
+    return attributeNode;
+  }
+
+  attributesEditor(cell, onRendered, success, extractor, mutator, extraValidators, i18n) {
+    const attributes = extractor(cell.getData());
+
+    const panel = U.node`<div tabindex="0" id="attributes-editor" class="attributes-editor"></div>`;
+    panel.addEventListener('keydown', (e) => {
+      if (e.keyCode === 9) {
+        e.stopPropagation(); // when a user clicks or tabs out of a cell the edit is cancelled and and the user is navigated to the next row
+        this.table.dispatch('cell-value-changed', this);
+      }
+      if (e.key === 'Escape') {
+        if (extraValidators(attributes) === true) {
+          const cloned = attributes.map((a) => a.clone()); // we need to clone the attribute otherwise tabulator won't detect a change (this.value ===  value) in setValueProcessData(value, mutate, force) internal
+          const toSuccess = mutator(cloned);
+          success(toSuccess);
+        }
+      }
+    });
+
+    var index = 0;
+    attributes.forEach((a) => {
+      const attributeNode = this.getAttributeEditorDiv(a, attributes, index, i18n);
+      panel.appendChild(attributeNode);
+      index += 1;
+    });
+
+    const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
+    const options = aNamesWithIds
+      .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
+      .join('');
+
+    const add = U.node`<div>
+       <label>${i18n.t('ui.editors.attributes.newAttribute')}: </label>
+       <input placeholder="${i18n.t('ui.editors.attributes.placeHolderName')}" type="search" class="longInput requiredInput" list="attributeNames" id="new-attribute-value">
+       <datalist id="attributeNames">${options}</datalist>
+       <span class="add-row"></span>
+    </div>`;
+    const addButton = add.querySelector('.add-row');
+    addButton.onclick = () => {
+      const input = add.querySelector('#new-attribute-value');
+      const selectedOption = add.querySelector(`#attributeNames option[value="${input.value}"]`);
+      const originalName = selectedOption.getAttribute('originalName');
+      const aName = input.value;
+      if (aNamesWithIds.find((a) => a.name === aName)) {
+        const newAttribute = this.attributeDefs.createByName(originalName)();
+        const attributeNode = this.getAttributeEditorDiv(newAttribute, attributes, index, i18n);
+        panel.insertBefore(attributeNode, add);
+        attributes.push(newAttribute);
+        input.value = '';
+      } else if (aName === '') {
+        this.showAlert(i18n.t('ui.editors.attributes.errors.noNameSelected'));
+      } else {
+        this.showAlert(i18n.t('ui.editors.attributes.errors.noAttributeWithName', { name: aName }));
+      }
+    };
+
+    panel.appendChild(add);
+
+    return panel;
+  }
+
+  getAttributeErrors(row, i18n) {
+    const errors = [];
+
+    row.attributes.forEach((a) => {
+      const paramErrors = a.validate();
+      paramErrors.forEach((error, paramName) => {
+        errors.push(i18n.t('ui.editors.attributes.errors.invalidAttribute', { attribute: a.name, paramName, error }));
+      });
+    });
+
+    return errors;
+  }
+
   tableFunctions = {
 
     checkAttributesLength : (attributes) => {
@@ -280,6 +351,91 @@ class FragmentAttributeEditor extends CaveEditor {
 
 }
 
+class FragmentAttributeEditor extends BaseAttributeEditor {
+
+  constructor(db, options, cave, scene, attributeDefs, panel) {
+    super(db, options, cave, scene, attributeDefs, panel);
+  }
+
+  getColumns() {
+    return [
+      {
+        width      : 25,
+        title      : '',
+        field      : 'status',
+        editor     : false,
+        formatter  : this.baseTableFunctions.statusIcon,
+        clickPopup : function (x, cell) {
+          const message = cell.getData().message;
+          return message === undefined ? 'No errors' : message;
+        },
+        validator  : ['required'],
+        bottomCalc : this.baseTableFunctions.countBadRows
+      },
+
+      {
+        width            : 25,
+        field            : 'visible',
+        formatter        : 'tickCross',
+        cellClick        : this.functions.toggleVisibility,
+        mutatorClipboard : (str) => (str === 'true' ? true : false) //TODO:better parser here that considers other values (like 0, 1)
+      },
+      {
+        title             : i18n.t('ui.editors.attributes.columns.color'),
+        field             : 'color',
+        formatter         : this.baseTableFunctions.colorIcon,
+        accessorClipboard : (color) => color,
+        mutatorClipboard  : (v) => v,
+        width             : 45,
+        cellClick         : (_e, cell) => this.baseTableFunctions.changeColor(_e, cell)
+      },
+      {
+        title            : i18n.t('ui.editors.attributes.columns.distance'),
+        field            : 'distance',
+        editor           : false,
+        mutatorClipboard : this.baseTableFunctions.floatAccessor,
+        formatter        : this.baseTableFunctions.floatFormatter('0')
+      },
+      {
+        title            : i18n.t('ui.editors.attributes.columns.attribute'),
+        field            : 'attribute',
+        headerFilterFunc : this.baseTableFunctions.attributeHeaderFilter,
+        headerFilter     : 'input',
+        formatter        : (cell) =>
+          this.baseTableFunctions.atrributesFormatter(
+            cell,
+            (cv) => (cv.attribute === undefined ? [] : [cv.attribute]),
+            i18n
+          ),
+        accessorClipboard : (value) =>
+          this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
+            attribute === undefined ? undefined : [attribute]
+          ),
+        mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs[0]),
+        formatterClipboard : (cell) =>
+          this.baseTableFunctions.clipboardFormatter(cell, (cv) => (cv.attribute === undefined ? [] : [cv.attribute])),
+
+        editor : (cell, onRendered, success) =>
+          this.attributesEditor(
+            cell,
+            onRendered,
+            success,
+            (cv) => (cv.attribute === undefined ? [] : [cv.attribute]),
+            (attrs) => {
+              return attrs.lenth === 0 ? undefined : attrs[0];
+            },
+            this.tableFunctions.checkAttributesLength,
+            i18n
+          )
+      },
+      {
+        title  : i18n.t('ui.editors.attributes.columns.format'),
+        field  : 'format',
+        editor : 'input'
+      }
+    ];
+  }
+}
 class ComponentAttributeEditor extends FragmentAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
@@ -307,13 +463,13 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
 
   setCaveComponentAttributes() {
     const newAttributes = this.getNewComponentAttributes();
-    const oldAttributes = this.cave.componentAttributes;
+    const oldAttributes = this.cave.attributes.componentAttributes;
     const isEqual =
       newAttributes.length === oldAttributes.length &&
       newAttributes.every((element, index) => element.isEqual(oldAttributes[index]));
 
     if (!isEqual) {
-      this.cave.componentAttributes = newAttributes;
+      this.cave.attributes.componentAttributes = newAttributes;
       this.#emitComponentAttributesChanged();
     }
   }
@@ -389,7 +545,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
 
   getTableData() {
 
-    const rows = this.cave.componentAttributes.map((r) => {
+    const rows = this.cave.attributes.componentAttributes.map((r) => {
       return {
         id          : r.id,
         visible     : r.visible,
@@ -446,7 +602,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       return editor;
     };
 
-    return [
+    const specificColumns = [
       {
         title        : i18n.t('ui.editors.attributes.columns.start'),
         field        : 'start',
@@ -477,6 +633,10 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         cellEdited   : this.functions.startOrTerminationEdited
       }
     ];
+
+    const baseColumns = [...super.getColumns()];
+    baseColumns.splice(3, 0, ...specificColumns);
+    return baseColumns;
 
   }
 
@@ -591,13 +751,13 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
   setCaveSectionAttributes() {
     const newAttributes = this.getNewSectionAttributes();
-    const oldAttributes = this.cave.sectionAttributes;
+    const oldAttributes = this.cave.attributes.sectionAttributes;
     const isEqual =
       newAttributes.length === oldAttributes.length &&
       newAttributes.every((element, index) => element.isEqual(oldAttributes[index]));
 
     if (!isEqual) {
-      this.cave.sectionAttributes = newAttributes;
+      this.cave.attributes.sectionAttributes = newAttributes;
       this.#emitSectionAttributesChanged();
     }
   }
@@ -673,7 +833,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
   getTableData() {
 
-    const rows = this.cave.sectionAttributes.map((r) => {
+    const rows = this.cave.attributes.sectionAttributes.map((r) => {
       return {
         id        : r.id,
         visible   : r.visible,
@@ -696,7 +856,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   }
 
   getColumns() {
-    return [
+    const specificColumns = [
       {
         title        : i18n.t('common.from'),
         field        : 'from',
@@ -717,6 +877,9 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       }
     ];
 
+    const baseColumns = [...super.getColumns()];
+    baseColumns.splice(3, 0, ...specificColumns);
+    return baseColumns;
   }
 
   functions = {
@@ -804,4 +967,242 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
 }
 
-export { SectionAttributeEditor, ComponentAttributeEditor };
+class StationAttributeEditor extends BaseAttributeEditor {
+
+  constructor(db, options, cave, scene, attributeDefs, panel) {
+    super(db, options, cave, scene, attributeDefs, panel);
+    this.title = i18n.t('ui.editors.stationAttributes.title', { name: this.cave.name });
+
+    document.addEventListener('languageChanged', () => {
+      this.title = i18n.t('ui.editors.stationAttributes.title', { name: this.cave.name });
+    });
+  }
+
+  closeEditor() {
+    this.setCaveStationAttributes();
+    super.closeEditor();
+  }
+
+  setupButtons() {
+    super.setupCommonButtons(); // sets this.iconbar
+    const specificButtons = IconBar.getAttributesButtons(
+      () => this.validateRows(),
+      () => this.setCaveStationAttributes()
+    );
+    specificButtons.forEach((button) => this.iconBar.addButton(button));
+  }
+
+  getColumns() {
+    return [
+      {
+        width      : 25,
+        title      : '',
+        field      : 'status',
+        editor     : false,
+        formatter  : this.baseTableFunctions.statusIcon,
+        clickPopup : function (x, cell) {
+          const message = cell.getData().message;
+          return message === undefined ? 'No errors' : message;
+        },
+        validator  : ['required'],
+        bottomCalc : this.baseTableFunctions.countBadRows
+      },
+      {
+        width            : 25,
+        field            : 'visible',
+        formatter        : 'tickCross',
+        cellClick        : this.functions.toggleVisibility,
+        mutatorClipboard : (str) => (str === 'true' ? true : false)
+      },
+      {
+        title        : i18n.t('ui.editors.stationAttributes.columns.station'),
+        field        : 'station',
+        editor       : 'list',
+        editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
+        validator    : ['required'],
+        headerFilter : 'input',
+        cellEdited   : this.functions.stationEdited
+      },
+      {
+        title        : i18n.t('ui.editors.stationAttributes.columns.survey'),
+        field        : 'survey',
+        editor       : false,
+        headerFilter : 'input'
+      },
+      {
+        title            : i18n.t('ui.editors.attributes.columns.attribute'),
+        field            : 'attribute',
+        headerFilterFunc : this.baseTableFunctions.attributeHeaderFilter,
+        headerFilter     : 'input',
+        formatter        : (cell) =>
+          this.baseTableFunctions.atrributesFormatter(
+            cell,
+            (cv) => (cv.attribute === undefined ? [] : [cv.attribute]),
+            i18n
+          ),
+        accessorClipboard : (value) =>
+          this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
+            attribute === undefined ? undefined : [attribute]
+          ),
+        mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs[0]),
+        formatterClipboard : (cell) =>
+          this.baseTableFunctions.clipboardFormatter(cell, (cv) => (cv.attribute === undefined ? [] : [cv.attribute])),
+
+        editor : (cell, onRendered, success) =>
+          this.attributesEditor(
+            cell,
+            onRendered,
+            success,
+            (cv) => (cv.attribute === undefined ? [] : [cv.attribute]),
+            (attrs) => {
+              return attrs.lenth === 0 ? undefined : attrs[0];
+            },
+            this.tableFunctions.checkAttributesLength,
+            i18n
+          )
+      }
+    ];
+  }
+
+  tableFunctions = {
+
+    checkAttributesLength : (attributes) => {
+      if (attributes.length > 1) {
+        this.showAlert(
+          i18n.t('ui.editors.attributes.errors.onlyOneAttributeAllowed', { nrAttributes: attributes.length - 1 })
+        );
+        return false;
+      } else {
+        return true;
+      }
+    }
+  };
+
+  setCaveStationAttributes() {
+    const newAttributes = this.getNewStationAttributes();
+    const oldAttributes = this.cave.attributes.stationAttributes;
+    const isEqual =
+      newAttributes.length === oldAttributes.length &&
+      newAttributes.every((element, index) => this.isStationAttributeEqual(element, oldAttributes[index]));
+
+    if (!isEqual) {
+      this.cave.attributes.stationAttributes = newAttributes;
+      this.#emitStationAttributesChanged();
+    }
+  }
+
+  isStationAttributeEqual(a, b) {
+    if (!a || !b) return false;
+    return a.isEqual(b);
+  }
+
+  getNewStationAttributes() {
+    return this.table
+      .getData()
+      .map((r) => new StationAttribute(r.id, r.station, r.attribute));
+  }
+
+  getValidationUpdate(r) {
+    let newRow;
+    const sa = new StationAttribute(r.id, r.station, r.attribute);
+    const emptyFields = sa.getEmptyFields();
+    const oldStatus = r.status;
+    let validationErrors = [];
+    if (emptyFields.length > 0) {
+      newRow = { ...r };
+      newRow.status = 'incomplete';
+      newRow.message = i18n.t('ui.editors.attributes.status.incomplete', { fields: emptyFields.join(',') });
+    } else {
+      const errors = sa.validate(i18n);
+      if (errors.length > 0) {
+        validationErrors.push(...errors);
+        newRow = { ...r };
+        newRow.status = 'invalid';
+        newRow.message = i18n.t('ui.editors.attributes.status.invalid', { errors: errors.join('<br>') });
+      }
+    }
+    if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
+      newRow = { ...r };
+      newRow.status = 'ok';
+      newRow.message = undefined;
+    }
+
+    return newRow;
+  }
+
+  getEmptyRow() {
+    return {
+      id        : randomAlphaNumbericString(6),
+      visible   : false,
+      station   : undefined,
+      survey    : undefined,
+      attribute : undefined,
+      status    : 'incomplete',
+      message   : i18n.t('ui.editors.attributes.status.new')
+    };
+  }
+
+  getTableData() {
+    const rows = this.cave.attributes.stationAttributes.map((r) => {
+      const station = this.cave.stations.get(r.name);
+      return {
+        id        : r.id,
+        visible   : false, // Station attributes don't have visibility by default
+        station   : r.name,
+        survey    : station ? station.survey.name : undefined,
+        attribute : r.attribute,
+        status    : 'ok',
+        message   : i18n.t('ui.editors.attributes.status.ok')
+      };
+    });
+
+    const rowsToUpdate = this.getValidationUpdates(rows);
+    rowsToUpdate.forEach((u) => (rows[rows.findIndex((r) => r.id === u.id)] = u));
+
+    return rows;
+  }
+
+  functions = {
+    toggleVisibility : (ev, cell) => {
+      const data = cell.getData();
+      if (data.status !== 'ok' && !data.visible) {
+        this.showAlert(i18n.t('ui.editors.stationAttributes.errors.stationAttributeMissingArguments'));
+        return;
+      }
+
+      cell.setValue(!cell.getValue());
+
+      if (cell.getValue() === true) {
+        const station = this.cave.stations.get(data.station);
+        if (['bedding', 'fault'].includes(data.attribute.name)) {
+          this.scene.showPlaneFor(data.id, station, data.attribute);
+        }
+
+      } else {
+        if (['bedding', 'fault'].includes(data.attribute.name)) {
+          this.scene.disposePlaneFor(data.id);
+        }
+      }
+    },
+    stationEdited : (cell) => {
+      const data = cell.getData();
+      const station = this.cave.stations.get(data.station);
+      if (station) {
+        data.survey = station.survey.name;
+        cell.getRow().update(data);
+      }
+    }
+  };
+
+  #emitStationAttributesChanged() {
+    const event = new CustomEvent('stationAttributesChanged', {
+      detail : {
+        cave : this.cave
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+}
+
+export { SectionAttributeEditor, ComponentAttributeEditor, StationAttributeEditor };

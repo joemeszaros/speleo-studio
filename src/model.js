@@ -269,16 +269,64 @@ class ComponentAttribute extends FragmentAttribute {
 
 class StationAttribute {
 
-  constructor(name, attribute) {
+  constructor(id, name, attribute) {
+    this.id = id;
     this.name = name;
     this.attribute = attribute;
   }
 
+  getEmptyFields() {
+    const fields = [];
+    if (!this.name || this.name.trim() === '') {
+      fields.push('name');
+    }
+    if (!this.attribute) {
+      fields.push('attribute');
+    }
+    return fields;
+  }
+
+  validate(i18n) {
+
+    const t = i18n === undefined ? (msg) => msg : (key, params) => i18n.t(key, params);
+
+    const errors = [];
+
+    const paramErrors = this.attribute.validate(false, i18n);
+    paramErrors.forEach((error, paramName) => {
+      const nameOrTranslated =
+        i18n === undefined ? this.attribute.name : i18n.t(`attributes.names.${this.attribute.name}`);
+      const paramNameOrTranslated = i18n === undefined ? paramName : i18n.t(`attributes.params.${paramName}`);
+      errors.push(
+        t('validation.stationAttribute.invalidAttribute', {
+          attribute : nameOrTranslated,
+          paramName : paramNameOrTranslated,
+          error
+        })
+      );
+    });
+    return errors;
+  }
+
+  isEqual(other) {
+    if (!other) return false;
+    return this.id === other.id &&
+      this.name === other.name &&
+      ((this.attribute === undefined && other.attribute === undefined) ||
+        (this.attribute !== undefined && other.attribute !== undefined && this.attribute.isEqual(other.attribute)));
+  }
+
   toExport() {
     return {
+      id        : this.id,
       name      : this.name,
-      attribute : this.attribute.toExport()
+      attribute : this.attribute?.toExport()
     };
+  }
+
+  static fromPure(pure, attributeDefs) {
+    pure.attribute = pure.attribute === undefined ? undefined : attributeDefs.createFromPure(pure.attribute);
+    return Object.assign(new StationAttribute(), pure);
   }
 }
 

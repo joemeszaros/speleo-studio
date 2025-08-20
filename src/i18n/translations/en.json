@@ -85,6 +85,7 @@
         "editCaveData": "Edit cave sheet",
         "editSectionAttributes": "Edit section attributes",
         "editComponentAttributes": "Edit component attributes",
+        "editStationAttributes": "Edit station attributes",
         "newSurvey": "New survey",
         "importSurvey": "Import survey",
         "cycles": "Cycles",
@@ -213,7 +214,9 @@
           "stations": "Stations",
           "surveys": "Surveys",
           "isolated": "Isolated surveys",
-          "attributes": "Station attributes",
+          "stationAttributes": "Station attributes",
+          "sectionAttributes": "Section attributes",
+          "componentAttributes": "Component attributes",
           "length": "Length",
           "orphanLength": "Length (orphan)",
           "invalidLength": "Length (invalid)",
@@ -275,8 +278,6 @@
         "title": "Survey editor: {name}",
         "message": {
           "missingFields": "Row has missing fields: {fields}",
-          "invalidAttributes": "Row has invalid attributes",
-          "invalidShot": "Row has invalid shot",
           "incomplete": "Row is incomplete",
           "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
           "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}"
@@ -343,6 +344,19 @@
           "componentAttributeMissingArguments": "Component attribute has missing arguments or is invalid. <br>Cannot change visibility!",
           "unableToTraverseGraph": "Unable to traverse graph from {from}.<br>Restoring previous value ({oldValue})."
         }
+      },
+      "stationAttributes": {
+        "title": "Station attributes: {name}",
+        "errors": {
+          "stationAttributeMissingArguments": "Station attribute has missing arguments or is invalid. <br>Cannot change visibility!",
+          "emptyName": "Station name is empty",
+          "emptyAttribute": "Attribute is empty",
+          "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
+        },
+        "columns": {
+          "station": "Station",
+          "survey": "Survey"
+        }
       }
     }
   },
@@ -374,6 +388,9 @@
     "fragmentAttribute": {
       "invalidVisible": "Visible '{visible}' is not a valid boolean",
       "invalidColor": "Color '{color}' is not a valid color",
+      "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
+    },
+    "stationAttribute": {
       "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
     },
     "caveSectionOrComponent": {

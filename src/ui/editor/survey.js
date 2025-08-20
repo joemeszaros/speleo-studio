@@ -3,15 +3,14 @@ import { BaseEditor, Editor } from './base.js';
 import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
 import { showErrorPanel, makeMovable } from '../../ui/popups.js';
 import { Shot, ShotType } from '../../model/survey.js';
-import { StationAttribute } from '../../model.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
 
 class SurveyEditor extends Editor {
 
-  constructor(options, cave, survey, scene, attributeDefs, panel, unsavedChanges) {
-    super(panel, scene, cave, attributeDefs);
+  constructor(options, cave, survey, scene, panel, unsavedChanges) {
+    super(panel, scene, cave);
     this.options = options;
     this.survey = survey;
     this.table = undefined;
@@ -63,12 +62,6 @@ class SurveyEditor extends Editor {
     }
   }
 
-  #getSurveyAttributesFromTable() {
-    return this.table.getData()
-      .filter((r) => r.attributes !== undefined && r.attributes.length > 0)
-      .flatMap((row) => row.attributes.map((a) => new StationAttribute(row.to, a)));
-  }
-
   updateShots() {
     this.survey.updateShots(this.getNewShots());
   }
@@ -83,7 +76,7 @@ class SurveyEditor extends Editor {
     if (rowsToUpdated.length > 0) {
       this.table.updateData(rowsToUpdated);
       const badRowIds = rowsToUpdated
-        .filter((r) => ['invalid', 'invalidAttributes', 'invalidShot', 'incomplete'].includes(r.status))
+        .filter((r) => ['invalid', 'incomplete'].includes(r.status))
         .map((r) => `id: ${r.id + 1} (${r.from} -> ${r.to})`);
       if (badRowIds.length > 0 && showAlert) {
         this.showAlert(
@@ -113,30 +106,16 @@ class SurveyEditor extends Editor {
         rowsToUpdated.push(newRow);
       } else {
         const shotErrors = shot.validate(i18n);
-        const attributeErrors = this.getAttributeErrors(r);
         validationErrors.push(...shotErrors);
-        validationErrors.push(...attributeErrors);
         if (validationErrors.length > 0) {
-          let status;
-          if (attributeErrors.length > 0 && shotErrors.length === 0) {
-            status = 'invalidAttributes';
-          } else if (attributeErrors.length === 0 && shotErrors.length > 0) {
-            status = 'invalidShot';
-          } else {
-            status = 'invalid'; // both shot and attributes are invalid
-          }
-
+          const status = 'invalid';
           const newRow = { ...r };
           newRow.status = status;
           newRow.message = i18n.t('ui.editors.survey.status.invalid', { errors: validationErrors.join('<br>') });
           rowsToUpdated.push(newRow);
         }
       }
-      if (
-        ['invalid', 'invalidAttributes', 'invalidShot', 'incomplete'].includes(oldStatus) &&
-        emptyFields.length === 0 &&
-        validationErrors.length === 0
-      ) {
+      if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
         const newRow = { ...r };
         newRow.status = 'ok';
         newRow.message = undefined;
@@ -149,19 +128,11 @@ class SurveyEditor extends Editor {
 
   updateSurvey() {
 
-    if (this.attributesModified || this.surveyModified) {
+    if (this.surveyModified) {
 
-      const attributes = this.#getSurveyAttributesFromTable();
-      this.survey.attributes = attributes;
-
-      if (this.attributesModified && !this.surveyModified) {
-        this.#emitAttribuesChanged();
-        this.attributesModified = false;
-      } else if (this.surveyModified) {
-        this.updateShots();
-        this.#emitSurveyChanged();
-        this.surveyModified = false;
-      }
+      this.updateShots();
+      this.#emitSurveyChanged();
+      this.surveyModified = false;
     }
 
     this.unsavedChanges = undefined;
@@ -180,31 +151,27 @@ class SurveyEditor extends Editor {
     }
 
     const rows = survey.shots.map((sh) => {
-      const stationAttributes = survey.attributes
-        .filter((a) => a.name === sh.to)
-        .map((a) => a.attribute);
       const toStation = stations.get(survey.getToStationName(sh));
 
       const rowToBe = {
-        id         : sh.id,
-        from       : sh.from,
-        to         : sh.to,
-        length     : sh.length,
-        azimuth    : sh.azimuth,
-        clino      : sh.clino,
-        comment    : sh.comment,
-        type       : sh.type,
-        status     : 'ok',
-        message    : i18n.t('ui.editors.survey.status.ok'),
-        attributes : stationAttributes,
-        x          : toStation?.position?.x,
-        y          : toStation?.position?.y,
-        z          : toStation?.position?.z,
-        eovy       : toStation?.coordinates?.eov?.y,
-        eovx       : toStation?.coordinates?.eov?.x,
-        eove       : toStation?.coordinates?.eov?.elevation,
-        wgslat     : toStation?.coordinates?.wgs?.lat,
-        wgslon     : toStation?.coordinates?.wgs?.lon
+        id      : sh.id,
+        from    : sh.from,
+        to      : sh.to,
+        length  : sh.length,
+        azimuth : sh.azimuth,
+        clino   : sh.clino,
+        comment : sh.comment,
+        type    : sh.type,
+        status  : 'ok',
+        message : i18n.t('ui.editors.survey.status.ok'),
+        x       : toStation?.position?.x,
+        y       : toStation?.position?.y,
+        z       : toStation?.position?.z,
+        eovy    : toStation?.coordinates?.eov?.y,
+        eovx    : toStation?.coordinates?.eov?.x,
+        eove    : toStation?.coordinates?.eov?.elevation,
+        wgslat  : toStation?.coordinates?.wgs?.lat,
+        wgslon  : toStation?.coordinates?.wgs?.lon
       };
 
       return rowToBe;
@@ -231,24 +198,23 @@ class SurveyEditor extends Editor {
     const id = data.length === 0 ? 0 : Math.max(...data.map((r) => r.id));
 
     return {
-      id         : id + 1,
-      from       : undefined,
-      to         : undefined,
-      length     : undefined,
-      azimuth    : undefined,
-      clino      : undefined,
-      type       : ShotType.CENTER,
-      status     : 'incomplete',
-      message    : i18n.t('ui.editors.survey.message.incomplete'),
-      attributes : [],
-      x          : undefined,
-      y          : undefined,
-      z          : undefined,
-      eovy       : undefined,
-      eovx       : undefined,
-      eove       : undefined,
-      wgslat     : undefined,
-      wgslon     : undefined
+      id      : id + 1,
+      from    : undefined,
+      to      : undefined,
+      length  : undefined,
+      azimuth : undefined,
+      clino   : undefined,
+      type    : ShotType.CENTER,
+      status  : 'incomplete',
+      message : i18n.t('ui.editors.survey.message.incomplete'),
+      x       : undefined,
+      y       : undefined,
+      z       : undefined,
+      eovy    : undefined,
+      eovx    : undefined,
+      eove    : undefined,
+      wgslat  : undefined,
+      wgslon  : undefined
     };
 
   }
@@ -467,28 +433,6 @@ class SurveyEditor extends Editor {
     });
 
     columns.push({
-      title              : i18n.t('ui.editors.survey.columns.attributes'),
-      field              : 'attributes',
-      visible            : true,
-      headerFilterFunc   : this.baseTableFunctions.attributeHeaderFilter,
-      headerFilter       : 'input',
-      formatter          : (cell) => this.baseTableFunctions.atrributesFormatter(cell, (cv) => cv.attributes),
-      accessorClipboard  : (value) => this.baseTableFunctions.attributesToClipboard(value, (v) => v),
-      accessorDownload   : (value) => this.baseTableFunctions.attributesToClipboard(value, (v) => v),
-      mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs),
-      formatterClipboard : (cell) => this.baseTableFunctions.clipboardFormatter(cell, (v) => v.attributes),
-      editor             : (cell, onRendered, success) =>
-        this.attributesEditor(
-          cell,
-          onRendered,
-          success,
-          (cv) => cv.attributes,
-          (attrs) => attrs,
-          () => true,
-          i18n
-        )
-    });
-    columns.push({
       title        : i18n.t('ui.editors.survey.columns.comment'),
       field        : 'comment',
       editor       : true,
@@ -628,16 +572,6 @@ class SurveyEditor extends Editor {
 
   #emitSurveyChanged() {
     const event = new CustomEvent('surveyChanged', {
-      detail : {
-        cave   : this.cave,
-        survey : this.survey
-      }
-    });
-    document.dispatchEvent(event);
-  }
-
-  #emitAttribuesChanged() {
-    const event = new CustomEvent('stationAttributesChanged', {
       detail : {
         cave   : this.cave,
         survey : this.survey

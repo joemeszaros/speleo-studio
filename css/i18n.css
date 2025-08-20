@@ -1,12 +1,6 @@
 /* Language Selector Styles */
 .language-selector {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  margin-right: 10px;
-  padding: 5px;
-  position: relative;
-  z-index: 1000;
+  padding: 10px;
 }
 
 .language-select {

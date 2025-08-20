@@ -1,9 +1,7 @@
 import * as U from '../../utils/utils.js';
 import { AttributesDefinitions } from '../../attributes.js';
-import { Color } from '../../model.js';
 import { SectionHelper } from '../../section.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
-import { i18n } from '../../i18n/i18n.js';
 
 class BaseEditor {
   constructor(panel) {
@@ -70,11 +68,10 @@ class BaseEditor {
 }
 
 class Editor extends BaseEditor {
-  constructor(panel, scene, cave, attributeDefs) {
+  constructor(panel, scene, cave) {
     super(panel);
     this.scene = scene;
     this.cave = cave;
-    this.attributeDefs = attributeDefs;
     this.closed = false;
     this.attributesModified = false;
   }
@@ -89,150 +86,6 @@ class Editor extends BaseEditor {
     const div = U.node`<div style="position: relative; padding:10px;"><div style="margin-right: 30px;">${msg}</div></div>`;
     div.appendChild(closingButton);
     this.table.alert(div);
-  }
-
-  getAttributeEditorDiv(a, attributes, index, i18n) {
-    const attributeNode = U.node`<div class="attribute-editor" id="attribute-editor-${index}"></div>`;
-    //const warning = U.node`<div class="warning" id="attribute-editor-${index}-warning">hel</div>`;
-    //attributeNode.appendChild(warning);
-    //warning.style.display = 'none'; TODO: somehow show the warning div
-    const name = U.node`<span>${i18n.t(`attributes.names.${a.name}`)}(</span>`;
-    const del = U.node`<span class="delete-row">`;
-    del.onclick = () => {
-      const indexToDelete = attributes.indexOf(a);
-      if (indexToDelete !== -1) {
-        attributes.splice(indexToDelete, 1);
-        attributeNode.parentNode.removeChild(attributeNode); // funny self destruction :-)
-      }
-    };
-
-    attributeNode.appendChild(name);
-    const paramNames = Object.keys(a.params);
-    var paramIndex = 0;
-    paramNames.forEach((paramName) => {
-      const value = a[paramName] === undefined ? '' : a[paramName];
-      const paramDef = a.params[paramName];
-      const errors = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check, no localization
-      let underScoreClass;
-      const requiredField = paramDef.required ?? false;
-      if (errors.length > 0) {
-        underScoreClass = 'invalidInput';
-      } else if (requiredField) {
-        underScoreClass = 'requiredInput';
-      } else {
-        underScoreClass = 'optionalInput';
-      }
-      const classes = [['int', 'float'].includes(paramDef.type) ? 'shortInput' : 'longInput', underScoreClass];
-
-      let datalist;
-      if ((paramDef.values ?? []).length > 0) {
-        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.values.map((n) => '<option value="' + n + '">').join('')}</datalist>`;
-      }
-      const inputType = datalist === undefined ? 'text' : 'search';
-      const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
-      const param = U.node`<input placeholder="${i18n.t(`attributes.params.${paramName}`)}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
-      param.onchange = (e) => {
-        this.attributesModified = true;
-        const newValue = e.target.value === '' ? undefined : e.target.value;
-        const errors = a.validateFieldValue(paramName, newValue, true, false, i18n);
-        if (errors.length > 0) {
-          param.classList.remove('requiredInput');
-          param.classList.add('invalidInput');
-          a[paramName] = newValue; // set the invalid value
-          this.showAlert(
-            i18n.t('common.invalid') + ` '${i18n.t(`attributes.params.${paramName}`)}': ${errors.join('<br>')}`
-          );
-        } else {
-          param.classList.remove('invalidInput');
-          param.classList.add(requiredField ? 'requiredInput' : 'optionalInput');
-          a.setParamFromString(paramName, newValue);
-        }
-      };
-      if (paramIndex !== 0) {
-        attributeNode.appendChild(document.createTextNode(','));
-      }
-      attributeNode.appendChild(param);
-      if (datalist !== undefined) {
-        attributeNode.appendChild(datalist);
-      }
-      paramIndex += 1;
-    });
-    attributeNode.appendChild(document.createTextNode(')'));
-    attributeNode.appendChild(del);
-    return attributeNode;
-  }
-
-  attributesEditor(cell, onRendered, success, extractor, mutator, extraValidators, i18n) {
-    const attributes = extractor(cell.getData());
-
-    const panel = U.node`<div tabindex="0" id="attributes-editor" class="attributes-editor"></div>`;
-    panel.addEventListener('keydown', (e) => {
-      if (e.keyCode === 9) {
-        e.stopPropagation(); // when a user clicks or tabs out of a cell the edit is cancelled and and the user is navigated to the next row
-        this.table.dispatch('cell-value-changed', this);
-      }
-      if (e.key === 'Escape') {
-        if (extraValidators(attributes) === true) {
-          const cloned = attributes.map((a) => a.clone()); // we need to clone the attribute otherwise tabulator won't detect a change (this.value ===  value) in setValueProcessData(value, mutate, force) internal
-          const toSuccess = mutator(cloned);
-          success(toSuccess);
-        }
-      }
-    });
-
-    var index = 0;
-    attributes.forEach((a) => {
-      const attributeNode = this.getAttributeEditorDiv(a, attributes, index, i18n);
-      panel.appendChild(attributeNode);
-      index += 1;
-    });
-
-    const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
-    const options = aNamesWithIds
-      .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
-      .join('');
-
-    const add = U.node`<div>
-       <label>${i18n.t('ui.editors.attributes.newAttribute')}: </label>
-       <input placeholder="${i18n.t('ui.editors.attributes.placeHolderName')}" type="search" class="longInput requiredInput" list="attributeNames" id="new-attribute-value">
-       <datalist id="attributeNames">${options}</datalist>
-       <span class="add-row"></span>
-    </div>`;
-    const addButton = add.querySelector('.add-row');
-    addButton.onclick = () => {
-      const input = add.querySelector('#new-attribute-value');
-      const selectedOption = add.querySelector(`#attributeNames option[value="${input.value}"]`);
-      const originalName = selectedOption.getAttribute('originalName');
-      const aName = input.value;
-      if (aNamesWithIds.find((a) => a.name === aName)) {
-        const newAttribute = this.attributeDefs.createByName(originalName)();
-        const attributeNode = this.getAttributeEditorDiv(newAttribute, attributes, index, i18n);
-        panel.insertBefore(attributeNode, add);
-        attributes.push(newAttribute);
-        input.value = '';
-      } else if (aName === '') {
-        this.showAlert(i18n.t('ui.editors.attributes.errors.noNameSelected'));
-      } else {
-        this.showAlert(i18n.t('ui.editors.attributes.errors.noAttributeWithName', { name: aName }));
-      }
-    };
-
-    panel.appendChild(add);
-
-    return panel;
-  }
-
-  getAttributeErrors(row, i18n) {
-    const errors = [];
-
-    row.attributes.forEach((a) => {
-      const paramErrors = a.validate();
-      paramErrors.forEach((error, paramName) => {
-        errors.push(i18n.t('ui.editors.attributes.errors.invalidAttribute', { attribute: a.name, paramName, error }));
-      });
-    });
-
-    return errors;
   }
 
   baseTableFunctions = {
@@ -301,7 +154,7 @@ class Editor extends BaseEditor {
         e.target.oninput = (e2) => {
           const newColor = e2.target.value;
           const data = cell.getData();
-          data.color = new Color(newColor);
+          data.color = newColor;
           if (data.visible) {
             this.scene.disposeSectionAttribute(data.id);
             this.scene.showSectionAttribute(

@@ -1,7 +1,6 @@
-import { Vector } from '../model.js';
+import { Vector, SectionAttribute, ComponentAttribute, StationAttribute } from '../model.js';
 import { GeoData } from './geo.js';
 import { Survey, SurveyAlias } from './survey.js';
-import { SectionAttribute, ComponentAttribute } from '../model.js';
 
 class CaveCycle {
 
@@ -12,6 +11,41 @@ class CaveCycle {
     this.path = path;
     this.distance = distance;
     this.pathSet = new Set(path);
+  }
+}
+
+class CaveAttributes {
+
+  constructor(stationAttributes = [], sectionAttributes = [], componentAttributes = [], schemaVersion = '1.0.0') {
+    this.stationAttributes = stationAttributes;
+    this.sectionAttributes = sectionAttributes;
+    this.componentAttributes = componentAttributes;
+    this.schemaVersion = schemaVersion;
+  }
+
+  toExport() {
+    return {
+      sectionAttributes   : this.sectionAttributes.map((sa) => sa.toExport()),
+      componentAttributes : this.componentAttributes.map((ca) => ca.toExport()),
+      stationAttributes   : this.stationAttributes.map((sa) => sa.toExport()),
+      schemaVersion       : this.schemaVersion
+    };
+  }
+
+  static fromPure(pure, attributeDefs) {
+    pure.sectionAttributes =
+      pure.sectionAttributes === undefined
+        ? []
+        : pure.sectionAttributes.map((sa) => SectionAttribute.fromPure(sa, attributeDefs));
+    pure.componentAttributes =
+      pure.componentAttributes === undefined
+        ? []
+        : pure.componentAttributes.map((ca) => ComponentAttribute.fromPure(ca, attributeDefs));
+    pure.stationAttributes =
+      pure.stationAttributes === undefined
+        ? []
+        : pure.stationAttributes.map((sa) => StationAttribute.fromPure(sa, attributeDefs));
+    return Object.assign(new CaveAttributes(), pure);
   }
 }
 
@@ -198,6 +232,7 @@ class Cave {
    * @param {Map<string, SurveyStation>} stations - The merged map of all survey stations
    * @param {Survey[]} surveys - The surveys associated to a cave
    * @param {SurveyAlias[]} - Mapping of connection point between surveys
+   * @param {CaveAttributes} attributes - The attributes of the cave (sections and components)
    * @param {boolean} visible - The visibility property of a cave
    */
   constructor(
@@ -207,8 +242,7 @@ class Cave {
     stations = new Map(),
     surveys = [],
     aliases = [],
-    sectionAttributes = [],
-    componentAttributes = [],
+    attributes = new CaveAttributes(),
     visible = true
   ) {
     this.id = this.#generateId();
@@ -218,8 +252,7 @@ class Cave {
     this.stations = stations;
     this.surveys = surveys;
     this.aliases = aliases;
-    this.sectionAttributes = sectionAttributes;
-    this.componentAttributes = componentAttributes;
+    this.attributes = attributes;
     this.visible = visible;
   }
 
@@ -255,11 +288,9 @@ class Cave {
     var invalidLength = 0;
     var isolated = 0;
     var surveys = 0;
-    var attributes = 0;
 
     this.surveys.forEach((survey) => {
       surveys += 1;
-      attributes += survey.attributes.length;
 
       if (survey.isolated === true) {
         isolated += 1;
@@ -316,7 +347,9 @@ class Cave {
 
     return {
       stations            : stations.filter((ss) => ss.isCenter()).length,
-      attributes          : attributes,
+      stationAttributes   : this.attributes.stationAttributes.length,
+      sectionAttributes   : this.attributes.sectionAttributes.length,
+      componentAttributes : this.attributes.componentAttributes.length,
       surveys             : surveys,
       isolated            : isolated,
       length              : length,
@@ -334,14 +367,13 @@ class Cave {
 
   toExport() {
     return {
-      id                  : this.id,
-      name                : this.name,
-      metadata            : this?.metadata?.toExport(),
-      geoData             : this?.geoData?.toExport(),
-      aliases             : this.aliases.map((a) => a.toExport()),
-      sectionAttributes   : this.sectionAttributes.map((sa) => sa.toExport()),
-      componentAttributes : this.componentAttributes.map((ca) => ca.toExport()),
-      surveys             : this.surveys.map((s) => s.toExport())
+      id         : this.id,
+      name       : this.name,
+      metadata   : this?.metadata?.toExport(),
+      geoData    : this?.geoData?.toExport(),
+      aliases    : this.aliases.map((a) => a.toExport()),
+      attributes : this.attributes.toExport(),
+      surveys    : this.surveys.map((s) => s.toExport())
     };
   }
 
@@ -350,20 +382,15 @@ class Cave {
       pure.metadata = CaveMetadata.fromPure(pure.metadata);
     }
     pure.geoData = pure.geoData === undefined ? [] : GeoData.fromPure(pure.geoData);
-    pure.surveys = pure.surveys.map((s) => Survey.fromPure(s, attributeDefs));
+    pure.surveys = pure.surveys.map((s) => Survey.fromPure(s));
     pure.aliases = pure.aliases === undefined ? [] : pure.aliases.map((a) => SurveyAlias.fromPure(a));
     pure.startPosition = Vector.fromPure(pure.startPosition);
-    pure.sectionAttributes =
-      pure.sectionAttributes === undefined
-        ? []
-        : pure.sectionAttributes.map((sa) => SectionAttribute.fromPure(sa, attributeDefs));
-    pure.componentAttributes =
-      pure.componentAttributes === undefined
-        ? []
-        : pure.componentAttributes.map((ca) => ComponentAttribute.fromPure(ca, attributeDefs));
+
+    pure.attributes = CaveAttributes.fromPure(pure.attributes, attributeDefs);
+
     const cave = Object.assign(new Cave(), pure);
     return cave;
   }
 }
 
-export { CaveCycle, CaveComponent, CaveSection, CaveMetadata, Cave };
+export { CaveCycle, CaveAttributes, CaveComponent, CaveSection, CaveMetadata, Cave };

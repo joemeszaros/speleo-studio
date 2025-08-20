@@ -3,7 +3,7 @@ import { tag } from '../../dependencies/html5-tag.js';
 import { escapeHtml } from '../../dependencies/escape-html.js';
 import * as U from '../utils/utils.js';
 import { Color } from '../model.js';
-import { SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
+import { SectionAttributeEditor, ComponentAttributeEditor, StationAttributeEditor } from './editor/attributes.js';
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CyclePanel } from '../cycle.js';
@@ -94,7 +94,6 @@ class ProjectExplorer {
         this.options,
         cave,
         this.scene,
-        this.attributeDefs,
         document.getElementById('fixed-size-editor')
       );
       this.editor.setupPanel();
@@ -123,6 +122,23 @@ class ProjectExplorer {
     editComponentAttributes.onclick = () => {
       this.#hidePreviousEditor();
       this.editor = new ComponentAttributeEditor(
+        this.db,
+        this.options,
+        cave,
+        this.scene,
+        this.attributeDefs,
+        document.getElementById('resizable-editor')
+      );
+      this.editor.setupPanel();
+      this.editor.show();
+      this.contextMenuElement.style.display = 'none';
+
+    };
+
+    const editStationAttributes = U.node`<li class="menu-option">${i18n.t('ui.explorer.menu.editStationAttributes')}</li>`;
+    editStationAttributes.onclick = () => {
+      this.#hidePreviousEditor();
+      this.editor = new StationAttributeEditor(
         this.db,
         this.options,
         cave,
@@ -166,6 +182,7 @@ class ProjectExplorer {
     menu.appendChild(editCaveData);
     menu.appendChild(editSectionAttributes);
     menu.appendChild(editComponentAttributes);
+    menu.appendChild(editStationAttributes);
     menu.appendChild(addSurvey);
     menu.appendChild(importSurvey);
     menu.appendChild(cycles);
@@ -316,7 +333,6 @@ class ProjectExplorer {
           state.cave,
           state.survey,
           this.scene,
-          this.attributeDefs,
           document.getElementById('resizable-editor')
         );
         this.editor.setupPanel();
@@ -328,7 +344,6 @@ class ProjectExplorer {
           this.options,
           state.cave,
           this.scene,
-          this.attributeDefs,
           document.getElementById('fixed-size-editor')
         );
         this.editor.setupPanel();

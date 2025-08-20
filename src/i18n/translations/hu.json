@@ -85,6 +85,7 @@
         "editCaveData": "Adatlap szerkesztése",
         "editSectionAttributes": "Szakasz attribútumok",
         "editComponentAttributes": "Komponens attribútumok",
+        "editStationAttributes": "Pont attribútumok",
         "newSurvey": "Új felmérés",
         "importSurvey": "Felmérés importálása",
         "cycles": "Hurkok",
@@ -213,7 +214,9 @@
           "stations": "Pontok",
           "surveys": "Felmérések",
           "isolated": "Izolált felmérések",
-          "attributes": "Pont attribútumok",
+          "stationAttributes": "Pont attribútumok",
+          "sectionAttributes": "Szakasz attribútumok",
+          "componentAttributes": "Komponens attribútumok",
           "length": "Hossz",
           "orphanLength": "Hossz (árva)",
           "invalidLength": "Hossz (érvénytelen)",
@@ -275,8 +278,6 @@
         "title": "Felmérés: {name}",
         "message": {
           "missingFields": "Sor hiányzó mezői: {fields}",
-          "invalidAttributes": "Sor érvénytelen attribútumokkal",
-          "invalidShot": "Sor érvénytelen méréssel",
           "incomplete": "Hiányos sor",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
           "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}"
@@ -342,6 +343,19 @@
           "componentAttributeMissingArguments": "A komponens attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!",
           "unableToTraverseGraph": "Nem lehet átjárni a gráfon a(z) {from} ponttól. <br>Visszavonva a régi érték ({oldValue})."
         }
+      },
+      "stationAttributes": {
+        "title": "Pont attribútumok: {name}",
+        "errors": {
+          "stationAttributeMissingArguments": "A pont attribútum hiányos vagy érvénytelen. <br>Nem lehet megjeleníteni!",
+          "emptyName": "Pont neve üres",
+          "emptyAttribute": "Attribútum üres",
+          "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
+        },
+        "columns": {
+          "station": "Pont",
+          "survey": "Felmérés"
+        }
       }
     }
   },
@@ -373,6 +387,9 @@
     "fragmentAttribute": {
       "invalidVisible": "Láthatóság '{visible}' érvénytelen logikai érték",
       "invalidColor": "Érvénytelen szín: '{color}'",
+      "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
+    },
+    "stationAttribute": {
       "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
     },
     "caveSectionOrComponent": {

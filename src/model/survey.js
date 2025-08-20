@@ -1,4 +1,4 @@
-import { Vector, StationAttribute } from '../model.js';
+import { Vector } from '../model.js';
 import { StationCoordinates } from './geo.js';
 
 /**
@@ -203,7 +203,6 @@ class Survey {
    * @param {string} - The start point of the whole survey that was explicitly specified for a survey
    * @param {Array[Shot]} shots - An array of shots holding the measurements for this Survey
    * @param {Array[Number]} orphanShotIds - An array of orphan shots that are disconnected (from and/or to is unknown)
-   * @param {Array[Object]} attributes - Extra attributes (e.g. tectonics information) associated to this Survey
    */
   constructor(
     name,
@@ -212,8 +211,7 @@ class Survey {
     start = undefined,
     shots = [],
     orphanShotIds = new Set(),
-    duplicateShotIds = new Set(),
-    attributes = []
+    duplicateShotIds = new Set()
   ) {
     this.name = name;
     this.visible = visible;
@@ -222,7 +220,6 @@ class Survey {
     this.shots = shots;
     this.orphanShotIds = orphanShotIds;
     this.duplicateShotIds = duplicateShotIds;
-    this.attributes = attributes;
     this.isolated = false;
     this.validShots = this.getValidShots();
     this.invalidShotIds = this.getInvalidShotIds();
@@ -267,12 +264,15 @@ class Survey {
   /**
    * Returns all the attributes with the given name for all stations
    *
+   * @param {Array[StationAttribute]} stationAttributes - Array of station attributes to search through
+   * @param {Map} stations - Map of station names to station objects
    * @param {string} name - The name an attribute, see attribute definitons for more information.
    * @returns {Array[Array[Vector, Object]]>} - Attribute params with 3D position
    */
-  getAttributesWithPositionsByName(stations, name) {
+  //TODO: maybe this is not used
+  getAttributesWithPositionsByName(stationAttributes, stations, name) {
     return (
-      this.attributes
+      stationAttributes
         .filter((sa) => sa.attribute.name === name)
         .map((sa) => {
           const pos = stations.get(sa.name).position;
@@ -284,16 +284,13 @@ class Survey {
 
   toExport() {
     return {
-      name       : this.name,
-      start      : this.start,
-      attributes : this.attributes.map((sta) => sta.toExport()),
-      shots      : this.shots.map((s) => s.toExport())
+      name  : this.name,
+      start : this.start,
+      shots : this.shots.map((s) => s.toExport())
     };
   }
 
-  static fromPure(pure, attributeDefs) {
-    pure.attributes = pure.attributes
-      .map((a) => new StationAttribute(a.name, attributeDefs.createFromPure(a.attribute)));
+  static fromPure(pure) {
     pure.shots = pure.shots.map((s) => Object.assign(new Shot(), s));
     const survey = Object.assign(new Survey(), pure);
     survey.validShots = survey.getValidShots();

@@ -402,7 +402,10 @@ class Attribute {
   }
 
   isEqual(other) {
-    return this.id === other.id && this.name === other.name && this.paramNames.every((n) => this[n] === other[n]);
+    return other !== undefined &&
+      this.id === other.id &&
+      this.name === other.name &&
+      this.paramNames.every((n) => this[n] === other[n]);
   }
 
   toExport() {
