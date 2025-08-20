@@ -42,11 +42,8 @@
         "profile": "Profile",
         "3d": "3D",
         "boundingBox": "Bounding box",
-        "beddings": "Show beddings",
-        "faults": "Show faults",
         "lineColor": "Line color mode",
         "grid": "Grid position/visibility",
-        "surface": "Surface visibility",
         "locate": "Locate point",
         "shortestPath": "Shortest path"
       },

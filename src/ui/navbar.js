@@ -215,16 +215,6 @@ class NavigationBar {
         click   : () => this.scene.toogleBoundingBox()
       },
       {
-        tooltip : i18n.t('ui.navbar.tooltips.beddings'),
-        icon    : './icons/bedding.svg',
-        click   : () => this.scene.tooglePlaneFor('bedding')
-      },
-      {
-        tooltip : i18n.t('ui.navbar.tooltips.faults'),
-        icon    : './icons/fault.svg',
-        click   : () => this.scene.tooglePlaneFor('fault')
-      },
-      {
         tooltip  : i18n.t('ui.navbar.tooltips.lineColor'),
         icon     : './icons/cl_color.svg',
         elements : [
@@ -245,11 +235,6 @@ class NavigationBar {
         tooltip : i18n.t('ui.navbar.tooltips.grid'),
         icon    : './icons/grid.svg',
         click   : () => this.scene.grid.roll()
-      },
-      {
-        tooltip : i18n.t('ui.navbar.tooltips.surface'),
-        icon    : './icons/surface.svg',
-        click   : () => this.scene.rollSurface()
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.locate'),

@@ -42,11 +42,8 @@
         "profile": "Profil",
         "3d": "3D",
         "boundingBox": "Határoló doboz",
-        "beddings": "Rétegek megjelenítése",
-        "faults": "Törések megjelenítése",
         "lineColor": "Vonal szín mód",
         "grid": "Rács pozíció/láthatóság",
-        "surface": "Felszín láthatóság",
         "locate": "Pont megkeresése",
         "shortestPath": "Legrövidebb út"
       },
