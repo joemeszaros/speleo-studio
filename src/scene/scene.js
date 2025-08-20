@@ -408,15 +408,22 @@ class MyScene {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(segments);
       geometry.computeBoundingBox();
-      const material = new LineMaterial({
-        color        : new THREE.Color(color),
-        linewidth    : this.options.scene.centerLines.segments.width * this.options.scene.sectionLineMultiplier,
-        worldUnits   : false,
-        vertexColors : false
+
+      // Create tube geometry for the attribute path
+      const tubeGroup = this.createTubeGeometryFromSegments(segments);
+
+      // Apply material to all tube segments in the group
+      tubeGroup.children.forEach((tubeMesh) => {
+        tubeMesh.material = new THREE.MeshBasicMaterial({
+          color       : new THREE.Color(color),
+          transparent : false,
+          opacity     : 1.0
+        });
       });
-      const lineSegments = new LineSegments2(geometry, material);
-      lineSegments.layers.set(1);
-      this.sectionAttributes3DGroup.add(lineSegments);
+
+      tubeGroup.layers.set(1);
+      this.sectionAttributes3DGroup.add(tubeGroup);
+
       const bb = geometry.boundingBox;
       const center = bb.getCenter(new THREE.Vector3());
       const maxZ = bb.min.z > bb.max.z ? bb.min.z : bb.max.z;
@@ -428,7 +435,7 @@ class MyScene {
       textMesh.layers.set(1);
 
       this.sectionAttributes.set(id, {
-        segments : lineSegments,
+        tube     : tubeGroup,
         text     : textMesh,
         label    : formattedAttribute,
         center   : center,
@@ -441,10 +448,18 @@ class MyScene {
   disposeSectionAttribute(id) {
     if (this.sectionAttributes.has(id)) {
       const e = this.sectionAttributes.get(id);
-      const lineSegments = e.segments;
-      lineSegments.geometry.dispose();
-      lineSegments.material.dispose();
-      this.sectionAttributes3DGroup.remove(lineSegments);
+
+      const tubeGroup = e.tube;
+
+      // Dispose tube mesh if it exists
+      if (tubeGroup) {
+        tubeGroup.children.forEach((tubeMesh) => {
+          tubeMesh.geometry.dispose();
+          tubeMesh.material.dispose();
+        });
+        this.sectionAttributes3DGroup.remove(tubeGroup);
+      }
+
       const textMesh = e.text;
       this.sectionAttributes3DGroup.remove(textMesh);
       textMesh.geometry.dispose();
@@ -699,6 +714,10 @@ class MyScene {
   updateCenterLinesOpacity(width) {
     this.sectionAttributes.forEach((e) => {
       e.segments.material.linewidth = width * this.options.scene.sectionLineMultiplier;
+      // Also update glow line width to maintain the glow effect
+      if (e.glow) {
+        e.glow.material.linewidth = width * this.options.scene.sectionLineMultiplier * 3;
+      }
     });
     this.view.renderView();
   }
@@ -1090,6 +1109,46 @@ class MyScene {
 
   deleteCave(caveName) {
     this.caveObjects.delete(caveName);
+  }
+
+  createTubeGeometryFromSegments(segments) {
+    // Create a simpler approach: create individual tube segments for each line segment
+    const group = new THREE.Group();
+
+    // Use fixed values for simplicity
+    const tubeRadius = this.options.scene.centerLines.segments.width * 0.15; // 15% of line width
+
+    // Process segments in pairs (start and end points)
+    for (let i = 0; i < segments.length; i += 6) {
+      if (i + 5 < segments.length) {
+        const startPoint = new THREE.Vector3(segments[i], segments[i + 1], segments[i + 2]);
+        const endPoint = new THREE.Vector3(segments[i + 3], segments[i + 4], segments[i + 5]);
+
+        // Create a tube segment between these two points
+        const direction = new THREE.Vector3().subVectors(endPoint, startPoint);
+        const distance = direction.length();
+
+        if (distance > 0.001) {
+          // Avoid very short segments
+          const tubeGeometry = new THREE.CylinderGeometry(tubeRadius, tubeRadius, distance, 6, 1, false);
+
+          // Position the tube at the midpoint
+          const midPoint = new THREE.Vector3().addVectors(startPoint, endPoint).multiplyScalar(0.5);
+
+          // Rotate to align with the direction
+          const up = new THREE.Vector3(0, 1, 0);
+          const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction.normalize());
+
+          const tubeMesh = new THREE.Mesh(tubeGeometry);
+          tubeMesh.position.copy(midPoint);
+          tubeMesh.setRotationFromQuaternion(quaternion);
+
+          group.add(tubeMesh);
+        }
+      }
+    }
+
+    return group;
   }
 }
 
