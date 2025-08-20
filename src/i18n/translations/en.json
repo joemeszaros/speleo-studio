@@ -80,6 +80,23 @@
       "project": "Project",
       "noProjectLoaded": "No project loaded"
     },
+    "controlPanel": {
+      "folders": {
+        "colorGradient": "Color gradient",
+        "centerLines": "Center lines",
+        "splays": "Splays",
+        "auxiliary": "Auxiliary",
+        "startingPoints": "Starting Points",
+        "textLabels": "Text labels",
+        "scene": "Scene",
+        "sectionAttributes": "Section attributes",
+        "stationAttributes": "Station attributes",
+        "screen": "Screen"
+      },
+      "labels": {
+        "iconScale": "Icon scale"
+      }
+    },
     "explorer": {
       "menu": {
         "editCaveData": "Edit cave sheet",

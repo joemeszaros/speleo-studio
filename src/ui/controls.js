@@ -1,4 +1,5 @@
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class Controls {
   constructor(options, element) {
@@ -66,12 +67,16 @@ export class Controls {
       color : s.sectionAttributes.color
     };
 
+    const stationAttributeParam = {
+      [i18n.t('ui.controlPanel.labels.iconScale')] : s.stationAttributes.iconScale
+    };
+
     const screenParam = {
       DPI : this.options.screen.DPI
     };
 
     // Multi-color gradient controls
-    const gradientFolder = gui.addFolder('Color gradient');
+    const gradientFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.colorGradient'));
 
     // Add gradient color controls
     const addGradientColor = () => {
@@ -117,7 +122,7 @@ export class Controls {
       }
     });
 
-    const centerLineFolder = gui.addFolder('Center lines');
+    const centerLineFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.centerLines'));
 
     centerLineFolder.add(centerLineParam, 'show center lines').onFinishChange(function (val) {
       s.centerLines.segments.show = val;
@@ -156,7 +161,7 @@ export class Controls {
         s.centerLines.spheres.radius = val;
       });
 
-    const splaysFolder = gui.addFolder('Splays');
+    const splaysFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.splays'));
 
     splaysFolder.add(splayParam, 'show splays').onFinishChange(function (val) {
       s.splays.segments.show = val;
@@ -185,7 +190,7 @@ export class Controls {
         s.splays.spheres.radius = val;
       });
 
-    const auxiliaryFolder = gui.addFolder('Auxiliary');
+    const auxiliaryFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.auxiliary'));
 
     auxiliaryFolder.add(auxiliaryParam, 'show auxiliary').onFinishChange(function (val) {
       s.auxiliaries.segments.show = val;
@@ -220,7 +225,7 @@ export class Controls {
       radius                 : s.startPoint.radius
     };
 
-    const startPointFolder = gui.addFolder('Starting Points');
+    const startPointFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.startingPoints'));
 
     startPointFolder.add(startPointParam, 'show starting points').onFinishChange(function (val) {
       s.startPoint.show = val;
@@ -237,7 +242,7 @@ export class Controls {
         s.startPoint.radius = val;
       });
 
-    const labelsFolder = gui.addFolder('Text labels');
+    const labelsFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.textLabels'));
 
     labelsFolder.addColor(labelParam, 'font color').onFinishChange(function (val) {
       s.labels.color = val;
@@ -250,19 +255,28 @@ export class Controls {
         s.labels.size = val;
       });
 
-    const sceneFolder = gui.addFolder('Scene');
+    const sceneFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.scene'));
 
     sceneFolder.addColor(sceneParam, 'background color').onFinishChange(function (val) {
       s.background.color = val;
     });
 
-    const sectionAttrFolder = gui.addFolder('Section attrbiutes');
+    const sectionAttrFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.sectionAttributes'));
 
     sectionAttrFolder.addColor(sectionAttributeParam, 'color').onFinishChange(function (val) {
       s.sectionAttributes.color = val;
     });
 
-    const screenFolder = gui.addFolder('Screen');
+    const stationAttrFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.stationAttributes'));
+
+    stationAttrFolder
+      .add(stationAttributeParam, i18n.t('ui.controlPanel.labels.iconScale'), 0.1, 20.0)
+      .step(0.1)
+      .onFinishChange(function (val) {
+        s.stationAttributes.iconScale = val;
+      });
+
+    const screenFolder = gui.addFolder(i18n.t('ui.controlPanel.folders.screen'));
 
     screenFolder
       .add(screenParam, 'DPI', 72, 300)

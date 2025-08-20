@@ -1174,13 +1174,20 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
       if (cell.getValue() === true) {
         const station = this.cave.stations.get(data.station);
-        if (['bedding', 'fault'].includes(data.attribute.name)) {
-          this.scene.showPlaneFor(data.id, station, data.attribute);
+        if (data.attribute && data.attribute.name) {
+          if (['bedding', 'fault'].includes(data.attribute.name)) {
+            this.scene.showPlaneFor(data.id, station, data.attribute);
+          } else {
+            this.scene.showIconFor(data.id, station, data.attribute);
+          }
         }
-
       } else {
-        if (['bedding', 'fault'].includes(data.attribute.name)) {
-          this.scene.disposePlaneFor(data.id);
+        if (data.attribute && data.attribute.name) {
+          if (['bedding', 'fault'].includes(data.attribute.name)) {
+            this.scene.disposePlaneFor(data.id);
+          } else {
+            this.scene.disposeIconFor(data.id);
+          }
         }
       }
     },

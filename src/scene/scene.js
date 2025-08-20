@@ -486,6 +486,77 @@ class MyScene {
     }
   }
 
+  showIconFor(id, station, attribute) {
+    if (!this.stationAttributes.has(id)) {
+      const position = station.position;
+
+      // Create a sprite with the SVG icon
+      const iconPath = `icons/${attribute.name}.svg`;
+      const textureLoader = new THREE.TextureLoader();
+
+      textureLoader.load(
+        iconPath,
+        (texture) => {
+          texture.colorSpace = THREE.SRGBColorSpace;
+          const spriteMaterial = new THREE.SpriteMaterial({
+            map         : texture,
+            transparent : false,
+            opacity     : 1.0
+          });
+
+          const sprite = new THREE.Sprite(spriteMaterial);
+          sprite.position.set(position.x, position.y, position.z);
+          sprite.scale.set(
+            this.options.scene.stationAttributes.iconScale,
+            this.options.scene.stationAttributes.iconScale,
+            this.options.scene.stationAttributes.iconScale
+          );
+
+          this.stationAttributes3DGroup.add(sprite);
+
+          this.stationAttributes.set(id, {
+            sprite    : sprite,
+            station   : station,
+            attribute : attribute
+          });
+
+          this.view.renderView();
+        },
+        undefined,
+        (error) => {
+          console.warn(`Failed to load icon for ${attribute.name}:`, error);
+        }
+      );
+    }
+  }
+
+  disposeIconFor(id) {
+    if (this.stationAttributes.has(id)) {
+      const e = this.stationAttributes.get(id);
+      const sprite = e.sprite;
+
+      if (sprite.material && sprite.material.map) {
+        sprite.material.map.dispose();
+      }
+      sprite.material.dispose();
+      sprite.geometry?.dispose();
+
+      this.stationAttributes3DGroup.remove(sprite);
+      this.stationAttributes.delete(id);
+      this.view.renderView();
+    }
+  }
+
+  updateStationAttributeIconScales(newScale) {
+    // Update the scale of all existing station attribute icons
+    this.stationAttributes.forEach((entry) => {
+      if (entry.sprite && entry.sprite.type === 'Sprite') {
+        entry.sprite.scale.set(newScale, newScale, newScale);
+      }
+    });
+    this.view.renderView();
+  }
+
   changeCenterLineColorMode(mode) {
     const clConfig = this.options.scene.centerLines;
     const splayConfig = this.options.scene.splays;

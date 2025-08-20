@@ -77,6 +77,9 @@ export const DEFAULT_OPTIONS = {
     sectionAttributes : {
       color : '#00ff2a'
     },
+    stationAttributes : {
+      iconScale : 7.0
+    },
     labels : {
       color : '#ffffff',
       size  : 3
@@ -695,6 +698,14 @@ export class ConfigChanges {
     }
   }
 
+  handleStationAttributeChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.stationAttributes.iconScale':
+        this.scene.updateStationAttributeIconScales(newValue);
+        break;
+    }
+  }
+
   /**
    * Main onChange handler that routes to specific handlers
    */
@@ -722,6 +733,8 @@ export class ConfigChanges {
       // do nothing, no action on survey editor changes
     } else if (path.startsWith('ui.panels.')) {
       this.handlePanelChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.stationAttributes')) {
+      this.handleStationAttributeChanges(path, oldValue, newValue);
     } else {
       console.log(`⚠️ No handler for path: ${path}`);
     }
