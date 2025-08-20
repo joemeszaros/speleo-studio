@@ -150,28 +150,66 @@ class SurveyEditor extends Editor {
       return this.unsavedChanges;
     }
 
+    // Helper function to get all attributes for the station
+    const getAttributesForStation = (stationName) => {
+      const attributes = [];
+
+      if (!stationName) return attributes;
+
+      // Get station attributes
+      if (this.cave.attributes) {
+        if (this.cave.attributes.stationAttributes) {
+          this.cave.attributes.stationAttributes.forEach((sa) => {
+            if (sa?.name === stationName && sa.attribute) {
+              attributes.push(sa.attribute);
+            }
+          });
+        }
+        if (this.cave.attributes.componentAttributes) {
+          this.cave.attributes.componentAttributes.forEach((ca) => {
+            if (ca?.component?.path?.includes(stationName) && ca.attribute) {
+              attributes.push(ca.attribute);
+            }
+          });
+        }
+
+        if (this.cave.attributes.sectionAttributes) {
+          this.cave.attributes.sectionAttributes.forEach((sa) => {
+            if (sa?.section?.path?.includes(stationName) && sa.attribute) {
+              attributes.push(sa.attribute);
+            }
+          });
+        }
+      }
+      return attributes;
+    };
+
     const rows = survey.shots.map((sh) => {
       const toStation = stations.get(survey.getToStationName(sh));
 
+      // Get attributes for both from and to stations
+      const attributes = toStation ? getAttributesForStation(sh.to) : [];
+
       const rowToBe = {
-        id      : sh.id,
-        from    : sh.from,
-        to      : sh.to,
-        length  : sh.length,
-        azimuth : sh.azimuth,
-        clino   : sh.clino,
-        comment : sh.comment,
-        type    : sh.type,
-        status  : 'ok',
-        message : i18n.t('ui.editors.survey.status.ok'),
-        x       : toStation?.position?.x,
-        y       : toStation?.position?.y,
-        z       : toStation?.position?.z,
-        eovy    : toStation?.coordinates?.eov?.y,
-        eovx    : toStation?.coordinates?.eov?.x,
-        eove    : toStation?.coordinates?.eov?.elevation,
-        wgslat  : toStation?.coordinates?.wgs?.lat,
-        wgslon  : toStation?.coordinates?.wgs?.lon
+        id         : sh.id,
+        from       : sh.from,
+        to         : sh.to,
+        length     : sh.length,
+        azimuth    : sh.azimuth,
+        clino      : sh.clino,
+        comment    : sh.comment,
+        type       : sh.type,
+        status     : 'ok',
+        message    : i18n.t('ui.editors.survey.status.ok'),
+        attributes : attributes,
+        x          : toStation?.position?.x,
+        y          : toStation?.position?.y,
+        z          : toStation?.position?.z,
+        eovy       : toStation?.coordinates?.eov?.y,
+        eovx       : toStation?.coordinates?.eov?.x,
+        eove       : toStation?.coordinates?.eov?.elevation,
+        wgslat     : toStation?.coordinates?.wgs?.lat,
+        wgslon     : toStation?.coordinates?.wgs?.lon
       };
 
       return rowToBe;
@@ -198,23 +236,24 @@ class SurveyEditor extends Editor {
     const id = data.length === 0 ? 0 : Math.max(...data.map((r) => r.id));
 
     return {
-      id      : id + 1,
-      from    : undefined,
-      to      : undefined,
-      length  : undefined,
-      azimuth : undefined,
-      clino   : undefined,
-      type    : ShotType.CENTER,
-      status  : 'incomplete',
-      message : i18n.t('ui.editors.survey.message.incomplete'),
-      x       : undefined,
-      y       : undefined,
-      z       : undefined,
-      eovy    : undefined,
-      eovx    : undefined,
-      eove    : undefined,
-      wgslat  : undefined,
-      wgslon  : undefined
+      id         : id + 1,
+      from       : undefined,
+      to         : undefined,
+      length     : undefined,
+      azimuth    : undefined,
+      clino      : undefined,
+      type       : ShotType.CENTER,
+      status     : 'incomplete',
+      message    : i18n.t('ui.editors.survey.message.incomplete'),
+      attributes : [],
+      x          : undefined,
+      y          : undefined,
+      z          : undefined,
+      eovy       : undefined,
+      eovx       : undefined,
+      eove       : undefined,
+      wgslat     : undefined,
+      wgslon     : undefined
     };
 
   }
@@ -430,6 +469,36 @@ class SurveyEditor extends Editor {
         formatter        : this.baseTableFunctions.floatFormatter('', c.decimals),
         editor           : false
       });
+    });
+
+    columns.push({
+      title        : i18n.t('ui.editors.survey.columns.attributes'),
+      field        : 'attributes',
+      editor       : false,
+      headerFilter : 'input',
+      formatter    : (cell) => {
+        const attrs = cell.getValue();
+        if (attrs && Array.isArray(attrs) && attrs.length > 0) {
+          // Use the same formatter as the attributes editor
+          return attrs
+            .map((attr) => {
+              if (attr && attr.name && attr.params) {
+                const paramNames = Object.keys(attr.params);
+                const paramValues = paramNames
+                  .map((n) => {
+                    const value = attr[n];
+                    return value !== undefined && value !== null ? value : '';
+                  })
+                  .join(',');
+                return `${attr.name}(${paramValues})`;
+              }
+              return '';
+            })
+            .filter((s) => s.length > 0)
+            .join(',');
+        }
+        return '';
+      }
     });
 
     columns.push({
