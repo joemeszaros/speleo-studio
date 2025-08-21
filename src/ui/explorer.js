@@ -25,11 +25,6 @@ class ProjectExplorer {
       this.contextMenuElement.style.display = 'none';
     });
 
-    if (this.options.ui.panels.explorer.show) {
-      this.panel.style.display = 'block';
-    } else {
-      this.panel.style.display = 'none';
-    }
   }
 
   deleteSurvey(caveName, surveyName) {

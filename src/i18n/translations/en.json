@@ -17,13 +17,6 @@
           "manager": "Project Manager",
           "export": "Export Project"
         },
-        "view": {
-          "name": "View",
-          "explorer": "Cave explorer",
-          "controlPanel": "Control panel",
-          "sceneOverview": "Scene overview",
-          "fullscreen": "Enter / exit fullscreen"
-        },
         "tools": {
           "name": "Tools",
           "dipStrike": "Dip & Strike Calculator"
@@ -45,7 +38,8 @@
         "lineColor": "Line color mode",
         "grid": "Grid position/visibility",
         "locate": "Locate point",
-        "shortestPath": "Shortest path"
+        "shortestPath": "Shortest path",
+        "fullscreen": "Enter / exit fullscreen"
       },
       "lineColorModes": {
         "global": "Global color",

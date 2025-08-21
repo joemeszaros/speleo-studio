@@ -109,17 +109,6 @@ export const DEFAULT_OPTIONS = {
         columns : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment']
       }
     },
-    panels : {
-      sceneOverview : {
-        show : true
-      },
-      explorer : {
-        show : true
-      },
-      settings : {
-        show : true
-      }
-    },
     sidebar : {
       position  : 'right', // 'left' or 'right'
       width     : 350,
@@ -182,7 +171,11 @@ export class ObjectObserver {
         }
 
         // Trigger change callback
-        if (oldValue !== value) {
+        if (Array.isArray(value) && Array.isArray(oldValue)) {
+          if (oldValue.length !== value.length || oldValue.some((item, index) => item !== value[index])) {
+            this.onChange(currentPath, oldValue, value, target);
+          }
+        } else if (oldValue !== value) {
           this.onChange(currentPath, oldValue, value, target);
         }
 

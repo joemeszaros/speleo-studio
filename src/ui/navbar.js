@@ -1,4 +1,3 @@
-import { ConfigManager } from '../config.js';
 import { Exporter } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
 
@@ -82,7 +81,6 @@ class NavigationBar {
                 this.exportPanel
               )
           }
-
         ]
       },
       {
@@ -105,27 +103,6 @@ class NavigationBar {
             click : () => {
               this.projectPanel.exportCurrentProject();
             }
-          }
-        ]
-      },
-      {
-        name     : i18n.t('ui.navbar.menu.view.name'),
-        elements : [
-          {
-            name  : i18n.t('ui.navbar.menu.view.explorer'),
-            click : () => (this.options.ui.panels.explorer.show = !this.options.ui.panels.explorer.show)
-          },
-          {
-            name  : i18n.t('ui.navbar.menu.view.controlPanel'),
-            click : () => (this.options.ui.panels.settings.show = !this.options.ui.panels.settings.show)
-          },
-          {
-            name  : i18n.t('ui.navbar.menu.view.sceneOverview'),
-            click : () => (this.options.ui.panels.sceneOverview.show = !this.options.ui.panels.sceneOverview.show)
-          },
-          {
-            name  : i18n.t('ui.navbar.menu.view.fullscreen'),
-            click : () => this.#toggleFullscreen()
           }
         ]
       },
@@ -229,6 +206,11 @@ class NavigationBar {
         tooltip : i18n.t('ui.navbar.tooltips.shortestPath'),
         icon    : './icons/shortest_path.svg',
         click   : (event) => this.interactive.showShortestPathPanel(event.clientX)
+      },
+      {
+        tooltip : i18n.t('ui.navbar.tooltips.fullscreen'),
+        icon    : './icons/fullscreen.svg',
+        click   : () => this.#toggleFullscreen()
       }
 
     ];

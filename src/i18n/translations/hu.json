@@ -17,13 +17,6 @@
           "manager": "Projekt kezelő",
           "export": "Projekt exportálása"
         },
-        "view": {
-          "name": "Nézet",
-          "explorer": "Böngésző",
-          "controlPanel": "Vezérlőpanel",
-          "sceneOverview": "Áttekintő",
-          "fullscreen": "Teljes képernyő be/kikapcsolása"
-        },
         "tools": {
           "name": "Eszközök",
           "dipStrike": "Dőlés és irány számító"
@@ -45,7 +38,8 @@
         "lineColor": "Vonal szín mód",
         "grid": "Rács pozíció/láthatóság",
         "locate": "Pont megkeresése",
-        "shortestPath": "Legrövidebb út"
+        "shortestPath": "Legrövidebb út",
+        "fullscreen": "Teljes képernyő be/kikapcsolása"
       },
       "lineColorModes": {
         "global": "Globális",

@@ -288,7 +288,7 @@ export class SettingsPanel {
     input.max = max;
     input.step = step;
     input.value = value;
-    input.oninput = (e) => {
+    input.onchange = (e) => {
       const newValue = parseFloat(e.target.value);
       onChange(newValue);
       valueDisplay.value = newValue.toFixed(1);
@@ -557,5 +557,6 @@ export class SettingsPanel {
     ConfigManager.clear();
     const loadedConfig = ConfigManager.loadOrDefaults();
     ConfigManager.deepMerge(this.options, loadedConfig);
+    this.render();
   }
 }

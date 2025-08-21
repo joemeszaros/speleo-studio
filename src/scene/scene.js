@@ -22,11 +22,6 @@ class SceneOverview {
     container.appendChild(this.domElement);
     this.width = container.offsetWidth;
     this.height = container.offsetHeight;
-    if (options.ui.panels.sceneOverview.show) {
-      this.container.style.display = 'block';
-    } else {
-      this.container.style.display = 'none';
-    }
   }
 
 }
