@@ -81,24 +81,8 @@ class NavigationBar {
                 this.scene,
                 this.exportPanel
               )
-          },
-          {
-            name  : i18n.t('ui.navbar.menu.file.downloadConfig'),
-            click : () => ConfigManager.downloadConfig(this.options)
-          },
-          {
-            name  : i18n.t('ui.navbar.menu.file.loadConfig'),
-            click : () => document.getElementById('configInput').click()
-          },
-          {
-            name  : i18n.t('ui.navbar.menu.file.resetConfig'),
-            click : () => {
-              ConfigManager.clear();
-              const loadedConfig = ConfigManager.loadOrDefaults();
-              ConfigManager.deepMerge(this.options, loadedConfig);
-              this.controls.reload();
-            }
           }
+
         ]
       },
       {

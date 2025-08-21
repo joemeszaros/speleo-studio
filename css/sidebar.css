@@ -405,6 +405,40 @@
   background: #059669;
 }
 
+/* Settings Buttons */
+.settings-button {
+  flex: 1;
+  padding: 8px 12px;
+  margin-right: 8px;
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-button:hover {
+  background: #404040;
+  border-color: #04aa6d;
+}
+
+.settings-button:active {
+  transform: scale(0.98);
+}
+
+.settings-button:last-child {
+  margin-right: 0;
+}
+
+/* Configuration buttons container */
+.config-buttons-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .settings-checkbox-container {
   display: flex;
   align-items: center;

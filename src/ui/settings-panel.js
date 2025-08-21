@@ -1,3 +1,5 @@
+import { ConfigManager } from '../config.js';
+
 export class SettingsPanel {
   constructor(container, options) {
     this.container = container;
@@ -11,6 +13,21 @@ export class SettingsPanel {
 
   render() {
     this.container.innerHTML = '';
+
+    // Configuration Management Buttons
+    this.container.appendChild(
+      this.createButtonRow([
+        this.createButton('Download', () => {
+          this.downloadConfig();
+        }),
+        this.createButton('Load', () => {
+          this.loadConfig();
+        }),
+        this.createButton('Reset', () => {
+          this.resetConfig();
+        })
+      ])
+    );
 
     // Survey Lines Section (expanded by default)
     this.createSection('Survey Lines', [
@@ -364,6 +381,23 @@ export class SettingsPanel {
     return subGroup;
   }
 
+  createButton(label, onClick) {
+    const button = document.createElement('button');
+    button.className = 'settings-button';
+    button.textContent = label;
+    button.onclick = onClick;
+    return button;
+  }
+
+  createButtonRow(buttons) {
+    const container = document.createElement('div');
+    container.className = 'config-buttons-container';
+    buttons.forEach((button) => {
+      container.appendChild(button);
+    });
+    return container;
+  }
+
   createColorGradientSection(collapsed = true) {
     const section = document.createElement('div');
     section.className = 'settings-group';
@@ -509,5 +543,19 @@ export class SettingsPanel {
   updateOptions(newOptions) {
     this.options = newOptions;
     this.render();
+  }
+
+  downloadConfig() {
+    ConfigManager.downloadConfig(this.options);
+  }
+
+  loadConfig() {
+    document.getElementById('configInput').click();
+  }
+
+  resetConfig() {
+    ConfigManager.clear();
+    const loadedConfig = ConfigManager.loadOrDefaults();
+    ConfigManager.deepMerge(this.options, loadedConfig);
   }
 }
