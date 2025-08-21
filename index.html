@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>Speleo studio</title>
-    <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
+    <link rel="icon" type="image/png" href="/images/logo.png" />
     <link rel="stylesheet" href="css/tree.css" />
     <link rel="stylesheet" href="css/navbar.css" />
     <link rel="stylesheet" href="css/iconbar.css" />
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/project.css" />
     <link rel="stylesheet" href="css/main.css" />
     <link rel="stylesheet" href="css/i18n.css" />
+    <link rel="stylesheet" href="css/sidebar.css" />
 
     <script src="dependencies/tree.js"></script>
     <script type="importmap">
@@ -25,7 +26,6 @@
   </head>
 
   <body>
-    <div id="tree-panel"></div>
     <div class="file-upload">
       <input type="file" id="caveInput" accept=".cave,.json" multiple style="display: none" />
       <input type="file" id="surveyInput" accept=".csv" multiple style="display: none" />
@@ -36,6 +36,74 @@
     <div id="infopanel" class="popup"></div>
     <div id="cautionpanel" class="cautionpanel"></div>
     <div id="navbarcontainer" , class="topnavbar"></div>
+
+    <!-- Main content area with flexbox layout -->
+    <div class="content-area">
+      <!-- Viewport takes remaining space -->
+      <div id="viewport" class="viewport">
+        <div class="logo"><img width="80px" src="images/logo.png" /></div>
+      </div>
+
+      <!-- Sidebar Container -->
+      <div id="sidebar-container" class="sidebar-container">
+        <div class="sidebar-header">
+          <button class="sidebar-toggle" id="sidebar-toggle">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="sidebar-tabs" role="tablist" aria-label="Sidebar navigation">
+          <button
+            class="sidebar-tab active"
+            data-tab="explorer"
+            role="tab"
+            aria-selected="true"
+            aria-controls="explorer-panel"
+            >Explorer</button
+          >
+
+          <button
+            class="sidebar-tab"
+            data-tab="settings"
+            role="tab"
+            aria-selected="false"
+            aria-controls="settings-panel"
+            >Settings</button
+          >
+        </div>
+
+        <div class="sidebar-content">
+          <div id="explorer-panel" class="sidebar-panel active" aria-hidden="false">
+            <div class="explorer-panel">
+              <div id="explorer-tree" class="explorer-tree"></div>
+            </div>
+          </div>
+
+          <div id="settings-panel" class="sidebar-panel" aria-hidden="true">
+            <div class="settings-panel">
+              <div id="settings-content"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-overview">
+          <div class="sidebar-overview-header" id="sidebar-overview-header">
+            <span class="sidebar-overview-toggle">▼</span>
+            <span class="sidebar-overview-title">Scene Overview</span>
+          </div>
+          <div class="sidebar-overview-content-wrapper" id="sidebar-overview-content-wrapper">
+            <div class="sidebar-overview-content" id="sidebar-overview-content">
+              <div id="scene-overview" class="scene-overview"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-resizer" id="sidebar-resizer"></div>
+      </div>
+    </div>
+
     <div id="tool-panel" class="popup editor"></div>
     <div id="project-panel" style="display: none" class="project-panel"></div>
 
@@ -59,13 +127,8 @@
     <div id="fixed-size-editor" class="popup"> </div>
     <div id="resizable-editor" class="popup"></div>
     <div id="export-panel" class="popup"></div>
-    <div id="control-panel"></div>
     <div id="footer" class="footer"></div>
-    <div id="scene-overview" class="scene-overview"></div>
     <div id="view-helper" class="scene-overview"></div>
-    <div id="viewport" class="viewport">
-      <div class="logo"><img width="80px" src="images/logo.png" /></div>
-    </div>
     <script type="module" src="src/main.js"></script>
     <script type="module">
       import { Main } from './src/main.js';

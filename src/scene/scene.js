@@ -125,6 +125,7 @@ class MyScene {
     this.view.activate();
 
     window.addEventListener('resize', () => this.onWindowResize());
+    document.addEventListener('viewport-resized', () => this.onWindowResize());
   }
 
   setFont(font) {

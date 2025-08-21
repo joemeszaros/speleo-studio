@@ -119,6 +119,11 @@ export const DEFAULT_OPTIONS = {
       settings : {
         show : true
       }
+    },
+    sidebar : {
+      position  : 'right', // 'left' or 'right'
+      width     : 350,
+      collapsed : false
     }
   },
   import : {
@@ -735,6 +740,8 @@ export class ConfigChanges {
       this.handlePanelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.stationAttributes')) {
       this.handleStationAttributeChanges(path, oldValue, newValue);
+    } else if (path.startsWith('ui.sidebar.')) {
+      // do nothing, no action on sidebar changes
     } else {
       console.log(`⚠️ No handler for path: ${path}`);
     }

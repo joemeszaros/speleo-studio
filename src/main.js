@@ -8,7 +8,11 @@ import { ProjectExplorer } from './ui/explorer.js';
 import { ProjectManager } from './ui/manager.js';
 import { NavigationBar } from './ui/navbar.js';
 import { Footer } from './ui/footer.js';
-import { Controls } from './ui/controls.js';
+
+import { Sidebar } from './ui/sidebar.js';
+import { ExplorerTree } from './ui/explorer-tree.js';
+import { SettingsPanel } from './ui/settings-panel.js';
+
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
 import { ProjectSystem } from './storage/project-system.js';
@@ -75,16 +79,58 @@ class Main {
     this.scene = scene;
     this.options = options;
 
-    const explorer = new ProjectExplorer(options, db, scene, attributeDefs, document.querySelector('#tree-panel'));
-    this.projectManager = new ProjectManager(db, options, scene, explorer, this.projectSystem, this.editorStateSystem);
+    // Initialize sidebar
+    this.sidebar = new Sidebar(this.options);
+
+    // Initialize explorer tree in sidebar
+    this.explorerTree = new ExplorerTree(document.getElementById('explorer-tree'), {
+      onNodeClick : (node) => {
+        // Handle node click - could open editor or focus on scene
+        console.log('Node clicked:', node);
+      },
+      onVisibilityToggle : (node) => {
+        // Handle visibility toggle
+        if (node.type === 'cave') {
+          scene.toggleCaveVisibility(node.data.name, node.visible);
+        } else if (node.type === 'survey') {
+          scene.toggleSurveyVisibility(node.data.name, node.visible);
+        }
+      },
+      onNodeSelect : (node) => {
+        // Handle node selection (attributes panel removed)
+        console.log('Node selected:', node);
+      }
+    });
+
+    // Initialize settings panel in sidebar
+    this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
+
+    // Add test data after a short delay
+    setTimeout(() => {
+      this.addTestData();
+    }, 1000);
+
+    // Initialize legacy explorer for compatibility (will be removed later)
+    this.legacyExplorer = new ProjectExplorer(
+      options,
+      db,
+      scene,
+      attributeDefs,
+      document.querySelector('#explorer-tree')
+    );
+    this.projectManager = new ProjectManager(
+      db,
+      options,
+      scene,
+      this.legacyExplorer,
+      this.projectSystem,
+      this.editorStateSystem
+    );
 
     // Initialize project panel
     this.projectPanel = new ProjectPanel(document.getElementById('project-panel'), this.projectSystem);
     this.projectPanel.setupPanel();
     this.projectPanel.show();
-
-    this.controls = new Controls(options, document.getElementById('control-panel'));
-    this.controls.close();
 
     const interaction = new SceneInteraction(
       db,
@@ -98,6 +144,35 @@ class Main {
       document.getElementById('tool-panel'),
       ['fixed-size-editor', 'resizable-editor']
     );
+
+    // Add test data method
+    this.addTestData = () => {
+      try {
+        // Add a sample cave
+        const testCave = {
+          name        : 'Test Cave',
+          description : 'A sample cave for testing the new sidebar interface',
+          visible     : true,
+          color       : '#4CAF50'
+        };
+
+        this.explorerTree.addCave(testCave);
+
+        // Add a sample survey
+        const testSurvey = {
+          name    : 'Main Survey',
+          date    : '2024-01-15',
+          visible : true,
+          color   : '#2196F3'
+        };
+
+        this.explorerTree.addSurvey('Test Cave', testSurvey);
+
+        console.log('Test data added successfully');
+      } catch (error) {
+        console.error('Error adding test data:', error);
+      }
+    };
 
     new NavigationBar(
       db,
