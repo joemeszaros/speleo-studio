@@ -8,6 +8,7 @@ export class Sidebar {
     this.overviewContent = document.getElementById('sidebar-overview-content');
     this.overviewHeader = document.getElementById('sidebar-overview-header');
     this.overviewContentWrapper = document.getElementById('sidebar-overview-content-wrapper');
+    this.positionToggle = document.getElementById('sidebar-position-toggle');
     this.config = config;
 
     // Validate required elements
@@ -20,6 +21,7 @@ export class Sidebar {
     this.isResizing = false;
     this.startX = 0;
     this.startWidth = 0;
+    this.position = 'right';
 
     this.init();
   }
@@ -31,6 +33,7 @@ export class Sidebar {
     this.setupToggle();
     this.setupResizer();
     this.setupOverviewToggle();
+    this.setupPositionToggle();
     this.setupKeyboardShortcuts();
     this.setupResponsive();
     this.initFromConfig();
@@ -80,18 +83,20 @@ export class Sidebar {
 
     // Add tooltips
     this.addTooltips();
-
-    // Add position toggle on right-click
-    this.toggle.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      this.togglePosition();
-    });
   }
 
   setupOverviewToggle() {
     if (this.overviewHeader) {
       this.overviewHeader.addEventListener('click', () => {
         this.toggleOverview();
+      });
+    }
+  }
+
+  setupPositionToggle() {
+    if (this.positionToggle) {
+      this.positionToggle.addEventListener('click', () => {
+        this.togglePosition();
       });
     }
   }
@@ -111,7 +116,8 @@ export class Sidebar {
       document.documentElement.style.setProperty('--sidebar-width', savedWidth + 'px');
     }
 
-    this.saveState(false);
+    this.config.ui.sidebar.collapsed = this.isCollapsed;
+
     setTimeout(() => {
       this.#emitViewportResized();
     }, 320);
@@ -160,7 +166,8 @@ export class Sidebar {
 
   resize(e) {
     const deltaX = e.clientX - this.startX;
-    const newWidth = Math.max(200, Math.min(600, this.startWidth - deltaX));
+    const w = this.position === 'left' ? this.startWidth + deltaX : this.startWidth - deltaX;
+    const newWidth = Math.max(200, Math.min(600, w));
     this.container.style.width = newWidth + 'px';
     document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
   }
@@ -171,8 +178,9 @@ export class Sidebar {
 
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    this.config.ui.sidebar.width = this.container.offsetWidth;
     this.#emitViewportResized();
-    this.saveState();
+
   }
 
   #emitViewportResized() {
@@ -223,12 +231,13 @@ export class Sidebar {
 
   setPosition(position) {
     // position can be 'left' or 'right'
-    this.container.classList.remove('left');
-    if (position === 'left') {
+    this.position = position;
+    if (position === 'left' && !this.container.classList.contains('left')) {
       this.container.classList.add('left');
+    } else if (position === 'right' && this.container.classList.contains('left')) {
+      this.container.classList.remove('left');
     }
-
-    this.saveState();
+    this.config.ui.sidebar.position = position;
   }
 
   setupResponsive() {
@@ -245,13 +254,21 @@ export class Sidebar {
 
   addTooltips() {
     const tooltips = {
-      explorer         : 'Cave and survey explorer (Ctrl+Shift+E)',
-      settings         : 'Scene and visualization settings (Ctrl+Shift+S)',
-      'sidebar-toggle' : 'Toggle sidebar (Ctrl+B)'
+      explorer                  : 'Cave and survey explorer (Ctrl+Shift+E)',
+      settings                  : 'Scene and visualization settings (Ctrl+Shift+S)',
+      'sidebar-toggle'          : 'Toggle sidebar (Ctrl+B)',
+      'sidebar-position-toggle' : 'Toggle sidebar position (Left/Right)'
     };
 
     Object.entries(tooltips).forEach(([key, text]) => {
-      const element = key === 'sidebar-toggle' ? this.toggle : document.querySelector(`[data-tab="${key}"]`);
+      let element;
+      if (key === 'sidebar-toggle') {
+        element = this.toggle;
+      } else if (key === 'sidebar-position-toggle') {
+        element = this.positionToggle;
+      } else {
+        element = document.querySelector(`[data-tab="${key}"]`);
+      }
 
       if (element) {
         element.title = text;
@@ -263,14 +280,15 @@ export class Sidebar {
     const currentPosition = this.container.classList.contains('left') ? 'left' : 'right';
     const newPosition = currentPosition === 'left' ? 'right' : 'left';
     this.setPosition(newPosition);
-  }
-  saveState(saveWidth = true) {
-    // Update config with current state
-    this.config.ui.sidebar.position = this.container.classList.contains('left') ? 'left' : 'right';
-    if (saveWidth) {
-      this.config.ui.sidebar.width = this.container.offsetWidth;
+
+    // Update position toggle button background
+    if (this.positionToggle) {
+      if (newPosition === 'left') {
+        this.positionToggle.style.background = 'no-repeat center/70% url(../icons/sidebar_right.svg)';
+      } else {
+        this.positionToggle.style.background = 'no-repeat center/70% url(../icons/sidebar_left.svg)';
+      }
     }
-    this.config.ui.sidebar.collapsed = this.isCollapsed;
   }
 
   initFromConfig() {
@@ -280,6 +298,12 @@ export class Sidebar {
     // Load position
     if (sidebarConfig.position === 'left') {
       this.setPosition('left');
+      // Update position toggle button background for left position
+      if (this.positionToggle) {
+        this.positionToggle.style.background = 'no-repeat center/70% url(../icons/sidebar_right.svg)';
+      }
+    } else {
+      this.setPosition('right');
     }
 
     let widthChanged = false;

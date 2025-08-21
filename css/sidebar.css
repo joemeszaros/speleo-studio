@@ -57,8 +57,13 @@
   display: none;
 }
 
+.sidebar-container.collapsed .sidebar-position-toggle {
+  display: none;
+}
+
 .sidebar-container.collapsed .sidebar-header {
   justify-content: center;
+  flex-direction: row;
 }
 
 .sidebar-container.collapsed .sidebar-toggle svg {
@@ -110,6 +115,58 @@
   height: 16px;
 }
 
+/* Flip toggle SVG when sidebar is on the left */
+.sidebar-container.left .sidebar-toggle svg {
+  transform: scaleX(-1);
+}
+
+/* Handle both left position and collapsed state */
+.sidebar-container.left.collapsed .sidebar-toggle svg {
+  transform: rotate(180deg) scaleX(-1);
+}
+
+/* Sidebar Header Layout */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #404040;
+  min-height: 48px;
+}
+
+/* When sidebar is on the right (default) */
+.sidebar-container .sidebar-header {
+  flex-direction: row;
+}
+
+/* When sidebar is on the left */
+.sidebar-container.left .sidebar-header {
+  flex-direction: row-reverse;
+}
+
+.sidebar-position-toggle {
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  margin-left: 4px;
+  background: no-repeat center/70% url(../icons/sidebar_left.svg);
+}
+
+.sidebar-position-toggle:hover {
+  transform: scale(1.1);
+}
+
+.sidebar-position-toggle:active {
+  transform: scale(0.95);
+}
 /* Sidebar Tabs */
 .sidebar-tabs {
   display: flex;
