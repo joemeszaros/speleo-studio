@@ -71,7 +71,6 @@ export class Sidebar {
       }
     });
 
-    this.saveState();
   }
 
   setupToggle() {
@@ -101,16 +100,21 @@ export class Sidebar {
     this.isCollapsed = !this.isCollapsed;
     this.container.classList.toggle('collapsed', this.isCollapsed);
 
-    // Update CSS custom property for collapsed state
+    // Update container width directly
     if (this.isCollapsed) {
+      this.container.style.width = 'var(--sidebar-collapsed-width)';
       document.documentElement.style.setProperty('--sidebar-width', 'var(--sidebar-collapsed-width)');
     } else {
       // Restore the saved width or default
       const savedWidth = this.config?.ui?.sidebar?.width || 350;
+      this.container.style.width = savedWidth + 'px';
       document.documentElement.style.setProperty('--sidebar-width', savedWidth + 'px');
     }
 
-    this.saveState();
+    this.saveState(false);
+    setTimeout(() => {
+      this.#emitViewportResized();
+    }, 320);
   }
 
   toggleOverview() {
@@ -259,39 +263,13 @@ export class Sidebar {
     const currentPosition = this.container.classList.contains('left') ? 'left' : 'right';
     const newPosition = currentPosition === 'left' ? 'right' : 'left';
     this.setPosition(newPosition);
-
-    // Show feedback
-    this.showPositionFeedback(newPosition);
   }
-
-  showPositionFeedback(position) {
-    const feedback = document.createElement('div');
-    feedback.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 14px;
-      z-index: 10000;
-      pointer-events: none;
-    `;
-    feedback.textContent = `Sidebar moved to ${position} side`;
-
-    document.body.appendChild(feedback);
-
-    setTimeout(() => {
-      feedback.remove();
-    }, 2000);
-  }
-
-  saveState() {
+  saveState(saveWidth = true) {
     // Update config with current state
     this.config.ui.sidebar.position = this.container.classList.contains('left') ? 'left' : 'right';
-    this.config.ui.sidebar.width = this.container.offsetWidth;
+    if (saveWidth) {
+      this.config.ui.sidebar.width = this.container.offsetWidth;
+    }
     this.config.ui.sidebar.collapsed = this.isCollapsed;
   }
 
@@ -304,25 +282,38 @@ export class Sidebar {
       this.setPosition('left');
     }
 
-    // Load width
-    if (sidebarConfig.width && sidebarConfig.width !== 350) {
-      this.container.style.width = sidebarConfig.width + 'px';
-      document.documentElement.style.setProperty('--sidebar-width', sidebarConfig.width + 'px');
-      this.#emitViewportResized();
-    }
+    let widthChanged = false;
 
     // Load collapsed state
     if (sidebarConfig.collapsed) {
+      widthChanged = true;
       this.isCollapsed = true;
       this.container.classList.add('collapsed');
+      this.container.style.width = 'var(--sidebar-collapsed-width)';
       document.documentElement.style.setProperty('--sidebar-width', 'var(--sidebar-collapsed-width)');
+    } else if (sidebarConfig.width !== 350) {
+      widthChanged = true;
+      this.container.style.width = sidebarConfig.width + 'px';
+      document.documentElement.style.setProperty('--sidebar-width', sidebarConfig.width + 'px');
+    }
+
+    // due to the animation, we need to wait for the animation to finish
+    if (widthChanged) {
+      setTimeout(() => {
+        this.#emitViewportResized();
+      }, 320);
     }
 
   }
 
   updateCSSVariables() {
     // Set initial CSS variables based on current state
-    const width = this.isCollapsed ? 'var(--sidebar-collapsed-width)' : this.container.offsetWidth + 'px';
-    document.documentElement.style.setProperty('--sidebar-width', width);
+    if (this.isCollapsed) {
+      this.container.style.width = 'var(--sidebar-collapsed-width)';
+      document.documentElement.style.setProperty('--sidebar-width', 'var(--sidebar-collapsed-width)');
+    } else {
+      const width = this.container.offsetWidth + 'px';
+      document.documentElement.style.setProperty('--sidebar-width', width);
+    }
   }
 }

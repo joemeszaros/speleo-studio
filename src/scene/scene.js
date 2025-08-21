@@ -125,7 +125,7 @@ class MyScene {
     this.view.activate();
 
     window.addEventListener('resize', () => this.onWindowResize());
-    document.addEventListener('viewport-resized', () => this.onWindowResize());
+    document.addEventListener('viewport-resized', () => this.onViewportResized());
   }
 
   setFont(font) {
@@ -302,9 +302,17 @@ class MyScene {
     }
   }
 
+  onViewportResized() {
+    this.onResize(this.container.offsetWidth, this.container.offsetHeight);
+  }
+
   onWindowResize() {
-    this.width = this.container.offsetWidth;
-    this.height = this.container.offsetHeight;
+    this.onResize(this.container.offsetWidth, this.container.offsetHeight);
+  }
+
+  onResize(newWidth, newHeigth) {
+    this.width = newWidth;
+    this.height = newHeigth;
     this.sceneRenderer.setSize(this.width, this.height);
     Object.keys(this.views).forEach((k) => this.views[k].onResize(this.width, this.height));
     this.view.renderView();

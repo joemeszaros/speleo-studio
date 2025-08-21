@@ -11,7 +11,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
   animation: slideInRight 0.3s ease-out;
-  border: 1px solid #0000ff; /* Debug border - blue */
+  min-height: 0;
 }
 
 /* Create a wrapper for the main content area */
@@ -44,16 +44,33 @@
   width: var(--sidebar-collapsed-width);
 }
 
+.sidebar-container.collapsed .sidebar-tabs,
+.sidebar-container.collapsed .sidebar-content {
+  display: none;
+}
+
+.sidebar-container.collapsed .sidebar-overview {
+  display: none;
+}
+
+.sidebar-container.collapsed .sidebar-resizer {
+  display: none;
+}
+
+.sidebar-container.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+.sidebar-container.collapsed .sidebar-toggle svg {
+  transform: rotate(180deg);
+}
+
 .sidebar-container.collapsed .sidebar-content {
   display: none;
 }
 
 .sidebar-container.collapsed .sidebar-tabs {
   display: none;
-}
-
-.sidebar-container.collapsed .sidebar-toggle {
-  transform: rotate(180deg);
 }
 
 .sidebar-title {
@@ -74,6 +91,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .sidebar-toggle:hover {
@@ -671,12 +690,10 @@ body {
   --sidebar-collapsed-width: 40px;
 }
 
-/* Debug: Add borders to see layout */
 .content-area {
   display: flex;
   flex: 1;
   min-height: 0; /* Allow flexbox to shrink */
-  border: 1px solid #ff0000; /* Debug border - red */
 }
 
 #viewport {
@@ -689,7 +706,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #00ff00; /* Debug border - green */
 }
 
 /* Hide old panels when sidebar is active */
