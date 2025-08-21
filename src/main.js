@@ -27,6 +27,8 @@ class Main {
   constructor() {
 
     i18n.init().then(() => {
+      // Setup welcome panel translations
+      this.setupWelcomePanel();
 
       if (localStorage.getItem('welcome') === null) {
         document.querySelector('#welcome-panel').style.display = 'block';
@@ -41,7 +43,7 @@ class Main {
 
       const attributeDefs = new AttributesDefinitions(attributeDefintions);
 
-      // Initialize database and project systems
+      // Initialize IndexedDB database and project systems
       this.databaseManager = new DatabaseManager();
       this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
       this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
@@ -83,24 +85,7 @@ class Main {
     this.sidebar = new Sidebar(this.options);
 
     // Initialize explorer tree in sidebar
-    this.explorerTree = new ExplorerTree(document.getElementById('explorer-tree'), {
-      onNodeClick : (node) => {
-        // Handle node click - could open editor or focus on scene
-        console.log('Node clicked:', node);
-      },
-      onVisibilityToggle : (node) => {
-        // Handle visibility toggle
-        if (node.type === 'cave') {
-          scene.toggleCaveVisibility(node.data.name, node.visible);
-        } else if (node.type === 'survey') {
-          scene.toggleSurveyVisibility(node.data.name, node.visible);
-        }
-      },
-      onNodeSelect : (node) => {
-        // Handle node selection (attributes panel removed)
-        console.log('Node selected:', node);
-      }
-    });
+    this.explorerTree = new ExplorerTree(document.getElementById('explorer-tree'));
 
     // Initialize settings panel in sidebar
     this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
@@ -446,6 +431,23 @@ class Main {
       } else if (document.msExitFullscreen) {
         document.msExitFullscreen();
       }
+    }
+  }
+
+  setupWelcomePanel() {
+    // Update welcome panel translations
+    const welcomeTitle = document.querySelector('.welcome-title');
+    const welcomeSubtitle = document.querySelector('.welcome-subtitle');
+    const welcomeButton = document.querySelector('.welcome-button');
+
+    if (welcomeTitle) {
+      welcomeTitle.textContent = i18n.t('ui.welcome.title');
+    }
+    if (welcomeSubtitle) {
+      welcomeSubtitle.innerHTML = i18n.t('ui.welcome.subtitle');
+    }
+    if (welcomeButton) {
+      welcomeButton.textContent = i18n.t('ui.welcome.button');
     }
   }
 }

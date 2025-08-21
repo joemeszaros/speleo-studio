@@ -1,3 +1,5 @@
+import { i18n } from '../i18n/i18n.js';
+
 export class Sidebar {
   constructor(config = null) {
     this.container = document.getElementById('sidebar-container');
@@ -37,9 +39,13 @@ export class Sidebar {
     this.setupKeyboardShortcuts();
     this.setupResponsive();
     this.initFromConfig();
+    this.setupLanguageChangeListener();
 
     // Initialize CSS variables
     this.updateCSSVariables();
+
+    // Initialize translations
+    this.updateTranslations();
   }
 
   setupTabs() {
@@ -254,10 +260,10 @@ export class Sidebar {
 
   addTooltips() {
     const tooltips = {
-      explorer                  : 'Cave and survey explorer (Ctrl+Shift+E)',
-      settings                  : 'Scene and visualization settings (Ctrl+Shift+S)',
-      'sidebar-toggle'          : 'Toggle sidebar (Ctrl+B)',
-      'sidebar-position-toggle' : 'Toggle sidebar position (Left/Right)'
+      explorer                  : i18n.t('ui.sidebar.tooltips.explorer'),
+      settings                  : i18n.t('ui.sidebar.tooltips.settings'),
+      'sidebar-toggle'          : i18n.t('ui.sidebar.tooltips.toggle'),
+      'sidebar-position-toggle' : i18n.t('ui.sidebar.tooltips.positionToggle')
     };
 
     Object.entries(tooltips).forEach(([key, text]) => {
@@ -338,6 +344,39 @@ export class Sidebar {
     } else {
       const width = this.container.offsetWidth + 'px';
       document.documentElement.style.setProperty('--sidebar-width', width);
+    }
+  }
+
+  setupLanguageChangeListener() {
+    document.addEventListener('languageChanged', () => {
+      this.updateTranslations();
+    });
+  }
+
+  updateTranslations() {
+    this.updateTabLabels();
+    this.updateOverviewTitle();
+    this.addTooltips(); // Refresh tooltips with new translations
+  }
+
+  updateTabLabels() {
+    // Update tab labels
+    const explorerTab = document.querySelector('[data-tab="explorer"]');
+    const settingsTab = document.querySelector('[data-tab="settings"]');
+
+    if (explorerTab) {
+      explorerTab.textContent = i18n.t('ui.sidebar.tabs.explorer');
+    }
+    if (settingsTab) {
+      settingsTab.textContent = i18n.t('ui.sidebar.tabs.settings');
+    }
+  }
+
+  updateOverviewTitle() {
+    // Update scene overview title
+    const overviewTitle = document.querySelector('.sidebar-overview-title');
+    if (overviewTitle) {
+      overviewTitle.textContent = i18n.t('ui.sidebar.overview.title');
     }
   }
 }

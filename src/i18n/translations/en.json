@@ -68,6 +68,63 @@
       "project": "Project",
       "noProjectLoaded": "No project loaded"
     },
+    "settingsPanel": {
+      "buttons": {
+        "download": "Download",
+        "load": "Load",
+        "reset": "Reset"
+      },
+      "sections": {
+        "surveyLines": "Survey Lines",
+        "stations": "Stations",
+        "appearance": "Appearance",
+        "colorGradient": "Color Gradient"
+      },
+      "groups": {
+        "centerLines": "Center Lines",
+        "splays": "Splays",
+        "auxiliaryLines": "Auxiliary Lines",
+        "centerStations": "Center Stations",
+        "splayStations": "Splay Stations",
+        "auxiliaryStations": "Auxiliary Stations",
+        "generalSettings": "General Settings"
+      },
+      "labels": {
+        "color": "Color",
+        "width": "Width",
+        "opacity": "Opacity",
+        "size": "Size",
+        "backgroundColor": "Background color",
+        "labelColor": "Label color",
+        "labelSize": "Label size",
+        "sectionColor": "Section color",
+        "screenDPI": "Screen DPI",
+        "stationIconScale": "Station icon scale",
+        "depth": "Depth",
+        "addColorStop": "Add Color Stop",
+        "remove": "Remove"
+      }
+    },
+    "sidebar": {
+      "tabs": {
+        "explorer": "Explorer",
+        "settings": "Settings"
+      },
+      "tooltips": {
+        "explorer": "Cave and survey explorer (Ctrl+Shift+E)",
+        "settings": "Scene and visualization settings (Ctrl+Shift+S)",
+        "toggle": "Toggle sidebar (Ctrl+B)",
+        "positionToggle": "Toggle sidebar position (Left/Right)"
+      },
+      "overview": {
+        "title": "Scene Overview"
+      }
+    },
+    "welcome": {
+      "title": "Welcome to Speleo Studio",
+      "subtitle": "Your comprehensive cave visualization and survey management platform.<br />Explore, analyze, and visualize cave systems with professional tools.",
+      "button": "Let's Get Started"
+    },
 
     "explorer": {
       "menu": {

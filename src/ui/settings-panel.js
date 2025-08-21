@@ -1,10 +1,16 @@
 import { ConfigManager } from '../config.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class SettingsPanel {
   constructor(container, options) {
     this.container = container;
     this.options = options;
     this.init();
+
+    // Listen for language changes to refresh translations
+    document.addEventListener('languageChanged', () => {
+      this.render();
+    });
   }
 
   init() {
@@ -17,33 +23,51 @@ export class SettingsPanel {
     // Configuration Management Buttons
     this.container.appendChild(
       this.createButtonRow([
-        this.createButton('Download', () => {
+        this.createButton(i18n.t('ui.settingsPanel.buttons.download'), () => {
           this.downloadConfig();
         }),
-        this.createButton('Load', () => {
+        this.createButton(i18n.t('ui.settingsPanel.buttons.load'), () => {
           this.loadConfig();
         }),
-        this.createButton('Reset', () => {
+        this.createButton(i18n.t('ui.settingsPanel.buttons.reset'), () => {
           this.resetConfig();
         })
       ])
     );
 
     // Survey Lines Section (expanded by default)
-    this.createSection('Survey Lines', [
+    this.createSection(i18n.t('ui.settingsPanel.sections.surveyLines'), [
       // Center Lines Group
       this.createSubGroup(
-        'Center Lines',
+        i18n.t('ui.settingsPanel.groups.centerLines'),
         [
-          this.createColorInput('Color', this.options.scene.centerLines.segments.color, (value) => {
-            this.options.scene.centerLines.segments.color = value;
-          }),
-          this.createRangeInput('Width', this.options.scene.centerLines.segments.width, 0.1, 5, 0.1, (value) => {
-            this.options.scene.centerLines.segments.width = value;
-          }),
-          this.createRangeInput('Opacity', this.options.scene.centerLines.segments.opacity, 0, 1, 0.1, (value) => {
-            this.options.scene.centerLines.segments.opacity = value;
-          })
+          this.createColorInput(
+            i18n.t('ui.settingsPanel.labels.color'),
+            this.options.scene.centerLines.segments.color,
+            (value) => {
+              this.options.scene.centerLines.segments.color = value;
+            }
+          ),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.width'),
+            this.options.scene.centerLines.segments.width,
+            0.1,
+            5,
+            0.1,
+            (value) => {
+              this.options.scene.centerLines.segments.width = value;
+            }
+          ),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.opacity'),
+            this.options.scene.centerLines.segments.opacity,
+            0,
+            1,
+            0.1,
+            (value) => {
+              this.options.scene.centerLines.segments.opacity = value;
+            }
+          )
         ],
         this.options.scene.centerLines.segments,
         (value) => {
@@ -53,14 +77,25 @@ export class SettingsPanel {
 
       // Splays Group
       this.createSubGroup(
-        'Splays',
+        i18n.t('ui.settingsPanel.groups.splays'),
         [
-          this.createColorInput('Color', this.options.scene.splays.segments.color, (value) => {
-            this.options.scene.splays.segments.color = value;
-          }),
-          this.createRangeInput('Width', this.options.scene.splays.segments.width, 0.1, 5, 0.1, (value) => {
-            this.options.scene.splays.segments.width = value;
-          })
+          this.createColorInput(
+            i18n.t('ui.settingsPanel.labels.color'),
+            this.options.scene.splays.segments.color,
+            (value) => {
+              this.options.scene.splays.segments.color = value;
+            }
+          ),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.width'),
+            this.options.scene.splays.segments.width,
+            0.1,
+            5,
+            0.1,
+            (value) => {
+              this.options.scene.splays.segments.width = value;
+            }
+          )
         ],
         this.options.scene.splays.segments,
         (value) => {
@@ -70,14 +105,25 @@ export class SettingsPanel {
 
       // Auxiliary Lines Group
       this.createSubGroup(
-        'Auxiliary Lines',
+        i18n.t('ui.settingsPanel.groups.auxiliaryLines'),
         [
-          this.createColorInput('Color', this.options.scene.auxiliaries.segments.color, (value) => {
-            this.options.scene.auxiliaries.segments.color = value;
-          }),
-          this.createRangeInput('Width', this.options.scene.auxiliaries.segments.width, 0.1, 5, 0.1, (value) => {
-            this.options.scene.auxiliaries.segments.width = value;
-          })
+          this.createColorInput(
+            i18n.t('ui.settingsPanel.labels.color'),
+            this.options.scene.auxiliaries.segments.color,
+            (value) => {
+              this.options.scene.auxiliaries.segments.color = value;
+            }
+          ),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.width'),
+            this.options.scene.auxiliaries.segments.width,
+            0.1,
+            5,
+            0.1,
+            (value) => {
+              this.options.scene.auxiliaries.segments.width = value;
+            }
+          )
         ],
         this.options.scene.auxiliaries.segments,
         (value) => {
@@ -88,18 +134,29 @@ export class SettingsPanel {
 
     // Stations Section (collapsed by default)
     this.createSection(
-      'Stations',
+      i18n.t('ui.settingsPanel.sections.stations'),
       [
         // Center Stations Group
         this.createSubGroup(
-          'Center Stations',
+          i18n.t('ui.settingsPanel.groups.centerStations'),
           [
-            this.createColorInput('Color', this.options.scene.centerLines.spheres.color, (value) => {
-              this.options.scene.centerLines.spheres.color = value;
-            }),
-            this.createRangeInput('Size', this.options.scene.centerLines.spheres.radius, 0.1, 2, 0.1, (value) => {
-              this.options.scene.centerLines.spheres.radius = value;
-            })
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.color'),
+              this.options.scene.centerLines.spheres.color,
+              (value) => {
+                this.options.scene.centerLines.spheres.color = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.size'),
+              this.options.scene.centerLines.spheres.radius,
+              0.1,
+              2,
+              0.1,
+              (value) => {
+                this.options.scene.centerLines.spheres.radius = value;
+              }
+            )
           ],
           this.options.scene.centerLines.spheres,
           (value) => {
@@ -109,14 +166,25 @@ export class SettingsPanel {
 
         // Splay Stations Group
         this.createSubGroup(
-          'Splay Stations',
+          i18n.t('ui.settingsPanel.groups.splayStations'),
           [
-            this.createColorInput('Color', this.options.scene.splays.spheres.color, (value) => {
-              this.options.scene.splays.spheres.color = value;
-            }),
-            this.createRangeInput('Size', this.options.scene.splays.spheres.radius, 0.1, 2, 0.1, (value) => {
-              this.options.scene.splays.spheres.radius = value;
-            })
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.color'),
+              this.options.scene.splays.spheres.color,
+              (value) => {
+                this.options.scene.splays.spheres.color = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.size'),
+              this.options.scene.splays.spheres.radius,
+              0.1,
+              2,
+              0.1,
+              (value) => {
+                this.options.scene.splays.spheres.radius = value;
+              }
+            )
           ],
           this.options.scene.splays.spheres,
           (value) => {
@@ -126,14 +194,25 @@ export class SettingsPanel {
 
         // Auxiliary Stations Group
         this.createSubGroup(
-          'Auxiliary Stations',
+          i18n.t('ui.settingsPanel.groups.auxiliaryStations'),
           [
-            this.createColorInput('Color', this.options.scene.auxiliaries.spheres.color, (value) => {
-              this.options.scene.auxiliaries.spheres.color = value;
-            }),
-            this.createRangeInput('Size', this.options.scene.auxiliaries.spheres.radius, 0.1, 2, 0.1, (value) => {
-              this.options.scene.auxiliaries.spheres.radius = value;
-            })
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.color'),
+              this.options.scene.auxiliaries.spheres.color,
+              (value) => {
+                this.options.scene.auxiliaries.spheres.color = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.size'),
+              this.options.scene.auxiliaries.spheres.radius,
+              0.1,
+              2,
+              0.1,
+              (value) => {
+                this.options.scene.auxiliaries.spheres.radius = value;
+              }
+            )
           ],
           this.options.scene.auxiliaries.spheres,
           (value) => {
@@ -142,9 +221,9 @@ export class SettingsPanel {
         ),
 
         // General Station Settings Group
-        this.createSubGroup('General Settings', [
+        this.createSubGroup(i18n.t('ui.settingsPanel.groups.generalSettings'), [
           this.createRangeInput(
-            'Station icon scale',
+            i18n.t('ui.settingsPanel.labels.stationIconScale'),
             this.options.scene.stationAttributes.iconScale,
             0.1,
             3,
@@ -160,23 +239,49 @@ export class SettingsPanel {
 
     // Appearance Section
     this.createSection(
-      'Appearance',
+      i18n.t('ui.settingsPanel.sections.appearance'),
       [
-        this.createColorInput('Background color', this.options.scene.background.color, (value) => {
-          this.options.scene.background.color = value;
-        }),
-        this.createColorInput('Label color', this.options.scene.labels.color, (value) => {
-          this.options.scene.labels.color = value;
-        }),
-        this.createRangeInput('Label size', this.options.scene.labels.size, 8, 32, 1, (value) => {
-          this.options.scene.labels.size = value;
-        }),
-        this.createColorInput('Section color', this.options.scene.sectionAttributes.color, (value) => {
-          this.options.scene.sectionAttributes.color = value;
-        }),
-        this.createRangeInput('Screen DPI', this.options.screen.DPI, 72, 300, 1, (value) => {
-          this.options.screen.DPI = value;
-        })
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.backgroundColor'),
+          this.options.scene.background.color,
+          (value) => {
+            this.options.scene.background.color = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.labelColor'),
+          this.options.scene.labels.color,
+          (value) => {
+            this.options.scene.labels.color = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.labelSize'),
+          this.options.scene.labels.size,
+          8,
+          32,
+          1,
+          (value) => {
+            this.options.scene.labels.size = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.sectionColor'),
+          this.options.scene.sectionAttributes.color,
+          (value) => {
+            this.options.scene.sectionAttributes.color = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.screenDPI'),
+          this.options.screen.DPI,
+          72,
+          300,
+          1,
+          (value) => {
+            this.options.screen.DPI = value;
+          }
+        )
       ],
       true
     );
@@ -410,7 +515,7 @@ export class SettingsPanel {
     titleElement.className = 'settings-group-title';
     titleElement.innerHTML = `
       <span class="settings-group-toggle">${collapsed ? '▶' : '▼'}</span>
-      <span>Color Gradient</span>
+      <span>${i18n.t('ui.settingsPanel.sections.colorGradient')}</span>
     `;
     titleElement.onclick = () => this.toggleSection(section);
     section.appendChild(titleElement);
@@ -423,7 +528,7 @@ export class SettingsPanel {
 
     const addButton = document.createElement('button');
     addButton.className = 'settings-input settings-add-button';
-    addButton.textContent = 'Add Color Stop';
+    addButton.textContent = i18n.t('ui.settingsPanel.labels.addColorStop');
     addButton.onclick = () => this.addGradientColor();
     content.appendChild(addButton);
 
@@ -461,7 +566,7 @@ export class SettingsPanel {
 
     const depthLabel = document.createElement('label');
     depthLabel.className = 'settings-label';
-    depthLabel.textContent = 'Depth';
+    depthLabel.textContent = i18n.t('ui.settingsPanel.labels.depth');
 
     const depthInput = document.createElement('input');
     depthInput.type = 'number';
@@ -488,7 +593,7 @@ export class SettingsPanel {
 
     const colorLabel = document.createElement('label');
     colorLabel.className = 'settings-label';
-    colorLabel.textContent = 'Color';
+    colorLabel.textContent = i18n.t('ui.settingsPanel.labels.color');
 
     const colorInput = document.createElement('input');
     colorInput.type = 'color';
@@ -508,7 +613,7 @@ export class SettingsPanel {
     container.appendChild(controlsRow);
 
     const removeButton = document.createElement('button');
-    removeButton.textContent = 'Remove';
+    removeButton.textContent = i18n.t('ui.settingsPanel.labels.remove');
     removeButton.style.background = '#dc2626';
     removeButton.style.color = 'white';
     removeButton.style.border = 'none';

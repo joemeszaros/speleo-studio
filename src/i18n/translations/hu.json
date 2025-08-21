@@ -68,6 +68,63 @@
       "project": "Projekt",
       "noProjectLoaded": "Nincs betöltött projekt"
     },
+    "settingsPanel": {
+      "buttons": {
+        "download": "Letöltés",
+        "load": "Betöltés",
+        "reset": "Visszaállítás"
+      },
+      "sections": {
+        "surveyLines": "Felmérés vonalak",
+        "stations": "Pontok",
+        "appearance": "Megjelenés",
+        "colorGradient": "Szín átmenet"
+      },
+      "groups": {
+        "centerLines": "Középvonalak",
+        "splays": "Tüskék",
+        "auxiliaryLines": "Segédvonalak",
+        "centerStations": "Közép pontok",
+        "splayStations": "Tüske pontok",
+        "auxiliaryStations": "Segéd pontok",
+        "generalSettings": "Általános beállítások"
+      },
+      "labels": {
+        "color": "Szín",
+        "width": "Szélesség",
+        "opacity": "Átlátszóság",
+        "size": "Méret",
+        "backgroundColor": "Háttér szín",
+        "labelColor": "Címke szín",
+        "labelSize": "Címke méret",
+        "sectionColor": "Szakasz szín",
+        "screenDPI": "Képernyő DPI",
+        "stationIconScale": "Pont ikon méretezés",
+        "depth": "Mélység",
+        "addColorStop": "Átmenet hozzáadása",
+        "remove": "Eltávolítás"
+      }
+    },
+    "sidebar": {
+      "tabs": {
+        "explorer": "Felfedező",
+        "settings": "Beállítások"
+      },
+      "tooltips": {
+        "explorer": "Barlang és felmérés böngésző (Ctrl+Shift+E)",
+        "settings": "Jelenet és megjelenítési beállítások (Ctrl+Shift+S)",
+        "toggle": "Oldalsáv ki/be (Ctrl+B)",
+        "positionToggle": "Oldalsáv pozíció váltás (Bal/Jobb)"
+      },
+      "overview": {
+        "title": "Jelenet áttekintő"
+      }
+    },
+    "welcome": {
+      "title": "Üdvözöljük a Speleo Studio-ban",
+      "subtitle": "Az átfogó barlang vizualizációs és felmérés kezelő platform.<br />Fedezzen fel, elemezzen és vizualizáljon barlangrendszereket professzionális eszközökkel.",
+      "button": "Kezdjük el"
+    },
 
     "explorer": {
       "menu": {
