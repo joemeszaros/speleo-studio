@@ -6,10 +6,7 @@
           "name": "File",
           "new": "New cave",
           "open": "Open cave(s)",
-          "export": "Export cave(s)",
-          "downloadConfig": "Download configuration",
-          "loadConfig": "Load configuration",
-          "resetConfig": "Reset configuration"
+          "export": "Export cave(s)"
         },
         "project": {
           "name": "Project",
@@ -71,23 +68,7 @@
       "project": "Project",
       "noProjectLoaded": "No project loaded"
     },
-    "controlPanel": {
-      "folders": {
-        "colorGradient": "Color gradient",
-        "centerLines": "Center lines",
-        "splays": "Splays",
-        "auxiliary": "Auxiliary",
-        "startingPoints": "Starting Points",
-        "textLabels": "Text labels",
-        "scene": "Scene",
-        "sectionAttributes": "Section attributes",
-        "stationAttributes": "Station attributes",
-        "screen": "Screen"
-      },
-      "labels": {
-        "iconScale": "Icon scale"
-      }
-    },
+
     "explorer": {
       "menu": {
         "editCaveData": "Edit cave sheet",

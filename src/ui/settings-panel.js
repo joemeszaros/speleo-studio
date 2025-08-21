@@ -288,6 +288,10 @@ export class SettingsPanel {
     input.max = max;
     input.step = step;
     input.value = value;
+    input.oninput = (e) => {
+      const newValue = parseFloat(e.target.value);
+      valueDisplay.value = newValue.toFixed(1);
+    };
     input.onchange = (e) => {
       const newValue = parseFloat(e.target.value);
       onChange(newValue);

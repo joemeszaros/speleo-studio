@@ -6,10 +6,7 @@
           "name": "Fájl",
           "new": "Új barlang",
           "open": "Barlang(ok) megnyitása",
-          "export": "Barlang(ok) exportálása",
-          "downloadConfig": "Konfiguráció letöltése",
-          "loadConfig": "Konfiguráció betöltése",
-          "resetConfig": "Konfiguráció visszaállítása"
+          "export": "Barlang(ok) exportálása"
         },
         "project": {
           "name": "Projekt",
@@ -71,23 +68,7 @@
       "project": "Projekt",
       "noProjectLoaded": "Nincs betöltött projekt"
     },
-    "controlPanel": {
-      "folders": {
-        "colorGradient": "Szín gradiens",
-        "centerLines": "Középvonalak",
-        "splays": "Szélesítések",
-        "auxiliary": "Segédvonalak",
-        "startingPoints": "Kezdőpontok",
-        "textLabels": "Szövegcímkék",
-        "scene": "Jelenet",
-        "sectionAttributes": "Szakasz attribútumok",
-        "stationAttributes": "Pont attribútumok",
-        "screen": "Képernyő"
-      },
-      "labels": {
-        "iconScale": "Ikon méretezés"
-      }
-    },
+
     "explorer": {
       "menu": {
         "editCaveData": "Adatlap szerkesztése",

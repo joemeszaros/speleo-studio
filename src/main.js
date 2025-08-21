@@ -183,8 +183,7 @@ class Main {
       this.projectManager,
       this.projectSystem,
       this.projectPanel,
-      document.getElementById('export-panel'),
-      this.controls
+      document.getElementById('export-panel')
     );
 
     this.importers = {
@@ -329,7 +328,7 @@ class Main {
 
           if (loadedConfig) {
             ConfigManager.deepMerge(this.options, loadedConfig);
-            this.controls.reload();
+            this.settingsPanel.render();
             console.log('✅ Configuration loaded successfully from file');
             showSuccessPanel(`Configuration loaded successfully from ${file.name}`);
           } else {
