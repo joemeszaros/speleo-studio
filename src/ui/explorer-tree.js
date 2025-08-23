@@ -97,58 +97,12 @@ export class ExplorerTree {
     this.render();
   }
 
-  updateCave(cave, predicate) {
-    let caveNode;
-    if (predicate) {
-      this.nodes.values().find((node) => predicate(node.data));
-      // Find cave using predicate function
-      for (const [, node] of this.nodes) {
-        if (predicate(node)) {
-          caveNode = node;
-          break;
-        }
-      }
-    } else {
-      // Find cave by name
-      caveNode = this.nodes.get(cave.name);
-    }
+  updateCave(cave) {
+    const caveNode = this.nodes.get(cave.name);
 
     if (caveNode) {
       caveNode.data = cave;
       caveNode.visible = cave.visible !== false;
-      this.render();
-    }
-  }
-
-  updateSurvey(cave, survey, predicate) {
-    let caveNode;
-    if (predicate) {
-      // Find cave using predicate function
-      for (const [, node] of this.nodes) {
-        if (predicate(node)) {
-          caveNode = node;
-          break;
-        }
-      }
-    } else {
-      // Find cave by name
-      caveNode = this.nodes.get(cave.name);
-    }
-
-    if (!caveNode) return;
-
-    let surveyNode;
-    if (predicate) {
-      // Find survey using predicate function
-      surveyNode = caveNode.children.find(predicate);
-    } else {
-      // Find survey by name
-      surveyNode = caveNode.children.find((s) => s.label === survey.name);
-    }
-
-    if (surveyNode) {
-      surveyNode.data = survey;
-      surveyNode.visible = survey.visible !== false;
       this.render();
     }
   }

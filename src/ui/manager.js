@@ -203,7 +203,7 @@ class ProjectManager {
     this.recalculateCave(cave);
     this.reloadOnScene(cave);
     this.scene.view.renderView();
-    this.explorer.updateCave(cave, (n) => n.name === cave.name);
+    this.explorer.updateCave(cave);
   }
 
   calculateFragmentAttributes(cave) {
