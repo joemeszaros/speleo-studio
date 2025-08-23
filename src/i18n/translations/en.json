@@ -211,6 +211,8 @@
         "z": "Z distance",
         "horizontal": "Horizontal distance",
         "spatial": "Spatial distance",
+        "azimuth": "Azimuth",
+        "clino": "Clino",
         "error": {
           "noStartingPoint": "You should select the starting point for distance measurement"
         }

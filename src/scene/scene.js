@@ -644,26 +644,32 @@ class MyScene {
               e['auxiliaries'].material = newAuxiliaryMaterial;
             } else if (mode === 'persurvey') {
               const survey = this.db.getSurvey(caveName, surveyName);
-              if (survey.color === undefined) return; // = continue
-              const hexColor = survey.color.hex();
-              e['centerLines'].material = new LineMaterial({
-                color       : hexColor,
-                linewidth   : clConfig.segments.width,
-                transparent : true,
-                opacity     : clConfig.segments.opacity
-              });
-              e['splays'].material = new LineMaterial({
-                color       : hexColor,
-                linewidth   : splayConfig.segments.width,
-                transparent : true,
-                opacity     : clConfig.segments.opacity
-              });
-              e['auxiliaries'].material = new LineMaterial({
-                color       : hexColor,
-                linewidth   : auxiliaryConfig.segments.width,
-                transparent : true,
-                opacity     : clConfig.segments.opacity
-              });
+              if (survey.color === undefined) {
+                e['centerLines'].material = this.materials.segments.fallback;
+                e['splays'].material = this.materials.segments.fallback;
+                e['auxiliaries'].material = this.materials.segments.fallback;
+
+              } else {
+
+                e['centerLines'].material = new LineMaterial({
+                  color       : survey.color,
+                  linewidth   : clConfig.segments.width,
+                  transparent : true,
+                  opacity     : clConfig.segments.opacity
+                });
+                e['splays'].material = new LineMaterial({
+                  color       : survey.color,
+                  linewidth   : splayConfig.segments.width,
+                  transparent : true,
+                  opacity     : clConfig.segments.opacity
+                });
+                e['auxiliaries'].material = new LineMaterial({
+                  color       : survey.color,
+                  linewidth   : auxiliaryConfig.segments.width,
+                  transparent : true,
+                  opacity     : clConfig.segments.opacity
+                });
+              }
             }
 
           });
@@ -912,6 +918,7 @@ class MyScene {
       splayLineMat = gradientMaterial;
       auxiliaryLineMat = gradientMaterial;
     } else {
+      //FIXME: sophisticate percave, persurvey, global
       clLineMat = this.materials.segments.centerLine;
       splayLineMat = this.materials.segments.splay;
       auxiliaryLineMat = this.materials.segments.auxiliary;

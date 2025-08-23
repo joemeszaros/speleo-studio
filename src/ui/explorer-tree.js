@@ -1,18 +1,17 @@
-import { i18n } from '../i18n/i18n.js';
+import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
+import { CaveEditor } from './editor/cave.js';
 
 export class ExplorerTree {
-  constructor(container, options = {}) {
+  constructor(db, options, scene, container) {
+    this.db = db;
+    this.options = options;
+    this.scene = scene;
     this.container = container;
-    this.options = {
-      onNodeClick        : () => {},
-      onVisibilityToggle : () => {},
-      onNodeSelect       : () => {},
-      ...options
-    };
 
     this.nodes = new Map();
     this.selectedNode = null;
     this.expandedNodes = new Set();
+    this.contextMenu = null;
 
     this.init();
   }
@@ -37,12 +36,12 @@ export class ExplorerTree {
     return node;
   }
 
-  addSurvey(caveName, survey) {
-    const caveNode = this.nodes.get(caveName);
+  addSurvey(cave, survey) {
+    const caveNode = this.nodes.get(cave.name);
     if (!caveNode) return null;
 
     const surveyNode = {
-      id       : `${caveName}-${survey.name}`,
+      id       : `${cave.name}-${survey.name}`,
       type     : 'survey',
       label    : survey.name,
       data     : survey,
@@ -52,7 +51,8 @@ export class ExplorerTree {
     };
 
     caveNode.children.push(surveyNode);
-    this.nodes.set(surveyNode.id, surveyNode);
+    // Don't add survey nodes to the nodes Map - they should only exist as children
+    // this.nodes.set(surveyNode.id, surveyNode);
     this.render();
     return surveyNode;
   }
@@ -60,11 +60,6 @@ export class ExplorerTree {
   removeCave(caveName) {
     const caveNode = this.nodes.get(caveName);
     if (!caveNode) return;
-
-    // Remove all survey nodes
-    caveNode.children.forEach((survey) => {
-      this.nodes.delete(survey.id);
-    });
 
     this.nodes.delete(caveName);
     this.render();
@@ -74,29 +69,66 @@ export class ExplorerTree {
     const caveNode = this.nodes.get(caveName);
     if (!caveNode) return;
 
-    const surveyIndex = caveNode.children.findIndex((s) => s.name === surveyName);
+    const surveyIndex = caveNode.children.findIndex((s) => s.label === surveyName);
     if (surveyIndex !== -1) {
-      const surveyNode = caveNode.children[surveyIndex];
       caveNode.children.splice(surveyIndex, 1);
-      this.nodes.delete(surveyNode.id);
       this.render();
     }
   }
 
-  updateCave(cave) {
-    const node = this.nodes.get(cave.name);
-    if (node) {
-      node.data = cave;
-      node.visible = cave.visible !== false;
+  // Alias for removeCave to match the interface expected by the project manager
+  deleteCave(caveName) {
+    return this.removeCave(caveName);
+  }
+
+  updateCave(cave, predicate) {
+    let caveNode;
+    if (predicate) {
+      // Find cave using predicate function
+      for (const [, node] of this.nodes) {
+        if (predicate(node)) {
+          caveNode = node;
+          break;
+        }
+      }
+    } else {
+      // Find cave by name
+      caveNode = this.nodes.get(cave.name);
+    }
+
+    if (caveNode) {
+      caveNode.data = cave;
+      caveNode.visible = cave.visible !== false;
       this.render();
     }
   }
 
-  updateSurvey(cave, survey) {
-    const caveNode = this.nodes.get(cave.name);
+  updateSurvey(cave, survey, predicate) {
+    let caveNode;
+    if (predicate) {
+      // Find cave using predicate function
+      for (const [, node] of this.nodes) {
+        if (predicate(node)) {
+          caveNode = node;
+          break;
+        }
+      }
+    } else {
+      // Find cave by name
+      caveNode = this.nodes.get(cave.name);
+    }
+
     if (!caveNode) return;
 
-    const surveyNode = caveNode.children.find((s) => s.name === survey.name);
+    let surveyNode;
+    if (predicate) {
+      // Find survey using predicate function
+      surveyNode = caveNode.children.find(predicate);
+    } else {
+      // Find survey by name
+      surveyNode = caveNode.children.find((s) => s.label === survey.name);
+    }
+
     if (surveyNode) {
       surveyNode.data = survey;
       surveyNode.visible = survey.visible !== false;
@@ -104,8 +136,22 @@ export class ExplorerTree {
     }
   }
 
+  // Helper method to find a node by ID (searches both top-level and children)
+  findNodeById(nodeId) {
+    // First check top-level nodes
+    const topLevelNode = this.nodes.get(nodeId);
+    if (topLevelNode) return topLevelNode;
+
+    // If not found, search through children of all caves
+    for (const [, caveNode] of this.nodes) {
+      const surveyNode = caveNode.children.find((s) => s.id === nodeId);
+      if (surveyNode) return surveyNode;
+    }
+    return null;
+  }
+
   toggleNodeExpansion(nodeId) {
-    const node = this.nodes.get(nodeId);
+    const node = this.findNodeById(nodeId);
     if (!node) return;
 
     node.expanded = !node.expanded;
@@ -119,11 +165,18 @@ export class ExplorerTree {
   }
 
   toggleNodeVisibility(nodeId) {
-    const node = this.nodes.get(nodeId);
+    const node = this.findNodeById(nodeId);
     if (!node) return;
 
     node.visible = !node.visible;
-    this.options.onVisibilityToggle(node);
+    if (node.type === 'survey') {
+      this.scene.setSurveyVisibility(node.parent.data.name, node.data.name, node.visible);
+    } else if (node.type === 'cave') {
+      node.data.visible = node.visible;
+      node.data.surveys.forEach((survey) => {
+        this.scene.setSurveyVisibility(node.data.name, survey.name, node.visible);
+      });
+    }
     this.render();
   }
 
@@ -132,14 +185,198 @@ export class ExplorerTree {
       this.selectedNode.selected = false;
     }
 
-    const node = this.nodes.get(nodeId);
+    const node = this.findNodeById(nodeId);
     if (node) {
       node.selected = true;
       this.selectedNode = node;
-      this.options.onNodeSelect(node);
+      //this.options.onNodeSelect(node);
+
+      this.render();
+
+      // Show context popup for surveys after render is complete
+      if (node.type === 'survey') {
+        // Use setTimeout to ensure DOM is updated after render
+        setTimeout(() => {
+          this.showSurveyContextMenu(node);
+        }, 10);
+      } else if (node.type === 'cave') {
+        setTimeout(() => {
+          this.showCaveContextMenu(node);
+        }, 10);
+      } else {
+        this.hideContextMenu();
+      }
+    } else {
+      this.render();
+    }
+  }
+
+  showCaveContextMenu(caveNode) {
+    const items = [
+      {
+        icon    : '📝',
+        title   : 'Open cave sheet editor',
+        onclick : () => {
+          this.editor = new CaveEditor(
+            this.db,
+            this.options,
+            caveNode.data,
+            this.scene,
+            document.getElementById('fixed-size-editor')
+          );
+          this.editor.setupPanel();
+          this.editor.show();
+        }
+      },
+      {
+        icon    : '〽🧩🔀',
+        title   : 'Rename cave',
+        onclick : () => {
+          const newName = prompt('Enter new cave name');
+          if (newName) {
+            this.db.renameCave(caveNode.data.name, newName);
+          }
+        }
+      },
+      {
+        icon    : '〽',
+        title   : 'Rename cave',
+        onclick : () => {
+          const newName = prompt('Enter new cave name');
+          if (newName) {
+            this.db.renameCave(caveNode.data.name, newName);
+          }
+        }
+      },
+      {
+        icon    : '🗑️',
+        title   : 'Delete Cave',
+        onclick : () => {
+          this.db.deleteCave(caveNode.data.name);
+        }
+      }
+    ];
+    this.showContextMenu(caveNode, items);
+  }
+
+  showSurveyContextMenu(surveyNode) {
+    const items = [
+      {
+        icon    : '📝',
+        title   : 'Open Survey Editor',
+        onclick : () => {
+          this.editor = new SurveyEditor(
+            this.options,
+            surveyNode.parent.data,
+            surveyNode.data,
+            this.scene,
+            document.getElementById('resizable-editor')
+          );
+          this.editor.setupPanel();
+          this.editor.show();
+        }
+      },
+      {
+        icon    : '🔠',
+        title   : 'Open Survey Sheet Editor',
+        onclick : () => {
+          this.editor = new SurveySheetEditor(
+            this.db,
+            surveyNode.parent.data,
+            surveyNode.data,
+            document.getElementById('fixed-size-editor')
+          );
+          this.editor.setupPanel();
+          this.editor.show();
+        }
+      },
+      {
+        icon    : '🎨',
+        title   : 'Set survey color',
+        onclick : () => {
+          const colorPicker = document.createElement('input');
+          colorPicker.type = 'color';
+          if (surveyNode.data.color) {
+            colorPicker.value = surveyNode.data.color;
+          }
+          colorPicker.click();
+
+          colorPicker.addEventListener('input', (e) => {
+            surveyNode.data.color = e.target.value;
+            this.render();
+          });
+
+        }
+      },
+      {
+        icon    : '🗑️',
+        title   : 'Delete Survey',
+        onclick : () => {
+          const result = confirm(`Do you want to delete survey '${surveyNode.data.name}'?`);
+          if (result) {
+            this.db.deleteSurvey(surveyNode.parent.data.name, surveyNode.data.name);
+            const event = new CustomEvent('surveyDeleted', {
+              detail : {
+                cave   : surveyNode.parent.data.name,
+                survey : surveyNode.data.name
+              }
+            });
+            document.dispatchEvent(event);
+          }
+        }
+      }
+
+    ];
+    this.showContextMenu(surveyNode, items);
+  }
+
+  showContextMenu(node, items) {
+    this.hideContextMenu();
+
+    this.contextMenu = document.createElement('div');
+    this.contextMenu.className = 'explorer-context-menu';
+
+    items.forEach((option) => {
+      const optionElement = document.createElement('div');
+      optionElement.className = 'context-menu-option';
+      optionElement.innerHTML = option.icon;
+      optionElement.title = option.title;
+      optionElement.onclick = () => {
+        option.onclick();
+        this.hideContextMenu();
+      };
+      this.contextMenu.appendChild(optionElement);
+    });
+
+    // Position the context menu relative to the selected node
+    const element = this.container.querySelector(`[data-node-id="${node.id}"]`);
+    if (element) {
+      const rect = element.getBoundingClientRect();
+
+      this.contextMenu.style.position = 'fixed';
+      this.contextMenu.style.left = `${rect.left + 10}px`;
+      this.contextMenu.style.top = `${rect.top + 30}px`;
     }
 
-    this.render();
+    document.body.appendChild(this.contextMenu);
+
+    // Hide context menu when clicking outside
+    setTimeout(() => {
+      document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this), { once: true });
+    }, 200);
+  }
+
+  hideContextMenu() {
+    if (this.contextMenu) {
+      this.contextMenu.remove();
+      this.contextMenu = null;
+    }
+  }
+
+  hideContextMenuOnClickOutside(event) {
+    if (this.contextMenu && !this.contextMenu.contains(event.target)) {
+      this.hideContextMenu();
+    }
   }
 
   render() {
@@ -157,15 +394,16 @@ export class ExplorerTree {
     }
 
     // Render caves and their surveys
-    for (const [caveId, caveNode] of this.nodes) {
+    this.nodes.values().forEach((caveNode) => {
       this.renderNode(caveNode, 0);
-    }
+    });
   }
 
   renderNode(node, level) {
     const nodeElement = document.createElement('div');
     nodeElement.className = 'explorer-tree-node';
-    nodeElement.style.paddingLeft = `${level * 20}px`;
+    nodeElement.style.paddingLeft = `${level * 10}px`;
+    nodeElement.setAttribute('data-node-id', node.id);
 
     if (node.selected) {
       nodeElement.classList.add('selected');
@@ -189,30 +427,60 @@ export class ExplorerTree {
       nodeElement.appendChild(spacer);
     }
 
-    // Icon
-    const icon = document.createElement('div');
-    icon.className = 'explorer-tree-icon';
-    if (node.type === 'cave') {
-      icon.innerHTML = '🏔️';
-    } else if (node.type === 'survey') {
-      icon.innerHTML = '📊';
+    // Warning icons for surveys with issues
+    if (node.type === 'survey') {
+      const survey = node.data;
+      const hasIssues = survey.isolated === true || survey.orphanShotIds.size > 0 || survey.invalidShotIds.size > 0;
+
+      if (hasIssues) {
+        const warningIcon = document.createElement('div');
+        warningIcon.className = 'explorer-tree-warning';
+
+        if (survey.isolated === true) {
+          warningIcon.innerHTML = '❌';
+          warningIcon.title = 'Survey is isolated from the cave network';
+          nodeElement.title = 'Survey is isolated from the cave network';
+        } else if (survey.orphanShotIds.size > 0) {
+          warningIcon.innerHTML = '⚠️';
+          warningIcon.title = `Survey has ${survey.orphanShotIds.size} orphan shots`;
+          nodeElement.title = `Survey has ${survey.orphanShotIds.size} orphan shots`;
+        } else if (survey.invalidShotIds.size > 0) {
+          warningIcon.innerHTML = '⚠️';
+          warningIcon.title = `Survey has ${survey.invalidShotIds.size} invalid shots`;
+          nodeElement.title = `Survey has ${survey.invalidShotIds.size} invalid shots`;
+        }
+
+        nodeElement.appendChild(warningIcon);
+      }
     }
-    nodeElement.appendChild(icon);
 
     // Label
     const label = document.createElement('div');
     label.className = 'explorer-tree-label';
     label.textContent = node.label;
+    if (node.data.color) {
+      label.style.color = node.data.color;
+    }
     label.onclick = () => {
       this.selectNode(node.id);
-      this.options.onNodeClick(node);
+      //this.options.onNodeClick(node);
     };
 
     // Add double-click to expand/collapse
     label.ondblclick = (e) => {
       e.stopPropagation();
-      if (node.children && node.children.length > 0) {
+      if (node.children && node.children.length > 0 && node.type === 'cave') {
         this.toggleNodeExpansion(node.id);
+      } else if (node.type === 'survey') {
+        this.editor = new SurveyEditor(
+          this.options,
+          node.parent.data,
+          node.data,
+          this.scene,
+          document.getElementById('resizable-editor')
+        );
+        this.editor.setupPanel();
+        this.editor.show();
       }
     };
     nodeElement.appendChild(label);
@@ -220,7 +488,13 @@ export class ExplorerTree {
     // Visibility toggle
     const visibility = document.createElement('div');
     visibility.className = `explorer-tree-visibility ${node.visible ? 'visible' : 'hidden'}`;
-    visibility.innerHTML = node.visible ? '👁️' : '👁️‍🗨️';
+
+    if (node.visible) {
+      visibility.innerHTML = '👁️';
+    } else {
+      visibility.innerHTML = '<span class="eye-strikethrough">👁️</span>';
+    }
+
     visibility.onclick = (e) => {
       e.stopPropagation();
       this.toggleNodeVisibility(node.id);
@@ -238,13 +512,7 @@ export class ExplorerTree {
   }
 
   getVisibleNodes() {
-    const visible = [];
-    for (const [id, node] of this.nodes) {
-      if (node.visible) {
-        visible.push(node);
-      }
-    }
-    return visible;
+    return Array.from(this.nodes.values()).filter((node) => node.visible && node.type === 'cave');
   }
 
   expandAll() {

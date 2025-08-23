@@ -30,6 +30,13 @@ class Materials {
           worldUnits      : false,
           vertexColors    : false,
           alphaToCoverage : false
+        }),
+        fallback : new LineMaterial({
+          color           : '#ffffff',
+          linewidth       : this.config.centerLines.segments.width,
+          worldUnits      : false,
+          vertexColors    : false,
+          alphaToCoverage : false
         })
       },
       text   : new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),

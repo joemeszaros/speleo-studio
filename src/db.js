@@ -12,13 +12,6 @@ class Database {
       const indexToDelete = cave.surveys.indexOf(survey);
       if (indexToDelete !== -1) {
         cave.surveys.splice(indexToDelete, 1);
-        const event = new CustomEvent('surveyDeleted', {
-          detail : {
-            cave   : caveName,
-            survey : surveyName
-          }
-        });
-        document.dispatchEvent(event);
       }
     }
   }

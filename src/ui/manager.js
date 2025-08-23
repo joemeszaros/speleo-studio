@@ -99,7 +99,7 @@ class ProjectManager {
     await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
-  onSurveyDeleted(e) {
+  async onSurveyDeleted(e) {
     const caveName = e.detail.cave;
     const surveyName = e.detail.survey;
     this.scene.disposeSurvey(caveName, surveyName);
@@ -107,8 +107,9 @@ class ProjectManager {
     this.recalculateCave(cave);
     this.reloadOnScene(cave);
     this.scene.view.renderView();
-    this.explorer.deleteSurvey(caveName, surveyName);
-    this.explorer.updateCave(cave, (n) => n.name === cave.name);
+    this.explorer.removeSurvey(caveName, surveyName);
+    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+
   }
 
   onCaveRenamed(e) {
@@ -275,7 +276,6 @@ class ProjectManager {
     // Update starting point position after recalculation
     this.scene.addStartingPoint(cave);
 
-    this.scene.updateVisiblePlanes();
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
     this.scene.view.fitScreen(boundingBox);
@@ -362,6 +362,9 @@ class ProjectManager {
     });
 
     this.explorer.addCave(cave);
+    cave.surveys.forEach((s) => {
+      this.explorer.addSurvey(cave, s);
+    });
 
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);

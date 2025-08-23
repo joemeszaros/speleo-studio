@@ -211,6 +211,8 @@
         "z": "Z távolság",
         "horizontal": "Vízszintes távolság",
         "spatial": "Térbeli távolság",
+        "azimuth": "Irány",
+        "clino": "Dőlés",
         "error": {
           "noStartingPoint": "A távolság méréséhez válasszon ki egy kezdőpontot"
         }

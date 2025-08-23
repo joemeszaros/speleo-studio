@@ -4,7 +4,6 @@ import { PlySurfaceImporter, PolygonImporter, TopodroidImporter, JsonImporter } 
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
-import { ProjectExplorer } from './ui/explorer.js';
 import { ProjectManager } from './ui/manager.js';
 import { NavigationBar } from './ui/navbar.js';
 import { Footer } from './ui/footer.js';
@@ -85,29 +84,16 @@ class Main {
     this.sidebar = new Sidebar(this.options);
 
     // Initialize explorer tree in sidebar
-    this.explorerTree = new ExplorerTree(document.getElementById('explorer-tree'));
+    this.explorerTree = new ExplorerTree(db, options, scene, document.getElementById('explorer-tree'));
 
     // Initialize settings panel in sidebar
     this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
 
-    // Add test data after a short delay
-    setTimeout(() => {
-      this.addTestData();
-    }, 1000);
-
-    // Initialize legacy explorer for compatibility (will be removed later)
-    this.legacyExplorer = new ProjectExplorer(
-      options,
-      db,
-      scene,
-      attributeDefs,
-      document.querySelector('#explorer-tree')
-    );
     this.projectManager = new ProjectManager(
       db,
       options,
       scene,
-      this.legacyExplorer,
+      this.explorerTree,
       this.projectSystem,
       this.editorStateSystem
     );
@@ -129,35 +115,6 @@ class Main {
       document.getElementById('tool-panel'),
       ['fixed-size-editor', 'resizable-editor']
     );
-
-    // Add test data method
-    this.addTestData = () => {
-      try {
-        // Add a sample cave
-        const testCave = {
-          name        : 'Test Cave',
-          description : 'A sample cave for testing the new sidebar interface',
-          visible     : true,
-          color       : '#4CAF50'
-        };
-
-        this.explorerTree.addCave(testCave);
-
-        // Add a sample survey
-        const testSurvey = {
-          name    : 'Main Survey',
-          date    : '2024-01-15',
-          visible : true,
-          color   : '#2196F3'
-        };
-
-        this.explorerTree.addSurvey('Test Cave', testSurvey);
-
-        console.log('Test data added successfully');
-      } catch (error) {
-        console.error('Error adding test data:', error);
-      }
-    };
 
     new NavigationBar(
       db,

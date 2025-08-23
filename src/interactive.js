@@ -720,12 +720,21 @@ class SceneInteraction {
     const formatCoords = (a) => a.map((x) => x.toFixed(2)).join(',');
     const tp = to.position;
     const content = node`<div class="infopanel-content"></div>`;
+
+    // Calculate horizontal angle from Y axis (0 degrees = North)
+    const azimuth = (Math.atan2(diffVector.x, diffVector.y) * 180) / Math.PI;
+    // Normalize to 0-360 range
+    const azimuthNormalized = (azimuth + 360) % 360;
+    const clino = (Math.asin(diffVector.z / diffVector.length()) * 180) / Math.PI;
+
     content.innerHTML = `
         ${i18n.t('common.from')}: ${from.name} (${formatCoords([fp.x, fp.y, fp.z])})<br>
         ${i18n.t('common.to')}: ${to.name} (${formatCoords([tp.x, tp.y, tp.z])})<br>
         ${i18n.t('ui.panels.distance.x')}: ${diffVector.x}<br>
         ${i18n.t('ui.panels.distance.y')}: ${diffVector.y}<br>
         ${i18n.t('ui.panels.distance.z')}: ${diffVector.z}<br>
+        ${i18n.t('ui.panels.distance.azimuth')}: ${azimuthNormalized.toFixed(2)}°<br>
+        ${i18n.t('ui.panels.distance.clino')}: ${clino.toFixed(2)}°<br>
         ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2))}<br>
         ${i18n.t('ui.panels.distance.spatial')}: ${diffVector.length()}
         `;
