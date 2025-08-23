@@ -2,21 +2,21 @@ import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CaveEditor } from './editor/cave.js';
 
 export class ExplorerTree {
-  constructor(db, options, scene, container) {
+  constructor(db, options, scene, container, contextMenuElement) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.container = container;
-
+    this.contextMenu = contextMenuElement;
     this.nodes = new Map();
     this.selectedNode = null;
     this.expandedNodes = new Set();
-    this.contextMenu = null;
 
     this.init();
   }
 
   init() {
+    document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this));
     this.render();
   }
 
@@ -186,28 +186,26 @@ export class ExplorerTree {
     }
 
     const node = this.findNodeById(nodeId);
+
     if (node) {
       node.selected = true;
       this.selectedNode = node;
-      //this.options.onNodeSelect(node);
 
-      this.render();
+      // Remove 'selected' class from all node elements
+      this.container.querySelectorAll('.explorer-tree-node').forEach((el) => {
+        el.classList.remove('selected');
+      });
+
+      node.element.classList.add('selected');
 
       // Show context popup for surveys after render is complete
       if (node.type === 'survey') {
-        // Use setTimeout to ensure DOM is updated after render
-        setTimeout(() => {
-          this.showSurveyContextMenu(node);
-        }, 10);
+        this.showSurveyContextMenu(node);
       } else if (node.type === 'cave') {
-        setTimeout(() => {
-          this.showCaveContextMenu(node);
-        }, 10);
+        this.showCaveContextMenu(node);
       } else {
         this.hideContextMenu();
       }
-    } else {
-      this.render();
     }
   }
 
@@ -331,10 +329,7 @@ export class ExplorerTree {
   }
 
   showContextMenu(node, items) {
-    this.hideContextMenu();
-
-    this.contextMenu = document.createElement('div');
-    this.contextMenu.className = 'explorer-context-menu';
+    this.contextMenu.innerHTML = '';
 
     items.forEach((option) => {
       const optionElement = document.createElement('div');
@@ -358,23 +353,17 @@ export class ExplorerTree {
       this.contextMenu.style.top = `${rect.top + 30}px`;
     }
 
-    document.body.appendChild(this.contextMenu);
+    this.contextMenu.style.display = 'flex';
+    this.contextMenu.node = node;
 
-    // Hide context menu when clicking outside
-    setTimeout(() => {
-      document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this), { once: true });
-    }, 200);
   }
 
   hideContextMenu() {
-    if (this.contextMenu) {
-      this.contextMenu.remove();
-      this.contextMenu = null;
-    }
+    this.contextMenu.style.display = 'none';
   }
 
   hideContextMenuOnClickOutside(event) {
-    if (this.contextMenu && !this.contextMenu.contains(event.target)) {
+    if (this.contextMenu.style.display !== 'none' && !this.contextMenu.node.element.contains(event.target)) {
       this.hideContextMenu();
     }
   }
@@ -461,29 +450,17 @@ export class ExplorerTree {
     if (node.data.color) {
       label.style.color = node.data.color;
     }
-    label.onclick = () => {
-      this.selectNode(node.id);
-      //this.options.onNodeClick(node);
-    };
-
     // Add double-click to expand/collapse
     label.ondblclick = (e) => {
       e.stopPropagation();
       if (node.children && node.children.length > 0 && node.type === 'cave') {
         this.toggleNodeExpansion(node.id);
-      } else if (node.type === 'survey') {
-        this.editor = new SurveyEditor(
-          this.options,
-          node.parent.data,
-          node.data,
-          this.scene,
-          document.getElementById('resizable-editor')
-        );
-        this.editor.setupPanel();
-        this.editor.show();
       }
     };
     nodeElement.appendChild(label);
+    nodeElement.onclick = () => {
+      this.selectNode(node.id);
+    };
 
     // Visibility toggle
     const visibility = document.createElement('div');
@@ -502,6 +479,7 @@ export class ExplorerTree {
     nodeElement.appendChild(visibility);
 
     this.container.appendChild(nodeElement);
+    node.element = nodeElement;
 
     // Render children if expanded
     if (node.expanded && node.children && node.children.length > 0) {

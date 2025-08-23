@@ -686,6 +686,14 @@ body {
   }
 }
 
+#explorer-context-menu {
+  position: absolute;
+  z-index: 1001;
+  color: azure;
+  background: rgb(40, 40, 40);
+  display: none;
+}
+
 #station-context-menu {
   position: absolute;
   z-index: 100;

@@ -85,7 +85,13 @@ class Main {
     this.sidebar = new Sidebar(this.options);
 
     // Initialize explorer tree in sidebar
-    this.explorerTree = new ExplorerTree(db, options, scene, document.getElementById('explorer-tree'));
+    this.explorerTree = new ExplorerTree(
+      db,
+      options,
+      scene,
+      document.getElementById('explorer-tree'),
+      document.getElementById('explorer-context-menu')
+    );
 
     // Initialize settings panel in sidebar
     this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
