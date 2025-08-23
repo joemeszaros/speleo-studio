@@ -1,7 +1,6 @@
 import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
-import { SurfaceHelper } from '../surface.js';
-import { showErrorPanel, showWarningPanel } from '../ui/popups.js';
+import { showErrorPanel } from '../ui/popups.js';
 import { Shot, ShotType } from '../model/survey.js';
 import { Vector, Surface } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
@@ -325,43 +324,17 @@ class JsonImporter extends Importer {
   }
 }
 
-class PlySurfaceImporter {
+class PlySurfaceImporter extends Importer {
 
-  constructor(db, options, scene) {
-    this.db = db;
-    this.options = options;
-    this.scene = scene;
+  constructor(db, options, scene, manager) {
+    super(db, options, scene, manager);
   }
 
-  addSurface(surface, cloud) {
-    const cavesReallyFar = Importer.getFarCaves(this.db.caves, surface.center);
-
-    if (this.db.getSurface(surface.name) !== undefined) {
-      showErrorPanel(`Import of '${surface.name}' failed, surface has already been imported!`, 20);
-    } else if (cavesReallyFar.length > 0) {
-      const message = `Import of '${surface.name}' failed, the surface is too far from previously imported caves:
-       ${cavesReallyFar.join(',')}`;
-      showWarningPanel(message, 20);
-    } else {
-      this.db.addSurface(surface);
-      const colorGradients = SurfaceHelper.getColorGradients(surface.points, this.options.scene.surface.color);
-      const _3dobjects = this.scene.addSurfaceToScene(cloud, colorGradients);
-      this.scene.addSurface(surface, _3dobjects);
-      const boundingBox = this.scene.computeBoundingBox();
-      this.scene.grid.adjust(boundingBox);
-      this.scene.view.fitScreen(boundingBox);
-    }
+  importFile(file, name, onModelLoad) {
+    super.importFile(file, name, onModelLoad);
   }
 
-  importFile(file) {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => this.importText(file.name, event.target.result);
-      reader.readAsText(file);
-    }
-  }
-
-  importText(fileName, text) {
+  async importText(text, onModelLoad, name) {
     const loader = new PLYLoader();
     const geometry = loader.parse(text);
     geometry.computeBoundingBox();
@@ -379,8 +352,8 @@ class PlySurfaceImporter {
       const point = new Vector(position.getX(i), position.getY(i), position.getZ(i));
       points.push(point);
     }
-    const surface = new Surface(fileName, points, new Vector(center.x, center.y, center.z));
-    this.addSurface(surface, cloud);
+    const surface = new Surface(name, points, new Vector(center.x, center.y, center.z));
+    await onModelLoad(surface, cloud);
   }
 }
 

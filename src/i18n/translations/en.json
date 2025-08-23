@@ -6,7 +6,8 @@
           "name": "File",
           "new": "New cave",
           "open": "Open cave(s)",
-          "export": "Export cave(s)"
+          "export": "Export cave(s)",
+          "openModel": "Open model"
         },
         "project": {
           "name": "Project",

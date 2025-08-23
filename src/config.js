@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ShotType } from './model/survey.js';
+import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
 
 export const DEFAULT_OPTIONS = {
   scene : {
@@ -56,11 +57,7 @@ export const DEFAULT_OPTIONS = {
       color : {
         start : '#39b14d',
         end   : '#9f2d2d',
-        mode  : {
-          value   : 'gradientByZ',
-          choices : ['gradientByZ', 'hidden']
-        }
-
+        mode  : 'gradientByZ'
       }
     },
     caveLines : {
@@ -213,6 +210,7 @@ export class ObjectObserver {
  * ConfigManager handles persistence of user configurations using localStorage
  */
 export class ConfigManager {
+
   static STORAGE_KEY = 'speleo-studio-config';
   static VERSION = '1.0';
 
@@ -395,6 +393,40 @@ export class ConfigManager {
       console.error('Failed to download configuration:', error);
       throw error;
     }
+  }
+
+  static setupConfigFileInputListener(options, settingsPanel, configInput) {
+    configInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonString = event.target.result;
+          const loadedConfig = ConfigManager.getConfigObject(jsonString);
+
+          if (loadedConfig) {
+            ConfigManager.deepMerge(options, loadedConfig);
+            settingsPanel.render();
+            console.log('✅ Configuration loaded successfully from file');
+            showSuccessPanel(`Configuration loaded successfully from ${file.name}`);
+          } else {
+            throw new Error('Invalid configuration file format');
+          }
+        } catch (error) {
+          console.error('Failed to load configuration:', error);
+          showErrorPanel(`Failed to load configuration from ${file.name}: ${error.message}`);
+        }
+      };
+
+      reader.onerror = () => {
+        showErrorPanel(`Failed to read file ${file.name}`);
+      };
+
+      reader.readAsText(file);
+      configInput.value = '';
+    });
   }
   /**
    * Recursively serialize an object, handling Color instances

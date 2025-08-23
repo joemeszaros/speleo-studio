@@ -812,6 +812,7 @@ class MyScene {
     sphere.type = meta.type; // custom property
     sphere.meta = meta; // custom property
     sphereGroup.add(sphere);
+    return sphere;
   }
 
   addStartingPoint(cave) {

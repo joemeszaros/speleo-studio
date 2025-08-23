@@ -1,8 +1,10 @@
+import { Color } from './model.js';
+
 class SurfaceHelper {
 
   static getColorGradients(points, colorConfig) {
-    const startColor = colorConfig.start;
-    const endColor = colorConfig.end;
+    const startColor = new Color(colorConfig.start);
+    const endColor = new Color(colorConfig.end);
     const diff = endColor.sub(startColor);
     var minZ = points[0].z;
     var maxZ = minZ;

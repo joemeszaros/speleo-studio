@@ -68,6 +68,12 @@ class NavigationBar {
                 this.scene,
                 this.exportPanel
               )
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.file.openModel'),
+            click : function () {
+              document.getElementById('modelInput').click();
+            }
           }
         ]
       },

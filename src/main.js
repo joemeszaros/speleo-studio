@@ -13,13 +13,14 @@ import { ExplorerTree } from './ui/explorer-tree.js';
 import { SettingsPanel } from './ui/settings-panel.js';
 
 import { AttributesDefinitions, attributeDefintions } from './attributes.js';
-import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
+import { showErrorPanel } from './ui/popups.js';
 import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
 import { DatabaseManager } from './storage/database-manager.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
+import { SurfaceHelper } from './surface.js';
 
 class Main {
 
@@ -159,8 +160,12 @@ class Main {
   #setupEventListeners() {
     this.#setupCaveFileInputListener();
     this.#setupSurveyFileInputListener();
-    this.#setupConfigFileInputListener();
-    this.#setupKeyboardShortcuts();
+    this.#setupModelFileInputListener();
+    ConfigManager.setupConfigFileInputListener(
+      this.options,
+      this.settingsPanel,
+      document.getElementById('configInput')
+    );
   }
 
   #setupFileInputListener(config) {
@@ -184,9 +189,9 @@ class Main {
 
           // Create a promise-based wrapper for the importFile callback
           await new Promise((resolve, reject) => {
-            handler.importFile(file, file.name, async (importedData) => {
+            handler.importFile(file, file.name, async (importedData, arg1) => {
               try {
-                await validationMethod(importedData);
+                await validationMethod(importedData, arg1);
                 resolve();
               } catch (error) {
                 reject(error);
@@ -223,6 +228,26 @@ class Main {
     });
   }
 
+  #setupModelFileInputListener() {
+    this.#setupFileInputListener({
+      inputId          : 'modelInput',
+      handlers         : new Map([['ply', this.importers.ply]]),
+      validationMethod : async (surface, cloud) => await this.#tryAddModel(surface, cloud)
+    });
+  }
+
+  async #tryAddModel(surface, cloud) {
+
+    //FIXME: check if surface already exists and is not too far from previously imported caves / objects
+    this.db.addSurface(surface);
+    const colorGradients = SurfaceHelper.getColorGradients(surface.points, this.options.scene.surface.color);
+    const _3dobjects = this.scene.addSurfaceToScene(cloud, colorGradients);
+    this.scene.addSurface(surface, _3dobjects);
+    const boundingBox = this.scene.computeBoundingBox();
+    this.scene.grid.adjust(boundingBox);
+    this.scene.view.fitScreen(boundingBox);
+  }
+
   async #tryAddSurvey(survey) {
 
     if (survey.name === undefined) {
@@ -254,41 +279,6 @@ class Main {
     } else {
       throw Error(`Cave ${cave.name} has already been imported`);
     }
-  }
-
-  #setupConfigFileInputListener() {
-    const input = document.getElementById('configInput');
-    input.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const jsonString = event.target.result;
-          const loadedConfig = ConfigManager.getConfigObject(jsonString);
-
-          if (loadedConfig) {
-            ConfigManager.deepMerge(this.options, loadedConfig);
-            this.settingsPanel.render();
-            console.log('✅ Configuration loaded successfully from file');
-            showSuccessPanel(`Configuration loaded successfully from ${file.name}`);
-          } else {
-            throw new Error('Invalid configuration file format');
-          }
-        } catch (error) {
-          console.error('Failed to load configuration:', error);
-          showErrorPanel(`Failed to load configuration from ${file.name}: ${error.message}`);
-        }
-      };
-
-      reader.onerror = () => {
-        showErrorPanel(`Failed to read file ${file.name}`);
-      };
-
-      reader.readAsText(file);
-      input.value = '';
-    });
   }
 
   async #loadProjectFromUrl(urlParams) {
@@ -356,38 +346,6 @@ class Main {
       }
     } else {
       this.scene.view.renderView();
-    }
-  }
-
-  #setupKeyboardShortcuts() {
-    document.addEventListener('keydown', (event) => {
-      // F11 for fullscreen
-      if (event.key === 'F11') {
-        event.preventDefault();
-        this.#toggleFullscreen();
-      }
-    });
-  }
-
-  #toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      // Enter fullscreen
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-      } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen();
-      } else if (document.documentElement.msRequestFullscreen) {
-        document.documentElement.msRequestFullscreen();
-      }
-    } else {
-      // Exit fullscreen
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
     }
   }
 

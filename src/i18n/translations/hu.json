@@ -6,7 +6,8 @@
           "name": "Fájl",
           "new": "Új barlang",
           "open": "Barlang(ok) megnyitása",
-          "export": "Barlang(ok) exportálása"
+          "export": "Barlang(ok) exportálása",
+          "openModel": "Model megnyitása"
         },
         "project": {
           "name": "Projekt",

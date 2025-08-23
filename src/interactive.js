@@ -730,13 +730,13 @@ class SceneInteraction {
     content.innerHTML = `
         ${i18n.t('common.from')}: ${from.name} (${formatCoords([fp.x, fp.y, fp.z])})<br>
         ${i18n.t('common.to')}: ${to.name} (${formatCoords([tp.x, tp.y, tp.z])})<br>
-        ${i18n.t('ui.panels.distance.x')}: ${diffVector.x}<br>
-        ${i18n.t('ui.panels.distance.y')}: ${diffVector.y}<br>
-        ${i18n.t('ui.panels.distance.z')}: ${diffVector.z}<br>
-        ${i18n.t('ui.panels.distance.azimuth')}: ${azimuthNormalized.toFixed(2)}°<br>
-        ${i18n.t('ui.panels.distance.clino')}: ${clino.toFixed(2)}°<br>
-        ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2))}<br>
-        ${i18n.t('ui.panels.distance.spatial')}: ${diffVector.length()}
+        ${i18n.t('ui.panels.distance.x')}: ${diffVector.x.toFixed(3)}<br>
+        ${i18n.t('ui.panels.distance.y')}: ${diffVector.y.toFixed(3)}<br>
+        ${i18n.t('ui.panels.distance.z')}: ${diffVector.z.toFixed(3)}<br>
+        ${i18n.t('ui.panels.distance.azimuth')}: ${azimuthNormalized.toFixed(3)}°<br>
+        ${i18n.t('ui.panels.distance.clino')}: ${clino.toFixed(3)}°<br>
+        ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2)).toFixed(3)}<br>
+        ${i18n.t('ui.panels.distance.spatial')}: ${diffVector.length().toFixed(3)}
         `;
     this.infoPanel.appendChild(content);
     this.infoPanel.style.display = 'block';
