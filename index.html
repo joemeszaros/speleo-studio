@@ -47,21 +47,13 @@
 
       <!-- Sidebar Container -->
       <div id="sidebar-container" class="sidebar-container">
-        <div class="sidebar-header">
-          <button class="sidebar-toggle" id="sidebar-toggle">
+        <div class="sidebar-tabs" role="tablist" aria-label="Sidebar navigation">
+          <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M8.59 7.41L10 6l6 6-6 6-1.41-1.41L13.17 12z" />
             </svg>
           </button>
-          <button
-            class="sidebar-position-toggle"
-            id="sidebar-position-toggle"
-            title="Toggle sidebar position (Left/Right)"
-          >
-          </button>
-        </div>
 
-        <div class="sidebar-tabs" role="tablist" aria-label="Sidebar navigation">
           <button
             class="sidebar-tab active"
             data-tab="explorer"
@@ -79,6 +71,13 @@
             aria-controls="settings-panel"
             >Settings</button
           >
+
+          <button
+            class="sidebar-position-toggle"
+            id="sidebar-position-toggle"
+            title="Toggle sidebar position (Left/Right)"
+          >
+          </button>
         </div>
 
         <div class="sidebar-content">

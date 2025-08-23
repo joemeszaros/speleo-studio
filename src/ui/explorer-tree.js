@@ -200,6 +200,10 @@ export class ExplorerTree {
   selectNode(nodeId) {
     if (this.selectedNode) {
       this.selectedNode.selected = false;
+      if (nodeId === this.selectedNode.id) {
+        this.hideContextMenu();
+        return;
+      }
     }
 
     const node = this.findNodeById(nodeId);

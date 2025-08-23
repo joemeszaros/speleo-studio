@@ -18,7 +18,7 @@
 .main-content-wrapper {
   display: flex;
   flex: 1;
-  margin-top: 48px; /* Below navbar */
+  margin-top: 0; /* No header margin needed */
   margin-bottom: 30px; /* Above footer */
 }
 
@@ -44,7 +44,6 @@
   width: var(--sidebar-collapsed-width);
 }
 
-.sidebar-container.collapsed .sidebar-tabs,
 .sidebar-container.collapsed .sidebar-content {
   display: none;
 }
@@ -61,21 +60,29 @@
   display: none;
 }
 
-.sidebar-container.collapsed .sidebar-header {
+.sidebar-container.collapsed .sidebar-tabs {
   justify-content: center;
-  flex-direction: row;
+  padding: 0;
+  position: relative;
+  height: 48px;
+  min-height: 48px;
 }
 
+.sidebar-container.collapsed .sidebar-tab {
+  display: none;
+}
+
+.sidebar-container.collapsed .sidebar-toggle {
+  margin: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Ensure SVG rotation works with positioning */
 .sidebar-container.collapsed .sidebar-toggle svg {
   transform: rotate(180deg);
-}
-
-.sidebar-container.collapsed .sidebar-content {
-  display: none;
-}
-
-.sidebar-container.collapsed .sidebar-tabs {
-  display: none;
 }
 
 .sidebar-title {
@@ -98,12 +105,20 @@
   justify-content: center;
   min-width: 32px;
   min-height: 32px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  order: 1; /* Default order for right sidebar */
 }
 
 .sidebar-toggle:hover {
   background: #404040;
   color: #ffffff;
   transform: scale(1.1);
+}
+
+/* Override hover transform for collapsed state */
+.sidebar-container.collapsed .sidebar-toggle:hover {
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
 .sidebar-toggle:active {
@@ -125,26 +140,38 @@
   transform: rotate(180deg) scaleX(-1);
 }
 
-/* Sidebar Header Layout */
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  background: #1e1e1e;
-  border-bottom: 1px solid #404040;
-  min-height: 48px;
+/* Adjust toggle button positioning for left sidebar */
+.sidebar-container.left .sidebar-toggle {
+  margin-right: 0;
+  margin-left: 8px;
+  order: 3; /* Move to the end (right side) */
 }
 
-/* When sidebar is on the right (default) */
-.sidebar-container .sidebar-header {
-  flex-direction: row;
+.sidebar-container.left .sidebar-position-toggle {
+  margin-left: 0;
+  margin-right: 8px;
+  order: 1; /* Move to the beginning (left side) */
 }
 
-/* When sidebar is on the left */
-.sidebar-container.left .sidebar-header {
-  flex-direction: row-reverse;
+/* Override positioning for collapsed left sidebar */
+.sidebar-container.left.collapsed .sidebar-toggle {
+  margin: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
+
+.sidebar-container.left.collapsed .sidebar-toggle svg {
+  transform: rotate(180deg) scaleX(-1);
+}
+
+/* Override hover transform for collapsed left sidebar */
+.sidebar-container.left.collapsed .sidebar-toggle:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Sidebar Header Layout - Removed, integrated into tabs */
 
 .sidebar-position-toggle {
   border: none;
@@ -156,8 +183,10 @@
   justify-content: center;
   min-width: 32px;
   min-height: 32px;
-  margin-left: 4px;
+  margin-left: 8px;
   background: no-repeat center/70% url(../icons/sidebar_left.svg);
+  flex-shrink: 0;
+  order: 3; /* Default order for right sidebar */
 }
 
 .sidebar-position-toggle:hover {
@@ -170,8 +199,11 @@
 /* Sidebar Tabs */
 .sidebar-tabs {
   display: flex;
+  align-items: center;
   background: #2d2d2d;
   border-bottom: 1px solid #404040;
+  padding: 0 8px;
+  min-height: 48px;
 }
 
 .sidebar-tab {
@@ -186,6 +218,8 @@
   transition: all 0.2s ease;
   border-bottom: 2px solid transparent;
   text-align: center;
+  margin: 0 2px;
+  order: 2; /* Always in the middle */
 }
 
 .sidebar-tab:hover {
@@ -205,13 +239,16 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Allow flexbox to shrink */
 }
 
 .sidebar-panel {
   display: none;
   flex: 1;
-  overflow: auto;
-  padding: 16px;
+  overflow: hidden;
+  padding: 8px;
+  min-height: 0; /* Allow flexbox to shrink */
+  box-sizing: border-box;
 }
 
 .sidebar-panel.active {
@@ -221,15 +258,22 @@
 /* Explorer Panel */
 .explorer-panel {
   color: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .explorer-tree {
   background: #1e1e1e;
   border-radius: 6px;
-  padding: 8px;
+  padding: 0px;
   overflow-y: auto;
-  max-height: 100%;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0; /* Allow flexbox to shrink */
   position: relative;
+  max-height: 100%;
+  height: 0; /* Force flexbox to calculate height properly */
 }
 
 .explorer-tree-node {
@@ -378,6 +422,10 @@
 .settings-panel {
   color: #ffffff;
   font-size: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .settings-group {
