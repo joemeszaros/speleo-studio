@@ -1089,7 +1089,6 @@ class MyScene {
       this.startPointObjects.delete(oldName);
       this.startPointObjects.set(newName, startPointObj);
       startPointObj.mesh.name = `startPoint_${newName}`;
-      startPointObj.meta.cave = newName;
     }
   }
 

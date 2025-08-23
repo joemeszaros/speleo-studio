@@ -953,9 +953,10 @@ body {
   overflow: visible !important;
 }
 
+/* there is no scrollbar in the table with this setting
 .tabulator .tabulator-tableholder {
   overflow: visible !important;
-}
+} */
 
 .tabulator .tabulator-cell .attributes-editor {
   font-size: 12px;

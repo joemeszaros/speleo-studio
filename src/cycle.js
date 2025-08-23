@@ -18,6 +18,8 @@ class CyclePanel {
 
   closeEditor() {
 
+    this.closed = true;
+
     if (this.table !== undefined) {
       this.hideAllCycles();
       this.table.destroy();

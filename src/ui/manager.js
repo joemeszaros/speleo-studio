@@ -38,16 +38,21 @@ class ProjectManager {
 
   }
 
-  onCaveAdded(e) {
-    const cave = e.detail.cave;
-    this.addCave(cave);
+  async saveCave(cave) {
+    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
-  onSurveyAdded(e) {
+  async onCaveAdded(e) {
+    const cave = e.detail.cave;
+    this.addCave(cave);
+    await this.saveCave(cave);
+  }
+
+  async onSurveyAdded(e) {
     const cave = e.detail.cave;
     const newSurvey = e.detail.survey;
-    cave.surveys.push(newSurvey);
-    this.explorer.addSurvey(cave, newSurvey);
+    this.addSurvey(cave.name, newSurvey);
+    await this.saveCave(cave);
   }
 
   beforeUnloadHandler = (event) => {
@@ -84,19 +89,12 @@ class ProjectManager {
     // If eov coordinates are changed, the first survey is passed in the event
     const cave = e.detail.cave;
     await this.reloadCave(cave);
-  }
-
-  async reloadCave(cave) {
-    this.recalculateCave(cave);
-    this.reloadOnScene(cave);
-    this.scene.view.renderView();
-    this.explorer.updateCave(cave, (n) => n.name === cave.name);
-    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+    await this.saveCave(cave);
   }
 
   async onAttributesChanged(e) {
     const cave = e.detail.cave;
-    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+    await this.saveCave(cave);
   }
 
   async onSurveyDeleted(e) {
@@ -108,49 +106,34 @@ class ProjectManager {
     this.reloadOnScene(cave);
     this.scene.view.renderView();
     this.explorer.removeSurvey(caveName, surveyName);
-    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+    await this.saveCave(cave);
 
   }
 
-  onCaveRenamed(e) {
+  async onCaveRenamed(e) {
     const oldName = e.detail.oldName;
     const cave = e.detail.cave;
     this.scene.renameCave(oldName, cave.name);
-    this.explorer.updateCave(cave, (n) => n.name === oldName);
+    this.explorer.renameCave(oldName, cave.name);
+    //indexed db caves object store is indexed by id
+    await this.saveCave(cave);
   }
 
-  onSurveyRenamed(e) {
+  async onSurveyRenamed(e) {
     const oldName = e.detail.oldName;
     const survey = e.detail.survey;
     const newName = survey.name;
     const cave = e.detail.cave;
 
     this.scene.renameSurvey(oldName, newName, cave.name);
-    this.explorer.updateSurvey(cave, survey, (s) => s.name === oldName);
+    this.explorer.renameSurvey(oldName, newName, cave.name);
+    await this.saveCave(cave);
   }
 
-  onCaveDeleted(e) {
+  async onCaveDeleted(e) {
     const caveName = e.detail.name;
     const id = e.detail.id;
-    this.deleteCave(caveName, id);
-  }
-
-  disposeCave(caveName) {
-    this.scene.disposeCave(caveName);
-    this.scene.deleteCave(caveName);
-    this.scene.view.renderView();
-    this.explorer.deleteCave(caveName);
-    this.explorer.closeEditors(caveName);
-  }
-
-  async deleteCave(caveName, id) {
-    this.disposeCave(caveName);
-
-    const currentProject = this.projectSystem.getCurrentProject();
-    if (currentProject) {
-      await this.projectSystem.removeCaveFromProject(currentProject.id, id);
-    }
-
+    await this.deleteCave(caveName, id);
   }
 
   async onCurrentProjectChanged(e) {
@@ -180,7 +163,6 @@ class ProjectManager {
         cave,
         survey,
         this.scene,
-        this.attributeDefs,
         document.getElementById('resizable-editor'),
         editorState.state
       );
@@ -198,6 +180,30 @@ class ProjectManager {
 
     this.db.clear();
     this.scene.view.renderView();
+  }
+
+  disposeCave(caveName) {
+    this.scene.disposeCave(caveName);
+    this.scene.deleteCave(caveName);
+    this.scene.view.renderView();
+    this.explorer.removeCave(caveName);
+    this.explorer.closeEditorsForCave(caveName);
+  }
+
+  async deleteCave(caveName, id) {
+    this.disposeCave(caveName);
+
+    const currentProject = this.projectSystem.getCurrentProject();
+    if (currentProject) {
+      await this.projectSystem.removeCaveFromProject(currentProject.id, id);
+    }
+  }
+
+  async reloadCave(cave) {
+    this.recalculateCave(cave);
+    this.reloadOnScene(cave);
+    this.scene.view.renderView();
+    this.explorer.updateCave(cave, (n) => n.name === cave.name);
   }
 
   calculateFragmentAttributes(cave) {
@@ -297,7 +303,6 @@ class ProjectManager {
       this.options,
       undefined,
       this.scene,
-      this.attributeDefs,
       document.getElementById('fixed-size-editor')
     );
 
@@ -318,11 +323,11 @@ class ProjectManager {
 
   }
 
-  async addSurvey(caveName, survey) {
+  addSurvey(caveName, survey) {
     const cave = this.db.getCave(caveName);
     cave.surveys.push(survey);
     this.explorer.addSurvey(cave, survey);
-    await this.reloadCave(cave);
+    this.reloadCave(cave);
   }
 
   addCave(cave) {

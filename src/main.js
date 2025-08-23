@@ -89,6 +89,7 @@ class Main {
       db,
       options,
       scene,
+      attributeDefs,
       document.getElementById('explorer-tree'),
       document.getElementById('explorer-context-menu')
     );
@@ -266,8 +267,9 @@ class Main {
       showErrorPanel(`Survey ${survey.name} already exists in cave ${caveName}`);
       return;
     }
-
-    await this.projectManager.addSurvey(caveName, survey);
+    const cave = this.db.getCave(caveName);
+    this.projectManager.addSurvey(caveName, survey);
+    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
   async #tryAddCave(cave) {

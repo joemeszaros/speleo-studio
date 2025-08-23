@@ -278,6 +278,9 @@ class Cave {
   }
 
   getFirstStation() {
+    if (this.surveys.length === 0) {
+      return undefined;
+    }
     return this.stations.get(this.surveys[0].start);
   }
 
@@ -381,7 +384,7 @@ class Cave {
     if (pure.metadata !== undefined) {
       pure.metadata = CaveMetadata.fromPure(pure.metadata);
     }
-    pure.geoData = pure.geoData === undefined ? [] : GeoData.fromPure(pure.geoData);
+    pure.geoData = pure.geoData === undefined ? undefined : GeoData.fromPure(pure.geoData);
     pure.surveys = pure.surveys.map((s) => Survey.fromPure(s));
     pure.aliases = pure.aliases === undefined ? [] : pure.aliases.map((a) => SurveyAlias.fromPure(a));
     pure.startPosition = Vector.fromPure(pure.startPosition);

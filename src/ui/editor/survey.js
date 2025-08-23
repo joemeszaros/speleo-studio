@@ -911,7 +911,6 @@ class SurveySheetEditor extends BaseEditor {
         this.survey.start = this.formData.start;
         this.#emitSurveyChanged();
       }
-      //if (this.onSave) this.onSave(survey);
       this.closeEditor();
     };
     this.panel.appendChild(form);

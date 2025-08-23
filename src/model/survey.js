@@ -167,12 +167,35 @@ class SurveyTeamMember {
     this.name = name;
     this.role = role;
   }
+
+  toExport() {
+    return {
+      name : this.name,
+      role : this.role
+    };
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new SurveyTeamMember(), pure);
+  }
 }
 
 class SurveyTeam {
   constructor(name, members = []) {
     this.name = name;
     this.members = members;
+  }
+
+  toExport() {
+    return {
+      name    : this.name,
+      members : this.members?.map((m) => m.toExport())
+    };
+  }
+
+  static fromPure(pure) {
+    pure.members = pure.members !== undefined ? pure.members.map((m) => SurveyTeamMember.fromPure(m)) : [];
+    return Object.assign(new SurveyTeam(), pure);
   }
 }
 
@@ -191,6 +214,24 @@ class SurveyMetadata {
     this.convergence = convergence;
     this.team = team;
     this.instruments = instruments;
+  }
+
+  toExport() {
+    return {
+      date        : this.date?.getTime(),
+      declination : this.declination,
+      convergence : this.convergence,
+      team        : this.team?.toExport(),
+      instruments : this.instruments?.map((i) => i.toExport())
+    };
+  }
+
+  static fromPure(pure) {
+    pure.date = new Date(pure.date); // unix epoch in millis
+    pure.team = SurveyTeam.fromPure(pure.team);
+    pure.instruments =
+      pure.instruments !== undefined ? pure.instruments.map((i) => Object.assign(new SurveyInstrument(), i)) : [];
+    return Object.assign(new SurveyMetadata(), pure);
   }
 }
 
@@ -284,14 +325,16 @@ class Survey {
 
   toExport() {
     return {
-      name  : this.name,
-      start : this.start,
-      shots : this.shots.map((s) => s.toExport())
+      name     : this.name,
+      start    : this.start,
+      metadata : this.metadata?.toExport(),
+      shots    : this.shots.map((s) => s.toExport())
     };
   }
 
   static fromPure(pure) {
     pure.shots = pure.shots.map((s) => Object.assign(new Shot(), s));
+    pure.metadata = pure.metadata !== undefined ? SurveyMetadata.fromPure(pure.metadata) : undefined;
     const survey = Object.assign(new Survey(), pure);
     survey.validShots = survey.getValidShots();
     survey.invalidShotIds = survey.getInvalidShotIds();

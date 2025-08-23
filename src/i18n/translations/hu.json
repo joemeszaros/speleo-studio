@@ -136,8 +136,22 @@
         "newSurvey": "Új felmérés",
         "importSurvey": "Felmérés importálása",
         "cycles": "Hurkok",
-        "editSurveySheet": "Adatlap szerkesztése"
-      }
+        "editSurveySheet": "Adatlap szerkesztése",
+        "deleteCave": "Barlang törlése",
+        "deleteSurvey": "Felmérés törlése",
+        "setSurveyColor": "Felmérés szín beállítása",
+        "openSurveyEditor": "Felmérés szerkesztése"
+      },
+      "confirm": {
+        "deleteCave": "Biztosan törölni akarod ezt a barlangot? Ez a művelet nem vonható vissza.",
+        "deleteSurvey": "Biztosan törölni akarod ezt a felmérést? Ez a művelet nem vonható vissza."
+      },
+      "tree": {
+        "isolated": "A felmérés izolált a barlanghálózattól, nem csatlakozik korábbi poligon ponthoz",
+        "orphan": "A felmérésnek {nr} árva pontja van",
+        "invalid": "A felmérésnek {nr} érvénytelen pontja van"
+      },
+      "noCaves": "Nincsenek barlangok betöltve"
     },
     "panels": {
       "projectManager": {

@@ -1,11 +1,15 @@
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CaveEditor } from './editor/cave.js';
+import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
+import { CyclePanel } from '../cycle.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class ExplorerTree {
-  constructor(db, options, scene, container, contextMenuElement) {
+  constructor(db, options, scene, attributeDefs, container, contextMenuElement) {
     this.db = db;
     this.options = options;
     this.scene = scene;
+    this.attributeDefs = attributeDefs;
     this.container = container;
     this.contextMenu = contextMenuElement;
     this.nodes = new Map();
@@ -13,6 +17,8 @@ export class ExplorerTree {
     this.expandedNodes = new Set();
 
     this.init();
+
+    document.addEventListener('languageChanged', () => this.render());
   }
 
   init() {
@@ -51,8 +57,6 @@ export class ExplorerTree {
     };
 
     caveNode.children.push(surveyNode);
-    // Don't add survey nodes to the nodes Map - they should only exist as children
-    // this.nodes.set(surveyNode.id, surveyNode);
     this.render();
     return surveyNode;
   }
@@ -76,14 +80,27 @@ export class ExplorerTree {
     }
   }
 
-  // Alias for removeCave to match the interface expected by the project manager
-  deleteCave(caveName) {
-    return this.removeCave(caveName);
+  renameCave(oldName, newName) {
+    if (!this.nodes.has(oldName)) return;
+    const caveNode = this.nodes.get(oldName);
+    caveNode.label = newName;
+    this.nodes.delete(oldName);
+    this.nodes.set(newName, caveNode);
+    this.render();
+  }
+
+  renameSurvey(oldName, newName, caveName) {
+    if (!this.nodes.has(caveName)) return;
+    const caveNode = this.nodes.get(caveName);
+    const surveyNode = caveNode.children.find((s) => s.label === oldName);
+    surveyNode.label = newName;
+    this.render();
   }
 
   updateCave(cave, predicate) {
     let caveNode;
     if (predicate) {
+      this.nodes.values().find((node) => predicate(node.data));
       // Find cave using predicate function
       for (const [, node] of this.nodes) {
         if (predicate(node)) {
@@ -210,47 +227,122 @@ export class ExplorerTree {
   }
 
   showCaveContextMenu(caveNode) {
+
+    const editorSetup = (editor) => {
+
+      if (this.editor !== undefined && !this.editor.closed) {
+        this.editor.closeEditor();
+      }
+      this.editor = editor;
+      editor.setupPanel();
+      editor.show();
+    };
+
     const items = [
       {
         icon    : '📝',
-        title   : 'Open cave sheet editor',
+        title   : i18n.t('ui.explorer.menu.editCaveData'),
         onclick : () => {
-          this.editor = new CaveEditor(
-            this.db,
-            this.options,
-            caveNode.data,
-            this.scene,
-            document.getElementById('fixed-size-editor')
+          editorSetup(
+            new CaveEditor(
+              this.db,
+              this.options,
+              caveNode.data,
+              this.scene,
+              document.getElementById('fixed-size-editor')
+            )
           );
-          this.editor.setupPanel();
-          this.editor.show();
         }
       },
       {
-        icon    : '〽🧩🔀',
-        title   : 'Rename cave',
+        icon    : '❇️',
+        title   : i18n.t('ui.explorer.menu.newSurvey'),
         onclick : () => {
-          const newName = prompt('Enter new cave name');
-          if (newName) {
-            this.db.renameCave(caveNode.data.name, newName);
-          }
+          editorSetup(
+            new SurveySheetEditor(this.db, caveNode.data, undefined, document.getElementById('fixed-size-editor'))
+          );
         }
       },
       {
-        icon    : '〽',
-        title   : 'Rename cave',
+        icon    : '🚚',
+        title   : i18n.t('ui.explorer.menu.importSurvey'),
         onclick : () => {
-          const newName = prompt('Enter new cave name');
-          if (newName) {
-            this.db.renameCave(caveNode.data.name, newName);
-          }
+          const surveyInput = document.getElementById('surveyInput');
+          surveyInput.caveName = caveNode.data.name;
+          surveyInput.click();
+        }
+      },
+      {
+        icon    : '📍',
+        title   : i18n.t('ui.explorer.menu.editStationAttributes'),
+        onclick : () => {
+          editorSetup(
+            new StationAttributeEditor(
+              this.db,
+              this.options,
+              caveNode.data,
+              this.scene,
+              this.attributeDefs,
+              document.getElementById('resizable-editor')
+            )
+          );
+        }
+      },
+      {
+        icon    : '🔀',
+        title   : i18n.t('ui.explorer.menu.editSectionAttributes'),
+        onclick : () => {
+          editorSetup(
+            new SectionAttributeEditor(
+              this.db,
+              this.options,
+              caveNode.data,
+              this.scene,
+              this.attributeDefs,
+              document.getElementById('resizable-editor')
+            )
+          );
+        }
+      },
+      {
+        icon    : '🧩',
+        title   : i18n.t('ui.explorer.menu.editComponentAttributes'),
+        onclick : () => {
+          editorSetup(
+            new ComponentAttributeEditor(
+              this.db,
+              this.options,
+              caveNode.data,
+              this.scene,
+              this.attributeDefs,
+              document.getElementById('resizable-editor')
+            )
+          );
+        }
+      },
+      {
+        icon    : '🔄',
+        title   : i18n.t('ui.explorer.menu.cycles'),
+        onclick : () => {
+          editorSetup(new CyclePanel(document.getElementById('resizable-editor'), this.scene, caveNode.data));
         }
       },
       {
         icon    : '🗑️',
-        title   : 'Delete Cave',
+        title   : i18n.t('ui.explorer.menu.deleteCave'),
         onclick : () => {
-          this.db.deleteCave(caveNode.data.name);
+          const result = confirm(i18n.t('ui.explorer.confirm.deleteCave', { name: caveNode.data.name }));
+          if (result) {
+            this.db.deleteCave(caveNode.data.name);
+            const event = new CustomEvent('caveDeleted', {
+              detail : {
+                name : caveNode.data.name,
+                id   : caveNode.data.id
+              }
+            });
+            document.dispatchEvent(event);
+          }
+
         }
       }
     ];
@@ -261,7 +353,7 @@ export class ExplorerTree {
     const items = [
       {
         icon    : '📝',
-        title   : 'Open Survey Editor',
+        title   : i18n.t('ui.explorer.menu.openSurveyEditor'),
         onclick : () => {
           this.editor = new SurveyEditor(
             this.options,
@@ -276,7 +368,7 @@ export class ExplorerTree {
       },
       {
         icon    : '🔠',
-        title   : 'Open Survey Sheet Editor',
+        title   : i18n.t('ui.explorer.menu.editSurveySheet'),
         onclick : () => {
           this.editor = new SurveySheetEditor(
             this.db,
@@ -290,7 +382,7 @@ export class ExplorerTree {
       },
       {
         icon    : '🎨',
-        title   : 'Set survey color',
+        title   : i18n.t('ui.explorer.menu.setSurveyColor'),
         onclick : () => {
           const colorPicker = document.createElement('input');
           colorPicker.type = 'color';
@@ -308,9 +400,9 @@ export class ExplorerTree {
       },
       {
         icon    : '🗑️',
-        title   : 'Delete Survey',
+        title   : i18n.t('ui.explorer.menu.deleteSurvey'),
         onclick : () => {
-          const result = confirm(`Do you want to delete survey '${surveyNode.data.name}'?`);
+          const result = confirm(i18n.t('ui.explorer.confirm.deleteSurvey', { name: surveyNode.data.name }));
           if (result) {
             this.db.deleteSurvey(surveyNode.parent.data.name, surveyNode.data.name);
             const event = new CustomEvent('surveyDeleted', {
@@ -349,13 +441,28 @@ export class ExplorerTree {
       const rect = element.getBoundingClientRect();
 
       this.contextMenu.style.position = 'fixed';
-      this.contextMenu.style.left = `${rect.left + 10}px`;
-      this.contextMenu.style.top = `${rect.top + 30}px`;
+
+      this.contextMenu.style.display = 'flex';
+      this.contextMenu.node = node;
+
+      // Get context menu dimensions
+      const menuWidth = this.contextMenu.offsetWidth;
+      const menuHeight = this.contextMenu.offsetHeight;
+
+      // Calculate positions ensuring menu stays within viewport
+      const left = Math.min(rect.left + 10, window.innerWidth - menuWidth);
+      const top = Math.min(rect.top + 30, window.innerHeight - menuHeight);
+
+      this.contextMenu.style.left = `${Math.max(0, left)}px`;
+      this.contextMenu.style.top = `${Math.max(0, top)}px`;
     }
 
-    this.contextMenu.style.display = 'flex';
-    this.contextMenu.node = node;
+  }
 
+  closeEditorsForCave(caveName) {
+    if (this.editor !== undefined && !this.closed && this.editor.cave.name === caveName) {
+      this.editor.closeEditor();
+    }
   }
 
   hideContextMenu() {
@@ -363,7 +470,11 @@ export class ExplorerTree {
   }
 
   hideContextMenuOnClickOutside(event) {
-    if (this.contextMenu.style.display !== 'none' && !this.contextMenu.node.element.contains(event.target)) {
+    if (
+      this.contextMenu.style.display !== 'none' &&
+      this.contextMenu.node?.element &&
+      !this.contextMenu.node.element.contains(event.target)
+    ) {
       this.hideContextMenu();
     }
   }
@@ -374,7 +485,7 @@ export class ExplorerTree {
     if (this.nodes.size === 0) {
       const emptyMessage = document.createElement('div');
       emptyMessage.className = 'explorer-empty';
-      emptyMessage.textContent = 'No caves loaded';
+      emptyMessage.textContent = i18n.t('ui.explorer.noCaves');
       emptyMessage.style.padding = '20px';
       emptyMessage.style.textAlign = 'center';
       emptyMessage.style.color = '#666';
@@ -427,16 +538,16 @@ export class ExplorerTree {
 
         if (survey.isolated === true) {
           warningIcon.innerHTML = '❌';
-          warningIcon.title = 'Survey is isolated from the cave network';
-          nodeElement.title = 'Survey is isolated from the cave network';
+          warningIcon.title = i18n.t('ui.explorer.tree.isolated');
+          nodeElement.title = i18n.t('ui.explorer.tree.isolated');
         } else if (survey.orphanShotIds.size > 0) {
           warningIcon.innerHTML = '⚠️';
-          warningIcon.title = `Survey has ${survey.orphanShotIds.size} orphan shots`;
-          nodeElement.title = `Survey has ${survey.orphanShotIds.size} orphan shots`;
+          warningIcon.title = i18n.t('ui.explorer.tree.orphan', { nr: survey.orphanShotIds.size });
+          nodeElement.title = i18n.t('ui.explorer.tree.orphan', { nr: survey.orphanShotIds.size });
         } else if (survey.invalidShotIds.size > 0) {
           warningIcon.innerHTML = '⚠️';
-          warningIcon.title = `Survey has ${survey.invalidShotIds.size} invalid shots`;
-          nodeElement.title = `Survey has ${survey.invalidShotIds.size} invalid shots`;
+          warningIcon.title = i18n.t('ui.explorer.tree.invalid', { nr: survey.invalidShotIds.size });
+          nodeElement.title = i18n.t('ui.explorer.tree.invalid', { nr: survey.invalidShotIds.size });
         }
 
         nodeElement.appendChild(warningIcon);

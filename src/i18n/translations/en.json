@@ -136,8 +136,22 @@
         "newSurvey": "New survey",
         "importSurvey": "Import survey",
         "cycles": "Cycles",
-        "editSurveySheet": "Edit survey sheet"
-      }
+        "editSurveySheet": "Edit survey sheet",
+        "deleteCave": "Delete cave",
+        "deleteSurvey": "Delete survey",
+        "setSurveyColor": "Set survey color",
+        "openSurveyEditor": "Open survey editor"
+      },
+      "confirm": {
+        "deleteCave": "Do you want to delete cave '{name}'?",
+        "deleteSurvey": "Do you want to delete survey '{name}'?"
+      },
+      "tree": {
+        "isolated": "Survey is isolated from the cave network",
+        "orphan": "Survey has {nr} orphan shots",
+        "invalid": "Survey has {nr} invalid shots"
+      },
+      "noCaves": "No caves loaded"
     },
     "panels": {
       "projectManager": {
