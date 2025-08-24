@@ -19,8 +19,6 @@
   margin-bottom: 30px; /* Above footer */
 }
 
-/* Removed slideInRight animation for print compatibility */
-
 .sidebar-container.left {
   border-left: none;
   border-right: 1px solid #404040;
@@ -258,6 +256,64 @@
   position: relative;
   max-height: 100%;
   height: 0; /* Force flexbox to calculate height properly */
+}
+
+.explorer-filter-container {
+  position: sticky;
+  top: 0;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  padding: 8px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.explorer-filter-input {
+  flex: 1;
+  padding: 6px 8px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.explorer-filter-input:focus {
+  border-color: #04aa6d;
+  box-shadow: 0 0 0 2px rgba(4, 170, 109, 0.2);
+}
+
+.explorer-filter-input::placeholder {
+  color: #888;
+}
+
+.explorer-filter-clear {
+  width: 20px;
+  height: 20px;
+  background: #444;
+  border: 1px solid #555;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.explorer-filter-clear:hover {
+  background: #666;
+  border-color: #777;
+  transform: scale(1.1);
+}
+
+.explorer-filter-clear:active {
+  transform: scale(0.95);
 }
 
 .explorer-tree-node {
@@ -604,10 +660,6 @@
   background: #252525;
 }
 
-.visibility-toggle {
-  /* Removed transition for print compatibility */
-}
-
 .visibility-toggle:hover {
   opacity: 0.8 !important;
 }
@@ -724,8 +776,6 @@
   height: 2px;
   background: linear-gradient(90deg, #04aa6d, #059669);
 }
-
-/* Removed slideIn animation for print compatibility */
 
 /* Improve explorer tree appearance */
 .explorer-tree-node {

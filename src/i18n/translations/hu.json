@@ -160,6 +160,11 @@
         "orphan": "A felmérésnek {nr} árva pontja van",
         "invalid": "A felmérésnek {nr} érvénytelen pontja van"
       },
+      "filter": {
+        "placeholder": "Barlangok és felmérések szűrése...",
+        "clear": "Szűrő törlése",
+        "noResults": "Nincs találat a szűrőre"
+      },
       "noCaves": "Nincsenek barlangok betöltve"
     },
     "panels": {

@@ -15,15 +15,15 @@ export class ExplorerTree {
     this.nodes = new Map();
     this.selectedNode = null;
     this.expandedNodes = new Set();
-
-    this.init();
+    this.filterText = '';
+    this.filteredNodes = new Map();
 
     document.addEventListener('languageChanged', () => this.render());
-  }
-
-  init() {
     document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this));
+    this.container.addEventListener('scroll', () => this.hideContextMenu());
+    this.renderFilterInput();
     this.render();
+
   }
 
   addCave(cave) {
@@ -38,6 +38,12 @@ export class ExplorerTree {
     };
 
     this.nodes.set(node.id, node);
+
+    // Reapply filter if active
+    if (this.filterText) {
+      this.applyFilter();
+    }
+
     this.render();
     return node;
   }
@@ -57,6 +63,12 @@ export class ExplorerTree {
     };
 
     caveNode.children.push(surveyNode);
+
+    // Reapply filter if active
+    if (this.filterText) {
+      this.applyFilter();
+    }
+
     this.render();
     return surveyNode;
   }
@@ -66,6 +78,12 @@ export class ExplorerTree {
     if (!caveNode) return;
 
     this.nodes.delete(caveName);
+
+    // Reapply filter if active
+    if (this.filterText) {
+      this.applyFilter();
+    }
+
     this.render();
   }
 
@@ -76,6 +94,12 @@ export class ExplorerTree {
     const surveyIndex = caveNode.children.findIndex((s) => s.label === surveyName);
     if (surveyIndex !== -1) {
       caveNode.children.splice(surveyIndex, 1);
+
+      // Reapply filter if active
+      if (this.filterText) {
+        this.applyFilter();
+      }
+
       this.render();
     }
   }
@@ -86,6 +110,12 @@ export class ExplorerTree {
     caveNode.label = newName;
     this.nodes.delete(oldName);
     this.nodes.set(newName, caveNode);
+
+    // Reapply filter if active
+    if (this.filterText) {
+      this.applyFilter();
+    }
+
     this.render();
   }
 
@@ -94,6 +124,12 @@ export class ExplorerTree {
     const caveNode = this.nodes.get(caveName);
     const surveyNode = caveNode.children.find((s) => s.label === oldName);
     surveyNode.label = newName;
+
+    // Reapply filter if active
+    if (this.filterText) {
+      this.applyFilter();
+    }
+
     this.render();
   }
 
@@ -103,6 +139,12 @@ export class ExplorerTree {
     if (caveNode) {
       caveNode.data = cave;
       caveNode.visible = cave.visible !== false;
+
+      // Reapply filter if active
+      if (this.filterText) {
+        this.applyFilter();
+      }
+
       this.render();
     }
   }
@@ -122,6 +164,7 @@ export class ExplorerTree {
   }
 
   toggleNodeExpansion(nodeId) {
+    this.hideContextMenu();
     const node = this.findNodeById(nodeId);
     if (!node) return;
 
@@ -130,6 +173,11 @@ export class ExplorerTree {
       this.expandedNodes.add(nodeId);
     } else {
       this.expandedNodes.delete(nodeId);
+    }
+
+    // If filtering is active, reapply the filter to maintain the filtered view
+    if (this.filterText) {
+      this.applyFilter();
     }
 
     this.render();
@@ -154,14 +202,15 @@ export class ExplorerTree {
   selectNode(nodeId) {
     if (this.selectedNode) {
       this.selectedNode.selected = false;
+      this.selectedNode.element.classList.remove('selected');
       if (nodeId === this.selectedNode.id) {
         this.hideContextMenu();
+        this.selectedNode = undefined;
         return;
       }
     }
 
     const node = this.findNodeById(nodeId);
-
     if (node) {
       node.selected = true;
       this.selectedNode = node;
@@ -180,6 +229,15 @@ export class ExplorerTree {
         this.showCaveContextMenu(node);
       } else {
         this.hideContextMenu();
+      }
+
+      // If filtering is active, reapply the filter to maintain the filtered view with selection
+      if (this.filterText) {
+        this.applyFilter();
+        // Defer the render to allow context menu to be shown first
+        setTimeout(() => {
+          this.render();
+        }, 0);
       }
     }
   }
@@ -428,18 +486,27 @@ export class ExplorerTree {
   }
 
   hideContextMenuOnClickOutside(event) {
-    if (
-      this.contextMenu.style.display !== 'none' &&
-      this.contextMenu.node?.element &&
-      !this.contextMenu.node.element.contains(event.target)
-    ) {
-      this.hideContextMenu();
+    if (this.contextMenu.style.display !== 'none' && this.contextMenu.node?.id) {
+      // Check if the click target is within the node element using data-node-id
+      const nodeElement = this.container.querySelector(`[data-node-id="${this.contextMenu.node.id}"]`);
+      if (nodeElement && !nodeElement.contains(event.target)) {
+        this.hideContextMenu();
+      }
     }
   }
 
   render() {
-    this.container.innerHTML = '';
+    // Clear only the tree content, not the filter input
+    const treeContent = this.container.querySelector('.explorer-tree-content');
+    if (treeContent) {
+      treeContent.remove();
+    }
 
+    // Create tree content container
+    const treeContentContainer = document.createElement('div');
+    treeContentContainer.className = 'explorer-tree-content';
+
+    // Check if we have any caves at all (not just filtered results)
     if (this.nodes.size === 0) {
       const emptyMessage = document.createElement('div');
       emptyMessage.className = 'explorer-empty';
@@ -447,17 +514,123 @@ export class ExplorerTree {
       emptyMessage.style.padding = '20px';
       emptyMessage.style.textAlign = 'center';
       emptyMessage.style.color = '#666';
-      this.container.appendChild(emptyMessage);
+      treeContentContainer.appendChild(emptyMessage);
       return;
     }
 
-    // Render caves and their surveys
-    this.nodes.values().forEach((caveNode) => {
-      this.renderNode(caveNode, 0);
-    });
+    // Render caves and their surveys (filtered if needed)
+    const nodesToRender = this.filterText ? this.filteredNodes : this.nodes;
+
+    if (nodesToRender.size === 0 && this.filterText) {
+      // Show "no results" message when filtering returns nothing
+      const noResultsMessage = document.createElement('div');
+      noResultsMessage.className = 'explorer-empty';
+      noResultsMessage.textContent = i18n.t('ui.explorer.filter.noResults');
+      noResultsMessage.style.padding = '20px';
+      noResultsMessage.style.textAlign = 'center';
+      noResultsMessage.style.color = '#666';
+      treeContentContainer.appendChild(noResultsMessage);
+    } else {
+      // Render the matching nodes
+      nodesToRender.values().forEach((caveNode) => {
+        this.renderNode(caveNode, 0, treeContentContainer);
+      });
+    }
+
+    this.container.appendChild(treeContentContainer);
   }
 
-  renderNode(node, level) {
+  renderFilterInput() {
+    this.filterInputContainer = document.createElement('div');
+    this.filterInputContainer.className = 'explorer-filter-container';
+
+    const filterInput = document.createElement('input');
+    filterInput.type = 'text';
+    filterInput.className = 'explorer-filter-input';
+    filterInput.placeholder = i18n.t('ui.explorer.filter.placeholder');
+
+    filterInput.addEventListener('input', (e) => {
+      this.filterText = e.target.value.toLowerCase();
+      this.applyFilter();
+      this.render();
+    });
+
+    this.filterInputContainer.appendChild(filterInput);
+    this.container.appendChild(this.filterInputContainer);
+  }
+
+  updateFilterInputUI() {
+    if (!this.filterInputContainer) return;
+
+    const filterInput = this.filterInputContainer.querySelector('.explorer-filter-input');
+    const existingClearButton = this.filterInputContainer.querySelector('.explorer-filter-clear');
+
+    if (filterInput) {
+      filterInput.value = this.filterText;
+    }
+
+    // Show/hide clear button based on filter text
+    if (this.filterText && !existingClearButton) {
+      const clearButton = document.createElement('button');
+      clearButton.className = 'explorer-filter-clear';
+      clearButton.innerHTML = '×';
+      clearButton.title = i18n.t('ui.explorer.filter.clear');
+      clearButton.onclick = () => {
+        this.clearFilter();
+      };
+      this.filterInputContainer.appendChild(clearButton);
+    } else if (!this.filterText && existingClearButton) {
+      existingClearButton.remove();
+    }
+  }
+
+  applyFilter() {
+    this.filteredNodes.clear();
+
+    if (!this.filterText.trim()) {
+      return;
+    }
+
+    // Filter caves and surveys based on name
+    for (const [caveName, caveNode] of this.nodes) {
+      const caveMatches = caveName.toLowerCase().includes(this.filterText);
+
+      // Check if any surveys match
+      const matchingSurveys = caveNode.children.filter((survey) =>
+        survey.label.toLowerCase().includes(this.filterText)
+      );
+
+      // Include cave if it matches or has matching surveys
+      if (caveMatches || matchingSurveys.length > 0) {
+        const filteredCaveNode = {
+          ...caveNode,
+          children : caveMatches ? caveNode.children : matchingSurveys
+        };
+
+        // Ensure the filtered node has the same expansion state as the original
+        filteredCaveNode.expanded = caveNode.expanded;
+
+        // Ensure the filtered node has the same selection state as the original
+        filteredCaveNode.selected = caveNode.selected;
+
+        // If we're only showing matching surveys, ensure they have proper parent references
+        if (!caveMatches && matchingSurveys.length > 0) {
+          filteredCaveNode.children = matchingSurveys.map((survey) => ({
+            ...survey,
+            parent   : filteredCaveNode, // Ensure proper parent reference
+            selected : survey.selected // Preserve selection state
+          }));
+        }
+
+        this.filteredNodes.set(caveName, filteredCaveNode);
+      }
+    }
+
+    // Update the filter input UI
+    this.updateFilterInputUI();
+  }
+
+  renderNode(node, level, container) {
     const nodeElement = document.createElement('div');
     nodeElement.className = 'explorer-tree-node';
     nodeElement.style.paddingLeft = `${level * 10}px`;
@@ -547,13 +720,13 @@ export class ExplorerTree {
     };
     nodeElement.appendChild(visibility);
 
-    this.container.appendChild(nodeElement);
+    container.appendChild(nodeElement);
     node.element = nodeElement;
 
     // Render children if expanded
     if (node.expanded && node.children && node.children.length > 0) {
       node.children.forEach((child) => {
-        this.renderNode(child, level + 1);
+        this.renderNode(child, level + 1, container);
       });
     }
   }
@@ -580,10 +753,13 @@ export class ExplorerTree {
     this.render();
   }
 
-  clear() {
-    this.nodes.clear();
-    this.selectedNode = null;
-    this.expandedNodes.clear();
+  clearFilter() {
+    this.filterText = '';
+    this.filteredNodes.clear();
+
+    // Update the filter input UI
+    this.updateFilterInputUI();
+
     this.render();
   }
 }

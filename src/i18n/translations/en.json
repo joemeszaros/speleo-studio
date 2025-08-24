@@ -160,6 +160,11 @@
         "orphan": "Survey has {nr} orphan shots",
         "invalid": "Survey has {nr} invalid shots"
       },
+      "filter": {
+        "placeholder": "Filter caves and surveys...",
+        "clear": "Clear filter",
+        "noResults": "No caves or surveys match the filter"
+      },
       "noCaves": "No caves loaded"
     },
     "panels": {
