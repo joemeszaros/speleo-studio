@@ -8,9 +8,6 @@
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
-  animation: slideInRight 0.3s ease-out;
   min-height: 0;
 }
 
@@ -22,21 +19,11 @@
   margin-bottom: 30px; /* Above footer */
 }
 
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
+/* Removed slideInRight animation for print compatibility */
 
 .sidebar-container.left {
   border-left: none;
   border-right: 1px solid #404040;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
   order: -1;
 }
 
@@ -99,7 +86,6 @@
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -177,7 +163,6 @@
   border: none;
   cursor: pointer;
   padding: 4px;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,7 +200,6 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s ease;
   border-bottom: 2px solid transparent;
   text-align: center;
   margin: 0 2px;
@@ -302,7 +286,6 @@
   align-items: center;
   justify-content: center;
   color: #cccccc;
-  transition: transform 0.2s ease;
 }
 
 .explorer-tree-toggle.expanded {
@@ -333,7 +316,6 @@
   justify-content: center;
   font-size: 14px;
   opacity: 0.8;
-  transition: opacity 0.2s ease;
   position: absolute;
   left: 10px;
 }
@@ -348,7 +330,6 @@
   margin-left: 8px;
   cursor: pointer;
   opacity: 0.7;
-  transition: opacity 0.2s ease;
 }
 
 .explorer-tree-visibility:hover {
@@ -388,7 +369,6 @@
   cursor: pointer;
   color: #ffffff;
   font-size: 18px;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -447,7 +427,6 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: background-color 0.2s ease;
   user-select: none;
 }
 
@@ -493,7 +472,6 @@
   border-radius: 3px;
   color: #ffffff;
   font-size: 12px;
-  transition: border-color 0.2s ease;
   min-width: 0;
 }
 
@@ -522,7 +500,6 @@
   border-radius: 3px;
   color: white;
   cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
 .settings-add-button:hover {
@@ -540,7 +517,6 @@
   color: #ffffff;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .settings-button:hover {
@@ -549,7 +525,7 @@
 }
 
 .settings-button:active {
-  transform: scale(0.98);
+  transform: scale(1.1);
 }
 
 .settings-button:last-child {
@@ -629,7 +605,7 @@
 }
 
 .visibility-toggle {
-  transition: opacity 0.2s ease;
+  /* Removed transition for print compatibility */
 }
 
 .visibility-toggle:hover {
@@ -664,7 +640,6 @@
   align-items: center;
   justify-content: space-between;
   user-select: none;
-  transition: background-color 0.2s ease;
 }
 
 .sidebar-overview-header:hover {
@@ -674,7 +649,6 @@
 .sidebar-overview-toggle {
   margin-right: 8px;
   font-size: 10px;
-  transition: transform 0.2s ease;
 }
 
 .sidebar-overview-title {
@@ -690,7 +664,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: all 0.3s ease;
   min-height: 0;
   width: 100%;
 }
@@ -750,22 +723,13 @@
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, #04aa6d, #059669);
-  animation: slideIn 0.3s ease-out;
 }
 
-@keyframes slideIn {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
+/* Removed slideIn animation for print compatibility */
 
 /* Improve explorer tree appearance */
 .explorer-tree-node {
   border-radius: 6px;
-  transition: all 0.2s ease;
   position: relative;
 }
 
@@ -779,7 +743,6 @@
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   transform: translateY(-50%);
   opacity: 0;
-  transition: opacity 0.2s ease;
 }
 
 .explorer-tree-node:hover::before {
@@ -799,7 +762,6 @@
 .settings-input {
   border-radius: 6px;
   font-size: 13px;
-  transition: all 0.2s ease;
 }
 
 .settings-input:hover {
@@ -852,7 +814,6 @@
   width: 4px;
   cursor: col-resize;
   background: transparent;
-  transition: background 0.2s ease;
 }
 
 .sidebar-container .sidebar-resizer {

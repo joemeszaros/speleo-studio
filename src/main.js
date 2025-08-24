@@ -21,6 +21,7 @@ import { DatabaseManager } from './storage/database-manager.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { SurfaceHelper } from './surface.js';
+import { PrintUtils } from './utils/print.js';
 
 class Main {
 
@@ -124,11 +125,18 @@ class Main {
       ['fixed-size-editor', 'resizable-editor']
     );
 
+    this.printUtils = new PrintUtils(options, scene, this.projectSystem);
+
+    window.addEventListener('beforeprint', async () => {
+      await this.printUtils.cropCanvasToImage();
+    });
+
     new NavigationBar(
       db,
       document.getElementById('navbarcontainer'),
       options,
       scene,
+      this.printUtils,
       interaction,
       this.projectManager,
       this.projectSystem,

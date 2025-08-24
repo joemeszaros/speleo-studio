@@ -114,6 +114,9 @@ export const DEFAULT_OPTIONS = {
   },
   import : {
     cavesMaxDistance : 2000
+  },
+  print : {
+    layout : 'landscape'
   }
 };
 
@@ -489,6 +492,9 @@ export class ConfigManager {
     for (const [key, value] of Object.entries(target)) {
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         if (!source[key] || (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key]))) {
+          if (!source[key]) {
+            source[key] = {};
+          }
           this.deepMerge(source[key], value);
         } else {
           source[key] = value;
@@ -767,6 +773,8 @@ export class ConfigChanges {
       this.handleStationAttributeChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
+    } else if (path.startsWith('print.layout')) {
+      // do nothing, no action on print layout changes
     } else {
       console.log(`⚠️ No handler for path: ${path}`);
     }

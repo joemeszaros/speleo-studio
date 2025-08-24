@@ -907,6 +907,7 @@ class SurveySheetEditor extends BaseEditor {
         this.survey = new Survey(this.formData.name, true, metadata, this.formData.start);
         this.#emitSurveyAdded();
       } else if (this.surveyHasChanged) {
+
         this.survey.metadata = metadata;
         this.survey.start = this.formData.start;
         this.#emitSurveyChanged();

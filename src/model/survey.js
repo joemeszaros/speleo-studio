@@ -204,6 +204,17 @@ class SurveyInstrument {
     this.name = name;
     this.value = value;
   }
+
+  toExport() {
+    return {
+      name  : this.name,
+      value : this.value
+    };
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new SurveyInstrument(), pure);
+  }
 }
 
 class SurveyMetadata {

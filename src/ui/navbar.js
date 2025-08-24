@@ -9,10 +9,22 @@ class NavigationBar {
    * @param {Map<String, Map>} options - Global project options, like global visibility of an object
    * @param {MyScene} scene - The 3D scene
    */
-  constructor(db, domElement, options, scene, interactive, projectManager, projectSystem, projectPanel, exportPanel) {
+  constructor(
+    db,
+    domElement,
+    options,
+    scene,
+    printUtils,
+    interactive,
+    projectManager,
+    projectSystem,
+    projectPanel,
+    exportPanel
+  ) {
     this.db = db;
     this.options = options;
     this.scene = scene;
+    this.printUtils = printUtils;
     this.interactive = interactive;
     this.projectManager = projectManager;
     this.projectSystem = projectSystem;
@@ -128,7 +140,9 @@ class NavigationBar {
       {
         tooltip : i18n.t('ui.navbar.tooltips.print'),
         icon    : './icons/print.svg',
-        click   : () => window.print()
+        click   : () => {
+          this.printUtils.printScene();
+        }
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.zoomFit'),

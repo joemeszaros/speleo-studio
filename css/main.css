@@ -14,25 +14,42 @@ body {
   height: 100vh; /* since every element within the body is positioned absolute, the height of the body would be 0, causing problems in tabulator popup */
 }
 
+@page landscape {
+  size: a4 landscape;
+  margin: 0;
+}
+
+@page portrait {
+  size: a4 portrait;
+  margin: 0;
+}
+
 @media print {
-  #control-panel {
+  body > * {
     display: none !important;
   }
-  .footer {
-    display: none !important;
+
+  #export-canvas {
+    display: block !important;
   }
-  .topnavbar {
-    display: none !important;
+
+  .landscape {
+    page: landscape;
   }
-  #tree-panel {
-    display: none !important;
+
+  .portrait {
+    page: portrait;
   }
+}
+
+#export-canvas {
+  display: none;
 }
 
 .viewport .logo {
   position: absolute;
-  bottom: 5px;
-  left: 5px;
+  bottom: 10px;
+  left: 10px;
   z-index: 10;
 }
 
@@ -50,10 +67,12 @@ body {
 #view-helper {
   width: 128px;
   height: 128px;
-  right: 0px;
+  position: fixed;
   bottom: 30px;
-  position: absolute;
+  right: 0px;
   z-index: 102;
+  /* Default position when sidebar is on the right */
+  margin-right: calc(var(--sidebar-width) + 10px);
 }
 
 #close {

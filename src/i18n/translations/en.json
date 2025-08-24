@@ -79,7 +79,8 @@
         "surveyLines": "Survey Lines",
         "stations": "Stations",
         "appearance": "Appearance",
-        "colorGradient": "Color Gradient"
+        "colorGradient": "Color Gradient",
+        "print": "Print"
       },
       "groups": {
         "centerLines": "Center Lines",
@@ -103,7 +104,15 @@
         "stationIconScale": "Station icon scale",
         "depth": "Depth",
         "addColorStop": "Add Color Stop",
-        "remove": "Remove"
+        "remove": "Remove",
+        "printLayout": "Print Layout"
+      },
+      "confirm": {
+        "resetConfig": "Are you sure you want to reset the configuration?"
+      },
+      "options": {
+        "portrait": "Portrait",
+        "landscape": "Landscape"
       }
     },
     "sidebar": {

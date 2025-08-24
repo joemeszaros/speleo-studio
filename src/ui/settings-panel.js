@@ -35,6 +35,26 @@ export class SettingsPanel {
       ])
     );
 
+    // Print Layout Section
+    this.createSection(
+      i18n.t('ui.settingsPanel.sections.print'),
+      [
+        this.createSelect(
+          i18n.t('ui.settingsPanel.labels.printLayout'),
+          [i18n.t('ui.settingsPanel.options.portrait'), i18n.t('ui.settingsPanel.options.landscape')],
+          i18n.t(`ui.settingsPanel.options.${this.options.print.layout}`),
+          (value) => {
+            if (value === i18n.t('ui.settingsPanel.options.portrait')) {
+              this.options.print.layout = 'portrait';
+            } else {
+              this.options.print.layout = 'landscape';
+            }
+          }
+        )
+      ],
+      true
+    );
+
     // Survey Lines Section (expanded by default)
     this.createSection(i18n.t('ui.settingsPanel.sections.surveyLines'), [
       // Center Lines Group
@@ -354,6 +374,38 @@ export class SettingsPanel {
     return container;
   }
 
+  createSelect(label, options, currentValue, onChange) {
+    const container = document.createElement('div');
+    container.className = 'settings-item';
+
+    const labelElement = document.createElement('label');
+    labelElement.className = 'settings-label';
+    labelElement.textContent = label;
+
+    const select = document.createElement('select');
+    select.className = 'settings-input';
+    select.onchange = (e) => onChange(e.target.value);
+
+    // Create option elements for each option
+    options.forEach((value) => {
+      const optionElement = document.createElement('option');
+      optionElement.value = value;
+      optionElement.textContent = value;
+      select.appendChild(optionElement);
+    });
+
+    container.appendChild(labelElement);
+    container.appendChild(select);
+
+    select.querySelectorAll('option').forEach((option) => {
+      if (option.value === currentValue) {
+        option.selected = true;
+      }
+    });
+
+    return container;
+  }
+
   createColorInput(label, value, onChange) {
     const container = document.createElement('div');
     container.className = 'settings-item';
@@ -663,9 +715,12 @@ export class SettingsPanel {
   }
 
   resetConfig() {
-    ConfigManager.clear();
-    const loadedConfig = ConfigManager.loadOrDefaults();
-    ConfigManager.deepMerge(this.options, loadedConfig);
-    this.render();
+    if (confirm(i18n.t('ui.settingsPanel.confirm.resetConfig'))) {
+      ConfigManager.clear();
+      const loadedConfig = ConfigManager.loadOrDefaults();
+      ConfigManager.deepMerge(this.options, loadedConfig);
+      this.options.print.layout = 'portrait';
+      this.render();
+    }
   }
 }

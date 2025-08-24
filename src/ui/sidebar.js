@@ -124,6 +124,9 @@ export class Sidebar {
 
     this.config.ui.sidebar.collapsed = this.isCollapsed;
 
+    // Update view helper position
+    this.updateViewHelperPosition();
+
     setTimeout(() => {
       this.#emitViewportResized();
     }, 320);
@@ -176,6 +179,9 @@ export class Sidebar {
     const newWidth = Math.max(200, Math.min(600, w));
     this.container.style.width = newWidth + 'px';
     document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+
+    // Update view helper position during resize
+    this.updateViewHelperPosition();
   }
 
   stopResize() {
@@ -244,6 +250,29 @@ export class Sidebar {
       this.container.classList.remove('left');
     }
     this.config.ui.sidebar.position = position;
+
+    // Update view helper position
+    this.updateViewHelperPosition();
+  }
+
+  updateViewHelperPosition() {
+    const viewHelper = document.getElementById('view-helper');
+    if (!viewHelper) return;
+
+    const isLeft = this.container.classList.contains('left');
+    const isCollapsed = this.container.classList.contains('collapsed');
+
+    if (isLeft) {
+      // Sidebar on left, no right margin needed
+      viewHelper.style.marginRight = '10px';
+    } else {
+      // Sidebar on right, account for sidebar width
+      if (isCollapsed) {
+        viewHelper.style.marginRight = 'calc(var(--sidebar-collapsed-width) + 10px)';
+      } else {
+        viewHelper.style.marginRight = 'calc(var(--sidebar-width) + 10px)';
+      }
+    }
   }
 
   setupResponsive() {
@@ -333,6 +362,9 @@ export class Sidebar {
         this.#emitViewportResized();
       }, 320);
     }
+
+    // Update view helper position after initialization
+    this.updateViewHelperPosition();
 
   }
 

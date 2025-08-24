@@ -79,7 +79,8 @@
         "surveyLines": "Felmérés vonalak",
         "stations": "Pontok",
         "appearance": "Megjelenés",
-        "colorGradient": "Szín átmenet"
+        "colorGradient": "Szín átmenet",
+        "print": "Nyomtatás"
       },
       "groups": {
         "centerLines": "Középvonalak",
@@ -103,7 +104,15 @@
         "stationIconScale": "Pont ikon méretezés",
         "depth": "Mélység",
         "addColorStop": "Átmenet hozzáadása",
-        "remove": "Eltávolítás"
+        "remove": "Eltávolítás",
+        "printLayout": "Elrendezés"
+      },
+      "confirm": {
+        "resetConfig": "Biztosan visszaállítod a beállításokat?"
+      },
+      "options": {
+        "portrait": "Álló",
+        "landscape": "Fekvő"
       }
     },
     "sidebar": {
