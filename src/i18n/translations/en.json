@@ -158,7 +158,7 @@
       "tree": {
         "isolated": "Survey is isolated from the cave network",
         "orphan": "Survey has {nr} orphan shots",
-        "invalid": "Survey has {nr} invalid shots"
+        "invalid": "Survey has {nrInvalid} invalid and {nrOrphan} orphan shots"
       },
       "filter": {
         "placeholder": "Filter caves and surveys...",
@@ -223,6 +223,8 @@
         "title": "Shortest path",
         "find": "Find shortest path",
         "length": "Length",
+        "from": "From",
+        "to": "To",
         "cannotFindPath": "Cannot find path between '{from}' and '{to}'",
         "cannotFindStations": "Cannot find stations '{from}' or '{to}'"
       },

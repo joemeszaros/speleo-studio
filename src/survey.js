@@ -5,6 +5,7 @@ import { ShotType } from './model/survey.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
 import { EOVToWGS84Transformer } from './utils/geo.js';
+import { radsToDegrees } from './utils/utils.js';
 
 class SurveyHelper {
 
@@ -131,8 +132,23 @@ class SurveyHelper {
             tryAddStation(stationName, newStation(st, fromStation, polarVector), sh);
             repeat = true;
           } else {
-            //from = 1, to = 1
-            duplicateShotIds.add(sh.id);
+            // from = 1, to = 1
+            const diffVector = toStation.position.sub(fromStation.position);
+            const polar = U.toPolar(diffVector);
+            // within 10 percent
+            if (polar.inTolerance(sh.toPolar(), 0.1)) {
+              duplicateShotIds.add(sh.id);
+              sh.processed = true;
+              console.log('duplicate shot', sh.from, sh.to);
+              return;
+            } else {
+              console.log('loop');
+              console.log(
+                `shot ${sh.id} is in loop, ${sh.from} -> ${sh.to}: \n\t shot: (${sh.length}, ${sh.azimuth}, ${sh.clino})\n\t diff: (${polar.distance}, ${radsToDegrees(polar.azimuth)}, ${radsToDegrees(polar.clino)})`
+              );
+              sh.processed = true;
+            }
+
           }
 
         } else if (toStation !== undefined) {

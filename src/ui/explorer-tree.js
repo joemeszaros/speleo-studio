@@ -340,7 +340,9 @@ export class ExplorerTree {
         icon    : '🔄',
         title   : i18n.t('ui.explorer.menu.cycles'),
         onclick : () => {
-          editorSetup(new CyclePanel(document.getElementById('resizable-editor'), this.scene, caveNode.data));
+          editorSetup(
+            new CyclePanel(this.options, document.getElementById('resizable-editor'), this.scene, caveNode.data)
+          );
         }
       },
       {
@@ -671,14 +673,17 @@ export class ExplorerTree {
           warningIcon.innerHTML = '❌';
           warningIcon.title = i18n.t('ui.explorer.tree.isolated');
           nodeElement.title = i18n.t('ui.explorer.tree.isolated');
-        } else if (survey.orphanShotIds.size > 0) {
+        } else if (survey.invalidShotIds.size > 0 || survey.orphanShotIds.size > 0) {
+          const nrInvalidOrpath = survey.orphanShotIds.difference(survey.invalidShotIds).size;
           warningIcon.innerHTML = '⚠️';
-          warningIcon.title = i18n.t('ui.explorer.tree.orphan', { nr: survey.orphanShotIds.size });
-          nodeElement.title = i18n.t('ui.explorer.tree.orphan', { nr: survey.orphanShotIds.size });
-        } else if (survey.invalidShotIds.size > 0) {
-          warningIcon.innerHTML = '⚠️';
-          warningIcon.title = i18n.t('ui.explorer.tree.invalid', { nr: survey.invalidShotIds.size });
-          nodeElement.title = i18n.t('ui.explorer.tree.invalid', { nr: survey.invalidShotIds.size });
+          warningIcon.title = i18n.t('ui.explorer.tree.invalid', {
+            nrInvalid : survey.invalidShotIds.size,
+            nrOrphan  : nrInvalidOrpath
+          });
+          nodeElement.title = i18n.t('ui.explorer.tree.invalid', {
+            nrInvalid : survey.invalidShotIds.size,
+            nrOrphan  : nrInvalidOrpath
+          });
         }
 
         nodeElement.appendChild(warningIcon);

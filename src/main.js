@@ -85,6 +85,19 @@ class Main {
     // Initialize sidebar
     this.sidebar = new Sidebar(this.options);
 
+    // wait for sidebar dom element to be available
+    await new Promise((resolve) => {
+      const checkElement = () => {
+        const element = document.getElementById('explorer-tree');
+        if (element) {
+          resolve();
+        } else {
+          setTimeout(checkElement, 50);
+        }
+      };
+      checkElement();
+    });
+
     // Initialize explorer tree in sidebar
     this.explorerTree = new ExplorerTree(
       db,

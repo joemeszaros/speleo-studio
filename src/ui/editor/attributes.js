@@ -2,7 +2,7 @@ import { SectionAttribute, ComponentAttribute, StationAttribute } from '../../mo
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
 import { randomAlphaNumbericString } from '../../utils/utils.js';
-import { makeMovable } from '../popups.js';
+import { makeFloatingPanel } from '../popups.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
 import { Editor } from './base.js';
@@ -50,25 +50,29 @@ class BaseAttributeEditor extends Editor {
   }
 
   buildPanel() {
-    this.panel.innerHTML = '';
-    makeMovable(
+    const contentElmnt = makeFloatingPanel(
       this.panel,
       this.title,
       true,
+      true,
+      this.options.ui.editor.attributes,
       () => {
-        document.removeEventListener('languageChanged', () => this.buildPanel());
+        document.removeEventListener('languageChanged', () => this.setupPanel());
         this.closeEditor();
       },
-      (_newWidth, newHeight) => this.table.setHeight(newHeight - 140),
+      (_newWidth, newHeight) => {
+        const h = this.panel.offsetHeight - 100;
+        this.table.setHeight(h);
+      },
       () => this.table.redraw()
     );
-    this.setupButtons();
-    this.setupTable();
+    this.setupButtons(contentElmnt);
+    this.setupTable(contentElmnt);
   }
 
-  setupCommonButtons() {
+  setupCommonButtons(contentElmnt) {
     // Create iconbar with common buttons
-    this.iconBar = new IconBar(this.panel);
+    this.iconBar = new IconBar(contentElmnt);
 
     // Add common buttons (undo, redo, add row, delete row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
@@ -76,29 +80,24 @@ class BaseAttributeEditor extends Editor {
     });
     commonButtons.forEach((button) => this.iconBar.addButton(button));
 
-    // Add separator
-    //this.iconBar.addSeparator();
-
-    //this.iconBar.addSeparator();
-
     // Add export button
     const exportButton = IconBar.getExportButton(() => this.table, this.cave.name + ' - attributes.csv');
     exportButton.forEach((button) => this.iconBar.addButton(button));
 
   }
 
-  setupTable() {
+  setupTable(contentElmnt) {
 
     const tableDiv = document.createElement('div');
     tableDiv.setAttribute('id', 'sectionattributes');
-    this.panel.appendChild(tableDiv);
+    contentElmnt.appendChild(tableDiv);
 
     const columns = this.getColumns();
 
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#sectionattributes', {
       history                   : true, //enable undo and redo
-      height                    : this.panel.style.height - 140,
+      height                    : this.options.ui.editor.attributes.height - 36 - 48, // header + iconbar
       autoResize                : false,
       data                      : this.getTableData(),
       layout                    : 'fitColumns',
@@ -452,8 +451,8 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     super.closeEditor();
   }
 
-  setupButtons() {
-    super.setupCommonButtons(); // sets this.iconbar
+  setupButtons(contentElmnt) {
+    super.setupCommonButtons(contentElmnt); // sets this.iconbar
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
       () => this.setCaveComponentAttributes()
@@ -740,8 +739,8 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     super.closeEditor();
   }
 
-  setupButtons() {
-    super.setupCommonButtons(); // sets this.iconbar
+  setupButtons(contentElmnt) {
+    super.setupCommonButtons(contentElmnt); // sets this.iconbar
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
       () => this.setCaveSectionAttributes()
@@ -983,8 +982,8 @@ class StationAttributeEditor extends BaseAttributeEditor {
     super.closeEditor();
   }
 
-  setupButtons() {
-    super.setupCommonButtons(); // sets this.iconbar
+  setupButtons(contentElmnt) {
+    super.setupCommonButtons(contentElmnt); // sets this.iconbar
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
       () => this.setCaveStationAttributes()

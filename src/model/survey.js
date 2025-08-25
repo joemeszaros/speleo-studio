@@ -1,4 +1,5 @@
-import { Vector } from '../model.js';
+import { Vector, Polar } from '../model.js';
+import { degreesToRads } from '../utils/utils.js';
 import { StationCoordinates } from './geo.js';
 
 /**
@@ -31,6 +32,10 @@ class Shot {
     this.clino = clino;
     this.comment = comment;
     this.processed = false;
+  }
+
+  toPolar() {
+    return new Polar(this.length, degreesToRads(this.azimuth), degreesToRads(this.clino));
   }
 
   isSplay() {

@@ -158,7 +158,7 @@
       "tree": {
         "isolated": "A felmérés izolált a barlanghálózattól, nem csatlakozik korábbi poligon ponthoz",
         "orphan": "A felmérésnek {nr} árva pontja van",
-        "invalid": "A felmérésnek {nr} érvénytelen pontja van"
+        "invalid": "A felmérésnek {nrInvalid} érvénytelen és {nrOrphan} árva pontja van"
       },
       "filter": {
         "placeholder": "Barlangok és felmérések szűrése...",
@@ -223,6 +223,8 @@
         "title": "Legrövidebb út",
         "find": "Legrövidebb út keresése",
         "length": "Hossz",
+        "from": "Kezdőpont",
+        "to": "Végpont",
         "cannotFindPath": "Nem található út a(z) '{from}' és a(z) '{to}' között",
         "cannotFindStations": "Nem található pont a(z) '{from}' vagy a(z) '{to}'"
       },

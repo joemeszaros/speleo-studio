@@ -104,6 +104,14 @@ export const DEFAULT_OPTIONS = {
         height  : 300,
         width   : 700,
         columns : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment']
+      },
+      attributes : {
+        height : 300,
+        width  : 700
+      },
+      cycles : {
+        height : 300,
+        width  : 700
       }
     },
     sidebar : {

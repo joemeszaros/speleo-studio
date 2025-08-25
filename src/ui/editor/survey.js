@@ -1,7 +1,7 @@
 import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor, Editor } from './base.js';
 import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
-import { showErrorPanel, makeMovable } from '../../ui/popups.js';
+import { showErrorPanel, makeFloatingPanel } from '../../ui/popups.js';
 import { Shot, ShotType } from '../../model/survey.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
@@ -295,30 +295,29 @@ class SurveyEditor extends Editor {
   }
 
   setupPanel() {
-    this.panel.innerHTML = '';
 
-    makeMovable(
+    //TODO: downsize if the table is too wide (settings > viewport)
+    const contentElmnt = makeFloatingPanel(
       this.panel,
       i18n.t('ui.editors.survey.title', { name: this.survey.name }),
       true,
-      () => this.closeEditor(),
+      true,
+      this.options.ui.editor.survey,
+      () => {
+        document.removeEventListener('languageChanged', () => this.setupPanel());
+        this.closeEditor();
+      },
       (newWidth, _newHeight) => {
         const h = this.panel.offsetHeight - 100;
-        //this.options.ui.editor.survey.height = h;
-        //this.options.ui.editor.survey.width = newWidth;
         this.table.setHeight(h); // we cannot use newHeight, because it could be a higher value than max-height
       },
-
       (newWidth, _newHeight) => {
-        const h = this.panel.offsetHeight - 100;
-        this.options.ui.editor.survey.height = h;
-        this.options.ui.editor.survey.width = newWidth;
         this.table.redraw();
       }
     );
 
     // Create iconbar with common buttons
-    this.iconBar = new IconBar(this.panel);
+    this.iconBar = new IconBar(contentElmnt);
 
     // Add common buttons (undo, redo, add row, delete row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
@@ -341,7 +340,7 @@ class SurveyEditor extends Editor {
     const exportButton = IconBar.getExportButton(() => this.table, this.cave.name + ' - ' + this.survey.name + '.csv');
     exportButton.forEach((button) => this.iconBar.addButton(button));
 
-    this.panel.appendChild(U.node`<div id="surveydata" class="popup-content"></div>`);
+    contentElmnt.appendChild(U.node`<div id="surveydata" class="popup-content"></div>`);
 
     var isFloatNumber = function (_cell, value) {
       return U.isFloatStr(value);
@@ -512,13 +511,10 @@ class SurveyEditor extends Editor {
       c.visible = c.field === 'status' || this.options.ui.editor.survey.columns.includes(c.field);
     });
 
-    //TODO: downsize if the table is too wide (settings > viewport)
-
-    this.panel.style.width = this.options.ui.editor.survey.width + 'px';
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.survey.height,
+      height                    : this.options.ui.editor.survey.height - 36 - 48, // header + iconbar
       data                      : this.#getTableData(this.survey, this.cave.stations),
       layout                    : 'fitDataStretch',
       validationMode            : 'highlight',
@@ -626,7 +622,7 @@ class SurveyEditor extends Editor {
       true
     ); // Use capture phase to intercept before Tabulator
 
-    this.panel.appendChild(this.#buildToggleColumnMenu(columns));
+    contentElmnt.appendChild(this.#buildToggleColumnMenu(columns));
 
   }
 
@@ -730,17 +726,21 @@ class SurveySheetEditor extends BaseEditor {
   }
 
   setupPanel() {
-    this.panel.innerHTML = '';
-    makeMovable(
+    const contentElmnt = makeFloatingPanel(
       this.panel,
       i18n.t('ui.editors.surveySheet.title', { name: this.survey?.name || i18n.t('ui.editors.surveySheet.titleNew') }),
       false,
-      () => this.closeEditor()
+      false,
+      {},
+      () => {
+        document.removeEventListener('languageChanged', () => this.setupPanel());
+        this.closeEditor();
+      }
     );
-    this.#setupEditor();
+    this.#setupEditor(contentElmnt);
   }
 
-  #setupEditor() {
+  #setupEditor(contentElmnt) {
 
     this.formData = {
       name        : this.survey?.name || '',
@@ -914,7 +914,7 @@ class SurveySheetEditor extends BaseEditor {
       }
       this.closeEditor();
     };
-    this.panel.appendChild(form);
+    contentElmnt.appendChild(form);
 
   }
 

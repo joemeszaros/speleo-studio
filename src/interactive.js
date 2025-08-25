@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { makeMovable, showErrorPanel } from './ui/popups.js';
+import { makeFloatingPanel, showErrorPanel } from './ui/popups.js';
 import { get3DCoordsStr, node, degreesToRads, fromPolar } from './utils/utils.js';
 import { SectionHelper } from './section.js';
 import { ShotType } from './model/survey.js';
 import { StrikeDipCalculator } from './utils/geo.js';
 import { Vector } from './model.js';
 import { i18n } from './i18n/i18n.js';
+import { toPolar, radsToDegrees } from './utils/utils.js';
 
 class SceneInteraction {
 
@@ -320,10 +321,19 @@ class SceneInteraction {
   }
 
   buildLocateStationPanel() {
-    this.locatePanel.innerHTML = '';
-    makeMovable(this.locatePanel, i18n.t('ui.panels.locateStation.title'), false, () => {
-      this.locatePanel.style.display = 'none';
-    });
+
+    const contentElmnt = makeFloatingPanel(
+      this.locatePanel,
+      i18n.t('ui.panels.locateStation.title'),
+      false,
+      false,
+      {},
+      () => {
+        document.removeEventListener('languageChanged', () => {
+          this.buildLocateStationPanel();
+        });
+      }
+    );
     const stNames = this.db.getAllStationNames();
     const multipleCaves = this.db.getAllCaveNames().length > 1;
     const optionValue = (x) => (multipleCaves ? `${x.name} (${x.cave})` : x.name);
@@ -363,8 +373,7 @@ class SceneInteraction {
 
     };
 
-    this.locatePanel.appendChild(container);
-    this.locatePanel.style.display = 'block';
+    contentElmnt.appendChild(container);
   }
 
   showDipStrikeCalculatorPanel() {
@@ -375,19 +384,17 @@ class SceneInteraction {
   }
 
   buildDipStrikeCalculatorPanel() {
-    this.locatePanel.innerHTML = '';
-    makeMovable(
+    const contentElmnt = makeFloatingPanel(
       this.locatePanel,
       i18n.t('ui.panels.dipStrikeCalculator.title'),
       false,
+      false,
+      {},
       () => {
-        this.locatePanel.style.display = 'none';
         document.removeEventListener('languageChanged', () => {
           this.buildDipStrikeCalculatorPanel();
         });
-      },
-      () => {},
-      () => {}
+      }
     );
 
     const container = node`
@@ -598,8 +605,7 @@ class SceneInteraction {
       };
     });
 
-    this.locatePanel.appendChild(container);
-    this.locatePanel.style.display = 'block';
+    contentElmnt.appendChild(container);
   }
 
   showShortestPathPanel() {
@@ -653,12 +659,19 @@ class SceneInteraction {
       };
     };
 
-    this.locatePanel.style.display = 'none'; //shown previously
-    this.locatePanel.innerHTML = '';
-    makeMovable(this.locatePanel, i18n.t('ui.panels.shortestPath.title'), false, () => {
-      this.scene.disposeSegments(segmentsId);
-      this.locatePanel.style.display = 'none';
-    });
+    const contentElmnt = makeFloatingPanel(
+      this.locatePanel,
+      i18n.t('ui.panels.shortestPath.title'),
+      false,
+      false,
+      {},
+      () => {
+        this.scene.disposeSegments(segmentsId);
+        document.removeEventListener('languageChanged', () => {
+          this.buildShortestPathPanel();
+        });
+      }
+    );
 
     const cNames = this.db.getAllCaveNames();
     if (cNames.length > 1) {
@@ -666,15 +679,15 @@ class SceneInteraction {
       const caveNamesL = node`<label for="cave-names">${i18n.t('common.cave')}: <select id="cave-names" name="cave-names">${optionCaveNames}</select></label>`;
       const caveNames = caveNamesL.childNodes[1];
 
-      this.locatePanel.appendChild(caveNamesL);
+      contentElmnt.appendChild(caveNamesL);
 
       caveNames.onchange = () => {
         const caveName = caveNames.options[caveNames.selectedIndex].text;
-        const cont = this.locatePanel.querySelector('#container-shortest-path');
+        const cont = contentElmnt.querySelector('#container-shortest-path');
         if (cont !== undefined) {
-          this.locatePanel.removeChild(cont);
+          contentElmnt.removeChild(cont);
         }
-        this.locatePanel.querySelectorAll('#shortest-path-label').forEach((e) => this.locatePanel.removeChild(e));
+        contentElmnt.querySelectorAll('#shortest-path-label').forEach((e) => contentElmnt.removeChild(e));
 
         addStationSelectors(caveName);
       };
@@ -682,7 +695,6 @@ class SceneInteraction {
 
     if (cNames.length > 0) {
       addStationSelectors(cNames[0]);
-      this.locatePanel.style.display = 'block';
     }
   }
 
@@ -705,12 +717,9 @@ class SceneInteraction {
   }
 
   buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
-    this.infoPanel.innerHTML = '';
 
-    makeMovable(this.infoPanel, i18n.t('ui.panels.distance.title'), false, () => {
-      this.infoPanel.style.display = 'none';
+    const contentElmnt = makeFloatingPanel(this.infoPanel, i18n.t('ui.panels.distance.title'), false, false, {}, () => {
       lineRemoveFn();
-
       document.removeEventListener('languageChanged', () => {
         this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
       });
@@ -721,11 +730,7 @@ class SceneInteraction {
     const tp = to.position;
     const content = node`<div class="infopanel-content"></div>`;
 
-    // Calculate horizontal angle from Y axis (0 degrees = North)
-    const azimuth = (Math.atan2(diffVector.x, diffVector.y) * 180) / Math.PI;
-    // Normalize to 0-360 range
-    const azimuthNormalized = (azimuth + 360) % 360;
-    const clino = (Math.asin(diffVector.z / diffVector.length()) * 180) / Math.PI;
+    const polar = toPolar(diffVector);
 
     content.innerHTML = `
         ${i18n.t('common.from')}: ${from.name} (${formatCoords([fp.x, fp.y, fp.z])})<br>
@@ -733,15 +738,16 @@ class SceneInteraction {
         ${i18n.t('ui.panels.distance.x')}: ${diffVector.x.toFixed(3)}<br>
         ${i18n.t('ui.panels.distance.y')}: ${diffVector.y.toFixed(3)}<br>
         ${i18n.t('ui.panels.distance.z')}: ${diffVector.z.toFixed(3)}<br>
-        ${i18n.t('ui.panels.distance.azimuth')}: ${azimuthNormalized.toFixed(3)}°<br>
-        ${i18n.t('ui.panels.distance.clino')}: ${clino.toFixed(3)}°<br>
+        ${i18n.t('ui.panels.distance.azimuth')}: ${radsToDegrees(polar.azimuth).toFixed(3)}°<br>
+        ${i18n.t('ui.panels.distance.clino')}: ${radsToDegrees(polar.clino).toFixed(3)}°<br>
         ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2)).toFixed(3)}<br>
-        ${i18n.t('ui.panels.distance.spatial')}: ${diffVector.length().toFixed(3)}
+        ${i18n.t('ui.panels.distance.spatial')}: ${polar.distance.toFixed(3)}
         `;
-    this.infoPanel.appendChild(content);
-    this.infoPanel.style.display = 'block';
+    contentElmnt.appendChild(content);
+
     const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
 
+    //FIXME: replace this with a generalized solution
     this.infoPanel.style.left = adjustedPosition.left + 'px';
     this.infoPanel.style.top = adjustedPosition.top + 'px';
 
@@ -755,25 +761,32 @@ class SceneInteraction {
   }
 
   buildStationDetailsPanel(station, left, top) {
-    this.infoPanel.innerHTML = '';
 
-    makeMovable(this.infoPanel, i18n.t('ui.panels.stationDetails.title'), false, () => {
-      this.infoPanel.style.display = 'none';
-      this.#clearSelectedForContext();
-      this.scene.view.renderView();
+    const contentElmnt = makeFloatingPanel(
+      this.infoPanel,
+      i18n.t('ui.panels.stationDetails.title'),
+      false,
+      false,
+      {},
+      () => {
+        this.#clearSelectedForContext();
+        this.scene.view.renderView();
 
-      document.removeEventListener('languageChanged', () => {
-        this.buildStationDetailsPanel(station, left, top);
-      });
-    });
+        document.removeEventListener('languageChanged', () => {
+          this.buildStationDetailsPanel(station, left, top);
+        });
+      }
+    );
 
-    const shots = station.meta.cave.surveys.flatMap((s) =>
-      s.shots.filter((s) => s.from === station.name || s.to === station.name)
+    const shots = station.meta.cave.surveys.flatMap((st) =>
+      st.shots
+        .filter((sh) => sh.from === station.name || sh.to === station.name)
+        .map((sh) => ({ survey: st, shot: sh }))
     );
     const shotDetails = shots
-      .map((s) => {
+      .map((r) => {
         return `
-        ${s.from} -> ${s.to} (${s.length.toFixed(2)} m, ${s.clino.toFixed(2)}°, ${s.azimuth.toFixed(2)}°)`;
+        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} m, ${r.shot.clino.toFixed(2)}°, ${r.shot.azimuth.toFixed(2)}°) - ${r.survey.name}`;
       })
       .join('<br>');
 
@@ -791,9 +804,8 @@ class SceneInteraction {
         ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${station.meta.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.wgs, ['lat', 'lon'], 6)}<br>
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br>
         `;
-    this.infoPanel.appendChild(content);
+    contentElmnt.appendChild(content);
 
-    this.infoPanel.style.display = 'block';
     const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
     this.infoPanel.style.left = adjustedPosition.left + 'px';
     this.infoPanel.style.top = adjustedPosition.top + 'px';

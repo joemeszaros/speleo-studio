@@ -39,6 +39,10 @@ class Vector {
     return new Vector(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
   }
 
+  length() {
+    return this.magnitude();
+  }
+
   magnitude() {
     return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
   }
@@ -59,6 +63,21 @@ class Vector {
 
   static fromPure(pure) {
     return Object.assign(new Vector(), pure);
+  }
+}
+
+class Polar {
+
+  constructor(distance, azimuth, clino) {
+    this.distance = distance;
+    this.azimuth = azimuth;
+    this.clino = clino;
+  }
+
+  inTolerance(other, tolerance) {
+    return Math.abs(this.distance - other.distance) < tolerance * this.distance &&
+      Math.abs(this.azimuth - other.azimuth) < tolerance * this.azimuth &&
+      Math.abs(this.clino - other.clino) < tolerance * this.clino;
   }
 }
 
@@ -347,4 +366,4 @@ class Surface {
 
 }
 
-export { Vector, Color, StationAttribute, SectionAttribute, ComponentAttribute, Surface };
+export { Vector, Polar, Color, StationAttribute, SectionAttribute, ComponentAttribute, Surface };

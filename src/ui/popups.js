@@ -167,10 +167,12 @@ function showInfoPanel(message, seconds = 0) {
   showCautionPanel(message, seconds, 'info');
 }
 
-function makeMovable(
+function makeFloatingPanel(
   panel,
   headerText,
   resizable = true,
+  minimizable = true,
+  options = {},
   closeFn = () => {},
   doDragFn = () => {},
   stopDragFn = () => {}
@@ -182,11 +184,15 @@ function makeMovable(
     pos2 = 0,
     pos3 = 0,
     pos4 = 0;
+
   var startX, startY, startWidth, startHeight;
   var pWidth, pHeight;
 
   var elmnt = null;
   var currentZIndex = 100;
+  var isMinimized = false;
+  var originalHeight = null;
+  var originalMinHeight = null;
 
   function closeDragElement() {
     /* stop moving when mouse button is released:*/
@@ -246,27 +252,79 @@ function makeMovable(
     document.documentElement.addEventListener('mouseup', stopDrag, false);
   }
 
-  const doDrag = (e) => {
+  function doDrag(e) {
     pHeight = startHeight + e.clientY - startY;
     pWidth = startWidth + e.clientX - startX;
     elmnt.style.width = pWidth + 'px';
     elmnt.style.height = pHeight + 'px';
     doDragFn(pWidth, pHeight);
 
-  };
+  }
 
-  const stopDrag = () => {
+  function stopDrag() {
     stopDragFn(pWidth, pHeight);
+    if (options?.width && options?.height) {
+      options.width = pWidth;
+      options.height = pHeight;
+    }
     document.documentElement.removeEventListener('mousemove', doDrag, false);
     document.documentElement.removeEventListener('mouseup', stopDrag, false);
-  };
+  }
+
+  function toggleMinimize(minimizeBtn) {
+
+    const contentElement = elmnt.querySelector('.popup-content-div');
+
+    if (!isMinimized) {
+      // Store original height and content elements
+      if (originalHeight === null) {
+        originalHeight = elmnt.offsetHeight;
+        originalMinHeight = elmnt.style.minHeight;
+      }
+      contentElement.style.display = 'none';
+
+      // Set height to just the header height
+      const headerHeight = elmnt.querySelector('.popup-header').offsetHeight;
+      elmnt.style.minHeight = headerHeight + 'px';
+      elmnt.style.height = headerHeight + 'px';
+      isMinimized = true;
+      minimizeBtn.classList.add('minimized');
+    } else {
+      // Restore content elements and original height
+      contentElement.style.display = 'block';
+
+      if (originalHeight !== null) {
+        elmnt.style.height = originalHeight + 'px';
+      }
+
+      if (originalMinHeight !== null) {
+        elmnt.style.minHeight = originalMinHeight;
+      }
+
+      originalHeight = null;
+      originalMinHeight = null;
+
+      isMinimized = false;
+      minimizeBtn.classList.remove('minimized');
+    }
+  }
 
   const close = node`<div class="close"></div>`;
   close.onclick = () => {
+    panel.style.display = 'none';
     closeFn();
   };
 
+  panel.innerHTML = '';
+
   const header = node`<div class="popup-header">${headerText}</div>`;
+
+  if (minimizable) {
+    const minimizeBtn = node`<div class="minimize"></div>`;
+    minimizeBtn.onclick = () => toggleMinimize(minimizeBtn);
+    header.appendChild(minimizeBtn);
+  }
+
   header.appendChild(close);
   header.parentPopup = panel;
   header.onmousedown = dragMouseDown;
@@ -291,6 +349,16 @@ function makeMovable(
     both.addEventListener('mousedown', initDrag, false);
     both.parentPopup = panel;
   }
+
+  const content = node`<div class="popup-content-div"></div>`;
+  panel.appendChild(content);
+
+  if (options?.width && options?.height) {
+    panel.style.width = options.width + 'px';
+    panel.style.height = options.height + 'px';
+  }
+  panel.style.display = 'block';
+  return content;
 }
 
-export { showErrorPanel, showWarningPanel, showSuccessPanel, showInfoPanel, makeMovable };
+export { showErrorPanel, showWarningPanel, showSuccessPanel, showInfoPanel, makeFloatingPanel };

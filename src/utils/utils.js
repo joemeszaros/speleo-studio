@@ -1,8 +1,39 @@
-import { Vector } from '../model.js';
+import { Vector, Polar } from '../model.js';
 
+/**
+ * Converts polar coordinates (distance, azimuth, clino) to Cartesian coordinates (x,y,z)
+ * @param {number} distance - The distance/length of the vector
+ * @param {number} azimuth - The azimuth angle in radians (0 = North, increases clockwise)
+ * @param {number} clino - The inclination/clino angle in radians (positive = up)
+ * @returns {Vector} A Vector representing the Cartesian coordinates
+ */
 function fromPolar(distance, azimuth, clino) {
   const h = Math.cos(clino) * distance;
   return new Vector(Math.sin(azimuth) * h, Math.cos(azimuth) * h, Math.sin(clino) * distance);
+}
+
+/**
+ * Converts Cartesian coordinates (x,y,z) to polar coordinates (distance, azimuth, clino)
+ * @param {Vector} vector - The 3D vector in Cartesian coordinates
+ * @returns {Object} Object containing distance, azimuth (in radians), and clino (in radians)
+ */
+function toPolar(vector) {
+  const distance = vector.length();
+  if (distance === 0) {
+    return new Polar(0, 0, 0);
+  }
+
+  // Calculate clino (vertical angle)
+  const clino = Math.asin(vector.z / distance);
+
+  // Calculate horizontal angle from Y axis (0 degrees = North)
+  let azimuth = Math.atan2(vector.x, vector.y);
+  // Normalize azimuth to 0-2π range
+  if (azimuth < 0) {
+    azimuth += 2 * Math.PI;
+  }
+
+  return new Polar(distance, azimuth, clino);
 }
 
 // https://courses.eas.ualberta.ca/eas421/formulasheets/formulasheetxythetaP12010.pdf
@@ -232,6 +263,7 @@ function textToIso88592Bytes(text) {
 
 export {
   fromPolar,
+  toPolar,
   normal,
   degreesToRads,
   radsToDegrees,

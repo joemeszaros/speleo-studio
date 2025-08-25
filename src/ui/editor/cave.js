@@ -1,6 +1,6 @@
 import * as U from '../../utils/utils.js';
 import { CaveMetadata, Cave } from '../../model/cave.js';
-import { makeMovable, showErrorPanel } from '../popups.js';
+import { makeFloatingPanel, showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
 import { GeoData, EOVCoordinateWithElevation, CoordinateSytem, StationWithCoordinate } from '../../model/geo.js';
 import { SurveyAlias } from '../../model/survey.js';
@@ -35,20 +35,22 @@ class CaveEditor extends Editor {
   }
 
   setupPanel() {
-    this.panel.innerHTML = '';
-    makeMovable(
+
+    const contentElmnt = makeFloatingPanel(
       this.panel,
       i18n.t('ui.editors.caveSheet.title', { name: this.cave?.name ?? i18n.t('ui.editors.caveSheet.titleNew') }),
       false,
+      false,
+      {},
       () => this.closeEditor(),
       () => {},
       () => {}
     );
-    this.#setupEditor();
-    this.#setupStats();
+    this.#setupEditor(contentElmnt);
+    this.#setupStats(contentElmnt);
   }
 
-  #setupEditor() {
+  #setupEditor(contentElmnt) {
     this.caveHasChanged = false;
 
     this.caveData = {
@@ -240,7 +242,7 @@ class CaveEditor extends Editor {
       this.closeEditor();
 
     };
-    this.panel.appendChild(form);
+    contentElmnt.appendChild(form);
   }
 
   renderAliases() {
@@ -337,7 +339,7 @@ class CaveEditor extends Editor {
     });
   }
 
-  #setupStats() {
+  #setupStats(contentElmnt) {
     const statFields = U.node`<div class="cave-stats"></div>`;
     const stats = this.cave?.getStats();
 
@@ -444,8 +446,8 @@ class CaveEditor extends Editor {
       }
       statFields.appendChild(node);
     });
-    this.panel.appendChild(statFields);
-    this.panel.appendChild(U.node`<hr/>`);
+    contentElmnt.appendChild(statFields);
+    contentElmnt.appendChild(U.node`<hr/>`);
   }
 }
 

@@ -6,6 +6,10 @@ export class PrintUtils {
     this.projectSystem = projectSystem;
   }
 
+  // just using window.print() doesn't work always. Firefox didn't work at all.
+  // also printing a canvas of three.js doesn't work based on comments on the internet
+  // I decided to save the scene to a A4 sized image and print just the image and nothing else
+  // page orientation comes form the config and controlled with named @page at-rules in main.css
   async cropCanvasToImage() {
 
     //FIXME: in plan view the compass shoul be visible

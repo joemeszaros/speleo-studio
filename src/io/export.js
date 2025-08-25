@@ -1,5 +1,5 @@
 import { toAscii, textToIso88592Bytes, toPolygonDate, node } from '../utils/utils.js';
-import { makeMovable, showErrorPanel } from '../ui/popups.js';
+import { makeFloatingPanel, showErrorPanel } from '../ui/popups.js';
 import { i18n } from '../i18n/i18n.js';
 
 class Exporter {
@@ -211,9 +211,8 @@ class Exporter {
   }
 
   static buildExportDialog(caves, project, scene, panel) {
-    // Create the export dialog HTML if it doesn't exist
-    panel.innerHTML = '';
-    makeMovable(panel, i18n.t('common.export'), false, () => (panel.style.display = 'none'));
+
+    const contentElmnt = makeFloatingPanel(panel, i18n.t('common.export'), false, false, {});
 
     const form = node`
         <form class="popup-content">
@@ -235,16 +234,16 @@ class Exporter {
           </div>
         </form>
       `;
-    panel.appendChild(form);
+    contentElmnt.appendChild(form);
     form.onsubmit = (e) => {
       e.preventDefault();
-      Exporter.executeExport(caves, scene, panel);
+      Exporter.executeExport(caves, scene, contentElmnt);
     };
 
     const projectNameInput = panel.querySelector('#export-project-name');
     // Set default filename
     projectNameInput.value = project?.name ?? 'cave-export';
-    panel.style.display = 'block';
+
   }
 
   static executeExport(caves, scene, panel) {

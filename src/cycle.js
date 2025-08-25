@@ -1,12 +1,13 @@
 import * as U from './utils/utils.js';
 import { SectionHelper } from './section.js';
-import { makeMovable } from './ui/popups.js';
+import { makeFloatingPanel } from './ui/popups.js';
 import { Color } from './model.js';
 import { CaveCycle } from './model/cave.js';
 
 class CyclePanel {
 
-  constructor(panel, scene, cave) {
+  constructor(options, panel, scene, cave) {
+    this.options = options;
     this.panel = panel;
     this.scene = scene;
     this.cave = cave;
@@ -25,25 +26,27 @@ class CyclePanel {
       this.table.destroy();
       this.table = undefined;
     }
-
-    this.panel.style.display = 'none';
   }
 
   setupPanel() {
-    this.panel.innerHTML = '';
-    makeMovable(
+    const contentElmnt = makeFloatingPanel(
       this.panel,
       `Cycles: ${this.cave.name}`,
-      false,
+      true,
+      true,
+      this.options.ui.editor.cycles,
       () => this.closeEditor(),
-      () => {},
-      () => {}
+      (_newWidth, newHeight) => {
+        const h = this.panel.offsetHeight - 100;
+        this.table.setHeight(h);
+      },
+      () => this.table.redraw()
     );
-    this.#setupButtons();
-    this.#setupTable();
+    this.#setupButtons(contentElmnt);
+    this.#setupTable(contentElmnt);
   }
 
-  #setupButtons() {
+  #setupButtons(contentElmnt) {
     [
       { id: 'show-all', text: 'Show all', click: () => this.showAllCycles() },
       { id: 'hide-all', text: 'Hide all', click: () => this.hideAllCycles() }
@@ -51,7 +54,7 @@ class CyclePanel {
     ].forEach((b) => {
       const button = U.node`<button id="${b.id}">${b.text}</button>`;
       button.onclick = b.click;
-      this.panel.appendChild(button);
+      contentElmnt.appendChild(button);
     });
   }
 
@@ -101,11 +104,11 @@ class CyclePanel {
     ];
   }
 
-  #setupTable() {
-    this.panel.appendChild(U.node`<div id="cycle-table"></div>`);
+  #setupTable(contentElmnt) {
+    contentElmnt.appendChild(U.node`<div id="cycle-table"></div>`);
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#cycle-table', {
-      height       : 300,
+      height       : this.options.ui.editor.cycles.height - 30,
       data         : this.#getTableData(),
       layout       : 'fitDataStretch',
       reactiveData : true,
