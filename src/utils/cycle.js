@@ -1,5 +1,6 @@
 import { toPolar, degreesToRads, radsToDegrees } from './utils.js';
 import { Polar } from '../model.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class CycleUtil {
 
@@ -17,7 +18,7 @@ export class CycleUtil {
     );
 
     if (!shotWithSurvey) {
-      throw new Error(`No shot found between stations ${from} and ${to}.`);
+      throw new Error(i18n.t('ui.editors.cycles.errors.noShotBetweenStations', { from, to }));
     }
 
     return shotWithSurvey;
@@ -58,16 +59,16 @@ export class CycleUtil {
    */
   static _validateLoopPath(path, stations) {
     if (!Array.isArray(path) || path.length < 3) {
-      throw new Error('Path must be an array containing at least 3 stations to form a loop');
+      throw new Error(i18n.t('ui.editors.cycles.errors.pathMustBeArray'));
     }
 
     if (path[0] !== path[path.length - 1]) {
-      throw new Error('Path must form a loop (first and last stations must be the same)');
+      throw new Error(i18n.t('ui.editors.cycles.errors.pathMustFormLoop'));
     }
 
     const missingStation = path.find((stationName) => !stations.has(stationName));
     if (missingStation) {
-      throw new Error(`Station ${missingStation} not found in stations map`);
+      throw new Error(i18n.t('ui.editors.cycles.errors.stationNotFound', { station: missingStation }));
     }
   }
 

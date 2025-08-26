@@ -444,6 +444,25 @@
           "station": "Pont",
           "survey": "Felmérés"
         }
+      },
+      "cycles": {
+        "title": "Hurok kezelő: {name}",
+        "errors": {
+          "noShotBetweenStations": "Nem található mérés a(z) {from} és a(z) {to} pont között",
+          "pathMustBeArray": "A hurkot alkotó útnak tömbnek kell lennie, és legalább 3 pontot kell tartalmaznia",
+          "pathMustFormLoop": "Az útnak hurkot kell alkotnia (első és utolsó pontnak ugyanaz kell lennie)",
+          "stationNotFound": "A(z) {station} pont nem található a pontok között"
+        },
+        "contextMenu": {
+          "propagateLoopClosureError": "Hurok hiba elosztása szakaszok között",
+          "adjustLoopDeviationShots": "Hurok eltérést okzó mérések korrigálása"
+        },
+        "buttons": {
+          "showAllCycles": "Összes hurok megjelenítése",
+          "hideAllCycles": "Összes hurok elrejtése",
+          "showAllDeviatingShots": "Összes eltérést okozó mérés megjelenítése",
+          "hideAllDeviatingShots": "Összes eltérést okozó mérés elrejtése"
+        }
       }
     }
   },

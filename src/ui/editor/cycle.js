@@ -4,6 +4,8 @@ import { makeFloatingPanel } from '../popups.js';
 import { Color, Polar } from '../../model.js';
 import { CaveCycle } from '../../model/cave.js';
 import { CycleUtil } from '../../utils/cycle.js';
+import { IconBar } from './iconbar.js';
+import { i18n } from '../../i18n/i18n.js';
 
 class CyclePanel {
 
@@ -43,7 +45,7 @@ class CyclePanel {
   setupPanel() {
     const contentElmnt = makeFloatingPanel(
       this.panel,
-      `Cycles: ${this.cave.name}`,
+      i18n.t('ui.editors.cycles.title', { name: this.cave.name }),
       true,
       true,
       this.options.ui.editor.cycles,
@@ -59,17 +61,17 @@ class CyclePanel {
   }
 
   #setupButtons(contentElmnt) {
-    [
-      { id: 'show-all', text: 'Show all', click: () => this.showAllCycles() },
-      { id: 'hide-all', text: 'Hide all', click: () => this.hideAllCycles() },
-      { id: 'show-all-deviating-shots', text: 'Show all deviating shots', click: () => this.showAllDeviatingShots() },
-      { id: 'hide-all-deviating-shots', text: 'Hide all deviating shots', click: () => this.hideAllDeviatingShots() }
 
-    ].forEach((b) => {
-      const button = U.node`<button id="${b.id}">${b.text}</button>`;
-      button.onclick = b.click;
-      contentElmnt.appendChild(button);
-    });
+    // Create iconbar with common buttons
+    this.iconBar = new IconBar(contentElmnt);
+
+    const cycleButtons = IconBar.getCycleButtons(
+      () => this.showAllCycles(),
+      () => this.hideAllCycles(),
+      () => this.showAllDeviatingShots(),
+      () => this.hideAllDeviatingShots()
+    );
+    cycleButtons.forEach((button) => this.iconBar.addButton(button));
   }
 
   #getTableData() {
@@ -152,13 +154,13 @@ class CyclePanel {
   getCycleContextMenu() {
     return [
       {
-        label  : 'Propagate loop closure error',
+        label  : i18n.t('ui.editors.cycles.contextMenu.propagateLoopClosureError'),
         action : (e, row) => {
           this.propagateLoopClosureError(row.getData());
         }
       },
       {
-        label  : 'Adjust loop closing shot',
+        label  : i18n.t('ui.editors.cycles.contextMenu.adjustLoopDeviationShots'),
         action : (e, row) => {
           this.adjustLoopDeviationShots(row.getData());
         }
@@ -273,7 +275,6 @@ class CyclePanel {
       const segments = [];
       deviationShots.forEach((s) => {
         if (s.diff.length() > 0.1) {
-          console.log(`showing for ${s.shot.from} -> ${s.shot.to}, diff is ${s.diff.length()}`);
           const from = this.cave.stations.get(s.shot.from);
           const fromPos = from.position;
           const toPos = from.position.add(

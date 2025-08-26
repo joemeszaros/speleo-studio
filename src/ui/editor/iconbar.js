@@ -154,6 +154,36 @@ export class IconBar {
     ];
   }
 
+  // Cycle-specific buttons
+  static getCycleButtons(showAllCycles, hideAllCycles, showAllDeviatingShots, hideAllDeviatingShots) {
+    return [
+      {
+        id      : 'show-all-cycles',
+        tooltip : i18n.t('ui.editors.cycles.buttons.showAllCycles'),
+        icon    : 'icons/cycle.svg',
+        click   : () => showAllCycles?.()
+      },
+      {
+        id      : 'hide-all-cycles',
+        tooltip : i18n.t('ui.editors.cycles.buttons.hideAllCycles'),
+        icon    : 'icons/cycle_hide.svg',
+        click   : () => hideAllCycles?.()
+      },
+      {
+        id      : 'show-all-deviating-shots',
+        tooltip : i18n.t('ui.editors.cycles.buttons.showAllDeviatingShots'),
+        icon    : 'icons/deviating_shots.svg',
+        click   : () => showAllDeviatingShots?.()
+      },
+      {
+        id      : 'hide-all-deviating-shots',
+        tooltip : i18n.t('ui.editors.cycles.buttons.hideAllDeviatingShots'),
+        icon    : 'icons/deviating_shots_hide.svg',
+        click   : () => hideAllDeviatingShots?.()
+      }
+    ];
+  }
+
   // Export button
   static getExportButton(getTable, filename) {
     return [

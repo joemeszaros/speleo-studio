@@ -445,6 +445,25 @@
           "station": "Station",
           "survey": "Survey"
         }
+      },
+      "cycles": {
+        "title": "Cycle manager: {name}",
+        "errors": {
+          "noShotBetweenStations": "No shot found between stations {from} and {to}",
+          "pathMustBeArray": "Path must be an array containing at least 3 stations to form a loop",
+          "pathMustFormLoop": "Path must form a loop (first and last stations must be the same)",
+          "stationNotFound": "Station {station} not found in stations map"
+        },
+        "contextMenu": {
+          "propagateLoopClosureError": "Propagate loop closure error",
+          "adjustLoopDeviationShots": "Adjust loop deviation shots"
+        },
+        "buttons": {
+          "showAllCycles": "Show all cycles",
+          "hideAllCycles": "Hide all cycles",
+          "showAllDeviatingShots": "Show all deviating shots",
+          "hideAllDeviatingShots": "Hide all deviating shots"
+        }
       }
     }
   },
