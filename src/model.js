@@ -1,4 +1,5 @@
 import { CaveSection, CaveComponent } from './model/cave.js';
+import { fromPolar, toPolar } from './utils/utils.js';
 
 class Vector {
 
@@ -53,6 +54,14 @@ class Vector {
     return new Vector(this.x / mag, this.y / mag, this.z / mag);
   }
 
+  copy() {
+    return new Vector(this.x, this.y, this.z);
+  }
+
+  toPolar() {
+    return toPolar(this);
+  }
+
   toExport() {
     return {
       x : this.x,
@@ -74,10 +83,12 @@ class Polar {
     this.clino = clino;
   }
 
-  inTolerance(other, tolerance) {
-    return Math.abs(this.distance - other.distance) < tolerance * this.distance &&
-      Math.abs(this.azimuth - other.azimuth) < tolerance * this.azimuth &&
-      Math.abs(this.clino - other.clino) < tolerance * this.clino;
+  mul(d) {
+    return new Polar(this.distance * d, this.azimuth, this.clino);
+  }
+
+  toVector() {
+    return fromPolar(this.distance, this.azimuth, this.clino);
   }
 }
 

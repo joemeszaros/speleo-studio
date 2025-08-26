@@ -353,27 +353,30 @@ class SceneInteraction {
       const selectedOption = container.querySelector(`#stations option[value='${input.value}']`);
       const caveName = selectedOption.getAttribute('cave');
       const stationName = selectedOption.getAttribute('station');
-
-      const stationSphere = this.scene.getStationSphere(stationName, caveName);
-      if (stationSphere !== undefined) {
-        if (this.selectedStation !== undefined) {
-          this.#clearSelected();
-        }
-        if (container.querySelector('#forContext').checked) {
-          this.#setSelectedForContext(stationSphere);
-        } else {
-          this.#setSelected(stationSphere);
-        }
-
-        this.scene.view.panCameraTo(stationSphere.position);
-        this.scene.view.zoomCameraTo(4);
-        this.locatePanel.style.display = 'none';
-        input.value = '';
-      }
-
+      const forContext = container.querySelector('#forContext').checked;
+      this.locateStation(caveName, stationName, forContext);
+      input.value = '';
+      this.locatePanel.style.display = 'none';
     };
 
     contentElmnt.appendChild(container);
+  }
+
+  locateStation(caveName, stationName, forContext) {
+    const stationSphere = this.scene.getStationSphere(stationName, caveName);
+    if (stationSphere !== undefined) {
+      if (this.selectedStation !== undefined) {
+        this.#clearSelected();
+      }
+      if (forContext) {
+        this.#setSelectedForContext(stationSphere);
+      } else {
+        this.#setSelected(stationSphere);
+      }
+
+      this.scene.view.panCameraTo(stationSphere.position);
+      this.scene.view.zoomCameraTo(4);
+    }
   }
 
   showDipStrikeCalculatorPanel() {

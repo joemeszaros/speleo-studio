@@ -158,7 +158,7 @@
       "tree": {
         "isolated": "A felmérés izolált a barlanghálózattól, nem csatlakozik korábbi poligon ponthoz",
         "orphan": "A felmérésnek {nr} árva pontja van",
-        "invalid": "A felmérésnek {nrInvalid} érvénytelen és {nrOrphan} árva pontja van"
+        "invalid": "A felmérésnek {nrInvalid} érvénytelen, {nrDuplicate} duplikált és {nrOrphan} árva pontja van"
       },
       "filter": {
         "placeholder": "Barlangok és felmérések szűrése...",
@@ -359,12 +359,14 @@
           "missingFields": "Sor hiányzó mezői: {fields}",
           "incomplete": "Hiányos sor",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
-          "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}"
+          "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}",
+          "duplicateRowWithIds": "{nrDuplicateRows} sor duplikált: {duplicateRowIds}"
         },
         "status": {
           "ok": "Nincs hiba",
           "orphan": "Árva sor",
           "duplicate": "Duplikált sor",
+          "loop": "Hurok mérés",
           "invalid": "Érvénytelen sor: {errors}"
         },
         "columns": {
@@ -379,6 +381,13 @@
         },
         "buttons": {
           "update": "Felmérés frissítése"
+        },
+        "menu": {
+          "invertRow": "Mérés megfordítása",
+          "locateFrom": "Ponttól megkeresése",
+          "locateTo": "Pontig megkeresése",
+          "detailsFrom": "Ponttól részletei",
+          "detailsTo": "Pontig részletei"
         }
       },
       "attributes": {

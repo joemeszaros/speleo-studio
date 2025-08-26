@@ -1,11 +1,10 @@
 import * as U from './utils/utils.js';
-import { SurveyStation as ST } from './model/survey.js';
+import { SurveyStation as ST, ShotWithSurvey } from './model/survey.js';
 import { Vector, Color } from './model.js';
 import { ShotType } from './model/survey.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
 import { EOVToWGS84Transformer } from './utils/geo.js';
-import { radsToDegrees } from './utils/utils.js';
 
 class SurveyHelper {
 
@@ -17,7 +16,7 @@ class SurveyHelper {
    * @param {aliases} - The connection points between different surveys
    * @returns The survey with updated properties
    */
-  static recalculateSurvey(index, es, surveyStations, aliases, geoData) {
+  static recalculateSurvey(index, es, surveys, surveyStations, aliases, geoData) {
     let startName, startPosition, startEov;
 
     //TODO: check if start station is still in shots
@@ -33,11 +32,11 @@ class SurveyHelper {
       }
     }
 
-    SurveyHelper.calculateSurveyStations(es, surveyStations, aliases, startName, startPosition, startEov);
+    SurveyHelper.calculateSurveyStations(es, surveys, surveyStations, aliases, startName, startPosition, startEov);
     return es;
   }
 
-  static calculateSurveyStations(survey, stations, aliases, startName, startPosition, startEov) {
+  static calculateSurveyStations(survey, surveys, stations, aliases, startName, startPosition, startEov) {
 
     if (survey.validShots.length === 0) return [];
 
@@ -66,6 +65,7 @@ class SurveyHelper {
       sh.toAlias = undefined;
     });
 
+    // declination and meridian convergence are also used in utils/cycle.js
     const declination = survey?.metadata?.declination ?? 0.0; //TODO: remove fallback logic
     const convergence = survey?.metadata?.convergence ?? 0.0;
 
@@ -73,14 +73,15 @@ class SurveyHelper {
 
     const duplicateShotIds = new Set();
 
-    const tryAddStation = (name, st, sh) => {
+    const tryAddStation = (name, st, sh, otherSt) => {
       if (stations.has(name)) {
         // this should never happen
         throw new Error(`Conflicting shot (${sh.from} -> ${sh.to})!`);
       } else {
         stations.set(name, st);
         sh.processed = true;
-
+        st.shots.push(new ShotWithSurvey(sh, survey)); // this is used in loop closure
+        otherSt.shots.push(new ShotWithSurvey(sh, survey)); // this is used in loop closure
       }
 
     };
@@ -129,25 +130,19 @@ class SurveyHelper {
             const fp = fromStation.position;
             const st = new Vector(fp.x, fp.y, fp.z).add(polarVector);
             const stationName = survey.getToStationName(sh);
-            tryAddStation(stationName, newStation(st, fromStation, polarVector), sh);
+            tryAddStation(stationName, newStation(st, fromStation, polarVector), sh, fromStation);
             repeat = true;
           } else {
             // from = 1, to = 1
-            const diffVector = toStation.position.sub(fromStation.position);
-            const polar = U.toPolar(diffVector);
-            // within 10 percent
-            if (polar.inTolerance(sh.toPolar(), 0.1)) {
+            // find a previously processed shot with the same from/to (or to/from) stations
+            if (SurveyHelper.findDuplicateShots(sh, survey, surveys).length > 0) {
               duplicateShotIds.add(sh.id);
-              sh.processed = true;
-              console.log('duplicate shot', sh.from, sh.to);
-              return;
             } else {
-              console.log('loop');
-              console.log(
-                `shot ${sh.id} is in loop, ${sh.from} -> ${sh.to}: \n\t shot: (${sh.length}, ${sh.azimuth}, ${sh.clino})\n\t diff: (${polar.distance}, ${radsToDegrees(polar.azimuth)}, ${radsToDegrees(polar.clino)})`
-              );
-              sh.processed = true;
+              fromStation.shots.push(new ShotWithSurvey(sh, survey));
+              toStation.shots.push(new ShotWithSurvey(sh, survey));
             }
+            sh.processed = true;
+            return;
 
           }
 
@@ -160,7 +155,7 @@ class SurveyHelper {
           // from = 0, to = 1
           const tp = toStation.position;
           const st = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-          tryAddStation(sh.from, newStation(st, toStation, polarVector.neg()), sh);
+          tryAddStation(sh.from, newStation(st, toStation, polarVector.neg()), sh, toStation);
           repeat = true;
         } else {
           //from = 0, to = 0, look for aliases
@@ -179,7 +174,7 @@ class SurveyHelper {
               const fp = from.position;
               const to = new Vector(fp.x, fp.y, fp.z).add(polarVector);
               const toStationName = survey.getToStationName(sh);
-              tryAddStation(toStationName, newStation(to, from, polarVector), sh);
+              tryAddStation(toStationName, newStation(to, from, polarVector), sh, from);
               repeat = true;
               sh.fromAlias = pairName;
             }
@@ -194,7 +189,7 @@ class SurveyHelper {
               }
               const tp = to.position;
               const from = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-              tryAddStation(sh.from, newStation(from, to, polarVector.neg()), sh);
+              tryAddStation(sh.from, newStation(from, to, polarVector.neg()), sh, to);
               repeat = true;
               sh.toAlias = pairName;
             }
@@ -210,6 +205,25 @@ class SurveyHelper {
     survey.orphanShotIds = unprocessedShots;
     survey.duplicateShotIds = duplicateShotIds;
     survey.isolated = processedCount === 0;
+  }
+
+  static findDuplicateShots(shot, survey, surveys) {
+
+    const existingShot = (sh, survey) =>
+      survey.validShots.find(
+        (s) =>
+          s.id !== sh.id &&
+          s.processed &&
+          ((s.from === sh.from && s.to === sh.to) || (s.from === sh.to && s.to === sh.from))
+      );
+
+    const surveyIndex = surveys.findIndex((s) => s.name === survey.name);
+    const previousSurveys = surveys.slice(0, surveyIndex);
+    return [...previousSurveys, survey]
+      .map((survey) => {
+        return existingShot(shot, survey);
+      })
+      .filter((s) => s !== undefined);
   }
 
   static getSegments(survey, stations) {

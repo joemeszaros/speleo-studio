@@ -98,33 +98,6 @@ class Main {
       checkElement();
     });
 
-    // Initialize explorer tree in sidebar
-    this.explorerTree = new ExplorerTree(
-      db,
-      options,
-      scene,
-      attributeDefs,
-      document.getElementById('explorer-tree'),
-      document.getElementById('explorer-context-menu')
-    );
-
-    // Initialize settings panel in sidebar
-    this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
-
-    this.projectManager = new ProjectManager(
-      db,
-      options,
-      scene,
-      this.explorerTree,
-      this.projectSystem,
-      this.editorStateSystem
-    );
-
-    // Initialize project panel
-    this.projectPanel = new ProjectPanel(document.getElementById('project-panel'), this.projectSystem);
-    this.projectPanel.setupPanel();
-    this.projectPanel.show();
-
     const interaction = new SceneInteraction(
       db,
       options,
@@ -137,6 +110,35 @@ class Main {
       document.getElementById('tool-panel'),
       ['fixed-size-editor', 'resizable-editor']
     );
+
+    // Initialize explorer tree in sidebar
+    this.explorerTree = new ExplorerTree(
+      db,
+      options,
+      scene,
+      interaction,
+      attributeDefs,
+      document.getElementById('explorer-tree'),
+      document.getElementById('explorer-context-menu')
+    );
+
+    // Initialize settings panel in sidebar
+    this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
+
+    this.projectManager = new ProjectManager(
+      db,
+      options,
+      scene,
+      interaction,
+      this.explorerTree,
+      this.projectSystem,
+      this.editorStateSystem
+    );
+
+    // Initialize project panel
+    this.projectPanel = new ProjectPanel(document.getElementById('project-panel'), this.projectSystem);
+    this.projectPanel.setupPanel();
+    this.projectPanel.show();
 
     this.printUtils = new PrintUtils(options, scene, this.projectSystem);
 

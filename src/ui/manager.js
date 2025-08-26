@@ -13,10 +13,11 @@ class ProjectManager {
    * @param {MyScene} scene - The 3D scene
    * @param {ProjectExplorer} explorer - The project explorer that displays caves and surveys in a tree view
    */
-  constructor(db, options, scene, explorer, projectSystem, editorStateSystem) {
+  constructor(db, options, scene, interaction, explorer, projectSystem, editorStateSystem) {
     this.db = db;
     this.options = options;
     this.scene = scene;
+    this.interaction = interaction;
     this.explorer = explorer;
     this.projectSystem = projectSystem;
     this.editorStateSystem = editorStateSystem;
@@ -163,6 +164,7 @@ class ProjectManager {
         cave,
         survey,
         this.scene,
+        this.interaction,
         document.getElementById('resizable-editor'),
         editorState.state
       );
@@ -246,10 +248,11 @@ class ProjectManager {
     let caveStations = new Map();
     cave.stations = caveStations;
     cave.surveys.entries().forEach(([index, es]) => {
-      SurveyHelper.recalculateSurvey(index, es, caveStations, cave.aliases, cave.geoData);
+      SurveyHelper.recalculateSurvey(index, es, cave.surveys, caveStations, cave.aliases, cave.geoData);
       this.#emitSurveyRecalculated(cave, es);
     });
     cave.stations = caveStations;
+    this.#emitCaveRecalculated(cave);
     //TODO: should recalculate section attributes
   }
 
@@ -297,6 +300,14 @@ class ProjectManager {
     document.dispatchEvent(event);
   }
 
+  #emitCaveRecalculated(cave) {
+    const event = new CustomEvent('caveRecalculated', {
+      detail : {
+        cave : cave
+      }
+    });
+    document.dispatchEvent(event);
+  }
   addNewCave() {
     this.editor = new CaveEditor(
       this.db,
@@ -374,7 +385,7 @@ class ProjectManager {
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
     this.scene.view.fitScreen(boundingBox);
-
+    this.scene.view.renderView();
   }
 
   /**

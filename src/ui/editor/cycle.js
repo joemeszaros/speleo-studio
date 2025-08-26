@@ -1,0 +1,337 @@
+import * as U from '../../utils/utils.js';
+import { SectionHelper } from '../../section.js';
+import { makeFloatingPanel } from '../popups.js';
+import { Color, Polar } from '../../model.js';
+import { CaveCycle } from '../../model/cave.js';
+import { CycleUtil } from '../../utils/cycle.js';
+
+class CyclePanel {
+
+  constructor(options, panel, scene, cave) {
+    this.options = options;
+    this.panel = panel;
+    this.scene = scene;
+    this.cave = cave;
+    //surveyChanged is not used here, because the whole cave needs to be recalculated to show all the loops and loop errors in the table
+    document.addEventListener('caveRecalculated', (e) => this.onCaveRecalculated(e));
+  }
+
+  onCaveRecalculated(e) {
+    const cave = e.detail.cave;
+    if (this.table !== undefined && this.cave.name === cave.name) {
+      const tableRows = this.#getTableData();
+      this.table.replaceData(tableRows);
+    }
+  }
+
+  show() {
+    this.panel.style.display = 'block';
+  }
+
+  closeEditor() {
+
+    this.closed = true;
+
+    if (this.table !== undefined) {
+      this.hideAllCycles();
+      this.hideAllDeviatingShots();
+      this.table.destroy();
+      this.table = undefined;
+    }
+  }
+
+  setupPanel() {
+    const contentElmnt = makeFloatingPanel(
+      this.panel,
+      `Cycles: ${this.cave.name}`,
+      true,
+      true,
+      this.options.ui.editor.cycles,
+      () => this.closeEditor(),
+      (_newWidth, newHeight) => {
+        const h = this.panel.offsetHeight - 100;
+        this.table.setHeight(h);
+      },
+      () => this.table.redraw()
+    );
+    this.#setupButtons(contentElmnt);
+    this.#setupTable(contentElmnt);
+  }
+
+  #setupButtons(contentElmnt) {
+    [
+      { id: 'show-all', text: 'Show all', click: () => this.showAllCycles() },
+      { id: 'hide-all', text: 'Hide all', click: () => this.hideAllCycles() },
+      { id: 'show-all-deviating-shots', text: 'Show all deviating shots', click: () => this.showAllDeviatingShots() },
+      { id: 'hide-all-deviating-shots', text: 'Hide all deviating shots', click: () => this.hideAllDeviatingShots() }
+
+    ].forEach((b) => {
+      const button = U.node`<button id="${b.id}">${b.text}</button>`;
+      button.onclick = b.click;
+      contentElmnt.appendChild(button);
+    });
+  }
+
+  #getTableData() {
+    const palette = ['#118B50', '#F26B0F', '#c92435'];
+    const g = SectionHelper.getGraph(this.cave);
+    return SectionHelper.getCycles(g).map((c) => {
+
+      const loopError = CycleUtil.calculateCycleError([...c.path, c.path[0]], this.cave.stations);
+
+      return {
+        id              : c.id,
+        path            : c.path,
+        distance        : c.distance,
+        color           : new Color(palette[Math.floor(Math.random() * palette.length)]),
+        visible         : false,
+        error           : loopError,
+        errorDistance   : loopError.error.distance,
+        errorAzimuth    : U.radsToDegrees(loopError.error.azimuth),
+        errorClino      : U.radsToDegrees(loopError.error.clino),
+        errorPercentage : (loopError.error.distance / loopError.totalLength) * 100
+      };
+
+    });
+  }
+
+  #getColumns() {
+    return [
+      {
+        width            : 25,
+        field            : 'visible',
+        formatter        : 'tickCross',
+        cellClick        : this.functions.toggleVisibility,
+        mutatorClipboard : (str) => (str === 'true' ? true : false) //TODO:better parser here that considers other values (like 0, 1)
+      },
+      {
+        title             : 'Color',
+        field             : 'color',
+        formatter         : this.functions.colorIcon,
+        accessorClipboard : (color) => color.hexString(),
+        mutatorClipboard  : (hex) => new Color(hex),
+        width             : 45,
+        cellClick         : (_e, cell) => this.functions.changeColor(_e, cell)
+      },
+      {
+        title        : 'Path',
+        field        : 'path',
+        headerFilter : 'input',
+        formatter    : (cell) => U.fitString(cell.getValue().join(','), 100)
+      },
+      {
+        title     : 'Distance',
+        field     : 'distance',
+        formatter : (cell) => cell.getValue().toFixed(3)
+      },
+      {
+        title     : 'Δ Distance',
+        field     : 'errorDistance',
+        formatter : (cell) => cell.getValue().toFixed(3)
+      },
+      {
+        title     : 'Δ Azimuth',
+        field     : 'errorAzimuth',
+        formatter : (cell) => cell.getValue().toFixed(3)
+      },
+      {
+        title     : 'Δ Clino',
+        field     : 'errorClino',
+        formatter : (cell) => cell.getValue().toFixed(3)
+      },
+      {
+        title     : 'Δ Percentage',
+        field     : 'errorPercentage',
+        formatter : (cell) => cell.getValue().toFixed(2) + ' %',
+        sorter    : 'number'
+      }
+
+    ];
+  }
+
+  getCycleContextMenu() {
+    return [
+      {
+        label  : 'Propagate loop closure error',
+        action : (e, row) => {
+          this.propagateLoopClosureError(row.getData());
+        }
+      },
+      {
+        label  : 'Adjust loop closing shot',
+        action : (e, row) => {
+          this.adjustLoopDeviationShots(row.getData());
+        }
+      }
+    ];
+  }
+
+  #setupTable(contentElmnt) {
+    contentElmnt.appendChild(U.node`<div id="cycle-table"></div>`);
+    // eslint-disable-next-line no-undef
+    this.table = new Tabulator('#cycle-table', {
+      height         : this.options.ui.editor.cycles.height - 30,
+      data           : this.#getTableData(),
+      layout         : 'fitDataStretch',
+      reactiveData   : false,
+      rowContextMenu : this.getCycleContextMenu(),
+      rowHeader      : {
+        formatter : 'rownum',
+        hozAlign  : 'center',
+        resizable : false,
+        frozen    : true,
+        editor    : false
+      },
+      columnDefaults : {
+        headerSort     : true,
+        headerHozAlign : 'center',
+        resizable      : 'header'
+      },
+      columns : this.#getColumns()
+    });
+  }
+
+  propagateLoopClosureError(data) {
+    const loopError = data.error;
+    const path = [...data.path, data.path[0]];
+    const stations = this.cave.stations;
+    if (CycleUtil.propagateError(path, stations, loopError.error, loopError.totalLength)) {
+      // we don't know which surveys are affected, so we just use the first one, if someone implements an optimization in survey calculation
+      // and only recalculates surveys after the affected survey
+      this.#emitSurveyChanged(this.cave.surveys[0]);
+    }
+  }
+
+  adjustLoopDeviationShots(data) {
+    const path = [...data.path, data.path[0]];
+    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.stations);
+    if (deviationShots.length > 0 && CycleUtil.adjustShots(deviationShots)) {
+      this.#emitSurveyChanged(this.cave.surveys[0]);
+    }
+  }
+
+  #emitSurveyChanged(survey) {
+    const event = new CustomEvent('surveyChanged', {
+      detail : {
+        cave   : this.cave,
+        survey : survey
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  showAllCycles() {
+    const toShow = this.table.getData().filter((r) => r.visible === false);
+    if (toShow.length > 0) {
+      toShow.forEach((r) => {
+        this.showCycle(r);
+      });
+      this.table.updateData(
+        toShow.map((t) => {
+          return { id: t.id, visible: true };
+        })
+      );
+    }
+  }
+
+  hideAllCycles() {
+    const toHide = this.table.getData().filter((r) => r.visible === true);
+    if (toHide.length > 0) {
+      toHide.forEach((r) => {
+        this.hideCycle(r.id);
+      });
+      this.table.updateData(
+        toHide.map((t) => {
+          return { id: t.id, visible: false };
+        })
+      );
+    }
+  }
+
+  showCycle(data) {
+    this.scene.showSegments(
+      data.id,
+      SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
+      data.color,
+      this.cave.name
+    );
+  }
+
+  hideCycle(id) {
+    this.scene.disposeSegments(id);
+  }
+
+  showAllDeviatingShots() {
+    this.table.getData().forEach((r) => {
+      this.showDeviatingShots([...r.path, r.path[0]], r.id);
+    });
+  }
+
+  showDeviatingShots(path, id) {
+    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.stations);
+    if (deviationShots.length > 0) {
+      const segments = [];
+      deviationShots.forEach((s) => {
+        if (s.diff.length() > 0.1) {
+          console.log(`showing for ${s.shot.from} -> ${s.shot.to}, diff is ${s.diff.length()}`);
+          const from = this.cave.stations.get(s.shot.from);
+          const fromPos = from.position;
+          const toPos = from.position.add(
+            new Polar(
+              s.diff.length(),
+              U.degreesToRads(s.shot.azimuth + s.declination + s.convergence),
+              U.degreesToRads(s.shot.clino)
+            ).toVector()
+          );
+          if (fromPos !== undefined && toPos !== undefined) {
+            segments.push(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z);
+          }
+        }
+      });
+      this.scene.showSegments(`deviating-shots-${id}`, segments, '#ff0000', this.cave.name);
+    }
+  }
+
+  hideAllDeviatingShots() {
+    this.table.getData().forEach((r) => {
+      this.scene.disposeSegments(`deviating-shots-${r.id}`);
+    });
+  }
+
+  functions = {
+    toggleVisibility : (ev, cell) => {
+      const data = cell.getData();
+      cell.setValue(!cell.getValue());
+
+      if (cell.getValue() === true) {
+        this.showCycle(data);
+      } else {
+        this.hideCycle(data.id);
+      }
+    },
+    colorIcon : (cell) => {
+      const data = cell.getData();
+      const color = data.color.hexString();
+      const style = `style="background: ${color}"`;
+      return `<input type="color" id="color-picker-${data.id}" value="${color}"><label id="color-picker-${data.id}-label" for="color-picker-${data.id}" ${style}></label>`;
+    },
+    changeColor : (e, cell) => {
+      if (e.target.tagName === 'INPUT') {
+        e.target.oninput = (e2) => {
+          const newColor = e2.target.value;
+          const data = cell.getData();
+          data.color = new Color(newColor);
+          if (data.visible) {
+            this.hideCycle(data.id);
+            this.showCycle(data);
+          }
+          const label = document.getElementById(e.target.id + '-label');
+          label.style.background = newColor;
+        };
+      }
+    }
+  };
+
+}
+
+export { CyclePanel };

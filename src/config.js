@@ -773,7 +773,7 @@ export class ConfigChanges {
       this.handleSceneChanges(path, oldValue, newValue);
     } else if (path.startsWith('screen.')) {
       this.handleScreenChanges(path, oldValue, newValue);
-    } else if (path.startsWith('ui.editor.survey.')) {
+    } else if (path.startsWith('ui.editor.')) {
       // do nothing, no action on survey editor changes
     } else if (path.startsWith('ui.panels.')) {
       this.handlePanelChanges(path, oldValue, newValue);

@@ -20,7 +20,7 @@ class ShotType {
 }
 
 class Shot {
-  export_fields = ['id', 'type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
+  static export_fields = ['id', 'type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
 
   constructor(id, type, from, to, length, azimuth, clino, comment) {
     this.id = id;
@@ -105,7 +105,7 @@ class Shot {
   }
 
   getEmptyFields() {
-    return this.export_fields
+    return Shot.export_fields
       .filter((f) => f !== 'to' && f !== 'comment')
       .filter((f) => this[f] === undefined || this[f] === null);
   }
@@ -116,7 +116,7 @@ class Shot {
 
   toExport() {
     let newShot = {};
-    this.export_fields.forEach((fName) => {
+    Shot.export_fields.forEach((fName) => {
       if (this[fName] !== undefined && this[fName] !== null) {
         newShot[fName] = this[fName];
       }
@@ -125,19 +125,27 @@ class Shot {
   }
 }
 
+class ShotWithSurvey {
+  constructor(shot, survey) {
+    this.shot = shot;
+    this.survey = survey;
+  }
+
+}
+
 class SurveyStation {
 
   /**
    *
    * @param {string} type - the type of the station, could be center and splay
    * @param {Vector} position - the 3D vector representing the position of the station
-   * @param {Survey} survey - the survey that this station belongs to
    */
-  constructor(type, position, coordinates, survey) {
+  constructor(type, position, coordinates, survey, shots = []) {
     this.type = type;
     this.position = position;
     this.coordinates = coordinates;
     this.survey = survey;
+    this.shots = shots; // this is used in loop closure, contains the shots that connect to this station
   }
 
   isCenter() {
@@ -260,6 +268,7 @@ class Survey {
    * @param {string} - The start point of the whole survey that was explicitly specified for a survey
    * @param {Array[Shot]} shots - An array of shots holding the measurements for this Survey
    * @param {Array[Number]} orphanShotIds - An array of orphan shots that are disconnected (from and/or to is unknown)
+   * @param {Array[Number]} duplicateShotIds - An array of duplicate shots that are the same from/to stations
    */
   constructor(
     name,
@@ -399,6 +408,7 @@ export {
   ShotType,
   Shot,
   SurveyStation,
+  ShotWithSurvey,
   SurveyTeamMember,
   SurveyTeam,
   SurveyInstrument,

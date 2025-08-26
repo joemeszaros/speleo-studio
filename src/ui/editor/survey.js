@@ -9,8 +9,9 @@ import { IconBar } from './iconbar.js';
 
 class SurveyEditor extends Editor {
 
-  constructor(options, cave, survey, scene, panel, unsavedChanges) {
+  constructor(options, cave, survey, scene, interactive, panel, unsavedChanges) {
     super(panel, scene, cave);
+    this.interactive = interactive;
     this.options = options;
     this.survey = survey;
     this.table = undefined;
@@ -36,7 +37,7 @@ class SurveyEditor extends Editor {
           `Invalid shot ids do not match for survey '${[...this.survey.invalidShotIds].join(',')}' and rows '${invalidShotIdsArray.join(',')}'`
         );
       }
-      if (invalidShotIds.size > 0 || survey.orphanShotIds.size > 0) {
+      if (invalidShotIds.size > 0 || survey.orphanShotIds.size > 0 || survey.duplicateShotIds.size > 0) {
         let invalidMessage = '';
         if (invalidShotIds.size > 0) {
           invalidMessage = i18n.t('ui.editors.survey.message.invalidRowWithIds', {
@@ -52,8 +53,16 @@ class SurveyEditor extends Editor {
             orphanRowIds : first15Ids.join(',')
           });
         }
+        let duplicateMessage = '';
+        if (survey.duplicateShotIds.size > 0) {
+          const first15Ids = [...survey.duplicateShotIds.values()].slice(0, 15);
+          duplicateMessage = i18n.t('ui.editors.survey.message.duplicateRowWithIds', {
+            nrDuplicateRows : survey.duplicateShotIds.size,
+            duplicateRowIds : first15Ids.join(',')
+          });
+        }
         this.showAlert(
-          `${invalidMessage}<br>${orphanMessage}<br>${i18n.t('ui.editors.common.error.checkWarningIcon')}`,
+          `${invalidMessage}<br>${orphanMessage}<br>${duplicateMessage}<br>${i18n.t('ui.editors.common.error.checkWarningIcon')}`,
           7
         );
       }
@@ -67,7 +76,9 @@ class SurveyEditor extends Editor {
   }
 
   getNewShots() {
-    return this.table.getData().map((r) => new Shot(r.id, r.type, r.from, r.to, r.length, r.azimuth, r.clino));
+    return this.table
+      .getData()
+      .map((r) => new Shot(r.id, r.type, r.from, r.to, r.length, r.azimuth, r.clino));
   }
 
   validateSurvey(showAlert = true) {
@@ -214,6 +225,7 @@ class SurveyEditor extends Editor {
 
       return rowToBe;
     });
+
     survey.orphanShotIds.forEach((id) => {
       const row = rows[rows.findIndex((r) => r.id === id)];
       row.status = 'orphan';
@@ -286,9 +298,57 @@ class SurveyEditor extends Editor {
     return [
       ...this.baseTableFunctions.getContextMenu(),
       {
-        label  : '<span class="invert-row"></span><span>Invert row<span/> ',
+        label  : `<span class="invert-row"></span><span>${i18n.t('ui.editors.survey.menu.invertRow')}<span/>`,
         action : (e, row) => {
           this.invertRow(row);
+        }
+      },
+      {
+        label  : `<span class="locate-station"></span><span>${i18n.t('ui.editors.survey.menu.locateFrom')}<span/>`,
+        action : (e, row) => {
+          this.interactive.locateStation(this.cave.name, row.getData().from, false);
+        }
+      },
+      {
+        label  : `<span class="locate-station"></span><span>${i18n.t('ui.editors.survey.menu.locateTo')}<span/>`,
+        action : (e, row) => {
+          this.interactive.locateStation(this.cave.name, row.getData().to, false);
+        }
+      },
+      {
+        label  : `<span class="info-row"></span><span>${i18n.t('ui.editors.survey.menu.detailsFrom')}<span/>`,
+        action : (e, row) => {
+          const d = row.getData();
+          const s = this.cave.stations.get(d.from);
+          const station = {
+            position : s.position,
+            name     : d.from,
+            meta     : {
+              type        : s.type,
+              survey      : this.survey,
+              cave        : this.cave,
+              coordinates : s.coordinates
+            }
+          };
+          this.interactive.showStationDetailsPanel(station, e.clientX, e.clientY);
+        }
+      },
+      {
+        label  : `<span class="info-row"></span><span>${i18n.t('ui.editors.survey.menu.detailsTo')}<span/>`,
+        action : (e, row) => {
+          const d = row.getData();
+          const s = this.cave.stations.get(d.to);
+          const station = {
+            position : s.position,
+            name     : d.to,
+            meta     : {
+              type        : s.type,
+              survey      : this.survey,
+              cave        : this.cave,
+              coordinates : s.coordinates
+            }
+          };
+          this.interactive.showStationDetailsPanel(station, e.clientX, e.clientY);
         }
       }
     ];

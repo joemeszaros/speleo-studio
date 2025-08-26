@@ -158,7 +158,7 @@
       "tree": {
         "isolated": "Survey is isolated from the cave network",
         "orphan": "Survey has {nr} orphan shots",
-        "invalid": "Survey has {nrInvalid} invalid and {nrOrphan} orphan shots"
+        "invalid": "Survey has {nrInvalid} invalid, {nrDuplicate} duplicate and {nrOrphan} orphan shots"
       },
       "filter": {
         "placeholder": "Filter caves and surveys...",
@@ -359,12 +359,14 @@
           "missingFields": "Row has missing fields: {fields}",
           "incomplete": "Row is incomplete",
           "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
-          "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}"
+          "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}",
+          "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}"
         },
         "status": {
           "ok": "No errors",
           "orphan": "Row is orphan",
           "duplicate": "Row is duplicate",
+          "loop": "Shot is forming a loop",
           "invalid": "Row is invalid: {errors}"
         },
         "columns": {
@@ -379,6 +381,13 @@
         },
         "buttons": {
           "update": "Update survey"
+        },
+        "menu": {
+          "invertRow": "Invert shot",
+          "locateFrom": "Locate from",
+          "locateTo": "Locate to",
+          "detailsFrom": "Details about from",
+          "detailsTo": "Details about to"
         }
       },
       "attributes": {

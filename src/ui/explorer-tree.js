@@ -1,14 +1,15 @@
 import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CaveEditor } from './editor/cave.js';
 import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
-import { CyclePanel } from '../cycle.js';
+import { CyclePanel } from './editor/cycle.js';
 import { i18n } from '../i18n/i18n.js';
 
 export class ExplorerTree {
-  constructor(db, options, scene, attributeDefs, container, contextMenuElement) {
+  constructor(db, options, scene, interaction, attributeDefs, container, contextMenuElement) {
     this.db = db;
     this.options = options;
     this.scene = scene;
+    this.interaction = interaction;
     this.attributeDefs = attributeDefs;
     this.container = container;
     this.contextMenu = contextMenuElement;
@@ -160,6 +161,15 @@ export class ExplorerTree {
       const surveyNode = caveNode.children.find((s) => s.id === nodeId);
       if (surveyNode) return surveyNode;
     }
+
+    // If filtering is active, also search in filtered nodes
+    if (this.filterText && this.filteredNodes.size > 0) {
+      for (const [, caveNode] of this.filteredNodes) {
+        const surveyNode = caveNode.children.find((s) => s.id === nodeId);
+        if (surveyNode) return surveyNode;
+      }
+    }
+
     return null;
   }
 
@@ -202,7 +212,9 @@ export class ExplorerTree {
   selectNode(nodeId) {
     if (this.selectedNode) {
       this.selectedNode.selected = false;
-      this.selectedNode.element.classList.remove('selected');
+      if (this.selectedNode.element) {
+        this.selectedNode.element.classList.remove('selected');
+      }
       if (nodeId === this.selectedNode.id) {
         this.hideContextMenu();
         this.selectedNode = undefined;
@@ -220,7 +232,10 @@ export class ExplorerTree {
         el.classList.remove('selected');
       });
 
-      node.element.classList.add('selected');
+      // Only try to add selected class if the element exists
+      if (node.element) {
+        node.element.classList.add('selected');
+      }
 
       // Show context popup for surveys after render is complete
       if (node.type === 'survey') {
@@ -234,10 +249,18 @@ export class ExplorerTree {
       // If filtering is active, reapply the filter to maintain the filtered view with selection
       if (this.filterText) {
         this.applyFilter();
-        // Defer the render to allow context menu to be shown first
+        // Defer the render slightly to ensure context menu is shown first
         setTimeout(() => {
           this.render();
-        }, 0);
+          // After re-rendering, update the element reference and reapply the selected class
+          if (node.selected) {
+            const newElement = this.container.querySelector(`[data-node-id="${node.id}"]`);
+            if (newElement) {
+              node.element = newElement;
+              newElement.classList.add('selected');
+            }
+          }
+        }, 10);
       }
     }
   }
@@ -378,6 +401,7 @@ export class ExplorerTree {
             surveyNode.parent.data,
             surveyNode.data,
             this.scene,
+            this.interaction,
             document.getElementById('resizable-editor')
           );
           this.editor.setupPanel();
@@ -460,7 +484,7 @@ export class ExplorerTree {
 
       this.contextMenu.style.position = 'fixed';
 
-      this.contextMenu.style.display = 'flex';
+      this.contextMenu.style.setProperty('display', 'flex', 'important');
       this.contextMenu.node = node;
 
       // Get context menu dimensions
@@ -663,7 +687,11 @@ export class ExplorerTree {
     // Warning icons for surveys with issues
     if (node.type === 'survey') {
       const survey = node.data;
-      const hasIssues = survey.isolated === true || survey.orphanShotIds.size > 0 || survey.invalidShotIds.size > 0;
+      const hasIssues =
+        survey.isolated === true ||
+        survey.orphanShotIds.size > 0 ||
+        survey.invalidShotIds.size > 0 ||
+        survey.duplicateShotIds.size > 0;
 
       if (hasIssues) {
         const warningIcon = document.createElement('div');
@@ -673,16 +701,24 @@ export class ExplorerTree {
           warningIcon.innerHTML = '❌';
           warningIcon.title = i18n.t('ui.explorer.tree.isolated');
           nodeElement.title = i18n.t('ui.explorer.tree.isolated');
-        } else if (survey.invalidShotIds.size > 0 || survey.orphanShotIds.size > 0) {
-          const nrInvalidOrpath = survey.orphanShotIds.difference(survey.invalidShotIds).size;
+        } else if (
+          survey.invalidShotIds.size > 0 ||
+          survey.orphanShotIds.size > 0 ||
+          survey.duplicateShotIds.size > 0
+        ) {
+          const nrInvalidOrpath = survey.orphanShotIds
+            .difference(survey.invalidShotIds)
+            .difference(survey.duplicateShotIds).size;
           warningIcon.innerHTML = '⚠️';
           warningIcon.title = i18n.t('ui.explorer.tree.invalid', {
-            nrInvalid : survey.invalidShotIds.size,
-            nrOrphan  : nrInvalidOrpath
+            nrInvalid   : survey.invalidShotIds.size,
+            nrDuplicate : survey.duplicateShotIds.size,
+            nrOrphan    : nrInvalidOrpath
           });
           nodeElement.title = i18n.t('ui.explorer.tree.invalid', {
-            nrInvalid : survey.invalidShotIds.size,
-            nrOrphan  : nrInvalidOrpath
+            nrInvalid   : survey.invalidShotIds.size,
+            nrDuplicate : survey.duplicateShotIds.size,
+            nrOrphan    : nrInvalidOrpath
           });
         }
 
@@ -705,7 +741,8 @@ export class ExplorerTree {
       }
     };
     nodeElement.appendChild(label);
-    nodeElement.onclick = () => {
+    nodeElement.onclick = (e) => {
+      e.stopPropagation();
       this.selectNode(node.id);
     };
 

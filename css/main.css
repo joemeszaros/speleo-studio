@@ -1078,6 +1078,21 @@ body {
   position: relative;
   background: no-repeat center/80% url(../icons/invert.svg);
 }
+
+.tabulator-menu .info-row {
+  padding: 5px 10px;
+  margin-right: 3px;
+  position: relative;
+  background: no-repeat center/70% url(../icons/info.svg);
+}
+
+.tabulator-menu .locate-station {
+  padding: 5px 10px;
+  margin-right: 3px;
+  position: relative;
+  background: no-repeat center/80% url(../icons/locate.svg);
+}
+
 .cave-stats {
   margin-top: 15px;
   font-size: 12px;

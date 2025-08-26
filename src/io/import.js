@@ -154,7 +154,7 @@ class PolygonImporter extends Importer {
             lineIterator,
             'Declination',
             (x) => U.parseMyFloat(x),
-            (x) => x > 0 && x < 20
+            (x) => x >= 0 && x < 20
           );
           U.iterateUntil(lineIterator, (v) => !v.startsWith('Instruments'));
           const instruments = [];
@@ -220,6 +220,7 @@ class PolygonImporter extends Importer {
           const survey = new Survey(surveyNameStr, true, metadata, fixPointName, shots);
           SurveyHelper.calculateSurveyStations(
             survey,
+            surveys,
             stations,
             [],
             fixPointName,
@@ -318,7 +319,9 @@ class JsonImporter extends Importer {
     const cave = Cave.fromPure(parsedCave, this.attributeDefs);
 
     [...cave.surveys.entries()]
-      .forEach(([index, es]) => SurveyHelper.recalculateSurvey(index, es, cave.stations, cave.aliases, cave.geoData));
+      .forEach(([index, es]) =>
+        SurveyHelper.recalculateSurvey(index, es, cave.surveys, cave.stations, cave.aliases, cave.geoData)
+      );
 
     return cave;
   }
