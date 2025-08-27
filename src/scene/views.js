@@ -4,12 +4,11 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 
-import { COORDINATE_INDEX, SimpleOrbitControl } from '../utils/orbitcontrol.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
 import { formatDistance } from '../utils/utils.js';
-import { ProfileViewControl } from './control.js';
+import { ProfileViewControl, PlanViewControl } from './control.js';
 
 class View {
 
@@ -435,7 +434,7 @@ class PlanView extends View {
     this.overviewCamera.layers.disable(1);
     this.overviewCamera.layers.enable(31);
 
-    this.control = new SimpleOrbitControl(this.camera, domElement, COORDINATE_INDEX.Z);
+    this.control = new PlanViewControl(this.camera, domElement);
 
     this.compass = this.#createCompass(compassSize);
     this.compass.visible = false;
@@ -443,37 +442,38 @@ class PlanView extends View {
 
     this.initiated = false;
     this.enabled = false;
-    this.addListener('orbitChange', (e) => this.#handleControlChange(e));
-    this.addListener('pointermove', (e) => this.control.onMove(e));
-    this.addListener('pointerdown', (e) => this.control.onDown(e));
-    this.addListener('pointerup', () => this.control.onUp());
-    this.addListener('wheel', (e) => this.control.onWheel(e));
-  }
 
-  #handleControlChange(e) {
-    if (e.detail.reason === 'rotate') {
+    // Set up custom plan view control event listeners
+    this.control.addEventListener('start', () => {
       this.isInteracting = true;
-      const rotation = e.detail.value.rotation;
-      this.compass.material.rotation = -rotation;
-    }
+    });
 
-    if (e.detail.reason === 'rotateEnd') {
-      this.overviewCamera.rotation.z = this.camera.rotation.z;
-      this.overviewCamera.updateProjectionMatrix();
-      this.updateFrustumFrame();
+    this.control.addEventListener('end', (params) => {
       this.isInteracting = false;
-    }
 
-    if (e.detail.reason === 'zoom') {
-      this.onZoomLevelChange(e.detail.value.level);
-      this.updateFrustumFrame();
-    }
+      if (params.type === 'rotate') {
+        this.overviewCamera.rotation.z = this.camera.rotation.z;
+        this.overviewCamera.updateProjectionMatrix();
+        this.updateFrustumFrame();
+      } else if (params.type === 'pan') {
+        this.updateFrustumFrame();
+      }
+      this.renderView();
+    });
 
-    if (e.detail.reason === 'panEnd') {
-      this.updateFrustumFrame();
-    }
-
-    this.renderView();
+    this.control.addEventListener('orbitChange', (e) => {
+      if (e.type === 'rotate') {
+        //console.log('rotate', e.rotation);
+        // Update compass rotation
+        this.compass.material.rotation = -e.rotation;
+      } else if (e.type === 'zoom') {
+        console.log('zoom', e.level);
+        this.onZoomLevelChange(e.level);
+        this.updateFrustumFrame();
+      }
+      //render for rotate and pan also
+      this.renderView();
+    });
   }
 
   getCameraRelativePosition(target) {
@@ -481,11 +481,12 @@ class PlanView extends View {
   }
 
   setCameraPosition() {
-    const cameraPos = this.getCameraRelativePosition(this.target);
-    this.camera.position.copy(cameraPos.clone());
-    this.overviewCamera.position.copy(cameraPos.clone());
-    this.camera.lookAt(this.target);
+    this.control.setTarget(this.target);
+    this.control.setHeight(100);
+    this.control.updateCameraPosition();
+    this.overviewCamera.position.copy(this.control.getCameraPosition());
     this.overviewCamera.lookAt(this.target);
+    this.overviewCamera.updateProjectionMatrix();
   }
 
   onResize(width, height) {
@@ -507,6 +508,7 @@ class PlanView extends View {
 
   activate() {
     super.activate();
+    this.control.enabled = true;
     this.compass.visible = true;
     this.renderView();
 
@@ -515,6 +517,7 @@ class PlanView extends View {
   deactivate() {
     super.deactivate();
     this.compass.visible = false;
+    this.control.enabled = false;
   }
 
 }
