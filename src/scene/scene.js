@@ -15,7 +15,7 @@ import { SpatialView, PlanView, ProfileView } from './views.js';
 class SceneOverview {
   constructor(options, container) {
     this.container = container;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: false });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(container.offsetWidth, container.offsetHeight);
     this.domElement = this.renderer.domElement; // auto generate canvas
@@ -45,12 +45,19 @@ class MyScene {
     this.stationAttributes = new Map();
     this.segments = new Map(); // for shortest path segments
     this.caveObject3DGroup = new THREE.Group();
+    this.caveObject3DGroup.name = 'cave object';
     this.sprites3DGroup = new THREE.Group();
+    this.sprites3DGroup.name = 'sprites';
     this.surfaceObject3DGroup = new THREE.Group();
+    this.surfaceObject3DGroup.name = 'surface objects';
     this.sectionAttributes3DGroup = new THREE.Group();
+    this.sectionAttributes3DGroup.name = 'section attributes';
     this.stationAttributes3DGroup = new THREE.Group();
+    this.stationAttributes3DGroup.name = 'station attributes';
     this.segments3DGroup = new THREE.Group();
+    this.segments3DGroup.name = 'segments';
     this.startPoints3DGroup = new THREE.Group();
+    this.startPoints3DGroup.name = 'starting points';
     this.startPointObjects = new Map(); // Map to store starting point objects for each cave
     this.stationFont = undefined;
     const loader = new FontLoader();
@@ -58,6 +65,7 @@ class MyScene {
 
     this.container = container;
     this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
+    this.sceneRenderer.name = 'sceneRenderer';
     this.sceneRenderer.setPixelRatio(window.devicePixelRatio);
     this.sceneRenderer.setSize(container.offsetWidth, container.offsetHeight);
     this.sceneRenderer.autoClear = false; // To allow render overlay on top of normal scene
@@ -71,16 +79,18 @@ class MyScene {
     this.overview = overview;
 
     this.spriteScene = new THREE.Scene();
+    this.spriteScene.name = 'sprite scene';
     this.spriteScene.add(this.sprites3DGroup);
+
+    this.threejsScene = new THREE.Scene();
+    this.threejsScene.name = 'main scene';
+    this.threejsScene.background = new THREE.Color(this.options.scene.background.color);
 
     this.views = {
       plan    : new PlanView(this, this.domElement),
       profile : new ProfileView(this, this.domElement),
       spatial : new SpatialView(this, this.domElement, viewHelperContainer)
     };
-
-    this.threejsScene = new THREE.Scene();
-    this.threejsScene.background = new THREE.Color(this.options.scene.background.color);
 
     this.grid = new Grid(this.options, this);
 
@@ -94,6 +104,8 @@ class MyScene {
     this.boundingBox = undefined;
 
     this.raycaster = new THREE.Raycaster();
+    this.raycaster.params.Mesh.threshold = 10;
+    this.pointer = new THREE.Vector2();
 
     const sphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 10, 10);
     this.surfaceSphere = this.addSphere(
@@ -240,11 +252,10 @@ class MyScene {
     return new THREE.Vector2((x - rect.left) / rect.width, (y - rect.top) / rect.height);
   }
 
-  getPointer(mousePosition) {
-    const pointer = new THREE.Vector2();
-    pointer.x = mousePosition.x * 2 - 1;
-    pointer.y = -mousePosition.y * 2 + 1;
-    return pointer;
+  setPointer(mousePosition) {
+    this.pointer.x = mousePosition.x * 2 - 1;
+    this.pointer.y = -mousePosition.y * 2 + 1;
+    //console.log(`x: ${this.pointer.x}, y: ${this.pointer.y}, zoom: ${this.view.camera.zoom}`);
   }
 
   getFirstIntersectedSprite(mouseCoordinates) {
@@ -262,12 +273,13 @@ class MyScene {
   }
 
   getIntersectedStationSphere(mouseCoordinates) {
-    const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
+    this.setPointer(this.getMousePosition(mouseCoordinates));
     const clSpheres = this.getAllCenterLineStationSpheres();
     const splaySpheres = this.getAllSplaysStationSpheres();
     const auxiliarySpheres = this.getAllAuxiliaryStationSpheres();
-    this.raycaster.setFromCamera(pointer, this.view.camera);
-    const intersectedSpheres = this.raycaster.intersectObjects(clSpheres.concat(splaySpheres).concat(auxiliarySpheres));
+    this.raycaster.setFromCamera(this.pointer, this.view.camera);
+    const spheres = clSpheres.concat(splaySpheres).concat(auxiliarySpheres);
+    const intersectedSpheres = this.raycaster.intersectObjects(spheres);
     if (intersectedSpheres.length) {
       return intersectedSpheres[0].object;
     } else {
@@ -277,9 +289,9 @@ class MyScene {
   }
 
   getIntersectedSurfacePoint(mouseCoordinates, purpose) {
-    const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
+    this.setPointer(this.getMousePosition(mouseCoordinates));
     const clouds = this.getAllSurfacePoints();
-    this.raycaster.setFromCamera(pointer, this.view.camera);
+    this.raycaster.setFromCamera(this.pointer, this.view.camera);
     this.raycaster.params.Points.threshold = 0.1;
     const intersectedPoints = this.raycaster.intersectObjects(clouds);
     if (intersectedPoints.length) {
@@ -373,7 +385,7 @@ class MyScene {
 
   }
 
-  showSegments(id, segments, color, caveName) {
+  showSegments(id, name, segments, color, caveName) {
     if (!this.segments.has(id)) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(segments);
@@ -385,6 +397,7 @@ class MyScene {
         vertexColors : false
       });
       const lineSegments = new LineSegments2(geometry, material);
+      lineSegments.name = name;
       lineSegments.layers.set(1);
       this.segments3DGroup.add(lineSegments);
       this.segments.set(id, {
@@ -477,6 +490,7 @@ class MyScene {
       const position = station.position;
       const geometry = new THREE.PlaneGeometry(attribute.width, attribute.height, 10, 10);
       const plane = new THREE.Mesh(geometry, this.materials.planes.get(attribute.name));
+      plane.name = `plane-${attribute.name}-${id}`;
       plane.position.set(0, 0, 0);
       const dir = U.normal(U.degreesToRads(attribute.azimuth), U.degreesToRads(attribute.dip));
       plane.lookAt(dir.x, dir.y, dir.z);
@@ -524,6 +538,7 @@ class MyScene {
           });
 
           const sprite = new THREE.Sprite(spriteMaterial);
+          sprite.name = `icon-${attribute.name}-${id}`;
           sprite.position.set(position.x, position.y, position.z);
           sprite.scale.set(
             this.options.scene.stationAttributes.iconScale,
@@ -797,6 +812,7 @@ class MyScene {
 
     const textMesh = new THREE.Mesh(textGeometry, this.materials.text);
     textMesh.lookAt(this.view.camera.position);
+    textMesh.name = `label-${label}`;
     textMesh.position.x = position.x;
     textMesh.position.y = position.y;
     textMesh.position.z = position.z;
@@ -926,23 +942,30 @@ class MyScene {
     }
 
     const lineSegmentsPolygon = new LineSegments2(geometryStations, clLineMat);
+    lineSegmentsPolygon.name = `centerline-segments-${cave.name}-${survey.name}`;
     lineSegmentsPolygon.visible = visibility && this.options.scene.centerLines.segments.show;
 
     const lineSegmentsSplays = new LineSegments2(splaysGeometry, splayLineMat);
+    lineSegmentsSplays.name = `splay-segments-${cave.name}-${survey.name}`;
     lineSegmentsSplays.visible = visibility && this.options.scene.splays.segments.show;
 
     const lineSegmentsAuxiliaries = new LineSegments2(auxiliaryGeometry, auxiliaryLineMat);
+    lineSegmentsAuxiliaries.name = `auxiliary-segments-${cave.name}-${survey.name}`;
     lineSegmentsAuxiliaries.visible = visibility && this.options.scene.auxiliaries.segments.show;
 
     const group = new THREE.Group();
+    group.name = `segments-cave-${cave.name}-survey-${survey.name}`;
 
     group.add(lineSegmentsPolygon);
     group.add(lineSegmentsSplays);
     group.add(lineSegmentsAuxiliaries);
 
     const clStationSpheresGroup = new THREE.Group();
+    clStationSpheresGroup.name = `center-line-spheres-${cave.name}-${survey.name}`;
     const splayStationSpheresGroup = new THREE.Group();
+    splayStationSpheresGroup.name = `splay-spheres-${cave.name}-${survey.name}`;
     const auxiliaryStationSpheresGroup = new THREE.Group();
+    auxiliaryStationSpheresGroup.name = `auxiliary-spheres-${cave.name}-${survey.name}`;
 
     const clSphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 5, 5);
     const splaySphereGeo = new THREE.SphereGeometry(this.options.scene.splays.spheres.radius, 5, 5);
@@ -1017,6 +1040,7 @@ class MyScene {
 
   addSurfaceToScene(cloud, colorGradients) {
     cloud.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorGradients, 3));
+    cloud.name = `surface-${cloud.name}`;
     this.surfaceObject3DGroup.add(cloud);
     this.view.renderView();
 
@@ -1028,6 +1052,7 @@ class MyScene {
 
   addSurfaceSphere(position, sphereGroup, geometry, material) {
     const sphere = new THREE.Mesh(geometry, material);
+    sphere.name = `surface-sphere-${position.x}-${position.y}-${position.z}`;
     sphere.position.x = position.x;
     sphere.position.y = position.y;
     sphere.position.z = position.z;
@@ -1061,7 +1086,7 @@ class MyScene {
     e.auxiliarySpheres.children.forEach((c) => c.geometry.dispose());
     e.auxiliarySpheres.clear();
     e.group.clear();
-    this.threejsScene.remove(e.group);
+    this.caveObject3DGroup.remove(e.group);
   }
 
   #dipostSectionAttributes(caveName) {
@@ -1125,6 +1150,7 @@ class MyScene {
   createTubeGeometryFromSegments(segments) {
     // Create a simpler approach: create individual tube segments for each line segment
     const group = new THREE.Group();
+    group.name = `tube-geometry-from-segments`;
 
     // Use fixed values for simplicity
     const tubeRadius = this.options.scene.centerLines.segments.width * 0.15; // 15% of line width
@@ -1151,6 +1177,7 @@ class MyScene {
           const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction.normalize());
 
           const tubeMesh = new THREE.Mesh(tubeGeometry);
+          tubeMesh.name = `tube-geometry-from-segments-${i}-${i + 5}`;
           tubeMesh.position.copy(midPoint);
           tubeMesh.setRotationFromQuaternion(quaternion);
 

@@ -9,6 +9,7 @@ class Grid {
     this.options = options;
     this.scene = scene;
     this.grid = new GridHelper(100, 100, 10, 0.4);
+    this.grid.name = 'grid helper';
     this.grid.visible = true;
     this.grid.layers.set(1);
     this.scene.threejsScene.add(this.grid);

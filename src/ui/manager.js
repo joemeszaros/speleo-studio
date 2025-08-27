@@ -258,6 +258,11 @@ class ProjectManager {
 
   reloadOnScene(cave) {
     const caveStations = cave.stations;
+
+    if (caveStations.size < 3) {
+      return;
+    }
+
     const lOptions = this.options.scene.caveLines;
 
     // get color gradients after recalculation
@@ -338,54 +343,62 @@ class ProjectManager {
     const cave = this.db.getCave(caveName);
     cave.surveys.push(survey);
     this.explorer.addSurvey(cave, survey);
-    this.reloadCave(cave);
+    if (survey.shots.length > 0) {
+      this.reloadCave(cave);
+    }
   }
 
   addCave(cave) {
     this.db.caves.set(cave.name, cave);
 
-    const lOptions = this.options.scene.caveLines;
-    let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
+    const allShots = cave.surveys.flatMap((s) => s.shots);
 
-    cave.surveys.forEach((s) => {
-      const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
-      const _3dobjects = this.scene.addToScene(
-        s,
-        cave,
-        centerLineSegments,
-        splaySegments,
-        auxiliarySegments,
-        true,
-        colorGradients.get(s.name)
-      );
-      this.scene.addSurvey(cave.name, s.name, _3dobjects);
-    });
+    if (cave.surveys.length > 0 && allShots.length > 0) {
 
-    // Add starting point for the cave
-    this.scene.addStartingPoint(cave);
+      const lOptions = this.options.scene.caveLines;
+      let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
 
-    cave.attributes.sectionAttributes.forEach((sa) => {
-      if (sa.visible) {
-        const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
-        this.scene.showSectionAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
-      }
-    });
-    cave.attributes.componentAttributes.forEach((ca) => {
-      if (ca.visible) {
-        const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
-        this.scene.showSectionAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
-      }
-    });
+      cave.surveys.forEach((s) => {
+        const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
+        const _3dobjects = this.scene.addToScene(
+          s,
+          cave,
+          centerLineSegments,
+          splaySegments,
+          auxiliarySegments,
+          true,
+          colorGradients.get(s.name)
+        );
+        this.scene.addSurvey(cave.name, s.name, _3dobjects);
+      });
+
+      // Add starting point for the cave
+      this.scene.addStartingPoint(cave);
+
+      cave.attributes.sectionAttributes.forEach((sa) => {
+        if (sa.visible) {
+          const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
+          this.scene.showSectionAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
+        }
+      });
+      cave.attributes.componentAttributes.forEach((ca) => {
+        if (ca.visible) {
+          const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
+          this.scene.showSectionAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
+        }
+      });
+
+      const boundingBox = this.scene.computeBoundingBox();
+      this.scene.grid.adjust(boundingBox);
+      this.scene.view.fitScreen(boundingBox);
+      this.scene.view.renderView();
+    }
 
     this.explorer.addCave(cave);
     cave.surveys.forEach((s) => {
       this.explorer.addSurvey(cave, s);
     });
 
-    const boundingBox = this.scene.computeBoundingBox();
-    this.scene.grid.adjust(boundingBox);
-    this.scene.view.fitScreen(boundingBox);
-    this.scene.view.renderView();
   }
 
   /**

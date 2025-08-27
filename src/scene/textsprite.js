@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 class TextSprite {
 
-  constructor(label, position, font, scale = 0.5) {
+  constructor(label, position, font, scale = 0.5, name = 'text sprite') {
     this.font = {
       size        : font.size,
       color       : font.color ?? 'white',
@@ -15,10 +15,10 @@ class TextSprite {
     this.scale = scale;
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.sprite = this.#createSprite(label, position, this.scale);
+    this.sprite = this.#createSprite(label, position, this.scale, name);
   }
 
-  #createSprite(label, position, scale) {
+  #createSprite(label, position, scale, name) {
     const fontStyle = `${this.font.size}px ${this.font.family}`;
     this.ctx.font = fontStyle;
     this.canvas.width = Math.ceil(this.ctx.measureText(label).width);
@@ -34,6 +34,7 @@ class TextSprite {
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteMap, toneMapped: false }));
     sprite.scale.set(scale * this.canvas.width, scale * this.canvas.height, 1);
     sprite.position.copy(position);
+    sprite.name = name;
     return sprite;
   }
 

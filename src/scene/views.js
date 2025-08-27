@@ -4,11 +4,12 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 
-import { SimpleOrbitControl, COORDINATE_INDEX } from '../utils/orbitcontrol.js';
+import { COORDINATE_INDEX, SimpleOrbitControl } from '../utils/orbitcontrol.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
 import { formatDistance } from '../utils/utils.js';
+import { ProfileViewControl } from './control.js';
 
 class View {
 
@@ -19,6 +20,10 @@ class View {
     this.scene = scene;
     this.dpi = dpi;
     this.isInteracting = false;
+
+    //this.cameraHelper = new THREE.CameraHelper(camera);
+    //scene.threejsScene.add(this.cameraHelper);
+    //this.cameraHelper.visible = false;
 
     this.ratioIndicator = this.#createRatioIndicator(ratioIndicatorWidth);
     this.ratioIndicator.visible = false;
@@ -50,7 +55,13 @@ class View {
   #createRatioText() {
     //https://discourse.threejs.org/t/how-to-update-text-in-real-time/39050/12
     const position = new THREE.Vector3(0, -this.scene.height / 2 + 40, 1);
-    return new TextSprite('0', position, { size: 35, family: 'Helvetica Neue', strokeColor: 'black' }, 0.5);
+    return new TextSprite(
+      '0',
+      position,
+      { size: 35, family: 'Helvetica Neue', strokeColor: 'black' },
+      0.5,
+      'ratio text'
+    );
   }
 
   #createRatioIndicator(width) {
@@ -62,6 +73,7 @@ class View {
     sprite.scale.set(width, (width / 755) * 36, 1); // 755 is the width of the image, 36 is the height of the image
     sprite.position.set(0, -this.scene.height / 2 + 20, 1); // bottom right
     sprite.width = width; // custom property
+    sprite.name = 'ratio ruler';
     return sprite;
   }
 
@@ -130,13 +142,13 @@ class View {
     });
   }
 
-  static createOrthoCamera(aspect, frustrum = 100) {
+  static createOrthoCamera(aspect, frustrum = 1000) {
     const camera = new THREE.OrthographicCamera(
       (frustrum * aspect) / -2,
       (frustrum * aspect) / 2,
       frustrum / 2,
       frustrum / -2,
-      -1000,
+      -10000,
       3000
     );
 
@@ -282,11 +294,7 @@ class View {
     if (this.initiated === false) {
 
       this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
-      const cameraPos = this.getCameraRelativePosition(this.target);
-      this.camera.position.copy(cameraPos.clone());
-      this.overviewCamera.position.copy(cameraPos.clone());
-      this.camera.lookAt(this.target);
-      this.overviewCamera.lookAt(this.target);
+      this.setCameraPosition();
       this.createFrustumFrame();
       this.fitScreen(boundingBox, true);
       this.onZoomLevelChange(this.camera.zoom);
@@ -297,16 +305,14 @@ class View {
       this.frustumFrame.visible = true;
       this.ratioIndicator.visible = true;
       this.ratioText.sprite.visible = true;
-
     }
-
-    this.renderView();
   }
 
   deactivate() {
     if (this.initiated) {
       this.ratioIndicator.visible = false;
       this.ratioText.sprite.visible = false;
+      this.frustumFrame.visible = false;
     }
 
     this.enabled = false;
@@ -370,6 +376,13 @@ class SpatialView extends View {
   getCameraRelativePosition(target) {
     return new THREE.Vector3(target.x, target.y, target.z + 100);
   }
+  setCameraPosition() {
+    const cameraPos = this.getCameraRelativePosition(this.target);
+    this.camera.position.copy(cameraPos.clone());
+    this.overviewCamera.position.copy(cameraPos.clone());
+    this.camera.lookAt(this.target);
+    this.overviewCamera.lookAt(this.target);
+  }
 
   renderView() {
     this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera, this.viewHelper);
@@ -404,6 +417,7 @@ class SpatialView extends View {
   activate() {
     super.activate();
     this.control.enabled = true;
+    this.renderView();
   }
 
   deactivate() {
@@ -466,6 +480,14 @@ class PlanView extends View {
     return new THREE.Vector3(target.x, target.y, target.z + 100);
   }
 
+  setCameraPosition() {
+    const cameraPos = this.getCameraRelativePosition(this.target);
+    this.camera.position.copy(cameraPos.clone());
+    this.overviewCamera.position.copy(cameraPos.clone());
+    this.camera.lookAt(this.target);
+    this.overviewCamera.lookAt(this.target);
+  }
+
   onResize(width, height) {
     super.onResize(width, height);
     this.compass.position.set(width / 2 - 60, -height / 2 + 60, 1); // bottom right
@@ -479,6 +501,7 @@ class PlanView extends View {
     sprite.center.set(0.5, 0.5);
     sprite.scale.set(size, size, 1);
     sprite.position.set(this.scene.width / 2 - 60, -this.scene.height / 2 + 60, 1); // bottom right
+    sprite.name = 'compass';
     return sprite;
   }
 
@@ -486,6 +509,7 @@ class PlanView extends View {
     super.activate();
     this.compass.visible = true;
     this.renderView();
+
   }
 
   deactivate() {
@@ -503,8 +527,10 @@ class ProfileView extends View {
     this.overviewCamera = View.createOrthoCamera(1);
     this.overviewCamera.layers.disable(1);
     this.overviewCamera.layers.enable(31);
+    this.overviewCamera.up = new THREE.Vector3(0, 0, 1);
 
-    this.control = new SimpleOrbitControl(this.camera, domElement, COORDINATE_INDEX.Y);
+    // Custom profile view camera control - camera moves on X-Y circle around cave
+    this.control = new ProfileViewControl(this.camera, this.domElement);
 
     // Add vertical ruler
     this.verticalRatioIndicatorHeight = verticalRatioIndicatorHeight;
@@ -521,42 +547,52 @@ class ProfileView extends View {
     this.initiated = false;
     this.enabled = false;
 
-    this.addListener('orbitChange', (e) => this.#handleControlChange(e));
-    this.addListener('pointermove', (e) => this.control.onMove(e));
-    this.addListener('pointerdown', (e) => this.control.onDown(e));
-    this.addListener('pointerup', () => this.control.onUp());
-    this.addListener('wheel', (e) => this.control.onWheel(e));
+    // Set up custom profile view control event listeners
+    this.control.addEventListener('start', () => {
+      this.isInteracting = true;
+    });
+
+    this.control.addEventListener('end', (params) => {
+      this.isInteracting = false;
+
+      if (params.type === 'rotate') {
+        const diff = this.control.getCameraPosition().sub(this.control.getTarget());
+        this.overviewCamera.position.copy(this.target.clone().add(diff));
+        this.overviewCamera.lookAt(this.target);
+        this.overviewCamera.updateProjectionMatrix();
+        this.updateFrustumFrame();
+      } else if (params.type === 'pan') {
+        this.updateFrustumFrame();
+      }
+      this.renderView();
+    });
+
+    this.control.addEventListener('orbitChange', (e) => {
+      if (e.type === 'zoom') {
+        this.onZoomLevelChange(e.level);
+        this.updateFrustumFrame();
+      }
+      //render for rotate and pan also
+
+      this.renderView();
+    });
+  }
+
+  setCameraPosition() {
+    this.control.setTarget(this.target);
+    this.control.setRadius(400);
+    this.control.updateCameraPosition();
+    const diff = this.control.getCameraPosition().sub(this.control.getTarget());
+    this.overviewCamera.position.copy(this.target.clone().add(diff));
+    this.overviewCamera.lookAt(this.target);
+    this.overviewCamera.updateProjectionMatrix();
   }
 
   onResize(width, height) {
+
     this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
     this.verticalRatioText.getSprite().position.set(this.scene.width / 2 - 80, 0, 1);
     super.onResize(width, height);
-  }
-
-  #handleControlChange(e) {
-
-    if (e.detail.reason === 'rotate') {
-      this.isInteracting = true;
-    }
-
-    if (e.detail.reason === 'rotateEnd') {
-      this.overviewCamera.rotation.y = this.camera.rotation.y;
-      this.overviewCamera.updateProjectionMatrix();
-      this.updateFrustumFrame();
-      this.isInteracting = false;
-    }
-
-    if (e.detail.reason === 'zoom') {
-      this.onZoomLevelChange(e.detail.value.level);
-      this.updateFrustumFrame();
-    }
-
-    if (e.detail.reason === 'panEnd') {
-      this.updateFrustumFrame();
-    }
-
-    this.renderView();
   }
 
   onZoomLevelChange(level) {
@@ -565,11 +601,6 @@ class ProfileView extends View {
     const verticalIndicatorHeightInMeters =
       worldHeightInMeters / (this.scene.height / this.verticalRatioIndicatorHeight);
     this.verticalRatioText.update(`${formatDistance(verticalIndicatorHeightInMeters)}`);
-
-  }
-
-  getCameraRelativePosition(target) {
-    return new THREE.Vector3(target.x, target.y - 1, target.z);
   }
 
   #createVerticalRuler() {
@@ -625,6 +656,7 @@ class ProfileView extends View {
     // Initial position will be set in onResize
     sprite.position.set(this.scene.width / 2 - 30, 0, 1);
     sprite.scale.set(width, height, 1);
+    sprite.name = 'vertical ruler';
 
     return sprite;
 
@@ -633,54 +665,28 @@ class ProfileView extends View {
   #createVerticalRatioText() {
     // Create vertical ratio text similar to horizontal ratio text
     const position = new THREE.Vector3(this.scene.width / 2 - 80, 0, 1);
-    return new TextSprite('0', position, { size: 35, family: 'Helvetica Neue', strokeColor: 'black' }, 0.5);
-  }
-
-  updateVerticalRuler() {
-    // Recreate the vertical ruler with updated gradient colors
-    if (this.verticalRuler) {
-      // Remove old ruler
-      this.scene.sprites3DGroup.remove(this.verticalRuler);
-      //this.verticalRuler.dispose();
-
-      // Create new ruler
-      this.verticalRuler = this.#createVerticalRuler();
-      this.verticalRuler.visible = this.enabled;
-      this.scene.sprites3DGroup.add(this.verticalRuler);
-      this.renderView();
-
-      // // Update position
-      // if (this.scene.width && this.scene.height) {
-      //   this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
-      // }
-    }
-
-    // // Also recreate vertical ratio text if needed
-    // if (this.verticalRatioText) {
-    //   this.scene.sprites3DGroup.remove(this.verticalRatioText.sprite);
-    //   this.verticalRatioText.sprite.dispose();
-
-    //   // Create new vertical ratio text
-    //   this.verticalRatioText = this.#createVerticalRatioText();
-    //   this.verticalRatioText.sprite.visible = this.enabled;
-    //   const verticalRatioTextSprite = this.verticalRatioText.getSprite();
-    //   this.scene.sprites3DGroup.add(verticalRatioTextSprite);
-
-    //   // Update position
-    //   if (this.scene.width && this.scene.height) {
-    //     this.verticalRatioText.getSprite().position.set(this.scene.width / 2 - 5, 0, 1);
-    //   }
-    // }
+    return new TextSprite(
+      '0',
+      position,
+      { size: 35, family: 'Helvetica Neue', strokeColor: 'black' },
+      0.5,
+      'vertical ratio text'
+    );
   }
 
   activate() {
     super.activate();
+
+    this.control.enabled = true;
     this.verticalRuler.visible = true;
     this.verticalRatioText.sprite.visible = true;
+    this.renderView();
+
   }
 
   deactivate() {
     super.deactivate();
+    this.control.enabled = false;
     this.verticalRuler.visible = false;
     this.verticalRatioText.sprite.visible = false;
   }

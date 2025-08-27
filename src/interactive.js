@@ -108,6 +108,7 @@ class SceneInteraction {
 
       const geometry = new THREE.BufferGeometry().setFromPoints([from, to]);
       const line = new THREE.Line(geometry, this.materials.distanceLine);
+      line.name = `distance-line-${from}-${to}`;
       line.computeLineDistances();
       this.scene.addObjectToScene(line);
 
@@ -207,12 +208,13 @@ class SceneInteraction {
     }
     this.mouseCoordinates.x = event.clientX;
     this.mouseCoordinates.y = event.clientY;
-    const hasPointedStationBefore = this.pointedStation !== undefined;
     const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
     if (intersectedStation !== undefined) {
+      this.scene.domElement.style.cursor = 'pointer';
       this.footer.showMessage(this.getPointedStationDetails(intersectedStation));
       this.pointedStation = intersectedStation;
-    } else if (hasPointedStationBefore) {
+    } else if (this.pointedStation !== undefined) {
+      this.scene.domElement.style.cursor = 'default';
       // do not call clearmessage every time
       this.footer.clearMessage();
       this.pointedStation = undefined;
@@ -649,7 +651,13 @@ class SceneInteraction {
           const section = SectionHelper.getSection(g, from, to);
           if (section !== undefined) {
             const segments = SectionHelper.getSectionSegments(section, cave.stations);
-            this.scene.showSegments(segmentsId, segments, this.options.scene.sectionAttributes.color, caveName);
+            this.scene.showSegments(
+              segmentsId,
+              `shortest-path-${from}-${to}-${segmentsId}`,
+              segments,
+              this.options.scene.sectionAttributes.color,
+              caveName
+            );
             label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.from')}: ${from} ${i18n.t('ui.panels.shortestPath.to')}: ${to} ${i18n.t('ui.panels.shortestPath.length')}: ${section.distance.toFixed(2)}</div>`;
           } else {
             label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.cannotFindPath', { from, to })}</div>`;

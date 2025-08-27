@@ -18,6 +18,12 @@ class SurveyEditor extends Editor {
     this.surveyModified = false;
     this.eovVisible = false;
     this.unsavedChanges = unsavedChanges;
+
+    // without any user integration the survey update button won't work
+    if (this.unsavedChanges !== undefined) {
+      this.surveyModified = true;
+    }
+
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
     document.addEventListener('languageChanged', () => this.setupPanel());
   }
@@ -887,25 +893,27 @@ class SurveySheetEditor extends BaseEditor {
     );
     const declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
     form.appendChild(declinationText);
-
-    const startOrRandomStation =
-      this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1];
-    const declinationPrefix = i18n.t('ui.editors.surveySheet.messages.declinationPrefix');
-    if (this.survey?.metadata?.declinationReal === undefined) {
-      if (startOrRandomStation?.coordinates?.wgs !== undefined && this.survey?.metadata?.date !== undefined) {
-        Declination.getDeclination(
-          startOrRandomStation.coordinates.wgs.lat,
-          startOrRandomStation.coordinates.wgs.lon,
-          this.survey.metadata.date
-        ).then((declination) => {
-          this.survey.metadata.declinationReal = declination;
-          declinationText.textContent = `${declinationPrefix} ${declination.toFixed(3)}`;
-        });
+    if (this.stations) {
+      const startOrRandomStation = this.cave.stations
+        ? (this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1])
+        : undefined;
+      const declinationPrefix = i18n.t('ui.editors.surveySheet.messages.declinationPrefix');
+      if (this.survey?.metadata?.declinationReal === undefined) {
+        if (startOrRandomStation?.coordinates?.wgs !== undefined && this.survey?.metadata?.date !== undefined) {
+          Declination.getDeclination(
+            startOrRandomStation.coordinates.wgs.lat,
+            startOrRandomStation.coordinates.wgs.lon,
+            this.survey.metadata.date
+          ).then((declination) => {
+            this.survey.metadata.declinationReal = declination;
+            declinationText.textContent = `${declinationPrefix} ${declination.toFixed(3)}`;
+          });
+        } else {
+          declinationText.textContent = `${declinationPrefix} ${i18n.t('ui.editors.surveySheet.errors.noWgs84Coordinates')}`;
+        }
       } else {
-        declinationText.textContent = `${declinationPrefix} ${i18n.t('ui.editors.surveySheet.errors.noWgs84Coordinates')}`;
+        declinationText.textContent = `${declinationPrefix} ${this.survey.metadata.declinationReal.toFixed(3)}`;
       }
-    } else {
-      declinationText.textContent = `${declinationPrefix} ${this.survey.metadata.declinationReal.toFixed(3)}`;
     }
 
     form.onsubmit = (e) => {

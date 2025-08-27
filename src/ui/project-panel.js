@@ -106,7 +106,7 @@ export class ProjectPanel {
       if (renameProjectBtn) {
         renameProjectBtn.addEventListener('click', () => {
           this.renameProject(currentProject.id);
-          this.projectSystem.setCurrentProject(currentProject);
+
         });
       }
     } else {
@@ -289,7 +289,9 @@ export class ProjectPanel {
         showErrorPanel(i18n.t('ui.panels.projectManager.projectNameAlreadyExists', { name: trimmedName }));
         return;
       }
-
+      if (this.projectSystem.getCurrentProject()?.id === project.id) {
+        document.title = `Speleo Studio - ${trimmedName}`;
+      }
       // Update project name
       project.name = trimmedName;
       project.updatedAt = new Date().toISOString();

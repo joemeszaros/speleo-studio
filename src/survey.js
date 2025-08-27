@@ -12,15 +12,17 @@ class SurveyHelper {
    * Recalculates and updates survey's shots, station positions, orphan shots and isolatied property
    * @param {number} index - The 0 based index of the survey withing the surveys array of a cave
    * @param {Survey} es - The survey that will be updated in place
-   * @param {Map<string, SurveyStation> } surveyStations - Previously calculated survey stations
+   * @param {Map<string, SurveyStation> } caveStations - Previously calculated survey stations
    * @param {aliases} - The connection points between different surveys
    * @returns The survey with updated properties
    */
-  static recalculateSurvey(index, es, surveys, surveyStations, aliases, geoData) {
+  static recalculateSurvey(index, es, surveys, caveStations, aliases, geoData) {
     let startName, startPosition, startEov;
 
+    if (es.validShots.length === 0) return;
+
     //TODO: check if start station is still in shots
-    startName = es.start !== undefined ? es.start : es.shots[0].from;
+    startName = es.start !== undefined && es.start !== '' ? es.start : es.shots[0].from;
 
     if (index === 0) {
       startEov = geoData?.coordinates?.find((c) => c.name === startName)?.coordinate;
@@ -32,13 +34,13 @@ class SurveyHelper {
       }
     }
 
-    SurveyHelper.calculateSurveyStations(es, surveys, surveyStations, aliases, startName, startPosition, startEov);
+    SurveyHelper.calculateSurveyStations(es, surveys, caveStations, aliases, startName, startPosition, startEov);
     return es;
   }
 
   static calculateSurveyStations(survey, surveys, stations, aliases, startName, startPosition, startEov) {
 
-    if (survey.validShots.length === 0) return [];
+    if (survey.validShots.length === 0) return;
 
     const startStationName = startName !== undefined ? startName : survey.shots[0].from;
     const eovToWgs84Transformer = new EOVToWGS84Transformer();

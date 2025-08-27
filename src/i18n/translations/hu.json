@@ -187,7 +187,7 @@
         "projectSaved": "Projekt mentve",
         "projectExported": "Projekt \"{name}\" exportálva",
         "projectExportFailed": "Hiba történt a projekt exportálása során: {error}",
-        "projectRenamed": "Projekt átnevezve \"{name}\" sikeresen",
+        "projectRenamed": "Projekt sikeresen átnevezve: \"{name}\" ",
         "projectRenameFailed": "Hiba történt a projekt átnevezése során: {error}",
         "projectDeleted": "Projekt törölve",
         "projectDeletionFailed": "Hiba történt a projekt törlése során: {error}",

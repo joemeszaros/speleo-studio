@@ -253,6 +253,7 @@ class CyclePanel {
   showCycle(data) {
     this.scene.showSegments(
       data.id,
+      `cycle-${data.id}`,
       SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
       data.color,
       this.cave.name
@@ -289,7 +290,7 @@ class CyclePanel {
           }
         }
       });
-      this.scene.showSegments(`deviating-shots-${id}`, segments, '#ff0000', this.cave.name);
+      this.scene.showSegments(`deviating-shots-${id}`, `deviating-shots-${id}`, segments, '#ff0000', this.cave.name);
     }
   }
 
