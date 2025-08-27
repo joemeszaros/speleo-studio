@@ -244,7 +244,6 @@ export class PlanViewControl extends BaseViewControl {
 
       // Calculate current angle from center
       const currentAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
-      console.log(`${(currentAngle * 180.0) / Math.PI}°`);
 
       // Calculate angle difference
       let angleDiff = currentAngle - this.startAngle;

@@ -274,7 +274,7 @@ class ProjectManager {
 
       const [clSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(es, caveStations);
       if (clSegments.length !== 0) {
-        const _3dObjects = this.scene.addToScene(
+        const _3dObjects = this.scene.addSurveyToScene(
           es,
           cave,
           clSegments,
@@ -360,7 +360,7 @@ class ProjectManager {
 
       cave.surveys.forEach((s) => {
         const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
-        const _3dobjects = this.scene.addToScene(
+        const _3dobjects = this.scene.addSurveyToScene(
           s,
           cave,
           centerLineSegments,
@@ -390,7 +390,12 @@ class ProjectManager {
 
       const boundingBox = this.scene.computeBoundingBox();
       this.scene.grid.adjust(boundingBox);
-      this.scene.view.fitScreen(boundingBox);
+
+      Object.keys(this.scene.views).forEach((k) => {
+        this.scene.views[k].initiated = false;
+      });
+
+      this.scene.view.activate();
       this.scene.view.renderView();
     }
 

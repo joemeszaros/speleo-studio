@@ -20,10 +20,6 @@ class View {
     this.dpi = dpi;
     this.isInteracting = false;
 
-    //this.cameraHelper = new THREE.CameraHelper(camera);
-    //scene.threejsScene.add(this.cameraHelper);
-    //this.cameraHelper.visible = false;
-
     this.ratioIndicator = this.#createRatioIndicator(ratioIndicatorWidth);
     this.ratioIndicator.visible = false;
     scene.sprites3DGroup.add(this.ratioIndicator);
@@ -141,56 +137,20 @@ class View {
     });
   }
 
-  static createOrthoCamera(aspect, frustrum = 1000) {
-    const camera = new THREE.OrthographicCamera(
-      (frustrum * aspect) / -2,
-      (frustrum * aspect) / 2,
-      frustrum / 2,
-      frustrum / -2,
-      -10000,
-      3000
-    );
-
-    camera.width = frustrum * aspect; // custom property
-    camera.height = frustrum; // custom property
-    camera.layers.enable(0);
-    camera.layers.enable(1);
-    camera.layers.disable(31);
-    return camera;
-  }
-
-  fitScreen(boundingBox, update = false) {
+  fitScreen(boundingBox) {
     if (boundingBox === undefined) return;
-    const boundingBoxCenter = boundingBox.getCenter(new THREE.Vector3());
     const rotation = new THREE.Matrix4().extractRotation(this.camera.matrix);
-    boundingBox.applyMatrix4(rotation);
+    boundingBox.applyMatrix4(rotation); // this is a side effect if fitScreen() is called multiple times
     const width = boundingBox.max.x - boundingBox.min.x;
     const height = boundingBox.max.y - boundingBox.min.y;
     const zoomLevel = Math.min(this.camera.width / width, this.camera.height / height); // camera width and height in world units
     const zoomChanged = this.camera.zoom !== zoomLevel;
     this.camera.zoom = zoomLevel;
 
-    const offset = boundingBoxCenter.clone().sub(this.target);
-    if (update || offset.length() > 0) {
-      const oldPosition = this.camera.position.clone();
-      const newCameraPosition = oldPosition.add(offset);
-      this.target.copy(boundingBoxCenter);
-      this.camera.position.copy(newCameraPosition);
-      this.camera.lookAt(this.target);
-      this.control.target = this.target;
-      if (this.viewHelper !== undefined) {
-        this.viewHelper.center = this.target;
-      }
-
-      const camDirection = this.camera.position.clone().sub(this.control.target);
-      this.overviewCamera.position.copy(this.target.clone().add(camDirection));
-      this.overviewCamera.rotation.copy(this.camera.rotation);
-    }
-
-    if (update || zoomChanged || offset.length > 0) {
+    if (zoomChanged) {
       this.camera.updateProjectionMatrix(); //lookat or zoom
       this.updateOverviewCameraZoom(boundingBox);
-      this.updateFrustumFrame();
+      if (this.frustumFrame) this.updateFrustumFrame();
       this.onZoomLevelChange(zoomLevel);
       this.renderView();
     }
@@ -291,10 +251,10 @@ class View {
     const boundingBox = this.scene.computeBoundingBox();
 
     if (this.initiated === false) {
-
       this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
-      this.setCameraPosition();
-      this.createFrustumFrame();
+      this.control.target = this.target;
+      this.adjustCamera(boundingBox);
+      if (this.frustumFrame === undefined) this.createFrustumFrame();
       this.fitScreen(boundingBox, true);
       this.onZoomLevelChange(this.camera.zoom);
       this.initiated = true;
@@ -315,6 +275,51 @@ class View {
     }
 
     this.enabled = false;
+  }
+
+  static updateCameraFrustum(camera, frustumSize, aspectRatio, near = null, far = null) {
+    const halfWidth = (frustumSize * aspectRatio) / 2;
+    const halfHeight = frustumSize / 2;
+
+    camera.left = -halfWidth;
+    camera.right = halfWidth;
+    camera.top = halfHeight;
+    camera.bottom = -halfHeight;
+
+    if (near === null) {
+      near = 0;
+    }
+
+    if (far === null) {
+      far = frustumSize * 10; // 10x the frustum size for good depth range
+    }
+
+    camera.near = -1000;
+    camera.far = far;
+
+    // Update custom properties
+    camera.width = frustumSize * aspectRatio;
+    camera.height = frustumSize;
+
+    camera.updateProjectionMatrix();
+  }
+
+  static createOrthoCamera(aspect, frustrum = 100) {
+    const camera = new THREE.OrthographicCamera(
+      (frustrum * aspect) / -2,
+      (frustrum * aspect) / 2,
+      frustrum / 2,
+      frustrum / -2,
+      0, // Near plane
+      frustrum * 10 // Far plane: 10x the frustum size for good depth range
+    );
+
+    camera.width = frustrum * aspect; // custom property
+    camera.height = frustrum; // custom property
+    camera.layers.enable(0);
+    camera.layers.enable(1);
+    camera.layers.disable(31);
+    return camera;
   }
 
 }
@@ -372,15 +377,40 @@ class SpatialView extends View {
     this.initiated = false;
   }
 
-  getCameraRelativePosition(target) {
-    return new THREE.Vector3(target.x, target.y, target.z + 100);
+  getViewSettings(boundingBox) {
+    if (!boundingBox) {
+      return { distance: 100, frustumSize: 120 };
+    }
+
+    const size = boundingBox.getSize(new THREE.Vector3());
+    // For spatial view, we need to consider all three dimensions
+    const maxDimension = Math.max(size.x, size.y, size.z);
+    const padding = 1.4; // 40% padding for 3D view
+    const frustumSize = maxDimension * padding;
+    const minFrustumSize = 120;
+    const finalFrustumSize = Math.max(frustumSize, minFrustumSize);
+    const distance = Math.max((maxDimension / 2) * 1.2, 100); // At least 200m from center
+
+    return {
+      distance,
+      frustumSize : finalFrustumSize
+    };
   }
-  setCameraPosition() {
-    const cameraPos = this.getCameraRelativePosition(this.target);
+
+  adjustCamera(boundingBox) {
+
+    const settings = this.getViewSettings(boundingBox);
+
+    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
+    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
+
+    const cameraPos = new THREE.Vector3(this.target.x, this.target.y, this.target.z + settings.distance);
     this.camera.position.copy(cameraPos.clone());
     this.overviewCamera.position.copy(cameraPos.clone());
     this.camera.lookAt(this.target);
     this.overviewCamera.lookAt(this.target);
+    this.camera.updateProjectionMatrix();
+    this.overviewCamera.updateProjectionMatrix();
   }
 
   renderView() {
@@ -463,11 +493,9 @@ class PlanView extends View {
 
     this.control.addEventListener('orbitChange', (e) => {
       if (e.type === 'rotate') {
-        //console.log('rotate', e.rotation);
         // Update compass rotation
         this.compass.material.rotation = -e.rotation;
       } else if (e.type === 'zoom') {
-        console.log('zoom', e.level);
         this.onZoomLevelChange(e.level);
         this.updateFrustumFrame();
       }
@@ -476,13 +504,36 @@ class PlanView extends View {
     });
   }
 
-  getCameraRelativePosition(target) {
-    return new THREE.Vector3(target.x, target.y, target.z + 100);
+  getViewSettings(boundingBox) {
+    if (!boundingBox) {
+      return { distance: 100, frustumSize: 120 };
+    }
+
+    const size = boundingBox.getSize(new THREE.Vector3());
+    const maxDimension = Math.max(size.x, size.y);
+    const padding = 1.2; // 20% padding
+    const frustumSize = maxDimension * padding;
+    const minFrustumSize = 100;
+    const finalFrustumSize = Math.max(frustumSize, minFrustumSize);
+    // For plan view, camera is above the cave looking down
+    const maxZ = boundingBox.max.z;
+    const minDistance = 50; // Minimum distance from cave surface
+    const distance = Math.max(maxZ + minDistance, 100); // At least 100m above
+
+    return {
+      distance,
+      frustumSize : finalFrustumSize
+    };
   }
 
-  setCameraPosition() {
+  adjustCamera(boundingBox) {
+    const settings = this.getViewSettings(boundingBox);
+
+    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
+    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
+
     this.control.setTarget(this.target);
-    this.control.setHeight(100);
+    this.control.setHeight(settings.distance);
     this.control.updateCameraPosition();
     this.overviewCamera.position.copy(this.control.getCameraPosition());
     this.overviewCamera.lookAt(this.target);
@@ -510,6 +561,7 @@ class PlanView extends View {
     super.activate();
     this.control.enabled = true;
     this.compass.visible = true;
+    this.compass.material.rotation = 0;
     this.renderView();
 
   }
@@ -581,9 +633,37 @@ class ProfileView extends View {
     });
   }
 
-  setCameraPosition() {
+  getViewSettings(boundingBox) {
+    if (!boundingBox) {
+      return { distance: 100, frustumSize: 120 };
+    }
+    const size = boundingBox.getSize(new THREE.Vector3());
+    // For profile view, we need to consider both X and Y dimensions
+    // since the camera rotates around the cave in the X-Y plane
+    const maxDimension = Math.max(size.x, size.y);
+    const padding = 1.3; // 30% padding for profile view
+    const frustumSize = maxDimension * padding;
+    const minFrustumSize = 100;
+    const finalFrustumSize = Math.max(frustumSize, minFrustumSize);
+
+    // Calculate camera distance - should be outside bounding box
+    // For profile view, camera moves in a circle around the cave
+    const minDistance = 100; // Minimum distance from cave edge
+    const distance = Math.max(maxDimension / 2 + minDistance, 300); // At least 300m from center
+
+    return {
+      distance,
+      frustumSize : finalFrustumSize
+    };
+  }
+
+  adjustCamera(boundingBox) {
+    const settings = this.getViewSettings(boundingBox);
+    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
+    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
+
     this.control.setTarget(this.target);
-    this.control.setRadius(400);
+    this.control.setRadius(settings.distance);
     this.control.updateCameraPosition();
     const diff = this.control.getCameraPosition().sub(this.control.getTarget());
     this.overviewCamera.position.copy(this.target.clone().add(diff));
@@ -679,12 +759,10 @@ class ProfileView extends View {
 
   activate() {
     super.activate();
-
     this.control.enabled = true;
     this.verticalRuler.visible = true;
     this.verticalRatioText.sprite.visible = true;
     this.renderView();
-
   }
 
   deactivate() {

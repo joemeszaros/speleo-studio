@@ -171,7 +171,7 @@ export class SettingsPanel {
               i18n.t('ui.settingsPanel.labels.size'),
               this.options.scene.centerLines.spheres.radius,
               0.1,
-              2,
+              4,
               0.1,
               (value) => {
                 this.options.scene.centerLines.spheres.radius = value;
@@ -199,7 +199,7 @@ export class SettingsPanel {
               i18n.t('ui.settingsPanel.labels.size'),
               this.options.scene.splays.spheres.radius,
               0.1,
-              2,
+              4,
               0.1,
               (value) => {
                 this.options.scene.splays.spheres.radius = value;
@@ -227,7 +227,7 @@ export class SettingsPanel {
               i18n.t('ui.settingsPanel.labels.size'),
               this.options.scene.auxiliaries.spheres.radius,
               0.1,
-              2,
+              4,
               0.1,
               (value) => {
                 this.options.scene.auxiliaries.spheres.radius = value;

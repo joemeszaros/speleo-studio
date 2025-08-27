@@ -898,7 +898,7 @@ class MyScene {
     });
   }
 
-  addToScene(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility, colorGradients) {
+  addSurveyToScene(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility, colorGradients) {
 
     const geometryStations = new LineSegmentsGeometry();
     geometryStations.setPositions(polygonSegments);

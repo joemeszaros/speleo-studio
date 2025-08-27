@@ -48,10 +48,7 @@ export const DEFAULT_OPTIONS = {
       show : false
     },
     grid : {
-      mode : {
-        value   : 'top',
-        choices : ['top', 'bottom', 'hidden']
-      }
+      mode : 'top'
     },
     surface : {
       color : {

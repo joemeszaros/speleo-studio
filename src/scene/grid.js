@@ -10,7 +10,7 @@ class Grid {
     this.scene = scene;
     this.grid = new GridHelper(100, 100, 10, 0.4);
     this.grid.name = 'grid helper';
-    this.grid.visible = true;
+    this.grid.visible = this.options.scene.grid.mode !== 'hidden';
     this.grid.layers.set(1);
     this.scene.threejsScene.add(this.grid);
 
@@ -18,7 +18,7 @@ class Grid {
 
   adjust(boundingBox) {
     this.adjustSize(boundingBox);
-    this.adjustPosition(this.options.scene.grid.mode.value);
+    this.adjustPosition(this.options.scene.grid.mode);
   }
 
   adjustSize(boundingBox) {
@@ -48,11 +48,11 @@ class Grid {
   roll() {
     const config = this.options.scene.grid.mode;
     Options.rotateOptionChoice(config);
-    switch (config.value) {
+    switch (config) {
       case 'top':
       case 'bottom':
         this.grid.visible = true;
-        this.adjustPosition(config.value);
+        this.adjustPosition(config);
         break;
       case 'hidden':
         this.grid.visible = false;
