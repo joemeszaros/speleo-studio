@@ -361,12 +361,14 @@ class SpatialView extends View {
       radius : 18
     });
 
-    viewHelperDomElement.addEventListener('pointerup', (event) => {
+    this.viewHelperDomElement = viewHelperDomElement;
+
+    this.viewHelperDomElement.addEventListener('pointerup', (event) => {
       event.stopPropagation();
       this.viewHelper.handleClick(event);
     });
 
-    viewHelperDomElement.addEventListener('pointerdown', function (event) {
+    this.viewHelperDomElement.addEventListener('pointerdown', function (event) {
       event.stopPropagation();
     });
 
@@ -446,11 +448,13 @@ class SpatialView extends View {
   activate() {
     super.activate();
     this.control.enabled = true;
+    this.viewHelperDomElement.style.display = 'block';
     this.renderView();
   }
 
   deactivate() {
     super.deactivate();
+    this.viewHelperDomElement.style.display = 'none';
     this.control.enabled = false;
   }
 }
@@ -470,6 +474,16 @@ class PlanView extends View {
     this.compass.visible = false;
     scene.sprites3DGroup.add(this.compass);
 
+    // Add rotation text display above compass
+    this.rotationText = this.#createRotationText();
+    this.rotationText.name = 'rotation text';
+    this.rotationText.sprite.visible = false;
+    const rotationTextSprite = this.rotationText.getSprite();
+    scene.sprites3DGroup.add(rotationTextSprite);
+    rotationTextSprite.onclick = () => {
+      this.#setRotation();
+    };
+
     this.initiated = false;
     this.enabled = false;
 
@@ -485,6 +499,8 @@ class PlanView extends View {
         this.overviewCamera.rotation.z = this.camera.rotation.z;
         this.overviewCamera.updateProjectionMatrix();
         this.updateFrustumFrame();
+        // Update rotation text when rotation ends
+        this.#updateRotationText();
       } else if (params.type === 'pan') {
         this.updateFrustumFrame();
       }
@@ -495,6 +511,8 @@ class PlanView extends View {
       if (e.type === 'rotate') {
         // Update compass rotation
         this.compass.material.rotation = -e.rotation;
+        // Update rotation text during rotation
+        this.#updateRotationText();
       } else if (e.type === 'zoom') {
         this.onZoomLevelChange(e.level);
         this.updateFrustumFrame();
@@ -543,6 +561,8 @@ class PlanView extends View {
   onResize(width, height) {
     super.onResize(width, height);
     this.compass.position.set(width / 2 - 60, -height / 2 + 60, 1); // bottom right
+    // Update rotation text position when resizing
+    this.rotationText.sprite.position.set(width / 2 - 60, -height / 2 + 120, 1); // above compass
   }
 
   #createCompass(size) {
@@ -557,11 +577,57 @@ class PlanView extends View {
     return sprite;
   }
 
+  #createRotationText() {
+    const position = new THREE.Vector3(this.scene.width / 2 - 60, -this.scene.height / 2 + 120, 1);
+    return new TextSprite(
+      '0°',
+      position,
+      { size: 24, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
+      0.5,
+      'rotation text'
+    );
+  }
+
+  #updateRotationText() {
+    const rotationDegrees = ((this.camera.rotation.z * 180) / Math.PI).toFixed(1);
+    this.rotationText.update(`${rotationDegrees}°`);
+  }
+
+  #setRotation() {
+    const currentRotation = ((this.camera.rotation.z * 180) / Math.PI).toFixed(1);
+    const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
+    if (rotationRaw === null) return;
+
+    const rotationValue = parseFloat(rotationRaw);
+    if (isNaN(rotationValue)) {
+      showWarningPanel(`Rotation '${rotationRaw}' is not a valid number`);
+      return;
+    }
+
+    // Convert degrees to radians and set camera rotation
+    const rotationRadians = (rotationValue * Math.PI) / 180;
+    this.camera.rotation.z = rotationRadians;
+
+    this.compass.material.rotation = -rotationRadians;
+    this.overviewCamera.rotation.z = rotationRadians;
+    this.overviewCamera.updateProjectionMatrix();
+    this.#updateRotationText();
+
+    // Update frustum frame and render
+    this.updateFrustumFrame();
+    this.renderView();
+
+    // Dispatch rotation change event
+    this.control.dispatchEvent('orbitChange', { type: 'rotate', rotation: rotationRadians });
+  }
+
   activate() {
     super.activate();
     this.control.enabled = true;
     this.compass.visible = true;
     this.compass.material.rotation = 0;
+    this.rotationText.sprite.visible = true;
+    this.#updateRotationText();
     this.renderView();
 
   }
@@ -569,9 +635,9 @@ class PlanView extends View {
   deactivate() {
     super.deactivate();
     this.compass.visible = false;
+    this.rotationText.sprite.visible = false;
     this.control.enabled = false;
   }
-
 }
 
 class ProfileView extends View {

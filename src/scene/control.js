@@ -253,7 +253,8 @@ export class PlanViewControl extends BaseViewControl {
       //   if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
 
       // Apply rotation to camera around Z axis
-      this.camera.rotation.z += angleDiff;
+      this.camera.rotation.z = (this.camera.rotation.z + angleDiff) % (2 * Math.PI);
+      if (this.camera.rotation.z < 0) this.camera.rotation.z += 2 * Math.PI;
 
       // Update start angle for next frame
       this.startAngle = currentAngle;

@@ -255,14 +255,13 @@ class MyScene {
   setPointer(mousePosition) {
     this.pointer.x = mousePosition.x * 2 - 1;
     this.pointer.y = -mousePosition.y * 2 + 1;
-    //console.log(`x: ${this.pointer.x}, y: ${this.pointer.y}, zoom: ${this.view.camera.zoom}`);
   }
 
   getFirstIntersectedSprite(mouseCoordinates) {
     if (this.view.spriteCamera === undefined) return;
-    const pointer = this.getPointer(this.getMousePosition(mouseCoordinates));
+    this.setPointer(this.getMousePosition(mouseCoordinates));
     const sprites = this.sprites3DGroup.children;
-    this.raycaster.setFromCamera(pointer, this.view.spriteCamera);
+    this.raycaster.setFromCamera(this.pointer, this.view.spriteCamera);
     const intersectedSprites = this.raycaster.intersectObjects(sprites);
     if (intersectedSprites.length) {
       return intersectedSprites[0].object;
