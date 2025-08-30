@@ -86,11 +86,11 @@ class MyScene {
     this.threejsScene.name = 'main scene';
     this.threejsScene.background = new THREE.Color(this.options.scene.background.color);
 
-    this.views = {
-      plan    : new PlanView(this, this.domElement),
-      profile : new ProfileView(this, this.domElement),
-      spatial : new SpatialView(this, this.domElement, viewHelperContainer)
-    };
+    this.views = new Map([
+      ['plan', new PlanView(this, this.domElement)],
+      ['profile', new ProfileView(this, this.domElement)],
+      ['spatial', new SpatialView(this, this.domElement, viewHelperContainer)]
+    ]);
 
     this.grid = new Grid(this.options, this);
 
@@ -128,7 +128,7 @@ class MyScene {
         type : 'surface'
       }
     );
-    this.view = this.views.spatial;
+    this.view = this.views.get('spatial');
     this.view.activate();
 
     window.addEventListener('resize', () => this.onWindowResize());
@@ -320,7 +320,7 @@ class MyScene {
     this.width = newWidth;
     this.height = newHeigth;
     this.sceneRenderer.setSize(this.width, this.height);
-    Object.keys(this.views).forEach((k) => this.views[k].onResize(this.width, this.height));
+    this.views.forEach((view) => view.onResize(this.width, this.height));
     this.view.renderView();
   }
 
@@ -721,9 +721,9 @@ class MyScene {
   }
 
   changeView(viewName) {
-    if (this.view !== this.views[viewName]) {
+    if (this.view !== this.views.get(viewName)) {
       this.view.deactivate();
-      this.view = this.views[viewName];
+      this.view = this.views.get(viewName);
       this.view.activate();
     }
   }

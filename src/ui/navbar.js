@@ -1,5 +1,6 @@
 import { Exporter } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
+import { RotationTool } from './tool/rotation.js';
 
 class NavigationBar {
 
@@ -216,6 +217,12 @@ class NavigationBar {
         click   : (event) => this.interactive.showShortestPathPanel(event.clientX)
       },
       {
+        tooltip  : i18n.t('ui.navbar.tooltips.rotation'),
+        icon     : './icons/rotate.svg',
+        click    : () => new RotationTool(this.scene).showPanel(),
+        shortkey : 'r'
+      },
+      {
         tooltip : i18n.t('ui.navbar.tooltips.fullscreen'),
         icon    : './icons/fullscreen.svg',
         click   : () => this.#toggleFullscreen()
@@ -270,7 +277,17 @@ class NavigationBar {
       return d;
     };
 
-    const createIcon = (tooltip, icon, selectable, selected, click, elements = [], width = 20, height = 20) => {
+    const createIcon = (
+      tooltip,
+      icon,
+      selectable,
+      selected,
+      click,
+      elements = [],
+      shortkey,
+      width = 20,
+      height = 20
+    ) => {
       const a = document.createElement('a');
       const c = document.createElement('div');
       c.setAttribute('class', 'mydropdown-content');
@@ -296,7 +313,7 @@ class NavigationBar {
       a.classList.add('mytooltip');
       a.classList.add('dropbtn');
 
-      a.onclick = (event) => {
+      const clickEvent = (event) => {
 
         if (elements.length > 0) {
           c.classList.toggle('mydropdown-show');
@@ -326,6 +343,16 @@ class NavigationBar {
 
       };
 
+      if (shortkey) {
+        document.addEventListener('keydown', (e) => {
+          if (e.key === shortkey && e.ctrlKey) {
+            e.preventDefault();
+            clickEvent(event);
+          }
+        });
+      }
+      a.onclick = clickEvent;
+
       if (icon !== undefined) {
         const img = document.createElement('img');
         img.setAttribute('class', 'dropbtn');
@@ -339,7 +366,8 @@ class NavigationBar {
 
       const t = document.createElement('span');
       t.setAttribute('class', 'mytooltiptext');
-      t.appendChild(document.createTextNode(tooltip));
+      const tooltipText = shortkey ? `${tooltip} (Ctrl + ${shortkey})` : tooltip;
+      t.appendChild(document.createTextNode(tooltipText));
 
       a.appendChild(t);
       if (selectable) {
@@ -364,6 +392,7 @@ class NavigationBar {
             i.selected,
             i.click,
             i.elements,
+            i.shortkey,
             i.width === undefined ? 20 : i.width,
             i.height === undefined ? 20 : i.height
           )

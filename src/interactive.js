@@ -1,12 +1,11 @@
 import * as THREE from 'three';
 import { makeFloatingPanel, showErrorPanel } from './ui/popups.js';
-import { get3DCoordsStr, node, degreesToRads, fromPolar } from './utils/utils.js';
+import { get3DCoordsStr, node, degreesToRads, fromPolar, radsToDegrees, toPolar } from './utils/utils.js';
 import { SectionHelper } from './section.js';
 import { ShotType } from './model/survey.js';
 import { StrikeDipCalculator } from './utils/geo.js';
 import { Vector } from './model.js';
 import { i18n } from './i18n/i18n.js';
-import { toPolar, radsToDegrees } from './utils/utils.js';
 
 class SceneInteraction {
 

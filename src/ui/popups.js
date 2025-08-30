@@ -309,13 +309,27 @@ function makeFloatingPanel(
     }
   }
 
-  const close = node`<div class="close"></div>`;
-  close.onclick = () => {
+  function closePanel() {
+    document.removeEventListener('keydown', setupKeyboardShortcuts);
     panel.style.display = 'none';
     closeFn();
-  };
+  }
+
+  function setupKeyboardShortcuts(event) {
+    if (event.key === 'w' && event.ctrlKey) {
+      event.preventDefault();
+      closePanel();
+    }
+  }
+
+  const close = node`<div class="close"></div>`;
+  close.onclick = closePanel;
+
+  if (typeof panel.closePanel === 'function') panel.closePanel();
 
   panel.innerHTML = '';
+
+  panel.closePanel = closePanel;
 
   const header = node`<div class="popup-header">${headerText}</div>`;
 
@@ -357,6 +371,9 @@ function makeFloatingPanel(
     panel.style.width = options.width + 'px';
     panel.style.height = options.height + 'px';
   }
+
+  document.addEventListener('keydown', setupKeyboardShortcuts);
+
   panel.style.display = 'block';
   return content;
 }

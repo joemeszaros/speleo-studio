@@ -391,8 +391,8 @@ class ProjectManager {
       const boundingBox = this.scene.computeBoundingBox();
       this.scene.grid.adjust(boundingBox);
 
-      Object.keys(this.scene.views).forEach((k) => {
-        this.scene.views[k].initiated = false;
+      this.scene.views.forEach((view) => {
+        view.initiated = false;
       });
 
       this.scene.view.activate();

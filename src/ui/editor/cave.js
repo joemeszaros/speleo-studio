@@ -103,7 +103,7 @@ class CaveEditor extends Editor {
           this.caveData.metadata[f.id] = e.target.value;
         }
       };
-      const label = U.node`<label for="${f.id}">${f.label}: </label>`;
+      const label = U.node`<label class="medium-width" for="${f.id}">${f.label}: </label>`;
       label.appendChild(input);
       form.appendChild(label);
     });

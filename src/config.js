@@ -689,9 +689,7 @@ export class ConfigChanges {
   handleScreenChanges(path, oldValue, newValue) {
     switch (path) {
       case 'screen.DPI':
-        this.scene.views.spatial.onDPIChange(newValue);
-        this.scene.views.plan.onDPIChange(newValue);
-        this.scene.views.profile.onDPIChange(newValue);
+        this.scene.views.forEach((view) => view.onDPIChange(newValue));
         this.scene.view.renderView();
         break;
     }
@@ -708,8 +706,8 @@ export class ConfigChanges {
           this.scene.changeCenterLineColorMode(this.watchedConfig.scene.caveLines.color.mode);
         }
 
-        if (this.scene.views.profile) {
-          this.scene.views.profile.updateVerticalRuler();
+        if (this.scene.views.get('profile')) {
+          this.scene.views.get('profile').updateVerticalRuler();
         }
         break;
     }

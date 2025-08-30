@@ -37,6 +37,7 @@
         "grid": "Grid position/visibility",
         "locate": "Locate point",
         "shortestPath": "Shortest path",
+        "rotation": "Rotation tool",
         "fullscreen": "Enter / exit fullscreen"
       },
       "lineColorModes": {
@@ -258,6 +259,14 @@
         "format": "Format",
         "baseName": "Base name",
         "baseNamePlaceholder": "Base name (without extension)"
+      },
+      "rotation": {
+        "title": "Rotation Tool",
+        "angle": "Angle",
+        "dip": "Dip",
+        "reset": "Reset to 0°",
+        "planView": "Plan View",
+        "profileView": "Profile View"
       }
     },
     "editors": {

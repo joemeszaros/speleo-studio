@@ -37,6 +37,7 @@
         "grid": "Rács pozíció/láthatóság",
         "locate": "Pont megkeresése",
         "shortestPath": "Legrövidebb út",
+        "rotation": "Forgatás eszköz",
         "fullscreen": "Teljes képernyő be/kikapcsolása"
       },
       "lineColorModes": {
@@ -198,6 +199,22 @@
         "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
         "caves": "barlang"
       },
+      "shortestPath": {
+        "title": "Legrövidebb út",
+        "from": "Honnan",
+        "to": "Hova",
+        "calculate": "Számítás",
+        "distance": "Távolság",
+        "path": "Útvonal"
+      },
+      "rotation": {
+        "title": "Forgatás eszköz",
+        "angle": "Szög",
+        "dip": "Dőlés",
+        "reset": "Visszaállítás 0°-ra",
+        "planView": "Alaprajz nézet",
+        "profileView": "Hosszmetszet nézet"
+      },
       "dipStrikeCalculator": {
         "title": "Dőlés és irány számító",
         "inputMethod": "Bemeneti mód",
@@ -218,15 +235,6 @@
           "allSurveyDataDefined": "Kérem, adja meg a hossz, irány és dőlés értékeit a három pontnál.",
           "calculationError": "Számítási hiba: {error}"
         }
-      },
-      "shortestPath": {
-        "title": "Legrövidebb út",
-        "find": "Legrövidebb út keresése",
-        "length": "Hossz",
-        "from": "Kezdőpont",
-        "to": "Végpont",
-        "cannotFindPath": "Nem található út a(z) '{from}' és a(z) '{to}' között",
-        "cannotFindStations": "Nem található pont a(z) '{from}' vagy a(z) '{to}'"
       },
       "stationDetails": {
         "title": "Pont részletei",

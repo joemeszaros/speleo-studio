@@ -1138,8 +1138,11 @@ body {
   margin-right: 5px;
   margin-top: 10px;
   white-space: nowrap;
-  width: 200px;
   display: inline-block;
+}
+
+.editor .medium-width {
+  width: 200px;
 }
 
 .popup button {

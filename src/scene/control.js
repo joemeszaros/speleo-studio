@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { Polar, Vector } from '../model.js';
+import { radsToDegrees } from '../utils/utils.js';
 
 // Base class for view controls with common functionality
 export class BaseViewControl {
@@ -89,6 +91,10 @@ export class BaseViewControl {
     this.dispatchEvent('orbitChange', { type: 'zoom', level: this.zoom });
   }
 
+  onRotationEnd() {
+    this.dispatchEvent('end', { type: 'rotate' }); // for update frustum frame and overview camera
+  }
+
   addEventListener(type, listener) {
     if (!this.listeners) this.listeners = new Map();
     if (!this.listeners.has(type)) this.listeners.set(type, []);
@@ -107,18 +113,37 @@ export class ProfileViewControl extends BaseViewControl {
   constructor(camera, domElement) {
     super(camera, domElement);
     this.radius = 100; // Distance from cave center
-    this.angle = 0; // Current angle on the circle (0 = right, π/2 = up, π = left, 3π/2 = down)
+    this.angle = 0;
+  }
+
+  getRadius() {
+    return this.radius;
+  }
+
+  getAngle() {
+    return this.angle;
+  }
+
+  setAngle(angle) {
+    this.angle = angle;
+    this.#update();
   }
 
   setRadius(radius) {
     this.radius = radius;
+    this.#update();
+  }
+
+  #update() {
     this.updateCameraPosition();
+    this.dispatchEvent('orbitSet', { type: 'rotate', angle: this.angle });
   }
 
   updateCameraPosition() {
     // Calculate camera position on the X-Y circle
-    const x = this.target.x + this.radius * Math.cos(this.angle);
-    const y = this.target.y + this.radius * Math.sin(this.angle);
+    // 0° = North (Y axis), 90° = East (X axis), rotation goes clockwise
+    const x = this.target.x + this.radius * Math.sin(this.angle);
+    const y = this.target.y + this.radius * Math.cos(this.angle);
     const z = this.target.z;
 
     this.camera.position.set(x, y, z);
@@ -191,19 +216,47 @@ export class PlanViewControl extends BaseViewControl {
   constructor(camera, domElement) {
     super(camera, domElement);
     this.height = 100; // Distance above the cave center (Z coordinate)
+    this.azimuth = 0;
     this.startY = 0;
     this.startAngle = 0;
   }
 
+  getHeight() {
+    return this.height;
+  }
+
+  getRotation() {
+    let r = -this.azimuth + Math.PI;
+    if (r < 0) r += 2 * Math.PI;
+    return r;
+  }
+
+  getAzimuth() {
+    return this.azimuth;
+  }
+
   setHeight(height) {
     this.height = height;
+    this.#update();
+  }
+
+  setRotation(rotation) {
+    let r = -rotation + Math.PI;
+    if (r < 0) r += 2 * Math.PI;
+    this.azimuth = r;
+    this.#update();
+  }
+
+  #update() {
     this.updateCameraPosition();
+    this.dispatchEvent('orbitSet', { type: 'rotate', rotation: this.camera.rotation.z });
   }
 
   updateCameraPosition() {
     // Position camera above the target looking down
     this.camera.position.set(this.target.x, this.target.y, this.target.z + this.height);
     this.camera.lookAt(this.target);
+    this.camera.rotation.z = this.azimuth;
     // Ensure camera up vector is always (0, 1, 0) for consistent top-down view
     this.camera.up.set(0, 1, 0);
     this.camera.updateMatrixWorld();
@@ -244,19 +297,14 @@ export class PlanViewControl extends BaseViewControl {
 
       // Calculate current angle from center
       const currentAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
-
-      // Calculate angle difference
       let angleDiff = currentAngle - this.startAngle;
 
-      //   // Handle angle wrapping (when crossing -π/π boundary)
-      //   if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-      //   if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-
       // Apply rotation to camera around Z axis
-      this.camera.rotation.z = (this.camera.rotation.z + angleDiff) % (2 * Math.PI);
-      if (this.camera.rotation.z < 0) this.camera.rotation.z += 2 * Math.PI;
+      let newRotation = (this.camera.rotation.z + angleDiff) % (2 * Math.PI);
+      if (newRotation < 0) newRotation += 2 * Math.PI;
 
-      // Update start angle for next frame
+      this.azimuth = newRotation;
+      this.camera.rotation.z = newRotation;
       this.startAngle = currentAngle;
 
       this.dispatchEvent('orbitChange', { type: 'rotate', rotation: this.camera.rotation.z });
@@ -297,5 +345,158 @@ export class PlanViewControl extends BaseViewControl {
 
       this.dispatchEvent('orbitChange', { type: 'pan', offset: new THREE.Vector3(panOffsetX, panOffsetY, 0) });
     }
+  }
+}
+
+// Custom camera control for SpatialView - allows full 3D rotation around objects
+export class SpatialViewControl extends BaseViewControl {
+  constructor(camera, domElement) {
+    super(camera, domElement);
+    this.distance = 100; // Fixed distance from target
+    this.azimuth = 0; // Horizontal rotation (0° = North, increases clockwise)
+    this.clino = 0; // Vertical angle (-90° = down, 0° = horizontal, +90° = up)
+
+    this.startAzimuth = 0;
+    this.startClino = 0;
+    this.startX = 0;
+    this.startY = 0;
+  }
+
+  setDistance(distance) {
+    this.distance = distance;
+    this.updateCameraPosition();
+  }
+
+  getDistance() {
+    return this.distance;
+  }
+
+  getAzimuth() {
+    return this.azimuth;
+  }
+
+  getClino() {
+    return this.clino;
+  }
+
+  updateCameraPosition() {
+    // Calculate camera position using spherical coordinates
+    const polar = new Polar(this.distance, this.azimuth, this.clino);
+    const v = polar.toVector();
+    const x = this.target.x + v.x;
+    const y = this.target.y + v.y;
+    const z = this.target.z + v.z;
+
+    this.camera.position.set(x, y, z);
+    this.camera.lookAt(this.target);
+
+    // Ensure camera up vector is always pointing up relative to world
+    this.camera.up.set(0, 0, 1);
+    this.camera.updateMatrixWorld();
+    this.camera.updateProjectionMatrix();
+  }
+
+  onPointerDown(event) {
+    if (!this.enabled) return;
+
+    if (event.shiftKey) {
+      // Pan mode with shift key
+      this.state = 'pan';
+      this.isPanning = true;
+      this.startPan.set(event.clientX, event.clientY);
+    } else {
+      // Rotate mode - full 3D rotation
+      this.state = 'rotate';
+      this.startX = event.clientX;
+      this.startY = event.clientY;
+      this.startAzimuth = this.azimuth;
+      this.startClino = this.clino;
+    }
+
+    this.dispatchEvent('start');
+  }
+
+  onPointerMove(event) {
+    if (!this.enabled) return;
+
+    if (this.state === 'rotate') {
+      // Full 3D rotation around target
+      const deltaX = event.clientX - this.startX;
+      const deltaY = event.clientY - this.startY;
+
+      // Convert mouse movement to rotation angles
+      const azimuthSpeed = 0.01; // Adjust sensitivity
+      const clinoSpeed = 0.01;
+
+      // Update azimuth (horizontal rotation)
+      this.azimuth = this.startAzimuth + deltaX * azimuthSpeed; // azimuth is inverted
+
+      // Update clino (vertical rotation) with constraints
+      let newClino = this.startClino - deltaY * clinoSpeed;
+      newClino = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, newClino)); // Prevent gimbal lock
+      this.clino = newClino;
+
+      // Update camera position
+      this.updateCameraPosition();
+      this.dispatchEvent('orbitChange', { type: 'rotate', azimuth: this.azimuth, clino: this.clino });
+
+    } else if (this.state === 'pan') {
+      // Pan the target (cave center) based on mouse movement
+      const rect = this.domElement.getBoundingClientRect();
+      const deltaX = event.clientX - this.startPan.x;
+      const deltaY = event.clientY - this.startPan.y;
+
+      // Convert screen movement to world movement
+      const worldDeltaX = ((deltaX / rect.width) * this.camera.width) / this.zoom;
+      const worldDeltaY = ((deltaY / rect.height) * this.camera.height) / this.zoom;
+
+      // Calculate pan direction in world space
+      // We need to pan relative to the camera's current orientation
+      const cameraDirection = new THREE.Vector3();
+      this.camera.getWorldDirection(cameraDirection);
+
+      // Create right and up vectors for camera-relative panning
+      const cameraRight = new THREE.Vector3();
+      cameraRight.crossVectors(cameraDirection, this.camera.up).normalize();
+      const cameraUp = new THREE.Vector3();
+      cameraUp.crossVectors(cameraRight, cameraDirection).normalize();
+
+      // Calculate pan offset in world space
+      const panOffsetX = -worldDeltaX * cameraRight.x - worldDeltaY * cameraUp.x;
+      const panOffsetY = -worldDeltaX * cameraRight.y - worldDeltaY * cameraUp.y;
+      const panOffsetZ = worldDeltaX * cameraRight.z - worldDeltaY * cameraUp.z;
+
+      // Apply pan to target
+      this.target.x += panOffsetX;
+      this.target.y += panOffsetY;
+      this.target.z -= panOffsetZ; // z axis is inverted
+
+      // Update camera position to maintain distance
+      this.updateCameraPosition();
+
+      this.startPan.set(event.clientX, event.clientY);
+
+      this.dispatchEvent('orbitChange', { type: 'pan', offset: new THREE.Vector3(panOffsetX, panOffsetY, panOffsetZ) });
+    }
+  }
+
+  // Method to set camera to specific azimuth and clino
+  setCameraOrientation(distance, azimuth, clino) {
+    this.distance = distance;
+    this.clino = clino;
+    this.azimuth = azimuth % (2 * Math.PI);
+    if (this.azimuth < 0) this.azimuth += 2 * Math.PI;
+
+    this.updateCameraPosition();
+    this.dispatchEvent('orbitSet', { type: 'rotate', azimuth: this.azimuth, clino: this.clino });
+  }
+
+  // Method to get current camera orientation as polar coordinates
+  getCameraOrientation() {
+    return {
+      distance : this.distance,
+      azimuth  : this.azimuth,
+      clino    : this.clino
+    };
   }
 }

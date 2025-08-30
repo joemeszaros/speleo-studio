@@ -1,14 +1,12 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
-
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
 import { formatDistance } from '../utils/utils.js';
-import { ProfileViewControl, PlanViewControl } from './control.js';
+import { ProfileViewControl, PlanViewControl, SpatialViewControl } from './control.js';
 
 class View {
 
@@ -246,6 +244,18 @@ class View {
 
   }
 
+  addEventListener(type, listener) {
+    if (!this.listeners) this.listeners = new Map();
+    if (!this.listeners.has(type)) this.listeners.set(type, []);
+    this.listeners.get(type).push(listener);
+  }
+
+  dispatchEvent(type, params) {
+    if (this.listeners && this.listeners.has(type)) {
+      this.listeners.get(type).forEach((listener) => listener(params));
+    }
+  }
+
   activate() {
     this.enabled = true;
     const boundingBox = this.scene.computeBoundingBox();
@@ -265,6 +275,8 @@ class View {
       this.ratioIndicator.visible = true;
       this.ratioText.sprite.visible = true;
     }
+
+    this.dispatchEvent('viewActivated', { name: this.name });
   }
 
   deactivate() {
@@ -333,23 +345,20 @@ class SpatialView extends View {
     this.overviewCamera.layers.disable(1);
     this.overviewCamera.layers.enable(31);
 
-    this.control = new OrbitControls(this.camera, this.domElement);
-    this.control.update();
+    this.control = new SpatialViewControl(this.camera, this.domElement);
+
     this.control.addEventListener('start', () => {
       this.isInteracting = true;
     });
     this.control.addEventListener('end', () => {
-      const newpos = this.camera.position.clone().sub(this.control.target);
-      this.overviewCamera.position.copy(this.target.clone().add(newpos));
-      this.overviewCamera.rotation.copy(this.camera.rotation);
-      this.overviewCamera.updateProjectionMatrix();
-      this.updateFrustumFrame();
-      this.renderView();
-      this.onZoomLevelChange(this.camera.zoom);
-      this.isInteracting = false;
+      this.onControlOperationEnd();
     });
-    this.control.addEventListener('change', () => {
-      this.renderView();
+
+    this.control.addEventListener('orbitSet', (e) => {
+      this.onOrbitAdjustment(e);
+    });
+    this.control.addEventListener('orbitChange', (e) => {
+      this.onOrbitAdjustment(e);
     });
 
     this.viewHelper = new ViewHelper(this.camera, this.domElement, {
@@ -379,6 +388,21 @@ class SpatialView extends View {
     this.initiated = false;
   }
 
+  onOrbitAdjustment() {
+    this.renderView();
+  }
+
+  onControlOperationEnd() {
+    const newpos = this.camera.position.clone().sub(this.control.target);
+    this.overviewCamera.position.copy(this.target.clone().add(newpos));
+    this.overviewCamera.rotation.copy(this.camera.rotation);
+    this.overviewCamera.updateProjectionMatrix();
+    if (this.frustumFrame) this.updateFrustumFrame();
+    this.renderView();
+    this.onZoomLevelChange(this.camera.zoom);
+    this.isInteracting = false;
+  }
+
   getViewSettings(boundingBox) {
     if (!boundingBox) {
       return { distance: 100, frustumSize: 120 };
@@ -395,24 +419,32 @@ class SpatialView extends View {
 
     return {
       distance,
-      frustumSize : finalFrustumSize
+      frustumSize : finalFrustumSize,
+      center      : boundingBox.getCenter(new THREE.Vector3())
     };
   }
 
   adjustCamera(boundingBox) {
-
     const settings = this.getViewSettings(boundingBox);
 
     View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
     View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
 
-    const cameraPos = new THREE.Vector3(this.target.x, this.target.y, this.target.z + settings.distance);
-    this.camera.position.copy(cameraPos.clone());
-    this.overviewCamera.position.copy(cameraPos.clone());
-    this.camera.lookAt(this.target);
+    this.control.setTarget(this.target);
+    this.control.setCameraOrientation(settings.distance, Math.PI, Math.PI / 2); // looking down from above
+
+    // Update camera position
+    this.control.updateCameraPosition();
+
+    // Update overview camera to match
+    this.overviewCamera.position.copy(this.camera.position);
     this.overviewCamera.lookAt(this.target);
-    this.camera.updateProjectionMatrix();
     this.overviewCamera.updateProjectionMatrix();
+  }
+
+  getCameraPolarPosition() {
+    // Get polar position from the SpatialViewControl
+    return this.control.getCameraPolarPosition();
   }
 
   renderView() {
@@ -431,9 +463,11 @@ class SpatialView extends View {
         .multiplyScalar(100)
         .add(this.camera.position.clone());
 
-      this.control.target = center;
+      this.control.setTarget(center);
       this.target = center;
-      this.control.update();
+
+      // Update camera position to maintain distance and orientation
+      this.control.updateCameraPosition();
 
       const newpos = this.camera.position.clone().sub(this.control.target);
       this.overviewCamera.position.copy(this.target.clone().add(newpos));
@@ -493,33 +527,45 @@ class PlanView extends View {
     });
 
     this.control.addEventListener('end', (params) => {
-      this.isInteracting = false;
-
-      if (params.type === 'rotate') {
-        this.overviewCamera.rotation.z = this.camera.rotation.z;
-        this.overviewCamera.updateProjectionMatrix();
-        this.updateFrustumFrame();
-        // Update rotation text when rotation ends
-        this.#updateRotationText();
-      } else if (params.type === 'pan') {
-        this.updateFrustumFrame();
-      }
-      this.renderView();
+      this.onControlOperationEnd(params);
     });
 
     this.control.addEventListener('orbitChange', (e) => {
-      if (e.type === 'rotate') {
-        // Update compass rotation
-        this.compass.material.rotation = -e.rotation;
-        // Update rotation text during rotation
-        this.#updateRotationText();
-      } else if (e.type === 'zoom') {
-        this.onZoomLevelChange(e.level);
-        this.updateFrustumFrame();
-      }
-      //render for rotate and pan also
-      this.renderView();
+      this.onOrbitAdjustment(e);
     });
+
+    this.control.addEventListener('orbitSet', (e) => {
+      this.onOrbitAdjustment(e);
+    });
+  }
+
+  onOrbitAdjustment(e) {
+    if (e.type === 'rotate') {
+      // Update compass rotation
+      this.compass.material.rotation = -e.rotation;
+      // Update rotation text during rotation
+      this.#updateRotationText();
+    } else if (e.type === 'zoom') {
+      this.onZoomLevelChange(e.level);
+      this.updateFrustumFrame();
+    }
+    //render for rotate and pan also
+    this.renderView();
+  }
+
+  onControlOperationEnd(params) {
+    this.isInteracting = false;
+
+    if (params.type === 'rotate') {
+      this.overviewCamera.rotation.z = this.camera.rotation.z;
+      this.overviewCamera.updateProjectionMatrix();
+      this.updateFrustumFrame();
+      // Update rotation text when rotation ends
+      this.#updateRotationText();
+    } else if (params.type === 'pan') {
+      this.updateFrustumFrame();
+    }
+    this.renderView();
   }
 
   getViewSettings(boundingBox) {
@@ -561,7 +607,6 @@ class PlanView extends View {
   onResize(width, height) {
     super.onResize(width, height);
     this.compass.position.set(width / 2 - 60, -height / 2 + 60, 1); // bottom right
-    // Update rotation text position when resizing
     this.rotationText.sprite.position.set(width / 2 - 60, -height / 2 + 120, 1); // above compass
   }
 
@@ -590,7 +635,7 @@ class PlanView extends View {
 
   #updateRotationText() {
     const rotationDegrees = ((this.camera.rotation.z * 180) / Math.PI).toFixed(1);
-    this.rotationText.update(`${rotationDegrees}°`);
+    this.rotationText.update(`N ${rotationDegrees}°`);
   }
 
   #setRotation() {
@@ -674,29 +719,40 @@ class ProfileView extends View {
     });
 
     this.control.addEventListener('end', (params) => {
-      this.isInteracting = false;
-
-      if (params.type === 'rotate') {
-        const diff = this.control.getCameraPosition().sub(this.control.getTarget());
-        this.overviewCamera.position.copy(this.target.clone().add(diff));
-        this.overviewCamera.lookAt(this.target);
-        this.overviewCamera.updateProjectionMatrix();
-        this.updateFrustumFrame();
-      } else if (params.type === 'pan') {
-        this.updateFrustumFrame();
-      }
-      this.renderView();
+      this.onControlOperationEnd(params);
     });
 
     this.control.addEventListener('orbitChange', (e) => {
-      if (e.type === 'zoom') {
-        this.onZoomLevelChange(e.level);
-        this.updateFrustumFrame();
-      }
-      //render for rotate and pan also
-
-      this.renderView();
+      this.onOrbitAdjustment(e);
     });
+
+    this.control.addEventListener('orbitSet', (e) => {
+      this.onOrbitAdjustment(e);
+    });
+  }
+
+  onOrbitAdjustment(e) {
+    if (e.type === 'zoom') {
+      this.onZoomLevelChange(e.level);
+      if (this.frustumFrame) this.updateFrustumFrame();
+    }
+    //render for rotate and pan also
+    this.renderView();
+  }
+
+  onControlOperationEnd(params) {
+    this.isInteracting = false;
+
+    if (params.type === 'rotate') {
+      const diff = this.control.getCameraPosition().sub(this.control.getTarget());
+      this.overviewCamera.position.copy(this.target.clone().add(diff));
+      this.overviewCamera.lookAt(this.target);
+      this.overviewCamera.updateProjectionMatrix();
+      if (this.frustumFrame) this.updateFrustumFrame();
+    } else if (params.type === 'pan') {
+      if (this.frustumFrame) this.updateFrustumFrame();
+    }
+    this.renderView();
   }
 
   getViewSettings(boundingBox) {
