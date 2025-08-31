@@ -1,6 +1,7 @@
 import { Exporter } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
 import { RotationTool } from './tool/rotation.js';
+import { DipStrikeCalculatorTool } from './tool/dipstrike.js';
 
 class NavigationBar {
 
@@ -48,10 +49,6 @@ class NavigationBar {
     if (fileMenuButton) {
       fileMenuButton.disabled = disabled;
     }
-  }
-
-  showDipStrikeCalculator() {
-    this.interactive.showDipStrikeCalculatorPanel();
   }
 
   #getMenus() {
@@ -119,7 +116,7 @@ class NavigationBar {
           {
             name  : i18n.t('ui.navbar.menu.tools.dipStrike'),
             click : () => {
-              this.showDipStrikeCalculator();
+              new DipStrikeCalculatorTool().showPanel();
             }
           }
         ]
