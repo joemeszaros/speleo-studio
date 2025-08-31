@@ -47,7 +47,6 @@ class MyScene {
     this.segments = new Map(); // for shortest path segments
     this.caveObject3DGroup = new THREE.Group();
     this.caveObject3DGroup.name = 'cave object';
-    this.caveObject3DGroup.scale.set(0.1, 0.1, 0.1);
     this.sprites3DGroup = new THREE.Group();
     this.sprites3DGroup.name = 'sprites';
     this.surfaceObject3DGroup = new THREE.Group();

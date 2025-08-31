@@ -188,8 +188,8 @@ export class ProfileViewControl extends BaseViewControl {
 
       // Camera-relative panning: X movement goes to X or Y based on camera angle
       // Y movement always goes to Z (depth)
-      const panOffsetX = -worldDeltaX * sinAngle;
-      const panOffsetY = -worldDeltaX * cosAngle;
+      const panOffsetX = worldDeltaX * cosAngle;
+      const panOffsetY = worldDeltaX * sinAngle;
       const panOffsetZ = worldDeltaY;
 
       this.target.x += panOffsetX;
