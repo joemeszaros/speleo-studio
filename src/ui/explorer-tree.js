@@ -89,7 +89,7 @@ export class ExplorerTree {
       label    : survey.name,
       data     : survey,
       parent   : caveNode,
-      visible  : survey.visible !== false,
+      visible  : survey.visible !== false && caveNode.visible, // Inherit cave visibility
       expanded : false
     };
 
@@ -171,6 +171,11 @@ export class ExplorerTree {
       caveNode.data = cave;
       caveNode.visible = cave.visible !== false;
 
+      // Update all survey nodes' visibility to match the cave
+      caveNode.children.forEach((surveyNode) => {
+        surveyNode.visible = caveNode.visible;
+      });
+
       // Reapply filter if active
       if (this.filterText) {
         this.applyFilter();
@@ -232,8 +237,11 @@ export class ExplorerTree {
       this.scene.setSurveyVisibility(node.parent.data.name, node.data.name, node.visible);
     } else if (node.type === 'cave') {
       node.data.visible = node.visible;
-      node.data.surveys.forEach((survey) => {
-        this.scene.setSurveyVisibility(node.data.name, survey.name, node.visible);
+
+      // Update all survey nodes' visibility to match the cave
+      node.children.forEach((surveyNode) => {
+        surveyNode.visible = node.visible;
+        this.scene.setSurveyVisibility(node.data.name, surveyNode.data.name, node.visible);
       });
     }
     this.render();
