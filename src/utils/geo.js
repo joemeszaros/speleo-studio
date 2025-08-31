@@ -33,7 +33,19 @@ class MeridianConvergence {
 
 class Declination {
 
-  static async getDeclination(lat, long, date, timeoutInMs = 3000) {
+  static async getDeclination(cache, lat, long, date, timeoutInMs = 3000) {
+    // First, try to get from cache if available
+    try {
+      const cachedDeclination = await cache.get(lat, long, date);
+      if (cachedDeclination !== null) {
+        return cachedDeclination;
+      }
+    } catch (error) {
+      console.warn('Failed to read from declination cache:', error);
+      // Continue with API call if cache fails
+    }
+
+    // If not in cache, make API call
     const url = 'https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination';
     const params = new URLSearchParams();
     params.append('lat1', lat);
@@ -44,8 +56,9 @@ class Declination {
     params.append('startYear', date.getFullYear());
     params.append('model', 'IGRF');
     params.append('key', 'zNEw7');
-    console.log(params);
+
     const start = Date.now();
+    console.log(`Fetching NOAA declination API: ${url}?${params}`);
     const response = await fetch(`${url}?${params}`, { signal: AbortSignal.timeout(timeoutInMs) });
     console.log(`Request took ${Date.now() - start}ms`);
 
@@ -53,7 +66,18 @@ class Declination {
       throw new Error(`Response status: ${response.status}`);
     }
 
-    return response.json().then((json) => json.result[0].declination);
+    const declination = await response.json().then((json) => json.result[0].declination);
+
+    // Cache the result for future use if cache is available
+
+    try {
+      await cache.set(lat, long, date, declination);
+    } catch (error) {
+      console.warn('Failed to cache declination value:', error);
+      // Don't throw error - caching failure shouldn't break the main functionality
+    }
+
+    return declination;
   }
 }
 
@@ -72,7 +96,7 @@ class Declination {
  *
  * The transformation is fairly precice.
  * EOV coordinates for Laci cave: 644741, 255551
- * This function gives implementation: 47.64378573513598, 18.97744998587031
+ * This function gives:                47.64378573513598, 18.97744998587031
  * ERDA.hu reference:                  47.643785,         18.977448 (17 cm difference)
  * PROJ library:                       47.6437852,        18.9774482 (13 cm difference)
  *

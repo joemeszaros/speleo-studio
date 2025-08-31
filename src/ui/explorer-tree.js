@@ -5,12 +5,13 @@ import { CyclePanel } from './editor/cycle.js';
 import { i18n } from '../i18n/i18n.js';
 
 export class ExplorerTree {
-  constructor(db, options, scene, interaction, attributeDefs, container, contextMenuElement) {
+  constructor(db, options, scene, interaction, attributeDefs, declinationCache, container, contextMenuElement) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.interaction = interaction;
     this.attributeDefs = attributeDefs;
+    this.declinationCache = declinationCache;
     this.container = container;
     this.contextMenu = contextMenuElement;
     this.nodes = new Map();
@@ -416,7 +417,9 @@ export class ExplorerTree {
             this.db,
             surveyNode.parent.data,
             surveyNode.data,
-            document.getElementById('fixed-size-editor')
+            document.getElementById('fixed-size-editor'),
+            this.declinationCache
+
           );
           this.editor.setupPanel();
           this.editor.show();

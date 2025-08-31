@@ -18,7 +18,6 @@ class SurveyEditor extends Editor {
     this.surveyModified = false;
     this.eovVisible = false;
     this.unsavedChanges = unsavedChanges;
-
     // without any user integration the survey update button won't work
     if (this.unsavedChanges !== undefined) {
       this.surveyModified = true;
@@ -782,12 +781,13 @@ class SurveyEditor extends Editor {
 
 class SurveySheetEditor extends BaseEditor {
 
-  constructor(db, cave, survey, panel) {
+  constructor(db, cave, survey, panel, declinationCache) {
     super(panel);
     this.panel = panel;
     this.db = db;
     this.cave = cave;
     this.survey = survey;
+    this.declinationCache = declinationCache;
     document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
@@ -893,7 +893,7 @@ class SurveySheetEditor extends BaseEditor {
     );
     const declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
     form.appendChild(declinationText);
-    if (this.stations) {
+    if (this.cave.stations) {
       const startOrRandomStation = this.cave.stations
         ? (this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1])
         : undefined;
@@ -901,6 +901,7 @@ class SurveySheetEditor extends BaseEditor {
       if (this.survey?.metadata?.declinationReal === undefined) {
         if (startOrRandomStation?.coordinates?.wgs !== undefined && this.survey?.metadata?.date !== undefined) {
           Declination.getDeclination(
+            this.declinationCache,
             startOrRandomStation.coordinates.wgs.lat,
             startOrRandomStation.coordinates.wgs.lon,
             this.survey.metadata.date

@@ -355,7 +355,7 @@
         "errors": {
           "unavailable": "unavailable",
           "notAvailable": "Not available",
-          "noWgs84Coordinates": "No WGS84 coordinates"
+          "noWgs84Coordinates": "No WGS84 coordinates or survey date"
         },
         "buttons": {
           "addMember": "Add member",

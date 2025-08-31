@@ -18,6 +18,8 @@ import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
 import { DatabaseManager } from './storage/database-manager.js';
+import { DeclinationCache } from './storage/declination-cache.js';
+import { Declination } from './utils/geo.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { SurfaceHelper } from './surface.js';
@@ -49,6 +51,7 @@ class Main {
       this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
       this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
       this.editorStateSystem = new EditorStateSystem(this.databaseManager);
+      this.declinationCache = new DeclinationCache(this.databaseManager);
 
       // Initialize the application
       this.#initializeApp(db, options, observer, attributeDefs);
@@ -118,6 +121,7 @@ class Main {
       scene,
       interaction,
       attributeDefs,
+      this.declinationCache,
       document.getElementById('explorer-tree'),
       document.getElementById('explorer-context-menu')
     );
@@ -132,7 +136,8 @@ class Main {
       interaction,
       this.explorerTree,
       this.projectSystem,
-      this.editorStateSystem
+      this.editorStateSystem,
+      this.declinationCache
     );
 
     // Initialize project panel

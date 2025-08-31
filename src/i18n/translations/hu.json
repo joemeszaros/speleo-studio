@@ -354,7 +354,7 @@
         "errors": {
           "unavailable": "nem elérhető",
           "notAvailable": "Nem elérhető",
-          "noWgs84Coordinates": "Nincs WGS84 koordináta"
+          "noWgs84Coordinates": "Nincs WGS84 koordináta vagy felmérés dátuma"
         },
         "buttons": {
           "addMember": "Tag hozzáadása",

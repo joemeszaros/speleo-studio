@@ -1,7 +1,12 @@
+/**
+ * Database manager version history:
+ * 1. Initial version
+ * 2. Added declinationCache store
+ */
 export class DatabaseManager {
   constructor() {
     this.dbName = 'SpeleoStudioDB';
-    this.dbVersion = 1;
+    this.dbVersion = 2;
     this.indexedDb = null;
     this.stores = {
       projects : {
@@ -19,6 +24,13 @@ export class DatabaseManager {
       surveyEditorStates : {
         keyPath : 'id',
         indexes : [{ name: 'projectId', keyPath: 'projectId', options: { unique: false } }]
+      },
+      declinationCache : {
+        keyPath : 'key',
+        indexes : [
+          { name: 'coordinates', keyPath: ['lat', 'lon'], options: { unique: false } },
+          { name: 'cachedAt', keyPath: 'cachedAt', options: { unique: false } }
+        ]
       }
     };
   }
@@ -39,21 +51,25 @@ export class DatabaseManager {
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
         console.log('Creating database stores...');
-
         // Create all stores
         Object.entries(this.stores).forEach(([storeName, config]) => {
           if (!db.objectStoreNames.contains(storeName)) {
-            console.log(`Creating ${storeName} store`);
-            const store = db.createObjectStore(storeName, { keyPath: config.keyPath });
-
-            // Create indexes
-            config.indexes.forEach((index) => {
-              store.createIndex(index.name, index.keyPath, index.options);
-            });
+            this.createStore(db, storeName, config);
           }
         });
       };
     });
+  }
+
+  createStore(db, storeName, config) {
+    console.log(`Creating ${storeName} store`);
+    const store = db.createObjectStore(storeName, { keyPath: config.keyPath });
+
+    // Create indexes
+    config.indexes.forEach((index) => {
+      store.createIndex(index.name, index.keyPath, index.options);
+    });
+
   }
 
   getStore(storeName, mode = 'readonly') {
