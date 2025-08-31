@@ -501,7 +501,8 @@
     "station": {
       "details": "Station details",
       "distanceFromHere": "Distance from here",
-      "distanceToHere": "Distance to here"
+      "distanceToHere": "Distance to here",
+      "pivotPoint": "Pivot point"
     }
   },
   "validation": {

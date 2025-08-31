@@ -72,6 +72,10 @@ class SceneInteraction {
       {
         name    : i18n.t('menu.station.distanceToHere'),
         onclick : () => this.selectDistanceStation('to')
+      },
+      {
+        name    : i18n.t('menu.station.pivotPoint'),
+        onclick : () => this.selectPivotPoint()
       }
     ].forEach((item) => {
       const button = node`<button id="station-context-menu-${item.name.toLowerCase().replace(' ', '-')}">${item.name}</button>`;
@@ -154,6 +158,11 @@ class SceneInteraction {
 
     this.scene.view.renderView();
     return true;
+  }
+
+  selectPivotPoint() {
+    const position = this.selectedStation.position;
+    this.scene.view.panCameraTo(position);
   }
 
   getMaterialForType(object) {

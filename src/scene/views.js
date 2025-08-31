@@ -159,6 +159,7 @@ class View {
     const dir = this.camera.position.clone().sub(this.target);
     const camPos = pos.clone().add(dir);
     this.target.copy(pos);
+    this.control.target.copy(pos);
     this.camera.position.copy(camPos);
     this.camera.updateProjectionMatrix();
     this.renderView();

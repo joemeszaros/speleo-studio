@@ -499,7 +499,8 @@
     "station": {
       "details": "Pont részletei",
       "distanceFromHere": "Távolság innen",
-      "distanceToHere": "Távolság ide"
+      "distanceToHere": "Távolság ide",
+      "pivotPoint": "Forgáspont beállítása"
     }
   },
   "validation": {
