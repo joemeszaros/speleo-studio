@@ -118,16 +118,6 @@ class MyScene {
         type : 'surface'
       }
     );
-    this.surfaceSphereContext = this.addSphere(
-      'surface',
-      new THREE.Vector3(0, 0, 0),
-      this.surfaceObject3DGroup,
-      sphereGeo,
-      this.materials.sphere.surface,
-      {
-        type : 'surface'
-      }
-    );
     this.view = this.views.get('spatial');
     this.view.activate();
 
@@ -298,10 +288,6 @@ class MyScene {
         this.surfaceSphere.position.copy(intersectedPoints[0].point);
         this.surfaceSphere.visible = true;
         return this.surfaceSphere;
-      } else if (purpose === 'selectedForContext') {
-        this.surfaceSphereContext.position.copy(intersectedPoints[0].point);
-        this.surfaceSphereContext.visible = true;
-        return this.surfaceSphereContext;
       }
     } else {
       return undefined;

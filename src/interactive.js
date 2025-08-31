@@ -30,8 +30,10 @@ class SceneInteraction {
     this.locatePanel = locatePanel;
     this.selectedStation = undefined;
     this.selectedPosition = undefined;
-    this.selectedStationForContext = undefined;
     this.pointedStation = undefined;
+    this.distanceMeasurementMode = false;
+    this.distanceFromStation = undefined;
+    this.distanceToStation = undefined;
 
     this.mouseOnEditor = false;
 
@@ -60,19 +62,17 @@ class SceneInteraction {
         name    : i18n.t('menu.station.details'),
         onclick : (event) => {
           const rect = this.scene.getBoundingClientRect();
-          this.showStationDetailsPanel(
-            this.selectedStationForContext,
-            event.clientX - rect.left,
-            event.clientY - rect.top
-          );
+          this.showStationDetailsPanel(this.selectedStation, event.clientX - rect.left, event.clientY - rect.top);
         }
       },
       {
         name    : i18n.t('menu.station.distanceFromHere'),
-        onclick : (event) => this.calcualteDistanceListener(event, 'from')
+        onclick : () => this.selectDistanceStation('from')
       },
-      { name: i18n.t('menu.station.distanceToHere'), onclick: (event) => this.calcualteDistanceListener(event, 'to') }
-
+      {
+        name    : i18n.t('menu.station.distanceToHere'),
+        onclick : () => this.selectDistanceStation('to')
+      }
     ].forEach((item) => {
       const button = node`<button id="station-context-menu-${item.name.toLowerCase().replace(' ', '-')}">${item.name}</button>`;
       button.onclick = (event) => {
@@ -84,40 +84,76 @@ class SceneInteraction {
     });
   }
 
-  calcualteDistanceListener(event, direction) {
-    const rect = this.scene.getBoundingClientRect();
-    const left = event.clientX - rect.left;
-    const top = event.clientY - rect.top;
-
+  selectDistanceStation(mode) {
     if (this.selectedStation === undefined) {
       showErrorPanel(i18n.t('ui.panels.distance.error.noStartingPoint'));
     } else {
-      let from, to;
-      if (direction === 'to') {
-        from = this.selectedStation.position.clone();
-        to = this.selectedStationForContext.position.clone();
-      } else {
-        from = this.selectedStationForContext.position.clone();
-        to = this.selectedStation.position.clone();
-      }
-      const diff = to.clone().sub(from);
-      this.hideContextMenu();
-
-      const geometry = new THREE.BufferGeometry().setFromPoints([from, to]);
-      const line = new THREE.Line(geometry, this.materials.distanceLine);
-      line.name = `distance-line-${from}-${to}`;
-      line.computeLineDistances();
-      this.scene.addObjectToScene(line);
-
-      this.showDistancePanel(this.selectedStation, this.selectedStationForContext, diff, left, top, () => {
-        this.scene.removeFromScene(line);
-        this.scene.view.renderView();
-      });
-
-      this.#clearSelectedForContext();
-      this.#clearSelected();
+      // Set distance measurement mode and change the visual appearance
+      this.distanceMeasurementMode = true;
+      this.selectedStation.material = this.materials.sphere.distanceMeasurement || this.materials.sphere.selected;
       this.scene.view.renderView();
+
+      // Show message that user should click on another station
+      this.footer.showMessage(i18n.t('ui.panels.distance.clickNextStation'));
+
+      // Store the first station for distance calculation
+      if (mode === 'from') {
+        this.distanceFromStation = this.selectedStation;
+      } else {
+        this.distanceToStation = this.selectedStation;
+      }
     }
+  }
+
+  handleDistanceMeasurement(secondStation) {
+    if (!this.distanceMeasurementMode || (!this.distanceFromStation && !this.distanceToStation)) {
+      return false;
+    }
+
+    let from, to;
+    if (this.distanceFromStation !== undefined) {
+      from = this.distanceFromStation;
+      to = secondStation;
+
+    } else {
+      from = secondStation;
+      to = this.distanceToStation;
+
+    }
+    const diff = to.position.clone().sub(from.position.clone());
+
+    const geometry = new THREE.BufferGeometry().setFromPoints([from.position.clone(), to.position.clone()]);
+    const line = new THREE.Line(geometry, this.materials.distanceLine);
+    line.name = `distance-line-${from}-${to}`;
+    line.computeLineDistances();
+    this.scene.addObjectToScene(line);
+
+    // Show distance panel
+    const rect = this.scene.getBoundingClientRect();
+    this.showDistancePanel(
+      from,
+      to,
+      diff,
+      this.mouseCoordinates.x - rect.left,
+      this.mouseCoordinates.y - rect.top,
+      () => {
+        this.scene.removeFromScene(line);
+        this.#clearSelected();
+        this.scene.view.renderView();
+      }
+    );
+
+    // Clear distance measurement mode
+    this.distanceMeasurementMode = false;
+    this.distanceFromStation = undefined;
+    this.distanceToStation = undefined;
+
+    // Clear the first selection and select the second station normally
+    this.#clearSelected();
+    this.#setSelected(secondStation);
+
+    this.scene.view.renderView();
+    return true;
   }
 
   getMaterialForType(object) {
@@ -159,7 +195,14 @@ class SceneInteraction {
   #setSelected(st) {
     this.selectedStation = st;
     this.selectedPosition = st.position.clone();
-    this.selectedStation.material = this.materials.sphere.selected;
+
+    // Use different material based on whether we're in distance measurement mode
+    if (this.distanceMeasurementMode) {
+      this.selectedStation.material = this.materials.sphere.distanceMeasurement;
+    } else {
+      this.selectedStation.material = this.materials.sphere.selected;
+    }
+
     this.selectedStation.scale.setScalar(1.7);
     if (this.selectedStation.meta.type === 'surface') {
       this.selectedStation.visible = true;
@@ -177,26 +220,7 @@ class SceneInteraction {
     }
     this.selectedStation = undefined;
     this.hideContextMenu();
-  }
-
-  #setSelectedForContext(st) {
-    this.selectedStationForContext = st;
-    this.selectedStationForContext.material = this.materials.sphere.selectedForContext;
-    this.selectedStationForContext.scale.setScalar(1.7);
-    if (this.selectedStationForContext.type === 'surface') {
-      this.selectedStationForContext.visible = true;
-    }
-
-    this.footer.showMessage(this.getSelectedStationDetails(st));
-  }
-
-  #clearSelectedForContext() {
-    this.selectedStationForContext.material = this.getMaterialForType(this.selectedStationForContext);
-    this.selectedStationForContext.scale.setScalar(1.0);
-    if (this.selectedStationForContext.meta.type === 'surface') {
-      this.selectedStationForContext.visible = false;
-    }
-    this.selectedStationForContext = undefined;
+    this.distanceMeasurementMode = false;
   }
 
   onPointerMove(event) {
@@ -225,6 +249,7 @@ class SceneInteraction {
     }
 
   }
+
   onClick() {
     const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
     const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selected');
@@ -233,8 +258,16 @@ class SceneInteraction {
     this.hideContextMenu();
 
     if (hasIntersection) {
+      const intersectedObject = intersectsSurfacePoint !== undefined ? intersectsSurfacePoint : intersectedStation;
 
-      const intersectedObject = intersectsSurfacePoint !== undefined ? intersectsSurfacePoint : intersectedStation; // first intersected object
+      // Check if we're in distance measurement mode
+      if (this.distanceMeasurementMode && (this.distanceFromStation || this.distanceToStation)) {
+        // Handle distance measurement
+        if (this.handleDistanceMeasurement(intersectedObject)) {
+          return; // Distance measurement handled, exit early
+        }
+      }
+
       if (intersectedObject.meta.type !== 'surface' && intersectedObject === this.selectedStation) {
         // clicked on the same sphere again
         this.#clearSelected();
@@ -246,13 +279,18 @@ class SceneInteraction {
         // clicked on the same surface point again
         this.#clearSelected();
       } else {
-        // clicked an other object
+        // clicked on a different object
         if (this.selectedStation !== undefined) {
-          // deactivate previouly selected sphere
+          // deactivate previously selected sphere
           this.#clearSelected();
         }
 
+        // Set the new station as selected
         this.#setSelected(intersectedObject);
+
+        // Show context menu for the newly selected station
+        const rect = this.scene.getBoundingClientRect();
+        this.showContextMenu(this.mouseCoordinates.x - rect.left, this.mouseCoordinates.y - rect.top);
       }
     } else if (this.selectedStation !== undefined) {
       this.#clearSelected();
@@ -264,52 +302,13 @@ class SceneInteraction {
   }
 
   onMouseDown(event) {
-    // right click
+    // Prevent default behavior for all mouse buttons
     event.preventDefault();
-    var rightclick;
-    if (!event) event = window.event;
-    if (event.which) rightclick = event.which == 3;
-    else if (event.button) rightclick = event.button == 2;
-    if (!rightclick) return;
 
-    const rect = this.scene.getBoundingClientRect();
-    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
-    const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selectedForContext');
+    // Only handle left click for context menu (right click is now disabled)
+    if (event.button !== 0) return;
 
-    if (intersectedStation !== undefined || intersectsSurfacePoint !== undefined) {
-      const intersectedObject = intersectsSurfacePoint !== undefined ? intersectsSurfacePoint : intersectedStation;
-      let distanceToSelected;
-      if (this.selectedPosition === undefined) {
-        distanceToSelected = Infinity;
-      } else {
-        distanceToSelected = intersectedObject.position.distanceTo(this.selectedPosition);
-      }
-      if (
-        (intersectedObject.meta.type !== 'surface' && intersectedObject === this.selectedStation) ||
-        (intersectedObject.meta.type === 'surface' && distanceToSelected < 0.2)
-      ) {
-
-        if (this.selectedStationForContext !== undefined) {
-          // deselect previously selected station for context
-          this.#clearSelectedForContext();
-        }
-        this.#clearSelected();
-        this.#setSelectedForContext(intersectedObject);
-        this.showContextMenu(event.clientX - rect.left, event.clientY - rect.top);
-      } else {
-        if (this.selectedStationForContext !== undefined) {
-          // clicked on the same sphere, that was already selected
-          this.#clearSelectedForContext();
-          this.hideContextMenu();
-        } else {
-          this.#setSelectedForContext(intersectedObject);
-          this.showContextMenu(event.clientX - rect.left, event.clientY - rect.top);
-        }
-      }
-      this.scene.view.renderView();
-    } else {
-      this.hideContextMenu();
-    }
+    // The context menu is now handled in onClick method
   }
 
   showLocateStationPanel() {
@@ -343,7 +342,6 @@ class SceneInteraction {
     const container = node`<div id="container-locate-station">
         <label for="pointtolocate">${i18n.t('common.station')}: <input type="search" list="stations" id="pointtolocate"/></label>
         <datalist id="stations">${options}</datalist>
-        <div><label for="forContext">${i18n.t('ui.panels.locateStation.forContext')}<input type="checkbox" id="forContext" /></label></div>
         <button id="locate-button">${i18n.t('ui.panels.locateStation.locate')}</button>
       </div>`;
     const input = container.querySelector('#pointtolocate');
@@ -352,8 +350,7 @@ class SceneInteraction {
       const selectedOption = container.querySelector(`#stations option[value='${input.value}']`);
       const caveName = selectedOption.getAttribute('cave');
       const stationName = selectedOption.getAttribute('station');
-      const forContext = container.querySelector('#forContext').checked;
-      this.locateStation(caveName, stationName, forContext);
+      this.locateStation(caveName, stationName);
       input.value = '';
       this.locatePanel.style.display = 'none';
     };
@@ -361,17 +358,15 @@ class SceneInteraction {
     contentElmnt.appendChild(container);
   }
 
-  locateStation(caveName, stationName, forContext) {
+  locateStation(caveName, stationName) {
     const stationSphere = this.scene.getStationSphere(stationName, caveName);
     if (stationSphere !== undefined) {
       if (this.selectedStation !== undefined) {
         this.#clearSelected();
       }
-      if (forContext) {
-        this.#setSelectedForContext(stationSphere);
-      } else {
-        this.#setSelected(stationSphere);
-      }
+
+      // Always use regular selection now
+      this.#setSelected(stationSphere);
 
       this.scene.view.panCameraTo(stationSphere.position);
       this.scene.view.zoomCameraTo(4);
@@ -545,7 +540,7 @@ class SceneInteraction {
       false,
       {},
       () => {
-        this.#clearSelectedForContext();
+        this.#clearSelected();
         this.scene.view.renderView();
 
         document.removeEventListener('languageChanged', () => {

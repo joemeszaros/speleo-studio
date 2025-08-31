@@ -41,13 +41,13 @@ class Materials {
       },
       text   : new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),
       sphere : {
-        centerLine         : new THREE.MeshBasicMaterial({ color: this.config.centerLines.spheres.color }),
-        splay              : new THREE.MeshBasicMaterial({ color: this.config.splays.spheres.color }),
-        auxiliary          : new THREE.MeshBasicMaterial({ color: this.config.auxiliaries.spheres.color }),
-        surface            : new THREE.MeshBasicMaterial({ color: 0xa0a0ff }),
-        selected           : new THREE.MeshBasicMaterial({ color: 0xf00fff }),
-        selectedForContext : new THREE.MeshBasicMaterial({ color: 0x20ff3d }),
-        startPoint         : new THREE.MeshBasicMaterial({ color: this.config.startPoint.color })
+        centerLine          : new THREE.MeshBasicMaterial({ color: this.config.centerLines.spheres.color }),
+        splay               : new THREE.MeshBasicMaterial({ color: this.config.splays.spheres.color }),
+        auxiliary           : new THREE.MeshBasicMaterial({ color: this.config.auxiliaries.spheres.color }),
+        surface             : new THREE.MeshBasicMaterial({ color: 0xa0a0ff }),
+        selected            : new THREE.MeshBasicMaterial({ color: 0xf00fff }),
+        distanceMeasurement : new THREE.MeshBasicMaterial({ color: 0xff8800 }), // Orange color for distance measurement
+        startPoint          : new THREE.MeshBasicMaterial({ color: this.config.startPoint.color })
       },
 
       distanceLine : new THREE.LineDashedMaterial({ color: 0xffffff, linewidth: 2, scale: 2, dashSize: 1, gapSize: 1 }),

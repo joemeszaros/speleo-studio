@@ -250,13 +250,13 @@
         "spatial": "Spatial distance",
         "azimuth": "Azimuth",
         "clino": "Clino",
+        "clickNextStation": "Click on another station to measure distance",
         "error": {
           "noStartingPoint": "You should select the starting point for distance measurement"
         }
       },
       "locateStation": {
         "title": "Locate station",
-        "forContext": "For context",
         "locate": "Locate point"
       },
       "export": {

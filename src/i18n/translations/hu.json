@@ -257,13 +257,13 @@
         "spatial": "Térbeli távolság",
         "azimuth": "Irány",
         "clino": "Dőlés",
+        "clickNextStation": "Kattints egy másik pontra a távolság méréséhez",
         "error": {
           "noStartingPoint": "A távolság méréséhez válasszon ki egy kezdőpontot"
         }
       },
       "locateStation": {
         "title": "Pont megkeresése",
-        "forContext": "Horgonypontnak",
         "locate": "Keresése"
       },
       "export": {
