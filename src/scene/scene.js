@@ -62,6 +62,13 @@ class MyScene {
     this.startPointObjects = new Map(); // Map to store starting point objects for each cave
     this.stationFont = undefined;
 
+    // Camera tracking for optimized billboarding
+    this.lastCameraPosition = new THREE.Vector3();
+    this.lastCameraQuaternion = new THREE.Quaternion();
+    this.framesSinceLastBillboardUpdate = 0;
+    this.billboardUpdateThreshold = 2; // Update every 2 frames when camera moves
+    this.cameraMovementThreshold = 0.1; // Minimum camera movement to trigger update
+
     const loader = new FontLoader();
     loader.load('fonts/helvetiker_regular.typeface.json', (font) => this.setFont(font));
 
@@ -122,6 +129,9 @@ class MyScene {
     );
     this.view = this.views.get('spatial');
     this.view.activate();
+
+    // Initialize camera tracking for billboard optimization
+    this.#initializeCameraTracking();
 
     window.addEventListener('resize', () => this.onWindowResize());
     document.addEventListener('viewport-resized', () => this.onViewportResized());
@@ -713,6 +723,8 @@ class MyScene {
       this.view.deactivate();
       this.view = this.views.get(viewName);
       this.view.activate();
+      // Reinitialize camera tracking for billboard optimization
+      this.#initializeCameraTracking();
     }
   }
 
@@ -758,15 +770,9 @@ class MyScene {
       e.text.lookAt(pos);
     });
 
-    const entries = this.#getCaveObjectsFlattened();
-    entries.forEach((e) => {
-
-      e.stationLabels.children.forEach((label) => {
-        if (label.userData && label.userData.textSprite) {
-          label.lookAt(this.view.camera.position);
-        }
-      });
-    });
+    if (this.options.scene.stationLabels.show) {
+      this.#updateStationLabelsBillboarding();
+    }
 
     if (spriteCamera === undefined) {
       this.sceneRenderer.render(this.threejsScene, camera);
@@ -789,6 +795,53 @@ class MyScene {
 
   #getCaveObjectsFlattened() {
     return [...this.caveObjects.values()].flatMap((c) => Array.from(c.values()));
+  }
+
+  #initializeCameraTracking() {
+    if (this.view && this.view.camera) {
+      this.lastCameraPosition.copy(this.view.camera.position);
+      this.lastCameraQuaternion.copy(this.view.camera.quaternion);
+    }
+  }
+
+  #hasCameraMoved() {
+    const currentPosition = this.view.camera.position;
+    const currentQuaternion = this.view.camera.quaternion;
+
+    const positionDelta = currentPosition.distanceTo(this.lastCameraPosition);
+    const rotationDelta = currentQuaternion.angleTo(this.lastCameraQuaternion);
+    return positionDelta > this.cameraMovementThreshold || rotationDelta > this.cameraMovementThreshold;
+  }
+
+  /**
+   * Optimized station labels billboarding update
+   */
+  #updateStationLabelsBillboarding() {
+    this.framesSinceLastBillboardUpdate++;
+
+    //Only check camera movement every few frames for performance
+    if (this.framesSinceLastBillboardUpdate < this.billboardUpdateThreshold) {
+      return;
+    }
+
+    // Check if camera has moved significantly
+    if (!this.#hasCameraMoved()) {
+      this.framesSinceLastBillboardUpdate = 0;
+      return;
+    }
+
+    const entries = this.#getCaveObjectsFlattened();
+    entries.forEach((e) => {
+      e.stationLabels.children.forEach((label) => {
+        if (label.userData && label.userData.textSprite) {
+          label.lookAt(this.view.camera.position);
+        }
+      });
+    });
+
+    this.lastCameraPosition.copy(this.view.camera.position);
+    this.lastCameraQuaternion.copy(this.view.camera.quaternion);
+    this.framesSinceLastBillboardUpdate = 0;
   }
 
   addObjectToScene(object) {
