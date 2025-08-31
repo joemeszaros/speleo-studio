@@ -48,7 +48,8 @@ export const DEFAULT_OPTIONS = {
       show : false
     },
     grid : {
-      mode : 'top'
+      mode : 'top',
+      step : 10
     },
     surface : {
       color : {
@@ -713,7 +714,7 @@ export class ConfigChanges {
     }
   }
 
-  handlePanelChanges(path, oldValue, newValue) {
+  handlePanelChanges(path) {
 
     const toggleVisibility = (name) => {
       let style = document.querySelector(name).style;
@@ -741,6 +742,14 @@ export class ConfigChanges {
     switch (path) {
       case 'scene.stationAttributes.iconScale':
         this.scene.updateStationAttributeIconScales(newValue);
+        break;
+    }
+  }
+
+  handleGridChanges(path) {
+    switch (path) {
+      case 'scene.grid.step':
+        this.scene.grid.refreshGrid();
         break;
     }
   }
@@ -774,6 +783,8 @@ export class ConfigChanges {
       this.handlePanelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.stationAttributes')) {
       this.handleStationAttributeChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.grid.')) {
+      this.handleGridChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('print.layout')) {

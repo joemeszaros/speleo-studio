@@ -301,6 +301,16 @@ export class SettingsPanel {
           (value) => {
             this.options.screen.DPI = value;
           }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.gridStep'),
+          this.options.scene.grid.step,
+          1,
+          100,
+          1,
+          (value) => {
+            this.options.scene.grid.step = value;
+          }
         )
       ],
       true

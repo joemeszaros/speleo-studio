@@ -106,7 +106,8 @@
         "depth": "Mélység",
         "addColorStop": "Átmenet hozzáadása",
         "remove": "Eltávolítás",
-        "printLayout": "Elrendezés"
+        "printLayout": "Elrendezés",
+        "gridStep": "Rács lépés"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"

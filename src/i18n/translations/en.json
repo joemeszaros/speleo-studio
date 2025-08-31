@@ -106,7 +106,8 @@
         "depth": "Depth",
         "addColorStop": "Add Color Stop",
         "remove": "Remove",
-        "printLayout": "Print Layout"
+        "printLayout": "Print Layout",
+        "gridStep": "Grid Step"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"

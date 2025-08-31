@@ -8,7 +8,7 @@ class Grid {
   constructor(options, scene) {
     this.options = options;
     this.scene = scene;
-    this.grid = new GridHelper(100, 100, 10, 0.4);
+    this.grid = new GridHelper(100, 100, this.options.scene.grid.step, 0.4);
     this.grid.name = 'grid helper';
     this.grid.visible = this.options.scene.grid.mode !== 'hidden';
     this.grid.layers.set(1);
@@ -26,7 +26,7 @@ class Grid {
     this.grid.geometry.dispose();
     this.grid.material.dispose();
     this.scene.threejsScene.remove(this.grid);
-    this.grid = new GridHelper(width, height, 10, 0.4);
+    this.grid = new GridHelper(width, height, this.options.scene.grid.step, 0.4);
     this.grid.layers.set(1);
     this.grid.boundingBox = boundingBox; // custom property
     this.scene.threejsScene.add(this.grid);
@@ -64,6 +64,14 @@ class Grid {
     if (this.scene.saveConfig) {
       this.scene.saveConfig();
     }
+  }
+
+  refreshGrid() {
+    if (this.grid.boundingBox) {
+      this.adjustSize(this.grid.boundingBox);
+      this.adjustPosition(this.options.scene.grid.mode);
+    }
+    this.scene.view.renderView();
   }
 }
 
