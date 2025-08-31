@@ -11,6 +11,7 @@ import { Options } from '../config.js';
 import { ShotType } from '../model/survey.js';
 
 import { SpatialView, PlanView, ProfileView } from './views.js';
+import { TextSprite } from './textsprite.js';
 
 class SceneOverview {
   constructor(options, container) {
@@ -60,6 +61,7 @@ class MyScene {
     this.startPoints3DGroup.name = 'starting points';
     this.startPointObjects = new Map(); // Map to store starting point objects for each cave
     this.stationFont = undefined;
+
     const loader = new FontLoader();
     loader.load('fonts/helvetiker_regular.typeface.json', (font) => this.setFont(font));
 
@@ -756,6 +758,16 @@ class MyScene {
       e.text.lookAt(pos);
     });
 
+    const entries = this.#getCaveObjectsFlattened();
+    entries.forEach((e) => {
+
+      e.stationLabels.children.forEach((label) => {
+        if (label.userData && label.userData.textSprite) {
+          label.lookAt(this.view.camera.position);
+        }
+      });
+    });
+
     if (spriteCamera === undefined) {
       this.sceneRenderer.render(this.threejsScene, camera);
     } else {
@@ -814,6 +826,66 @@ class MyScene {
     sphere.meta = meta; // custom property
     sphereGroup.add(sphere);
     return sphere;
+  }
+
+  /**
+   * Options for 3D labels in three.js
+
+    CSS3DRenderer (HTML overlay)
+        Pros: crisp text, easy styling, fixed pixel size, trivial offsets.
+        Cons: no automatic occlusion by 3D objects, lots of DOM nodes hurt performance (>300–500), z-order is DOM-based.
+        Good for: dozens to a few hundred labels, quick UI, when occlusion isn’t critical.
+    WebGL sprites with canvas textures (THREE.Sprite or libraries like three-spritetext)
+        Pros: occludes correctly, simple to billboard, OK for a few hundred.
+        Cons: each label has its own texture; blurry at varying scales; memory-heavy with many labels.
+    Signed-distance-field (SDF/MSDF) text meshes (troika-three-text)
+        Pros: crisp at any scale, participates in depth, occludes correctly, good performance, easy billboarding, outlines/shadows.
+        Cons: still one mesh per label; very large counts require culling/decluttering.
+        Good for: hundreds to a few thousand labels with culling.
+    look at addLabel for a 4th option where ShapeGeometry is used to create the text mesh
+   */
+  addStationLabel(stationLabel, stationName, position, targetGroup) {
+    const labelConfig = this.options.scene.stationLabels;
+    const labelPosition = position.clone();
+
+    if (labelConfig.offsetDirection === 'up') {
+      labelPosition.y += labelConfig.offset; // offset above the station
+    } else if (labelConfig.offsetDirection === 'down') {
+      labelPosition.y -= labelConfig.offset; // offset below the station
+    } else if (labelConfig.offsetDirection === 'left') {
+      labelPosition.x -= labelConfig.offset; // offset left of the station
+    } else if (labelConfig.offsetDirection === 'right') {
+      labelPosition.x += labelConfig.offset; // offset right of the station
+    }
+
+    const font = {
+      size  : labelConfig.size,
+      color : labelConfig.color,
+      name  : 'Arial'
+
+    };
+
+    if (labelConfig.stroke) {
+      font.strokeColor = labelConfig.strokeColor;
+    }
+
+    const textSprite = new TextSprite(
+      stationLabel,
+      labelPosition,
+      font,
+      labelConfig.scale,
+      `station-label-${stationLabel}`
+    );
+
+    const sprite = textSprite.getSprite();
+    sprite.userData = {
+      label           : stationLabel,
+      textSprite,
+      stationName,
+      stationPosition : position.clone()
+    };
+
+    targetGroup.add(sprite);
   }
 
   addStartingPoint(cave) {
@@ -956,8 +1028,13 @@ class MyScene {
     const splaySphereGeo = new THREE.SphereGeometry(this.options.scene.splays.spheres.radius, 5, 5);
     const auxiliarySphereGeo = new THREE.SphereGeometry(this.options.scene.auxiliaries.spheres.radius, 5, 5);
 
+    const stationLabelsGroup = new THREE.Group();
+    stationLabelsGroup.name = `station-labels-${cave.name}-${survey.name}`;
+    const stationNameMode = this.options.scene.stationLabels.mode;
+
     for (const [stationName, station] of cave.stations) {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
+      const stationLabel = stationNameMode === 'name' ? stationName : station.position.z.toFixed(2);
       if (station.type === ShotType.CENTER) {
         this.addSphere(
           stationName,
@@ -972,6 +1049,12 @@ class MyScene {
             coordinates : station.coordinates
           }
         );
+        // Add station label
+        if (this.options.scene.stationLabels.show) {
+          // adding sprites for a cave with 3k stations is roughly 25 MB, let's try to save memory by not adding them if they are not visible
+          this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
+        }
+
       } else if (station.type === ShotType.SPLAY) {
         this.addSphere(
           stationName,
@@ -1000,15 +1083,20 @@ class MyScene {
             coordinates : station.coordinates
           }
         );
+        if (this.options.scene.stationLabels.show) {
+          this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
+        }
       }
     }
     clStationSpheresGroup.visible = visibility && this.options.scene.centerLines.spheres.show;
     splayStationSpheresGroup.visible = visibility && this.options.scene.splays.spheres.shows;
     auxiliaryStationSpheresGroup.visible = visibility && this.options.scene.auxiliaries.spheres.show;
+    stationLabelsGroup.visible = visibility && this.options.scene.stationLabels.show;
 
     group.add(clStationSpheresGroup);
     group.add(splayStationSpheresGroup);
     group.add(auxiliaryStationSpheresGroup);
+    group.add(stationLabelsGroup);
     this.caveObject3DGroup.add(group);
 
     return {
@@ -1019,6 +1107,7 @@ class MyScene {
       splaysSpheres      : splayStationSpheresGroup,
       auxiliaries        : lineSegmentsAuxiliaries,
       auxiliarySpheres   : auxiliaryStationSpheresGroup,
+      stationLabels      : stationLabelsGroup,
       group              : group
     };
   }
@@ -1070,8 +1159,87 @@ class MyScene {
     e.splaysSpheres.clear();
     e.auxiliarySpheres.children.forEach((c) => c.geometry.dispose());
     e.auxiliarySpheres.clear();
+    e.stationLabels.children.forEach((c) => {
+      if (c.userData && c.userData.textSprite) {
+        const sprite = c.userData.textSprite;
+        if (sprite.material && sprite.material.map) {
+          sprite.material.map.dispose();
+        }
+        sprite.material.dispose();
+        sprite.geometry.dispose();
+      }
+    });
+    e.stationLabels.clear();
     e.group.clear();
     this.caveObject3DGroup.remove(e.group);
+  }
+
+  addStationLabels() {
+    const mode = this.options.scene.stationLabels.mode;
+    this.caveObjects.forEach((surveyEntries, caveName) => {
+      const cave = this.db.getCave(caveName);
+      surveyEntries.forEach((surveyObject, surveyName) => {
+        cave.stations.forEach((station, stationName) => {
+          if (station.survey.name === surveyName) {
+            const stationLabel = mode === 'name' ? stationName : station.position.z.toFixed(2);
+            this.addStationLabel(stationLabel, stationName, station.position, surveyObject.stationLabels);
+          }
+        });
+      });
+    });
+  }
+
+  getStationsLabelCount() {
+    let count = 0;
+    this.caveObjects.forEach((caveObject) => {
+      caveObject.forEach((surveyObject) => {
+        if (surveyObject.stationLabels) {
+          count += surveyObject.stationLabels.children.length;
+        }
+      });
+    });
+    return count;
+  }
+
+  recreateAllStationLabels() {
+    if (!this.options.scene.stationLabels.show) return;
+    const mode = this.options.scene.stationLabels.mode;
+
+    this.caveObjects.forEach((caveObject) => {
+      caveObject.forEach((surveyObject) => {
+        // Store all existing label data
+        const labelData = [];
+
+        surveyObject.stationLabels.children.forEach((label) => {
+          if (label.userData) {
+            labelData.push({
+              stationName : label.userData.stationName,
+              position    : label.userData.stationPosition.clone()
+            });
+          }
+        });
+
+        // Dispose old labels and clear the group
+        surveyObject.stationLabels.children.forEach((label) => {
+          if (label.userData && label.userData.textSprite) {
+            // Dispose the texture
+            if (label.userData.textSprite.sprite.material.map) {
+              label.userData.textSprite.sprite.material.map.dispose();
+            }
+
+            label.userData.textSprite.sprite.material.dispose();
+          }
+        });
+        surveyObject.stationLabels.clear();
+
+        // Recreate labels with current configuration
+        labelData.forEach((data) => {
+          const stationLabel = mode === 'name' ? data.stationName : data.position.z.toFixed(2);
+          this.addStationLabel(stationLabel, data.stationName, data.position, surveyObject.stationLabels);
+        });
+
+      });
+    });
   }
 
   #dipostSectionAttributes(caveName) {

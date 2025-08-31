@@ -15,7 +15,7 @@ export const DEFAULT_OPTIONS = {
         opacity : 1.0
       },
       spheres : {
-        show   : true,
+        show   : false,
         color  : '#ffff00',
         radius : 0.3
       }
@@ -27,7 +27,7 @@ export const DEFAULT_OPTIONS = {
         width : 1.5
       },
       spheres : {
-        show   : true,
+        show   : false,
         color  : '#0000ff',
         radius : 0.3
       }
@@ -39,7 +39,7 @@ export const DEFAULT_OPTIONS = {
         width : 1.5
       },
       spheres : {
-        show   : true,
+        show   : false,
         color  : '#f0abff',
         radius : 0.3
       }
@@ -74,6 +74,17 @@ export const DEFAULT_OPTIONS = {
     },
     stationAttributes : {
       iconScale : 7.0
+    },
+    stationLabels : {
+      mode            : 'name', // or depth
+      show            : false,
+      color           : '#ffffff',
+      size            : 20,
+      scale           : 0.05,
+      offset          : 1,
+      offsetDirection : 'up', // or down, left, right
+      stroke          : true,
+      strokeColor     : '#000000'
     },
     labels : {
       color : '#ffffff',
@@ -746,6 +757,50 @@ export class ConfigChanges {
     }
   }
 
+  /**
+   * Handle station labels configuration changes
+   */
+  handleStationLabelChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.stationLabels.mode':
+        this.scene.recreateAllStationLabels();
+        break;
+      case 'scene.stationLabels.stroke':
+        this.scene.recreateAllStationLabels();
+        break;
+      case 'scene.stationLabels.show': {
+        const c = this.scene.getStationsLabelCount();
+        if (newValue === true && c === 0) {
+          this.scene.addStationLabels();
+        }
+        this.scene.setObjectsVisibility('stationLabels', newValue);
+        break;
+      }
+
+      case 'scene.stationLabels.color':
+        this.scene.recreateAllStationLabels();
+        break;
+
+      case 'scene.stationLabels.size':
+        this.scene.recreateAllStationLabels();
+        break;
+
+      case 'scene.stationLabels.offset':
+        this.scene.recreateAllStationLabels();
+        break;
+
+      case 'scene.stationLabels.offsetDirection':
+        this.scene.recreateAllStationLabels();
+        break;
+
+      case 'scene.stationLabels.strokeColor':
+        this.scene.recreateAllStationLabels();
+        break;
+    }
+
+    this.scene.view.renderView();
+  }
+
   handleGridChanges(path) {
     switch (path) {
       case 'scene.grid.step':
@@ -783,6 +838,8 @@ export class ConfigChanges {
       this.handlePanelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.stationAttributes')) {
       this.handleStationAttributeChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.stationLabels')) {
+      this.handleStationLabelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.grid.')) {
       this.handleGridChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.sidebar.')) {

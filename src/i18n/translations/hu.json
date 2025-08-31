@@ -79,6 +79,7 @@
       "sections": {
         "surveyLines": "Felmérés vonalak",
         "stations": "Pontok",
+        "stationLabels": "Pont címkék",
         "appearance": "Megjelenés",
         "colorGradient": "Szín átmenet",
         "print": "Nyomtatás"
@@ -90,16 +91,23 @@
         "centerStations": "Közép pontok",
         "splayStations": "Tüske pontok",
         "auxiliaryStations": "Segéd pontok",
-        "generalSettings": "Általános beállítások"
+        "generalSettings": "Általános beállítások",
+        "stationLabels": "Pont címkék"
       },
       "labels": {
         "color": "Szín",
+        "stroke": "Körvonal",
         "width": "Szélesség",
         "opacity": "Átlátszóság",
         "size": "Méret",
         "backgroundColor": "Háttér szín",
         "labelColor": "Címke szín",
         "labelSize": "Címke méret",
+        "scale": "Méretezés",
+        "offset": "Eltolás",
+        "offsetDirection": "Eltolás iránya",
+        "strokeColor": "Körvonal szín",
+        "labelMode": "Címke mód",
         "sectionColor": "Szakasz szín",
         "screenDPI": "Képernyő DPI",
         "stationIconScale": "Pont ikon méretezés",
@@ -114,7 +122,13 @@
       },
       "options": {
         "portrait": "Álló",
-        "landscape": "Fekvő"
+        "landscape": "Fekvő",
+        "name": "Név",
+        "depth": "Z koordináta",
+        "up": "Fent",
+        "down": "Lent",
+        "left": "Balra",
+        "right": "Jobbra"
       }
     },
     "sidebar": {

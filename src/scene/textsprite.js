@@ -7,8 +7,7 @@ class TextSprite {
       size        : font.size,
       color       : font.color ?? 'white',
       family      : font.name ?? 'Helvetica Neue',
-      background  : font.background,
-      strokeColor : font.strokeColor
+      strokeColor : font?.strokeColor
     };
     this.label = label;
     this.position = position;
@@ -61,9 +60,10 @@ class TextSprite {
     if (label.length > this.label.length) {
       this.sprite.material.map.dispose();
       this.sprite.material.map = new THREE.CanvasTexture(this.canvas);
-      this.sprite.scale.set(0.5 * this.canvas.width, 0.5 * this.canvas.height, 1);
+      this.sprite.scale.set(this.scale * this.canvas.width, this.scale * this.canvas.height, 1);
     }
     this.sprite.material.map.needsUpdate = true;
+    this.label = label;
 
   }
 

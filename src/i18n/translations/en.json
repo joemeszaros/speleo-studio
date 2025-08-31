@@ -79,6 +79,7 @@
       "sections": {
         "surveyLines": "Survey Lines",
         "stations": "Stations",
+        "stationLabels": "Station Labels",
         "appearance": "Appearance",
         "colorGradient": "Color Gradient",
         "print": "Print"
@@ -90,16 +91,22 @@
         "centerStations": "Center Stations",
         "splayStations": "Splay Stations",
         "auxiliaryStations": "Auxiliary Stations",
-        "generalSettings": "General Settings"
+        "generalSettings": "General Settings",
+        "stationLabels": "Station Labels"
       },
       "labels": {
         "color": "Color",
+        "stroke": "Stroke",
         "width": "Width",
         "opacity": "Opacity",
         "size": "Size",
         "backgroundColor": "Background color",
         "labelColor": "Label color",
         "labelSize": "Label size",
+        "scale": "Scale",
+        "offset": "Offset",
+        "strokeColor": "Stroke color",
+        "labelMode": "Label mode",
         "sectionColor": "Section color",
         "screenDPI": "Screen DPI",
         "stationIconScale": "Station icon scale",
@@ -114,7 +121,9 @@
       },
       "options": {
         "portrait": "Portrait",
-        "landscape": "Landscape"
+        "landscape": "Landscape",
+        "name": "Name",
+        "depth": "Depth"
       }
     },
     "sidebar": {

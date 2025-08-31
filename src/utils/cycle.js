@@ -83,8 +83,8 @@ export class CycleUtil {
 
     let totalLength = 0;
     const startStation = stations.get(path[0]);
-    let startPosition = startStation.position.copy();
-    let calculatedPosition = startStation.position.copy(); // Start from the known position
+    let startPosition = startStation.position.clone();
+    let calculatedPosition = startStation.position.clone(); // Start from the known position
 
     // Follow the path through each station
     for (let i = 0; i < path.length - 1; i++) {

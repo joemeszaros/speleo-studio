@@ -54,7 +54,7 @@ class Vector {
     return new Vector(this.x / mag, this.y / mag, this.z / mag);
   }
 
-  copy() {
+  clone() {
     return new Vector(this.x, this.y, this.z);
   }
 

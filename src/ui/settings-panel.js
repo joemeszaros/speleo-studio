@@ -257,6 +257,98 @@ export class SettingsPanel {
       true
     );
 
+    // Station Labels Section
+    this.createSection(
+      i18n.t('ui.settingsPanel.sections.stationLabels'),
+      [
+        this.createSubGroup(
+          i18n.t('ui.settingsPanel.groups.stationLabels'),
+          [
+            this.createSelect(
+              i18n.t('ui.settingsPanel.labels.labelMode'),
+              [i18n.t('ui.settingsPanel.options.name'), i18n.t('ui.settingsPanel.options.depth')],
+              i18n.t(`ui.settingsPanel.options.${this.options.scene.stationLabels.mode}`),
+              (value) => {
+                if (value === i18n.t('ui.settingsPanel.options.name')) {
+                  this.options.scene.stationLabels.mode = 'name';
+                } else {
+                  this.options.scene.stationLabels.mode = 'depth';
+                }
+              }
+            ),
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.color'),
+              this.options.scene.stationLabels.color,
+              (value) => {
+                this.options.scene.stationLabels.color = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.size'),
+              this.options.scene.stationLabels.size,
+              15,
+              60,
+              1,
+              (value) => {
+                this.options.scene.stationLabels.size = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.offset'),
+              this.options.scene.stationLabels.offset,
+              0.1,
+              10,
+              0.1,
+              (value) => {
+                this.options.scene.stationLabels.offset = value;
+              }
+            ),
+            this.createSelect(
+              i18n.t('ui.settingsPanel.labels.offsetDirection'),
+              [
+                i18n.t('ui.settingsPanel.options.up'),
+                i18n.t('ui.settingsPanel.options.down'),
+                i18n.t('ui.settingsPanel.options.left'),
+                i18n.t('ui.settingsPanel.options.right')
+              ],
+              i18n.t(`ui.settingsPanel.options.${this.options.scene.stationLabels.offsetDirection}`),
+              (value) => {
+                if (value === i18n.t('ui.settingsPanel.options.up')) {
+                  this.options.scene.stationLabels.offsetDirection = 'up';
+                } else if (value === i18n.t('ui.settingsPanel.options.down')) {
+                  this.options.scene.stationLabels.offsetDirection = 'down';
+                } else if (value === i18n.t('ui.settingsPanel.options.left')) {
+                  this.options.scene.stationLabels.offsetDirection = 'left';
+                } else if (value === i18n.t('ui.settingsPanel.options.right')) {
+                  this.options.scene.stationLabels.offsetDirection = 'right';
+                }
+
+              }
+            ),
+            this.createCheckbox(
+              i18n.t('ui.settingsPanel.labels.stroke'),
+              this.options.scene.stationLabels.stroke,
+              (value) => {
+                this.options.scene.stationLabels.stroke = value;
+              }
+            ),
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.strokeColor'),
+              this.options.scene.stationLabels.strokeColor,
+              (value) => {
+                this.options.scene.stationLabels.strokeColor = value;
+              }
+            )
+          ],
+          this.options.scene.stationLabels,
+          (value) => {
+            this.options.scene.stationLabels.show = value;
+          }
+        )
+      ],
+      false
+    );
+
     // Appearance Section
     this.createSection(
       i18n.t('ui.settingsPanel.sections.appearance'),
