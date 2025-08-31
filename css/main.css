@@ -715,10 +715,63 @@ body {
 
 #station-context-menu {
   position: absolute;
-  z-index: 100;
+  z-index: 1000;
   color: azure;
   background: rgb(40, 40, 40);
   display: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 150px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+#station-context-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+#station-context-menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+#station-context-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+#station-context-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+#station-context-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: azure;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+#station-context-menu button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#station-context-menu button:first-child {
+  border-radius: 4px 4px 0 0;
+}
+
+#station-context-menu button:last-child {
+  border-radius: 0 0 4px 4px;
+}
+
+#station-context-menu button:only-child {
+  border-radius: 4px;
 }
 
 #welcome-panel button:hover {

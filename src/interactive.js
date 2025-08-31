@@ -483,10 +483,34 @@ class SceneInteraction {
     const adjustedPosition = this.#ensurePanelInViewport(left, top, this.contextMenu);
     this.contextMenu.style.left = adjustedPosition.left + 'px';
     this.contextMenu.style.top = adjustedPosition.top + 'px';
+
+    // Handle very small viewports by making the context menu scrollable if needed
+    this.#handleSmallViewportContextMenu();
   }
 
   hideContextMenu() {
     this.contextMenu.style.display = 'none';
+    // Reset any small viewport adjustments
+    this.contextMenu.style.maxHeight = '';
+    this.contextMenu.style.overflowY = '';
+  }
+
+  /**
+   * Handles context menu display in very small viewports
+   * Makes the menu scrollable if it's too tall for the viewport
+   */
+  #handleSmallViewportContextMenu() {
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const menuHeight = this.contextMenu.offsetHeight;
+    const availableHeight = viewportHeight - 100; // Leave some margin for navbar and padding
+
+    if (menuHeight > availableHeight) {
+      this.contextMenu.style.maxHeight = availableHeight + 'px';
+      this.contextMenu.style.overflowY = 'auto';
+    } else {
+      this.contextMenu.style.maxHeight = '';
+      this.contextMenu.style.overflowY = '';
+    }
   }
 
   showDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
@@ -603,51 +627,61 @@ class SceneInteraction {
   #ensurePanelInViewport(left, top, panel) {
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const margin = 10; // Consistent margin from viewport edges
 
     let panelWidth = panel.offsetWidth;
     let panelHeight = panel.offsetHeight;
 
-    // Ensure we have valid dimensions
-    if (panelWidth <= 0) {
-      console.warn('panelWidth is 0');
-      panelWidth = 350;
-    }
-    if (panelHeight <= 0) {
-      console.warn('panelHeight is 0');
-      panelHeight = 250;
+    // Ensure we have valid dimensions - get dimensions if not available
+    if (panelWidth <= 0 || panelHeight <= 0) {
+      // Temporarily show the panel to get accurate dimensions
+      const wasVisible = panel.style.display !== 'none';
+      if (!wasVisible) {
+        panel.style.display = 'block';
+        panel.style.visibility = 'hidden';
+        panel.style.position = 'absolute';
+        panel.style.left = '-9999px';
+        panel.style.top = '-9999px';
+      }
+
+      panelWidth = panel.offsetWidth || 200; // fallback width
+      panelHeight = panel.offsetHeight || 150; // fallback height
+
+      if (!wasVisible) {
+        panel.style.display = 'none';
+        panel.style.visibility = 'visible';
+        panel.style.position = 'absolute';
+        panel.style.left = '';
+        panel.style.top = '';
+      }
     }
 
-    // Ensure panel doesn't go off the right edge
-    if (left + panelWidth > viewportWidth) {
-      left = Math.max(10, viewportWidth - panelWidth - 10); // 10px margin from edge
+    // Adjust horizontal position
+    if (left + panelWidth > viewportWidth - margin) {
+      // Try to position to the left of the cursor
+      left = Math.max(margin, left - panelWidth);
     }
 
-    // Ensure panel doesn't go off the left edge
-    if (left < 10) {
-      left = 10;
+    // Ensure minimum left margin
+    if (left < margin) {
+      left = margin;
     }
 
-    // Ensure panel doesn't go off the bottom edge
-    if (top + panelHeight + 30 > viewportHeight) {
-      top = Math.max(48, viewportHeight - panelHeight - 30); // 10px margin from edge
+    // Adjust vertical position
+    if (top + panelHeight > viewportHeight - margin) {
+      // Try to position above the cursor
+      top = Math.max(margin, top - panelHeight);
     }
 
-    // Ensure panel doesn't go off the top edge
-    if (top < 48) {
-      top = 48;
+    // Ensure minimum top margin (account for potential header/navbar)
+    const minTopMargin = 50; // Account for navbar height
+    if (top < minTopMargin) {
+      top = minTopMargin;
     }
 
-    // Final safety check - ensure panel is completely visible
-    if (left + panelWidth > viewportWidth) {
-      left = viewportWidth - panelWidth - 5;
-    }
-    if (top + panelHeight > viewportHeight) {
-      top = viewportHeight - panelHeight - 5;
-    }
-
-    // Ensure minimum margins from edges
-    left = Math.max(5, Math.min(left, viewportWidth - panelWidth - 5));
-    top = Math.max(5, Math.min(top, viewportHeight - panelHeight - 5));
+    // Final safety checks to ensure panel is completely within viewport
+    left = Math.max(margin, Math.min(left, viewportWidth - panelWidth - margin));
+    top = Math.max(minTopMargin, Math.min(top, viewportHeight - panelHeight - margin));
 
     return { left, top };
   }
