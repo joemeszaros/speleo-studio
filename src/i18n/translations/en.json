@@ -164,7 +164,12 @@
       "filter": {
         "placeholder": "Filter caves and surveys...",
         "clear": "Clear filter",
-        "noResults": "No caves or surveys match the filter"
+        "noResults": "No caves or surveys match the filter",
+        "modes": {
+          "caveSurvey": "Cave/Survey",
+          "shotNames": "Shot Names"
+        },
+        "tooltip": "Search mode: {mode}"
       },
       "noCaves": "No caves loaded"
     },

@@ -164,7 +164,12 @@
       "filter": {
         "placeholder": "Barlangok és felmérések szűrése...",
         "clear": "Szűrő törlése",
-        "noResults": "Nincs találat a szűrőre"
+        "noResults": "Nincs találat a szűrőre",
+        "modes": {
+          "caveSurvey": "Barlang/Felmérés",
+          "shotNames": "Pont nevek szűrése"
+        },
+        "tooltip": "Keresési mód: {mode}"
       },
       "noCaves": "Nincsenek barlangok betöltve"
     },

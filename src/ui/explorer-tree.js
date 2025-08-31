@@ -19,6 +19,7 @@ export class ExplorerTree {
     this.expandedNodes = new Set();
     this.filterText = '';
     this.filteredNodes = new Map();
+    this.searchMode = 'caveSurvey'; // 'caveSurvey' or 'shotNames'
 
     document.addEventListener('languageChanged', () => this.render());
     document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this));
@@ -26,6 +27,34 @@ export class ExplorerTree {
     this.renderFilterInput();
     this.render();
 
+  }
+
+  setSearchMode(mode) {
+    if (this.searchMode === mode) return;
+
+    this.searchMode = mode;
+
+    // Update button active states
+    if (this.caveSurveyButton && this.shotNamesButton) {
+      this.caveSurveyButton.classList.toggle('active', mode === 'caveSurvey');
+      this.shotNamesButton.classList.toggle('active', mode === 'shotNames');
+    }
+
+    // Update placeholder text based on mode
+    const filterInput = this.filterInputContainer?.querySelector('.explorer-filter-input');
+    if (filterInput) {
+      if (mode === 'shotNames') {
+        filterInput.placeholder = i18n.t('ui.explorer.filter.modes.shotNames') + '...';
+      } else {
+        filterInput.placeholder = i18n.t('ui.explorer.filter.placeholder');
+      }
+    }
+
+    // Reapply filter if there's active filter text
+    if (this.filterText) {
+      this.applyFilter();
+      this.render();
+    }
   }
 
   addCave(cave) {
@@ -573,6 +602,33 @@ export class ExplorerTree {
     this.filterInputContainer = document.createElement('div');
     this.filterInputContainer.className = 'explorer-filter-container';
 
+    // Create search mode selector
+    const modeSelector = document.createElement('div');
+    modeSelector.className = 'explorer-filter-mode-selector';
+
+    const caveSurveyButton = document.createElement('button');
+    caveSurveyButton.className = 'explorer-filter-mode-button active';
+    caveSurveyButton.innerHTML = '♎';
+    caveSurveyButton.title = i18n.t('ui.explorer.filter.tooltip', {
+      mode : i18n.t('ui.explorer.filter.modes.caveSurvey')
+    });
+    caveSurveyButton.onclick = () => this.setSearchMode('caveSurvey');
+
+    const shotNamesButton = document.createElement('button');
+    shotNamesButton.className = 'explorer-filter-mode-button';
+    shotNamesButton.innerHTML = '📍';
+    shotNamesButton.title = i18n.t('ui.explorer.filter.tooltip', {
+      mode : i18n.t('ui.explorer.filter.modes.shotNames')
+    });
+    shotNamesButton.onclick = () => this.setSearchMode('shotNames');
+
+    modeSelector.appendChild(caveSurveyButton);
+    modeSelector.appendChild(shotNamesButton);
+
+    // Store references to buttons for updating active state
+    this.caveSurveyButton = caveSurveyButton;
+    this.shotNamesButton = shotNamesButton;
+
     const filterInput = document.createElement('input');
     filterInput.type = 'text';
     filterInput.className = 'explorer-filter-input';
@@ -584,6 +640,7 @@ export class ExplorerTree {
       this.render();
     });
 
+    this.filterInputContainer.appendChild(modeSelector);
     this.filterInputContainer.appendChild(filterInput);
     this.container.appendChild(this.filterInputContainer);
   }
@@ -620,38 +677,81 @@ export class ExplorerTree {
       return;
     }
 
-    // Filter caves and surveys based on name
-    for (const [caveName, caveNode] of this.nodes) {
-      const caveMatches = caveName.toLowerCase().includes(this.filterText);
+    if (this.searchMode === 'shotNames') {
+      // Filter by shot names (from/to stations)
+      for (const [caveName, caveNode] of this.nodes) {
+        const matchingSurveys = [];
 
-      // Check if any surveys match
-      const matchingSurveys = caveNode.children.filter((survey) =>
-        survey.label.toLowerCase().includes(this.filterText)
-      );
+        for (const survey of caveNode.children) {
+          const surveyData = survey.data;
+          if (surveyData && surveyData.shots) {
+            // Check if any shots have matching from/to station names
+            const hasMatchingShots = surveyData.shots.some(
+              (shot) =>
+                shot.from.toLowerCase().includes(this.filterText) ||
+                (shot.to && shot.to.toLowerCase().includes(this.filterText))
+            );
 
-      // Include cave if it matches or has matching surveys
-      if (caveMatches || matchingSurveys.length > 0) {
-        const filteredCaveNode = {
-          ...caveNode,
-          children : caveMatches ? caveNode.children : matchingSurveys
-        };
-
-        // Ensure the filtered node has the same expansion state as the original
-        filteredCaveNode.expanded = caveNode.expanded;
-
-        // Ensure the filtered node has the same selection state as the original
-        filteredCaveNode.selected = caveNode.selected;
-
-        // If we're only showing matching surveys, ensure they have proper parent references
-        if (!caveMatches && matchingSurveys.length > 0) {
-          filteredCaveNode.children = matchingSurveys.map((survey) => ({
-            ...survey,
-            parent   : filteredCaveNode, // Ensure proper parent reference
-            selected : survey.selected // Preserve selection state
-          }));
+            if (hasMatchingShots) {
+              matchingSurveys.push(survey);
+            }
+          }
         }
 
-        this.filteredNodes.set(caveName, filteredCaveNode);
+        if (matchingSurveys.length > 0) {
+          const filteredCaveNode = {
+            ...caveNode,
+            children : matchingSurveys
+          };
+
+          // Ensure the filtered node has the same expansion state as the original
+          filteredCaveNode.expanded = caveNode.expanded;
+          filteredCaveNode.selected = caveNode.selected;
+
+          // Ensure proper parent references
+          filteredCaveNode.children = matchingSurveys.map((survey) => ({
+            ...survey,
+            parent   : filteredCaveNode,
+            selected : survey.selected
+          }));
+
+          this.filteredNodes.set(caveName, filteredCaveNode);
+        }
+      }
+    } else {
+      // Filter caves and surveys based on name (original behavior)
+      for (const [caveName, caveNode] of this.nodes) {
+        const caveMatches = caveName.toLowerCase().includes(this.filterText);
+
+        // Check if any surveys match
+        const matchingSurveys = caveNode.children.filter((survey) =>
+          survey.label.toLowerCase().includes(this.filterText)
+        );
+
+        // Include cave if it matches or has matching surveys
+        if (caveMatches || matchingSurveys.length > 0) {
+          const filteredCaveNode = {
+            ...caveNode,
+            children : caveMatches ? caveNode.children : matchingSurveys
+          };
+
+          // Ensure the filtered node has the same expansion state as the original
+          filteredCaveNode.expanded = caveNode.expanded;
+
+          // Ensure the filtered node has the same selection state as the original
+          filteredCaveNode.selected = caveNode.selected;
+
+          // If we're only showing matching surveys, ensure they have proper parent references
+          if (!caveMatches && matchingSurveys.length > 0) {
+            filteredCaveNode.children = matchingSurveys.map((survey) => ({
+              ...survey,
+              parent   : filteredCaveNode, // Ensure proper parent reference
+              selected : survey.selected // Preserve selection state
+            }));
+          }
+
+          this.filteredNodes.set(caveName, filteredCaveNode);
+        }
       }
     }
 
@@ -801,6 +901,9 @@ export class ExplorerTree {
   clearFilter() {
     this.filterText = '';
     this.filteredNodes.clear();
+
+    // Reset search mode to default
+    this.setSearchMode('caveSurvey');
 
     // Update the filter input UI
     this.updateFilterInputUI();
