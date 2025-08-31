@@ -19,7 +19,6 @@ import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
 import { DatabaseManager } from './storage/database-manager.js';
 import { DeclinationCache } from './storage/declination-cache.js';
-import { Declination } from './utils/geo.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { SurfaceHelper } from './surface.js';
@@ -63,7 +62,7 @@ class Main {
       await this.databaseManager.init();
     } catch (error) {
       console.error('Failed to initialize database:', error);
-      showErrorPanel('Failed to initialize database');
+      showErrorPanel(i18n.t('errors.import.failedToInitIndexedDb'));
     }
 
     const materials = new Materials(options).materials;
@@ -182,12 +181,12 @@ class Main {
             await this.#loadCaveFromUrl(urlParams, project);
           } catch (error) {
             console.error('Failed to load cave from URL:', error);
-            showErrorPanel(`Failed to load cave from URL: ${error.message}`);
+            showErrorPanel(i18n.t('errors.import.failedToLoadCaveFromUrl', { error: error.message }));
           }
         }
       }).catch((error) => {
         console.error('Failed to load project or cave from URL:', error);
-        showErrorPanel(`Failed to load project or cave from URL: ${error.message}`);
+        showErrorPanel(i18n.t('errors.import.failedToLoadProjectOrCaveFromUrl', { error: error.message }));
       });
 
   }
@@ -234,7 +233,7 @@ class Main {
             });
           });
         } catch (error) {
-          showErrorPanel(`Unable to import file ${file.name}: ${error.message}`);
+          showErrorPanel(i18n.t('errors.import.unableToImportFile', { name: file.name, error: error.message }));
           console.error(error);
         }
       }
@@ -286,13 +285,13 @@ class Main {
   async #tryAddSurvey(survey) {
 
     if (survey.name === undefined) {
-      showErrorPanel('Survey name is undefined, please set a name in the file');
+      showErrorPanel(i18n.t('errors.import.surveyNameUndefined'));
       return;
     }
 
     const caveName = document.getElementById('surveyInput').caveName; // custom property
     if (this.db.getSurvey(caveName, survey.name) !== undefined) {
-      showErrorPanel(`Survey ${survey.name} already exists in cave ${caveName}`);
+      showErrorPanel(i18n.t('errors.import.surveyAlreadyExists', { name: survey.name, cave: caveName }));
       return;
     }
     const cave = this.db.getCave(caveName);
@@ -313,7 +312,7 @@ class Main {
       await this.projectSystem.addCaveToProject(currentProject, cave);
       this.projectManager.addCave(cave);
     } else {
-      throw Error(`Cave ${cave.name} has already been imported`);
+      throw Error(i18n.t('errors.import.caveAlreadyImported', { name: cave.name }));
     }
   }
 
@@ -340,7 +339,7 @@ class Main {
       const caveNameUrl = urlParams.get('cave');
 
       if (!project) {
-        throw new Error('Probably the project URL parameter is missing');
+        throw new Error(i18n.t('errors.import.projectUrlParameterMissing'));
       }
 
       this.projectPanel.hide();
@@ -359,7 +358,9 @@ class Main {
         fetch(caveNameUrl)
           .then((response) => {
             if (!response.ok) {
-              throw new Error(`Failed to download file: ${response.statusText} (HTTP ${response.status})`);
+              throw new Error(
+                i18n.t('errors.import.failedToDownloadFile', { name: caveNameUrl, error: response.statusText })
+              );
             }
             return response.blob();
           })
@@ -376,7 +377,7 @@ class Main {
             });
           })
           .catch((error) => {
-            showErrorPanel(`Unable to import file ${caveNameUrl}: ${error.message}`);
+            showErrorPanel(i18n.t('errors.import.unableToImportFile', { name: caveNameUrl, error: error.message }));
             console.error(error);
           });
       }

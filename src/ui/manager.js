@@ -4,6 +4,7 @@ import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor } from './editor/survey.js';
 import { showInfoPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
+import { i18n } from '../i18n/i18n.js';
 
 class ProjectManager {
 
@@ -327,12 +328,20 @@ class ProjectManager {
   }
 
   validateBeforeAdd(cave) {
-    const cavesReallyFar = this.getFarCaves(this.db.caves, cave.getFirstStation().coordinates.eov);
+    let cavesReallyFar = [];
+
+    if (cave.getFirstStation()) {
+      cavesReallyFar = this.getFarCaves(
+        this.db.caves,
+        cave.getFirstStation().coordinates.eov,
+        cave.getFirstStation()?.position
+      );
+    }
 
     if (this.db.caves.has(cave.name)) {
-      return `Cave '${cave.name}' has already been added!`;
+      return i18n.t('errors.import.caveAlreadyImported', { name: cave.name });
     } else if (cavesReallyFar.length > 0) {
-      return `'${cave.name}' is too far from previously imported caves: ${cavesReallyFar.join(',')}`;
+      return i18n.t('errors.import.cavesReallyFar', { name: cave.name, caves: cavesReallyFar.join('<br>') });
     }
 
     return undefined;
@@ -413,17 +422,31 @@ class ProjectManager {
    * @param {Vector} position - The position to measure the distance from.
    * @returns {Array<string>} An array of strings, each representing a cave name and its distance from the position, formatted as "caveName - distance m".
    */
-  getFarCaves(caves, eovCoordinate) {
+  getFarCaves(caves, eovCoordinate, position) {
     return Array.from(caves.values()).reduce((acc, c) => {
       const firstStation = c.getFirstStation();
-      const distanceBetweenCaves = firstStation?.coordinates.eov?.distanceTo(eovCoordinate);
-      if (distanceBetweenCaves !== undefined && distanceBetweenCaves > this.options.import.cavesMaxDistance) {
-        acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
+      const firstStationEov = firstStation?.coordinates.eov;
+      const maxDistance = this.options.import.cavesMaxDistance;
+
+      if (eovCoordinate === undefined && firstStationEov !== undefined) {
+        acc.push(`${c.name} - ${i18n.t('errors.import.unknownDistance')}`);
+      } else if (
+        firstStationEov === undefined &&
+        eovCoordinate === undefined &&
+        position !== undefined &&
+        firstStation.position.distanceTo(position) > maxDistance
+      ) {
+        acc.push(`${c.name} - ${U.formatDistance(firstStation.position.distanceTo(position), 0)}`);
+      } else if (eovCoordinate !== undefined && firstStationEov === undefined) {
+        acc.push(`${c.name} - ${i18n.t('errors.import.unknownDistance')}`);
+      } else if (eovCoordinate !== undefined && firstStationEov !== undefined) {
+        // eov for both caves
+        const distanceBetweenCaves = firstStationEov.distanceTo(eovCoordinate);
+        if (distanceBetweenCaves > this.options.import.cavesMaxDistance) {
+          acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
+        }
       }
 
-      if (eovCoordinate !== undefined && distanceBetweenCaves === undefined) {
-        acc.push(`${c.name} - Unknown distance, no EOV coordinates`);
-      }
       return acc;
     }, []);
   }

@@ -479,6 +479,21 @@
       }
     }
   },
+  "errors": {
+    "import": {
+      "unableToImportFile": "Nem lehet importálni a(z) {name} fájlt: {error}",
+      "surveyNameUndefined": "A felmérés neve nincs megadva, kérem adja meg a nevet a fájlban",
+      "surveyAlreadyExists": "A(z) {name} nevű felmérés már létezik a(z) {cave} barlangban",
+      "caveAlreadyImported": "A(z) {name} nevű barlang már importálva lett korábban",
+      "projectUrlParameterMissing": "Valószínű, hogy a projekt URL paraméter hiányzik",
+      "failedToDownloadFile": "Nem lehet letölteni a(z) {name} fájlt: {error}",
+      "failedToLoadCaveFromUrl": "Nem lehet betölteni a(z) {name} barlangot a URL-ből: {error}",
+      "failedToLoadProjectOrCaveFromUrl": "Nem lehet betölteni a(z) {name} projektet és barlangot a URL-ből: {error}",
+      "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist",
+      "cavesReallyFar": "A(z) {name} nevű barlang túl messze van a korábban importált barlangoktól: {caves}",
+      "unknownDistance": "Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál"
+    }
+  },
   "menu": {
     "station": {
       "details": "Pont részletei",
