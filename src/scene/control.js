@@ -82,7 +82,7 @@ export class BaseViewControl {
     }
 
     // Clamp zoom
-    this.zoom = Math.max(0.1, Math.min(10, this.zoom));
+    //this.zoom = Math.max(0.1, Math.min(10, this.zoom));
 
     this.camera.zoom = this.zoom;
     this.camera.updateProjectionMatrix();
