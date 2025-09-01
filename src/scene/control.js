@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { Polar, Vector } from '../model.js';
-import { radsToDegrees } from '../utils/utils.js';
+import { Polar } from '../model.js';
 
 // Base class for view controls with common functionality
 export class BaseViewControl {
@@ -9,6 +8,7 @@ export class BaseViewControl {
     this.domElement = domElement;
     this.target = new THREE.Vector3();
     this.zoom = 1;
+    this._100pixelsInWorldUnites = 0;
     this.enabled = false;
 
     this.state = 'none';
@@ -75,17 +75,15 @@ export class BaseViewControl {
 
     // Zoom in/out
     const zoomSpeed = 0.1;
+
+    let newZoom;
     if (event.deltaY < 0) {
-      this.zoom *= 1 + zoomSpeed;
+      newZoom = this.zoom * (1 + zoomSpeed);
     } else {
-      this.zoom /= 1 + zoomSpeed;
+      newZoom = this.zoom / (1 + zoomSpeed);
     }
 
-    // Clamp zoom
-    //this.zoom = Math.max(0.1, Math.min(10, this.zoom));
-
-    this.camera.zoom = this.zoom;
-    this.camera.updateProjectionMatrix();
+    this.setZoomLevel(newZoom);
 
     // Dispatch change event
     this.dispatchEvent('orbitChange', { type: 'zoom', level: this.zoom });
@@ -93,6 +91,22 @@ export class BaseViewControl {
 
   onRotationEnd() {
     this.dispatchEvent('end', { type: 'rotate' }); // for update frustum frame and overview camera
+  }
+
+  getWorldUnitsForPixels(pixels) {
+    return this._100pixelsInWorldUnites / (100 / pixels);
+  }
+
+  setZoomLevel(level) {
+
+    if (this.zoom === level) return;
+
+    this.zoom = level;
+    this._100pixelsInWorldUnites =
+      ((100 / this.domElement.getBoundingClientRect().width) * this.camera.width) / this.zoom;
+    this.camera.zoom = this.zoom;
+    this.camera.updateProjectionMatrix();
+
   }
 
   addEventListener(type, listener) {

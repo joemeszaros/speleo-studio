@@ -46,6 +46,7 @@ class Materials {
         auxiliary           : new THREE.MeshBasicMaterial({ color: this.config.auxiliaries.spheres.color }),
         surface             : new THREE.MeshBasicMaterial({ color: 0xa0a0ff }),
         selected            : new THREE.MeshBasicMaterial({ color: 0xf00fff }),
+        hover               : new THREE.MeshBasicMaterial({ color: 0x00ffff }),
         distanceMeasurement : new THREE.MeshBasicMaterial({ color: 0xff8800 }), // Orange color for distance measurement
         startPoint          : new THREE.MeshBasicMaterial({ color: this.config.startPoint.color })
       },

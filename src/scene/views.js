@@ -94,7 +94,7 @@ class View {
   onDPIChange(dpi) {
     const fac = this.dpi / dpi;
     this.dpi = dpi;
-    this.zoomCameraTo(this.camera.zoom * fac);
+    this.zoomCameraTo(this.control.zoom * fac);
   }
 
   onZoomLevelChange(level) {
@@ -108,6 +108,7 @@ class View {
   }
 
   onResize(width, height) {
+
     if (this.camera.isOrthographicCamera) {
       const aspect = width / height;
       this.camera.left = this.camera.bottom * aspect;
@@ -123,7 +124,7 @@ class View {
     this.spriteCamera.top = height / 2;
     this.spriteCamera.bottom = -height / 2;
     this.spriteCamera.updateProjectionMatrix();
-    this.onZoomLevelChange(this.camera.zoom);
+    this.onZoomLevelChange(this.control.zoom);
 
   }
 
@@ -142,11 +143,10 @@ class View {
     const width = boundingBox.max.x - boundingBox.min.x;
     const height = boundingBox.max.y - boundingBox.min.y;
     const zoomLevel = Math.min(this.camera.width / width, this.camera.height / height); // camera width and height in world units
-    const zoomChanged = this.camera.zoom !== zoomLevel;
-    this.camera.zoom = zoomLevel;
+    const zoomChanged = this.control.zoom !== zoomLevel;
+    this.control.setZoomLevel(zoomLevel);
 
     if (zoomChanged) {
-      this.camera.updateProjectionMatrix(); //lookat or zoom
       this.updateOverviewCameraZoom(boundingBox);
       if (this.frustumFrame) this.updateFrustumFrame();
       this.onZoomLevelChange(zoomLevel);
@@ -167,19 +167,18 @@ class View {
 
   zoomCameraTo(level) {
     if (level >= 0.1) {
-      this.camera.zoom = level;
-      this.camera.updateProjectionMatrix();
+      this.control.setZoomLevel(level);
       this.onZoomLevelChange(level);
       this.renderView();
     }
   }
 
   zoomIn() {
-    this.zoomCameraTo(this.camera.zoom * 1.2);
+    this.zoomCameraTo(this.control.zoom * 1.2);
   }
 
   zoomOut() {
-    this.zoomCameraTo(this.camera.zoom / 1.2);
+    this.zoomCameraTo(this.control.zoom / 1.2);
   }
 
   updateOverviewCameraZoom(boundingBox) {
@@ -267,7 +266,6 @@ class View {
       this.adjustCamera(boundingBox);
       if (this.frustumFrame === undefined) this.createFrustumFrame();
       this.fitScreen(boundingBox, true);
-      this.onZoomLevelChange(this.camera.zoom);
       this.initiated = true;
     }
 
@@ -400,7 +398,7 @@ class SpatialView extends View {
     this.overviewCamera.updateProjectionMatrix();
     if (this.frustumFrame) this.updateFrustumFrame();
     this.renderView();
-    this.onZoomLevelChange(this.camera.zoom);
+    this.onZoomLevelChange(this.control.zoom);
     this.isInteracting = false;
   }
 

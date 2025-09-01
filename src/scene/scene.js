@@ -57,6 +57,8 @@ class MyScene {
     this.stationAttributes3DGroup.name = 'station attributes';
     this.segments3DGroup = new THREE.Group();
     this.segments3DGroup.name = 'segments';
+    this.spheres3DGroup = new THREE.Group();
+    this.spheres3DGroup.name = 'spheres';
     this.startPoints3DGroup = new THREE.Group();
     this.startPoints3DGroup.name = 'starting points';
     this.startPointObjects = new Map(); // Map to store starting point objects for each cave
@@ -108,6 +110,7 @@ class MyScene {
     this.threejsScene.add(this.sectionAttributes3DGroup);
     this.threejsScene.add(this.stationAttributes3DGroup);
     this.threejsScene.add(this.segments3DGroup);
+    this.threejsScene.add(this.spheres3DGroup);
     this.threejsScene.add(this.startPoints3DGroup);
 
     this.boundingBox = undefined;
@@ -127,6 +130,40 @@ class MyScene {
         type : 'surface'
       }
     );
+
+    const map = new THREE.TextureLoader().load('icons/focus.svg');
+    map.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.SpriteMaterial({ map: map });
+
+    const focusSprite = new THREE.Sprite(material);
+    focusSprite.name = 'focus sprite';
+    this.focusSprite = focusSprite;
+    this.threejsScene.add(focusSprite);
+
+    const geometry = new THREE.TorusGeometry(1.3, 0.2, 16, 100);
+    this.focusSphere = this.addSphere(
+      'selected station sphere',
+      new THREE.Vector3(0, 0, 0),
+      this.spheres3DGroup,
+      sphereGeo,
+      this.materials.sphere.selectedStation,
+      {
+        type : 'selected station'
+      }
+    );
+    this.focusSphere.visible = false;
+    this.distanceSphere = this.addSphere(
+      'distance sphere',
+      new THREE.Vector3(0, 0, 0),
+      this.spheres3DGroup,
+      geometry,
+      this.materials.sphere.distanceMeasurement,
+      {
+        type : 'distance station'
+      }
+    );
+    this.distanceSphere.visible = false;
+
     this.view = this.views.get('spatial');
     this.view.activate();
 
@@ -273,20 +310,35 @@ class MyScene {
 
   }
 
-  getIntersectedStationSphere(mouseCoordinates) {
+  getIntersectedStationSphere(mouseCoordinates, radius) {
     this.setPointer(this.getMousePosition(mouseCoordinates));
     const clSpheres = this.getAllCenterLineStationSpheres();
     const splaySpheres = this.getAllSplaysStationSpheres();
     const auxiliarySpheres = this.getAllAuxiliaryStationSpheres();
-    this.raycaster.setFromCamera(this.pointer, this.view.camera);
-    const spheres = clSpheres.concat(splaySpheres).concat(auxiliarySpheres);
-    const intersectedSpheres = this.raycaster.intersectObjects(spheres);
+    const stationSpheres = clSpheres.concat(splaySpheres).concat(auxiliarySpheres);
+
+    const camera = this.view.camera;
+    const origin = new THREE.Vector3(
+      this.pointer.x,
+      this.pointer.y,
+      (camera.near + camera.far) / (camera.near - camera.far)
+    ).unproject(camera);
+    const direction = new THREE.Vector3(0, 0, -1).transformDirection(camera.matrixWorld);
+    const spheres = stationSpheres.map((s) => {
+      const sphere = new THREE.Sphere(s.position, radius);
+      sphere.station = s; // custom property
+      sphere.distance = origin.distanceTo(s.position); // custom property
+      return sphere;
+    });
+
+    const ray = new THREE.Ray(origin, direction);
+    const intersectedSpheres = spheres.filter((s) => ray.intersectSphere(s, new THREE.Vector3()));
     if (intersectedSpheres.length) {
-      return intersectedSpheres[0].object;
+      intersectedSpheres.sort((a, b) => a.distance - b.distance); // get the closest sphere
+      return intersectedSpheres[0].station;
     } else {
       return undefined;
     }
-
   }
 
   getIntersectedSurfacePoint(mouseCoordinates, purpose) {

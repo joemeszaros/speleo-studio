@@ -94,7 +94,9 @@ class SceneInteraction {
     } else {
       // Set distance measurement mode and change the visual appearance
       this.distanceMeasurementMode = true;
-      this.selectedStation.material = this.materials.sphere.distanceMeasurement || this.materials.sphere.selected;
+      this.scene.focusSphere.visible = false;
+      this.scene.distanceSphere.position.copy(this.selectedStation.position);
+      this.showSphere(this.scene.distanceSphere);
       this.scene.view.renderView();
 
       // Show message that user should click on another station
@@ -132,14 +134,15 @@ class SceneInteraction {
     line.computeLineDistances();
     this.scene.addObjectToScene(line);
 
+    //FIXME; ensure that it fits in the screen
     // Show distance panel
     const rect = this.scene.getBoundingClientRect();
     this.showDistancePanel(
       from,
       to,
       diff,
-      this.mouseCoordinates.x - rect.left,
-      this.mouseCoordinates.y - rect.top,
+      this.mouseCoordinates.x - rect.left + 50,
+      this.mouseCoordinates.y - rect.top + 50,
       () => {
         this.scene.removeFromScene(line);
         this.#clearSelected();
@@ -152,10 +155,7 @@ class SceneInteraction {
     this.distanceFromStation = undefined;
     this.distanceToStation = undefined;
 
-    // Clear the first selection and select the second station normally
-    this.#clearSelected();
     this.#setSelected(secondStation);
-
     this.scene.view.renderView();
     return true;
   }
@@ -163,21 +163,6 @@ class SceneInteraction {
   selectPivotPoint() {
     const position = this.selectedStation.position;
     this.scene.view.panCameraTo(position);
-  }
-
-  getMaterialForType(object) {
-    switch (object.meta.type) {
-      case ShotType.SPLAY:
-        return this.materials.sphere.splay;
-      case ShotType.CENTER:
-        return this.materials.sphere.centerLine;
-      case ShotType.AUXILIARY:
-        return this.materials.sphere.auxiliary;
-      case 'surface':
-        return this.materials.sphere.surface;
-      default:
-        throw new Error(`Uknown object type for sphere ${object.meta.type}`);
-    }
   }
 
   getSelectedStationDetails(st) {
@@ -201,35 +186,35 @@ class SceneInteraction {
     return stLabel;
   }
 
+  showSphere(sphereToShow) {
+    const radius = this.scene.view.control.getWorldUnitsForPixels(5);
+    const actualRadius = sphereToShow.geometry.parameters.radius;
+
+    if (radius !== actualRadius) {
+      sphereToShow.geometry.dispose();
+      sphereToShow.geometry = new THREE.SphereGeometry(radius, 10, 10);
+    }
+
+    sphereToShow.visible = true;
+  }
+
   #setSelected(st) {
     this.selectedStation = st;
     this.selectedPosition = st.position.clone();
-
-    // Use different material based on whether we're in distance measurement mode
-    if (this.distanceMeasurementMode) {
-      this.selectedStation.material = this.materials.sphere.distanceMeasurement;
-    } else {
-      this.selectedStation.material = this.materials.sphere.selected;
-    }
-
-    this.selectedStation.scale.setScalar(1.7);
-    if (this.selectedStation.meta.type === 'surface') {
-      this.selectedStation.visible = true;
-    }
-
+    this.scene.focusSphere.position.copy(st.position);
+    this.showSphere(this.scene.focusSphere);
     this.footer.showMessage(this.getSelectedStationDetails(st));
   }
 
   #clearSelected() {
     this.selectedPosition = undefined;
-    this.selectedStation.material = this.getMaterialForType(this.selectedStation);
-    this.selectedStation.scale.setScalar(1.0);
-    if (this.selectedStation.meta.type === 'surface') {
-      this.selectedStation.visible = false;
-    }
+    this.scene.focusSphere.visible = false;
+    this.scene.distanceSphere.visible = false;
     this.selectedStation = undefined;
-    this.hideContextMenu();
     this.distanceMeasurementMode = false;
+    this.hideContextMenu();
+    this.scene.view.renderView();
+
   }
 
   onPointerMove(event) {
@@ -238,16 +223,27 @@ class SceneInteraction {
     }
     this.mouseCoordinates.x = event.clientX;
     this.mouseCoordinates.y = event.clientY;
-    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
+
+    const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
+    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates, worldUnitsFor5Pixels);
+
     if (intersectedStation !== undefined) {
       this.scene.domElement.style.cursor = 'pointer';
+      this.scene.focusSprite.position.copy(intersectedStation.position);
+      const worldUnitsFor30Pixels = this.scene.view.control.getWorldUnitsForPixels(30);
+      this.scene.focusSprite.scale.set(worldUnitsFor30Pixels, worldUnitsFor30Pixels, worldUnitsFor30Pixels);
+      this.scene.focusSprite.visible = true;
+
       this.footer.showMessage(this.getPointedStationDetails(intersectedStation));
       this.pointedStation = intersectedStation;
+      this.scene.view.renderView();
     } else if (this.pointedStation !== undefined) {
       this.scene.domElement.style.cursor = 'default';
+      this.scene.focusSprite.visible = false;
       // do not call clearmessage every time
       this.footer.clearMessage();
       this.pointedStation = undefined;
+      this.scene.view.renderView();
     }
   }
 
@@ -256,15 +252,13 @@ class SceneInteraction {
     if (intersectedSprite !== undefined && typeof intersectedSprite.onclick === 'function') {
       intersectedSprite.onclick(); // custom function
     }
-
   }
 
   onClick() {
-    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates);
+    const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
+    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates, worldUnitsFor5Pixels);
     const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selected');
     const hasIntersection = intersectedStation !== undefined || intersectsSurfacePoint !== undefined;
-
-    this.hideContextMenu();
 
     if (hasIntersection) {
       const intersectedObject = intersectsSurfacePoint !== undefined ? intersectsSurfacePoint : intersectedStation;
@@ -299,7 +293,7 @@ class SceneInteraction {
 
         // Show context menu for the newly selected station
         const rect = this.scene.getBoundingClientRect();
-        this.showContextMenu(this.mouseCoordinates.x - rect.left, this.mouseCoordinates.y - rect.top);
+        this.showContextMenu(this.mouseCoordinates.x - rect.left + 10, this.mouseCoordinates.y - rect.top + 10);
       }
     } else if (this.selectedStation !== undefined) {
       this.#clearSelected();
