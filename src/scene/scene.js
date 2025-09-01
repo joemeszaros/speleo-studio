@@ -164,7 +164,7 @@ class MyScene {
     this.distanceSphere.visible = false;
 
     this.view = this.views.get('spatial');
-    this.view.activate();
+    this.view.activate(this.computeBoundingBox());
 
     // Initialize camera tracking for billboard optimization
     this.#initializeCameraTracking();
@@ -762,7 +762,7 @@ class MyScene {
     if (this.view !== this.views.get(viewName)) {
       this.view.deactivate();
       this.view = this.views.get(viewName);
-      this.view.activate();
+      this.view.activate(this.computeBoundingBox());
       // Reinitialize camera tracking for billboard optimization
       this.#initializeCameraTracking();
     }

@@ -256,16 +256,14 @@ class View {
     }
   }
 
-  activate() {
+  activate(boundingBox) {
     this.enabled = true;
-    const boundingBox = this.scene.computeBoundingBox();
 
     if (this.initiated === false) {
       this.target = boundingBox?.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
-      this.control.target = this.target;
       this.adjustCamera(boundingBox);
       if (this.frustumFrame === undefined) this.createFrustumFrame();
-      this.fitScreen(boundingBox, true);
+      this.fitScreen(boundingBox);
       this.initiated = true;
     }
 
@@ -435,7 +433,9 @@ class SpatialView extends View {
     View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
 
     this.control.setTarget(this.target);
-    this.control.setCameraOrientation(settings.distance, Math.PI, Math.PI / 2); // looking down from above
+    // wihtout the Math.PI / 2 - 0.0001 Firefox renders the initial view 90 degree clockwise
+    // the first rotation fixes the view but I rather decided to apply this delta
+    this.control.setCameraOrientation(settings.distance, Math.PI, Math.PI / 2 - 0.001); // looking down from above
 
     // Update camera position
     this.control.updateCameraPosition();
@@ -444,11 +444,6 @@ class SpatialView extends View {
     this.overviewCamera.position.copy(this.camera.position);
     this.overviewCamera.lookAt(this.target);
     this.overviewCamera.updateProjectionMatrix();
-  }
-
-  getCameraPolarPosition() {
-    // Get polar position from the SpatialViewControl
-    return this.control.getCameraPolarPosition();
   }
 
   renderView() {
@@ -483,8 +478,8 @@ class SpatialView extends View {
     }
   }
 
-  activate() {
-    super.activate();
+  activate(boundingBox) {
+    super.activate(boundingBox);
     this.control.enabled = true;
     this.viewHelperDomElement.style.display = 'block';
     this.renderView();
@@ -670,8 +665,8 @@ class PlanView extends View {
     this.control.dispatchEvent('orbitChange', { type: 'rotate', rotation: rotationRadians });
   }
 
-  activate() {
-    super.activate();
+  activate(boundingBox) {
+    super.activate(boundingBox);
     this.control.enabled = true;
     this.compass.visible = true;
     this.compass.material.rotation = 0;
@@ -883,8 +878,8 @@ class ProfileView extends View {
     );
   }
 
-  activate() {
-    super.activate();
+  activate(boundingBox) {
+    super.activate(boundingBox);
     this.control.enabled = true;
     this.verticalRuler.visible = true;
     this.verticalRatioText.sprite.visible = true;

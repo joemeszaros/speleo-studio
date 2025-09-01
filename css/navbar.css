@@ -66,12 +66,9 @@
   text-align: left;
 }
 
-.mydropdown-content .selected {
-  background-color: #ddd;
-}
-
-.mydropdown-content a:hover {
-  background-color: #ddd;
+.mydropdown .mydropdown-content img {
+  padding: 0px;
+  margin-right: 10px;
 }
 
 .mydropdown-show {

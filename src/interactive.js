@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { makeFloatingPanel, showErrorPanel } from './ui/popups.js';
 import { get3DCoordsStr, node, radsToDegrees, toPolar } from './utils/utils.js';
 import { SectionHelper } from './section.js';
-import { ShotType } from './model/survey.js';
 import { i18n } from './i18n/i18n.js';
 
 class SceneInteraction {
@@ -34,6 +33,7 @@ class SceneInteraction {
     this.distanceMeasurementMode = false;
     this.distanceFromStation = undefined;
     this.distanceToStation = undefined;
+    this.raycastingEnabled = true;
 
     this.mouseOnEditor = false;
 
@@ -165,6 +165,18 @@ class SceneInteraction {
     this.scene.view.panCameraTo(position);
   }
 
+  toggleRaycasting() {
+    this.raycastingEnabled = !this.raycastingEnabled;
+    if (this.raycastingEnabled) {
+      this.footer.showMessage(i18n.t('ui.footer.raycastingEnabled'));
+    } else {
+      this.footer.showMessage(i18n.t('ui.footer.raycastingDisabled'));
+    }
+    if (this.raycastingEnabled === false) {
+      this.scene.focusSphere.visible = false;
+    }
+  }
+
   getSelectedStationDetails(st) {
     let stLabel;
     if (st.meta.survey !== undefined && st.meta.cave !== undefined) {
@@ -218,7 +230,7 @@ class SceneInteraction {
   }
 
   onPointerMove(event) {
-    if (this.mouseOnEditor || this.scene.view.isInteracting) {
+    if (this.raycastingEnabled === false || this.mouseOnEditor || this.scene.view.isInteracting) {
       return;
     }
     this.mouseCoordinates.x = event.clientX;
@@ -255,6 +267,11 @@ class SceneInteraction {
   }
 
   onClick() {
+
+    if (this.raycastingEnabled === false) {
+      return;
+    }
+
     const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
     const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates, worldUnitsFor5Pixels);
     const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selected');

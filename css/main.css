@@ -304,8 +304,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(90vw, 600px);
-  max-width: 600px;
+  width: min(90vw, 650px);
+  max-width: 650px;
   min-width: 320px;
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border-radius: 20px;
@@ -328,8 +328,8 @@ body {
 }
 
 .welcome-logo {
-  width: 120px;
-  height: 120px;
+  width: 200px;
+  height: 200px;
   margin: 0 auto 30px;
   display: block;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
@@ -392,9 +392,12 @@ body {
 }
 
 .welcome-button:hover {
+  cursor: pointer;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(4, 170, 109, 0.4);
   background: linear-gradient(135deg, #059669 0%, #04aa6d 100%);
+  border: solid 1px white;
+  border-radius: 12px;
 }
 
 .welcome-button:hover::before {
@@ -772,15 +775,6 @@ body {
 
 #station-context-menu button:only-child {
   border-radius: 4px;
-}
-
-#welcome-panel button:hover {
-  cursor: pointer;
-  background: linear-gradient(to bottom, #5fc768 0%, #328e3a 100%);
-  padding: 10px;
-  color: azure;
-  border: solid 1px white;
-  border-radius: 6px;
 }
 
 #cycle-panel {

@@ -404,8 +404,7 @@ class ProjectManager {
         view.initiated = false;
       });
 
-      this.scene.view.activate();
-      this.scene.view.renderView();
+      this.scene.view.activate(boundingBox);
     }
 
     this.explorer.addCave(cave);

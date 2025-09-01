@@ -32,15 +32,31 @@ class NavigationBar {
     this.projectSystem = projectSystem;
     this.projectPanel = projectPanel;
     this.exportPanel = exportPanel;
+    this.listeners = [];
     this.#addNavbarClickListener();
     document.addEventListener('currentProjectChanged', () => this.setFileMenuDisabled(false));
     document.addEventListener('currentProjectDeleted', () => this.setFileMenuDisabled(true));
+    document.addEventListener('keydown', (e) => this.onKeyDown(e));
 
     // Listen for language changes and refresh navbar
     document.addEventListener('languageChanged', () => {
       this.#buildNavbar(domElement);
     });
     this.#buildNavbar(domElement);
+  }
+
+  onKeyDown(e) {
+
+    this.listeners.forEach((l) => {
+      if (
+        e.key.toUpperCase() === l.key &&
+        ((e.ctrlKey && l.crtl) || !l.crtl) &&
+        ((e.shiftKey && l.shift) || (!l.shift && !e.shiftKey))
+      ) {
+        e.preventDefault();
+        l.action(e);
+      }
+    });
   }
 
   setFileMenuDisabled(disabled) {
@@ -61,23 +77,27 @@ class NavigationBar {
             name  : i18n.t('ui.navbar.menu.file.new'),
             click : () => {
               this.projectManager.addNewCave();
-            }
+            },
+            shortkeys : ['crtl⊕n']
           },
           {
             name  : i18n.t('ui.navbar.menu.file.open'),
             click : function () {
               document.getElementById('caveInput').click();
-            }
+            },
+            shortkeys : ['crtl⊕o']
           },
           {
             name  : i18n.t('ui.navbar.menu.file.export'),
-            click : () =>
+            click : () => {
               Exporter.showExportDialog(
                 this.db.getAllCaves(),
                 this.projectSystem.getCurrentProject(),
                 this.scene,
                 this.exportPanel
-              )
+              );
+            },
+            shortkeys : ['crtl⊕s']
           },
           {
             name  : i18n.t('ui.navbar.menu.file.openModel'),
@@ -94,19 +114,22 @@ class NavigationBar {
             name  : i18n.t('ui.navbar.menu.project.new'),
             click : () => {
               this.projectPanel.showNewProjectDialog();
-            }
+            },
+            shortkeys : ['crtl⊕shift⊕n']
           },
           {
             name  : i18n.t('ui.navbar.menu.project.manager'),
             click : () => {
               this.projectPanel.show();
-            }
+            },
+            shortkeys : ['crtl⊕shift⊕p']
           },
           {
             name  : i18n.t('ui.navbar.menu.project.export'),
             click : () => {
               this.projectPanel.exportCurrentProject();
-            }
+            },
+            shortkeys : ['crtl⊕shift⊕s']
           }
         ]
       },
@@ -115,9 +138,15 @@ class NavigationBar {
         elements : [
           {
             name  : i18n.t('ui.navbar.menu.tools.dipStrike'),
+            icon  : './icons/strike.svg',
             click : () => {
               new DipStrikeCalculatorTool().showPanel();
             }
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.tools.shortestPath'),
+            icon  : './icons/shortest_path.svg',
+            click : (event) => this.interactive.showShortestPathPanel(event.clientX)
           }
         ]
       },
@@ -141,33 +170,41 @@ class NavigationBar {
         click   : () => this.scene.view.fitScreen(this.scene.computeBoundingBox())
       },
       {
-        tooltip : i18n.t('ui.navbar.tooltips.zoomIn'),
-        icon    : './icons/zoom_in.svg',
-        click   : () => this.scene.view.zoomIn()
+        tooltip   : i18n.t('ui.navbar.tooltips.zoomIn'),
+        icon      : './icons/zoom_in.svg',
+        click     : () => this.scene.view.zoomIn(),
+        shortkeys : ['crtl⊕+', 'crtl⊕=']
       },
       {
-        tooltip : i18n.t('ui.navbar.tooltips.zoomOut'),
-        icon    : './icons/zoom_out.svg',
-        click   : () => this.scene.view.zoomOut()
+        tooltip   : i18n.t('ui.navbar.tooltips.zoomOut'),
+        icon      : './icons/zoom_out.svg',
+        click     : () => this.scene.view.zoomOut(),
+        shortkeys : ['crtl⊕-', 'crtl⊕_']
       },
       {
-        tooltip    : i18n.t('ui.navbar.tooltips.plan'),
-        selectable : true,
-        icon       : './icons/plan.svg',
-        click      : () => this.scene.changeView('plan')
+        tooltip     : i18n.t('ui.navbar.tooltips.plan'),
+        selectable  : true,
+        selectGroup : 'view',
+        icon        : './icons/plan.svg',
+        click       : () => this.scene.changeView('plan'),
+        shortkeys   : ['crtl⊕shift⊕1', 'crtl⊕shift⊕!']
       },
       {
-        tooltip    : i18n.t('ui.navbar.tooltips.profile'),
-        selectable : true,
-        icon       : './icons/profile.svg',
-        click      : () => this.scene.changeView('profile')
+        tooltip     : i18n.t('ui.navbar.tooltips.profile'),
+        selectable  : true,
+        selectGroup : 'view',
+        icon        : './icons/profile.svg',
+        click       : () => this.scene.changeView('profile'),
+        shortkeys   : ['crtl⊕shift⊕2', 'crtl⊕shift⊕@']
       },
       {
-        tooltip    : i18n.t('ui.navbar.tooltips.3d'),
-        selectable : true,
-        selected   : true,
-        icon       : './icons/3d.svg',
-        click      : () => this.scene.changeView('spatial')
+        tooltip     : i18n.t('ui.navbar.tooltips.3d'),
+        selectable  : true,
+        selectGroup : 'view',
+        selected    : true,
+        icon        : './icons/3d.svg',
+        click       : () => this.scene.changeView('spatial'),
+        shortkeys   : ['crtl⊕shift⊕3', 'crtl⊕shift⊕#'] // alternative to use key codes
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.boundingBox'),
@@ -197,20 +234,25 @@ class NavigationBar {
         click   : () => this.scene.grid.roll()
       },
       {
-        tooltip : i18n.t('ui.navbar.tooltips.locate'),
-        icon    : './icons/locate.svg',
-        click   : (event) => this.interactive.showLocateStationPanel(event.clientX)
+        tooltip   : i18n.t('ui.navbar.tooltips.locate'),
+        icon      : './icons/locate.svg',
+        click     : (event) => this.interactive.showLocateStationPanel(event.clientX),
+        shortkeys : ['crtl⊕L']
       },
       {
-        tooltip : i18n.t('ui.navbar.tooltips.shortestPath'),
-        icon    : './icons/shortest_path.svg',
-        click   : (event) => this.interactive.showShortestPathPanel(event.clientX)
+        tooltip     : i18n.t('ui.navbar.tooltips.raycasting'),
+        icon        : './icons/raycasting.svg',
+        selectable  : true,
+        selectGroup : 'raycasting',
+        selected    : this.interactive.raycastingEnabled,
+        click       : () => this.interactive.toggleRaycasting(),
+        shortkeys   : ['crtl⊕shift⊕R']
       },
       {
-        tooltip  : i18n.t('ui.navbar.tooltips.rotation'),
-        icon     : './icons/rotate.svg',
-        click    : () => new RotationTool(this.scene).showPanel(),
-        shortkey : 'r'
+        tooltip   : i18n.t('ui.navbar.tooltips.rotation'),
+        icon      : './icons/rotate.svg',
+        click     : () => new RotationTool(this.scene).showPanel(),
+        shortkeys : ['crtl⊕R']
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.fullscreen'),
@@ -235,15 +277,53 @@ class NavigationBar {
   }
 
   #buildNavbar(navbarHtmlElement) {
-    const createMenu = (name, elements, disabled = false) => {
+
+    const addShortkeys = (shortkeys, clickEvent) => {
+      shortkeys.forEach((shortkey) => {
+        const parts = shortkey.split('⊕');
+        const key = parts[parts.length - 1].toUpperCase();
+        const hasCtrl = parts.length > 1 && parts[0] === 'crtl';
+        const hasShift = parts.length > 1 && parts[1] === 'shift';
+        this.listeners.push({
+          key,
+          crtl   : hasCtrl,
+          shift  : hasShift,
+          action : clickEvent
+        });
+      });
+    };
+
+    const shortKeyText = (shortkeys, label) => {
+      if (shortkeys) {
+        const firstShortKeyParts = shortkeys[0].split('⊕');
+        const key = firstShortKeyParts.at(-1);
+        const hasShift = firstShortKeyParts.length > 1 && firstShortKeyParts[1] === 'shift';
+        const hasCtrl = firstShortKeyParts.length > 1 && firstShortKeyParts[0] === 'crtl';
+        return `${label} (${hasCtrl ? 'Ctrl + ' : ''}${hasShift ? 'Shift + ' : ''}${key.toUpperCase()})`;
+      } else {
+        return label;
+      }
+    };
+
+    const createMenu = (name, elements, disabled = false, iconSize = 20) => {
       const c = document.createElement('div');
       c.setAttribute('class', 'mydropdown-content');
       c.setAttribute('id', 'myDropdown');
 
       elements.forEach((e) => {
         const a = document.createElement('a');
-        a.appendChild(document.createTextNode(e.name));
+        if (e.icon !== undefined) {
+          const img = document.createElement('img');
+          img.setAttribute('src', e.icon);
+          img.setAttribute('width', iconSize);
+          img.setAttribute('height', iconSize);
+          a.appendChild(img);
+        }
+        a.appendChild(document.createTextNode(shortKeyText(e.shortkeys, e.name)));
         a.onclick = e.click;
+        if (e.shortkeys) {
+          addShortkeys(e.shortkeys, e.click);
+        }
         c.appendChild(a);
       });
 
@@ -272,9 +352,10 @@ class NavigationBar {
       icon,
       selectable,
       selected,
+      selectGroup,
       click,
       elements = [],
-      shortkey,
+      shortkeys,
       width = 20,
       height = 20
     ) => {
@@ -282,6 +363,10 @@ class NavigationBar {
       const c = document.createElement('div');
       c.setAttribute('class', 'mydropdown-content');
       c.setAttribute('id', 'myDropdown');
+      if (selectGroup) {
+        a.setAttribute('selectGroup', selectGroup);
+      }
+
       c.style.left = '0px';
       c.style.top = '47px';
 
@@ -291,12 +376,17 @@ class NavigationBar {
           if (e.selected) {
             al.classList.add('selected');
           }
-          al.appendChild(document.createTextNode(e.name));
+          al.appendChild(document.createTextNode(shortKeyText(e.shortkeys, e.name)));
           al.onclick = () => {
             al.parentNode.querySelectorAll('a').forEach((c) => c.classList.remove('selected'));
             al.classList.add('selected');
             e.click();
           };
+
+          if (e.shortkeys) {
+            addShortkeys(e.shortkeys, e.click);
+          }
+
           c.appendChild(al);
         });
       }
@@ -324,8 +414,16 @@ class NavigationBar {
         } else {
 
           if (a.hasAttribute('selectable')) {
-            a.parentNode.querySelectorAll('a[selectable="true"]').forEach((c) => c.classList.remove('selected'));
-            a.classList.add('selected');
+            const group = a.getAttribute('selectGroup');
+            const groupItems = a.parentNode
+              .querySelectorAll('a[selectable="true"][selectGroup="' + group + '"]');
+            if (groupItems.length === 1) {
+              groupItems[0].classList.toggle('selected');
+            } else {
+              groupItems.forEach((c) => c.classList.remove('selected'));
+              a.classList.add('selected');
+            }
+
           }
 
           click(event);
@@ -333,13 +431,8 @@ class NavigationBar {
 
       };
 
-      if (shortkey) {
-        document.addEventListener('keydown', (e) => {
-          if (e.key === shortkey && e.ctrlKey) {
-            e.preventDefault();
-            clickEvent(event);
-          }
-        });
+      if (shortkeys) {
+        addShortkeys(shortkeys, clickEvent);
       }
       a.onclick = clickEvent;
 
@@ -356,7 +449,7 @@ class NavigationBar {
 
       const t = document.createElement('span');
       t.setAttribute('class', 'mytooltiptext');
-      const tooltipText = shortkey ? `${tooltip} (Ctrl + ${shortkey})` : tooltip;
+      const tooltipText = shortKeyText(shortkeys, tooltip);
       t.appendChild(document.createTextNode(tooltipText));
 
       a.appendChild(t);
@@ -380,9 +473,10 @@ class NavigationBar {
             i.icon,
             i.selectable,
             i.selected,
+            i.selectGroup,
             i.click,
             i.elements,
-            i.shortkey,
+            i.shortkeys,
             i.width === undefined ? 20 : i.width,
             i.height === undefined ? 20 : i.height
           )

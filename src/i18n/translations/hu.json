@@ -17,7 +17,8 @@
         },
         "tools": {
           "name": "Eszközök",
-          "dipStrike": "Dőlés és irány számító"
+          "dipStrike": "Dőlés és irány számító",
+          "shortestPath": "Legrövidebb út"
         },
         "help": {
           "name": "Súgó",
@@ -36,9 +37,9 @@
         "lineColor": "Vonal szín mód",
         "grid": "Rács pozíció/láthatóság",
         "locate": "Pont megkeresése",
-        "shortestPath": "Legrövidebb út",
         "rotation": "Forgatás eszköz",
-        "fullscreen": "Teljes képernyő be/kikapcsolása"
+        "fullscreen": "Teljes képernyő be/kikapcsolása",
+        "raycasting": "Pont kiválasztás"
       },
       "lineColorModes": {
         "global": "Globális",
@@ -68,7 +69,9 @@
     },
     "footer": {
       "project": "Projekt",
-      "noProjectLoaded": "Nincs betöltött projekt"
+      "noProjectLoaded": "Nincs betöltött projekt",
+      "raycastingEnabled": "Pont kiválasztás engedélyezve",
+      "raycastingDisabled": "Pont kiválasztás letiltva"
     },
     "settingsPanel": {
       "buttons": {
@@ -137,13 +140,13 @@
         "settings": "Beállítások"
       },
       "tooltips": {
-        "explorer": "Barlang és felmérés böngésző (Ctrl+Shift+E)",
-        "settings": "Jelenet és megjelenítési beállítások (Ctrl+Shift+S)",
+        "explorer": "Barlang és felmérés böngésző (Ctrl+E)",
+        "settings": "Jelenet és megjelenítési beállítások (Ctrl+D)",
         "toggle": "Oldalsáv ki/be (Ctrl+B)",
         "positionToggle": "Oldalsáv pozíció váltás (Bal/Jobb)"
       },
       "overview": {
-        "title": "Jelenet áttekintő"
+        "title": "Jelenet áttekintő (Ctrl+G)"
       }
     },
     "welcome": {

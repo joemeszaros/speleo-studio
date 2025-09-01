@@ -17,7 +17,8 @@
         },
         "tools": {
           "name": "Tools",
-          "dipStrike": "Dip & Strike Calculator"
+          "dipStrike": "Dip & Strike Calculator",
+          "shortestPath": "Shortest path"
         },
         "help": {
           "name": "Help",
@@ -36,9 +37,9 @@
         "lineColor": "Line color mode",
         "grid": "Grid position/visibility",
         "locate": "Locate point",
-        "shortestPath": "Shortest path",
         "rotation": "Rotation tool",
-        "fullscreen": "Enter / exit fullscreen"
+        "fullscreen": "Enter / exit fullscreen",
+        "raycasting": "Point selection"
       },
       "lineColorModes": {
         "global": "Global color",
@@ -68,7 +69,9 @@
     },
     "footer": {
       "project": "Project",
-      "noProjectLoaded": "No project loaded"
+      "noProjectLoaded": "No project loaded",
+      "raycastingEnabled": "Point selection enabled",
+      "raycastingDisabled": "Point selection disabled"
     },
     "settingsPanel": {
       "buttons": {
@@ -137,18 +140,18 @@
         "settings": "Settings"
       },
       "tooltips": {
-        "explorer": "Cave and survey explorer (Ctrl+Shift+E)",
-        "settings": "Scene and visualization settings (Ctrl+Shift+S)",
+        "explorer": "Cave and survey explorer (Ctrl+E)",
+        "settings": "Scene and visualization settings (Ctrl+D)",
         "toggle": "Toggle sidebar (Ctrl+B)",
         "positionToggle": "Toggle sidebar position (Left/Right)"
       },
       "overview": {
-        "title": "Scene Overview"
+        "title": "Scene Overview (Ctrl+G)"
       }
     },
     "welcome": {
       "title": "Welcome to Speleo Studio",
-      "subtitle": "Your comprehensive cave visualization and survey management platform.<br />Explore, analyze, and visualize cave systems with professional tools.",
+      "subtitle": "Your comprehensive cave visualization and survey management platform.<br />Explore, analyze, and visualize caves with a professional tool.",
       "button": "Let's Get Started"
     },
 

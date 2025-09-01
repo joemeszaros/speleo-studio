@@ -209,14 +209,20 @@ export class Sidebar {
       }
 
       // Ctrl/Cmd + Shift + E to focus explorer
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'E') {
         e.preventDefault();
         this.switchTab('explorer');
         this.focus();
       }
 
+      if ((e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'G') {
+        e.preventDefault();
+        this.toggleOverview();
+        this.focus();
+      }
+
       // Ctrl/Cmd + Shift + S to focus settings
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'D') {
         e.preventDefault();
         this.switchTab('settings');
         this.focus();
