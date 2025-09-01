@@ -105,6 +105,7 @@
         "labelSize": "Label size",
         "scale": "Scale",
         "offset": "Offset",
+        "offsetDirection": "Offset direction",
         "strokeColor": "Stroke color",
         "labelMode": "Label mode",
         "sectionColor": "Section color",
@@ -123,7 +124,11 @@
         "portrait": "Portrait",
         "landscape": "Landscape",
         "name": "Name",
-        "depth": "Depth"
+        "depth": "Depth",
+        "up": "Up",
+        "down": "Down",
+        "left": "Left",
+        "right": "Right"
       }
     },
     "sidebar": {

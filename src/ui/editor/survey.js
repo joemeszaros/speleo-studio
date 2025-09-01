@@ -893,7 +893,7 @@ class SurveySheetEditor extends BaseEditor {
     );
     const declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
     form.appendChild(declinationText);
-    if (this.cave.stations) {
+    if (this.cave.stations.size > 0) {
       const startOrRandomStation = this.cave.stations
         ? (this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1])
         : undefined;

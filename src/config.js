@@ -719,7 +719,8 @@ export class ConfigChanges {
         }
 
         if (this.scene.views.get('profile')) {
-          this.scene.views.get('profile').updateVerticalRuler();
+          //FIXME implement updateVerticalRuler in profile view
+          //this.scene.views.get('profile').updateVerticalRuler();
         }
         break;
     }

@@ -518,6 +518,7 @@ class SceneInteraction {
 
     const contentElmnt = makeFloatingPanel(this.infoPanel, i18n.t('ui.panels.distance.title'), false, false, {}, () => {
       lineRemoveFn();
+
       document.removeEventListener('languageChanged', () => {
         this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
       });

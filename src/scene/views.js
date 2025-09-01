@@ -387,7 +387,12 @@ class SpatialView extends View {
     this.initiated = false;
   }
 
-  onOrbitAdjustment() {
+  onOrbitAdjustment(e) {
+    if (e.type === 'zoom') {
+      this.onZoomLevelChange(e.level);
+      this.updateFrustumFrame();
+    }
+    //render for rotate and pan also
     this.renderView();
   }
 

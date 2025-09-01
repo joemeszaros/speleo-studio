@@ -212,7 +212,11 @@ class Exporter {
 
   static buildExportDialog(caves, project, scene, panel) {
 
-    const contentElmnt = makeFloatingPanel(panel, i18n.t('common.export'), false, false, {});
+    const contentElmnt = makeFloatingPanel(panel, i18n.t('common.export'), false, false, {}, () => {
+      document.removeEventListener('languageChanged', () => {
+        this.buildExportDialog(caves, project, scene, panel);
+      });
+    });
 
     const form = node`
         <form class="popup-content">
@@ -238,6 +242,7 @@ class Exporter {
     form.onsubmit = (e) => {
       e.preventDefault();
       Exporter.executeExport(caves, scene, contentElmnt);
+      contentElmnt.parentElement.style.display = 'none';
     };
 
     const projectNameInput = panel.querySelector('#export-project-name');

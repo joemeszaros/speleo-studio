@@ -1096,6 +1096,9 @@ class StationAttributeEditor extends BaseAttributeEditor {
   }
 
   getNewStationAttributes() {
+
+    if (!this.table) return [];
+
     return this.table
       .getData()
       .map((r) => new StationAttribute(r.id, r.station, r.attribute));

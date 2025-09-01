@@ -732,8 +732,9 @@ export class SettingsPanel {
     depthInput.style.marginLeft = '8px';
     depthInput.onchange = (e) => {
       gradientColor.depth = parseFloat(e.target.value);
-      this.options.scene.caveLines.color.gradientColors.sort((a, b) => a.depth - b.depth);
-      this.options.scene.caveLines.color.gradientColors = [...this.options.scene.caveLines.color.gradientColors]; // trigger a change event
+      const colors = [...this.options.scene.caveLines.color.gradientColors];
+      colors.sort((a, b) => a.depth - b.depth);
+      this.options.scene.caveLines.color.gradientColors = [...colors]; // trigger a change event
       this.reloadGradientSection();
     };
 
@@ -756,8 +757,10 @@ export class SettingsPanel {
     colorInput.style.height = '24px';
     colorInput.style.padding = '2px';
     colorInput.onchange = (e) => {
-      gradientColor.color = e.target.value;
-      this.options.scene.caveLines.color.gradientColors = [...this.options.scene.caveLines.color.gradientColors]; // trigger a change event
+      const colors = [...this.options.scene.caveLines.color.gradientColors];
+      const item = colors.find((color) => color.depth === gradientColor.depth);
+      colors.splice(colors.indexOf(item), 1, { ...item, color: e.target.value });
+      this.options.scene.caveLines.color.gradientColors = [...colors]; // trigger a change event
     };
 
     colorContainer.appendChild(colorLabel);
@@ -782,16 +785,18 @@ export class SettingsPanel {
   addGradientColor() {
     const maxDepth = Math.max(...this.options.scene.caveLines.color.gradientColors.map((gc) => gc.depth));
     const newColor = { depth: Math.min(maxDepth + 25, 100), color: '#ffffff' };
-    this.options.scene.caveLines.color.gradientColors.push(newColor);
-    this.options.scene.caveLines.color.gradientColors.sort((a, b) => a.depth - b.depth);
-    this.options.scene.caveLines.color.gradientColors = [...this.options.scene.caveLines.color.gradientColors]; // trigger a change event
+    const colors = [...this.options.scene.caveLines.color.gradientColors];
+    colors.push(newColor);
+    colors.sort((a, b) => a.depth - b.depth);
+    this.options.scene.caveLines.color.gradientColors = [...colors]; // trigger a change event
     this.reloadGradientSection();
   }
 
   removeGradientColor(index) {
     if (this.options.scene.caveLines.color.gradientColors.length > 2) {
-      this.options.scene.caveLines.color.gradientColors.splice(index, 1);
-      this.options.scene.caveLines.color.gradientColors = [...this.options.scene.caveLines.color.gradientColors]; // trigger a change event
+      const colors = [...this.options.scene.caveLines.color.gradientColors];
+      colors.splice(index, 1); // splicing the original array and then settings the value would NOT trigger a change event
+      this.options.scene.caveLines.color.gradientColors = [...colors]; // trigger a change event
       this.reloadGradientSection();
     }
   }
