@@ -7,7 +7,6 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { SurveyHelper } from '../survey.js';
 import { Grid } from './grid.js';
 import * as U from '../utils/utils.js';
-import { Options } from '../config.js';
 import { ShotType } from '../model/survey.js';
 
 import { SpatialView, PlanView, ProfileView } from './views.js';
@@ -299,7 +298,7 @@ class MyScene {
   getFirstIntersectedSprite(mouseCoordinates) {
     if (this.view.spriteCamera === undefined) return;
     this.setPointer(this.getMousePosition(mouseCoordinates));
-    const sprites = this.sprites3DGroup.children;
+    const sprites = this.sprites3DGroup.children.filter((s) => s.visible);
     this.raycaster.setFromCamera(this.pointer, this.view.spriteCamera);
     const intersectedSprites = this.raycaster.intersectObjects(sprites);
     if (intersectedSprites.length) {
@@ -411,17 +410,6 @@ class MyScene {
         this.boundingBoxHelper = boundingBoxHelper;
         this.boundingBoxHelper.layers.set(1);
         this.threejsScene.add(boundingBoxHelper);
-        this.addSphere(
-          '',
-          bb.getCenter(new THREE.Vector3()), //TODO: remove sphere from here
-          this.caveObject3DGroup,
-          new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius * 4, 10, 10),
-          this.materials.sphere.centerLine,
-          {
-
-          }
-        );
-        //this.addSphere('center', bb.getCenter(new THREE.Vector3()),);
       }
     } else {
       if (this.boundingBoxHelper !== undefined) {

@@ -137,20 +137,6 @@ export const DEFAULT_OPTIONS = {
   }
 };
 
-export class Options {
-
-  static rotateOptionChoice(config) {
-    const index = config.choices.indexOf(config.value);
-
-    if (index >= 0 && index < config.choices.length - 1) {
-      config.value = config.choices[index + 1];
-    } else {
-      config.value = config.choices[0];
-    }
-
-  }
-}
-
 /**
  * Watching changes of nested objects
  */

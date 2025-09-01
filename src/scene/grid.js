@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 
 import { GridHelper } from '../utils/grid.js';
-import { Options } from '../config.js';
 
 class Grid {
 
@@ -47,7 +46,15 @@ class Grid {
 
   roll() {
     const config = this.options.scene.grid.mode;
-    Options.rotateOptionChoice(config);
+
+    const choices = ['top', 'bottom', 'hidden'];
+    const index = choices.indexOf(config);
+    if (index >= 0 && index < choices.length - 1) {
+      this.options.scene.grid.mode = choices[index + 1];
+    } else {
+      this.options.scene.grid.mode = choices[0];
+    }
+
     switch (config) {
       case 'top':
       case 'bottom':
