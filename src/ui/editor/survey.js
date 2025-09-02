@@ -1,7 +1,8 @@
 import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor, Editor } from './base.js';
 import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
-import { showErrorPanel, makeFloatingPanel } from '../../ui/popups.js';
+import { showErrorPanel } from '../popups.js';
+import { wm } from '../window.js';
 import { Shot, ShotType } from '../../model/survey.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
@@ -24,7 +25,6 @@ class SurveyEditor extends Editor {
     }
 
     document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
-    document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
   onSurveyRecalculated(e) {
@@ -358,28 +358,28 @@ class SurveyEditor extends Editor {
       }
     ];
   }
-
   setupPanel() {
-
     //TODO: downsize if the table is too wide (settings > viewport)
-    const contentElmnt = makeFloatingPanel(
+
+    wm.makeFloatingPanel(
       this.panel,
-      i18n.t('ui.editors.survey.title', { name: this.survey.name }),
+      (contentElmnt) => this.buildPanel(contentElmnt),
+      () => i18n.t('ui.editors.survey.title', { name: this.survey.name }),
       true,
       true,
       this.options.ui.editor.survey,
       () => {
-        document.removeEventListener('languageChanged', () => this.setupPanel());
         this.closeEditor();
       },
-      (newWidth, _newHeight) => {
+      (_newWidth, newHeight) => {
         const h = this.panel.offsetHeight - 100;
-        this.table.setHeight(h); // we cannot use newHeight, because it could be a higher value than max-height
+        this.table.setHeight(h);
       },
-      (newWidth, _newHeight) => {
-        this.table.redraw();
-      }
+      () => this.table.redraw()
     );
+  }
+
+  buildPanel(contentElmnt) {
 
     // Create iconbar with common buttons
     this.iconBar = new IconBar(contentElmnt);
@@ -792,21 +792,23 @@ class SurveySheetEditor extends BaseEditor {
   }
 
   setupPanel() {
-    const contentElmnt = makeFloatingPanel(
+    wm.makeFloatingPanel(
       this.panel,
-      i18n.t('ui.editors.surveySheet.title', { name: this.survey?.name || i18n.t('ui.editors.surveySheet.titleNew') }),
+      (contentElmnt) => this.build(contentElmnt),
+      () =>
+        i18n.t('ui.editors.surveySheet.title', {
+          name : this.survey?.name || i18n.t('ui.editors.surveySheet.titleNew')
+        }),
       false,
       false,
       {},
       () => {
-        document.removeEventListener('languageChanged', () => this.setupPanel());
         this.closeEditor();
       }
     );
-    this.#setupEditor(contentElmnt);
   }
 
-  #setupEditor(contentElmnt) {
+  build(contentElmnt) {
 
     this.formData = {
       name        : this.survey?.name || '',

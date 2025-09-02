@@ -1,4 +1,4 @@
-import { makeFloatingPanel } from '../popups.js';
+import { wm } from '../window.js';
 import { node, degreesToRads, fromPolar } from '../../utils/utils.js';
 import { StrikeDipCalculator } from '../../utils/geo.js';
 import { Vector } from '../../model.js';
@@ -10,30 +10,233 @@ export class DipStrikeCalculatorTool {
   constructor(panel = '#tool-panel') {
     this.panel = document.querySelector(panel);
     this.panel.style.width = '300px';
+
+    // Data storage
+    this.points = [null, null, null];
+    this.surveyData = [null, null, null];
+
+    // DOM elements (will be set in build)
+    this.container = null;
+    this.coordinatesInput = null;
+    this.surveyInput = null;
+    this.resultSection = null;
+    this.errorSection = null;
+    this.calculateBtn = null;
+    this.clearBtn = null;
+    this.coordInputs = null;
+    this.surveyInputs = null;
+    this.inputMethodRadios = null;
+
+    // Bind event handlers
+    this.onInputMethodChange = this.handleInputMethodChange.bind(this);
+    this.onCalculateClick = this.handleCalculateClick.bind(this);
+    this.onClearClick = this.handleClearClick.bind(this);
+    this.onCoordInput = this.handleCoordInput.bind(this);
+    this.onSurveyInput = this.handleSurveyInput.bind(this);
   }
 
-  showPanel() {
-    this.buildPanel();
-    document.addEventListener('languageChanged', () => {
-      this.buildPanel();
-    });
-  }
-
-  buildPanel() {
-    const contentElmnt = makeFloatingPanel(
+  show() {
+    wm.makeFloatingPanel(
       this.panel,
-      i18n.t('ui.panels.dipStrikeCalculator.title'),
+      (contentElmnt) => this.build(contentElmnt),
+      'ui.panels.dipStrikeCalculator.title',
       false,
       false,
       {},
       () => {
-        document.removeEventListener('languageChanged', () => {
-          this.buildPanel();
-        });
+        // Cleanup event listeners when panel is closed
+        this.cleanup();
       }
     );
+  }
 
-    const container = node`
+  showCalculatorError(message) {
+    const errorMessage = this.errorSection.querySelector('#error-message');
+    this.resultSection.style.display = 'none';
+    errorMessage.textContent = message;
+    this.errorSection.style.display = 'block';
+  }
+
+  handleInputMethodChange(event) {
+    const radio = event.target;
+    if (radio.value === 'coordinates') {
+      this.coordinatesInput.style.display = 'block';
+      this.surveyInput.style.display = 'none';
+    } else {
+      this.coordinatesInput.style.display = 'none';
+      this.surveyInput.style.display = 'block';
+    }
+    // Clear results when switching methods
+    this.resultSection.style.display = 'none';
+    this.errorSection.style.display = 'none';
+  }
+
+  handleCalculateClick() {
+    const selectedMethod = this.container.querySelector('input[name="input-method"]:checked').value;
+
+    if (selectedMethod === 'coordinates') {
+      // Check if all points are defined
+      const allPointsDefined = this.points.every(
+        (point) =>
+          point !== null &&
+          point.x !== undefined &&
+          point.y !== undefined &&
+          point.z !== undefined &&
+          point.x != '' &&
+          point.y != '' &&
+          point.z != ''
+      );
+      if (!allPointsDefined) {
+        this.showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.allPointsDefined'));
+        return;
+      }
+
+      // Check if points define a valid plane
+      if (!StrikeDipCalculator.isValidPlane(this.points[0], this.points[1], this.points[2])) {
+        this.showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.validPlane'));
+        return;
+      }
+
+      try {
+        const result = StrikeDipCalculator.calculateStrikeDip(this.points[0], this.points[1], this.points[2]);
+        this.errorSection.style.display = 'none';
+        this.resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
+        this.resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
+        this.resultSection.querySelector('#normal-vector-result').textContent =
+          `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
+
+        this.resultSection.style.display = 'block';
+      } catch (error) {
+        this.showCalculatorError(
+          `${i18n.t('ui.panels.dipStrikeCalculator.error.calculationError', { error: error.message })}`
+        );
+      }
+    } else {
+      // Survey method
+      const allSurveyDataDefined = this.surveyData.every(
+        (data) => data !== null && data.length !== undefined && data.azimuth !== undefined && data.clino !== undefined
+      );
+      if (!allSurveyDataDefined) {
+        this.showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.allSurveyDataDefined'));
+        return;
+      }
+
+      try {
+        // Convert survey measurements to 3D coordinates
+        const convertedPoints = this.surveyData.map((data) => {
+          const azimuthRad = degreesToRads(data.azimuth);
+          const clinoRad = degreesToRads(data.clino);
+          return fromPolar(data.length, azimuthRad, clinoRad);
+        });
+
+        // Check if points define a valid plane
+        if (!StrikeDipCalculator.isValidPlane(convertedPoints[0], convertedPoints[1], convertedPoints[2])) {
+          this.showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.validPlane'));
+          return;
+        }
+
+        const result = StrikeDipCalculator.calculateStrikeDip(
+          convertedPoints[0],
+          convertedPoints[1],
+          convertedPoints[2]
+        );
+        this.errorSection.style.display = 'none';
+        this.resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
+        this.resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
+        this.resultSection.querySelector('#normal-vector-result').textContent =
+          `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
+
+        this.resultSection.style.display = 'block';
+      } catch (error) {
+        this.showCalculatorError(
+          `${i18n.t('ui.panels.dipStrikeCalculator.error.calculationError', { error: error.message })}`
+        );
+      }
+    }
+  }
+
+  handleClearClick() {
+    this.points.fill(null);
+    this.surveyData.fill(null);
+    this.coordInputs.forEach((input) => {
+      input.value = '';
+    });
+    this.surveyInputs.forEach((input) => {
+      input.value = '';
+    });
+    this.resultSection.style.display = 'none';
+    this.errorSection.style.display = 'none';
+  }
+
+  handleCoordInput(event) {
+    const input = event.target;
+    const pointIndex = parseInt(input.dataset.point);
+    const coord = input.dataset.coord;
+    const value = parseFloat(input.value) || 0;
+
+    if (!this.points[pointIndex]) {
+      this.points[pointIndex] = new Vector(0, 0, 0);
+    }
+
+    this.points[pointIndex][coord] = value;
+  }
+
+  handleSurveyInput(event) {
+    const input = event.target;
+    const pointIndex = parseInt(input.dataset.point);
+    const field = input.dataset.field;
+    const value = parseFloat(input.value) || 0;
+
+    if (!this.surveyData[pointIndex]) {
+      this.surveyData[pointIndex] = {};
+    }
+
+    this.surveyData[pointIndex][field] = value;
+  }
+
+  cleanup() {
+    // Remove event listeners
+    if (this.inputMethodRadios) {
+      this.inputMethodRadios.forEach((radio) => {
+        radio.removeEventListener('change', this.onInputMethodChange);
+      });
+    }
+
+    if (this.calculateBtn) {
+      this.calculateBtn.removeEventListener('click', this.onCalculateClick);
+    }
+
+    if (this.clearBtn) {
+      this.clearBtn.removeEventListener('click', this.onClearClick);
+    }
+
+    if (this.coordInputs) {
+      this.coordInputs.forEach((input) => {
+        input.removeEventListener('input', this.onCoordInput);
+      });
+    }
+
+    if (this.surveyInputs) {
+      this.surveyInputs.forEach((input) => {
+        input.removeEventListener('input', this.onSurveyInput);
+      });
+    }
+
+    // Clear DOM references to avoid detached nodes
+    this.container = null;
+    this.coordinatesInput = null;
+    this.surveyInput = null;
+    this.resultSection = null;
+    this.errorSection = null;
+    this.calculateBtn = null;
+    this.clearBtn = null;
+    this.coordInputs = null;
+    this.surveyInputs = null;
+    this.inputMethodRadios = null;
+  }
+
+  build(contentElmnt) {
+    this.container = node`
     <div id="dip-strike-calculator-container">
       <div>${i18n.t('ui.panels.dipStrikeCalculator.inputMethod')}:</div>
       <div>
@@ -72,175 +275,49 @@ export class DipStrikeCalculatorTool {
       </div>
     </div>`;
 
-    const calculateBtn = node`<button id="calculate-btn">${i18n.t('ui.panels.dipStrikeCalculator.calculate')}</button>`;
-    const clearBtn = node`<button id="clear-btn">${i18n.t('common.clear')}</button>`;
+    this.calculateBtn = node`<button id="calculate-btn">${i18n.t('ui.panels.dipStrikeCalculator.calculate')}</button>`;
+    this.clearBtn = node`<button id="clear-btn">${i18n.t('common.clear')}</button>`;
 
-    container.appendChild(calculateBtn);
-    container.appendChild(clearBtn);
+    this.container.appendChild(this.calculateBtn);
+    this.container.appendChild(this.clearBtn);
 
-    const resultSection = node`
+    this.resultSection = node`
       <div id="results-section" style="display: none;">
         <div>${i18n.t('ui.panels.dipStrikeCalculator.strike')}: <span id="strike-result">-</span></div>
         <div>${i18n.t('ui.panels.dipStrikeCalculator.dip')}: <span id="dip-result">-</span></div>
         <div>${i18n.t('ui.panels.dipStrikeCalculator.normal')}: <span id="normal-vector-result">-</span></div>
       </div>`;
-    container.appendChild(resultSection);
+    this.container.appendChild(this.resultSection);
 
-    const errorSection = node`
+    this.errorSection = node`
       <div id="error-section" style="display: none;">
         <div id="error-message" style="color: #ff6b6b;"></div>
       </div>`;
-    container.appendChild(errorSection);
+    this.container.appendChild(this.errorSection);
 
-    const showCalculatorError = (message) => {
-      const errorMessage = errorSection.querySelector('#error-message');
-      resultSection.style.display = 'none';
-      errorMessage.textContent = message;
-      errorSection.style.display = 'block';
-    };
+    // Store DOM element references
+    this.inputMethodRadios = this.container.querySelectorAll('input[name="input-method"]');
+    this.coordinatesInput = this.container.querySelector('#coordinates-input');
+    this.surveyInput = this.container.querySelector('#survey-input');
+    this.coordInputs = this.container.querySelectorAll('.coord-input');
+    this.surveyInputs = this.container.querySelectorAll('.survey-input');
 
-    // Setup input method toggle
-    const inputMethodRadios = container.querySelectorAll('input[name="input-method"]');
-    const coordinatesInput = container.querySelector('#coordinates-input');
-    const surveyInput = container.querySelector('#survey-input');
-
-    inputMethodRadios.forEach((radio) => {
-      radio.onchange = () => {
-        if (radio.value === 'coordinates') {
-          coordinatesInput.style.display = 'block';
-          surveyInput.style.display = 'none';
-        } else {
-          coordinatesInput.style.display = 'none';
-          surveyInput.style.display = 'block';
-        }
-        // Clear results when switching methods
-        resultSection.style.display = 'none';
-        errorSection.style.display = 'none';
-      };
+    // Setup event listeners using bound handlers
+    this.inputMethodRadios.forEach((radio) => {
+      radio.addEventListener('change', this.onInputMethodChange);
     });
 
-    // Setup event listeners
-    const coordInputs = container.querySelectorAll('.coord-input');
-    const surveyInputs = container.querySelectorAll('.survey-input');
-    const points = [null, null, null];
-    const surveyData = [null, null, null];
+    this.calculateBtn.addEventListener('click', this.onCalculateClick);
+    this.clearBtn.addEventListener('click', this.onClearClick);
 
-    calculateBtn.onclick = () => {
-      const selectedMethod = container.querySelector('input[name="input-method"]:checked').value;
-
-      if (selectedMethod === 'coordinates') {
-        // Check if all points are defined
-        const allPointsDefined = points.every((point) => point !== null);
-        if (!allPointsDefined) {
-          showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.allPointsDefined'));
-          return;
-        }
-
-        // Check if points define a valid plane
-        if (!StrikeDipCalculator.isValidPlane(points[0], points[1], points[2])) {
-          showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.validPlane'));
-          return;
-        }
-
-        try {
-          const result = StrikeDipCalculator.calculateStrikeDip(points[0], points[1], points[2]);
-          errorSection.style.display = 'none';
-          resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
-          resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
-          resultSection.querySelector('#normal-vector-result').textContent =
-            `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
-
-          resultSection.style.display = 'block';
-        } catch (error) {
-          showCalculatorError(
-            `${i18n.t('ui.panels.dipStrikeCalculator.error.calculationError', { error: error.message })}`
-          );
-        }
-      } else {
-        // Survey method
-        const allSurveyDataDefined = surveyData.every(
-          (data) => data !== null && data.length !== undefined && data.azimuth !== undefined && data.clino !== undefined
-        );
-        if (!allSurveyDataDefined) {
-          showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.allSurveyDataDefined'));
-          return;
-        }
-
-        try {
-          // Convert survey measurements to 3D coordinates
-          const convertedPoints = surveyData.map((data) => {
-            const azimuthRad = degreesToRads(data.azimuth);
-            const clinoRad = degreesToRads(data.clino);
-            return fromPolar(data.length, azimuthRad, clinoRad);
-          });
-
-          // Check if points define a valid plane
-          if (!StrikeDipCalculator.isValidPlane(convertedPoints[0], convertedPoints[1], convertedPoints[2])) {
-            showCalculatorError(i18n.t('ui.panels.dipStrikeCalculator.error.validPlane'));
-            return;
-          }
-
-          const result = StrikeDipCalculator.calculateStrikeDip(
-            convertedPoints[0],
-            convertedPoints[1],
-            convertedPoints[2]
-          );
-          errorSection.style.display = 'none';
-          resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
-          resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
-          resultSection.querySelector('#normal-vector-result').textContent =
-            `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
-
-          resultSection.style.display = 'block';
-        } catch (error) {
-          showCalculatorError(
-            `${i18n.t('ui.panels.dipStrikeCalculator.error.calculationError', { error: error.message })}`
-          );
-        }
-      }
-    };
-
-    clearBtn.onclick = () => {
-      points.fill(null);
-      surveyData.fill(null);
-      coordInputs.forEach((input) => {
-        input.value = '';
-      });
-      surveyInputs.forEach((input) => {
-        input.value = '';
-      });
-      resultSection.style.display = 'none';
-      errorSection.style.display = 'none';
-    };
-
-    coordInputs.forEach((input) => {
-      input.oninput = () => {
-        const pointIndex = parseInt(input.dataset.point);
-        const coord = input.dataset.coord;
-        const value = parseFloat(input.value) || 0;
-
-        if (!points[pointIndex]) {
-          points[pointIndex] = new Vector(0, 0, 0);
-        }
-
-        points[pointIndex][coord] = value;
-      };
+    this.coordInputs.forEach((input) => {
+      input.addEventListener('input', this.onCoordInput);
     });
 
-    surveyInputs.forEach((input) => {
-      input.oninput = () => {
-        const pointIndex = parseInt(input.dataset.point);
-        const field = input.dataset.field;
-        const value = parseFloat(input.value) || 0;
-
-        if (!surveyData[pointIndex]) {
-          surveyData[pointIndex] = {};
-        }
-
-        surveyData[pointIndex][field] = value;
-      };
+    this.surveyInputs.forEach((input) => {
+      input.addEventListener('input', this.onSurveyInput);
     });
 
-    contentElmnt.appendChild(container);
+    contentElmnt.appendChild(this.container);
   }
 }

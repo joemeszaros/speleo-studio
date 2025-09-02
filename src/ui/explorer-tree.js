@@ -306,10 +306,6 @@ export class ExplorerTree {
   showCaveContextMenu(caveNode) {
 
     const editorSetup = (editor) => {
-
-      if (this.editor !== undefined && !this.editor.closed) {
-        this.editor.closeEditor();
-      }
       this.editor = editor;
       editor.setupPanel();
       editor.show();

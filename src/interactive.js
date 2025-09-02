@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { makeFloatingPanel, showErrorPanel } from './ui/popups.js';
+import { wm } from './ui/window.js';
+import { showErrorPanel } from './ui/popups.js';
 import { get3DCoordsStr, node, radsToDegrees, toPolar } from './utils/utils.js';
-import { SectionHelper } from './section.js';
 import { i18n } from './i18n/i18n.js';
 
 class SceneInteraction {
@@ -15,7 +15,7 @@ class SceneInteraction {
     sceneDOMElement,
     contextMenu,
     infoPanel,
-    locatePanel,
+    toolPanel,
     editorElementIDs
   ) {
     this.db = db;
@@ -26,7 +26,7 @@ class SceneInteraction {
     this.mouseCoordinates = new THREE.Vector2();
     this.contextMenu = contextMenu;
     this.infoPanel = infoPanel;
-    this.locatePanel = locatePanel;
+    this.toolPanel = toolPanel;
     this.selectedStation = undefined;
     this.selectedPosition = undefined;
     this.pointedStation = undefined;
@@ -40,7 +40,6 @@ class SceneInteraction {
     document.addEventListener('pointermove', (event) => this.onPointerMove(event));
     sceneDOMElement.addEventListener('click', () => this.onClick(), false);
     sceneDOMElement.addEventListener('dblclick', () => this.onDoubleClick(), false);
-    sceneDOMElement.addEventListener('mousedown', (event) => this.onMouseDown(event), false);
     editorElementIDs.forEach((id) => {
       document.getElementById(id).addEventListener('mouseenter', () => {
         this.mouseOnEditor = true;
@@ -321,37 +320,19 @@ class SceneInteraction {
     }
   }
 
-  onMouseDown(event) {
-    // Prevent default behavior for all mouse buttons
-    event.preventDefault();
-
-    // Only handle left click for context menu (right click is now disabled)
-    if (event.button !== 0) return;
-
-    // The context menu is now handled in onClick method
-  }
-
   showLocateStationPanel() {
-    this.buildLocateStationPanel();
-    document.addEventListener('languageChanged', () => {
-      this.buildLocateStationPanel();
-    });
+    wm.makeFloatingPanel(
+      this.toolPanel,
+      (e) => this.buildLocateStationPanel(e),
+      'ui.panels.locateStation.title',
+      false,
+      false,
+      {}
+    );
+
   }
 
-  buildLocateStationPanel() {
-
-    const contentElmnt = makeFloatingPanel(
-      this.locatePanel,
-      i18n.t('ui.panels.locateStation.title'),
-      false,
-      false,
-      {},
-      () => {
-        document.removeEventListener('languageChanged', () => {
-          this.buildLocateStationPanel();
-        });
-      }
-    );
+  buildLocateStationPanel(contentElmnt) {
     const stNames = this.db.getAllStationNames();
     const multipleCaves = this.db.getAllCaveNames().length > 1;
     const optionValue = (x) => (multipleCaves ? `${x.name} (${x.cave})` : x.name);
@@ -372,7 +353,7 @@ class SceneInteraction {
       const stationName = selectedOption.getAttribute('station');
       this.locateStation(caveName, stationName);
       input.value = '';
-      this.locatePanel.style.display = 'none';
+      this.toolPanel.style.display = 'none';
     };
 
     contentElmnt.appendChild(container);
@@ -390,102 +371,6 @@ class SceneInteraction {
 
       this.scene.view.panCameraTo(stationSphere.position);
       this.scene.view.zoomCameraTo(4);
-    }
-  }
-
-  showShortestPathPanel() {
-    this.buildShortestPathPanel();
-    document.addEventListener('languageChanged', () => {
-      this.buildShortestPathPanel();
-    });
-  }
-
-  buildShortestPathPanel() {
-    const segmentsId = 'shortest-path-segments';
-
-    const addStationSelectors = (caveName) => {
-      const form = node`<form id="container-shortest-path"></form>`;
-      const stNames = this.db.getStationNames(caveName);
-      const options = stNames.map((n) => `<option value="${n}">`).join('');
-      const datalist = node`<datalist id="stations">${options}</datalist>`;
-      const button = node`<button type="submit">${i18n.t('ui.panels.shortestPath.find')}</button>`;
-      const fromL = node`<label for="point-from">${i18n.t('common.from')}:<input required type="search" list="stations" id="point-from"></label>`;
-      const toL = node`<label for="point-to">${i18n.t('common.to')}:<input required type="search" list="stations" id="point-to"></label>`;
-
-      form.appendChild(datalist);
-      form.appendChild(fromL);
-      form.appendChild(toL);
-      form.appendChild(button);
-      this.locatePanel.appendChild(form);
-
-      form.onsubmit = (e) => {
-        e.preventDefault();
-
-        this.scene.disposeSegments(segmentsId);
-        const cave = this.db.getCave(caveName);
-        const g = SectionHelper.getGraph(cave);
-        let label;
-        const from = fromL.childNodes[1].value;
-        const to = toL.childNodes[1].value;
-        if (cave.stations.has(from) && cave.stations.has(to)) {
-          const section = SectionHelper.getSection(g, from, to);
-          if (section !== undefined) {
-            const segments = SectionHelper.getSectionSegments(section, cave.stations);
-            this.scene.showSegments(
-              segmentsId,
-              `shortest-path-${from}-${to}-${segmentsId}`,
-              segments,
-              this.options.scene.sectionAttributes.color,
-              caveName
-            );
-            label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.from')}: ${from} ${i18n.t('ui.panels.shortestPath.to')}: ${to} ${i18n.t('ui.panels.shortestPath.length')}: ${section.distance.toFixed(2)}</div>`;
-          } else {
-            label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.cannotFindPath', { from, to })}</div>`;
-          }
-        } else {
-          label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.cannotFindStations', { from, to })}</div>`;
-        }
-        this.locatePanel.appendChild(label);
-
-      };
-    };
-
-    const contentElmnt = makeFloatingPanel(
-      this.locatePanel,
-      i18n.t('ui.panels.shortestPath.title'),
-      false,
-      false,
-      {},
-      () => {
-        this.scene.disposeSegments(segmentsId);
-        document.removeEventListener('languageChanged', () => {
-          this.buildShortestPathPanel();
-        });
-      }
-    );
-
-    const cNames = this.db.getAllCaveNames();
-    if (cNames.length > 1) {
-      const optionCaveNames = cNames.map((n) => `<option value="${n}">${n}</option>`).join('');
-      const caveNamesL = node`<label for="cave-names">${i18n.t('common.cave')}: <select id="cave-names" name="cave-names">${optionCaveNames}</select></label>`;
-      const caveNames = caveNamesL.childNodes[1];
-
-      contentElmnt.appendChild(caveNamesL);
-
-      caveNames.onchange = () => {
-        const caveName = caveNames.options[caveNames.selectedIndex].text;
-        const cont = contentElmnt.querySelector('#container-shortest-path');
-        if (cont !== undefined) {
-          contentElmnt.removeChild(cont);
-        }
-        contentElmnt.querySelectorAll('#shortest-path-label').forEach((e) => contentElmnt.removeChild(e));
-
-        addStationSelectors(caveName);
-      };
-    }
-
-    if (cNames.length > 0) {
-      addStationSelectors(cNames[0]);
     }
   }
 
@@ -525,21 +410,21 @@ class SceneInteraction {
   }
 
   showDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
-    this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
-    document.addEventListener('languageChanged', () => {
-      this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
-    });
+
+    wm.makeFloatingPanel(
+      this.infoPanel,
+      (contentElmnt) => this.buildDistancePanel(contentElmnt, from, to, diffVector, left, top),
+      'ui.panels.distance.title',
+      false,
+      false,
+      {},
+      () => {
+        lineRemoveFn();
+      }
+    );
   }
 
-  buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
-
-    const contentElmnt = makeFloatingPanel(this.infoPanel, i18n.t('ui.panels.distance.title'), false, false, {}, () => {
-      lineRemoveFn();
-
-      document.removeEventListener('languageChanged', () => {
-        this.buildDistancePanel(from, to, diffVector, left, top, lineRemoveFn);
-      });
-    });
+  buildDistancePanel(contentElmnt, from, to, diffVector, left, top) {
 
     const fp = from.position;
     const formatCoords = (a) => a.map((x) => x.toFixed(2)).join(',');
@@ -570,29 +455,22 @@ class SceneInteraction {
   }
 
   showStationDetailsPanel(station, left, top) {
-    this.buildStationDetailsPanel(station, left, top);
-    document.addEventListener('languageChanged', () => {
-      this.buildStationDetailsPanel(station, left, top);
-    });
-  }
 
-  buildStationDetailsPanel(station, left, top) {
-
-    const contentElmnt = makeFloatingPanel(
+    wm.makeFloatingPanel(
       this.infoPanel,
-      i18n.t('ui.panels.stationDetails.title'),
+      (contentElmnt) => this.buildStationDetailsPanel(contentElmnt, station, left, top),
+      'ui.panels.stationDetails.title',
       false,
       false,
       {},
       () => {
         this.#clearSelected();
         this.scene.view.renderView();
-
-        document.removeEventListener('languageChanged', () => {
-          this.buildStationDetailsPanel(station, left, top);
-        });
       }
     );
+  }
+
+  buildStationDetailsPanel(contentElmnt, station, left, top) {
 
     const shots = station.meta.cave.surveys.flatMap((st) =>
       st.shots

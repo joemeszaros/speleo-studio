@@ -250,6 +250,11 @@ class View {
     this.listeners.get(type).push(listener);
   }
 
+  removeEventListener(type, listener) {
+    if (this.listeners && this.listeners.has(type)) {
+      this.listeners.get(type).splice(this.listeners.get(type).indexOf(listener), 1);
+    }
+  }
   dispatchEvent(type, params) {
     if (this.listeners && this.listeners.has(type)) {
       this.listeners.get(type).forEach((listener) => listener(params));

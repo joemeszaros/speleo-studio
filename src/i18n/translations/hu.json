@@ -226,6 +226,7 @@
         "title": "Legrövidebb út",
         "from": "Honnan",
         "to": "Hova",
+        "find": "Legrövidebb út keresése",
         "calculate": "Számítás",
         "distance": "Távolság",
         "path": "Útvonal"

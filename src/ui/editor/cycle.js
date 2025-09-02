@@ -1,6 +1,6 @@
 import * as U from '../../utils/utils.js';
 import { SectionHelper } from '../../section.js';
-import { makeFloatingPanel } from '../popups.js';
+import { wm } from '../window.js';
 import { Color, Polar } from '../../model.js';
 import { CaveCycle } from '../../model/cave.js';
 import { CycleUtil } from '../../utils/cycle.js';
@@ -43,9 +43,10 @@ class CyclePanel {
   }
 
   setupPanel() {
-    const contentElmnt = makeFloatingPanel(
+    wm.makeFloatingPanel(
       this.panel,
-      i18n.t('ui.editors.cycles.title', { name: this.cave.name }),
+      (contentElmnt) => this.build(contentElmnt),
+      () => i18n.t('ui.editors.cycles.title', { name: this.cave.name }),
       true,
       true,
       this.options.ui.editor.cycles,
@@ -56,6 +57,10 @@ class CyclePanel {
       },
       () => this.table.redraw()
     );
+
+  }
+
+  build(contentElmnt) {
     this.#setupButtons(contentElmnt);
     this.#setupTable(contentElmnt);
   }

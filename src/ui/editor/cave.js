@@ -1,6 +1,7 @@
 import * as U from '../../utils/utils.js';
 import { CaveMetadata, Cave } from '../../model/cave.js';
-import { makeFloatingPanel, showErrorPanel } from '../popups.js';
+import { wm } from '../window.js';
+import { showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
 import { GeoData, EOVCoordinateWithElevation, CoordinateSytem, StationWithCoordinate } from '../../model/geo.js';
 import { SurveyAlias } from '../../model/survey.js';
@@ -35,19 +36,22 @@ class CaveEditor extends Editor {
   }
 
   setupPanel() {
-
-    const contentElmnt = makeFloatingPanel(
+    wm.makeFloatingPanel(
       this.panel,
-      i18n.t('ui.editors.caveSheet.title', { name: this.cave?.name ?? i18n.t('ui.editors.caveSheet.titleNew') }),
+      (contentElmnt) => this.build(contentElmnt),
+      () => i18n.t('ui.editors.caveSheet.title', { name: this.cave?.name ?? i18n.t('ui.editors.caveSheet.titleNew') }),
       false,
       false,
       {},
-      () => this.closeEditor(),
-      () => {},
-      () => {}
+      () => this.closeEditor()
     );
+
+  }
+
+  build(contentElmnt) {
     this.#setupEditor(contentElmnt);
     this.#setupStats(contentElmnt);
+
   }
 
   #setupEditor(contentElmnt) {

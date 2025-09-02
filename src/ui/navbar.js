@@ -1,6 +1,7 @@
-import { Exporter } from '../io/export.js';
+import { ExportWindow } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
 import { RotationTool } from './tool/rotation.js';
+import { ShortestPathTool } from './tool/shortestpath.js';
 import { DipStrikeCalculatorTool } from './tool/dipstrike.js';
 
 class NavigationBar {
@@ -90,12 +91,12 @@ class NavigationBar {
           {
             name  : i18n.t('ui.navbar.menu.file.export'),
             click : () => {
-              Exporter.showExportDialog(
+              new ExportWindow(
                 this.db.getAllCaves(),
                 this.projectSystem.getCurrentProject(),
                 this.scene,
                 this.exportPanel
-              );
+              ).show();
             },
             shortkeys : ['crtl⊕s']
           },
@@ -140,13 +141,13 @@ class NavigationBar {
             name  : i18n.t('ui.navbar.menu.tools.dipStrike'),
             icon  : './icons/strike.svg',
             click : () => {
-              new DipStrikeCalculatorTool().showPanel();
+              new DipStrikeCalculatorTool().show();
             }
           },
           {
             name  : i18n.t('ui.navbar.menu.tools.shortestPath'),
             icon  : './icons/shortest_path.svg',
-            click : (event) => this.interactive.showShortestPathPanel(event.clientX)
+            click : () => new ShortestPathTool(this.db, this.scene).show()
           }
         ]
       },
@@ -251,7 +252,7 @@ class NavigationBar {
       {
         tooltip   : i18n.t('ui.navbar.tooltips.rotation'),
         icon      : './icons/rotate.svg',
-        click     : () => new RotationTool(this.scene).showPanel(),
+        click     : () => new RotationTool(this.scene).show(),
         shortkeys : ['crtl⊕R']
       },
       {

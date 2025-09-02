@@ -2,7 +2,7 @@ import { SectionAttribute, ComponentAttribute, StationAttribute } from '../../mo
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
 import { randomAlphaNumbericString } from '../../utils/utils.js';
-import { makeFloatingPanel } from '../popups.js';
+import { wm } from '../window.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
 import { Editor } from './base.js';
@@ -45,19 +45,16 @@ class BaseAttributeEditor extends Editor {
   }
 
   setupPanel() {
-    this.buildPanel();
-    document.addEventListener('languageChanged', () => this.buildPanel());
-  }
-
-  buildPanel() {
-    const contentElmnt = makeFloatingPanel(
+    wm.makeFloatingPanel(
       this.panel,
-      this.title,
+      (contentElmnt) => this.buildPanel(contentElmnt),
+      () => {
+        return i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
+      },
       true,
       true,
       this.options.ui.editor.attributes,
       () => {
-        document.removeEventListener('languageChanged', () => this.setupPanel());
         this.closeEditor();
       },
       (_newWidth, newHeight) => {
@@ -66,6 +63,10 @@ class BaseAttributeEditor extends Editor {
       },
       () => this.table.redraw()
     );
+  }
+
+  buildPanel(contentElmnt) {
+
     this.setupButtons(contentElmnt);
     this.setupTable(contentElmnt);
   }
@@ -439,11 +440,6 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
     super(db, options, cave, scene, attributeDefs, panel);
-    this.title = i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
-
-    document.addEventListener('languageChanged', () => {
-      this.title = i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
-    });
   }
 
   closeEditor() {
@@ -726,12 +722,6 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
     super(db, options, cave, scene, attributeDefs, panel);
-    this.title = i18n.t('ui.editors.sectionAttributes.title', { name: this.cave.name });
-
-    document.addEventListener('languageChanged', () => {
-      this.title = i18n.t('ui.editors.sectionAttributes.title', { name: this.cave.name });
-    });
-
   }
 
   closeEditor() {
@@ -970,11 +960,6 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
     super(db, options, cave, scene, attributeDefs, panel);
-    this.title = i18n.t('ui.editors.stationAttributes.title', { name: this.cave.name });
-
-    document.addEventListener('languageChanged', () => {
-      this.title = i18n.t('ui.editors.stationAttributes.title', { name: this.cave.name });
-    });
   }
 
   closeEditor() {
