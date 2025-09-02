@@ -167,7 +167,8 @@
         "editSurveySheet": "Adatlap szerkesztése",
         "deleteCave": "Barlang törlése",
         "deleteSurvey": "Felmérés törlése",
-        "setSurveyColor": "Felmérés szín beállítása",
+        "setSurveyColor": "Felmérés színének beállítása",
+        "setCaveColor": "Barlang színének beállítása",
         "openSurveyEditor": "Felmérés szerkesztése"
       },
       "confirm": {

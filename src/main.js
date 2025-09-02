@@ -67,7 +67,7 @@ class Main {
 
     const materials = new Materials(options).materials;
 
-    const sceneOverview = new SceneOverview(options, document.querySelector('#scene-overview'));
+    const sceneOverview = new SceneOverview(document.querySelector('#scene-overview'));
     const scene = new MyScene(
       options,
       db,

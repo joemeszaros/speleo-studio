@@ -13,7 +13,7 @@ import { SpatialView, PlanView, ProfileView } from './views.js';
 import { TextSprite } from './textsprite.js';
 
 class SceneOverview {
-  constructor(options, container) {
+  constructor(container) {
     this.container = container;
     this.renderer = new THREE.WebGLRenderer({ antialias: false });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -658,7 +658,7 @@ class MyScene {
 
           let newClMaterial, newSplayMaterial, newAuxiliaryMaterial;
           if (mode === 'percave' && this.db.getCave(caveName).color !== undefined) {
-            const color = this.db.getCave(caveName).color.hex();
+            const color = this.db.getCave(caveName).color;
             newClMaterial = new LineMaterial({
               color        : color,
               linewidth    : clConfig.segments.width,

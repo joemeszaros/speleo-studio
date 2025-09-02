@@ -420,6 +420,24 @@ export class ExplorerTree {
       },
       {
         icon    : '🗑️',
+        title   : i18n.t('ui.explorer.menu.setCaveColor'),
+        onclick : () => {
+          const colorPicker = document.createElement('input');
+          colorPicker.type = 'color';
+          if (caveNode.data.color) {
+            colorPicker.value = caveNode.data.color;
+          }
+          colorPicker.click();
+
+          colorPicker.addEventListener('input', (e) => {
+            caveNode.data.color = e.target.value;
+            this.render();
+          });
+
+        }
+      },
+      {
+        icon    : '🗑️',
         title   : i18n.t('ui.explorer.menu.deleteCave'),
         onclick : () => {
           const result = confirm(i18n.t('ui.explorer.confirm.deleteCave', { name: caveNode.data.name }));
