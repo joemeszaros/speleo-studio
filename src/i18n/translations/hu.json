@@ -229,7 +229,8 @@
         "find": "Legrövidebb út keresése",
         "calculate": "Számítás",
         "distance": "Távolság",
-        "path": "Útvonal"
+        "path": "Útvonal",
+        "length": "Hossz"
       },
       "rotation": {
         "title": "Forgatás eszköz",

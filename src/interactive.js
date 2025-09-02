@@ -480,7 +480,7 @@ class SceneInteraction {
     const shotDetails = shots
       .map((r) => {
         return `
-        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} m, ${r.shot.clino.toFixed(2)}°, ${r.shot.azimuth.toFixed(2)}°) - ${r.survey.name}`;
+        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} m, ${r.shot.azimuth.toFixed(2)}°, ${r.shot.clino.toFixed(2)}°) - ${r.survey.name}`;
       })
       .join('<br>');
 
@@ -494,7 +494,7 @@ class SceneInteraction {
         ${i18n.t('common.survey')}: ${station.meta.survey.name}<br>
         ${i18n.t('common.cave')}: ${station.meta.cave.name}<br>
         ${i18n.t('ui.panels.stationDetails.localCoordinates')}: ${get3DCoordsStr(station.meta.coordinates.local)}<br>
-        ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${station.meta.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.eov, ['y', 'x', 'elevation'])}<br>
+        ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${station.meta.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.eov, ['x', 'y', 'elevation'])}<br>
         ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${station.meta.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.wgs, ['lat', 'lon'], 6)}<br>
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br>
         `;

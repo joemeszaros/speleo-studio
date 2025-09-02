@@ -5,8 +5,9 @@ import { i18n } from '../../i18n/i18n.js';
 
 export class ShortestPathTool {
 
-  constructor(db, scene, panel = '#tool-panel') {
+  constructor(db, options, scene, panel = '#tool-panel') {
     this.db = db;
+    this.options = options;
     this.scene = scene;
     this.panel = document.querySelector(panel);
     this.panel.style.width = '300px';

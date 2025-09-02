@@ -138,7 +138,23 @@ export class ExplorerTree {
   renameCave(oldName, newName) {
     if (!this.nodes.has(oldName)) return;
     const caveNode = this.nodes.get(oldName);
+
+    // Update the cave node properties
     caveNode.label = newName;
+    caveNode.id = newName;
+
+    // Update survey node IDs to reference the new cave name
+    caveNode.children.forEach((surveyNode) => {
+      surveyNode.id = `${newName}-${surveyNode.data.name}`;
+    });
+
+    // Update expandedNodes set to use the new name
+    if (this.expandedNodes.has(oldName)) {
+      this.expandedNodes.delete(oldName);
+      this.expandedNodes.add(newName);
+    }
+
+    // Update the nodes map
     this.nodes.delete(oldName);
     this.nodes.set(newName, caveNode);
 
@@ -337,7 +353,7 @@ export class ExplorerTree {
         }
       },
       {
-        icon    : '🚚',
+        icon    : '<img src="icons/topodroid.png" alt="TopoDroid" style="width: 20px; height: 20px;">',
         title   : i18n.t('ui.explorer.menu.importSurvey'),
         onclick : () => {
           const surveyInput = document.getElementById('surveyInput');

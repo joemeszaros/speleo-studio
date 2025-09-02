@@ -48,6 +48,10 @@ class NavigationBar {
 
   onKeyDown(e) {
 
+    const isEditable =
+      e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target.isContentEditable;
+    if (isEditable) return; // ignore normal typing
+
     this.listeners.forEach((l) => {
       if (
         e.key.toUpperCase() === l.key &&
@@ -147,7 +151,7 @@ class NavigationBar {
           {
             name  : i18n.t('ui.navbar.menu.tools.shortestPath'),
             icon  : './icons/shortest_path.svg',
-            click : () => new ShortestPathTool(this.db, this.scene).show()
+            click : () => new ShortestPathTool(this.db, this.options, this.scene).show()
           }
         ]
       },
