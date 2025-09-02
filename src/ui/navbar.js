@@ -72,7 +72,7 @@ class NavigationBar {
     return [
       {
         name     : i18n.t('ui.navbar.menu.file.name'),
-        disabled : this.projectSystem.getCurrentProject() === undefined,
+        disabled : this.projectSystem.getCurrentProject() === null,
         elements : [
           {
             name  : i18n.t('ui.navbar.menu.file.new'),
