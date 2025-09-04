@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D vizualizáció és navigáció - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+      .control-box h4 {
+        color: #2c3e50;
+        margin-top: 0;
+      }
+      .shortcut {
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>3D vizualizáció és navigáció</h1>
+
+      <div class="nav">
+        <a href="03-adatok-importalasa.html">← Előző: Adatok importálása</a>
+        <a href="index.html">Főoldal</a>
+        <a href="05-felmereek-szerkesztese.html">Következő: Felmérések szerkesztése →</a>
+      </div>
+
+      <h2>3D viewport áttekintése</h2>
+      <p
+        >A 3D viewport a Speleo Studio központi területe, ahol a barlangrendszerek 3D-s megjelenítése és navigálása
+        történik. Itt vizualizálhatja a felmérési adatokat, navigálhat a jelenetben és használhatja a vizualizációs
+        eszközöket.</p
+      >
+
+      <div class="image-placeholder"> [KÉP HELYE: 3D viewport teljes megjelenítése címkékkel] </div>
+
+      <h3>Viewport komponensek</h3>
+      <ul>
+        <li><strong>3D jelenet:</strong> A barlangrendszer 3D-s megjelenítése</li>
+        <li><strong>Navigációs eszközök:</strong> Kamera vezérlés és nézetek</li>
+        <li><strong>Koordináta rendszer:</strong> X, Y, Z tengelyek megjelenítése</li>
+        <li><strong>Rács:</strong> Referencia rács a méretezéshez</li>
+      </ul>
+
+      <h2>Alapvető navigáció</h2>
+
+      <h3>Egér vezérlés</h3>
+      <div class="control-box">
+        <h4>Bal egérgomb + húzás</h4>
+        <p>Kamera forgatása a jelenet körül. Ez a fő navigációs mód.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Jobb egérgomb + húzás</h4>
+        <p>Kamera eltolása (pan) vízszintes és függőleges irányban.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Görgő</h4>
+        <p>Nagyítás és kicsinyítés. Előre görgetés = nagyítás, hátra görgetés = kicsinyítés.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Középső gomb + húzás</h4>
+        <p>Kamera eltolása (pan) - alternatív módszer a jobb egérgombhoz.</p>
+      </div>
+
+      <h3>Billentyűzet vezérlés</h3>
+      <div class="info">
+        <h4>Gyorsbillentyűk:</h4>
+        <ul>
+          <li><span class="shortcut">F</span> - Képernyőre illesztés (zoom to fit)</li>
+          <li><span class="shortcut">+</span> - Nagyítás</li>
+          <li><span class="shortcut">-</span> - Kicsinyítés</li>
+          <li><span class="shortcut">0</span> - Alaphelyzet visszaállítása</li>
+          <li><span class="shortcut">1</span> - Alaprajz nézet</li>
+          <li><span class="shortcut">2</span> - Hosszmetszet nézet</li>
+          <li><span class="shortcut">3</span> - 3D nézet</li>
+        </ul>
+      </div>
+
+      <h2>Navigációs eszközök</h2>
+
+      <h3>Nagyítás eszközök</h3>
+      <div class="image-placeholder"> [KÉP HELYE: Navigációs eszközök sávja] </div>
+
+      <div class="control-box">
+        <h4>Nagyítás illesztése (Zoom to Fit)</h4>
+        <p>Automatikusan beállítja a kamerát, hogy az egész barlangrendszer látható legyen a viewportban.</p>
+        <p
+          ><strong>Használat:</strong> Kattintson a nagyítás illesztése gombra vagy használja az
+          <span class="shortcut">F</span> billentyűt.</p
+        >
+      </div>
+
+      <div class="control-box">
+        <h4>Nagyítás/Kicsinyítés</h4>
+        <p>Fokozatos nagyítás és kicsinyítés a barlang részleteinek megtekintéséhez.</p>
+        <p><strong>Használat:</strong> Kattintson a + vagy - gombokra, vagy használja a görgőt.</p>
+      </div>
+
+      <h3>Nézet módok</h3>
+
+      <div class="control-box">
+        <h4>Alaprajz nézet (Plan View)</h4>
+        <p>A barlangrendszer felülnézetből, mintha lefelé nézne rá. Ez a klasszikus térkép nézet.</p>
+        <p
+          ><strong>Használat:</strong> Kattintson az alaprajz gombra vagy használja az
+          <span class="shortcut">1</span> billentyűt.</p
+        >
+        <div class="image-placeholder"> [KÉP HELYE: Alaprajz nézet példa] </div>
+      </div>
+
+      <div class="control-box">
+        <h4>Hosszmetszet nézet (Profile View)</h4>
+        <p>A barlangrendszer oldalnézetből, amely a függőleges kiterjedést mutatja.</p>
+        <p
+          ><strong>Használat:</strong> Kattintson a hosszmetszet gombra vagy használja a
+          <span class="shortcut">2</span> billentyűt.</p
+        >
+        <div class="image-placeholder"> [KÉP HELYE: Hosszmetszet nézet példa] </div>
+      </div>
+
+      <div class="control-box">
+        <h4>3D nézet</h4>
+        <p>Szabad 3D nézet, ahol bármilyen szögből megtekintheti a barlangrendszert.</p>
+        <p
+          ><strong>Használat:</strong> Kattintson a 3D gombra vagy használja a
+          <span class="shortcut">3</span> billentyűt.</p
+        >
+        <div class="image-placeholder"> [KÉP HELYE: 3D nézet példa] </div>
+      </div>
+
+      <h2>Vizualizációs beállítások</h2>
+
+      <h3>Vonal szín módok</h3>
+      <p>A barlang vonalak színezését különböző módokban állíthatja be:</p>
+
+      <div class="control-box">
+        <h4>Globális szín</h4>
+        <p>Minden vonal ugyanazzal a színnel jelenik meg.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Mélység szerinti átmenet</h4>
+        <p>A vonalak színe a Z koordináta (mélység) szerint változik.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Távolság szerinti átmenet</h4>
+        <p>A vonalak színe a kezdőponttól való távolság szerint változik.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Barlangonként</h4>
+        <p>Minden barlang különböző színnel jelenik meg.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Felmérésenként</h4>
+        <p>Minden felmérés különböző színnel jelenik meg.</p>
+      </div>
+
+      <h3>Rács beállítások</h3>
+      <div class="control-box">
+        <h4>Rács megjelenítése/elrejtése</h4>
+        <p>A referencia rács segít a méretezésben és orientációban.</p>
+        <p><strong>Használat:</strong> Kattintson a rács gombra a navigációs sávban.</p>
+      </div>
+
+      <div class="control-box">
+        <h4>Rács pozíció</h4>
+        <p>A rács pozícióját a barlang mélysége szerint állíthatja be.</p>
+      </div>
+
+      <h3>Határoló doboz</h3>
+      <div class="control-box">
+        <h4>Határoló doboz megjelenítése</h4>
+        <p>Egy doboz jelenik meg, amely körülveszi a teljes barlangrendszert.</p>
+        <p><strong>Használat:</strong> Kattintson a határoló doboz gombra a navigációs sávban.</p>
+      </div>
+
+      <h2>Pont kiválasztás és interakció</h2>
+
+      <h3>Raycasting engedélyezése</h3>
+      <div class="step">
+        <h4>1. lépés: Raycasting bekapcsolása</h4>
+        <p>Kattintson a raycasting gombra a navigációs sávban, vagy használja a megfelelő gyorsbillentyűt.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Pont kiválasztása</h4>
+        <p>Kattintson egy pontra a 3D jelenetben. A kiválasztott pont kiemelésre kerül.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. lépés: Pont információi</h4>
+        <p>A kiválasztott pont információi megjelennek a láblécben és az info panelben.</p>
+      </div>
+
+      <div class="image-placeholder"> [KÉP HELYE: Pont kiválasztás és info panel] </div>
+
+      <h3>Pont kontextus menü</h3>
+      <p>Jobb egérgomb kattintással egy pontra megnyílik a kontextus menü:</p>
+      <ul>
+        <li><strong>Pont részletei:</strong> Részletes koordináta információk</li>
+        <li><strong>Távolság innen:</strong> Távolság mérés más pontoktól</li>
+        <li><strong>Távolság ide:</strong> Távolság mérés más pontokból</li>
+        <li><strong>Forgáspont beállítása:</strong> Kamera forgáspont beállítása</li>
+      </ul>
+
+      <h2>Jelenet áttekintő</h2>
+
+      <div class="info">
+        <h3>Jelenet áttekintő panel</h3>
+        <p
+          >A jelenet áttekintő egy kisebb ablak, amely a teljes barlangrendszer felülnézetét mutatja. Ez segít a
+          navigációban és orientációban.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>Áttekintő megnyitása</h4>
+        <p>1. Kattintson a jelenet áttekintő gombra az oldalsávban</p>
+        <p>2. Vagy használja a <span class="shortcut">Ctrl + G</span> gyorsbillentyűt</p>
+      </div>
+
+      <div class="step">
+        <h4>Áttekintő használata</h4>
+        <p>1. Kattintson az áttekintőben egy területre a kamera gyors mozgatásához</p>
+        <p>2. Húzza az áttekintőben a kamerát a nézet módosításához</p>
+      </div>
+
+      <div class="image-placeholder"> [KÉP HELYE: Jelenet áttekintő panel] </div>
+
+      <h2>Teljes képernyős mód</h2>
+
+      <div class="control-box">
+        <h4>Teljes képernyős mód be/kikapcsolása</h4>
+        <p>A teljes képernyős mód eltávolítja az összes UI elemet, csak a 3D viewport marad látható.</p>
+        <p
+          ><strong>Használat:</strong> Kattintson a teljes képernyő gombra a navigációs sávban, vagy használja az
+          <span class="shortcut">F11</span> billentyűt.</p
+        >
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ Teljes képernyős mód megjegyzések</h3>
+        <ul>
+          <li>Az ESC billentyű kilép a teljes képernyős módból</li>
+          <li>A navigációs eszközök továbbra is elérhetők</li>
+          <li>Az egér vezérlés változatlan marad</li>
+        </ul>
+      </div>
+
+      <h2>Nyomtatás és exportálás</h2>
+
+      <h3>Képernyő kép mentése</h3>
+      <div class="step">
+        <h4>1. lépés: Nézet beállítása</h4>
+        <p>Állítsa be a kívánt nézetet és nagyítást a mentéshez.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Nyomtatás indítása</h4>
+        <p
+          >Kattintson a nyomtatás gombra a navigációs sávban, vagy használja a
+          <span class="shortcut">Ctrl + P</span> gyorsbillentyűt.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>3. lépés: Fájl mentése</h4>
+        <p>A böngésző nyomtatási párbeszédpanelében válassza a "Mentés PDF-ként" opciót.</p>
+      </div>
+
+      <h2>Navigációs tippek és trükkök</h2>
+
+      <div class="info">
+        <h3>Hatékony navigáció</h3>
+        <ul>
+          <li>Használja a nézet módokat a gyors orientációhoz</li>
+          <li>A nagyítás illesztése gomb gyakran hasznos a teljes barlang megtekintéséhez</li>
+          <li>A jelenet áttekintő segít a nagy barlangrendszerekben való navigációban</li>
+          <li>A pont kiválasztás segít a specifikus területek megkeresésében</li>
+        </ul>
+      </div>
+
+      <div class="info">
+        <h3>Teljesítmény optimalizálás</h3>
+        <ul>
+          <li>Nagy barlangrendszerek esetén csökkentse a részletességet</li>
+          <li>Használja a szín módokat a jobb áttekinthetőséghez</li>
+          <li>Rendszeresen használja a nagyítás illesztése funkciót</li>
+          <li>Zárja be a felesleges paneleket a teljesítmény javításához</li>
+        </ul>
+      </div>
+
+      <h2>Gyakori problémák és megoldások</h2>
+
+      <div class="warning">
+        <h3>Kamera elveszett</h3>
+        <p><strong>Probléma:</strong> A kamera olyan pozícióba került, ahol nem látható a barlang.</p>
+        <p
+          ><strong>Megoldás:</strong> Használja a nagyítás illesztése gombot vagy az
+          <span class="shortcut">F</span> billentyűt.</p
+        >
+      </div>
+
+      <div class="warning">
+        <h3>Lassú navigáció</h3>
+        <p><strong>Probléma:</strong> A 3D jelenet lassan válaszol a navigációs parancsokra.</p>
+        <p><strong>Megoldás:</strong> Csökkentse a részletességet vagy zárja be a felesleges paneleket.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Pontok nem választhatók ki</h3>
+        <p><strong>Probléma:</strong> A raycasting nincs engedélyezve.</p>
+        <p><strong>Megoldás:</strong> Kapcsolja be a raycasting funkciót a navigációs sávban.</p>
+      </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte a 3D navigációt, folytathatja a
+        <a href="05-felmereek-szerkesztese.html">felmérések szerkesztése</a> fejezettel, ahol megtanulja, hogyan
+        szerkessze és validálja a felmérési adatokat.</p
+      >
+
+      <div class="nav">
+        <a href="03-adatok-importalasa.html">← Előző: Adatok importálása</a>
+        <a href="index.html">Főoldal</a>
+        <a href="05-felmereek-szerkesztese.html">Következő: Felmérések szerkesztése →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

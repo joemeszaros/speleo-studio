@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Egyetlen PDF fájl létrehozása - Speleo Studio Kézikönyv</title>
+    <link rel="stylesheet" href="manual.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Egyetlen PDF fájl létrehozása</h1>
+
+      <p>
+        Ez az útmutató segít egyetlen PDF fájlt létrehozni, amely tartalmazza a teljes Speleo Studio felhasználói
+        kézikönyvet. Minden módszer automatikusan összefűzi az összes oldalt egy PDF-be.
+      </p>
+
+      <h2>1. wkhtmltopdf - Ajánlott megoldás <span class="difficulty medium">Közepes</span></h2>
+
+      <div class="method">
+        <h3>Automatikus összefűzés minden oldallal</h3>
+        <p>
+          A wkhtmltopdf eszköz képes automatikusan összefűzni az összes HTML oldalt egy PDF-be, beleértve a
+          tartalomjegyzéket és navigációs linkeket is.
+        </p>
+
+        <div class="steps">
+          <ol>
+            <li
+              >Töltse le és telepítse a wkhtmltopdf-et:
+              <a href="https://wkhtmltopdf.org/downloads.html" target="_blank"
+                >https://wkhtmltopdf.org/downloads.html</a
+              ></li
+            >
+            <li>Nyissa meg a terminált/parancssort</li>
+            <li>Navigáljon a kézikönyv mappájába: <code>cd manual</code></li>
+            <li>Futtassa a következő parancsot:</li>
+          </ol>
+        </div>
+
+        <div class="code-block">
+          wkhtmltopdf --enable-local-file-access --page-size A4 --margin-top 20mm --margin-bottom 20mm --margin-left
+          15mm --margin-right 15mm --header-html header.html --footer-html footer.html index.html 01-bevezetes.html
+          02-projekt-kezeles.html 03-adatok-importalasa.html 04-3d-vizualizacio.html 05-felmereek-szerkesztese.html
+          06-attributumok.html 07-eszkozok.html 08-exportalas.html 09-beallitasok.html 10-tippek-trukkok.html
+          speleo-studio-teljes-kezikonyv.pdf
+        </div>
+
+        <div class="note">
+          <strong>Megjegyzés:</strong> Ez a parancs létrehoz egy teljes PDF-et az összes oldallal, megfelelő
+          oldalszámozással és formázással.
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <h4>Előnyök:</h4>
+            <ul>
+              <li>Egyetlen PDF fájl</li>
+              <li>Kiváló minőség</li>
+              <li>Teljes CSS támogatás</li>
+              <li>Automatikus tartalomjegyzék</li>
+              <li>Oldalszámozás</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <h4>Hátrányok:</h4>
+            <ul>
+              <li>Telepítés szükség</li>
+              <li>Parancssori használat</li>
+              <li>Technikai ismeretek kellenek</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h2>2. Puppeteer Script - Fejlett megoldás <span class="difficulty hard">Haladó</span></h2>
+
+      <div class="method">
+        <h3>Node.js alapú automatikus összefűzés</h3>
+        <p>
+          Létrehozhat egy Node.js scriptet, amely automatikusan összefűzi az összes oldalt és létrehoz egy teljes
+          PDF-et.
+        </p>
+
+        <div class="steps">
+          <ol>
+            <li>Telepítse a Node.js-t</li>
+            <li>Hozzon létre egy új mappát a projektben</li>
+            <li>Futtassa: <code>npm init -y</code></li>
+            <li>Telepítse a Puppeteer-t: <code>npm install puppeteer</code></li>
+            <li>Hozzon létre egy <code>generate-pdf.js</code> fájlt</li>
+          </ol>
+        </div>
+
+        <div class="code-block">
+          const puppeteer = require('puppeteer'); const fs = require('fs'); const pages = [ 'manual/index.html',
+          'manual/01-bevezetes.html', 'manual/02-projekt-kezeles.html', 'manual/03-adatok-importalasa.html',
+          'manual/04-3d-vizualizacio.html', 'manual/05-felmereek-szerkesztese.html', 'manual/06-attributumok.html',
+          'manual/07-eszkozok.html', 'manual/08-exportalas.html', 'manual/09-beallitasok.html',
+          'manual/10-tippek-trukkok.html' ]; (async () => { const browser = await puppeteer.launch(); const page = await
+          browser.newPage(); // Összefűzött PDF létrehozása await page.goto(`file://${process.cwd()}/manual/index.html`,
+          { waitUntil: 'networkidle0' }); await page.pdf({ path: 'speleo-studio-teljes-kezikonyv.pdf', format: 'A4',
+          margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' }, printBackground: true,
+          displayHeaderFooter: true, headerTemplate: '&lt;div style="font-size: 10px; text-align: center; width:
+          100%;"&gt;Speleo Studio Felhasználói Kézikönyv&lt;/div&gt;', footerTemplate: '&lt;div style="font-size: 10px;
+          text-align: center; width: 100%;"&gt;Oldal &lt;span class="pageNumber"&gt;&lt;/span&gt; / &lt;span
+          class="totalPages"&gt;&lt;/span&gt;&lt;/div&gt;' }); await browser.close(); console.log('PDF sikeresen
+          létrehozva!'); })();
+        </div>
+
+        <div class="note"> <strong>Használat:</strong> Futtassa a scriptet: <code>node generate-pdf.js</code> </div>
+      </div>
+
+      <h2>3. Online HTML összefűző szolgáltatások <span class="difficulty easy">Könnyű</span></h2>
+
+      <div class="method">
+        <h3>Webes eszközök több oldal összefűzésére</h3>
+        <p> Néhány online szolgáltatás támogatja több HTML oldal összefűzését egy PDF-be. </p>
+
+        <div class="steps">
+          <ol>
+            <li>Használja a <strong>PDF24</strong> online eszközt</li>
+            <li>Válassza ki a "HTML to PDF" opciót</li>
+            <li>Töltse fel az összes HTML fájlt (index.html és az összes fejezet)</li>
+            <li>Állítsa be a megfelelő beállításokat</li>
+            <li>Generálja a PDF-et</li>
+          </ol>
+        </div>
+
+        <div class="warning">
+          <strong>Figyelem:</strong> Ez a módszer nem mindig működik megfelelően a helyi fájlokkal. Először próbálja meg
+          a böngésző alapú megoldásokat.
+        </div>
+      </div>
+
+      <h2>4. Böngésző alapú megoldás - Egyszerű <span class="difficulty easy">Könnyű</span></h2>
+
+      <div class="method">
+        <h3>Firefox böngésző használatával</h3>
+        <p> A Firefox böngésző képes automatikusan követni a linkeket és összefűzni az összes oldalt. </p>
+
+        <div class="steps">
+          <ol>
+            <li>Nyissa meg a Firefox böngészőt</li>
+            <li>Nyissa meg a kézikönyv főoldalát: <code>manual/index.html</code></li>
+            <li>Nyomja meg a <strong>Ctrl+P</strong> (Cmd+P Mac-en)</li>
+            <li>A nyomtatási beállításokban:</li>
+            <ul>
+              <li>Válassza ki a "PDF mentése" opciót</li>
+              <li>Állítsa be a "Több oldal" opciót "Minden oldal" értékre</li>
+              <li>Kapcsolja be a "Háttér nyomtatása" opciót</li>
+              <li>Válassza ki az A4 oldalméretet</li>
+            </ul>
+            <li>Kattintson a "Mentés" gombra</li>
+          </ol>
+        </div>
+
+        <div class="note">
+          <strong>Megjegyzés:</strong> Ez a módszer automatikusan követi a kézikönyv linkjeit és összefűzi az összes
+          oldalt egy PDF-be.
+        </div>
+      </div>
+
+      <h2>5. Automatizált script a könnyebb használathoz</h2>
+
+      <div class="method">
+        <h3>Bash script wkhtmltopdf-hez</h3>
+        <p> Létrehozhat egy egyszerű scriptet, amely automatikusan generálja a teljes PDF-et. </p>
+
+        <div class="code-block">
+          #!/bin/bash # Speleo Studio kézikönyv PDF generálása echo "Speleo Studio kézikönyv PDF generálása..." #
+          Ellenőrizze, hogy a wkhtmltopdf telepítve van-e if ! command -v wkhtmltopdf &> /dev/null; then echo "Hiba:
+          wkhtmltopdf nincs telepítve!" echo "Töltse le innen: https://wkhtmltopdf.org/downloads.html" exit 1 fi #
+          Navigáljon a manual mappába cd manual # Generálja a PDF-et wkhtmltopdf \ --enable-local-file-access \
+          --page-size A4 \ --margin-top 20mm \ --margin-bottom 20mm \ --margin-left 15mm \ --margin-right 15mm \
+          --header-html header.html \ --footer-html footer.html \ --toc \ --toc-header-text "Tartalomjegyzék" \
+          index.html \ 01-bevezetes.html \ 02-projekt-kezeles.html \ 03-adatok-importalasa.html \
+          04-3d-vizualizacio.html \ 05-felmereek-szerkesztese.html \ 06-attributumok.html \ 07-eszkozok.html \
+          08-exportalas.html \ 09-beallitasok.html \ 10-tippek-trukkok.html \ ../speleo-studio-teljes-kezikonyv.pdf echo
+          "PDF sikeresen létrehozva: speleo-studio-teljes-kezikonyv.pdf"
+        </div>
+
+        <div class="steps">
+          <ol>
+            <li>Mentse el a scriptet <code>generate-pdf.sh</code> néven</li>
+            <li>Tegye futtathatóvá: <code>chmod +x generate-pdf.sh</code></li>
+            <li>Futtassa: <code>./generate-pdf.sh</code></li>
+          </ol>
+        </div>
+      </div>
+
+      <h2>6. Ajánlott megoldás</h2>
+
+      <div class="method">
+        <h3>Legjobb megoldás a legtöbb felhasználónak</h3>
+        <p> <strong>wkhtmltopdf</strong> a legjobb megoldás egyetlen PDF fájl létrehozásához, mert: </p>
+        <ul>
+          <li>Automatikusan összefűzi az összes oldalt</li>
+          <li>Kiváló minőség</li>
+          <li>Teljes CSS támogatás</li>
+          <li>Automatikus tartalomjegyzék</li>
+          <li>Oldalszámozás</li>
+          <li>Fejléc és lábléc</li>
+        </ul>
+
+        <div class="note">
+          <strong>Alternatíva:</strong> Ha a wkhtmltopdf túl bonyolult, próbálja meg a Firefox böngészőt a "Minden
+          oldal" opcióval.
+        </div>
+      </div>
+
+      <h2>7. Hibaelhárítás</h2>
+
+      <div class="method">
+        <h3>Gyakori problémák és megoldások</h3>
+
+        <h4>Probléma: A képek nem jelennek meg</h4>
+        <p><strong>Megoldás:</strong> Használja a <code>--enable-local-file-access</code> kapcsolót wkhtmltopdf-nél.</p>
+
+        <h4>Probléma: A CSS formázás nem megfelelő</h4>
+        <p
+          ><strong>Megoldás:</strong> Próbálja meg a Firefox böngészőt, vagy használja a
+          <code>--print-media-type</code> kapcsolót.</p
+        >
+
+        <h4>Probléma: Az oldaltörések nem megfelelőek</h4>
+        <p><strong>Megoldás:</strong> Állítsa be a megfelelő margókat és oldalméretet.</p>
+
+        <h4>Probléma: A linkek nem működnek</h4>
+        <p><strong>Megoldás:</strong> Ellenőrizze, hogy minden fájl ugyanabban a mappában van-e.</p>
+      </div>
+
+      <div class="back-link">
+        <a href="index.html">← Vissza a kézikönyv főoldalára</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exportálás és megosztás - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Exportálás és megosztás</h1>
+
+      <div class="nav">
+        <a href="07-eszkozok.html">← Előző: Eszközök</a>
+        <a href="index.html">Főoldal</a>
+        <a href="09-beallitasok.html">Következő: Beállítások →</a>
+      </div>
+
+      <h2>Exportálás áttekintése</h2>
+      <p
+        >A Speleo Studio számos formátumot támogat az adatok exportálásához és megosztásához. Ez lehetővé teszi a
+        barlang adatok más alkalmazásokkal való használatát és a projekt megosztását más felhasználókkal.</p
+      >
+
+      <div class="info">
+        <h3>Támogatott export formátumok:</h3>
+        <ul>
+          <li><strong>JSON:</strong> Teljes projekt adatok</li>
+          <li><strong>PNG:</strong> Képernyő kép exportálás</li>
+          <li><strong>DXF:</strong> CAD kompatibilis formátum</li>
+          <li><strong>Polygon (.cave):</strong> Polygon szoftver kompatibilis</li>
+        </ul>
+      </div>
+
+      <h2>Exportálás indítása</h2>
+
+      <div class="step">
+        <h3>1. lépés: Exportálás menü</h3>
+        <p>Kattintson a "Fájl" menüre a navigációs sávban.</p>
+      </div>
+
+      <div class="step">
+        <h3>2. lépés: Exportálás opció</h3>
+        <p>Válassza az "Exportálás" opciót a menüből, vagy használja a <strong>Ctrl + S</strong> gyorsbillentyűt.</p>
+      </div>
+
+      <div class="step">
+        <h3>3. lépés: Exportálás panel</h3>
+        <p
+          >Megnyílik az exportálás panel, ahol kiválaszthatja a formátumot és beállíthatja az exportálási
+          paramétereket.</p
+        >
+        <div class="image-placeholder"> [KÉP HELYE: Exportálás panel megjelenítése] </div>
+      </div>
+
+      <h2>JSON exportálás</h2>
+
+      <div class="format-box">
+        <h4>JSON formátum</h4>
+        <p
+          >A JSON a Speleo Studio natív formátuma, amely teljes projekt adatokat tartalmaz, beleértve a felméréseket,
+          attribútumokat és metaadatokat.</p
+        >
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>Teljes adatmegőrzés</li>
+          <li>Attribútumok és metaadatok</li>
+          <li>EOV koordináták</li>
+          <li>Projekt struktúra megőrzése</li>
+          <li>Importálás más Speleo Studio példányokba</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>JSON exportálás lépései</h3>
+        <p>1. Válassza a "JSON" formátumot az exportálás panelben</p>
+        <p>2. Adja meg az előtagot a fájlnevekhez</p>
+        <p>3. Kattintson az "Exportálás" gombra</p>
+        <p>4. Válassza ki a mentési helyet</p>
+      </div>
+
+      <div class="info">
+        <h3>JSON exportálás megjegyzések:</h3>
+        <ul>
+          <li>Minden barlang külön JSON fájlba kerül exportálásra</li>
+          <li>A fájlnevek automatikusan generálódnak az előtag alapján</li>
+          <li>A projekt metaadatok is exportálásra kerülnek</li>
+        </ul>
+      </div>
+
+      <h2>PNG képernyő kép exportálás</h2>
+
+      <div class="format-box">
+        <h4>PNG formátum</h4>
+        <p>A PNG formátum lehetővé teszi a 3D jelenet képernyő képének exportálását magas minőségben.</p>
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>Magas minőségű képek</li>
+          <li>Transzparencia támogatás</li>
+          <li>Széles körű kompatibilitás</li>
+          <li>Kis fájlméret</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>PNG exportálás lépései</h3>
+        <p>1. Állítsa be a kívánt nézetet a 3D viewportban</p>
+        <p>2. Válassza a "PNG Image" formátumot az exportálás panelben</p>
+        <p>3. Adja meg a fájlnevet</p>
+        <p>4. Kattintson az "Exportálás" gombra</p>
+      </div>
+
+      <div class="info">
+        <h3>PNG exportálás tippek:</h3>
+        <ul>
+          <li>Használja a nagyítás illesztése funkciót a teljes barlang megjelenítéséhez</li>
+          <li>Állítsa be a megfelelő nézetet az exportálás előtt</li>
+          <li>Zárja be a felesleges paneleket a tiszta kép érdekében</li>
+        </ul>
+      </div>
+
+      <h2>DXF exportálás</h2>
+
+      <div class="format-box">
+        <h4>DXF formátum</h4>
+        <p
+          >A DXF (Drawing Exchange Format) egy széles körben támogatott CAD formátum, amely lehetővé teszi a barlang
+          adatok importálását CAD szoftverekbe.</p
+        >
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>CAD szoftver kompatibilitás</li>
+          <li>Vektoros formátum</li>
+          <li>Pontos koordináták</li>
+          <li>Layerek támogatása</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>DXF exportálás lépései</h3>
+        <p>1. Válassza a "DXF" formátumot az exportálás panelben</p>
+        <p>2. Adja meg a fájlnevet</p>
+        <p>3. Kattintson az "Exportálás" gombra</p>
+        <p>4. Válassza ki a mentési helyet</p>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ DXF exportálás megjegyzések</h3>
+        <ul>
+          <li>Csak a felmérési vonalak exportálásra kerülnek</li>
+          <li>Az attribútumok részben konvertálhatók</li>
+          <li>3D adatok 2D vetületként kerülnek exportálásra</li>
+          <li>Ellenőrizze az eredményt a célalkalmazásban</li>
+        </ul>
+      </div>
+
+      <h2>Polygon (.cave) exportálás</h2>
+
+      <div class="format-box">
+        <h4>Polygon formátum</h4>
+        <p>A Polygon .cave formátum lehetővé teszi a barlang adatok exportálását a Polygon szoftverbe.</p>
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>Polygon szoftver kompatibilitás</li>
+          <li>Felmérési adatok megőrzése</li>
+          <li>Alapvető attribútumok</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>Polygon exportálás lépései</h3>
+        <p>1. Válassza a "Polygon (.cave)" formátumot az exportálás panelben</p>
+        <p>2. Adja meg a fájlnevet</p>
+        <p>3. Kattintson az "Exportálás" gombra</p>
+        <p>4. Válassza ki a mentési helyet</p>
+      </div>
+
+      <h2>Formátumok összehasonlítása</h2>
+
+      <div class="comparison-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Formátum</th>
+              <th>Adatok</th>
+              <th>Attribútumok</th>
+              <th>3D</th>
+              <th>Kompatibilitás</th>
+              <th>Fájlméret</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>JSON</td>
+              <td>Teljes</td>
+              <td>Teljes</td>
+              <td>Igen</td>
+              <td>Speleo Studio</td>
+              <td>Közepes</td>
+            </tr>
+            <tr>
+              <td>PNG</td>
+              <td>Kép</td>
+              <td>Nem</td>
+              <td>2D vetület</td>
+              <td>Univerzális</td>
+              <td>Kicsi</td>
+            </tr>
+            <tr>
+              <td>DXF</td>
+              <td>Vonalak</td>
+              <td>Részleges</td>
+              <td>2D vetület</td>
+              <td>CAD</td>
+              <td>Kicsi</td>
+            </tr>
+            <tr>
+              <td>Polygon</td>
+              <td>Felmérések</td>
+              <td>Alapvető</td>
+              <td>Igen</td>
+              <td>Polygon</td>
+              <td>Kicsi</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Projekt exportálás</h2>
+
+      <h3>Teljes projekt exportálása</h3>
+      <div class="step">
+        <h4>1. Projekt menü</h4>
+        <p>Kattintson a "Projekt" menüre a navigációs sávban.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Projekt exportálás</h4>
+        <p>Válassza a "Projekt exportálása" opciót a menüből.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Exportálás beállítása</h4>
+        <p>Állítsa be az exportálási paramétereket:</p>
+        <ul>
+          <li><strong>Formátum:</strong> JSON (ajánlott)</li>
+          <li><strong>Fájlnév:</strong> Projekt neve</li>
+          <li><strong>Tartalom:</strong> Teljes projekt vagy csak kiválasztott barlangok</li>
+        </ul>
+      </div>
+
+      <h2>Nyomtatás és PDF exportálás</h2>
+
+      <h3>Nyomtatás beállítása</h3>
+      <div class="step">
+        <h4>1. Nézet beállítása</h4>
+        <p>Állítsa be a kívánt nézetet és nagyítást a nyomtatáshoz.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Nyomtatás indítása</h4>
+        <p
+          >Kattintson a nyomtatás gombra a navigációs sávban, vagy használja a
+          <strong>Ctrl + P</strong> gyorsbillentyűt.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>3. PDF mentése</h4>
+        <p>A böngésző nyomtatási párbeszédpanelében válassza a "Mentés PDF-ként" opciót.</p>
+      </div>
+
+      <h3>Nyomtatási beállítások</h3>
+      <div class="info">
+        <h4>Optimalizálás nyomtatáshoz:</h4>
+        <ul>
+          <li>Használja a nagyítás illesztése funkciót</li>
+          <li>Állítsa be a megfelelő nézetet (alaprajz, hosszmetszet)</li>
+          <li>Zárja be a felesleges paneleket</li>
+          <li>Ellenőrizze a színek kontrasztját</li>
+        </ul>
+      </div>
+
+      <h2>Megosztás és együttműködés</h2>
+
+      <h3>Projekt megosztása</h3>
+      <div class="step">
+        <h4>1. Projekt exportálása</h4>
+        <p>Exportálja a projektet JSON formátumban.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Fájl megosztása</h4>
+        <p>Ossza meg a JSON fájlt más felhasználókkal:</p>
+        <ul>
+          <li>Email mellékletként</li>
+          <li>Felhő tárolóban (Google Drive, Dropbox)</li>
+          <li>Fájl megosztó szolgáltatásokon</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h4>3. Projekt importálása</h4>
+        <p>A másik felhasználó importálhatja a projektet a saját Speleo Studio példányába.</p>
+      </div>
+
+      <h3>Verzió kezelés</h3>
+      <div class="info">
+        <h4>Verzió követés tippek:</h4>
+        <ul>
+          <li>Használjon dátumot a fájlnevekben (pl. "Barlang_2024-01-15.json")</li>
+          <li>Készítsen rendszeres biztonsági másolatokat</li>
+          <li>Dokumentálja a változtatásokat</li>
+          <li>Használjon verzió kezelő rendszereket (Git) nagy projektekhez</li>
+        </ul>
+      </div>
+
+      <h2>Exportálási tippek és ajánlások</h2>
+
+      <div class="info">
+        <h3>Hatékony exportálás</h3>
+        <ul>
+          <li>Válassza a megfelelő formátumot a célalkalmazás szerint</li>
+          <li>Ellenőrizze az exportált adatokat</li>
+          <li>Használjon egyértelmű fájlneveket</li>
+          <li>Készítsen biztonsági másolatokat</li>
+        </ul>
+      </div>
+
+      <div class="info">
+        <h3>Adatminőség biztosítása</h3>
+        <ul>
+          <li>Validálja az adatokat az exportálás előtt</li>
+          <li>Ellenőrizze a koordináta rendszereket</li>
+          <li>Dokumentálja az exportálási folyamatot</li>
+          <li>Tesztelje az importálást a célalkalmazásban</li>
+        </ul>
+      </div>
+
+      <h2>Gyakori problémák és megoldások</h2>
+
+      <div class="warning">
+        <h3>Exportálás nem működik</h3>
+        <p><strong>Probléma:</strong> Az exportálás panel nem nyílik meg.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze, hogy van-e aktív projekt és barlang adatok.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Fájl nem mentődik</h3>
+        <p><strong>Probléma:</strong> A böngésző nem engedélyezi a fájl mentését.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze a böngésző beállításait és engedélyezze a fájl letöltést.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Exportált adatok hiányosak</h3>
+        <p><strong>Probléma:</strong> Az exportált fájl nem tartalmazza az összes adatot.</p>
+        <p
+          ><strong>Megoldás:</strong> Ellenőrizze a formátum kompatibilitását és használja a JSON formátumot a teljes
+          adatokhoz.</p
+        >
+      </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte az exportálást, folytathatja a
+        <a href="09-beallitasok.html">beállítások és testreszabás</a> fejezettel, ahol megtanulja, hogyan szabhatja
+        testre az alkalmazás működését.</p
+      >
+
+      <div class="nav">
+        <a href="07-eszkozok.html">← Előző: Eszközök</a>
+        <a href="index.html">Főoldal</a>
+        <a href="09-beallitasok.html">Következő: Beállítások →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

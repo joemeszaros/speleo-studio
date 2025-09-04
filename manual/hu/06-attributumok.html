@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attribútumok kezelése - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+      .attribute-box h4 {
+        color: #2c3e50;
+        margin-top: 0;
+      }
+      .attribute-type {
+        background: #e9ecef;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      .attribute-type h5 {
+        color: #495057;
+        margin-top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Attribútumok kezelése</h1>
+
+      <div class="nav">
+        <a href="05-felmereek-szerkesztese.html">← Előző: Felmérések szerkesztése</a>
+        <a href="index.html">Főoldal</a>
+        <a href="07-eszkozok.html">Következő: Eszközök →</a>
+      </div>
+
+      <h2>Attribútumok áttekintése</h2>
+      <p
+        >Az attribútumok további információkat adnak a barlang elemeihez, mint például a szpeleotémák, rétegdőlés,
+        vetők, kötelek és egyéb jellegzetességek. A Speleo Studio három típusú attribútumot támogat.</p
+      >
+
+      <div class="info">
+        <h3>Attribútum típusok:</h3>
+        <ul>
+          <li><strong>Pont attribútumok:</strong> Egyedi pontokhoz kapcsolódó információk</li>
+          <li><strong>Szakasz attribútumok:</strong> Mérésekhez kapcsolódó információk</li>
+          <li><strong>Komponens attribútumok:</strong> Barlang komponensekhez kapcsolódó információk</li>
+        </ul>
+      </div>
+
+      <h2>Pont attribútumok</h2>
+
+      <div class="attribute-type">
+        <h5>Pont attribútumok</h5>
+        <p>Egyedi pontokhoz kapcsolódó információk, mint például szpeleotémák, címkék vagy egyéb jellegzetességek.</p>
+      </div>
+
+      <h3>Pont attribútum szerkesztő megnyitása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Pont kiválasztása</h4>
+        <p>A felfedező panelben bontsa ki a barlangot és a felmérést, majd kattintson jobb egérgombbal egy pontra.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Attribútum szerkesztő</h4>
+        <p>A kontextus menüből válassza a "Pont attribútumok" opciót.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. lépés: Szerkesztő panel</h4>
+        <p>Megnyílik a pont attribútum szerkesztő panel.</p>
+        <div class="image-placeholder"> [KÉP HELYE: Pont attribútum szerkesztő panel] </div>
+      </div>
+
+      <h3>Pont attribútumok hozzáadása</h3>
+
+      <div class="step">
+        <h4>1. Új attribútum hozzáadása</h4>
+        <p>Kattintson az "Új attribútum" gombra a szerkesztő panelben.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Attribútum típus kiválasztása</h4>
+        <p>Válassza ki az attribútum típusát a legördülő menüből:</p>
+        <ul>
+          <li><strong>Szpeleotéma:</strong> Cseppkő, függőcseppkő, oszlop stb.</li>
+          <li><strong>Címke:</strong> Szöveges címke a ponthoz</li>
+          <li><strong>Felfedezés:</strong> Felfedezési információk</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h4>3. Attribútum paraméterek megadása</h4>
+        <p>Töltse ki az attribútum paramétereit:</p>
+        <ul>
+          <li><strong>Típus:</strong> Az attribútum típusa</li>
+          <li><strong>Leírás:</strong> Részletes leírás</li>
+          <li><strong>Érték:</strong> Numerikus vagy szöveges érték</li>
+          <li><strong>Szín:</strong> Megjelenítési szín</li>
+        </ul>
+      </div>
+
+      <h3>Gyakori pont attribútumok</h3>
+
+      <div class="attribute-box">
+        <h4>Szpeleotéma attribútumok</h4>
+        <ul>
+          <li><strong>Cseppkő:</strong> Függőcseppkő, állócseppkő</li>
+          <li><strong>Oszlop:</strong> Cseppkő oszlop</li>
+          <li><strong>Függőcseppkő:</strong> Stalaktit</li>
+          <li><strong>Állócseppkő:</strong> Stalagmit</li>
+          <li><strong>Falburkolat:</strong> Falburkolat</li>
+        </ul>
+      </div>
+
+      <div class="attribute-box">
+        <h4>Címke attribútumok</h4>
+        <ul>
+          <li><strong>Pont neve:</strong> Egyedi pont azonosító</li>
+          <li><strong>Magasság:</strong> Pont magassága</li>
+          <li><strong>Mélység:</strong> Pont mélysége</li>
+          <li><strong>Megjegyzés:</strong> Szöveges megjegyzés</li>
+        </ul>
+      </div>
+
+      <h2>Szakasz attribútumok</h2>
+
+      <div class="attribute-type">
+        <h5>Szakasz attribútumok</h5>
+        <p
+          >Mérésekhez kapcsolódó információk, mint például rétegdőlés, vetők, kötelek vagy egyéb szakasz
+          jellegzetességek.</p
+        >
+      </div>
+
+      <h3>Szakasz attribútum szerkesztő megnyitása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Felmérés kiválasztása</h4>
+        <p>A felfedező panelben kattintson jobb egérgombbal egy felmérésre.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Szakasz attribútumok</h4>
+        <p>A kontextus menüből válassza a "Szakasz attribútumok" opciót.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. lépés: Szerkesztő panel</h4>
+        <p>Megnyílik a szakasz attribútum szerkesztő panel.</p>
+        <div class="image-placeholder"> [KÉP HELYE: Szakasz attribútum szerkesztő panel] </div>
+      </div>
+
+      <h3>Szakasz attribútumok hozzáadása</h3>
+
+      <div class="step">
+        <h4>1. Új szakasz attribútum</h4>
+        <p>Kattintson az "Új attribútum" gombra a szerkesztő panelben.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Szakasz kiválasztása</h4>
+        <p>Válassza ki a szakaszt, amelyhez az attribútumot hozzá szeretné adni:</p>
+        <ul>
+          <li><strong>Induló pont:</strong> A szakasz kezdőpontja</li>
+          <li><strong>Végpont:</strong> A szakasz végpontja</li>
+          <li><strong>Távolság:</strong> Az attribútum pozíciója a szakaszon</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h4>3. Attribútum paraméterek</h4>
+        <p>Adja meg az attribútum paramétereit:</p>
+        <ul>
+          <li><strong>Attribútum típus:</strong> Rétegdőlés, vető, kötél stb.</li>
+          <li><strong>Dőlés:</strong> Dőlés szöge</li>
+          <li><strong>Irány:</strong> Irány szöge</li>
+          <li><strong>Szélesség:</strong> Attribútum szélessége</li>
+          <li><strong>Magasság:</strong> Attribútum magassága</li>
+        </ul>
+      </div>
+
+      <h3>Gyakori szakasz attribútumok</h3>
+
+      <div class="attribute-box">
+        <h4>Rétegdőlés attribútumok</h4>
+        <ul>
+          <li><strong>Dőlés:</strong> Réteg dőlési szöge</li>
+          <li><strong>Irány:</strong> Réteg irány szöge</li>
+          <li><strong>Típus:</strong> Réteg típusa</li>
+        </ul>
+      </div>
+
+      <div class="attribute-box">
+        <h4>Vető attribútumok</h4>
+        <ul>
+          <li><strong>Dőlés:</strong> Vető dőlési szöge</li>
+          <li><strong>Irány:</strong> Vető irány szöge</li>
+          <li><strong>Mozgás típusa:</strong> Vető mozgás típusa</li>
+        </ul>
+      </div>
+
+      <div class="attribute-box">
+        <h4>Kötél attribútumok</h4>
+        <ul>
+          <li><strong>Kötél típusa:</strong> Használt kötél típusa</li>
+          <li><strong>Hossz:</strong> Kötél hossza</li>
+          <li><strong>Állapot:</strong> Kötél állapota</li>
+        </ul>
+      </div>
+
+      <h2>Komponens attribútumok</h2>
+
+      <div class="attribute-type">
+        <h5>Komponens attribútumok</h5>
+        <p
+          >Barlang komponensekhez kapcsolódó információk, mint például termek, folyosók vagy egyéb térrészek
+          jellemzői.</p
+        >
+      </div>
+
+      <h3>Komponens attribútum szerkesztő megnyitása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Barlang kiválasztása</h4>
+        <p>A felfedező panelben kattintson jobb egérgombbal egy barlangra.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Komponens attribútumok</h4>
+        <p>A kontextus menüből válassza a "Komponens attribútumok" opciót.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. lépés: Szerkesztő panel</h4>
+        <p>Megnyílik a komponens attribútum szerkesztő panel.</p>
+        <div class="image-placeholder"> [KÉP HELYE: Komponens attribútum szerkesztő panel] </div>
+      </div>
+
+      <h3>Komponens attribútumok hozzáadása</h3>
+
+      <div class="step">
+        <h4>1. Új komponens attribútum</h4>
+        <p>Kattintson az "Új attribútum" gombra a szerkesztő panelben.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Komponens definiálása</h4>
+        <p>Adja meg a komponens határait:</p>
+        <ul>
+          <li><strong>Induló pont:</strong> Komponens kezdőpontja</li>
+          <li><strong>Végpontok:</strong> Komponens végpontjai</li>
+          <li><strong>Út:</strong> Komponens útvonala</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h4>3. Attribútum paraméterek</h4>
+        <p>Töltse ki az attribútum paramétereit:</p>
+        <ul>
+          <li><strong>Komponens típusa:</strong> Term, folyosó, akna stb.</li>
+          <li><strong>Leírás:</strong> Részletes leírás</li>
+          <li><strong>Méret:</strong> Komponens méretei</li>
+          <li><strong>Jellemzők:</strong> Speciális jellemzők</li>
+        </ul>
+      </div>
+
+      <h2>Attribútumok megjelenítése</h2>
+
+      <h3>3D megjelenítés</h3>
+      <p>Az attribútumok különböző módon jelennek meg a 3D viewportban:</p>
+
+      <div class="attribute-box">
+        <h4>Pont attribútumok megjelenítése</h4>
+        <ul>
+          <li><strong>Színes pontok:</strong> Különböző színek az attribútum típusok szerint</li>
+          <li><strong>Címkék:</strong> Szöveges címkék a pontok mellett</li>
+          <li><strong>Ikonok:</strong> Speciális ikonok az attribútum típusokhoz</li>
+        </ul>
+      </div>
+
+      <div class="attribute-box">
+        <h4>Szakasz attribútumok megjelenítése</h4>
+        <ul>
+          <li><strong>Színes vonalak:</strong> Különböző színek a szakaszokhoz</li>
+          <li><strong>Szimbólumok:</strong> Speciális szimbólumok a szakaszok mentén</li>
+          <li><strong>Méret jelzések:</strong> Szélesség és magasság jelzések</li>
+        </ul>
+      </div>
+
+      <h3>Megjelenítési beállítások</h3>
+
+      <div class="step">
+        <h4>1. Beállítások panel megnyitása</h4>
+        <p>Kattintson a beállítások lapra az oldalsávban.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Attribútum beállítások</h4>
+        <p>Keresse meg az attribútum beállításokat a beállítások panelben.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Megjelenítés testreszabása</h4>
+        <p>Állítsa be az attribútumok megjelenítését:</p>
+        <ul>
+          <li><strong>Láthatóság:</strong> Attribútum típusok megjelenítése/elrejtése</li>
+          <li><strong>Színek:</strong> Attribútum színek módosítása</li>
+          <li><strong>Méret:</strong> Attribútum méretek beállítása</li>
+        </ul>
+      </div>
+
+      <h2>Attribútumok exportálása</h2>
+
+      <h3>JSON exportálás</h3>
+      <div class="step">
+        <h4>1. Exportálás indítása</h4>
+        <p>A "Fájl" menüben válassza az "Exportálás" opciót.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Formátum kiválasztása</h4>
+        <p>Válassza a JSON formátumot az attribútumok megőrzéséhez.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Fájl mentése</h4>
+        <p>Adja meg a fájlnevet és mentse a fájlt.</p>
+      </div>
+
+      <h2>Attribútum kezelési tippek</h2>
+
+      <div class="info">
+        <h3>Hatékony attribútum kezelés</h3>
+        <ul>
+          <li>Használjon konzisztens elnevezési konvenciókat</li>
+          <li>Dokumentálja az attribútum típusokat</li>
+          <li>Rendszeresen exportálja az attribútum adatokat</li>
+          <li>Használja a színeket a jobb áttekinthetőséghez</li>
+        </ul>
+      </div>
+
+      <div class="info">
+        <h3>Adatminőség javítása</h3>
+        <ul>
+          <li>Validálja az attribútum adatokat</li>
+          <li>Ellenőrizze a koordináta pontosságot</li>
+          <li>Használjon standardizált értékeket</li>
+          <li>Dokumentálja a mérési módszereket</li>
+        </ul>
+      </div>
+
+      <h2>Gyakori problémák és megoldások</h2>
+
+      <div class="warning">
+        <h3>Attribútum nem jelenik meg</h3>
+        <p><strong>Probléma:</strong> Az attribútum nem látható a 3D viewportban.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze a láthatósági beállításokat a beállítások panelben.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Attribútum szerkesztő nem nyílik meg</h3>
+        <p><strong>Probléma:</strong> Az attribútum szerkesztő nem nyílik meg.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze, hogy a kiválasztott elem rendelkezik-e attribútumokkal.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Attribútum adatok elvesznek</h3>
+        <p><strong>Probléma:</strong> Az attribútum adatok nem kerülnek mentésre.</p>
+        <p><strong>Megoldás:</strong> Kattintson az "Attribútumok frissítése" gombra a mentéshez.</p>
+      </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte az attribútumok kezelését, folytathatja az
+        <a href="07-eszkozok.html">eszközök és számítások</a> fejezettel, ahol megtanulja a Speleo Studio speciális
+        eszközeinek használatát.</p
+      >
+
+      <div class="nav">
+        <a href="05-felmereek-szerkesztese.html">← Előző: Felmérések szerkesztése</a>
+        <a href="index.html">Főoldal</a>
+        <a href="07-eszkozok.html">Következő: Eszközök →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
