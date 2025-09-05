@@ -325,9 +325,9 @@ export class Sidebar {
     // Update position toggle button background
     if (this.positionToggle) {
       if (newPosition === 'left') {
-        this.positionToggle.style.background = 'no-repeat center/70% url(../icons/sidebar_right.svg)';
+        this.positionToggle.style.background = 'no-repeat center/70% url(icons/sidebar_right.svg)';
       } else {
-        this.positionToggle.style.background = 'no-repeat center/70% url(../icons/sidebar_left.svg)';
+        this.positionToggle.style.background = 'no-repeat center/70% url(icons/sidebar_left.svg)';
       }
     }
   }
@@ -341,7 +341,7 @@ export class Sidebar {
       this.setPosition('left');
       // Update position toggle button background for left position
       if (this.positionToggle) {
-        this.positionToggle.style.background = 'no-repeat center/70% url(../icons/sidebar_right.svg)';
+        this.positionToggle.style.background = 'no-repeat center/70% url(icons/sidebar_right.svg)';
       }
     } else {
       this.setPosition('right');

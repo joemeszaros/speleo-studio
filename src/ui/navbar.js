@@ -150,14 +150,14 @@ class NavigationBar {
         elements : [
           {
             name  : i18n.t('ui.navbar.menu.tools.dipStrike'),
-            icon  : './icons/strike.svg',
+            icon  : 'icons/strike.svg',
             click : () => {
               new DipStrikeCalculatorTool().show();
             }
           },
           {
             name  : i18n.t('ui.navbar.menu.tools.shortestPath'),
-            icon  : './icons/shortest_path.svg',
+            icon  : 'icons/shortest_path.svg',
             click : () => new ShortestPathTool(this.db, this.options, this.scene).show()
           }
         ]
@@ -178,18 +178,18 @@ class NavigationBar {
     return [
       {
         tooltip : i18n.t('ui.navbar.tooltips.zoomFit'),
-        icon    : './icons/zoom_fit.svg',
+        icon    : 'icons/zoom_fit.svg',
         click   : () => this.scene.view.fitScreen(this.scene.computeBoundingBox())
       },
       {
         tooltip   : i18n.t('ui.navbar.tooltips.zoomIn'),
-        icon      : './icons/zoom_in.svg',
+        icon      : 'icons/zoom_in.svg',
         click     : () => this.scene.view.zoomIn(),
         shortkeys : ['crtl⊕+', 'crtl⊕=']
       },
       {
         tooltip   : i18n.t('ui.navbar.tooltips.zoomOut'),
-        icon      : './icons/zoom_out.svg',
+        icon      : 'icons/zoom_out.svg',
         click     : () => this.scene.view.zoomOut(),
         shortkeys : ['crtl⊕-', 'crtl⊕_']
       },
@@ -197,7 +197,7 @@ class NavigationBar {
         tooltip     : i18n.t('ui.navbar.tooltips.plan'),
         selectable  : true,
         selectGroup : 'view',
-        icon        : './icons/plan.svg',
+        icon        : 'icons/plan.svg',
         click       : () => this.scene.changeView('plan'),
         shortkeys   : ['crtl⊕shift⊕1', 'crtl⊕shift⊕!']
       },
@@ -205,7 +205,7 @@ class NavigationBar {
         tooltip     : i18n.t('ui.navbar.tooltips.profile'),
         selectable  : true,
         selectGroup : 'view',
-        icon        : './icons/profile.svg',
+        icon        : 'icons/profile.svg',
         click       : () => this.scene.changeView('profile'),
         shortkeys   : ['crtl⊕shift⊕2', 'crtl⊕shift⊕@']
       },
@@ -214,18 +214,18 @@ class NavigationBar {
         selectable  : true,
         selectGroup : 'view',
         selected    : true,
-        icon        : './icons/3d.svg',
+        icon        : 'icons/3d.svg',
         click       : () => this.scene.changeView('spatial'),
         shortkeys   : ['crtl⊕shift⊕3', 'crtl⊕shift⊕#'] // alternative to use key codes
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.boundingBox'),
-        icon    : './icons/bounding_box.svg',
+        icon    : 'icons/bounding_box.svg',
         click   : () => this.scene.toogleBoundingBox()
       },
       {
         tooltip  : i18n.t('ui.navbar.tooltips.lineColor'),
-        icon     : './icons/cl_color.svg',
+        icon     : 'icons/cl_color.svg',
         elements : [
           { id: 'global', title: i18n.t('ui.navbar.lineColorModes.global') },
           { id: 'gradientByZ', title: i18n.t('ui.navbar.lineColorModes.gradientByZ') },
@@ -242,18 +242,18 @@ class NavigationBar {
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.grid'),
-        icon    : './icons/grid.svg',
+        icon    : 'icons/grid.svg',
         click   : () => this.scene.grid.roll()
       },
       {
         tooltip   : i18n.t('ui.navbar.tooltips.locate'),
-        icon      : './icons/locate.svg',
+        icon      : 'icons/locate.svg',
         click     : (event) => this.interactive.showLocateStationPanel(event.clientX),
         shortkeys : ['crtl⊕L']
       },
       {
         tooltip     : i18n.t('ui.navbar.tooltips.raycasting'),
-        icon        : './icons/raycasting.svg',
+        icon        : 'icons/raycasting.svg',
         selectable  : true,
         selectGroup : 'raycasting',
         selected    : this.interactive.raycastingEnabled,
@@ -262,13 +262,13 @@ class NavigationBar {
       },
       {
         tooltip   : i18n.t('ui.navbar.tooltips.rotation'),
-        icon      : './icons/rotate.svg',
+        icon      : 'icons/rotate.svg',
         click     : () => new RotationTool(this.scene).show(),
         shortkeys : ['crtl⊕R']
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.fullscreen'),
-        icon    : './icons/fullscreen.svg',
+        icon    : 'icons/fullscreen.svg',
         click   : () => this.#toggleFullscreen()
       }
 
