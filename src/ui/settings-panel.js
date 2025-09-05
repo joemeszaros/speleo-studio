@@ -735,8 +735,9 @@ export class SettingsPanel {
 
       // Set initial state based on visibility
       if (visibilityKey.show === false) {
-        eyeIcon.style.opacity = '0.3';
-        eyeIcon.textContent = '👁️‍🗨️';
+        eyeIcon.innerHTML = '<span class="eye-strikethrough">👁️</span>';
+      } else {
+        eyeIcon.innerHTML = '👁️';
       }
 
       eyeIcon.onclick = (e) => {
@@ -747,11 +748,9 @@ export class SettingsPanel {
 
         // Update icon appearance
         if (newValue) {
-          eyeIcon.style.opacity = '1';
-          eyeIcon.textContent = '👁️';
+          eyeIcon.innerHTML = '👁️';
         } else {
-          eyeIcon.style.opacity = '0.3';
-          eyeIcon.textContent = '👁️‍🗨️';
+          eyeIcon.innerHTML = '<span class="eye-strikethrough">👁️</span>';
         }
       };
 

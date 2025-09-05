@@ -706,6 +706,23 @@
   opacity: 0.8 !important;
 }
 
+.visibility-toggle .eye-strikethrough {
+  position: relative;
+  display: inline-block;
+}
+
+.visibility-toggle .eye-strikethrough::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ff4444;
+  transform: translateY(-50%) rotate(-45deg);
+  transform-origin: center;
+}
+
 .gradient-color-control {
   padding: 8px !important;
   margin-bottom: 6px !important;
