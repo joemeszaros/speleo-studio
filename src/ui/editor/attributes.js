@@ -395,7 +395,9 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         field            : 'distance',
         editor           : false,
         mutatorClipboard : this.baseTableFunctions.floatAccessor,
-        formatter        : this.baseTableFunctions.floatFormatter('0')
+        formatter        : this.baseTableFunctions.floatFormatter('0'),
+        bottomCalc       : this.baseTableFunctions.sumDistance
+
       },
       {
         title            : i18n.t('ui.editors.attributes.columns.attribute'),

@@ -89,6 +89,10 @@ class Editor extends BaseEditor {
   }
 
   baseTableFunctions = {
+
+    sumDistance : (_values, data) => {
+      return data.reduce((sum, v) => sum + (v.distance || 0), 0).toFixed(2);
+    },
     statusIcon : (cell) => {
       const data = cell.getData();
       if (data.status === 'ok') {

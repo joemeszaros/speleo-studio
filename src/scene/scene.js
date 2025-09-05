@@ -71,7 +71,9 @@ class MyScene {
     this.cameraMovementThreshold = 0.1; // Minimum camera movement to trigger update
 
     const loader = new FontLoader();
-    loader.load('fonts/helvetiker_regular.typeface.json', (font) => this.setFont(font));
+    loader.load('fonts/helvetiker_regular.typeface.json', (font) => {
+      this.setFont(font);
+    });
 
     this.container = container;
     this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
