@@ -528,7 +528,8 @@
       "failedToLoadProjectOrCaveFromUrl": "Failed to load project or cave from URL: {error}",
       "failedToInitIndexedDb": "Failed to initialize database",
       "cavesReallyFar": "Cave {name} is too far from previously imported caves: {caves}",
-      "unknownDistance": "Unknown distance, no EOV coordinates for one of the caves"
+      "unknownDistance": "Unknown distance, no EOV coordinates for one of the caves",
+      "surveyNameAlreadyExists": "Survey name {name} exists multiple times"
     }
   },
   "menu": {

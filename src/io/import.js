@@ -9,7 +9,7 @@ import { MeridianConvergence } from '../utils/geo.js';
 import { EOVCoordinateWithElevation, StationWithCoordinate, GeoData, CoordinateSytem } from '../model/geo.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
-
+import { i18n } from '../i18n/i18n.js';
 /**
  * Base class for cave importerers
  */
@@ -127,6 +127,9 @@ class PolygonImporter extends Importer {
 
         if (surveyName !== undefined) {
           const surveyNameStr = surveyName.substring(13);
+          if (surveys.find((s) => s.name === surveyNameStr)) {
+            throw new Error(i18n.t('errors.import.surveyNameAlreadyExists', { name: surveyNameStr }));
+          }
           const surveyTeamName = this.getNextLineValue(
             lineIterator,
             'Survey team',
