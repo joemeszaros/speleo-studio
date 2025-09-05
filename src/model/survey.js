@@ -207,7 +207,7 @@ class SurveyTeam {
   }
 
   static fromPure(pure) {
-    pure.members = pure.members !== undefined ? pure.members.map((m) => SurveyTeamMember.fromPure(m)) : [];
+    pure.members = pure?.members !== undefined ? pure.members.map((m) => SurveyTeamMember.fromPure(m)) : [];
     return Object.assign(new SurveyTeam(), pure);
   }
 }
