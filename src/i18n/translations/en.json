@@ -596,13 +596,14 @@
   },
   "attributes": {
     "names": {
-      "speleotheme": "speleotheme",
+      "speleothem": "speleothem",
       "bedding": "bedding",
       "fault": "fault",
       "rope": "rope",
       "co": "co",
       "label": "label",
-      "exploration": "exploration"
+      "exploration": "exploration",
+      "bat": "bat"
     },
     "params": {
       "dip": "dip",
@@ -615,7 +616,8 @@
       "value": "value",
       "year": "year",
       "month": "month",
-      "day": "day"
+      "day": "day",
+      "popuplation": "popuplation"
     }
   },
   "common": {

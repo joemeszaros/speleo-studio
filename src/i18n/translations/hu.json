@@ -329,7 +329,7 @@
           "name": "Barlang neve",
           "settlement": "Település",
           "country": "Ország",
-          "region": "Régió",
+          "region": "Régió / Tájegység",
           "catasterCode": "Kataszter szám",
           "date": "Dátum",
           "eovCoordinates": "EOV koordináták",
@@ -596,13 +596,14 @@
   },
   "attributes": {
     "names": {
-      "speleotheme": "szpeleotéma",
+      "speleothem": "szpeleotéma",
       "bedding": "rétegdőlés",
       "fault": "vető",
       "rope": "kötél",
       "co": "co",
       "label": "címke",
-      "exploration": "felfedezés"
+      "exploration": "felfedezés",
+      "bat": "denevér"
     },
     "params": {
       "dip": "dőlés",
@@ -615,7 +616,8 @@
       "value": "érték",
       "year": "év",
       "month": "hónap",
-      "day": "nap"
+      "day": "nap",
+      "popuplation": "populáció"
     }
   },
   "common": {

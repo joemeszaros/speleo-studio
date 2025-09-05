@@ -977,6 +977,7 @@ class MyScene {
       stationName,
       stationPosition : position.clone()
     };
+    sprite.layers.set(1);
 
     targetGroup.add(sprite);
   }

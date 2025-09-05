@@ -13,14 +13,26 @@ const attributeDefintions = {
     },
     {
       id   : 3,
+      name : 'formation'
+    },
+    {
+      id   : 4,
+      name : 'fauna'
+    },
+    {
+      id   : 5,
+      name : 'climatology'
+    },
+    {
+      id   : 6,
       name : 'metadata'
     }
   ],
   definitions : [
     {
       id       : 1,
-      category : 1,
-      name     : 'speleotheme',
+      category : 3,
+      name     : 'speleothem',
       params   : {
         type : {
           required : true,
@@ -87,8 +99,8 @@ const attributeDefintions = {
       }
     },
     {
-      id       : 14,
-      category : 2,
+      id       : 5,
+      category : 5,
       name     : 'co',
       params   : {
         value : {
@@ -97,8 +109,8 @@ const attributeDefintions = {
       }
     },
     {
-      id     : 5,
-      type   : 3,
+      id     : 6,
+      type   : 6,
       name   : 'label',
       params : {
         value : {
@@ -107,8 +119,8 @@ const attributeDefintions = {
       }
     },
     {
-      id       : 14,
-      category : 3,
+      id       : 7,
+      category : 6,
       name     : 'exploration',
       params   : {
         year : {
@@ -127,6 +139,44 @@ const attributeDefintions = {
           validators : {
             min : 1,
             max : 31
+          }
+        }
+      }
+    },
+    {
+      id       : 8,
+      category : 6,
+      name     : 'exploration',
+      params   : {
+        year : {
+          type     : 'int',
+          required : true
+        },
+        month : {
+          type       : 'int',
+          validators : {
+            min : 1,
+            max : 12
+          }
+        },
+        day : {
+          type       : 'int',
+          validators : {
+            min : 1,
+            max : 31
+          }
+        }
+      }
+    },
+    {
+      id       : 9,
+      category : 4,
+      name     : 'bat',
+      params   : {
+        popuplation : {
+          type       : 'int',
+          validators : {
+            min : 0
           }
         }
       }

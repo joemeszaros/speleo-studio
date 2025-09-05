@@ -246,7 +246,7 @@ export class SettingsPanel {
             i18n.t('ui.settingsPanel.labels.stationIconScale'),
             this.options.scene.stationAttributes.iconScale,
             0.1,
-            3,
+            20,
             0.1,
             (value) => {
               this.options.scene.stationAttributes.iconScale = value;
@@ -370,7 +370,7 @@ export class SettingsPanel {
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.labelSize'),
           this.options.scene.labels.size,
-          8,
+          0.1,
           32,
           1,
           (value) => {
