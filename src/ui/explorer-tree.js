@@ -329,7 +329,7 @@ export class ExplorerTree {
 
     const items = [
       {
-        icon    : '📝',
+        icon    : '🔠',
         title   : i18n.t('ui.explorer.menu.editCaveData'),
         onclick : () => {
           editorSetup(
@@ -419,7 +419,7 @@ export class ExplorerTree {
         }
       },
       {
-        icon    : '🗑️',
+        icon    : '🎨',
         title   : i18n.t('ui.explorer.menu.setCaveColor'),
         onclick : () => {
           const colorPicker = document.createElement('input');

@@ -177,24 +177,109 @@ class SceneInteraction {
   }
 
   getSelectedStationDetails(st) {
-    let stLabel;
-    if (st.meta.survey !== undefined && st.meta.cave !== undefined) {
-      stLabel = `${st.meta.cave.name} -> ${st.meta.survey.name} -> ${st.name}`;
-    } else {
-      stLabel = st.name;
-    }
-
-    return stLabel;
+    // Use the same configuration as pointed station details
+    return this.getPointedStationDetails(st);
   }
 
   getPointedStationDetails(st) {
-    let stLabel;
-    if (st.meta.survey !== undefined && st.meta.cave !== undefined) {
-      stLabel = `${st.meta.cave.name} -> ${st.meta.survey.name} -> ${st.name}`;
-    } else {
-      stLabel = st.name;
+    // Ensure stationDetails configuration exists
+    if (!this.options.ui.stationDetails) {
+      this.options.ui.stationDetails = {
+        caveName     : true,
+        surveyName   : true,
+        stationName  : true,
+        xCoordinate  : false,
+        yCoordinate  : false,
+        zCoordinate  : false,
+        eovY         : false,
+        eovX         : false,
+        eovElevation : false,
+        type         : false,
+        position     : false,
+        shots        : false
+      };
     }
-    return stLabel;
+
+    const config = this.options.ui.stationDetails;
+    const details = [];
+
+    // Check if cave name, survey name, and station name are all enabled
+    const hasCaveName = config.caveName && st.meta.cave !== undefined;
+    const hasSurveyName = config.surveyName && st.meta.survey !== undefined;
+    const hasStationName = config.stationName;
+
+    // Use arrow format for cave -> survey -> station if all three are enabled
+    if (hasCaveName && hasSurveyName && hasStationName) {
+      details.push(`${st.meta.cave.name} → ${st.meta.survey.name} → ${st.name}`);
+    } else {
+      // Use individual names with pipe separators
+      if (hasCaveName) {
+        details.push(st.meta.cave.name);
+      }
+      if (hasSurveyName) {
+        details.push(st.meta.survey.name);
+      }
+      if (hasStationName) {
+        details.push(st.name);
+      }
+    }
+
+    // Individual coordinates
+    const coords = [];
+    if (config.xCoordinate) {
+      coords.push(`X: ${st.position.x.toFixed(2)}`);
+    }
+    if (config.yCoordinate) {
+      coords.push(`Y: ${st.position.y.toFixed(2)}`);
+    }
+    if (config.zCoordinate) {
+      coords.push(`Z: ${st.position.z.toFixed(2)}`);
+    }
+    if (coords.length > 0) {
+      details.push('(' + coords.join(', ') + ')');
+    }
+
+    // EOV coordinates
+    if (st.meta.coordinates && st.meta.coordinates.eov) {
+      const eovCoords = [];
+      if (config.eovY) {
+        eovCoords.push(`EOV Y: ${st.meta.coordinates.eov.y.toFixed(2)}`);
+      }
+      if (config.eovX) {
+        eovCoords.push(`EOV X: ${st.meta.coordinates.eov.x.toFixed(2)}`);
+      }
+      if (config.eovElevation) {
+        eovCoords.push(`EOV Elev: ${st.meta.coordinates.eov.elevation.toFixed(2)}`);
+      }
+      if (eovCoords.length > 0) {
+        details.push('(' + eovCoords.join(', ') + ')');
+      }
+    }
+
+    // Type
+    if (config.type) {
+      details.push(`${i18n.t('common.type')}: ${i18n.t(`params.shotType.${st.meta.type}`)}`);
+    }
+
+    // Position (x,y,z)
+    if (config.position) {
+      details.push(`(${st.position.x.toFixed(2)}, ${st.position.y.toFixed(2)}, ${st.position.z.toFixed(2)})`);
+    }
+
+    // Shots in compact format
+    if (config.shots) {
+      const shots = st.meta.shots.map((shw) => `${shw.shot.from}→${shw.shot.to}(${shw.shot.length.toFixed(1)}m)`);
+      if (shots.length > 0) {
+        details.push(`Shots: ${shots.join(', ')}`);
+      }
+    }
+
+    // If no details are configured, fall back to basic name
+    if (details.length === 0) {
+      return st.name;
+    }
+
+    return details.join(' | ');
   }
 
   showSphere(sphereToShow) {
@@ -441,7 +526,7 @@ class SceneInteraction {
         ${i18n.t('ui.panels.distance.z')}: ${diffVector.z.toFixed(3)}<br>
         ${i18n.t('ui.panels.distance.azimuth')}: ${radsToDegrees(polar.azimuth).toFixed(3)}°<br>
         ${i18n.t('ui.panels.distance.clino')}: ${radsToDegrees(polar.clino).toFixed(3)}°<br>
-        ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(Math.pow(diffVector.x, 2), Math.pow(diffVector.y, 2)).toFixed(3)}<br>
+        ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(diffVector.x * diffVector.x + diffVector.y * diffVector.y).toFixed(3)}<br>
         ${i18n.t('ui.panels.distance.spatial')}: ${polar.distance.toFixed(3)}
         `;
     contentElmnt.appendChild(content);
@@ -479,8 +564,13 @@ class SceneInteraction {
     );
     const shotDetails = shots
       .map((r) => {
+        const comment = r.shot.comment
+          ? r.shot.comment.length > 40
+            ? r.shot.comment.substring(0, 40) + '...'
+            : r.shot.comment
+          : 'no comment';
         return `
-        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} m, ${r.shot.azimuth.toFixed(2)}°, ${r.shot.clino.toFixed(2)}°) - ${r.survey.name}`;
+        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} m, ${r.shot.azimuth.toFixed(2)}°, ${r.shot.clino.toFixed(2)}°) - ${r.survey.name} - ${comment}`;
       })
       .join('<br>');
 

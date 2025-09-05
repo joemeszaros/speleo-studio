@@ -408,6 +408,97 @@ export class SettingsPanel {
       true
     );
 
+    this.createStationDetailsSection(
+      i18n.t('ui.settingsPanel.sections.stationDetails'),
+      [
+        // Column 1: Core names
+        this.createCompactCheckboxGroup([
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.caveName'),
+            this.options.ui.stationDetails.caveName,
+            (value) => {
+              this.options.ui.stationDetails.caveName = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.surveyName'),
+            this.options.ui.stationDetails.surveyName,
+            (value) => {
+              this.options.ui.stationDetails.surveyName = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.stationName'),
+            this.options.ui.stationDetails.stationName,
+            (value) => {
+              this.options.ui.stationDetails.stationName = value;
+            }
+          )
+        ]),
+        // Column 2: Local coordinates
+        this.createCompactCheckboxGroup([
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.xCoordinate'),
+            this.options.ui.stationDetails.xCoordinate,
+            (value) => {
+              this.options.ui.stationDetails.xCoordinate = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.yCoordinate'),
+            this.options.ui.stationDetails.yCoordinate,
+            (value) => {
+              this.options.ui.stationDetails.yCoordinate = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.zCoordinate'),
+            this.options.ui.stationDetails.zCoordinate,
+            (value) => {
+              this.options.ui.stationDetails.zCoordinate = value;
+            }
+          )
+        ]),
+        // Column 3: EOV coordinates
+        this.createCompactCheckboxGroup([
+          this.createCheckbox(i18n.t('ui.settingsPanel.labels.eovY'), this.options.ui.stationDetails.eovY, (value) => {
+            this.options.ui.stationDetails.eovY = value;
+          }),
+          this.createCheckbox(i18n.t('ui.settingsPanel.labels.eovX'), this.options.ui.stationDetails.eovX, (value) => {
+            this.options.ui.stationDetails.eovX = value;
+          }),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.eovElevation'),
+            this.options.ui.stationDetails.eovElevation,
+            (value) => {
+              this.options.ui.stationDetails.eovElevation = value;
+            }
+          )
+        ]),
+        // Column 4: Other options
+        this.createCompactCheckboxGroup([
+          this.createCheckbox(i18n.t('ui.settingsPanel.labels.type'), this.options.ui.stationDetails.type, (value) => {
+            this.options.ui.stationDetails.type = value;
+          }),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.position'),
+            this.options.ui.stationDetails.position,
+            (value) => {
+              this.options.ui.stationDetails.position = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.shots'),
+            this.options.ui.stationDetails.shots,
+            (value) => {
+              this.options.ui.stationDetails.shots = value;
+            }
+          )
+        ])
+      ],
+      true
+    );
+
     // Color Gradient Section
     this.createColorGradientSection();
   }
@@ -437,6 +528,44 @@ export class SettingsPanel {
 
     section.appendChild(content);
     this.container.appendChild(section);
+  }
+
+  createStationDetailsSection(title, items, collapsed = false) {
+    const section = document.createElement('div');
+    section.className = 'settings-group';
+
+    const titleElement = document.createElement('h3');
+    titleElement.className = 'settings-group-title';
+    titleElement.innerHTML = `
+      <span class="settings-group-toggle">${collapsed ? '▶' : '▼'}</span>
+      <span>${title}</span>
+    `;
+    titleElement.onclick = () => this.toggleSection(section);
+    section.appendChild(titleElement);
+
+    const content = document.createElement('div');
+    content.className = 'settings-group-content compact-layout';
+    if (collapsed) {
+      content.style.display = 'none';
+    }
+
+    items.forEach((item) => {
+      content.appendChild(item);
+    });
+
+    section.appendChild(content);
+    this.container.appendChild(section);
+  }
+
+  createCompactCheckboxGroup(checkboxes) {
+    const container = document.createElement('div');
+    container.className = 'compact-checkbox-group';
+
+    checkboxes.forEach((checkbox) => {
+      container.appendChild(checkbox);
+    });
+
+    return container;
   }
 
   toggleSection(section) {

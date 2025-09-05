@@ -183,6 +183,7 @@ export class ProjectSystem {
   }
 
   async saveCaveInProject(projectId, cave) {
+    console.log(`💾 Saving cave ${cave.name} in project ${projectId}`);
     return await this.caveSystem.saveCave(cave, projectId);
   }
 

@@ -2,7 +2,7 @@ import * as U from '../../utils/utils.js';
 import { AttributesDefinitions } from '../../attributes.js';
 import { SectionHelper } from '../../section.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
-
+import { i18n } from '../../i18n/i18n.js';
 class BaseEditor {
   constructor(panel) {
     this.panel = panel;
@@ -191,15 +191,15 @@ class Editor extends BaseEditor {
         return undefined;
       }
     },
-    attributeHeaderFilter : (headerValue, _rowValue, rowData) => {
+    attributesHeaderFilter : (headerValue, _rowValue, rowData) => {
       let attrs;
       if (rowData.attribute !== undefined) {
         attrs = [rowData.attribute];
       } else if (rowData.attributes !== undefined) {
         attrs = rowData.attributes;
       }
-      if (attrs !== undefined) {
-        const formatted = AttributesDefinitions.getAttributesAsString(attrs);
+      if (attrs !== undefined && attrs && Array.isArray(attrs) && attrs.length > 0) {
+        const formatted = AttributesDefinitions.getAttributesAsString(attrs, i18n);
         return formatted.includes(headerValue);
       } else {
         return false;
@@ -232,6 +232,7 @@ class Editor extends BaseEditor {
         return converter(result.attributes);
       }
     }
+
   };
 
 }

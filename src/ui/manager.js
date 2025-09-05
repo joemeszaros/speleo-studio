@@ -89,8 +89,13 @@ class ProjectManager {
   async onSurveyChanged(e) {
     //TODO : consider survey here and only recalculate following surveys
     // If eov coordinates are changed, the first survey is passed in the event
+    const reasons = e.detail.reasons;
     const cave = e.detail.cave;
-    await this.reloadCave(cave);
+
+    // we do not need to reload the cave if only the metadata has changed
+    if (reasons.length > 1 || (reasons.length === 1 && reasons[0] !== 'metadata')) {
+      await this.reloadCave(cave);
+    }
     await this.saveCave(cave);
   }
 

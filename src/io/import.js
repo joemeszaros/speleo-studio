@@ -106,7 +106,7 @@ class PolygonImporter extends Importer {
       const lineIterator = lines.entries();
       U.iterateUntil(lineIterator, (v) => v !== '*** Project ***');
       const projectName = this.getNextLineValue(lineIterator, 'Project name');
-      const settlement = this.getNextLineValue(lineIterator, 'Project place');
+      const region = this.getNextLineValue(lineIterator, 'Project place');
       const catasterCode = this.getNextLineValue(lineIterator, 'Project code');
       const madeBy = this.getNextLineValue(lineIterator, 'Made by');
       const date = this.getNextLineValue(
@@ -115,7 +115,7 @@ class PolygonImporter extends Importer {
         (x) => U.getPolygonDate(U.parseMyFloat(x)),
         (x) => x instanceof Date
       );
-      const metadata = new CaveMetadata(settlement, catasterCode, date, madeBy);
+      const metadata = new CaveMetadata(undefined, region, undefined, catasterCode, date, madeBy);
       let geoData, fixPointName, convergence;
       const surveys = [];
       const stations = new Map();

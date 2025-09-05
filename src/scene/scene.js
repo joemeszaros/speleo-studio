@@ -1138,6 +1138,7 @@ class MyScene {
           {
             cave        : cave,
             survey      : station.survey,
+            shots       : station.shots,
             type        : station.type,
             coordinates : station.coordinates
           }
@@ -1158,6 +1159,7 @@ class MyScene {
           {
             cave        : cave,
             survey      : station.survey,
+            shots       : station.shots,
             type        : station.type,
             coordinates : station.coordinates
           }
@@ -1172,6 +1174,7 @@ class MyScene {
           {
             cave        : cave,
             survey      : station.survey,
+            shots       : station.shots,
             type        : station.type,
             coordinates : station.coordinates
           }

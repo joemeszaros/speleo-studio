@@ -56,13 +56,18 @@ class CaveEditor extends Editor {
 
   #setupEditor(contentElmnt) {
     this.caveHasChanged = false;
+    this.metadataHasChanged = false;
 
     this.caveData = {
       name     : this.cave?.name ?? '',
       metadata : {
         settlement   : this.cave?.metadata?.settlement ?? '',
         catasterCode : this.cave?.metadata?.catasterCode ?? '',
-        date         : this.cave?.metadata?.date ? U.formatDateISO(this.cave.metadata.date) : ''
+        date         : this.cave?.metadata?.date ? U.formatDateISO(this.cave.metadata.date) : '',
+        country      : this.cave?.metadata?.country ?? '',
+        region       : this.cave?.metadata?.region ?? '',
+        creator      : this.cave?.metadata?.creator ?? ''
+
       },
       coordinates :
         this.cave?.geoData?.coordinates.map((c) => {
@@ -84,35 +89,108 @@ class CaveEditor extends Editor {
     };
 
     const form = U.node`<form class="editor"></form>`;
-    const fields = [
-      { label: i18n.t('ui.editors.caveSheet.fields.name'), id: 'name', type: 'text', required: true },
-      { label: i18n.t('ui.editors.caveSheet.fields.settlement'), id: 'settlement', type: 'text', required: true },
-      { label: i18n.t('ui.editors.caveSheet.fields.catasterCode'), id: 'catasterCode', type: 'text', required: true },
-      { label: i18n.t('ui.editors.caveSheet.fields.date'), id: 'date', type: 'date', required: true }
-    ];
-    fields.forEach((f) => {
-      const value = f.id === 'name' ? this.caveData.name : this.caveData.metadata[f.id];
+
+    // Create 2-column layout
+    const formGrid = U.node`<div class="sheet-editor-grid"></div>`;
+    form.appendChild(formGrid);
+
+    // Column 1: Name and Settlement
+    const column1 = U.node`<div class="sheet-editor-column"></div>`;
+    formGrid.appendChild(column1);
+
+    // Column 2: Cataster Code and Date
+    const column2 = U.node`<div class="sheet-editor-column"></div>`;
+    formGrid.appendChild(column2);
+
+    // Helper function to create form field
+    const createField = (f, container) => {
+      const value = f.id === 'name' ? this.caveData.name : (this.caveData.metadata[f.id] ?? '');
       const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${value}" ${f.required ? 'required' : ''}>`;
       input.oninput = (e) => {
         if (f.id === 'name') {
           if (this.caveData.name !== e.target.value) {
             this.caveHasChanged = true;
           }
-
           this.caveData.name = e.target.value;
         } else {
-          if (this.caveData.metadata[f.id] !== e.target.value) {
+          if (this.caveData.metadata[f.id] === undefined) {
+            this.metadataHasChanged = true;
+            this.caveHasChanged = true;
+          } else if (this.caveData.metadata[f.id] !== e.target.value) {
+            this.metadataHasChanged = true;
             this.caveHasChanged = true;
           }
           this.caveData.metadata[f.id] = e.target.value;
         }
       };
-      const label = U.node`<label class="medium-width" for="${f.id}">${f.label}: </label>`;
-      label.appendChild(input);
-      form.appendChild(label);
-    });
-    form.appendChild(U.node`<br/>`);
-    form.appendChild(U.node`<br/>`);
+      const label = U.node`<label class="sheet-editor-label" for="${f.id}">${f.label}: </label>`;
+      const fieldContainer = U.node`<div class="sheet-editor-field"></div>`;
+      fieldContainer.appendChild(label);
+      fieldContainer.appendChild(input);
+      container.appendChild(fieldContainer);
+    };
+
+    // Column 1: Name and Settlement
+    createField(
+      {
+        label    : i18n.t('ui.editors.caveSheet.fields.name'),
+        id       : 'name',
+        type     : 'text',
+        required : true
+      },
+      column1
+    );
+
+    // Column 2: Cataster Code and Date
+    createField(
+      {
+        label    : i18n.t('ui.editors.caveSheet.fields.catasterCode'),
+        id       : 'catasterCode',
+        type     : 'text',
+        required : true
+      },
+      column1
+    );
+
+    createField(
+      {
+        label    : i18n.t('ui.editors.caveSheet.fields.date'),
+        id       : 'date',
+        type     : 'date',
+        required : true
+      },
+      column1
+    );
+
+    createField(
+      {
+        label    : i18n.t('ui.editors.caveSheet.fields.country'),
+        id       : 'country',
+        type     : 'text',
+        required : false
+      },
+      column2
+    );
+
+    createField(
+      {
+        label    : i18n.t('ui.editors.caveSheet.fields.region'),
+        id       : 'region',
+        type     : 'text',
+        required : false
+      },
+      column2
+    );
+
+    createField(
+      {
+        label    : i18n.t('ui.editors.caveSheet.fields.settlement'),
+        id       : 'settlement',
+        type     : 'text',
+        required : false
+      },
+      column2
+    );
 
     const coordsDiv = U.node`<div class="coords-section"><b>${i18n.t('ui.editors.caveSheet.fields.eovCoordinates')}:</b><br/><br/></div>`;
     this.coordsList = U.node`<div class="coords-list"></div>`;
@@ -159,9 +237,12 @@ class CaveEditor extends Editor {
         }
 
         const caveMetadata = new CaveMetadata(
+          this.caveData.metadata.country,
+          this.caveData.metadata.region,
           this.caveData.metadata.settlement,
           this.caveData.metadata.catasterCode,
-          new Date(this.caveData.metadata.date)
+          new Date(this.caveData.metadata.date),
+          this.caveData.metadata.creator
         );
         const geoData = new GeoData(
           CoordinateSytem.EOV,
@@ -230,12 +311,26 @@ class CaveEditor extends Editor {
 
           // deleting an eov coordinate will change the survey data
           // an alias can change survey data
-          if ((aliasesHasChanged || !this.cave.geoData.isEqual(oldGeoData)) && this.cave.surveys.length > 0) {
+          if (
+            this.metadataHasChanged ||
+            ((aliasesHasChanged || !this.cave.geoData.isEqual(oldGeoData)) && this.cave.surveys.length > 0)
+          ) {
+            const reasons = [];
+            if (this.metadataHasChanged) {
+              reasons.push('metadata');
+            }
+            if (aliasesHasChanged) {
+              reasons.push('alias');
+            }
+            if (!this.cave.geoData.isEqual(oldGeoData)) {
+              reasons.push('geodata');
+            }
             document.dispatchEvent(
               new CustomEvent('surveyChanged', {
                 detail : {
-                  cave   : this.cave,
-                  survey : this.cave.surveys[0]
+                  reasons : reasons,
+                  cave    : this.cave,
+                  survey  : this.cave.surveys[0]
                 }
               })
             );

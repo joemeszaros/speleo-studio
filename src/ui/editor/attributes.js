@@ -302,6 +302,7 @@ class BaseAttributeEditor extends Editor {
     addButton.onclick = () => {
       const input = add.querySelector('#new-attribute-value');
       const selectedOption = add.querySelector(`#attributeNames option[value="${input.value}"]`);
+      if (!selectedOption) return;
       const originalName = selectedOption.getAttribute('originalName');
       const aName = input.value;
       if (aNamesWithIds.find((a) => a.name === aName)) {
@@ -1016,7 +1017,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
       {
         title            : i18n.t('ui.editors.attributes.columns.attribute'),
         field            : 'attribute',
-        headerFilterFunc : this.baseTableFunctions.attributeHeaderFilter,
+        headerFilterFunc : this.baseTableFunctions.attributesHeaderFilter,
         headerFilter     : 'input',
         formatter        : (cell) =>
           this.baseTableFunctions.atrributesFormatter(

@@ -7,7 +7,8 @@
           "new": "Új barlang",
           "open": "Barlang(ok) megnyitása",
           "export": "Barlang(ok) exportálása",
-          "openModel": "Model megnyitása"
+          "openModel": "Model megnyitása",
+          "print": "Nyomtatás"
         },
         "project": {
           "name": "Projekt",
@@ -85,6 +86,7 @@
         "stationLabels": "Pont címkék",
         "appearance": "Megjelenés",
         "colorGradient": "Szín átmenet",
+        "stationDetails": "Pont részletek (láblécben)",
         "print": "Nyomtatás"
       },
       "groups": {
@@ -118,7 +120,19 @@
         "addColorStop": "Átmenet hozzáadása",
         "remove": "Eltávolítás",
         "printLayout": "Elrendezés",
-        "gridStep": "Rács lépés"
+        "gridStep": "Rács lépés",
+        "caveName": "Barlang név",
+        "surveyName": "Felmérés név",
+        "stationName": "Pont név",
+        "xCoordinate": "X koordináta",
+        "yCoordinate": "Y koordináta",
+        "zCoordinate": "Z koordináta",
+        "eovY": "EOV Y koordináta",
+        "eovX": "EOV X koordináta",
+        "eovElevation": "EOV magasság",
+        "type": "Típus",
+        "position": "Pozíció (X,Y,Z)",
+        "shots": "Mérések listája"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"
@@ -314,6 +328,8 @@
         "fields": {
           "name": "Barlang neve",
           "settlement": "Település",
+          "country": "Ország",
+          "region": "Régió",
           "catasterCode": "Kataszter szám",
           "date": "Dátum",
           "eovCoordinates": "EOV koordináták",

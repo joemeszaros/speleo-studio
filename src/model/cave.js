@@ -203,7 +203,9 @@ class CaveSection {
 
 class CaveMetadata {
 
-  constructor(settlement, catasterCode, date, creator) {
+  constructor(country, region, settlement, catasterCode, date, creator) {
+    this.country = country;
+    this.region = region;
     this.settlement = settlement;
     this.catasterCode = catasterCode;
     this.date = date;
@@ -212,9 +214,12 @@ class CaveMetadata {
 
   toExport() {
     return {
+      country      : this.country,
+      region       : this.region,
       settlement   : this.settlement,
       catasterCode : this.catasterCode,
-      date         : this.date.getTime()
+      date         : this.date.getTime(),
+      creator      : this.creator
     };
   }
 

@@ -536,11 +536,12 @@ class SurveyEditor extends Editor {
     });
 
     columns.push({
-      title        : i18n.t('ui.editors.survey.columns.attributes'),
-      field        : 'attributes',
-      editor       : false,
-      headerFilter : 'input',
-      formatter    : (cell) => {
+      title            : i18n.t('ui.editors.survey.columns.attributes'),
+      field            : 'attributes',
+      editor           : false,
+      headerFilter     : 'input',
+      headerFilterFunc : this.baseTableFunctions.attributesHeaderFilter,
+      formatter        : (cell) => {
         const attrs = cell.getValue();
         if (attrs && Array.isArray(attrs) && attrs.length > 0) {
           // Use the same formatter as the attributes editor
@@ -554,7 +555,7 @@ class SurveyEditor extends Editor {
                     return value !== undefined && value !== null ? value : '';
                   })
                   .join(',');
-                return `${attr.name}(${paramValues})`;
+                return `${i18n.t('attributes.names.' + attr.name)}(${paramValues})`;
               }
               return '';
             })
@@ -822,24 +823,28 @@ class SurveySheetEditor extends BaseEditor {
     };
 
     const form = U.node`<form class="editor"></form>`;
-    const fields = [
-      { label: i18n.t('ui.editors.surveySheet.fields.name'), id: 'name', type: 'text', required: true },
-      { label: i18n.t('ui.editors.surveySheet.fields.start'), id: 'start', type: 'text' },
-      { label: i18n.t('ui.editors.surveySheet.fields.date'), id: 'date', type: 'date', required: true },
-      {
-        label    : i18n.t('ui.editors.surveySheet.fields.declination'),
-        id       : 'declination',
-        type     : 'number',
-        step     : 'any',
-        required : true
-      },
-      { label: i18n.t('ui.editors.surveySheet.fields.team'), id: 'team', type: 'text', required: false }
-    ];
+
+    // Create 2-column layout
+    const formGrid = U.node`<div class="sheet-editor-grid"></div>`;
+    form.appendChild(formGrid);
+
+    // Column 1: Survey name and date
+    const column1 = U.node`<div class="sheet-editor-column"></div>`;
+    formGrid.appendChild(column1);
+
+    // Column 2: Start station and declination
+    const column2 = U.node`<div class="sheet-editor-column"></div>`;
+    formGrid.appendChild(column2);
+
+    // Team field (full width)
+    const teamField = U.node`<div class="sheet-editor-full-width"></div>`;
+    formGrid.appendChild(teamField);
 
     this.surveyHasChanged = false;
     this.nameHasChanged = false;
 
-    fields.forEach((f) => {
+    // Helper function to create form field
+    const createField = (f, container) => {
       let value = this.formData[f.id];
       if (value !== undefined && f.formatter !== undefined) {
         value = f.formatter(value);
@@ -859,13 +864,65 @@ class SurveySheetEditor extends BaseEditor {
           this.formData[f.id] = e.target.value;
         }
       };
-      const label = U.node`<label class="medium-width" for="${f.id}">${f.label}: </label>`;
-      label.appendChild(input);
-      form.appendChild(label);
-    });
+      const label = U.node`<label class="sheet-editor-label" for="${f.id}">${f.label}: </label>`;
+      const fieldContainer = U.node`<div class="sheet-editor-field"></div>`;
+      fieldContainer.appendChild(label);
+      fieldContainer.appendChild(input);
+      container.appendChild(fieldContainer);
+    };
 
-    form.appendChild(U.node`<br/>`);
-    form.appendChild(U.node`<br/>`);
+    // Column 1: Survey name and date
+    createField(
+      {
+        label    : i18n.t('ui.editors.surveySheet.fields.name'),
+        id       : 'name',
+        type     : 'text',
+        required : true
+      },
+      column1
+    );
+
+    createField(
+      {
+        label    : i18n.t('ui.editors.surveySheet.fields.date'),
+        id       : 'date',
+        type     : 'date',
+        required : true
+      },
+      column1
+    );
+
+    // Column 2: Start station and declination
+    createField(
+      {
+        label : i18n.t('ui.editors.surveySheet.fields.start'),
+        id    : 'start',
+        type  : 'text'
+      },
+      column2
+    );
+
+    createField(
+      {
+        label    : i18n.t('ui.editors.surveySheet.fields.declination'),
+        id       : 'declination',
+        type     : 'number',
+        step     : 'any',
+        required : true
+      },
+      column2
+    );
+
+    // Team field (full width)
+    createField(
+      {
+        label    : i18n.t('ui.editors.surveySheet.fields.team'),
+        id       : 'team',
+        type     : 'text',
+        required : false
+      },
+      teamField
+    );
     const columns = U.node`<div class="columns"></div>`;
     form.appendChild(columns);
 
@@ -1062,8 +1119,9 @@ class SurveySheetEditor extends BaseEditor {
   #emitSurveyChanged() {
     const event = new CustomEvent('surveyChanged', {
       detail : {
-        cave   : this.cave,
-        survey : this.survey
+        reasons : ['shots'],
+        cave    : this.cave,
+        survey  : this.survey
       }
     });
     document.dispatchEvent(event);

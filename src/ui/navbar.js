@@ -102,13 +102,20 @@ class NavigationBar {
                 this.exportPanel
               ).show();
             },
-            shortkeys : ['crtl⊕s']
+            shortkeys : ['crtl⊕h']
           },
           {
             name  : i18n.t('ui.navbar.menu.file.openModel'),
             click : function () {
               document.getElementById('modelInput').click();
             }
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.file.print'),
+            click : () => {
+              window.print();
+            },
+            shortkeys : ['crtl⊕p']
           }
         ]
       },
@@ -346,6 +353,7 @@ class NavigationBar {
           }
         });
       };
+
       b.appendChild(document.createTextNode(name));
       d.appendChild(b);
       d.appendChild(c);

@@ -1192,6 +1192,69 @@ body {
   width: 200px;
 }
 
+.editor input[type='text'].large-width {
+  width: 80%;
+}
+
+.editor .large-width {
+  width: 400px;
+}
+
+/* Sheet editor form layout */
+.sheet-editor-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.sheet-editor-column {
+  flex: 1;
+  min-width: 200px;
+}
+
+.sheet-editor-full-width {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.sheet-editor-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sheet-editor-label {
+  min-width: 120px;
+  font-weight: 500;
+  margin-right: 10px;
+  text-align: right;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.sheet-editor-field input {
+  outline: none;
+  color: azure;
+  display: inline-block;
+  padding: 4px 0px;
+}
+
+.sheet-editor-field label {
+  margin-top: 0px; /* Remove the top margin from editor class input label */
+  margin-left: 0px;
+}
+
+/* Make name input longer */
+.sheet-editor-field input[name='name'] {
+  min-width: 250px;
+}
+
+.sheet-editor-field input[name='team'] {
+  max-width: 250px;
+}
+
 .popup button {
   font-size: 12px;
   border: 1px solid #328e3a;

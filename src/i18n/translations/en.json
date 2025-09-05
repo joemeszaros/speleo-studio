@@ -7,7 +7,8 @@
           "new": "New cave",
           "open": "Open cave(s)",
           "export": "Export cave(s)",
-          "openModel": "Open model"
+          "openModel": "Open model",
+          "print": "Print"
         },
         "project": {
           "name": "Project",
@@ -85,6 +86,7 @@
         "stationLabels": "Station Labels",
         "appearance": "Appearance",
         "colorGradient": "Color Gradient",
+        "stationDetails": "Station details (in footer)",
         "print": "Print"
       },
       "groups": {
@@ -118,7 +120,19 @@
         "addColorStop": "Add Color Stop",
         "remove": "Remove",
         "printLayout": "Print Layout",
-        "gridStep": "Grid Step"
+        "gridStep": "Grid Step",
+        "caveName": "Cave name",
+        "surveyName": "Survey name",
+        "stationName": "Station name",
+        "xCoordinate": "X coordinate",
+        "yCoordinate": "Y coordinate",
+        "zCoordinate": "Z coordinate",
+        "eovY": "EOV Y coordinate",
+        "eovX": "EOV X coordinate",
+        "eovElevation": "EOV elevation",
+        "type": "Type",
+        "position": "Position (X,Y,Z)",
+        "shots": "Shots list"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"
@@ -313,6 +327,8 @@
         "fields": {
           "name": "Name",
           "settlement": "Settlement",
+          "country": "Country",
+          "region": "Region",
           "catasterCode": "Cataster code",
           "date": "Date",
           "eovCoordinates": "EOV coordinates",

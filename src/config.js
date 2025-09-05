@@ -127,6 +127,20 @@ export const DEFAULT_OPTIONS = {
       position  : 'right', // 'left' or 'right'
       width     : 350,
       collapsed : false
+    },
+    stationDetails : {
+      caveName     : true,
+      surveyName   : true,
+      stationName  : true,
+      xCoordinate  : false,
+      yCoordinate  : false,
+      zCoordinate  : false,
+      eovY         : false,
+      eovX         : false,
+      eovElevation : false,
+      type         : false,
+      position     : false, // x,y,z coordinates
+      shots        : false // list of shots in compact format
     }
   },
   import : {
@@ -830,6 +844,8 @@ export class ConfigChanges {
     } else if (path.startsWith('scene.grid.')) {
       this.handleGridChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.sidebar.')) {
+      // do nothing, no action on sidebar changes
+    } else if (path.startsWith('ui.stationDetails.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('print.layout')) {
       // do nothing, no action on print layout changes
