@@ -5,7 +5,7 @@ import { SurveyEditor } from './editor/survey.js';
 import { showInfoPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
 import { i18n } from '../i18n/i18n.js';
-
+import * as THREE from 'three';
 class ProjectManager {
 
   /**
@@ -403,13 +403,18 @@ class ProjectManager {
       });
 
       const boundingBox = this.scene.computeBoundingBox();
-      this.scene.grid.adjust(boundingBox);
+      const [w, h, d] = boundingBox.getSize(new THREE.Vector3());
 
-      this.scene.views.forEach((view) => {
-        view.initiated = false;
-      });
+      // if the center lines or splays are not visible
+      if (w > 0 && h > 0 && d > 0) {
+        this.scene.grid.adjust(boundingBox);
 
-      this.scene.view.activate(boundingBox);
+        this.scene.views.forEach((view) => {
+          view.initiated = false;
+        });
+
+        this.scene.view.activate(boundingBox);
+      }
     }
 
     this.explorer.addCave(cave);

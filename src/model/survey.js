@@ -207,7 +207,7 @@ class SurveyTeam {
   }
 
   static fromPure(pure) {
-    pure.members = pure?.members !== undefined ? pure.members.map((m) => SurveyTeamMember.fromPure(m)) : [];
+    pure.members = pure.members !== undefined ? pure.members.map((m) => SurveyTeamMember.fromPure(m)) : [];
     return Object.assign(new SurveyTeam(), pure);
   }
 }
@@ -252,7 +252,7 @@ class SurveyMetadata {
 
   static fromPure(pure) {
     pure.date = new Date(pure.date); // unix epoch in millis
-    pure.team = SurveyTeam.fromPure(pure.team);
+    pure.team = pure.team !== undefined ? SurveyTeam.fromPure(pure.team) : undefined;
     pure.instruments =
       pure.instruments !== undefined ? pure.instruments.map((i) => Object.assign(new SurveyInstrument(), i)) : [];
     return Object.assign(new SurveyMetadata(), pure);
