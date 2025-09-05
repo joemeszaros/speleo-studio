@@ -3,7 +3,8 @@ import { ShotType } from './model/survey.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
 
 export const DEFAULT_OPTIONS = {
-  scene : {
+  isDefault : true,
+  scene     : {
 
     zoomStep              : 0.1,
     sectionLineMultiplier : 2,
@@ -171,7 +172,6 @@ export class ObjectObserver {
     if (this.watchedObjects.has(obj) || typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
       return obj;
     }
-
     const watched = new Proxy(obj, {
       set : (target, property, value) => {
         const oldValue = target[property];
@@ -345,8 +345,12 @@ export class ConfigManager {
       console.log('No saved configuration found, using defaults');
       return defaultConfig;
     }
-
+    savedConfig.isDefault = false;
     return savedConfig;
+  }
+
+  static getDefaults() {
+    return DEFAULT_OPTIONS;
   }
 
   /**
@@ -504,20 +508,20 @@ export class ConfigManager {
    * @param {Object} source - Source object
    * @returns {Object} - Merged object
    */
-  static deepMerge(source, target) {
+  static deepMerge(target, source) {
 
-    for (const [key, value] of Object.entries(target)) {
+    for (const [key, value] of Object.entries(source)) {
       if (value && typeof value === 'object' && !Array.isArray(value)) {
-        if (!source[key] || (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key]))) {
-          if (!source[key]) {
-            source[key] = {};
+        if (!target[key] || (target[key] && typeof target[key] === 'object' && !Array.isArray(target[key]))) {
+          if (!target[key]) {
+            target[key] = {};
           }
-          this.deepMerge(source[key], value);
+          this.deepMerge(target[key], value);
         } else {
-          source[key] = value;
+          target[key] = value;
         }
       } else {
-        source[key] = value;
+        target[key] = value;
       }
     }
 

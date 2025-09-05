@@ -952,10 +952,11 @@ export class SettingsPanel {
 
   resetConfig() {
     if (confirm(i18n.t('ui.settingsPanel.confirm.resetConfig'))) {
-      ConfigManager.clear();
-      const loadedConfig = ConfigManager.loadOrDefaults();
-      ConfigManager.deepMerge(this.options, loadedConfig);
-      this.options.print.layout = 'portrait';
+      const defaultConfig = ConfigManager.getDefaults();
+      if (!this.options.isDefault) {
+        ConfigManager.clear();
+        ConfigManager.deepMerge(this.options, defaultConfig);
+      }
       this.render();
     }
   }
