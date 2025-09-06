@@ -9,7 +9,7 @@
   <body>
     <div class="container">
       <div class="logo">
-        <img src="../images/logo.png" alt="Speleo Studio Logo" />
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
       </div>
       <h1>Speleo Studio - Felhasználói Kézikönyv</h1>
 
@@ -19,6 +19,17 @@
           >A Speleo Studio egy átfogó webes alkalmazás barlang vizualizációhoz és felmérés kezeléséhez. Ez a kézikönyv
           segít megérteni és használni az alkalmazás összes funkcióját, a kezdő lépésektől a haladó funkciókig.</p
         >
+
+        <!-- Search Box -->
+        <div class="search-container">
+          <h3>🔍 Keresés a kézikönyvben</h3>
+          <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Keresés a kézikönyv tartalmában..." />
+            <button id="searchButton">Keresés</button>
+          </div>
+          <div id="searchResults" class="search-results"></div>
+        </div>
+
         <div style="text-align: center; margin-top: 20px">
           <a
             href="pdf-instructions.html"
@@ -159,5 +170,7 @@
         </div>
       </div>
     </div>
+
+    <script src="search.js"></script>
   </body>
 </html>
