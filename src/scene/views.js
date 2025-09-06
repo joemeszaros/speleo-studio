@@ -10,6 +10,9 @@ import { ProfileViewControl, PlanViewControl, SpatialViewControl } from './contr
 
 class View {
 
+  // Dedicated ratio values commonly used in cave surveying
+  static DEDICATED_RATIOS = [5, 10, 25, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+
   constructor(name, camera, domElement, scene, dpi = 96, ratioIndicatorWidth = 200) {
     this.name = name;
     this.camera = camera;
@@ -97,14 +100,73 @@ class View {
     this.zoomCameraTo(this.control.zoom * fac);
   }
 
+  #roundToDedicatedRatio(ratio) {
+    // Find the closest dedicated ratio
+    let closest = View.DEDICATED_RATIOS[0];
+    let minDiff = Math.abs(ratio - closest);
+
+    for (const dedicated of View.DEDICATED_RATIOS) {
+      const diff = Math.abs(ratio - dedicated);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = dedicated;
+      }
+    }
+
+    return closest;
+  }
+
   onZoomLevelChange(level) {
     const cmInPixels = this.dpi / 2.54;
     const worldWidthInMeters = this.camera.width / level;
-    const indicatorWidthInMeters = worldWidthInMeters / (this.scene.width / this.ratioIndicator.width);
     const screenInCentimeters = window.screen.width / cmInPixels;
-    this.ratio = Math.floor((worldWidthInMeters * 100) / screenInCentimeters);
-    const ratioText = `${formatDistance(indicatorWidthInMeters)} - M 1:${this.ratio}`;
+    const rawRatio = (worldWidthInMeters * 100) / screenInCentimeters;
+
+    // Round to dedicated ratio
+    this.ratio = this.#roundToDedicatedRatio(rawRatio);
+
+    // Calculate dynamic ruler width based on the rounded ratio
+    // Target: ruler should represent a nice round distance (e.g., 1m, 5m, 10m, 50m, 100m)
+    const targetRulerDistance = this.getTargetRulerDistance(this.ratio);
+    const rulerWidthInMeters = targetRulerDistance;
+    const rulerWidthInPixels = (rulerWidthInMeters / worldWidthInMeters) * this.scene.width;
+
+    this.ratioIndicator.width = Math.max(50, Math.min(400, rulerWidthInPixels)); // between 50-400px
+    this.ratioIndicator.scale.set(this.ratioIndicator.width, 15, 1);
+
+    const ratioText = `${formatDistance(rulerWidthInMeters)} - M 1:${this.ratio}`;
     this.ratioText.update(`${ratioText}`);
+  }
+
+  getTargetRulerDistance(ratio) {
+    // Map ratios to appropriate ruler distances
+    const ratioToDistance = {
+      5     : 1, // 1m for very detailed views
+      10    : 1, // 1m for very detailed views
+      25    : 5, // 5m for detailed views
+      50    : 5, // 5m for detailed views
+      100   : 10, // 10m for medium views
+      200   : 20, // 20m for medium views
+      500   : 50, // 50m for overview views
+      1000  : 100, // 100m for overview views
+      2000  : 200, // 200m for wide views
+      5000  : 500, // 500m for very wide views
+      10000 : 1000 // 1000m for extremely wide views
+    };
+
+    // Find the closest dedicated ratio
+    let closest = View.DEDICATED_RATIOS[0];
+    let minDiff = Math.abs(ratio - closest);
+
+    for (const dedicated of View.DEDICATED_RATIOS) {
+      const diff = Math.abs(ratio - dedicated);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = dedicated;
+      }
+    }
+
+    return ratioToDistance[closest];
   }
 
   onResize(width, height) {
@@ -807,8 +869,12 @@ class ProfileView extends View {
   onZoomLevelChange(level) {
     super.onZoomLevelChange(level);
     const worldHeightInMeters = this.camera.height / level;
-    const verticalIndicatorHeightInMeters =
-      worldHeightInMeters / (this.scene.height / this.verticalRatioIndicatorHeight);
+    // Use the same target distance as horizontal ruler for consistency
+    const targetRulerDistance = this.getTargetRulerDistance(this.ratio);
+    const verticalIndicatorHeightInMeters = targetRulerDistance;
+    const verticalIndicatorHeightInPixels = (verticalIndicatorHeightInMeters / worldHeightInMeters) * this.scene.height;
+    this.verticalRatioIndicatorHeight = Math.max(50, Math.min(600, verticalIndicatorHeightInPixels));
+    this.verticalRuler.scale.set(15, this.verticalRatioIndicatorHeight, 1);
     this.verticalRatioText.update(`${formatDistance(verticalIndicatorHeightInMeters)}`);
   }
 
