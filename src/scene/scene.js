@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
 import { SurveyHelper } from '../survey.js';
 import { Grid } from './grid.js';
@@ -35,7 +34,7 @@ class MyScene {
    * @param {Database} db - The database of the application, containing caves and other infomations
    * @param {*} - Collection of line and geometry materials
    */
-  constructor(options, db, materials, container, viewHelperContainer, overview) {
+  constructor(options, db, materials, font, container, viewHelperContainer, overview) {
     this.options = options;
     this.db = db;
     this.materials = materials;
@@ -61,7 +60,7 @@ class MyScene {
     this.startPoints3DGroup = new THREE.Group();
     this.startPoints3DGroup.name = 'starting points';
     this.startPointObjects = new Map(); // Map to store starting point objects for each cave
-    this.stationFont = undefined;
+    this.stationFont = font;
 
     // Camera tracking for optimized billboarding
     this.lastCameraPosition = new THREE.Vector3();
@@ -69,11 +68,6 @@ class MyScene {
     this.framesSinceLastBillboardUpdate = 0;
     this.billboardUpdateThreshold = 2; // Update every 2 frames when camera moves
     this.cameraMovementThreshold = 0.1; // Minimum camera movement to trigger update
-
-    const loader = new FontLoader();
-    loader.load('fonts/helvetiker_regular.typeface.json', (font) => {
-      this.setFont(font);
-    });
 
     this.container = container;
     this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
@@ -173,10 +167,6 @@ class MyScene {
 
     window.addEventListener('resize', () => this.onWindowResize());
     document.addEventListener('viewport-resized', () => this.onViewportResized());
-  }
-
-  setFont(font) {
-    this.stationFont = font;
   }
 
   setBackground(val) {

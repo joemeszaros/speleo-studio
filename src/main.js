@@ -23,10 +23,12 @@ import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { SurfaceHelper } from './surface.js';
 import { PrintUtils } from './utils/print.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
 class Main {
 
   constructor() {
+    const loader = new FontLoader();
 
     i18n.init().then(() => {
       // Setup welcome panel translations
@@ -52,17 +54,28 @@ class Main {
       this.editorStateSystem = new EditorStateSystem(this.databaseManager);
       this.declinationCache = new DeclinationCache(this.databaseManager);
 
-      // Initialize the application
-      this.#initializeApp(db, options, observer, attributeDefs);
+      loader.load(
+        'fonts/helvetiker_regular.typeface.json',
+        (font) => {
+          // Initialize the application
+          this.#initializeApp(db, options, observer, attributeDefs, font);
+        },
+        () => {},
+        (error) => {
+          console.error(i18n.t('errors.init.failedToLoadFont'), error);
+          showErrorPanel(i18n.t('errors.init.failedToLoadFont'));
+        }
+      );
     });
+
   }
 
-  async #initializeApp(db, options, observer, attributeDefs) {
+  async #initializeApp(db, options, observer, attributeDefs, font) {
     try {
       await this.databaseManager.init();
     } catch (error) {
-      console.error('Failed to initialize database:', error);
-      showErrorPanel(i18n.t('errors.import.failedToInitIndexedDb'));
+      console.error(i18n.t('errors.init.failedToInitIndexedDb'), error);
+      showErrorPanel(i18n.t('errors.init.failedToInitIndexedDb'));
     }
 
     const materials = new Materials(options).materials;
@@ -72,6 +85,7 @@ class Main {
       options,
       db,
       materials,
+      font,
       document.querySelector('#viewport'),
       document.querySelector('#view-helper'),
       sceneOverview

@@ -526,10 +526,13 @@
       "failedToDownloadFile": "Nem lehet letölteni a(z) {name} fájlt: {error}",
       "failedToLoadCaveFromUrl": "Nem lehet betölteni a(z) {name} barlangot a URL-ből: {error}",
       "failedToLoadProjectOrCaveFromUrl": "Nem lehet betölteni a(z) {name} projektet és barlangot a URL-ből: {error}",
-      "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist",
       "cavesReallyFar": "A(z) {name} nevű barlang túl messze van a korábban importált barlangoktól: {caves}",
       "unknownDistance": "Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál",
       "surveyNameAlreadyExists": "A(z) {name} nevű felmérés többször szerepel"
+    },
+    "init": {
+      "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",
+      "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist"
     }
   },
   "menu": {
