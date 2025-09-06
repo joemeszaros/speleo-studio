@@ -5,7 +5,7 @@ import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
-import { formatDistance } from '../utils/utils.js';
+import { degreesToRads, formatDistance, radsToDegrees } from '../utils/utils.js';
 import { ProfileViewControl, PlanViewControl, SpatialViewControl } from './control.js';
 
 class View {
@@ -34,6 +34,19 @@ class View {
     scene.sprites3DGroup.add(ratioTextSprite);
     ratioTextSprite.onclick = () => {
       this.#setRatio();
+    };
+
+    this.compass = this.#createCompass(100);
+    this.compass.visible = false;
+    scene.sprites3DGroup.add(this.compass);
+
+    this.rotationText = this.#createRotationText();
+    this.rotationText.name = `rotation text ${this.name}`;
+    this.rotationText.sprite.visible = false;
+    const rotationTextSprite = this.rotationText.getSprite();
+    scene.sprites3DGroup.add(rotationTextSprite);
+    rotationTextSprite.onclick = () => {
+      this.setCompassRotation();
     };
 
     this.spriteCamera = new THREE.OrthographicCamera(
@@ -71,6 +84,29 @@ class View {
     sprite.width = width; // custom property
     sprite.name = 'ratio ruler';
     return sprite;
+  }
+
+  #createCompass(size) {
+    const map = new THREE.TextureLoader().load('images/compass.png');
+    map.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.SpriteMaterial({ map: map });
+    const sprite = new THREE.Sprite(material);
+    sprite.center.set(0.5, 0.5);
+    sprite.scale.set(size, size, 1);
+    sprite.position.set(this.scene.width / 2 - 60, -this.scene.height / 2 + 60, 1); // bottom right
+    sprite.name = 'compass';
+    return sprite;
+  }
+
+  #createRotationText() {
+    const position = new THREE.Vector3(this.scene.width / 2 - 60, -this.scene.height / 2 + 120, 1);
+    return new TextSprite(
+      '0°',
+      position,
+      { size: 24, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
+      0.5,
+      `rotation text ${this.name}`
+    );
   }
 
   #setRatio() {
@@ -181,6 +217,11 @@ class View {
 
     this.ratioText.getSprite().position.set(0, -this.scene.height / 2 + 45, 1);
     this.ratioIndicator.position.set(0, -this.scene.height / 2 + 20, 1);
+
+    // Update compass and rotation text positions
+    this.compass.position.set(width / 2 - 60, -height / 2 + 60, 1);
+    this.rotationText.sprite.position.set(width / 2 - 60, -height / 2 + 120, 1);
+
     this.spriteCamera.left = -width / 2;
     this.spriteCamera.right = width / 2;
     this.spriteCamera.top = height / 2;
@@ -338,6 +379,8 @@ class View {
       this.frustumFrame.visible = true;
       this.ratioIndicator.visible = true;
       this.ratioText.sprite.visible = true;
+      this.compass.visible = true;
+      this.rotationText.sprite.visible = true;
     }
 
     this.dispatchEvent('viewActivated', { name: this.name });
@@ -347,6 +390,8 @@ class View {
     if (this.initiated) {
       this.ratioIndicator.visible = false;
       this.ratioText.sprite.visible = false;
+      this.compass.visible = false;
+      this.rotationText.sprite.visible = false;
       this.frustumFrame.visible = false;
     }
 
@@ -453,7 +498,18 @@ class SpatialView extends View {
   }
 
   onOrbitAdjustment(e) {
-    if (e.type === 'zoom') {
+    if (e.type === 'rotate') {
+      //Update compass rotation based on camera azimuth
+      let compassRotation = this.control.azimuth + Math.PI;
+      if (compassRotation < 0) {
+        compassRotation += 2 * Math.PI;
+      }
+      compassRotation = compassRotation % (2 * Math.PI);
+
+      this.compass.material.rotation = compassRotation;
+      // Update rotation text during rotation
+      this.#updateRotationText();
+    } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       this.updateFrustumFrame();
     }
@@ -545,10 +601,46 @@ class SpatialView extends View {
     }
   }
 
+  #updateRotationText() {
+    // For spatial view, calculate azimuth from camera position and target
+    let compassRotation = 2 * Math.PI - this.compass.material.rotation;
+    if (compassRotation === 2 * Math.PI) compassRotation = 0;
+    this.rotationText.update(`N ${radsToDegrees(compassRotation).toFixed(1)}°`);
+  }
+
+  setCompassRotation() {
+    // For spatial view, calculate current azimuth
+    const currentAzimuth = 2 * Math.PI - (this.control.azimuth + Math.PI);
+    const currentRotation = radsToDegrees(currentAzimuth).toFixed(1);
+
+    const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
+    if (rotationRaw === null) return;
+
+    const rotationValue = parseFloat(rotationRaw);
+    if (isNaN(rotationValue)) {
+      showWarningPanel(`Rotation '${rotationRaw}' is not a valid number`);
+      return;
+    }
+
+    let rotationRadians = 2 * Math.PI - (degreesToRads(rotationValue) + Math.PI);
+    if (rotationRadians < 0) rotationRadians += 2 * Math.PI;
+
+    this.control.setCameraOrientation(this.control.distance, rotationRadians, this.control.clino);
+
+    // Update frustum frame and render
+    this.updateFrustumFrame();
+    this.renderView();
+
+    // Dispatch rotation change event
+    this.control.dispatchEvent('orbitChange', { type: 'rotate', azimuth: rotationRadians });
+  }
+
   activate(boundingBox) {
     super.activate(boundingBox);
     this.control.enabled = true;
     this.viewHelperDomElement.style.display = 'block';
+    this.compass.material.rotation = 0;
+    this.#updateRotationText();
     this.renderView();
   }
 
@@ -561,7 +653,7 @@ class SpatialView extends View {
 
 class PlanView extends View {
 
-  constructor(scene, domElement, compassSize = 100) {
+  constructor(scene, domElement) {
     super('planView', View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
@@ -569,20 +661,6 @@ class PlanView extends View {
     this.overviewCamera.layers.enable(31);
 
     this.control = new PlanViewControl(this.camera, domElement);
-
-    this.compass = this.#createCompass(compassSize);
-    this.compass.visible = false;
-    scene.sprites3DGroup.add(this.compass);
-
-    // Add rotation text display above compass
-    this.rotationText = this.#createRotationText();
-    this.rotationText.name = 'rotation text';
-    this.rotationText.sprite.visible = false;
-    const rotationTextSprite = this.rotationText.getSprite();
-    scene.sprites3DGroup.add(rotationTextSprite);
-    rotationTextSprite.onclick = () => {
-      this.#setRotation();
-    };
 
     this.initiated = false;
     this.enabled = false;
@@ -672,39 +750,14 @@ class PlanView extends View {
 
   onResize(width, height) {
     super.onResize(width, height);
-    this.compass.position.set(width / 2 - 60, -height / 2 + 60, 1); // bottom right
-    this.rotationText.sprite.position.set(width / 2 - 60, -height / 2 + 120, 1); // above compass
-  }
-
-  #createCompass(size) {
-    const map = new THREE.TextureLoader().load('images/compass.png');
-    map.colorSpace = THREE.SRGBColorSpace;
-    const material = new THREE.SpriteMaterial({ map: map });
-    const sprite = new THREE.Sprite(material);
-    sprite.center.set(0.5, 0.5);
-    sprite.scale.set(size, size, 1);
-    sprite.position.set(this.scene.width / 2 - 60, -this.scene.height / 2 + 60, 1); // bottom right
-    sprite.name = 'compass';
-    return sprite;
-  }
-
-  #createRotationText() {
-    const position = new THREE.Vector3(this.scene.width / 2 - 60, -this.scene.height / 2 + 120, 1);
-    return new TextSprite(
-      '0°',
-      position,
-      { size: 24, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
-      0.5,
-      'rotation text'
-    );
   }
 
   #updateRotationText() {
-    const rotationDegrees = ((this.camera.rotation.z * 180) / Math.PI).toFixed(1);
+    const rotationDegrees = radsToDegrees(this.camera.rotation.z).toFixed(1);
     this.rotationText.update(`N ${rotationDegrees}°`);
   }
 
-  #setRotation() {
+  setCompassRotation() {
     const currentRotation = ((this.camera.rotation.z * 180) / Math.PI).toFixed(1);
     const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
     if (rotationRaw === null) return;
@@ -735,18 +788,13 @@ class PlanView extends View {
   activate(boundingBox) {
     super.activate(boundingBox);
     this.control.enabled = true;
-    this.compass.visible = true;
     this.compass.material.rotation = 0;
-    this.rotationText.sprite.visible = true;
     this.#updateRotationText();
     this.renderView();
-
   }
 
   deactivate() {
     super.deactivate();
-    this.compass.visible = false;
-    this.rotationText.sprite.visible = false;
     this.control.enabled = false;
   }
 }
@@ -762,7 +810,7 @@ class ProfileView extends View {
     this.overviewCamera.up = new THREE.Vector3(0, 0, 1);
 
     // Custom profile view camera control - camera moves on X-Y circle around cave
-    this.control = new ProfileViewControl(this.camera, this.domElement);
+    this.control = new ProfileViewControl(this.camera, this.domElement, Math.PI);
 
     // Add vertical ruler
     this.verticalRatioIndicatorHeight = verticalRatioIndicatorHeight;
@@ -798,7 +846,12 @@ class ProfileView extends View {
   }
 
   onOrbitAdjustment(e) {
-    if (e.type === 'zoom') {
+    if (e.type === 'rotate') {
+      // Update compass rotation based on camera angle (opposite direction + 180° shift like plan view)
+      this.compass.material.rotation = e.angle + Math.PI;
+      // Update rotation text during rotation
+      this.#updateRotationText();
+    } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       if (this.frustumFrame) this.updateFrustumFrame();
     }
@@ -949,11 +1002,47 @@ class ProfileView extends View {
     );
   }
 
+  #updateRotationText() {
+    // For profile view, use the camera angle from the control
+
+    let compassRotation = 2 * Math.PI - this.compass.material.rotation;
+    if (compassRotation < 0) compassRotation += 2 * Math.PI;
+    if (compassRotation === 2 * Math.PI) compassRotation = 0; // show 0 not 360
+    this.rotationText.update(`N ${radsToDegrees(compassRotation).toFixed(1)}°`);
+  }
+
+  setCompassRotation() {
+    const currentRotation = ((this.control.angle * 180) / Math.PI).toFixed(1);
+    const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
+    if (rotationRaw === null) return;
+
+    const rotationValue = parseFloat(rotationRaw);
+    if (isNaN(rotationValue)) {
+      showWarningPanel(`Rotation '${rotationRaw}' is not a valid number`);
+      return;
+    }
+
+    // Convert degrees to radians and set camera angle
+    let rotationRadians = degreesToRads(rotationValue) + (Math.PI % (2 * Math.PI));
+    if (rotationRadians < 0) rotationRadians += 2 * Math.PI;
+    this.control.angle = rotationRadians;
+    this.control.updateCameraPosition();
+
+    // Update frustum frame and render
+    this.updateFrustumFrame();
+    this.renderView();
+
+    // Dispatch rotation change event
+    this.control.dispatchEvent('orbitChange', { type: 'rotate', angle: rotationRadians });
+  }
+
   activate(boundingBox) {
     super.activate(boundingBox);
     this.control.enabled = true;
     this.verticalRuler.visible = true;
     this.verticalRatioText.sprite.visible = true;
+    this.compass.material.rotation = -this.control.angle + Math.PI;
+    this.#updateRotationText();
     this.renderView();
   }
 

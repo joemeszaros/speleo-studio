@@ -96,10 +96,11 @@ class ViewHelper extends Object3D {
       point.applyQuaternion(camera.quaternion);
 
       const x = domElement.offsetWidth - dim;
+      const y = domElement.offsetHeight - dim;
 
       renderer.clearDepth();
       renderer.getViewport(viewport);
-      renderer.setViewport(x, 0, dim, dim);
+      renderer.setViewport(x, y, dim, dim);
       renderer.render(this, orthoCamera);
       renderer.setViewport(viewport.x, viewport.y, viewport.z, viewport.w);
     };

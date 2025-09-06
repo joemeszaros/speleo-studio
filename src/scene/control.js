@@ -130,10 +130,10 @@ export class BaseViewControl {
 
 // Custom camera control for ProfileView - restricts camera to X-Y circle around 3d objects
 export class ProfileViewControl extends BaseViewControl {
-  constructor(camera, domElement) {
+  constructor(camera, domElement, angle = 0) {
     super(camera, domElement);
     this.radius = 100; // Distance from cave center
-    this.angle = 0;
+    this.angle = angle;
   }
 
   getRadius() {

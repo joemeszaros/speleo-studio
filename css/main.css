@@ -68,7 +68,7 @@ body {
   width: 128px;
   height: 128px;
   position: fixed;
-  bottom: 30px;
+  top: 30px;
   right: 0px;
   z-index: 102;
   /* Default position when sidebar is on the right */
