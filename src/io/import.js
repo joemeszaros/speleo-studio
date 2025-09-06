@@ -80,21 +80,25 @@ class PolygonImporter extends Importer {
 
   getNextLineValue(iterator, start, processor = (x) => x, validator = (x) => x.length > 0) {
     if (iterator.done) {
-      throw new Error(`Invalid survey, reached end of file`);
+      throw new Error(i18n.t('errors.import.invalidSurveyReachedEndOfFile'));
     }
     const nextLine = iterator.next();
     const lineNr = nextLine.value[0] + 1;
     if (!nextLine.value[1].startsWith(start)) {
-      throw new Error(`Invalid survey, expected ${start} at line ${lineNr}`);
+      throw new Error(i18n.t('errors.import.invalidSurveyExpectedValue', { start, lineNr }));
     }
     const parts = nextLine.value[1].split(':');
     if (parts.length !== 2) {
-      throw new Error(`Invalid survey, expected value separated by : at line ${lineNr}`);
+      throw new Error(i18n.t('errors.import.invalidSurveySeparator', { lineNr }));
     }
     const result = processor(parts[1].trim());
     if (!validator(result)) {
       throw new Error(
-        `Invalid survey, value at line ${lineNr}: "${nextLine.value[1].substring(0, 15)}" is not valid accoring to : ${validator.toString()}`
+        i18n.t('errors.import.invalidSurveyValidation', {
+          lineNr,
+          value : nextLine.value[1].substring(0, 15),
+          rule  : validator.toString()
+        })
       );
     }
     return result;
@@ -189,7 +193,9 @@ class PolygonImporter extends Importer {
               let eovCoordinate = new EOVCoordinateWithElevation(y, x, z);
               const eovErrors = eovCoordinate.validate();
               if (eovErrors.length > 0) {
-                throw new Error(`Invalid EOV coordinates for start position: ${eovErrors.join(',')}`);
+                throw new Error(
+                  i18n.t('errors.import.invalidEOVCoordinates', { name: surveyNameStr, error: eovErrors.join(',') })
+                );
               }
               startCoordinate = new StationWithCoordinate(fixPointName, eovCoordinate);
               geoData = new GeoData(CoordinateSytem.EOV, [startCoordinate]);
@@ -200,7 +206,11 @@ class PolygonImporter extends Importer {
 
             if (fixPointName != shots[0].from) {
               throw new Error(
-                `Invalid Polygon survey, fix point ${fixPointName} != first shot's from value (${shots[0].from})`
+                i18n.t('errors.import.invalidPolygonFixPoint', {
+                  name  : surveyNameStr,
+                  fixPointName,
+                  shots : shots[0].from
+                })
               );
             }
             //calculate convergence based on the first survey

@@ -528,7 +528,13 @@
       "failedToLoadProjectOrCaveFromUrl": "Failed to load project or cave from URL: {error}",
       "cavesReallyFar": "Cave {name} is too far from previously imported caves: {caves}",
       "unknownDistance": "Unknown distance, no EOV coordinates for one of the caves",
-      "surveyNameAlreadyExists": "Survey name {name} exists multiple times"
+      "surveyNameAlreadyExists": "Survey name {name} exists multiple times",
+      "invalidEOVCoordinates": "Invalid EOV coordinates for start position: {error}",
+      "invalidPolygonFixPoint": "Invalid Polygon survey {name}, fix point {fixPointName} != first shot's from value ({shots})",
+      "invalidSurveyReachedEndOfFile": "Invalid survey, reached end of file",
+      "invalidSurveyExpectedValue": "Invalid survey, expected {start} at line {lineNr}",
+      "invalidSurveySeparator": "Invalid survey, expected value separated by : at line {lineNr}",
+      "invalidSurveyValidation": "Invalid survey, value at line {lineNr}: \"{value}\" is not valid accoring to : {rule}"
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",

@@ -528,7 +528,13 @@
       "failedToLoadProjectOrCaveFromUrl": "Nem lehet betölteni a(z) {name} projektet és barlangot a URL-ből: {error}",
       "cavesReallyFar": "A(z) {name} nevű barlang túl messze van a korábban importált barlangoktól: {caves}",
       "unknownDistance": "Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál",
-      "surveyNameAlreadyExists": "A(z) {name} nevű felmérés többször szerepel"
+      "surveyNameAlreadyExists": "A(z) {name} nevű felmérés többször szerepel",
+      "invalidEOVCoordinates": "Ilyen EOV koordináták nincs megfelelő barlangban: {error}",
+      "invalidPolygonFixPoint": "Helytelen felmérés {name}, a(z) {fixPointName} fix pont nem egyezik az első mérés 'ponttól' nevével ({shots})",
+      "invalidSurveyReachedEndOfFile": "Helytelen felmérés, vége elé ért a fájl",
+      "invalidSurveyExpectedValue": "Helytelen felmérés, a {start} értéket vártam a {lineNr} sorban",
+      "invalidSurveySeparator": "Helytelen felmérés, a {lineNr} sorbant nem szeparáló : van",
+      "invalidSurveyValidation": "Helytelen felmérés, a {lineNr} sorb erteke {value} nem felel meg a szabálynak {rule}"
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",
