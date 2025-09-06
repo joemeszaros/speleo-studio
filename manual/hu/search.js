@@ -15,7 +15,8 @@ class ManualSearch {
       { url: '08-exportalas.html', title: 'Exportálás és megosztás' },
       { url: '09-beallitasok.html', title: 'Beállítások és testreszabás' },
       { url: '10-tippek-trukkok.html', title: 'Tippek és trükkök' },
-      { url: '11-tamogatas.html', title: 'Támogatás és adományozás' }
+      { url: '11-tamogatas.html', title: 'Támogatás és adományozás' },
+      { url: '12-about.html', title: 'A projektről' }
     ];
     this.pageContent = new Map();
     this.init();
