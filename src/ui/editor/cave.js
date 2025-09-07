@@ -244,16 +244,21 @@ class CaveEditor extends Editor {
           new Date(this.caveData.metadata.date),
           this.caveData.metadata.creator
         );
-        const geoData = new GeoData(
-          CoordinateSytem.EOV,
-          this.caveData.coordinates.map(
-            (c) =>
-              new StationWithCoordinate(
-                c.name,
-                new EOVCoordinateWithElevation(U.parseMyFloat(c.y), U.parseMyFloat(c.x), U.parseMyFloat(c.elevation))
-              )
-          )
-        );
+        let geoData;
+        if (this.caveData.coordinates.length > 0) {
+          geoData = undefined;
+        } else {
+          geoData = new GeoData(
+            CoordinateSytem.EOV,
+            this.caveData.coordinates.map(
+              (c) =>
+                new StationWithCoordinate(
+                  c.name,
+                  new EOVCoordinateWithElevation(U.parseMyFloat(c.y), U.parseMyFloat(c.x), U.parseMyFloat(c.elevation))
+                )
+            )
+          );
+        }
 
         // validate coordinates
         let errors = [];
@@ -322,7 +327,7 @@ class CaveEditor extends Editor {
             if (aliasesHasChanged) {
               reasons.push('alias');
             }
-            if (!this.cave.geoData.isEqual(oldGeoData)) {
+            if (this.cave.geoData && !this.cave.geoData.isEqual(oldGeoData)) {
               reasons.push('geodata');
             }
             document.dispatchEvent(

@@ -57,15 +57,15 @@ class PolygonImporter extends Importer {
     const shots = [];
     do {
       it = iterator.next();
-      const parts = it.value[1].split(/\t/);
+      const parts = it.value[1].split(/\t/).map((p) => p.trim());
       if (parts.length > 10) {
         // splays are not supported by polygon format
         shots.push(
           new Shot(
             i++,
-            ShotType.CENTER,
+            parts[1] === '' ? ShotType.SPLAY : ShotType.CENTER,
             parts[0],
-            parts[1],
+            parts[1] === '' ? undefined : parts[1],
             U.parseMyFloat(parts[2]),
             U.parseMyFloat(parts[3]),
             U.parseMyFloat(parts[4]),
@@ -109,10 +109,19 @@ class PolygonImporter extends Importer {
       const lines = wholeFileInText.split(/\r\n|\n/);
       const lineIterator = lines.entries();
       U.iterateUntil(lineIterator, (v) => v !== '*** Project ***');
+
+      const getOptional = (fieldName) =>
+        this.getNextLineValue(
+          lineIterator,
+          fieldName,
+          (x) => x,
+          () => true
+        );
+
       const projectName = this.getNextLineValue(lineIterator, 'Project name');
-      const region = this.getNextLineValue(lineIterator, 'Project place');
-      const catasterCode = this.getNextLineValue(lineIterator, 'Project code');
-      const madeBy = this.getNextLineValue(lineIterator, 'Made by');
+      const region = getOptional('Project place');
+      const catasterCode = getOptional('Project code');
+      const madeBy = getOptional('Made by');
       const date = this.getNextLineValue(
         lineIterator,
         'Made date',
@@ -134,12 +143,7 @@ class PolygonImporter extends Importer {
           if (surveys.find((s) => s.name === surveyNameStr)) {
             throw new Error(i18n.t('errors.import.surveyNameAlreadyExists', { name: surveyNameStr }));
           }
-          const surveyTeamName = this.getNextLineValue(
-            lineIterator,
-            'Survey team',
-            (x) => x,
-            () => true
-          ); // we allow empty team name
+          const surveyTeamName = getOptional('Survey team');
 
           const members = [];
           for (let i = 0; i < 5; i++) {
@@ -175,12 +179,7 @@ class PolygonImporter extends Importer {
             }
           }
 
-          fixPointName = this.getNextLineValue(
-            lineIterator,
-            'Fix point',
-            (x) => x,
-            () => true // we allow empty fix point name
-          );
+          fixPointName = getOptional('Fix point');
           let posLine = lineIterator.next();
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
           lineIterator.next(); //From To ...

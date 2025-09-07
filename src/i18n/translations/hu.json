@@ -542,7 +542,7 @@
       "invalidSurveyReachedEndOfFile": "Helytelen felmérés, vége elé ért a fájl",
       "invalidSurveyExpectedValue": "Helytelen felmérés, a {start} értéket vártam a {lineNr} sorban",
       "invalidSurveySeparator": "Helytelen felmérés, a {lineNr} sorbant nem szeparáló : van",
-      "invalidSurveyValidation": "Helytelen felmérés, a {lineNr} sorb erteke {value} nem felel meg a szabálynak {rule}",
+      "invalidSurveyValidation": "Helytelen felmérés, a {lineNr} sor értéke '{value}' nem felel meg a szabálynak {rule}",
       "noShotTopodroid": "Nem található mérési adat a TopoDroid CSV-ben",
       "noShotDataSection": "Nem található mérési adat szakasz a TopoDroid CSV-ben",
       "noFromToInHeader": "Nem található 'from' és 'to' oszlop a fejlécben: {header}",

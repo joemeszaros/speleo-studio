@@ -220,8 +220,9 @@ class CyclePanel {
   #emitSurveyChanged(survey) {
     const event = new CustomEvent('surveyChanged', {
       detail : {
-        cave   : this.cave,
-        survey : survey
+        reasons : ['cycles'],
+        cave    : this.cave,
+        survey  : survey
       }
     });
     document.dispatchEvent(event);

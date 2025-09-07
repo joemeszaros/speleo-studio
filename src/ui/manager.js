@@ -443,6 +443,7 @@ class ProjectManager {
         firstStationEov === undefined &&
         eovCoordinate === undefined &&
         position !== undefined &&
+        firstStation !== undefined &&
         firstStation.position.distanceTo(position) > maxDistance
       ) {
         acc.push(`${c.name} - ${U.formatDistance(firstStation.position.distanceTo(position), 0)}`);

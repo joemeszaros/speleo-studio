@@ -706,8 +706,9 @@ class SurveyEditor extends Editor {
   #emitSurveyChanged() {
     const event = new CustomEvent('surveyChanged', {
       detail : {
-        cave   : this.cave,
-        survey : this.survey
+        reasons : ['shots'],
+        cave    : this.cave,
+        survey  : this.survey
       }
     });
     document.dispatchEvent(event);
@@ -817,8 +818,8 @@ class SurveySheetEditor extends BaseEditor {
       name        : this.survey?.name || '',
       start       : this.survey?.start || '',
       date        : this.survey?.metadata?.date ? U.formatDateISO(this.survey.metadata.date) : '',
-      declination : this.survey?.metadata?.declination || '',
-      convergence : this.survey?.metadata?.convergence || '',
+      declination : this.survey?.metadata?.declination ?? '',
+      convergence : this.survey?.metadata?.convergence ?? '',
       team        : this.survey?.metadata?.team?.name || '',
       members     : (this.survey?.metadata?.team?.members || []).map((m) => ({ name: m.name, role: m.role })),
       instruments : (this.survey?.metadata?.instruments || []).map((i) => ({ name: i.name, value: i.value }))
@@ -848,10 +849,7 @@ class SurveySheetEditor extends BaseEditor {
     // Helper function to create form field
     const createField = (f, container) => {
       let value = this.formData[f.id];
-      if (value !== undefined && f.formatter !== undefined) {
-        value = f.formatter(value);
-      }
-      const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${value || ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
+      const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${value ?? ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
       input.oninput = (e) => {
         if (this.formData[f.id] !== e.target.value) {
           this.surveyHasChanged = true;
@@ -1121,7 +1119,7 @@ class SurveySheetEditor extends BaseEditor {
   #emitSurveyChanged() {
     const event = new CustomEvent('surveyChanged', {
       detail : {
-        reasons : ['shots'],
+        reasons : ['sheet'],
         cave    : this.cave,
         survey  : this.survey
       }
