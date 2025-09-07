@@ -1021,13 +1021,39 @@ body {
   top: 0;
   /* Add some offset to ensure it's not hidden behind other elements */
   margin-top: -5px;
+  margin-right: 5px;
   background: rgb(40, 40, 40);
   border: 2px solid white;
-  padding: 5px 5px;
+  padding: 5px 25px 5px 5px; /* Add right padding to reserve space for close button */
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   /* Ensure the editor is not clipped by parent containers */
   transform: translateZ(0);
+}
+
+.tabulator .tabulator-cell .attributes-editor .close-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+  margin-left: 10px;
+}
+
+.tabulator .tabulator-cell .attributes-editor .close-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.tabulator .tabulator-cell .attributes-editor .delete-row {
+  margin-left: 5px;
+  margin-right: 5px; /* Add right margin to prevent overlap with close button */
+  flex-shrink: 0; /* Prevent the delete button from shrinking */
 }
 
 .tabulator .tabulator-cell .attributes-editor input {
@@ -1068,6 +1094,10 @@ body {
 
 .tabulator .tabulator-cell .attributes-editor .longInput {
   width: 120px;
+}
+
+.tabulator .tabulator-cell .attributes-editor .mediumInput {
+  width: 80px;
 }
 
 .tabulator .tabulator-cell .attributes-editor label {

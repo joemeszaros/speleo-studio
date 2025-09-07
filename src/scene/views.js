@@ -714,7 +714,10 @@ class SpatialView extends View {
 
   #updateDipIndicator() {
     const dipDegrees = radsToDegrees(this.control.clino);
-    this.dipText.update(`${dipDegrees.toFixed(1)}°`);
+    let rounded = Math.round(dipDegrees);
+    if (rounded === 89) rounded = 90;
+    if (rounded === -89) rounded = -90;
+    this.dipText.update(`${rounded}°`);
     this.#updateGyroscopeVisual(this.control.clino, true);
   }
 

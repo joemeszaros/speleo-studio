@@ -202,7 +202,40 @@ class BaseAttributeEditor extends Editor {
       const indexToDelete = attributes.indexOf(a);
       if (indexToDelete !== -1) {
         attributes.splice(indexToDelete, 1);
-        attributeNode.parentNode.removeChild(attributeNode); // funny self destruction :-)
+        // Replace the attribute editor with the add new attribute interface
+        const panel = attributeNode.parentNode;
+        const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
+        const options = aNamesWithIds
+          .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
+          .join('');
+
+        const add = U.node`<div>
+           <label>${i18n.t('ui.editors.attributes.newAttribute')}: </label>
+           <input placeholder="${i18n.t('ui.editors.attributes.placeHolderName')}" type="search" class="longInput requiredInput" list="attributeNames" id="new-attribute-value">
+           <datalist id="attributeNames">${options}</datalist>
+           <span class="add-row"></span>
+        </div>`;
+        const addButton = add.querySelector('.add-row');
+        addButton.onclick = () => {
+          const input = add.querySelector('#new-attribute-value');
+          const selectedOption = add.querySelector(`#attributeNames option[value="${input.value}"]`);
+          if (!selectedOption) return;
+          const originalName = selectedOption.getAttribute('originalName');
+          const aName = input.value;
+          if (aNamesWithIds.find((a) => a.name === aName)) {
+            const newAttribute = this.attributeDefs.createByName(originalName)();
+            attributes.push(newAttribute);
+            // Replace the add section with the new attribute editor
+            const newAttributeNode = this.getAttributeEditorDiv(newAttribute, attributes, 0, i18n);
+            panel.replaceChild(newAttributeNode, add);
+          } else if (aName === '') {
+            this.showAlert(i18n.t('ui.editors.attributes.errors.noNameSelected'));
+          } else {
+            this.showAlert(i18n.t('ui.editors.attributes.errors.noAttributeWithName', { name: aName }));
+          }
+        };
+
+        panel.replaceChild(add, attributeNode);
       }
     };
 
@@ -222,7 +255,17 @@ class BaseAttributeEditor extends Editor {
       } else {
         underScoreClass = 'optionalInput';
       }
-      const classes = [['int', 'float'].includes(paramDef.type) ? 'shortInput' : 'longInput', underScoreClass];
+
+      const classes = [underScoreClass];
+      if (['int', 'float'].includes(paramDef.type)) {
+        classes.push('shortInput');
+      } else if (paramDef.type === 'string') {
+        if (paramDef.values?.length > 0) {
+          //classes.push('shortInput');
+        } else {
+          classes.push('mediumInput');
+        }
+      }
 
       let datalist;
       if ((paramDef.values ?? []).length > 0) {
@@ -266,6 +309,18 @@ class BaseAttributeEditor extends Editor {
     const attributes = extractor(cell.getData());
 
     const panel = U.node`<div tabindex="0" id="attributes-editor" class="attributes-editor"></div>`;
+
+    // Add close button in top right corner
+    const closeButton = U.node`<span class="close-button">&times;</span>`;
+    closeButton.onclick = () => {
+      if (extraValidators(attributes) === true) {
+        const cloned = attributes.map((a) => a.clone());
+        const toSuccess = mutator(cloned);
+        success(toSuccess);
+      }
+    };
+    panel.appendChild(closeButton);
+
     panel.addEventListener('keydown', (e) => {
       if (e.keyCode === 9) {
         e.stopPropagation(); // when a user clicks or tabs out of a cell the edit is cancelled and and the user is navigated to the next row
@@ -280,45 +335,45 @@ class BaseAttributeEditor extends Editor {
       }
     });
 
-    var index = 0;
-    attributes.forEach((a) => {
-      const attributeNode = this.getAttributeEditorDiv(a, attributes, index, i18n);
+    // Only show the first attribute (single attribute editing)
+    if (attributes.length > 0) {
+      const attributeNode = this.getAttributeEditorDiv(attributes[0], attributes, 0, i18n);
       panel.appendChild(attributeNode);
-      index += 1;
-    });
+    } else {
+      // If no attribute exists, show add attribute functionality
+      const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
+      const options = aNamesWithIds
+        .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
+        .join('');
 
-    const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
-    const options = aNamesWithIds
-      .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
-      .join('');
+      const add = U.node`<div>
+         <label>${i18n.t('ui.editors.attributes.newAttribute')}: </label>
+         <input placeholder="${i18n.t('ui.editors.attributes.placeHolderName')}" type="search" class="longInput requiredInput" list="attributeNames" id="new-attribute-value">
+         <datalist id="attributeNames">${options}</datalist>
+         <span class="add-row"></span>
+      </div>`;
+      const addButton = add.querySelector('.add-row');
+      addButton.onclick = () => {
+        const input = add.querySelector('#new-attribute-value');
+        const selectedOption = add.querySelector(`#attributeNames option[value="${input.value}"]`);
+        if (!selectedOption) return;
+        const originalName = selectedOption.getAttribute('originalName');
+        const aName = input.value;
+        if (aNamesWithIds.find((a) => a.name === aName)) {
+          const newAttribute = this.attributeDefs.createByName(originalName)();
+          attributes.push(newAttribute);
+          // Replace the add section with the new attribute editor
+          const attributeNode = this.getAttributeEditorDiv(newAttribute, attributes, 0, i18n);
+          panel.replaceChild(attributeNode, add);
+        } else if (aName === '') {
+          this.showAlert(i18n.t('ui.editors.attributes.errors.noNameSelected'));
+        } else {
+          this.showAlert(i18n.t('ui.editors.attributes.errors.noAttributeWithName', { name: aName }));
+        }
+      };
 
-    const add = U.node`<div>
-       <label>${i18n.t('ui.editors.attributes.newAttribute')}: </label>
-       <input placeholder="${i18n.t('ui.editors.attributes.placeHolderName')}" type="search" class="longInput requiredInput" list="attributeNames" id="new-attribute-value">
-       <datalist id="attributeNames">${options}</datalist>
-       <span class="add-row"></span>
-    </div>`;
-    const addButton = add.querySelector('.add-row');
-    addButton.onclick = () => {
-      const input = add.querySelector('#new-attribute-value');
-      const selectedOption = add.querySelector(`#attributeNames option[value="${input.value}"]`);
-      if (!selectedOption) return;
-      const originalName = selectedOption.getAttribute('originalName');
-      const aName = input.value;
-      if (aNamesWithIds.find((a) => a.name === aName)) {
-        const newAttribute = this.attributeDefs.createByName(originalName)();
-        const attributeNode = this.getAttributeEditorDiv(newAttribute, attributes, index, i18n);
-        panel.insertBefore(attributeNode, add);
-        attributes.push(newAttribute);
-        input.value = '';
-      } else if (aName === '') {
-        this.showAlert(i18n.t('ui.editors.attributes.errors.noNameSelected'));
-      } else {
-        this.showAlert(i18n.t('ui.editors.attributes.errors.noAttributeWithName', { name: aName }));
-      }
-    };
-
-    panel.appendChild(add);
+      panel.appendChild(add);
+    }
 
     return panel;
   }

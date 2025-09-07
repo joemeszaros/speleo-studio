@@ -139,7 +139,10 @@ class NavigationBar {
           {
             name  : i18n.t('ui.navbar.menu.project.export'),
             click : () => {
-              this.projectPanel.exportCurrentProject();
+              const currentProject = this.projectSystem.getCurrentProject();
+              if (currentProject) {
+                this.projectPanel.exportProject(currentProject.id);
+              }
             },
             shortkeys : ['crtl⊕shift⊕s']
           }
