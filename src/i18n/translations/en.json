@@ -542,7 +542,11 @@
       "invalidSurveyReachedEndOfFile": "Invalid survey, reached end of file",
       "invalidSurveyExpectedValue": "Invalid survey, expected {start} at line {lineNr}",
       "invalidSurveySeparator": "Invalid survey, expected value separated by : at line {lineNr}",
-      "invalidSurveyValidation": "Invalid survey, value at line {lineNr}: \"{value}\" is not valid accoring to : {rule}"
+      "invalidSurveyValidation": "Invalid survey, value at line {lineNr}: \"{value}\" is not valid accoring to : {rule}",
+      "noShotTopodroid": "No shot data found in TopoDroid CSV",
+      "noShotDataSection": "No shot data section found in TopoDroid CSV",
+      "noFromToInHeader": "No 'from' and 'to' columns found in header: {header}",
+      "noHeaderLine": "No header line found in TopoDroid CSV"
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",

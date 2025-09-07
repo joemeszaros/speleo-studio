@@ -259,47 +259,193 @@ class PolygonImporter extends Importer {
   }
 }
 
+/**
+ * Hopefully robust TopoDroid CSV importer that recognizes survey metadata section and
+ * find the shot data section containing the shots. This should prevent import failures
+ * due to format changes in TopoDroid.
+ */
 class TopodroidImporter extends Importer {
 
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
   }
 
-  #getShotsAndName(csvTextData) {
-    const shots = [];
-    const lines = csvTextData.split(/\r\n|\n/);
-    let name;
+  #parseMetadata(lines) {
+    const metadata = {
+      name        : null,
+      date        : null,
+      team        : null,
+      comment     : null,
+      declination : null,
+      units       : null
+    };
+
+    for (const line of lines) {
+      if (!line.startsWith('#')) continue;
+
+      const trimmedLine = line.substring(1).trim();
+      Object.keys(metadata).forEach((key) => {
+        if (trimmedLine.includes(`${key}:`)) {
+          const value = trimmedLine.split(`${key}:`)[1].trim();
+          metadata[key] = value ? value : null;
+        }
+      });
+
+      if (metadata.declination && U.isFloatStr(metadata.declination)) {
+        metadata.declination = U.parseMyFloat(metadata.declination);
+      } else if (metadata.declination) {
+        // it has a non-float value
+        metadata.declination = null;
+      }
+
+    }
+
+    return metadata;
+  }
+
+  #findShotDataSection(lines) {
+    let shotDataStart = -1;
+    let shotDataEnd = -1;
+    let headerLine = null;
 
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i] === null || lines[i] === undefined) continue;
+      if (lines[i] === null || lines[i] === undefined || lines[i].trim() === '') continue;
+      const line = lines[i];
 
-      if (lines[i].startsWith('#') && lines[i].includes('name:')) {
-        const parts = lines[i].split('name:');
-        name = parts[1].trim();
+      // Look for header line that contains "from" and "to"
+      if (line.startsWith('#') && line.includes('from') && line.includes('to')) {
+        headerLine = line.substring(1).trim();
+        shotDataStart = i + 1;
         continue;
       }
-      const row = lines[i].split(',');
 
-      if (row.length != 8) {
-        continue;
+      // Look for end of shot data (empty line or next section)
+      if (shotDataStart !== -1 && shotDataEnd === -1) {
+        // next section of header with commented lines, except the following line
+        if (line.startsWith('#') && !line.startsWith('# units')) {
+          shotDataEnd = i;
+          break;
+        }
       }
-      const from = row[0].split('@')[0];
-      const to = row[1].split('@')[0];
-      const distance = U.parseMyFloat(row[2]);
-      const azimuth = U.parseMyFloat(row[3]);
-      const clino = U.parseMyFloat(row[4]);
-      const type = to === '-' ? ShotType.SPLAY : ShotType.CENTER;
-      const toName = type === ShotType.SPLAY ? undefined : to;
-      shots.push(new Shot(i, type, from, toName, distance, azimuth, clino));
     }
-    return [shots, name];
+
+    return { shotDataStart, shotDataEnd, headerLine };
+  }
+
+  #parseShotData(lines, startIndex, endIndex, headerLine) {
+    const shots = [];
+    let surveyName;
+    if (!headerLine) {
+      throw new Error(i18n.t('errors.import.noHeaderLine'));
+    }
+
+    // Parse header to understand column positions
+    const headerColumns = headerLine.split(/[,\s]+/).map((col) => col.trim().toLowerCase());
+    const fromIndex = headerColumns.indexOf('from');
+    const toIndex = headerColumns.indexOf('to');
+    const tapeIndex = headerColumns.indexOf('tape');
+    const compassIndex = headerColumns.indexOf('compass');
+    const clinoIndex = headerColumns.indexOf('clino');
+    const commentIndex = headerColumns.indexOf('comment');
+    const maxIndex = Math.max(fromIndex, toIndex, tapeIndex, compassIndex, clinoIndex) + 1;
+    if (fromIndex === -1 || toIndex === -1) {
+      throw new Error(i18n.t('errors.import.noFromToInHeader', { header: headerLine }));
+    }
+
+    const stopIndex = endIndex > 0 ? endIndex : lines.length;
+    const withoutQuotes = (s) => (s && s.startsWith('"') && s.endsWith('"') ? s.substring(1, s.length - 1) : s);
+
+    for (let i = startIndex; i < stopIndex; i++) {
+      const line = lines[i];
+      if (!line || line.trim() === '') continue;
+
+      const row = line.split(',').map((c) => c.trim());
+
+      if (row.length < maxIndex) {
+        continue; // Skip incomplete rows
+      }
+
+      let from = withoutQuotes(row[fromIndex]);
+      let to = withoutQuotes(row[toIndex]);
+
+      if (!from && !to) {
+        console.error(`Skipping invalid line without from and to: ${line}`);
+        continue;
+      }
+
+      if (from && from.includes('@')) {
+        const fp = from.split('@');
+        from = fp[0];
+        if (!surveyName) {
+          surveyName = fp[1];
+        }
+      }
+
+      if (to && to.includes('@')) {
+        const tp = to.split('@');
+        to = tp[0];
+        if (!surveyName) {
+          surveyName = tp[1];
+        }
+      }
+
+      const distance = tapeIndex !== -1 ? U.parseMyFloat(withoutQuotes(row[tapeIndex])) : 0;
+      const azimuth = compassIndex !== -1 ? U.parseMyFloat(withoutQuotes(row[compassIndex])) : 0;
+      const clino = clinoIndex !== -1 ? U.parseMyFloat(withoutQuotes(row[clinoIndex])) : 0;
+      let comment = commentIndex !== -1 ? withoutQuotes(row[commentIndex]) : undefined;
+
+      // Determine shot type
+      const type = to === '-' || to === '' ? ShotType.SPLAY : ShotType.CENTER;
+      const toName = type === ShotType.SPLAY ? undefined : to;
+
+      shots.push(new Shot(i, type, from, toName, distance, azimuth, clino, comment));
+    }
+
+    return { shots, surveyName };
+  }
+
+  #getShotsAndMetadata(csvTextData) {
+    const lines = csvTextData.split(/\r\n|\n/);
+    const metadata = this.#parseMetadata(lines);
+    const { shotDataStart, shotDataEnd, headerLine } = this.#findShotDataSection(lines);
+
+    if (shotDataStart === -1) {
+      throw new Error(i18n.t('errors.import.noShotDataSection'));
+    }
+    const { shots, surveyName } = this.#parseShotData(lines, shotDataStart, shotDataEnd, headerLine);
+
+    if (!metadata.name && surveyName) {
+      metadata.name = surveyName;
+    }
+
+    return { shots, metadata };
+  }
+
+  #createSurveyMetadata(metadata) {
+    const surveyDate = metadata.date ? new Date(metadata.date) : new Date();
+    const declination = metadata.declination;
+
+    // Create team if team name is provided
+    let team = null;
+    if (metadata.team) {
+      team = new SurveyTeam(metadata.team, []);
+    }
+
+    return new SurveyMetadata(surveyDate, declination, null, team, []);
   }
 
   getSurvey(csvTextData) {
-    const [shots, name] = this.#getShotsAndName(csvTextData);
-    //TODO: add metadata
+    const { shots, metadata } = this.#getShotsAndMetadata(csvTextData);
+
+    if (shots.length === 0) {
+      throw new Error(i18n.t('errors.import.noShotTopodroid'));
+    }
+
+    const surveyMetadata = this.#createSurveyMetadata(metadata);
     const startStation = shots[0].from;
-    return new Survey(name, true, new SurveyMetadata(), startStation, shots);
+    const surveyName = metadata.name || 'TopoDroid Survey';
+
+    return new Survey(surveyName, true, surveyMetadata, startStation, shots);
   }
 
   importFile(file, name, onSurveyLoad) {

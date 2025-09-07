@@ -331,6 +331,7 @@ class SurveyEditor extends Editor {
             meta     : {
               type        : s.type,
               survey      : this.survey,
+              shots       : s.shots,
               cave        : this.cave,
               coordinates : s.coordinates
             }
@@ -349,6 +350,7 @@ class SurveyEditor extends Editor {
             meta     : {
               type        : s.type,
               survey      : this.survey,
+              shots       : s.shots,
               cave        : this.cave,
               coordinates : s.coordinates
             }

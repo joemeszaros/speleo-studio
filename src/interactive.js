@@ -563,9 +563,10 @@ class SceneInteraction {
 
   buildStationDetailsPanel(contentElmnt, station, left, top) {
 
+    // do not use station.meta.shots here, because it contains all shots, not only the ones that are valid and connected
     const shots = station.meta.cave.surveys.flatMap((st) =>
       st.shots
-        .filter((sh) => sh.from === station.name || sh.to === station.name)
+        .filter((sh) => (sh.isCenter() && sh.from === station.name) || sh.to === station.name)
         .map((sh) => ({ survey: st, shot: sh }))
     );
     const shotDetails = shots
