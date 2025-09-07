@@ -94,6 +94,21 @@ export class CaveSystem {
     });
   }
 
+  async checkCaveExistsById(caveId) {
+
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadOnlyStore(this.storeName).count(caveId);
+
+      request.onsuccess = () => {
+        resolve(request.result > 0);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to check cave existence'));
+      };
+    });
+  }
+
   async deleteCave(caveId) {
     return new Promise((resolve, reject) => {
       const request = this.dbManager.getReadWriteStore(this.storeName).delete(caveId);

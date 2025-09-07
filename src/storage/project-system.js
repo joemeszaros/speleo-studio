@@ -37,7 +37,7 @@ export class ProjectSystem {
   async saveProject(project) {
     return new Promise((resolve, reject) => {
 
-      const request = this.dbManager.getReadWriteStore(this.storeName).put(project.toJSON());
+      const request = this.dbManager.getReadWriteStore(this.storeName).put(project.toExport());
 
       request.onsuccess = () => {
         resolve(project);
@@ -77,7 +77,7 @@ export class ProjectSystem {
   async #loadProject(request, resolve, reject, idOrName) {
     request.onsuccess = () => {
       if (request.result) {
-        const project = Project.fromJSON(request.result);
+        const project = Project.fromPure(request.result);
         resolve(project);
       } else {
         reject(new ProjectNotFoundError(idOrName));
@@ -89,7 +89,21 @@ export class ProjectSystem {
     };
   }
 
-  async checkProjectExists(projectName) {
+  async checkProjectExistsById(projectId) {
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadOnlyStore(this.storeName).count(projectId);
+
+      request.onsuccess = () => {
+        resolve(request.result > 0);
+      };
+
+      request.onerror = () => {
+        reject(new Error('Failed to check project existence'));
+      };
+    });
+  }
+
+  async checkProjectExistsByName(projectName) {
     return new Promise((resolve, reject) => {
       const request = this.dbManager.getReadOnlyStore(this.storeName).index('name').count(projectName);
 
@@ -108,7 +122,7 @@ export class ProjectSystem {
       const request = this.dbManager.getReadOnlyStore(this.storeName).getAll();
 
       request.onsuccess = () => {
-        const projects = request.result.map((data) => Project.fromJSON(data));
+        const projects = request.result.map((data) => Project.fromPure(data));
         // Sort by updatedAt (most recent first)
         projects.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         resolve(projects);

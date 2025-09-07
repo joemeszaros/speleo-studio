@@ -1,3 +1,4 @@
+import { i18n } from '../i18n/i18n.js';
 // Global state to track active panel and messages
 let activePanelState = {
   isVisible : false,
@@ -77,16 +78,16 @@ function updatePanelDisplay(cautionPanel, messages, errorOrWarning) {
   let icon, title;
   if (errorOrWarning === 'error') {
     icon = '⚠️';
-    title = 'Error';
+    title = i18n.t('popups.error');
   } else if (errorOrWarning === 'warning') {
     icon = '⚠️';
-    title = 'Warning';
+    title = i18n.t('popups.warning');
   } else if (errorOrWarning === 'success') {
     icon = '✅';
-    title = 'Success';
+    title = i18n.t('popups.success');
   } else if (errorOrWarning === 'info') {
     icon = 'ℹ️';
-    title = 'Info';
+    title = i18n.t('popups.info');
   }
 
   cautionPanel.style.display = 'block';

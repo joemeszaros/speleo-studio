@@ -1,15 +1,36 @@
 import { showErrorPanel, showSuccessPanel } from './popups.js';
 import * as U from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
+import { FatProject } from '../model/project.js';
 
 export class ProjectPanel {
-  constructor(panel, projectSystem) {
+  constructor(panel, projectSystem, projectInput = 'projectInput') {
     this.panel = panel;
     this.projectSystem = projectSystem;
     this.isVisible = false;
+    this.fileInputElement = document.getElementById(projectInput);
 
-    document.addEventListener('languageChanged', () => {
-      this.setupPanel();
+    this.fileInputElement.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const text = event.target.result;
+          await this.importProject(text);
+        } catch (error) {
+          console.error(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
+          showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
+        }
+      };
+
+      reader.onerror = (error) => {
+        showErrorPanel(i18n.t('ui.panels.projectManager.errors.fileReadFailed', { error: error.message }));
+      };
+
+      reader.readAsText(file);
+      this.fileInputElement.value = '';
     });
   }
 
@@ -18,6 +39,7 @@ export class ProjectPanel {
       <div class="project-panel-header">
         <h3>${i18n.t('ui.panels.projectManager.title')}</h3>
         <button id="new-project-btn" class="project-btn">${i18n.t('ui.panels.projectManager.new')}</button>
+        <button id="import-project-btn" class="project-btn">${i18n.t('ui.panels.projectManager.import')}</button>
         <button class="project-panel-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
       </div>
       
@@ -46,9 +68,11 @@ export class ProjectPanel {
 
   setupEventListeners() {
     const newProjectBtn = this.panel.querySelector('#new-project-btn');
+    const importProjectBtn = this.panel.querySelector('#import-project-btn');
     const projectSearch = this.panel.querySelector('#project-search');
 
     newProjectBtn.addEventListener('click', () => this.showNewProjectDialog());
+    importProjectBtn.addEventListener('click', () => this.fileInputElement.click());
     projectSearch.addEventListener('input', () => this.filterProjects());
   }
 
@@ -96,12 +120,17 @@ export class ProjectPanel {
       const saveProjectBtn = currentProjectInfo.querySelector('#save-project-btn');
       const exportProjectBtn = currentProjectInfo.querySelector('#export-project-btn');
       const renameProjectBtn = currentProjectInfo.querySelector('#rename-project-btn');
-
       if (saveProjectBtn) {
         saveProjectBtn.addEventListener('click', () => this.saveCurrentProject());
       }
       if (exportProjectBtn) {
-        exportProjectBtn.addEventListener('click', () => this.exportCurrentProject());
+        exportProjectBtn.addEventListener('click', () => {
+          if (!currentProject) {
+            showErrorPanel(i18n.t('ui.panels.projectManager.noProjectToExport'));
+            return;
+          }
+          this.exportProject(currentProject.id);
+        });
       }
       if (renameProjectBtn) {
         renameProjectBtn.addEventListener('click', () => {
@@ -150,6 +179,7 @@ export class ProjectPanel {
                ${!isCurrent ? `<button id="open-project-btn" class="project-action-btn">${i18n.t('common.open')}</button>` : ''}
                <button id="delete-project-btn" class="project-action-btn delete">${i18n.t('common.delete')}</button>
                <button id="rename-project-btn" class="project-action-btn rename">${i18n.t('common.rename')}</button>
+               <button id="export-project-btn" class="project-action-btn export">${i18n.t('common.export')}</button>
              </div>
            </div>
          `;
@@ -157,6 +187,7 @@ export class ProjectPanel {
           panel.querySelector('#open-project-btn')?.addEventListener('click', () => this.openProject(project.id));
           panel.querySelector('#delete-project-btn').addEventListener('click', () => this.deleteProject(project.id));
           panel.querySelector('#rename-project-btn').addEventListener('click', () => this.renameProject(project.id));
+          panel.querySelector('#export-project-btn').addEventListener('click', () => this.exportProject(project.id));
           return panel;
         })
       );
@@ -179,14 +210,25 @@ export class ProjectPanel {
 
     const description = prompt(i18n.t('ui.panels.projectManager.enterProjectDescription'));
 
+    if (!name || name.trim() === '') {
+      return;
+    }
+
+    const trimmedName = name.trim();
+
     try {
-      const project = await this.projectSystem.createProject(name, description);
+      const nameExists = await this.projectSystem.checkProjectExistsByName(trimmedName);
+      if (nameExists) {
+        showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectNameAlreadyExists', { name: trimmedName }));
+        return;
+      }
+      const project = await this.projectSystem.createProject(trimmedName, description);
       this.projectSystem.setCurrentProject(project);
 
       this.#emitCurrentProjectChanged(project);
 
       this.hide();
-      showSuccessPanel(i18n.t('ui.panels.projectManager.projectCreated', { name }));
+      showSuccessPanel(i18n.t('ui.panels.projectManager.projectCreated', { name: trimmedName }));
     } catch (error) {
       showErrorPanel(i18n.t('ui.panels.projectManager.projectCreationFailed', { error: error.message }));
     }
@@ -237,27 +279,67 @@ export class ProjectPanel {
     }
   }
 
-  async exportCurrentProject() {
-    const currentProject = this.projectSystem.getCurrentProject();
-    if (!currentProject) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.noProjectToExport'));
+  async importProject(projectText) {
+    const pure = JSON.parse(projectText);
+    const project = FatProject.fromPure(pure);
+    const nameExists = await this.projectSystem.checkProjectExistsByName(project.project.name);
+
+    if (nameExists) {
+      showErrorPanel(
+        i18n.t('ui.panels.projectManager.errors.projectNameAlreadyExists', { name: project.project.name })
+      );
+      return;
+    }
+    const projectExists = await this.projectSystem.checkProjectExistsById(project.project.id);
+    if (projectExists) {
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectIdAlreadyExists', { id: project.project.id }));
       return;
     }
 
+    const projectCaveIds = new Set(project.project.caveIds);
+    const caveIds = new Set(project.caves.map((cave) => cave.id));
+    if (projectCaveIds.size !== caveIds.size || ![...projectCaveIds].every((id) => caveIds.has(id))) {
+      showErrorPanel(
+        i18n.t('ui.panels.projectManager.errors.projectImportFailed', {
+          error : i18n.t('ui.panels.projectManager.errors.nonMatchingCaveIds')
+        })
+      );
+      return;
+    }
+
+    for (const cave of project.caves) {
+      const caveExists = await this.projectSystem.caveSystem.checkCaveExistsById(cave.id);
+      if (caveExists) {
+        showErrorPanel(i18n.t('ui.panels.projectManager.errors.caveIdAlreadyExists', { id: cave.id }));
+        return;
+      }
+    }
+
+    await this.projectSystem.saveProject(project.project);
+    project.caves.forEach(async (cave) => {
+      await this.projectSystem.caveSystem.saveCave(cave, project.project.id);
+    });
+    this.updateDisplay();
+  }
+
+  async exportProject(projectId) {
+    const project = await this.projectSystem.loadProjectById(projectId);
     try {
-      const projectData = currentProject.toJSON();
+
+      const projectWithCaves = new FatProject(project, await this.projectSystem.getCavesForProject(projectId));
+      const projectData = projectWithCaves.toExport();
       const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
 
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentProject.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_project.json`;
+      a.download = `${project.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_project.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      showSuccessPanel(i18n.t('ui.panels.projectManager.projectExported', { name: currentProject.name }));
+      showSuccessPanel(i18n.t('ui.panels.projectManager.projectExported', { name: project.name }));
     } catch (error) {
       showErrorPanel(i18n.t('ui.panels.projectManager.projectExportFailed', { error: error.message }));
     }
@@ -283,10 +365,10 @@ export class ProjectPanel {
 
     try {
       // Check if name already exists
-      const nameExists = await this.projectSystem.checkProjectExists(trimmedName);
+      const nameExists = await this.projectSystem.checkProjectExistsByName(trimmedName);
 
       if (nameExists) {
-        showErrorPanel(i18n.t('ui.panels.projectManager.projectNameAlreadyExists', { name: trimmedName }));
+        showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectNameAlreadyExists', { name: trimmedName }));
         return;
       }
       if (this.projectSystem.getCurrentProject()?.id === project.id) {

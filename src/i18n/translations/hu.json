@@ -210,6 +210,7 @@
       "projectManager": {
         "title": "Projekt kezelő",
         "new": "Új projekt",
+        "import": "Projekt importálása",
         "current": "Jelenlegi projekt",
         "noProject": "Nincs projekt betöltve",
         "noProjectsFound": "Nincs projekt",
@@ -233,9 +234,16 @@
         "noProjectToExport": "Nincs projekt a kiválasztott projekt exportálásához",
         "noProjectToRename": "Nincs projekt a kiválasztott projekt átnevezéséhez",
         "enterNewProjectName": "Új projekt neve: {name}",
-        "projectNameAlreadyExists": "A \"{name}\" nevű projekt már létezik",
         "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
-        "caves": "barlang"
+        "caves": "barlang",
+        "errors": {
+          "projectNameAlreadyExists": "A \"{name}\" nevű projekt már létezik",
+          "projectIdAlreadyExists": "A \"{id}\" azonosítójú projekt már létezik",
+          "projectImportFailed": "Hiba történt a projekt importálása során: {error}",
+          "fileReadFailed": "Hiba történt a fájl olvasása során: {error}",
+          "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik",
+          "nonMatchingCaveIds": "A projektben felsorolt barlang azonosítók nem egyeznek a barlangok azonosítóival"
+        }
       },
       "shortestPath": {
         "title": "Legrövidebb út",
@@ -540,6 +548,12 @@
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",
       "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist"
     }
+  },
+  "popups": {
+    "error": "Hiba",
+    "warning": "Figyelmeztetés",
+    "success": "Siker",
+    "info": "Információ"
   },
   "menu": {
     "station": {

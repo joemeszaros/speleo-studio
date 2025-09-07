@@ -1,3 +1,27 @@
+import { Cave } from './cave.js';
+
+export class FatProject {
+
+  constructor(project, caves) {
+    this.project = project;
+    this.caves = caves;
+  }
+
+  toExport() {
+    return {
+      project : this.project.toExport(),
+      caves   : this.caves.map((cave) => cave.toExport())
+    };
+  }
+
+  static fromPure(pure) {
+    const project = Project.fromPure(pure.project);
+    const caves = pure.caves.map((cave) => Cave.fromPure(cave));
+    return new FatProject(project, caves);
+
+  }
+}
+
 export class Project {
   constructor(name, id = null, createdAt = null, updatedAt = null) {
     this.id = id || this.#generateId();
@@ -31,7 +55,7 @@ export class Project {
     return [...this.caveIds];
   }
 
-  toJSON() {
+  toExport() {
     return {
       id          : this.id,
       name        : this.name,
@@ -42,10 +66,7 @@ export class Project {
     };
   }
 
-  static fromJSON(data) {
-    const project = new Project(data.name, data.id, data.createdAt, data.updatedAt);
-    project.description = data.description || '';
-    project.caveIds = data.caveIds || [];
-    return project;
+  static fromPure(pure) {
+    return Object.assign(new Project(), pure);
   }
 }
