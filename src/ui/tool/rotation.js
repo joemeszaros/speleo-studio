@@ -89,7 +89,7 @@ export class RotationTool {
     ctx.fill();
 
     // Draw degree markers
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = '#ffffff';
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -152,7 +152,7 @@ export class RotationTool {
     ctx.stroke();
 
     // Draw degree markers
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = '#ffffff';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

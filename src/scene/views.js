@@ -490,6 +490,17 @@ class SpatialView extends View {
       event.stopPropagation();
     });
 
+    // Add dip indicator (gyroscope-style)
+    this.dipIndicator = this.#createDipIndicator(80);
+    this.dipIndicator.visible = false;
+    scene.sprites3DGroup.add(this.dipIndicator);
+
+    // Add dip text display
+    this.dipText = this.#createDipText();
+    this.dipText.sprite.visible = false;
+    const dipTextSprite = this.dipText.getSprite();
+    scene.sprites3DGroup.add(dipTextSprite);
+
     this.animatedPreviously = false;
 
     this.enabled = false;
@@ -509,6 +520,8 @@ class SpatialView extends View {
       this.compass.material.rotation = compassRotation;
       // Update rotation text during rotation
       this.#updateRotationText();
+      // Update dip indicator during rotation
+      this.#updateDipIndicator();
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       this.updateFrustumFrame();
@@ -523,9 +536,16 @@ class SpatialView extends View {
     this.overviewCamera.rotation.copy(this.camera.rotation);
     this.overviewCamera.updateProjectionMatrix();
     if (this.frustumFrame) this.updateFrustumFrame();
+    this.#updateDipIndicator();
     this.renderView();
     this.onZoomLevelChange(this.control.zoom);
     this.isInteracting = false;
+  }
+
+  onResize(width, height) {
+    super.onResize(width, height);
+    this.dipIndicator.position.set(width / 2 - 170, -height / 2 + 60, 1);
+    this.dipText.sprite.position.set(width / 2 - 170, -height / 2 + 120, 1);
   }
 
   getViewSettings(boundingBox) {
@@ -608,6 +628,172 @@ class SpatialView extends View {
     this.rotationText.update(`N ${radsToDegrees(compassRotation).toFixed(1)}°`);
   }
 
+  #createDipIndicator(size) {
+    // Create a gyroscope-style dip indicator using a canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const width = size;
+    const height = size;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // Draw the gyroscope background
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = size / 2 - 5;
+
+    // Outer circle (background)
+    ctx.fillStyle = '#2c3e50';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Inner circle (foreground)
+    ctx.fillStyle = '#34495e';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius - 8, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Horizon line
+    ctx.strokeStyle = '#ecf0f1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(centerX - radius + 10, centerY);
+    ctx.lineTo(centerX + radius - 10, centerY);
+    ctx.stroke();
+
+    // Center cross
+    ctx.strokeStyle = '#ecf0f1';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(centerX - 8, centerY);
+    ctx.lineTo(centerX + 8, centerY);
+    ctx.moveTo(centerX, centerY - 8);
+    ctx.lineTo(centerX, centerY + 8);
+    ctx.stroke();
+
+    // Create texture from canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const sprite = new THREE.Sprite(material);
+
+    // Store canvas and context references for later updates
+    sprite.userData = { canvas, ctx, width, height };
+    sprite.position.set(this.scene.width / 2 - 170, -this.scene.height / 2 + 160, 1); // bottom right
+    sprite.scale.set(size, size, 1);
+    sprite.name = 'dip indicator';
+
+    return sprite;
+  }
+
+  #createDipText() {
+    const position = new THREE.Vector3(this.scene.width / 2 - 179, -this.scene.height / 2 - 120, 1);
+    return new TextSprite(
+      '0°',
+      position,
+      { size: 24, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
+      0.5,
+      'dip text'
+    );
+  }
+
+  #updateDipIndicator() {
+    const dipDegrees = radsToDegrees(this.control.clino);
+    this.dipText.update(`${dipDegrees.toFixed(1)}°`);
+    this.#updateGyroscopeVisual(this.control.clino, true);
+  }
+
+  #updateGyroscopeVisual(dipAngle) {
+    // Get the context and dimensions from userData
+    const { ctx, width, height } = this.dipIndicator.userData;
+
+    // Clear the canvas
+    ctx.clearRect(0, 0, width, height);
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = width / 2 - 5;
+
+    // Outer circle (background)
+    ctx.fillStyle = '#2c3e50';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.fill();
+
+    // Inner circle (foreground)
+    ctx.fillStyle = '#34495e';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius - 8, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Calculate horizon line position based on dip angle
+    // Map 0-90 degrees to 0-1 range for visual offset
+    const normalizedAngle = dipAngle / (Math.PI / 2); // 0 to 1
+    const maxOffset = radius - 10;
+    const horizonOffset = normalizedAngle * maxOffset;
+    const horizonY = centerY - horizonOffset;
+
+    // Add angle markers for reference
+    //ctx.strokeStyle = '#7f8c8d';
+    ctx.font = '10px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+
+    // Draw angle markers every 30 degrees
+    const angles = [90];
+    angles.forEach((angle) => {
+      const normalizedMarkerAngle = angle / 90; // 0 to 1
+      const markerOffset = normalizedMarkerAngle * maxOffset;
+      const markerY = centerY + markerOffset;
+
+      // Top markers (looking up)
+      if (markerY > centerY - 5) {
+        ctx.beginPath();
+        ctx.moveTo(centerX - 5, markerY);
+        //ctx.lineTo(centerX + 5, markerY);
+        ctx.stroke();
+        ctx.fillText(`${-angle}°`, centerX, markerY - 3);
+      }
+
+      // Bottom markers (looking down)
+      const bottomMarkerY = centerY - markerOffset;
+      if (bottomMarkerY < centerY + 5) {
+        ctx.beginPath();
+        ctx.moveTo(centerX - 5, bottomMarkerY);
+        //ctx.lineTo(centerX + 5, bottomMarkerY);
+        ctx.stroke();
+        ctx.fillText(`${angle}°`, centerX, bottomMarkerY + 13);
+      }
+    });
+
+    // Center cross
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(centerX - 5, centerY);
+    ctx.lineTo(centerX + 5, centerY);
+    ctx.moveTo(centerX, centerY - 5);
+    ctx.lineTo(centerX, centerY + 5);
+    ctx.stroke();
+
+    // Draw horizon line
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const lineLength = 15 + radius * (1 - Math.abs(normalizedAngle));
+    ctx.moveTo(centerX - lineLength + 5, horizonY);
+    ctx.lineTo(centerX + lineLength - 5, horizonY);
+    ctx.stroke();
+
+    // Update the texture
+    this.dipIndicator.material.map.needsUpdate = true;
+  }
+
   setCompassRotation() {
     // For spatial view, calculate current azimuth
     const currentAzimuth = 2 * Math.PI - (this.control.azimuth + Math.PI);
@@ -637,15 +823,20 @@ class SpatialView extends View {
 
   activate(boundingBox) {
     super.activate(boundingBox);
+    this.dipIndicator.visible = true;
+    this.dipText.sprite.visible = true;
     this.control.enabled = true;
     this.viewHelperDomElement.style.display = 'block';
     this.compass.material.rotation = 0;
     this.#updateRotationText();
+    this.#updateDipIndicator();
     this.renderView();
   }
 
   deactivate() {
     super.deactivate();
+    this.dipIndicator.visible = false;
+    this.dipText.sprite.visible = false;
     this.viewHelperDomElement.style.display = 'none';
     this.control.enabled = false;
   }
