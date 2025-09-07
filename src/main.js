@@ -81,15 +81,7 @@ class Main {
     const materials = new Materials(options).materials;
 
     const sceneOverview = new SceneOverview(document.querySelector('#scene-overview'));
-    const scene = new MyScene(
-      options,
-      db,
-      materials,
-      font,
-      document.querySelector('#viewport'),
-      document.querySelector('#view-helper'),
-      sceneOverview
-    );
+    const scene = new MyScene(options, db, materials, font, document.querySelector('#viewport'), sceneOverview);
 
     observer.watchChanges(new ConfigChanges(options, scene, materials).getOnChangeHandler());
 

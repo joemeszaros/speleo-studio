@@ -2,27 +2,24 @@ import {
   CylinderGeometry,
   CanvasTexture,
   Color,
-  Euler,
   Mesh,
   MeshBasicMaterial,
   Object3D,
   OrthographicCamera,
-  Quaternion,
-  Raycaster,
   Sprite,
   SpriteMaterial,
   SRGBColorSpace,
-  Vector2,
   Vector3,
   Vector4
 } from 'three';
 
 class ViewHelper extends Object3D {
 
-  constructor(camera, domElement, options, center = new Vector3(0, 0, 0)) {
+  constructor(camera, domElement, spatialControl, options, size = 128, center = new Vector3(0, 0, 0)) {
 
     super();
 
+    this.spatialControl = spatialControl;
     this.isViewHelper = true;
 
     this.animating = false;
@@ -32,12 +29,10 @@ class ViewHelper extends Object3D {
     const yColor = new Color('#88ff44');
     const zColor = new Color('#4488ff');
 
-    const interactiveObjects = [];
-    const raycaster = new Raycaster();
-    const mouse = new Vector2();
-    const dummy = new Object3D();
+    this.interactiveObjects = []; // used in scene.js for raycasting
 
     const orthoCamera = new OrthographicCamera(-2, 2, 2, -2, 0, 4);
+    this.orthoCamera = orthoCamera;
     orthoCamera.position.set(0, 0, 2);
 
     const geometry = new CylinderGeometry(0.04, 0.04, 0.8, 5).rotateZ(-Math.PI / 2).translate(0.4, 0, 0);
@@ -79,25 +74,28 @@ class ViewHelper extends Object3D {
     negZSprite.userData.type = 'negZ';
 
     [posXSprite, posYSprite, posZSprite, negXSprite, negYSprite, negZSprite].forEach((sprite) => {
+      sprite.onclick = () => {
+        this.prepareAnimationData(sprite);
+        this.animating = true;
+        this.animationProgress = 0;
+      };
       this.add(sprite);
-      interactiveObjects.push(sprite);
+      this.interactiveObjects.push(sprite);
     });
 
     const point = new Vector3();
-    const dim = 128;
-    const turnRate = 2 * Math.PI; // turn rate in angles per second
+    const dim = size;
+    this.size = size;
+    const turnRate = 2.0; // turn rate in radians per second (slower for smoother animation)
 
     this.render = function (renderer) {
 
       this.quaternion.copy(camera.quaternion).invert();
       this.updateMatrixWorld();
-
       point.set(0, 0, 1);
       point.applyQuaternion(camera.quaternion);
-
       const x = domElement.offsetWidth - dim;
       const y = domElement.offsetHeight - dim;
-
       renderer.clearDepth();
       renderer.getViewport(viewport);
       renderer.setViewport(x, y, dim, dim);
@@ -105,55 +103,45 @@ class ViewHelper extends Object3D {
       renderer.setViewport(viewport.x, viewport.y, viewport.z, viewport.w);
     };
 
-    const targetPosition = new Vector3();
-    const targetQuaternion = new Quaternion();
-
-    const q1 = new Quaternion();
-    const q2 = new Quaternion();
     const viewport = new Vector4();
-    let radius = 0;
-
-    this.handleClick = function (event) {
-
-      if (this.animating === true) return false;
-
-      const rect = domElement.getBoundingClientRect();
-      const offsetX = rect.left + (domElement.offsetWidth - dim);
-      const offsetY = rect.top + (domElement.offsetHeight - dim);
-      mouse.x = ((event.clientX - offsetX) / (rect.right - offsetX)) * 2 - 1;
-      mouse.y = -((event.clientY - offsetY) / (rect.bottom - offsetY)) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, orthoCamera);
-
-      const intersects = raycaster.intersectObjects(interactiveObjects);
-
-      if (intersects.length > 0) {
-        const intersection = intersects[0];
-        const object = intersection.object;
-        prepareAnimationData(object, this.center);
-        this.animating = true;
-        return true;
-      } else {
-        return false;
-      }
-
-    };
 
     this.update = function (delta) {
+      if (!this.animating) return;
 
       const step = delta * turnRate;
+      const spatialControl = this.spatialControl;
 
-      // animate position by doing a slerp and then scaling the position on the unit sphere
-      q1.rotateTowards(q2, step);
-      camera.position.set(0, 0, 1).applyQuaternion(q1).multiplyScalar(radius).add(this.center);
+      // Increment animation progress
+      this.animationProgress = (this.animationProgress || 0) + step;
 
-      // animate orientation
-      camera.quaternion.rotateTowards(targetQuaternion, step);
+      const currentOrientation = spatialControl.getCameraOrientation();
 
-      if (q1.angleTo(q2) === 0) {
-        this.animating = false;
+      // Calculate azimuth difference with proper wrapping
+      let azimuthDiff = this.targetAzimuth - this.startAzimuth;
+
+      // Handle azimuth wrapping (shortest path)
+      if (azimuthDiff > Math.PI) {
+        azimuthDiff -= 2 * Math.PI;
+      } else if (azimuthDiff < -Math.PI) {
+        azimuthDiff += 2 * Math.PI;
       }
 
+      // Interpolate azimuth
+      const newAzimuth = this.startAzimuth + azimuthDiff * Math.min(this.animationProgress, 1.0);
+
+      // Interpolate clino
+      const clinoDiff = this.targetClino - this.startClino;
+      const newClino = this.startClino + clinoDiff * Math.min(this.animationProgress, 1.0);
+
+      spatialControl.setCameraOrientation(currentOrientation.distance, newAzimuth, newClino);
+
+      // Check if animation is complete
+      if (this.animationProgress >= 1.0) {
+        this.animating = false;
+        this.animationProgress = 0;
+        // Set final position to ensure we end exactly at target
+        spatialControl.setCameraOrientation(currentOrientation.distance, this.targetAzimuth, this.targetClino);
+      }
     };
 
     this.dispose = function () {
@@ -180,54 +168,66 @@ class ViewHelper extends Object3D {
 
     };
 
-    function prepareAnimationData(object, focusPoint) {
-      const delta = new Vector3();
+    this.prepareAnimationData = function (object) {
+      // Get current camera orientation from SpatialViewControl
+      const currentOrientation = this.spatialControl?.getCameraOrientation();
+      if (!currentOrientation) {
+        console.error('ViewHelper: SpatialViewControl not found on camera');
+        return;
+      }
 
+      let targetAzimuth = currentOrientation.azimuth;
+      let targetClino = currentOrientation.clino;
+
+      // Map axis clicks to azimuth/clino values
+      // In your system: Y-axis is North (0° azimuth), azimuth increases clockwise
       switch (object.userData.type) {
-
-        case 'posX':
-          delta.setX(100);
-          targetQuaternion.setFromEuler(new Euler(0, Math.PI * 0.5, 0));
+        case 'posX': // Positive X axis (East)
+          targetAzimuth = Math.PI / 2; // 90° East
+          targetClino = 0; // Horizontal
           break;
 
-        case 'posY':
-          delta.setY(-100);
-          targetQuaternion.setFromEuler(new Euler(-Math.PI * 0.5, 0, 0));
+        case 'posY': // Positive Y axis (North)
+          targetAzimuth = 0; // 0° North
+          targetClino = 0; // Horizontal
           break;
 
-        case 'posZ':
-          delta.setZ(100);
-          targetQuaternion.setFromEuler(new Euler());
+        case 'posZ': // Positive Z axis (Up)
+          targetAzimuth = currentOrientation.azimuth; // Keep current azimuth
+          targetClino = Math.PI / 2; // 90° Up
           break;
 
-        case 'negX':
-          delta.setX(-100);
-          targetQuaternion.setFromEuler(new Euler(0, -Math.PI * 0.5, 0));
+        case 'negX': // Negative X axis (West)
+          targetAzimuth = -Math.PI / 2; // -90° West (or 270°)
+          targetClino = 0; // Horizontal
           break;
 
-        case 'negY':
-          delta.setY(100);
-          targetQuaternion.setFromEuler(new Euler(Math.PI * 0.5, 0, 0));
+        case 'negY': // Negative Y axis (South)
+          targetAzimuth = Math.PI; // 180° South
+          targetClino = 0; // Horizontal
           break;
 
-        case 'negZ':
-          delta.setZ(-100);
-          targetQuaternion.setFromEuler(new Euler(0, Math.PI, 0));
+        case 'negZ': // Negative Z axis (Down)
+          targetAzimuth = currentOrientation.azimuth; // Keep current azimuth
+          targetClino = -Math.PI / 2; // -90° Down
           break;
 
         default:
           console.error('ViewHelper: Invalid axis.');
+          return;
       }
 
-      radius = camera.position.distanceTo(focusPoint);
-      targetPosition.copy(focusPoint.clone().add(delta));
+      // Normalize azimuth to 0-2π range
+      if (targetAzimuth < 0) targetAzimuth += 2 * Math.PI;
+      if (targetAzimuth >= 2 * Math.PI) targetAzimuth -= 2 * Math.PI;
 
-      dummy.position.copy(focusPoint);
-      dummy.lookAt(camera.position);
-      q1.copy(dummy.quaternion);
-      dummy.lookAt(targetPosition);
-      q2.copy(dummy.quaternion);
-    }
+      // Store target values for animation
+      this.targetAzimuth = targetAzimuth;
+      this.targetClino = targetClino;
+      this.startAzimuth = currentOrientation.azimuth;
+      this.startClino = currentOrientation.clino;
+
+    };
 
     function getAxisMaterial(color) {
       return new MeshBasicMaterial({ color: color, toneMapped: false });

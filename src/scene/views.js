@@ -447,7 +447,7 @@ class View {
 
 class SpatialView extends View {
 
-  constructor(scene, domElement, viewHelperDomElement) {
+  constructor(scene, domElement) {
     super('spatialView', View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
@@ -470,24 +470,13 @@ class SpatialView extends View {
       this.onOrbitAdjustment(e);
     });
 
-    this.viewHelper = new ViewHelper(this.camera, this.domElement, {
+    this.viewHelper = new ViewHelper(this.camera, this.domElement, this.control, {
       labelX : 'x',
       labelY : 'y',
       labelZ : 'z',
       font   : '28px Arial',
       color  : 'black',
       radius : 18
-    });
-
-    this.viewHelperDomElement = viewHelperDomElement;
-
-    this.viewHelperDomElement.addEventListener('pointerup', (event) => {
-      event.stopPropagation();
-      this.viewHelper.handleClick(event);
-    });
-
-    this.viewHelperDomElement.addEventListener('pointerdown', function (event) {
-      event.stopPropagation();
     });
 
     // Add dip indicator (gyroscope-style)
@@ -518,9 +507,7 @@ class SpatialView extends View {
       compassRotation = compassRotation % (2 * Math.PI);
 
       this.compass.material.rotation = compassRotation;
-      // Update rotation text during rotation
       this.#updateRotationText();
-      // Update dip indicator during rotation
       this.#updateDipIndicator();
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
@@ -795,10 +782,8 @@ class SpatialView extends View {
   }
 
   setCompassRotation() {
-    // For spatial view, calculate current azimuth
     const currentAzimuth = 2 * Math.PI - (this.control.azimuth + Math.PI);
     const currentRotation = radsToDegrees(currentAzimuth).toFixed(1);
-
     const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
     if (rotationRaw === null) return;
 
@@ -813,11 +798,9 @@ class SpatialView extends View {
 
     this.control.setCameraOrientation(this.control.distance, rotationRadians, this.control.clino);
 
-    // Update frustum frame and render
     this.updateFrustumFrame();
     this.renderView();
 
-    // Dispatch rotation change event
     this.control.dispatchEvent('orbitChange', { type: 'rotate', azimuth: rotationRadians });
   }
 
@@ -826,7 +809,6 @@ class SpatialView extends View {
     this.dipIndicator.visible = true;
     this.dipText.sprite.visible = true;
     this.control.enabled = true;
-    this.viewHelperDomElement.style.display = 'block';
     this.compass.material.rotation = 0;
     this.#updateRotationText();
     this.#updateDipIndicator();
@@ -837,7 +819,6 @@ class SpatialView extends View {
     super.deactivate();
     this.dipIndicator.visible = false;
     this.dipText.sprite.visible = false;
-    this.viewHelperDomElement.style.display = 'none';
     this.control.enabled = false;
   }
 }

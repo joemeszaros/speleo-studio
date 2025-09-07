@@ -63,18 +63,6 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
-
-#view-helper {
-  width: 128px;
-  height: 128px;
-  position: fixed;
-  top: 30px;
-  right: 0px;
-  z-index: 102;
-  /* Default position when sidebar is on the right */
-  margin-right: calc(var(--sidebar-width) + 10px);
-}
-
 #close {
   position: absolute;
   top: 3px;

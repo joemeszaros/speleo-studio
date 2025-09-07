@@ -34,7 +34,7 @@ class MyScene {
    * @param {Database} db - The database of the application, containing caves and other infomations
    * @param {*} - Collection of line and geometry materials
    */
-  constructor(options, db, materials, font, container, viewHelperContainer, overview) {
+  constructor(options, db, materials, font, container, overview) {
     this.options = options;
     this.db = db;
     this.materials = materials;
@@ -95,7 +95,7 @@ class MyScene {
     this.views = new Map([
       ['plan', new PlanView(this, this.domElement)],
       ['profile', new ProfileView(this, this.domElement)],
-      ['spatial', new SpatialView(this, this.domElement, viewHelperContainer)]
+      ['spatial', new SpatialView(this, this.domElement)]
     ]);
 
     this.grid = new Grid(this.options, this);
@@ -298,7 +298,6 @@ class MyScene {
     } else {
       return undefined;
     }
-
   }
 
   getIntersectedStationSphere(mouseCoordinates, radius) {
@@ -330,6 +329,42 @@ class MyScene {
     } else {
       return undefined;
     }
+  }
+
+  /**
+   * Get the first intersected sprite from the viewhelper. It converts mouse coordinates to viewhelper's coordinate system,
+   * which is in the top right corner of the canvas.
+   * @param {*} mouseCoordinates
+   * @returns
+   */
+
+  getFirstIntersectedViewHelperSprite(mouseCoordinates) {
+    if (this.view.name !== 'spatialView') return;
+
+    const viewHelper = this.view.viewHelper;
+    const dim = viewHelper.size;
+
+    const sceneRect = this.domElement.getBoundingClientRect();
+
+    const relativeX = mouseCoordinates.x - sceneRect.left;
+    const relativeY = mouseCoordinates.y - sceneRect.top;
+
+    if (relativeX < sceneRect.width - dim || relativeY > dim) {
+      return undefined;
+    }
+
+    // Convert mouse coordinates to viewhelper's coordinate system
+    const localX = (relativeX - (sceneRect.width - dim)) / dim;
+    const localY = relativeY / dim;
+
+    // Convert to normalized device coordinates for the orthographic camera
+    const ndcX = localX * 2 - 1;
+    const ndcY = -(localY * 2 - 1);
+    // Set up raycaster with viewhelper's orthographic camera
+    this.raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), viewHelper.orthoCamera);
+    const intersectedSprites = this.raycaster.intersectObjects(viewHelper.interactiveObjects);
+
+    return intersectedSprites.length > 0 ? intersectedSprites[0].object : undefined;
   }
 
   getIntersectedSurfacePoint(mouseCoordinates, purpose) {

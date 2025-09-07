@@ -352,6 +352,12 @@ class SceneInteraction {
 
   onClick() {
 
+    const firstSprite = this.scene.getFirstIntersectedViewHelperSprite(this.mouseCoordinates);
+    if (firstSprite !== undefined && typeof firstSprite.onclick === 'function') {
+      firstSprite.onclick(); // custom function
+      return; // Exit early if viewhelper was clicked
+    }
+
     if (this.raycastingEnabled === false) {
       return;
     }
