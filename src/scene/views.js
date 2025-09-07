@@ -69,12 +69,23 @@ class View {
       position,
       { size: 35, family: 'Helvetica Neue', strokeColor: 'black' },
       0.5,
-      'ratio text'
+      `ratio text ${this.name}`
     );
   }
 
   #createRatioIndicator(width) {
-    const map = new THREE.TextureLoader().load('images/ratio.png');
+    const map = new THREE.TextureLoader().load(
+      'images/ratio.png',
+      (texture) => {
+        // Force a render update when texture loads
+        this.scene.view.renderView();
+
+      },
+      undefined,
+      (error) => {
+        console.error('Failed to load ratio indicator texture:', error);
+      }
+    );
     map.colorSpace = THREE.SRGBColorSpace;
     const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff });
     const sprite = new THREE.Sprite(material);
@@ -82,19 +93,29 @@ class View {
     sprite.scale.set(width, (width / 755) * 36, 1); // 755 is the width of the image, 36 is the height of the image
     sprite.position.set(0, -this.scene.height / 2 + 20, 1); // bottom right
     sprite.width = width; // custom property
-    sprite.name = 'ratio ruler';
+    sprite.name = `ratio ruler ${this.name}`;
     return sprite;
   }
 
   #createCompass(size) {
-    const map = new THREE.TextureLoader().load('images/compass.png');
+    const map = new THREE.TextureLoader().load(
+      'images/compass.png',
+      (texture) => {
+        // Force a render update when texture loads
+        this.scene.view.renderView();
+      },
+      undefined,
+      (error) => {
+        console.error('Failed to load compass texture:', error);
+      }
+    );
     map.colorSpace = THREE.SRGBColorSpace;
     const material = new THREE.SpriteMaterial({ map: map });
     const sprite = new THREE.Sprite(material);
     sprite.center.set(0.5, 0.5);
     sprite.scale.set(size, size, 1);
     sprite.position.set(this.scene.width / 2 - 60, -this.scene.height / 2 + 60, 1); // bottom right
-    sprite.name = 'compass';
+    sprite.name = `compass ${this.name}`;
     return sprite;
   }
 
@@ -153,6 +174,10 @@ class View {
   }
 
   onZoomLevelChange(level) {
+    this.updateRationSprites(level);
+  }
+
+  updateRationSprites(level) {
     const cmInPixels = this.dpi / 2.54;
     const worldWidthInMeters = this.camera.width / level;
     const screenInCentimeters = window.screen.width / cmInPixels;
@@ -668,7 +693,7 @@ class SpatialView extends View {
 
     // Store canvas and context references for later updates
     sprite.userData = { canvas, ctx, width, height };
-    sprite.position.set(this.scene.width / 2 - 170, -this.scene.height / 2 + 160, 1); // bottom right
+    sprite.position.set(this.scene.width / 2 - 170, -this.scene.height / 2 + 60, 1); // bottom right
     sprite.scale.set(size, size, 1);
     sprite.name = 'dip indicator';
 
@@ -676,7 +701,7 @@ class SpatialView extends View {
   }
 
   #createDipText() {
-    const position = new THREE.Vector3(this.scene.width / 2 - 179, -this.scene.height / 2 - 120, 1);
+    const position = new THREE.Vector3(this.scene.width / 2 - 170, -this.scene.height / 2 + 120, 1);
     return new TextSprite(
       '0°',
       position,
@@ -809,7 +834,6 @@ class SpatialView extends View {
     this.dipIndicator.visible = true;
     this.dipText.sprite.visible = true;
     this.control.enabled = true;
-    this.compass.material.rotation = 0;
     this.#updateRotationText();
     this.#updateDipIndicator();
     this.renderView();

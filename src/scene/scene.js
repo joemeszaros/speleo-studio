@@ -161,6 +161,7 @@ class MyScene {
 
     this.view = this.views.get('spatial');
     this.view.activate(this.computeBoundingBox());
+    this.view.updateRationSprites(this.view.control.zoom);
 
     // Initialize camera tracking for billboard optimization
     this.#initializeCameraTracking();
