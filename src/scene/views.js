@@ -183,19 +183,20 @@ class View {
     const screenInCentimeters = window.screen.width / cmInPixels;
     const rawRatio = (worldWidthInMeters * 100) / screenInCentimeters;
 
+    const roundedRatio = this.#roundToDedicatedRatio(rawRatio);
     // Round to dedicated ratio
-    this.ratio = this.#roundToDedicatedRatio(rawRatio);
+    this.ratio = rawRatio;
 
     // Calculate dynamic ruler width based on the rounded ratio
     // Target: ruler should represent a nice round distance (e.g., 1m, 5m, 10m, 50m, 100m)
-    const targetRulerDistance = this.getTargetRulerDistance(this.ratio);
+    const targetRulerDistance = this.getTargetRulerDistance(roundedRatio);
     const rulerWidthInMeters = targetRulerDistance;
     const rulerWidthInPixels = (rulerWidthInMeters / worldWidthInMeters) * this.scene.width;
 
     this.ratioIndicator.width = Math.max(50, Math.min(400, rulerWidthInPixels)); // between 50-400px
     this.ratioIndicator.scale.set(this.ratioIndicator.width, 15, 1);
 
-    const ratioText = `${formatDistance(rulerWidthInMeters)} - M 1:${this.ratio}`;
+    const ratioText = `${formatDistance(rulerWidthInMeters)} - M 1:${Math.floor(this.ratio)}`;
     this.ratioText.update(`${ratioText}`);
   }
 
