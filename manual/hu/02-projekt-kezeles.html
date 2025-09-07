@@ -16,30 +16,30 @@
       <div class="nav">
         <a href="01-bevezetes.html">← Előző: Bevezetés</a>
         <a href="index.html">Főoldal</a>
-        <a href="03-adatok-importalasa.html">Következő: Adatok importálása →</a>
+        <a href="02b-adatmodell.html">Következő: Adatmodell és struktúra →</a>
       </div>
 
       <h2>Mi az a projekt?</h2>
       <p
         >A projekt a Speleo Studio-ban egy logikai egység, amely egy vagy több barlangot, valamint azok felméréseit és
-        kapcsolódó adatait tartalmazza. A projektek segítenek szervezni és kezelni a barlang adatokat.</p
+        kapcsolódó adatait tartalmazza. A barlangok mellett tartalmazhat még 3D modelleket, mint például a barlang
+        felszíne. A projektek az adatok rendszerezésében és tárolásában segítenek.</p
       >
 
       <div class="feature-box">
         <h3>Projekt komponensei:</h3>
         <ul>
-          <li><strong>Barlangok:</strong> Egy vagy több barlang adatai</li>
+          <li><strong>Barlangok:</strong> Egy vagy több barlang adatai (pl. kataszteri szám)</li>
           <li><strong>Felmérések:</strong> Minden barlanghoz tartozó felmérési adatok</li>
-          <li><strong>Attribútumok:</strong> Pontok, szakaszok és komponensek attribútumai</li>
-          <li><strong>Felszín adatok:</strong> PLY formátumú felszín modellek</li>
-          <li><strong>Beállítások:</strong> Projekt-specifikus konfigurációk</li>
+          <li><strong>Attribútumok:</strong> Kiegészítő információk a barlang egyes pontjaihoz vagy szakaszaihoz</li>
+          <li><strong>3D modellek:</strong> 3D moellek, mint például a felszín</li>
         </ul>
       </div>
 
       <h2>Projekt kezelő panel</h2>
       <p>A projekt kezelő panel az alkalmazás központi eleme, ahol létrehozhat, megnyithat és kezelhet projekteket.</p>
 
-      <div class="image-placeholder"> [KÉP HELYE: Projekt kezelő panel megjelenítése] </div>
+      <div class="image-placeholder"> <img src="images/2-projekt-kezelo.png" alt="Projekt kezelő panel" /> </div>
 
       <h3>Panel megnyitása</h3>
       <p>A projekt kezelő panelt több módon is megnyithatja:</p>
@@ -54,22 +54,31 @@
       <div class="step">
         <h3>1. lépés: Új projekt gomb</h3>
         <p>A projekt kezelő panelben kattintson az "Új projekt" gombra.</p>
-        <div class="image-placeholder"> [KÉP HELYE: Új projekt gomb kiemelése] </div>
+        <div class="image-placeholder black"> <img src="images/2-projekt-panel-new.png" alt="Új projekt gomb" /> </div>
       </div>
 
-      <div class="step">
-        <h3>2. lépés: Projekt adatok megadása</h3>
-        <p>Adja meg a projekt nevét és opcionálisan leírását:</p>
-        <ul>
-          <li><strong>Projekt neve:</strong> Egyedi név a projekt azonosításához</li>
-          <li><strong>Leírás:</strong> Részletes leírás a projekt tartalmáról (opcionális)</li>
-        </ul>
-        <div class="image-placeholder"> [KÉP HELYE: Új projekt párbeszédpanel] </div>
+      <div class="step" style="display: flex">
+        <div style="flex: 50%; padding: 10px">
+          <h3>2. lépés: Projekt adatok megadása</h3>
+          <p>Adja meg a projekt nevét és opcionálisan leírását:</p>
+          <ul>
+            <li><strong>Projekt neve:</strong> Egyedi név a projekt azonosításához</li>
+            <li><strong>Leírás:</strong> Részletes leírás a projekt tartalmáról (opcionális)</li>
+          </ul>
+        </div>
+        <div class="image-placeholder" style="flex: 50%; padding: 10px">
+          <img src="images/2-projekt-nev.png" />
+        </div>
       </div>
 
-      <div class="step">
-        <h3>3. lépés: Projekt mentése</h3>
-        <p>Kattintson a "Létrehozás" gombra. A projekt automatikusan mentésre kerül és aktívvá válik.</p>
+      <div class="step" style="display: flex">
+        <div style="flex: 50%; padding: 10px">
+          <h3>3. lépés: Projekt mentése</h3>
+          <p>Kattintson az "Ok" gombra. A projekt automatikusan mentésre kerül és aktívvá válik.</p>
+        </div>
+        <div class="image-placeholder" style="flex: 50%; padding: 10px">
+          <img src="images/2-projekt-uzenet.png" />
+        </div>
       </div>
 
       <div class="warning">
@@ -86,7 +95,7 @@
       <h3>Legutóbbi projektek listája</h3>
       <p>A projekt kezelő panel "Legutóbbi projektek" szekciójában láthatók a korábban használt projektek.</p>
 
-      <div class="image-placeholder"> [KÉP HELYE: Legutóbbi projektek listája] </div>
+      <div class="image-placeholder black"> <img src="images/2-projekt-lista.png" /> </div>
 
       <div class="step">
         <h3>Projekt megnyitása</h3>
@@ -96,35 +105,35 @@
       <h3>Projekt keresése</h3>
       <p>Ha sok projektje van, használja a keresőmezőt a projekt neve alapján történő szűréshez.</p>
 
-      <div class="image-placeholder"> [KÉP HELYE: Projekt keresőmező használata] </div>
+      <div class="image-placeholder black"> <img src="images/2-projekt-kereses.png" /> </div>
 
       <h2>Projekt kezelése</h2>
 
-      <h3>Jelenlegi projekt információi</h3>
-      <p>A projekt kezelő panel tetején látható a jelenleg aktív projekt információi:</p>
-      <ul>
-        <li>Projekt neve</li>
-        <li>Létrehozás dátuma</li>
-        <li>Utolsó módosítás dátuma</li>
-        <li>Barlangok száma</li>
-      </ul>
+      <div class="row">
+        <div class="column-2">
+          <h3>Jelenlegi projekt információi</h3>
+          <p>A projekt kezelő panel tetején látható a jelenleg aktív projekt információi:</p>
+          <ul>
+            <li>Projekt neve</li>
+            <li>Létrehozás dátuma</li>
+            <li>Utolsó módosítás dátuma</li>
+            <li>Barlangok száma</li>
+          </ul>
+        </div>
 
-      <div class="image-placeholder"> [KÉP HELYE: Aktív projekt információk megjelenítése] </div>
-
+        <div class="image-placeholder column-2"><img src="images/2-projekt-reszletek.png" /> </div>
+      </div>
       <h3>Projekt műveletek</h3>
       <p>Az aktív projekttel a következő műveleteket végezheti el:</p>
 
       <div class="feature-box">
         <h4>Projekt átnevezése</h4>
-        <p>Kattintson a projekt nevére, majd módosítsa a nevet. A változtatás automatikusan mentésre kerül.</p>
+        <p>Kattintson az "Átnevezés" gombra. A változtatás automatikusan mentésre kerül.</p>
       </div>
 
       <div class="feature-box">
         <h4>Projekt exportálása</h4>
-        <p
-          >A "Projekt" menüben válassza az "Exportálás" opciót. Ez egy JSON fájlt hoz létre a teljes projekt
-          adataival.</p
-        >
+        <p>Kattintson az "Exportálás" gombra. Ez egy JSON fájlt hoz létre a teljes projekt adataival.</p>
       </div>
 
       <div class="feature-box">
@@ -134,27 +143,6 @@
           törlés gombbal távolíthatja el a projektet.</p
         >
       </div>
-
-      <h2>Projekt struktúra</h2>
-
-      <h3>Barlangok szervezése</h3>
-      <p>Egy projektben több barlangot is kezelhet. Minden barlang:</p>
-      <ul>
-        <li>Saját nevet és metaadatokat tartalmaz</li>
-        <li>Egy vagy több felmérést tartalmazhat</li>
-        <li>EOV koordinátákkal rendelkezhet</li>
-        <li>Attribútumokat tartalmazhat</li>
-      </ul>
-
-      <div class="image-placeholder"> [KÉP HELYE: Projekt struktúra diagram - barlangok és felmérések] </div>
-
-      <h3>Felmérések kezelése</h3>
-      <p>Minden barlang több felmérést tartalmazhat:</p>
-      <ul>
-        <li><strong>Középvonalak:</strong> Fő barlang útvonalak</li>
-        <li><strong>Tüskék:</strong> Mellékágak és részletek</li>
-        <li><strong>Segédvonalak:</strong> Segédeszközök és referenciák</li>
-      </ul>
 
       <h2>Projekt mentése és biztonsági mentés</h2>
 
@@ -177,16 +165,11 @@
         <p>Válassza ki a mentési helyet és adja meg a fájlnevet. A projekt JSON formátumban kerül mentésre.</p>
       </div>
 
-      <div class="step">
-        <h4>3. Biztonsági mentés</h4>
-        <p>Mentsen rendszeres biztonsági másolatokat különböző helyekre (felhő, külső meghajtó).</p>
-      </div>
-
       <h2>Projekt importálása</h2>
 
       <div class="step">
         <h3>1. lépés: Importálás indítása</h3>
-        <p>A projekt kezelő panelben kattintson az "Importálás" gombra (ha elérhető).</p>
+        <p>A projekt kezelő panelben kattintson az "Project importálása" gombra.</p>
       </div>
 
       <div class="step">
@@ -219,21 +202,12 @@
         </ul>
       </div>
 
-      <div class="feature-box">
-        <h3>Biztonsági mentési stratégia</h3>
-        <ul>
-          <li>Hetente exportálja a fontos projekteket</li>
-          <li>Tartsa meg a különböző verziókat</li>
-          <li>Használjon felhő tárolást a biztonságos mentéshez</li>
-        </ul>
-      </div>
-
       <h2>Gyakori problémák és megoldások</h2>
 
       <div class="warning">
         <h3>Projekt nem nyílik meg</h3>
         <p><strong>Probléma:</strong> A projekt fájl sérült vagy nem kompatibilis.</p>
-        <p><strong>Megoldás:</strong> Ellenőrizze a fájl integritását, vagy importálja újra a forrás adatokat.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze a fájl integritását, vagy importálja újra a adatokat.</p>
       </div>
 
       <div class="warning">
@@ -251,19 +225,18 @@
       <h2>Következő lépések</h2>
       <p
         >Most, hogy megismerte a projekt kezelést, folytathatja az
-        <a href="03-adatok-importalasa.html">adatok importálása</a> fejezettel, ahol megtanulja, hogyan importálhat
-        barlang adatokat különböző formátumokból.</p
+        <a href="02b-adatmodell.html">adatok modelljének</a> megértésével.</p
       >
 
       <div class="nav">
         <a href="01-bevezetes.html">← Előző: Bevezetés</a>
         <a href="index.html">Főoldal</a>
-        <a href="03-adatok-importalasa.html">Következő: Adatok importálása →</a>
+        <a href="02b-adatmodell.html">Következő: Adatmodell és struktúra →</a>
       </div>
 
       <div class="donation-footer">
         <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
-        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
         <div class="donation-actions">
           <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
           <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>

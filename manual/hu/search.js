@@ -7,6 +7,7 @@ class ManualSearch {
     this.pages = [
       { url: '01-bevezetes.html', title: 'Bevezetés és első lépések' },
       { url: '02-projekt-kezeles.html', title: 'Projekt kezelés' },
+      { url: '02b-adatmodell.html', title: 'Adatmodell és struktúra' },
       { url: '03-adatok-importalasa.html', title: 'Adatok importálása' },
       { url: '04-3d-vizualizacio.html', title: '3D vizualizáció és navigáció' },
       { url: '05-felmereek-szerkesztese.html', title: 'Felmérések szerkesztése' },
