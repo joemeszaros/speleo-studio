@@ -838,6 +838,13 @@ img {
   margin: 40px 0;
 }
 
+.objective {
+  background: #e8f4fd;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
 .developer-info {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

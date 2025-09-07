@@ -22,8 +22,8 @@
       <h2>Mi a Speleo Studio?</h2>
       <p
         >A Speleo Studio egy modern, webes barlang vizualizációs és felmérés kezelő alkalmazás, amely lehetővé teszi
-        barlangrendszerek 3D-s megjelenítését, szerkesztését és elemzését. Az alkalmazás különösen hasznos
-        barlangkutatók, speleológusok és geológusok számára.</p
+        barlangrendszerek 3D-s megjelenítését, szerkesztését és elemzését telepítés nélkül. Az alkalmazás különösen hasznos
+        barlangkutatók, barlangokkal foglalkozó szakemberek számára és mindenkinek, aki érdeklődik a barlangok iránt.</p
       >
 
       <div class="feature-list">
@@ -32,10 +32,11 @@
           <li><strong>3D vizualizáció:</strong> Interaktív 3D barlangrendszerek megjelenítése</li>
           <li><strong>Adatimportálás:</strong> Több formátum támogatása (TopoDroid, Polygon, JSON, PLY)</li>
           <li><strong>Felmérés szerkesztés:</strong> Felmérési adatok szerkesztése és validálása</li>
-          <li><strong>Attribútumok:</strong> Pontok, szakaszok és komponensek attribútumainak kezelése</li>
-          <li><strong>Eszközök:</strong> Dőlés-irány számító, legrövidebb út keresés</li>
+          <li><strong>Attribútumok:</strong>Kiegészíétő információk rendelése pontokhoz vagy szakaszokhoz</li>
+          <li><strong>Segédeszközök:</strong> Dőlés-irány számító, legrövidebb út keresés és még több segédeszköz</li>
           <li><strong>Exportálás:</strong> Különböző formátumokba exportálás (PNG, DXF, JSON)</li>
           <li><strong>Projekt kezelés:</strong> Több barlang és felmérés szervezése projektekben</li>
+          <li><strong>Validálás:</strong> Adatok széleskörű ellenőrzése a felmérési adatok helyességének ellenőrzéséhez</li>
         </ul>
       </div>
 
@@ -43,10 +44,8 @@
       <div class="info">
         <h3>Minimális követelmények:</h3>
         <ul>
-          <li>Modern webböngésző (Chrome, Firefox, Safari, Edge)</li>
-          <li>JavaScript engedélyezve</li>
-          <li>WebGL támogatás</li>
-          <li>Stabil internetkapcsolat (első betöltéshez)</li>
+          <li>Firefox vagy Chrome böngésző (más böngésző nem támogatott)</li>
+          <li>Internetkapcsolat az első betöltéshez</li>
         </ul>
       </div>
 
@@ -56,27 +55,20 @@
         <h3>1. lépés: Alkalmazás megnyitása</h3>
         <p
           >Nyissa meg a webböngészőjét és navigáljon a Speleo Studio weboldalára. Az alkalmazás automatikusan
-          betöltődik.</p
-        >
-        <div class="image-placeholder"> [KÉP HELYE: Speleo Studio főoldal betöltése] </div>
-      </div>
-
-      <div class="step">
-        <h3>2. lépés: Üdvözlő panel</h3>
-        <p
-          >Első indításkor megjelenik az üdvözlő panel, amely bemutatja az alkalmazás főbb funkcióit. Kattintson a
+          betöltődik. Első indításkor megjelenik az üdvözlő panel, amely bemutatja az alkalmazás főbb funkcióit. Kattintson a
           "Kezdjük el" gombra a folytatáshoz.</p
         >
-        <div class="image-placeholder"> [KÉP HELYE: Üdvözlő panel megjelenítése] </div>
+        <div class="image-placeholder"> <img src="images/1-1-welcome.png" alt="Üdvözlő panel" /> </div>
       </div>
 
       <div class="step">
-        <h3>3. lépés: Projekt létrehozása vagy megnyitása</h3>
+        <h3>2. lépés: Projekt létrehozása</h3>
         <p
           >Az alkalmazás automatikusan megnyitja a projekt kezelő panelt, ahol új projektet hozhat létre vagy meglévőt
-          nyithat meg.</p
+          nyithat meg. Projekt nélkül nem lehet barlangokat importálni és azokat szerkeszteni és bizonyos funkciók nem elérhetőek.
+          A projekt kezelő bezárásával a Speleo Studio kezelői felülete válik láthatóvá.</p
         >
-        <div class="image-placeholder"> [KÉP HELYE: Projekt kezelő panel] </div>
+        <div class="image-placeholder"> <img src="images/1-2-project.png" alt="Projekt kezelő panel" /> </div>
       </div>
 
       <h2>Felület áttekintése</h2>
@@ -85,29 +77,30 @@
       <div class="image-placeholder"> [KÉP HELYE: Speleo Studio felület áttekintése címkékkel] </div>
 
       <h3>1. Navigációs sáv (felső)</h3>
-      <p>A navigációs sáv tartalmazza a főbb menüket és eszközöket:</p>
+      <p>A navigációs sáv tartalmazza a főbb menüket és ikonokat:</p>
       <ul>
         <li><strong>Fájl menü:</strong> Új barlang, megnyitás, exportálás</li>
         <li><strong>Projekt menü:</strong> Projekt kezelés</li>
         <li><strong>Eszközök menü:</strong> Speciális eszközök</li>
-        <li><strong>Navigációs eszközök:</strong> Nagyítás, nézetek, színek</li>
+        <li><strong>Ikonok:</strong> Nagyítás, nézetek, színek</li>
       </ul>
 
-      <h3>2. 3D Viewport (középső terület)</h3>
+      <h3>2. 3D nézetablak (középső terület)</h3>
       <p
-        >Itt jelenik meg a 3D barlangrendszer. Itt navigálhat a jelenetben, kiválaszthat pontokat és használhatja a
+        >Ez az a 3 dimenziós viurtális tér, ahol a barlangok megjelennek 3D-ben. Itt navigálhat a jelenetben, kiválaszthat pontokat és használhatja a
         vizualizációs eszközöket.</p
       >
 
-      <h3>3. Oldalsáv (jobb oldal)</h3>
-      <p>Az oldalsáv két fő lapot tartalmaz:</p>
+      <h3>3. Oldalsáv (jobb vagy bal oldal)</h3>
+      <p>Az oldalsáv két fő fület tartalmaz:</p>
       <ul>
         <li><strong>Felfedező lap:</strong> Barlangok és felmérések listája</li>
         <li><strong>Beállítások lap:</strong> Megjelenítési beállítások</li>
       </ul>
+      <p>Az oldalsáv alján találja a 3D jelenet áttekintőt, ami kicsiben mutatja a 3D jelenetet.</p>
 
       <h3>4. Lábléc (alsó)</h3>
-      <p>Itt látható a jelenlegi projekt információja és a pont kiválasztás állapota.</p>
+      <p>Itt látható a jelenlegi projekt információja és a felhasználó számára érdekes üzenetek.</p>
 
       <h2>Alapvető navigáció</h2>
 
@@ -119,15 +112,22 @@
         <li><strong>Középső gomb + húzás:</strong> Kamera eltolása</li>
       </ul>
 
-      <h3>Gyorsbillentyűk</h3>
+      <h3>Legfontosabb gyorsbillentyűk</h3>
       <ul>
         <li><strong>Ctrl + B:</strong> Oldalsáv ki/bekapcsolása</li>
         <li><strong>Ctrl + E:</strong> Felfedező lap megnyitása</li>
         <li><strong>Ctrl + D:</strong> Beállítások lap megnyitása</li>
-        <li><strong>Ctrl + G:</strong> Jelenet áttekintő megnyitása</li>
+        <li><strong>Ctrl + G:</strong> Jelenet áttekintő ki/bekapcsolása</li>
         <li><strong>Ctrl + N:</strong> Új barlang</li>
         <li><strong>Ctrl + O:</strong> Barlang megnyitása</li>
-        <li><strong>Ctrl + S:</strong> Exportálás</li>
+        <li><strong>Ctrl + H:</strong> Exportálás</li>
+        <li><strong>Ctrl + P:</strong> Nyomtatás</li>
+        <li><strong>Ctrl + +:</strong> Nagyítás</li>
+        <li><strong>Ctrl + -:</strong> Kicsinyítés</li>
+        <li><strong>Ctrl + 1:</strong> Alaprajz nézet</li>
+        <li><strong>Ctrl + 2:</strong> Oldal nézet</li>
+        <li><strong>Ctrl + 3:</strong> 3D nézet</li>
+        <li><strong>Ctrl + R:</strong> Forgatás eszköz</li>
       </ul>
 
       <h2>Első lépések</h2>
@@ -136,22 +136,22 @@
         <h3>1. Új projekt létrehozása</h3>
         <p
           >Kattintson a "Projekt" menüre, majd "Új projekt" opcióra. Adjon nevet a projektnek és opcionálisan
-          leírást.</p
+          leírást vagy kattintson az "Új projekt" gombra a projekt kezelő panelen.</p
         >
       </div>
 
       <div class="step">
         <h3>2. Barlang importálása</h3>
         <p
-          >Kattintson a "Fájl" menüre, majd "Barlang(ok) megnyitása" opcióra. Válassza ki a barlang fájlját (JSON vagy
-          .cave formátum).</p
+          >Kattintson a "Fájl" menüre, majd "Barlang(ok) megnyitása" opcióra. Válassza ki a megfelelő formátumú
+           fájlt a felnyíló tallózó ablakban a barlang adatainak importálásához.</p
         >
       </div>
 
       <div class="step">
         <h3>3. 3D vizualizáció megtekintése</h3>
         <p
-          >Az importálás után a barlang automatikusan megjelenik a 3D viewportban. Használja az egérgombokat a
+          >Az importálás után a barlang automatikusan megjelenik a 3D nézetablakban. Használja az egérgombokat a
           navigáláshoz.</p
         >
       </div>
@@ -160,8 +160,8 @@
         <h3>⚠️ Fontos megjegyzések</h3>
         <ul>
           <li>Az alkalmazás böngészőben fut, nincs szükség telepítésre</li>
-          <li>Az adatok a böngésző helyi tárolójában vannak mentve</li>
-          <li>Rendszeres mentés ajánlott a projekt exportálásával</li>
+          <li>Az adatok a böngésző helyi tárolójában vannak automatikus mentve, nincs szükség külön mentésre</li>
+          <li>Aaánlott a projektek exportálása bizonyos időközönként</li>
           <li>Nagy fájlok esetén a betöltés időt vehet igénybe</li>
         </ul>
       </div>
@@ -180,7 +180,7 @@
 
       <div class="donation-footer">
         <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
-        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
         <div class="donation-actions">
           <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
           <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
