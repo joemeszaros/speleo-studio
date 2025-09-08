@@ -228,6 +228,18 @@ code {
   color: #e74c3c;
 }
 
+.code-example {
+  background: #2c3e50;
+  color: #ecf0f1;
+  padding: 15px;
+  border-radius: 5px;
+  font-family: 'Courier New', monospace;
+  overflow-x: auto;
+  margin: 10px 0;
+  white-space: pre-wrap;
+  border-left: 4px solid #3498db;
+}
+
 /* Pros and cons */
 .pros-cons {
   display: grid;
@@ -395,6 +407,10 @@ img {
 
 .image-placeholder.small-padding {
   padding: 10px;
+}
+
+.image-placeholder .medium-size img {
+  width: 200px;
 }
 
 /* Feature lists */
