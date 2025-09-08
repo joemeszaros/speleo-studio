@@ -63,7 +63,7 @@ class PolygonImporter extends Importer {
         shots.push(
           new Shot(
             i++,
-            parts[1] === '' ? ShotType.SPLAY : ShotType.CENTER,
+            parts[1] === '' || parts[1] === '-' ? ShotType.SPLAY : ShotType.CENTER,
             parts[0],
             parts[1] === '' ? undefined : parts[1],
             U.parseMyFloat(parts[2]),

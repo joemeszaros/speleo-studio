@@ -156,12 +156,12 @@ class View {
       text,
       position,
       {
-        size        : 24,
+        size        : 45,
         family      : 'Helvetica Neue',
         strokeColor : this.scene.options.scene.sprites3D.textStroke,
         color       : this.scene.options.scene.sprites3D.textColor
       },
-      0.5,
+      0.4,
       `rotation text ${this.name}`
     );
   }
