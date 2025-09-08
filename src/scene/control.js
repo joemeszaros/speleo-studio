@@ -13,10 +13,16 @@ export class BaseViewControl {
 
     this.state = 'none';
     this.startX = 0;
+    this.startY = 0;
     this.startPan = new THREE.Vector2();
     this.isPanning = false;
+    this.isTouchDevice = this.#detectTouchDevice();
 
     this.setupEventListeners();
+  }
+
+  #detectTouchDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }
 
   setTarget(target) {
@@ -33,24 +39,48 @@ export class BaseViewControl {
   }
 
   setupEventListeners() {
+    // Use pointer events for better touch/mouse compatibility
     this.domElement.addEventListener('pointerdown', this.onPointerDown.bind(this));
     this.domElement.addEventListener('pointermove', this.onPointerMove.bind(this));
     this.domElement.addEventListener('pointerup', this.onPointerUp.bind(this));
+    this.domElement.addEventListener('pointercancel', this.onPointerUp.bind(this));
     this.domElement.addEventListener('wheel', this.onWheel.bind(this));
+
+    // Prevent context menu on right click
+    this.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
   onPointerDown(event) {
     if (!this.enabled) return;
 
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      // Pan mode
+    // Store initial position for all modes
+    this.startX = event.clientX;
+    this.startY = event.clientY;
+    this.startPan.set(event.clientX, event.clientY);
+
+    if (this.isTouchDevice) {
+      // Touch device: always pan (like Google Maps)
       this.state = 'pan';
       this.isPanning = true;
-      this.startPan.set(event.clientX, event.clientY);
     } else {
-      // Rotate mode - to be implemented by subclasses
-      this.state = 'rotate';
-      this.startX = event.clientX;
+      // Mouse device: check button and modifiers
+
+      if (event.button === 2 || event.button === 1) {
+
+        // Right click or middle click = pan
+        this.state = 'pan';
+        this.isPanning = true;
+      } else if (event.button === 0) {
+        // Left click
+        if (event.ctrlKey || event.metaKey || event.shiftKey) {
+          // Left click + modifier = pan
+          this.state = 'pan';
+          this.isPanning = true;
+        } else {
+          // Left click = rotate (to be implemented by subclasses)
+          this.state = 'rotate';
+        }
+      }
     }
 
     this.dispatchEvent('start');
@@ -286,15 +316,11 @@ export class PlanViewControl extends BaseViewControl {
   onPointerDown(event) {
     if (!this.enabled) return;
 
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      // Pan mode
-      this.state = 'pan';
-      this.isPanning = true;
-      this.startPan.set(event.clientX, event.clientY);
-    } else {
-      // Rotate mode - rotate camera around Z axis
-      this.state = 'rotate';
-      this.startX = event.clientX;
+    // Call parent method for basic control logic
+    super.onPointerDown(event);
+
+    // Additional setup for PlanView rotation
+    if (this.state === 'rotate') {
       this.startY = event.clientY;
       // Calculate start angle from center of the element
       const rect = this.domElement.getBoundingClientRect();
@@ -302,8 +328,6 @@ export class PlanViewControl extends BaseViewControl {
       const centerY = rect.height / 2;
       this.startAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
     }
-
-    this.dispatchEvent('start');
   }
 
   onPointerMove(event) {
@@ -419,21 +443,14 @@ export class SpatialViewControl extends BaseViewControl {
   onPointerDown(event) {
     if (!this.enabled) return;
 
-    if (event.shiftKey) {
-      // Pan mode with shift key
-      this.state = 'pan';
-      this.isPanning = true;
-      this.startPan.set(event.clientX, event.clientY);
-    } else {
-      // Rotate mode - full 3D rotation
-      this.state = 'rotate';
-      this.startX = event.clientX;
-      this.startY = event.clientY;
+    // Call parent method for basic control logic
+    super.onPointerDown(event);
+
+    // Additional setup for SpatialView rotation
+    if (this.state === 'rotate') {
       this.startAzimuth = this.azimuth;
       this.startClino = this.clino;
     }
-
-    this.dispatchEvent('start');
   }
 
   onPointerMove(event) {

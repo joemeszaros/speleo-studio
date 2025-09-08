@@ -295,8 +295,8 @@ export class Sidebar {
 
   addTooltips() {
     const tooltips = {
-      explorer                  : i18n.t('ui.sidebar.tooltips.explorer'),
-      settings                  : i18n.t('ui.sidebar.tooltips.settings'),
+      explorer                  : '♎ ' + i18n.t('ui.sidebar.tooltips.explorer'),
+      settings                  : '⚙️ ' + i18n.t('ui.sidebar.tooltips.settings'),
       'sidebar-toggle'          : i18n.t('ui.sidebar.tooltips.toggle'),
       'sidebar-position-toggle' : i18n.t('ui.sidebar.tooltips.positionToggle')
     };
@@ -403,10 +403,10 @@ export class Sidebar {
     const settingsTab = document.querySelector('[data-tab="settings"]');
 
     if (explorerTab) {
-      explorerTab.textContent = i18n.t('ui.sidebar.tabs.explorer');
+      explorerTab.textContent = '♎ ' + i18n.t('ui.sidebar.tabs.explorer');
     }
     if (settingsTab) {
-      settingsTab.textContent = i18n.t('ui.sidebar.tabs.settings');
+      settingsTab.textContent = '⚙️ ' + i18n.t('ui.sidebar.tabs.settings');
     }
   }
 

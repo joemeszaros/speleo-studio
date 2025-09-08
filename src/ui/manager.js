@@ -131,9 +131,9 @@ class ProjectManager {
     const survey = e.detail.survey;
     const newName = survey.name;
     const cave = e.detail.cave;
-
     this.scene.renameSurvey(oldName, newName, cave.name);
     this.explorer.renameSurvey(oldName, newName, cave.name);
+    console.log('in manager');
     await this.saveCave(cave);
   }
 
@@ -269,11 +269,6 @@ class ProjectManager {
       return;
     }
 
-    const lOptions = this.options.scene.caveLines;
-
-    // get color gradients after recalculation
-    const colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
-
     cave.surveys.forEach((es) => {
       this.scene.disposeSurvey(cave.name, es.name);
       this.scene.deleteSurvey(cave.name, es.name);
@@ -286,15 +281,15 @@ class ProjectManager {
           clSegments,
           splaySegments,
           auxiliarySegments,
-          cave.visible && es.visible,
-          colorGradients.get(es.name)
+          cave.visible && es.visible
         );
         this.scene.addSurvey(cave.name, es.name, _3dObjects);
+        this.scene.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
       }
     });
 
     // Update starting point position after recalculation
-    this.scene.addStartingPoint(cave);
+    this.scene.addOrUpdateStartingPoint(cave);
 
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
@@ -369,9 +364,6 @@ class ProjectManager {
 
     if (cave.surveys.length > 0 && allShots.length > 0) {
 
-      const lOptions = this.options.scene.caveLines;
-      let colorGradients = SurveyHelper.getColorGradients(cave, lOptions);
-
       cave.surveys.forEach((s) => {
         const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
         const _3dobjects = this.scene.addSurveyToScene(
@@ -380,14 +372,15 @@ class ProjectManager {
           centerLineSegments,
           splaySegments,
           auxiliarySegments,
-          true,
-          colorGradients.get(s.name)
+          true
         );
         this.scene.addSurvey(cave.name, s.name, _3dobjects);
       });
 
+      this.scene.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
+
       // Add starting point for the cave
-      this.scene.addStartingPoint(cave);
+      this.scene.addOrUpdateStartingPoint(cave);
 
       cave.attributes.sectionAttributes.forEach((sa) => {
         if (sa.visible) {

@@ -3,6 +3,7 @@ import { CaveEditor } from './editor/cave.js';
 import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
 import { CyclePanel } from './editor/cycle.js';
 import { i18n } from '../i18n/i18n.js';
+import { randomAlphaNumbericString } from '../utils/utils.js';
 
 export class ExplorerTree {
   constructor(db, options, scene, interaction, attributeDefs, declinationCache, container, contextMenuElement) {
@@ -431,8 +432,27 @@ export class ExplorerTree {
 
           colorPicker.addEventListener('input', (e) => {
             caveNode.data.color = e.target.value;
+            this.options.scene.caveLines.color.trigger = {
+              reason : 'caveColor',
+              cave   : caveNode.data.name,
+              color  : e.target.value
+            };
             this.render();
           });
+
+        }
+      },
+      {
+        icon    : '<span style="text-decoration: line-through; text-decoration-color: red; text-decoration-thickness: 2px; transform: rotate(45deg); display: inline-block;">🎨</span>',
+        title   : i18n.t('ui.explorer.menu.clearCaveColor'),
+        onclick : () => {
+          caveNode.data.color = undefined;
+          this.options.scene.caveLines.color.trigger = {
+            reason : 'caveColor',
+            cave   : caveNode.data.name,
+            color  : undefined
+          };
+          this.render();
 
         }
       },
@@ -505,8 +525,28 @@ export class ExplorerTree {
 
           colorPicker.addEventListener('input', (e) => {
             surveyNode.data.color = e.target.value;
+            this.options.scene.caveLines.color.trigger = {
+              reason : 'surveyColor',
+              survey : surveyNode.data.name,
+              cave   : surveyNode.parent.data.name,
+              color  : e.target.value
+            };
             this.render();
           });
+        }
+      },
+      {
+        icon    : '<span style="text-decoration: line-through; text-decoration-color: red; text-decoration-thickness: 2px; transform: rotate(45deg); display: inline-block;">🎨</span>',
+        title   : i18n.t('ui.explorer.menu.clearSurveyColor'),
+        onclick : () => {
+          surveyNode.data.color = undefined;
+          this.options.scene.caveLines.color.trigger = {
+            reason : 'surveyColor',
+            survey : surveyNode.data.name,
+            cave   : surveyNode.parent.data.name,
+            color  : undefined
+          };
+          this.render();
 
         }
       },

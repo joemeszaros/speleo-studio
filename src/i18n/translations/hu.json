@@ -182,7 +182,9 @@
         "deleteCave": "Barlang törlése",
         "deleteSurvey": "Felmérés törlése",
         "setSurveyColor": "Felmérés színének beállítása",
+        "clearSurveyColor": "Felmérés színének törlése",
         "setCaveColor": "Barlang színének beállítása",
+        "clearCaveColor": "Barlang színének törlése",
         "openSurveyEditor": "Felmérés szerkesztése"
       },
       "confirm": {
@@ -340,6 +342,7 @@
           "region": "Régió / Tájegység",
           "catasterCode": "Kataszter szám",
           "date": "Dátum",
+          "creator": "Készítő",
           "eovCoordinates": "EOV koordináták",
           "surveyAliases": "Felmérés aliasok",
           "stationName": "Pont neve",

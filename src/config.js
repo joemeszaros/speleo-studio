@@ -23,9 +23,10 @@ export const DEFAULT_OPTIONS = {
     },
     splays : {
       segments : {
-        show  : true,
-        color : '#00ffff',
-        width : 1.5
+        show    : true,
+        color   : '#00ffff',
+        width   : 1.5,
+        opacity : 1.0
       },
       spheres : {
         show   : false,
@@ -35,9 +36,10 @@ export const DEFAULT_OPTIONS = {
     },
     auxiliaries : {
       segments : {
-        show  : true,
-        color : '#f0abff',
-        width : 1.5
+        show    : true,
+        color   : '#f0abff',
+        width   : 1.5,
+        opacity : 1.0
       },
       spheres : {
         show   : false,
@@ -61,6 +63,7 @@ export const DEFAULT_OPTIONS = {
     },
     caveLines : {
       color : {
+        trigger        : '', // this is used when the survey or cave color changes
         mode           : 'gradientByZ',
         gradientColors : [
           { depth: 0, color: '#e1ff00' }, // 0 = highest point
@@ -536,7 +539,8 @@ export class ConfigChanges {
   constructor(watchedConfig, scene, materials) {
     this.watchedConfig = watchedConfig;
     this.scene = scene;
-    this.materials = materials;
+    this.mats = materials.materials;
+    this.materias = materials;
   }
 
   /**
@@ -548,21 +552,26 @@ export class ConfigChanges {
         this.scene.setObjectsVisibility('centerLines', newValue);
         break;
 
-      case 'scene.centerLines.segments.color':
-        this.materials.segments.centerLine.color = new THREE.Color(newValue);
+      case 'scene.centerLines.segments.color': {
+        const newColor = new THREE.Color(newValue);
+        this.mats.segments.centerLine.color = newColor;
+        this.materias.setSurveyOrCaveMaterial('center', 'color', newColor);
         this.scene.view.renderView();
         break;
+      }
 
       case 'scene.centerLines.segments.width':
-        this.materials.segments.centerLine.linewidth = newValue;
-        this.materials.whiteLine.linewidth = newValue;
-        this.scene.updateSegmentsWidth(newValue);
+        this.mats.segments.centerLine.linewidth = newValue;
+        this.materias.setSurveyOrCaveMaterial('center', 'linewidth', newValue);
+        this.mats.whiteLine.get('center').linewidth = newValue;
+        this.scene.updateSegmentsWidth(newValue); //TODO: have separata config for this
         this.scene.view.renderView();
         break;
 
       case 'scene.centerLines.segments.opacity':
-        this.materials.segments.centerLine.opacity = newValue;
-        this.materials.whiteLine.opacity = newValue;
+        this.mats.segments.centerLine.opacity = newValue;
+        this.materias.setSurveyOrCaveMaterial('center', 'opacity', newValue);
+        this.mats.whiteLine.get('center').opacity = newValue;
         this.scene.setObjectsOpacity('centerLines', newValue);
         this.scene.view.renderView();
         break;
@@ -572,6 +581,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.centerLines.spheres.color':
+        this.mats.sphere.centerLine.color = new THREE.Color(newValue);
         this.scene.view.renderView();
         break;
 
@@ -590,14 +600,25 @@ export class ConfigChanges {
         this.scene.setObjectsVisibility('splays', newValue);
         break;
 
-      case 'scene.splays.segments.color':
-        this.materials.segments.splay.color = new THREE.Color(newValue);
+      case 'scene.splays.segments.color': {
+        const newColor = new THREE.Color(newValue);
+        this.mats.segments.splay.color = newColor;
+        this.materias.setSurveyOrCaveMaterial('splay', 'color', newColor);
+        this.scene.view.renderView();
+        break;
+      }
+      case 'scene.splays.segments.width':
+        this.mats.segments.splay.linewidth = newValue;
+        this.mats.whiteLine.get('splay').linewidth = newValue;
+        this.materias.setSurveyOrCaveMaterial('splay', 'linewidth', newValue);
         this.scene.view.renderView();
         break;
 
-      case 'scene.splays.segments.width':
-        this.materials.segments.splay.linewidth = newValue;
-        this.materials.whiteLine.linewidth = newValue;
+      case 'scene.splays.segments.opacity':
+        this.mats.segments.splay.opacity = newValue;
+        this.materias.setSurveyOrCaveMaterial('splay', 'opacity', newValue);
+        this.mats.whiteLine.get('splay').opacity = newValue;
+        this.scene.setObjectsOpacity('splays', newValue);
         this.scene.view.renderView();
         break;
 
@@ -606,6 +627,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.splays.spheres.color':
+        this.mats.sphere.splay.color = new THREE.Color(newValue);
         this.scene.view.renderView();
         break;
 
@@ -624,12 +646,27 @@ export class ConfigChanges {
         this.scene.setObjectsVisibility('auxiliaries', newValue);
         break;
 
-      case 'scene.auxiliaries.segments.color':
-        this.materials.segments.auxiliary.color = new THREE.Color(newValue);
+      case 'scene.auxiliaries.segments.color': {
+        const newColor = new THREE.Color(newValue);
+        this.mats.segments.auxiliary.color = newColor;
+        this.mats.whiteLine.get('auxiliary').color = newColor;
+        this.materias.setSurveyOrCaveMaterial('auxiliary', 'color', newColor);
+        this.scene.view.renderView();
+        break;
+      }
+      case 'scene.auxiliaries.segments.width':
+        this.mats.segments.auxiliary.linewidth = newValue;
+        this.materias.setSurveyOrCaveMaterial('auxiliary', 'linewidth', newValue);
+        this.mats.whiteLine.get('auxiliary').linewidth = newValue;
+        this.scene.view.renderView();
         break;
 
-      case 'scene.auxiliaries.segments.width':
-        this.scene.updateSegmentsWidth(newValue);
+      case 'scene.auxiliaries.segments.opacity':
+        this.mats.segments.auxiliary.opacity = newValue;
+        this.materias.setSurveyOrCaveMaterial('auxiliary', 'opacity', newValue);
+        this.mats.whiteLine.get('auxiliary').opacity = newValue;
+        this.scene.setObjectsOpacity('auxiliaries', newValue);
+        this.scene.view.renderView();
         break;
 
       case 'scene.auxiliaries.spheres.show':
@@ -637,7 +674,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.auxiliaries.spheres.color':
-        this.materials.sphere.auxiliary.color = new THREE.Color(newValue);
+        this.mats.sphere.auxiliary.color = new THREE.Color(newValue);
         break;
 
       case 'scene.auxiliaries.spheres.radius':
@@ -656,7 +693,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.startPoint.color':
-        this.materials.sphere.startPoint.color = new THREE.Color(newValue);
+        this.mats.sphere.startPoint.color = new THREE.Color(newValue);
         break;
 
       case 'scene.startPoint.radius':
@@ -673,7 +710,7 @@ export class ConfigChanges {
   handleLabelChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.labels.color':
-        this.materials.text.color = new THREE.Color(newValue);
+        this.mats.text.color = new THREE.Color(newValue);
         this.scene.view.renderView();
         break;
 
@@ -712,14 +749,19 @@ export class ConfigChanges {
   }
 
   handleCaveLineColorChanges(path, oldValue, newValue) {
+    const existingMode = this.watchedConfig.scene.caveLines.color.mode;
+
     switch (path) {
+      case 'scene.caveLines.color.trigger':
+        this.scene.changeCenterLineColorMode(existingMode, newValue);
+        break;
       case 'scene.caveLines.color.mode':
         this.scene.changeCenterLineColorMode(newValue);
         break;
       case 'scene.caveLines.color.gradientColors':
-        if (['gradientByZ', 'gradientByDistance'].includes(this.watchedConfig.scene.caveLines.color.mode)) {
+        if (['gradientByZ', 'gradientByDistance'].includes(existingMode)) {
           // Update the scene with new gradient colors
-          this.scene.changeCenterLineColorMode(this.watchedConfig.scene.caveLines.color.mode);
+          this.scene.changeCenterLineColorMode(existingMode);
         }
 
         if (this.scene.views.get('profile')) {

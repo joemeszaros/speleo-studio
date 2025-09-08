@@ -67,8 +67,8 @@ class View {
     return new TextSprite(
       '0',
       position,
-      { size: 35, family: 'Helvetica Neue', strokeColor: 'black' },
-      0.5,
+      { size: 45, family: 'Helvetica Neue', strokeColor: 'black' },
+      0.4,
       `ratio text ${this.name}`
     );
   }
@@ -706,8 +706,8 @@ class SpatialView extends View {
     return new TextSprite(
       '0°',
       position,
-      { size: 24, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
-      0.5,
+      { size: 45, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
+      0.4,
       'dip text'
     );
   }

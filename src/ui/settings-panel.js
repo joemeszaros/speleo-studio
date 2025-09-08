@@ -37,7 +37,7 @@ export class SettingsPanel {
 
     // Print Layout Section
     this.createSection(
-      i18n.t('ui.settingsPanel.sections.print'),
+      '🖨️ ' + i18n.t('ui.settingsPanel.sections.print'),
       [
         this.createSelect(
           i18n.t('ui.settingsPanel.labels.printLayout'),
@@ -56,7 +56,7 @@ export class SettingsPanel {
     );
 
     // Survey Lines Section (expanded by default)
-    this.createSection(i18n.t('ui.settingsPanel.sections.surveyLines'), [
+    this.createSection('➜ ' + i18n.t('ui.settingsPanel.sections.surveyLines'), [
       // Center Lines Group
       this.createSubGroup(
         i18n.t('ui.settingsPanel.groups.centerLines'),
@@ -115,6 +115,16 @@ export class SettingsPanel {
             (value) => {
               this.options.scene.splays.segments.width = value;
             }
+          ),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.opacity'),
+            this.options.scene.splays.segments.opacity,
+            0,
+            1,
+            0.1,
+            (value) => {
+              this.options.scene.splays.segments.opacity = value;
+            }
           )
         ],
         this.options.scene.splays.segments,
@@ -143,6 +153,16 @@ export class SettingsPanel {
             (value) => {
               this.options.scene.auxiliaries.segments.width = value;
             }
+          ),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.opacity'),
+            this.options.scene.auxiliaries.segments.opacity,
+            0,
+            1,
+            0.1,
+            (value) => {
+              this.options.scene.auxiliaries.segments.opacity = value;
+            }
           )
         ],
         this.options.scene.auxiliaries.segments,
@@ -154,7 +174,7 @@ export class SettingsPanel {
 
     // Stations Section (collapsed by default)
     this.createSection(
-      i18n.t('ui.settingsPanel.sections.stations'),
+      '📍 ' + i18n.t('ui.settingsPanel.sections.stations'),
       [
         // Center Stations Group
         this.createSubGroup(
@@ -259,7 +279,7 @@ export class SettingsPanel {
 
     // Station Labels Section
     this.createSection(
-      i18n.t('ui.settingsPanel.sections.stationLabels'),
+      '🏷️ ' + i18n.t('ui.settingsPanel.sections.stationLabels'),
       [
         this.createSubGroup(
           i18n.t('ui.settingsPanel.groups.stationLabels'),
@@ -351,7 +371,7 @@ export class SettingsPanel {
 
     // Appearance Section
     this.createSection(
-      i18n.t('ui.settingsPanel.sections.appearance'),
+      '🖼 ' + i18n.t('ui.settingsPanel.sections.appearance'),
       [
         this.createColorInput(
           i18n.t('ui.settingsPanel.labels.backgroundColor'),
@@ -409,7 +429,7 @@ export class SettingsPanel {
     );
 
     this.createStationDetailsSection(
-      i18n.t('ui.settingsPanel.sections.stationDetails'),
+      'ⓘ ' + i18n.t('ui.settingsPanel.sections.stationDetails'),
       [
         // Column 1: Core names
         this.createCompactCheckboxGroup([
@@ -797,7 +817,7 @@ export class SettingsPanel {
     titleElement.className = 'settings-group-title';
     titleElement.innerHTML = `
       <span class="settings-group-toggle">${collapsed ? '▶' : '▼'}</span>
-      <span>${i18n.t('ui.settingsPanel.sections.colorGradient')}</span>
+      <span>🌈 ${i18n.t('ui.settingsPanel.sections.colorGradient')}</span>
     `;
     titleElement.onclick = () => this.toggleSection(section);
     section.appendChild(titleElement);

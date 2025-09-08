@@ -164,6 +164,16 @@ class CaveEditor extends Editor {
 
     createField(
       {
+        label    : i18n.t('ui.editors.caveSheet.fields.creator'),
+        id       : 'creator',
+        type     : 'text',
+        required : true
+      },
+      column1
+    );
+
+    createField(
+      {
         label    : i18n.t('ui.editors.caveSheet.fields.country'),
         id       : 'country',
         type     : 'text',

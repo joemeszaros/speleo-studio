@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { ColorModeHelper } from './colormode.js';
 
 import { SurveyHelper } from '../survey.js';
 import { Grid } from './grid.js';
@@ -37,6 +38,7 @@ class MyScene {
   constructor(options, db, materials, font, container, overview) {
     this.options = options;
     this.db = db;
+    this.mats = materials.materials;
     this.materials = materials;
     this.caveObjects = new Map(); // for centerlines, splays ... for a cave
     this.surfaceObjects = new Map();
@@ -100,6 +102,8 @@ class MyScene {
 
     this.grid = new Grid(this.options, this);
 
+    this.colorModeHelper = new ColorModeHelper(this.db, this.options, this.caveObjects, materials);
+
     this.threejsScene.add(this.caveObject3DGroup);
     this.threejsScene.add(this.surfaceObject3DGroup);
     this.threejsScene.add(this.sectionAttributes3DGroup);
@@ -120,7 +124,7 @@ class MyScene {
       new THREE.Vector3(0, 0, 0),
       this.surfaceObject3DGroup,
       sphereGeo,
-      this.materials.sphere.surface,
+      this.mats.sphere.surface,
       {
         type : 'surface'
       }
@@ -141,7 +145,7 @@ class MyScene {
       new THREE.Vector3(0, 0, 0),
       this.spheres3DGroup,
       sphereGeo,
-      this.materials.sphere.selectedStation,
+      this.mats.sphere.selectedStation,
       {
         type : 'selected station'
       }
@@ -152,7 +156,7 @@ class MyScene {
       new THREE.Vector3(0, 0, 0),
       this.spheres3DGroup,
       geometry,
-      this.materials.sphere.distanceMeasurement,
+      this.mats.sphere.distanceMeasurement,
       {
         type : 'distance station'
       }
@@ -554,7 +558,7 @@ class MyScene {
     if (!this.stationAttributes.has(id)) {
       const position = station.position;
       const geometry = new THREE.PlaneGeometry(attribute.width, attribute.height, 10, 10);
-      const plane = new THREE.Mesh(geometry, this.materials.planes.get(attribute.name));
+      const plane = new THREE.Mesh(geometry, this.mats.planes.get(attribute.name));
       plane.name = `plane-${attribute.name}-${id}`;
       plane.position.set(0, 0, 0);
       const dir = U.normal(U.degreesToRads(attribute.azimuth), U.degreesToRads(attribute.dip));
@@ -656,109 +660,8 @@ class MyScene {
     this.view.renderView();
   }
 
-  changeCenterLineColorMode(mode) {
-    const clConfig = this.options.scene.centerLines;
-    const splayConfig = this.options.scene.splays;
-    const auxiliaryConfig = this.options.scene.auxiliaries;
-
-    switch (mode) {
-      case 'gradientByZ':
-      case 'gradientByDistance': {
-        const colors = SurveyHelper.getColorGradientsForCaves(this.db.caves, this.options.scene.caveLines);
-        this.caveObjects.forEach((surveyEntrires, caveName) => {
-          surveyEntrires.forEach((e, surveyName) => {
-            e['centerLines'].material = this.materials.whiteLine;
-            e['splays'].material = this.materials.whiteLine;
-            e['auxiliaries'].material = this.materials.whiteLine;
-            const surveyColors = colors.get(caveName).get(surveyName);
-            e['centerLines'].geometry.setColors(surveyColors.center);
-            e['splays'].geometry.setColors(surveyColors.splays);
-            e['auxiliaries'].geometry.setColors(surveyColors.auxiliary);
-          });
-        });
-        break;
-      }
-      case 'global':
-      case 'percave':
-      case 'persurvey': {
-
-        this.caveObjects.forEach((surveyEntrires, caveName) => {
-
-          let newClMaterial, newSplayMaterial, newAuxiliaryMaterial;
-          if (mode === 'percave' && this.db.getCave(caveName).color !== undefined) {
-            const color = this.db.getCave(caveName).color;
-            newClMaterial = new LineMaterial({
-              color        : color,
-              linewidth    : clConfig.segments.width,
-              vertexColors : false,
-              transparent  : true,
-              opacity      : clConfig.segments.opacity
-            });
-            newSplayMaterial = new LineMaterial({
-              color       : color,
-              linewidth   : splayConfig.segments.width,
-              transparent : true,
-              opacity     : clConfig.segments.opacity
-            });
-            newAuxiliaryMaterial = new LineMaterial({
-              color       : color,
-              linewidth   : auxiliaryConfig.segments.width,
-              transparent : true,
-              opacity     : clConfig.segments.opacity
-            });
-          }
-
-          surveyEntrires.forEach((e, surveyName) => {
-
-            e['centerLines'].geometry.setColors([]);
-            e['splays'].geometry.setColors([]);
-            e['auxiliaries'].geometry.setColors([]);
-
-            if (mode === 'global' || (mode === 'percave' && newClMaterial === undefined)) {
-              e['centerLines'].material = this.materials.segments.centerLine;
-              e['splays'].material = this.materials.segments.splay;
-              e['auxiliaries'].material = this.materials.segments.auxiliary;
-            } else if (mode === 'percave' && newClMaterial !== undefined) {
-              e['centerLines'].material = newClMaterial;
-              e['splays'].material = newSplayMaterial;
-              e['auxiliaries'].material = newAuxiliaryMaterial;
-            } else if (mode === 'persurvey') {
-              const survey = this.db.getSurvey(caveName, surveyName);
-              if (survey.color === undefined) {
-                e['centerLines'].material = this.materials.segments.fallback;
-                e['splays'].material = this.materials.segments.fallback;
-                e['auxiliaries'].material = this.materials.segments.fallback;
-
-              } else {
-
-                e['centerLines'].material = new LineMaterial({
-                  color       : survey.color,
-                  linewidth   : clConfig.segments.width,
-                  transparent : true,
-                  opacity     : clConfig.segments.opacity
-                });
-                e['splays'].material = new LineMaterial({
-                  color       : survey.color,
-                  linewidth   : splayConfig.segments.width,
-                  transparent : true,
-                  opacity     : clConfig.segments.opacity
-                });
-                e['auxiliaries'].material = new LineMaterial({
-                  color       : survey.color,
-                  linewidth   : auxiliaryConfig.segments.width,
-                  transparent : true,
-                  opacity     : clConfig.segments.opacity
-                });
-              }
-            }
-
-          });
-        });
-        break;
-      }
-      default:
-        throw new Error(`unknown configuration for cave line colors: ${mode}`);
-    }
+  changeCenterLineColorMode(mode, trigger) {
+    this.colorModeHelper.setColorMode(mode, trigger);
     this.view.renderView();
 
   }
@@ -928,7 +831,7 @@ class MyScene {
     const xMid = -0.5 * (textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x);
     textGeometry.translate(xMid, 0, 0);
 
-    const textMesh = new THREE.Mesh(textGeometry, this.materials.text);
+    const textMesh = new THREE.Mesh(textGeometry, this.mats.text);
     textMesh.lookAt(this.view.camera.position);
     textMesh.name = `label-${label}`;
     textMesh.position.x = position.x;
@@ -1010,7 +913,7 @@ class MyScene {
     targetGroup.add(sprite);
   }
 
-  addStartingPoint(cave) {
+  addOrUpdateStartingPoint(cave) {
     // Remove existing starting point if it exists
     if (this.startPointObjects.has(cave.name)) {
       this.removeStartingPoint(cave.name);
@@ -1024,7 +927,7 @@ class MyScene {
     const startPointGeo = new THREE.SphereGeometry(this.options.scene.startPoint.radius, 7, 7);
 
     // Create the starting point mesh
-    const startPoint = new THREE.Mesh(startPointGeo, this.materials.sphere.startPoint);
+    const startPoint = new THREE.Mesh(startPointGeo, this.mats.sphere.startPoint);
     startPoint.position.copy(firstStation.position);
     startPoint.name = `startPoint_${cave.name}`;
 
@@ -1038,7 +941,7 @@ class MyScene {
     this.startPointObjects.set(cave.name, {
       mesh     : startPoint,
       geometry : startPointGeo,
-      material : this.materials.sphere.startPoint
+      material : this.mats.sphere.startPoint
     });
 
     return startPoint;
@@ -1077,7 +980,7 @@ class MyScene {
     });
   }
 
-  addSurveyToScene(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility, colorGradients) {
+  addSurveyToScene(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility) {
 
     const geometryStations = new LineSegmentsGeometry();
     geometryStations.setPositions(polygonSegments);
@@ -1086,39 +989,11 @@ class MyScene {
     const auxiliaryGeometry = new LineSegmentsGeometry();
     auxiliaryGeometry.setPositions(auxiliarySegments);
 
-    let clLineMat, splayLineMat, auxiliaryLineMat;
-    const gradientMaterial = this.materials.whiteLine;
-    if (gradientMaterial.linewidth === 0) {
-      gradientMaterial.linewidth = this.materials.segments.centerLine.linewidth;
-    }
-    if (colorGradients !== undefined) {
-      if (colorGradients.center.length !== polygonSegments.length) {
-        throw new Error(
-          `Color gradients length ${colorGradients.center.length} does not match polygon segments length ${polygonSegments.length} for survey ${survey.name}`
-        );
-      }
-      if (colorGradients.splays.length !== splaySegments.length) {
-        throw new Error(
-          `Color gradients length ${colorGradients.splays.length} does not match splay segments length ${splaySegments.length} for survey ${survey.name}`
-        );
-      }
-      if (colorGradients.auxiliary.length !== auxiliarySegments.length) {
-        throw new Error(
-          `Color gradients length ${colorGradients.auxiliary.length} does not match auxiliary segments length ${auxiliarySegments.length} for survey ${survey.name}`
-        );
-      }
-      geometryStations.setColors(colorGradients.center);
-      splaysGeometry.setColors(colorGradients.splays);
-      auxiliaryGeometry.setColors(colorGradients.auxiliary);
-      clLineMat = gradientMaterial;
-      splayLineMat = gradientMaterial;
-      auxiliaryLineMat = gradientMaterial;
-    } else {
-      //FIXME: sophisticate percave, persurvey, global
-      clLineMat = this.materials.segments.centerLine;
-      splayLineMat = this.materials.segments.splay;
-      auxiliaryLineMat = this.materials.segments.auxiliary;
-    }
+    //We set simple materials here, color mode helper will set the correct materials after
+    // this function is called
+    const clLineMat = this.mats.segments.centerLine;
+    const splayLineMat = this.mats.segments.splay;
+    const auxiliaryLineMat = this.mats.segments.auxiliary;
 
     const lineSegmentsPolygon = new LineSegments2(geometryStations, clLineMat);
     lineSegmentsPolygon.name = `centerline-segments-${cave.name}-${survey.name}`;
@@ -1158,20 +1033,13 @@ class MyScene {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
       const stationLabel = stationNameMode === 'name' ? stationName : station.position.z.toFixed(2);
       if (station.type === ShotType.CENTER) {
-        this.addSphere(
-          stationName,
-          station.position,
-          clStationSpheresGroup,
-          clSphereGeo,
-          this.materials.sphere.centerLine,
-          {
-            cave        : cave,
-            survey      : station.survey,
-            shots       : station.shots,
-            type        : station.type,
-            coordinates : station.coordinates
-          }
-        );
+        this.addSphere(stationName, station.position, clStationSpheresGroup, clSphereGeo, this.mats.sphere.centerLine, {
+          cave        : cave,
+          survey      : station.survey,
+          shots       : station.shots,
+          type        : station.type,
+          coordinates : station.coordinates
+        });
         // Add station label
         if (this.options.scene.stationLabels.show) {
           // adding sprites for a cave with 3k stations is roughly 25 MB, let's try to save memory by not adding them if they are not visible
@@ -1184,7 +1052,7 @@ class MyScene {
           station.position,
           splayStationSpheresGroup,
           splaySphereGeo,
-          this.materials.sphere.splay,
+          this.mats.sphere.splay,
           {
             cave        : cave,
             survey      : station.survey,
@@ -1193,13 +1061,14 @@ class MyScene {
             coordinates : station.coordinates
           }
         );
+        // no station label for splays
       } else if (station.type === ShotType.AUXILIARY) {
         this.addSphere(
           stationName,
           station.position,
           auxiliaryStationSpheresGroup,
           auxiliarySphereGeo,
-          this.materials.sphere.auxiliary,
+          this.mats.sphere.auxiliary,
           {
             cave        : cave,
             survey      : station.survey,
@@ -1214,7 +1083,7 @@ class MyScene {
       }
     }
     clStationSpheresGroup.visible = visibility && this.options.scene.centerLines.spheres.show;
-    splayStationSpheresGroup.visible = visibility && this.options.scene.splays.spheres.shows;
+    splayStationSpheresGroup.visible = visibility && this.options.scene.splays.spheres.show;
     auxiliaryStationSpheresGroup.visible = visibility && this.options.scene.auxiliaries.spheres.show;
     stationLabelsGroup.visible = visibility && this.options.scene.stationLabels.show;
 
@@ -1392,17 +1261,19 @@ class MyScene {
       this.startPointObjects.set(newName, startPointObj);
       startPointObj.mesh.name = `startPoint_${newName}`;
     }
+
+    this.materials.renameCave(oldName, newName);
   }
 
   renameSurvey(oldName, newName, caveName) {
     const caveObjects = this.caveObjects.get(caveName);
-
     if (caveObjects.has(newName)) {
       throw new Error(`Survey with ${newName} does exists!`);
     }
     const surveyObjects = caveObjects.get(oldName);
     caveObjects.delete(oldName);
     caveObjects.set(newName, surveyObjects);
+    this.materials.renameSurvey(oldName, newName, caveName);
   }
 
   disposeCave(caveName) {

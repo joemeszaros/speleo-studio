@@ -999,6 +999,8 @@ class SurveySheetEditor extends BaseEditor {
         } else {
           const oldName = this.survey.name;
           this.db.renameSurvey(this.cave, oldName, this.formData.name);
+          //TODO: this is a race condition with survey change event coming shortly after this
+          // the cave objects and materials have to be renamed until the survey change event is processed
           this.#emitSurveyRenamed(this.cave, this.survey, oldName);
         }
       }

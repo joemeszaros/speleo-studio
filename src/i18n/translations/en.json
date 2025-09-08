@@ -179,10 +179,12 @@
         "importSurvey": "Import survey",
         "cycles": "Cycles",
         "setCaveColor": "Set cave color",
+        "clearCaveColor": "Clear cave color",
         "editSurveySheet": "Edit survey sheet",
         "deleteCave": "Delete cave",
         "deleteSurvey": "Delete survey",
         "setSurveyColor": "Set survey color",
+        "clearSurveyColor": "Clear survey color",
         "openSurveyEditor": "Open survey editor"
       },
       "confirm": {
@@ -338,6 +340,7 @@
           "country": "Country",
           "region": "Region",
           "catasterCode": "Cataster code",
+          "creator": "Creator",
           "date": "Date",
           "eovCoordinates": "EOV coordinates",
           "surveyAliases": "Survey aliases",

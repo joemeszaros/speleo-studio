@@ -82,7 +82,7 @@ class Shot {
       }
     }
 
-    if (isValidFloat(this.length) && this.length <= 0) {
+    if (!isValidFloat(this.length)) {
       errors.push(t('validation.shot.invalidLength'));
     }
 

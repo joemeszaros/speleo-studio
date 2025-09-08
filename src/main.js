@@ -78,7 +78,7 @@ class Main {
       showErrorPanel(i18n.t('errors.init.failedToInitIndexedDb'));
     }
 
-    const materials = new Materials(options).materials;
+    const materials = new Materials(options);
 
     const sceneOverview = new SceneOverview(document.querySelector('#scene-overview'));
     const scene = new MyScene(options, db, materials, font, document.querySelector('#viewport'), sceneOverview);

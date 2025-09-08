@@ -86,7 +86,7 @@ class Database {
     if (survey === undefined) {
       throw new Error(`Survey '${oldName}' does not exists!`);
     }
-    if (this.getSurvey(cave, newName !== undefined)) {
+    if (this.getSurvey(cave.name, newName) !== undefined) {
       throw new Error(`Survey '${newName}' already exists!`);
     }
     survey.name = newName;
