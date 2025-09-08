@@ -56,121 +56,125 @@ export class SettingsPanel {
     );
 
     // Survey Lines Section (expanded by default)
-    this.createSection('➜ ' + i18n.t('ui.settingsPanel.sections.surveyLines'), [
-      // Center Lines Group
-      this.createSubGroup(
-        i18n.t('ui.settingsPanel.groups.centerLines'),
-        [
-          this.createColorInput(
-            i18n.t('ui.settingsPanel.labels.color'),
-            this.options.scene.centerLines.segments.color,
-            (value) => {
-              this.options.scene.centerLines.segments.color = value;
-            }
-          ),
-          this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.width'),
-            this.options.scene.centerLines.segments.width,
-            0.1,
-            5,
-            0.1,
-            (value) => {
-              this.options.scene.centerLines.segments.width = value;
-            }
-          ),
-          this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.opacity'),
-            this.options.scene.centerLines.segments.opacity,
-            0,
-            1,
-            0.1,
-            (value) => {
-              this.options.scene.centerLines.segments.opacity = value;
-            }
-          )
-        ],
-        this.options.scene.centerLines.segments,
-        (value) => {
-          this.options.scene.centerLines.segments.show = value;
-        }
-      ),
+    this.createSection(
+      '➜ ' + i18n.t('ui.settingsPanel.sections.surveyLines'),
+      [
+        // Center Lines Group
+        this.createSubGroup(
+          i18n.t('ui.settingsPanel.groups.centerLines'),
+          [
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.color'),
+              this.options.scene.centerLines.segments.color,
+              (value) => {
+                this.options.scene.centerLines.segments.color = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.width'),
+              this.options.scene.centerLines.segments.width,
+              0.1,
+              5,
+              0.1,
+              (value) => {
+                this.options.scene.centerLines.segments.width = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.opacity'),
+              this.options.scene.centerLines.segments.opacity,
+              0,
+              1,
+              0.1,
+              (value) => {
+                this.options.scene.centerLines.segments.opacity = value;
+              }
+            )
+          ],
+          this.options.scene.centerLines.segments,
+          (value) => {
+            this.options.scene.centerLines.segments.show = value;
+          }
+        ),
 
-      // Splays Group
-      this.createSubGroup(
-        i18n.t('ui.settingsPanel.groups.splays'),
-        [
-          this.createColorInput(
-            i18n.t('ui.settingsPanel.labels.color'),
-            this.options.scene.splays.segments.color,
-            (value) => {
-              this.options.scene.splays.segments.color = value;
-            }
-          ),
-          this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.width'),
-            this.options.scene.splays.segments.width,
-            0.1,
-            5,
-            0.1,
-            (value) => {
-              this.options.scene.splays.segments.width = value;
-            }
-          ),
-          this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.opacity'),
-            this.options.scene.splays.segments.opacity,
-            0,
-            1,
-            0.1,
-            (value) => {
-              this.options.scene.splays.segments.opacity = value;
-            }
-          )
-        ],
-        this.options.scene.splays.segments,
-        (value) => {
-          this.options.scene.splays.segments.show = value;
-        }
-      ),
+        // Splays Group
+        this.createSubGroup(
+          i18n.t('ui.settingsPanel.groups.splays'),
+          [
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.color'),
+              this.options.scene.splays.segments.color,
+              (value) => {
+                this.options.scene.splays.segments.color = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.width'),
+              this.options.scene.splays.segments.width,
+              0.1,
+              5,
+              0.1,
+              (value) => {
+                this.options.scene.splays.segments.width = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.opacity'),
+              this.options.scene.splays.segments.opacity,
+              0,
+              1,
+              0.1,
+              (value) => {
+                this.options.scene.splays.segments.opacity = value;
+              }
+            )
+          ],
+          this.options.scene.splays.segments,
+          (value) => {
+            this.options.scene.splays.segments.show = value;
+          }
+        ),
 
-      // Auxiliary Lines Group
-      this.createSubGroup(
-        i18n.t('ui.settingsPanel.groups.auxiliaryLines'),
-        [
-          this.createColorInput(
-            i18n.t('ui.settingsPanel.labels.color'),
-            this.options.scene.auxiliaries.segments.color,
-            (value) => {
-              this.options.scene.auxiliaries.segments.color = value;
-            }
-          ),
-          this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.width'),
-            this.options.scene.auxiliaries.segments.width,
-            0.1,
-            5,
-            0.1,
-            (value) => {
-              this.options.scene.auxiliaries.segments.width = value;
-            }
-          ),
-          this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.opacity'),
-            this.options.scene.auxiliaries.segments.opacity,
-            0,
-            1,
-            0.1,
-            (value) => {
-              this.options.scene.auxiliaries.segments.opacity = value;
-            }
-          )
-        ],
-        this.options.scene.auxiliaries.segments,
-        (value) => {
-          this.options.scene.auxiliaries.segments.show = value;
-        }
-      )
-    ]);
+        // Auxiliary Lines Group
+        this.createSubGroup(
+          i18n.t('ui.settingsPanel.groups.auxiliaryLines'),
+          [
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.color'),
+              this.options.scene.auxiliaries.segments.color,
+              (value) => {
+                this.options.scene.auxiliaries.segments.color = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.width'),
+              this.options.scene.auxiliaries.segments.width,
+              0.1,
+              5,
+              0.1,
+              (value) => {
+                this.options.scene.auxiliaries.segments.width = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.opacity'),
+              this.options.scene.auxiliaries.segments.opacity,
+              0,
+              1,
+              0.1,
+              (value) => {
+                this.options.scene.auxiliaries.segments.opacity = value;
+              }
+            )
+          ],
+          this.options.scene.auxiliaries.segments,
+          (value) => {
+            this.options.scene.auxiliaries.segments.show = value;
+          }
+        )
+      ],
+      true
+    );
 
     // Stations Section (collapsed by default)
     this.createSection(
@@ -366,7 +370,7 @@ export class SettingsPanel {
           }
         )
       ],
-      false
+      true
     );
 
     // Appearance Section
@@ -399,9 +403,19 @@ export class SettingsPanel {
         ),
         this.createColorInput(
           i18n.t('ui.settingsPanel.labels.sectionColor'),
-          this.options.scene.sectionAttributes.color,
+          this.options.scene.sections.color,
           (value) => {
-            this.options.scene.sectionAttributes.color = value;
+            this.options.scene.sections.color = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.sectionSize'),
+          this.options.scene.sections.width,
+          0.1,
+          32,
+          1,
+          (value) => {
+            this.options.scene.sections.width = value;
           }
         ),
         this.createRangeInput(
@@ -515,6 +529,70 @@ export class SettingsPanel {
             }
           )
         ])
+      ],
+      true
+    );
+
+    // 3D Sprites Section
+    this.createSection(
+      '🎯 ' + i18n.t('ui.settingsPanel.sections.sprites3D'),
+      [
+        // Column 1: Main sprite groups
+        this.createCompactCheckboxGroup([
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.compass'),
+            this.options.scene?.sprites3D?.compass?.show ?? true,
+            (show) => {
+              this.options.scene.sprites3D.compass.show = show;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.ruler'),
+            this.options.scene?.sprites3D?.ruler?.show ?? true,
+            (show) => {
+              this.options.scene.sprites3D.ruler.show = show;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.dip'),
+            this.options.scene?.sprites3D?.dip?.show ?? true,
+            (show) => {
+              this.options.scene.sprites3D.dip.show = show;
+            }
+          )
+        ]),
+        // Column 2: Other elements
+        this.createCompactCheckboxGroup([
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.logo'),
+            this.options.scene?.sprites3D?.logo?.show ?? true,
+            (show) => {
+              this.options.scene.sprites3D.logo.show = show;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.viewHelper'),
+            this.options.scene?.sprites3D?.viewHelper?.show ?? true,
+            (show) => {
+              this.options.scene.sprites3D.viewHelper.show = show;
+            }
+          )
+        ]),
+        // Column 3: Text styling
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.textColor'),
+          this.options.scene?.sprites3D?.textColor ?? '#ffffff',
+          (color) => {
+            this.options.scene.sprites3D.textColor = color;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.textStroke'),
+          this.options.scene?.sprites3D?.textStroke ?? '#000000',
+          (strokeColor) => {
+            this.options.scene.sprites3D.textStroke = strokeColor;
+          }
+        )
       ],
       true
     );

@@ -133,7 +133,6 @@ class ProjectManager {
     const cave = e.detail.cave;
     this.scene.renameSurvey(oldName, newName, cave.name);
     this.explorer.renameSurvey(oldName, newName, cave.name);
-    console.log('in manager');
     await this.saveCave(cave);
   }
 
@@ -385,13 +384,13 @@ class ProjectManager {
       cave.attributes.sectionAttributes.forEach((sa) => {
         if (sa.visible) {
           const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
-          this.scene.showSectionAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
+          this.scene.showFragmentAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
         }
       });
       cave.attributes.componentAttributes.forEach((ca) => {
         if (ca.visible) {
           const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
-          this.scene.showSectionAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
+          this.scene.showFragmentAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
         }
       });
 

@@ -6,9 +6,8 @@ export const DEFAULT_OPTIONS = {
   isDefault : true,
   scene     : {
 
-    zoomStep              : 0.1,
-    sectionLineMultiplier : 2,
-    centerLines           : {
+    zoomStep    : 0.1,
+    centerLines : {
       segments : {
         show    : true,
         color   : '#ff0000',
@@ -73,8 +72,9 @@ export const DEFAULT_OPTIONS = {
         ]
       }
     },
-    sectionAttributes : {
-      color : '#00ff2a'
+    sections : {
+      color : '#00ff2a',
+      width : 2.0
     },
     stationAttributes : {
       iconScale : 7.0
@@ -89,6 +89,15 @@ export const DEFAULT_OPTIONS = {
       offsetDirection : 'up', // or down, left, right
       stroke          : true,
       strokeColor     : '#000000'
+    },
+    sprites3D : {
+      compass    : { show: true },
+      ruler      : { show: true },
+      dip        : { show: true },
+      logo       : { show: true },
+      viewHelper : { show: true },
+      textColor  : '#ffffff',
+      textStroke : '#000000'
     },
     labels : {
       color : '#ffffff',
@@ -564,7 +573,6 @@ export class ConfigChanges {
         this.mats.segments.centerLine.linewidth = newValue;
         this.materias.setSurveyOrCaveMaterial('center', 'linewidth', newValue);
         this.mats.whiteLine.get('center').linewidth = newValue;
-        this.scene.updateSegmentsWidth(newValue); //TODO: have separata config for this
         this.scene.view.renderView();
         break;
 
@@ -730,8 +738,12 @@ export class ConfigChanges {
         this.scene.setBackground(newValue);
         break;
 
-      case 'scene.sectionAttributes.color':
+      case 'scene.sections.color':
         // Section attributes color changed - no immediate visual update needed
+        break;
+      case 'scene.sections.width':
+        this.scene.updateSegmentsWidth(newValue);
+        this.scene.updateSectionAttributesWidth(newValue);
         break;
     }
   }
@@ -857,6 +869,40 @@ export class ConfigChanges {
   }
 
   /**
+   * Handle 3D sprites configuration changes
+   */
+  handleSprites3DChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.sprites3D.compass.show':
+        this.scene.view.toggleSpriteVisibility('compass', newValue);
+        break;
+      case 'scene.sprites3D.ruler.show':
+        this.scene.view.toggleSpriteVisibility('ruler', newValue);
+        break;
+      case 'scene.sprites3D.dip.show':
+        this.scene.view.toggleSpriteVisibility('dip', newValue);
+        break;
+      case 'scene.sprites3D.logo.show': {
+        const logo = document.querySelector('#viewport-logo');
+        logo.style.display = newValue ? 'block' : 'none';
+        break;
+      }
+      case 'scene.sprites3D.viewHelper.show': {
+        this.scene.view.viewHelper.visible = newValue;
+        break;
+      }
+      case 'scene.sprites3D.textColor':
+        this.scene.views.forEach((view) => view.recreateAllTextSprites());
+        break;
+      case 'scene.sprites3D.textStroke':
+        this.scene.views.forEach((view) => view.recreateAllTextSprites());
+        break;
+    }
+
+    this.scene.view.renderView();
+  }
+
+  /**
    * Main onChange handler that routes to specific handlers
    */
   onChange(path, oldValue, newValue) {
@@ -875,7 +921,7 @@ export class ConfigChanges {
       this.handleCaveLineColorChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.labels')) {
       this.handleLabelChanges(path, oldValue, newValue);
-    } else if (path.startsWith('scene.background') || path.startsWith('scene.sectionAttributes')) {
+    } else if (path.startsWith('scene.background') || path.startsWith('scene.sections')) {
       this.handleSceneChanges(path, oldValue, newValue);
     } else if (path.startsWith('screen.')) {
       this.handleScreenChanges(path, oldValue, newValue);
@@ -889,6 +935,8 @@ export class ConfigChanges {
       this.handleStationLabelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.grid.')) {
       this.handleGridChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.sprites3D.')) {
+      this.handleSprites3DChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('ui.stationDetails.')) {

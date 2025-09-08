@@ -145,31 +145,6 @@ const attributeDefintions = {
     },
     {
       id       : 8,
-      category : 6,
-      name     : 'exploration',
-      params   : {
-        year : {
-          type     : 'int',
-          required : true
-        },
-        month : {
-          type       : 'int',
-          validators : {
-            min : 1,
-            max : 12
-          }
-        },
-        day : {
-          type       : 'int',
-          validators : {
-            min : 1,
-            max : 31
-          }
-        }
-      }
-    },
-    {
-      id       : 9,
       category : 4,
       name     : 'bat',
       params   : {

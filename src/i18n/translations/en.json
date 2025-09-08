@@ -87,6 +87,7 @@
         "appearance": "Appearance",
         "colorGradient": "Color Gradient",
         "stationDetails": "Station details (in footer)",
+        "sprites3D": "3D helpers",
         "print": "Print"
       },
       "groups": {
@@ -114,6 +115,7 @@
         "strokeColor": "Stroke color",
         "labelMode": "Label mode",
         "sectionColor": "Section color",
+        "sectionSize": "Section size",
         "screenDPI": "Screen DPI",
         "stationIconScale": "Station icon scale",
         "depth": "Depth",
@@ -132,7 +134,14 @@
         "eovElevation": "EOV elevation",
         "type": "Type",
         "position": "Position (X,Y,Z)",
-        "shots": "Shots list"
+        "shots": "Shots list",
+        "compass": "Compass",
+        "ruler": "Ruler",
+        "dip": "Dip",
+        "logo": "Logo",
+        "viewHelper": "3D rotation helper",
+        "textColor": "Text color",
+        "textStroke": "Text stroke"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"

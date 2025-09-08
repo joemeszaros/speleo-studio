@@ -87,6 +87,7 @@
         "appearance": "Megjelenés",
         "colorGradient": "Szín átmenet",
         "stationDetails": "Pont részletek (láblécben)",
+        "sprites3D": "3D segédek",
         "print": "Nyomtatás"
       },
       "groups": {
@@ -114,6 +115,7 @@
         "strokeColor": "Körvonal szín",
         "labelMode": "Címke mód",
         "sectionColor": "Szakasz szín",
+        "sectionSize": "Szakasz vastagság",
         "screenDPI": "Képernyő DPI",
         "stationIconScale": "Pont ikon méretezés",
         "depth": "Mélység",
@@ -132,7 +134,14 @@
         "eovElevation": "EOV magasság",
         "type": "Típus",
         "position": "Pozíció (X,Y,Z)",
-        "shots": "Mérések listája"
+        "shots": "Mérések listája",
+        "compass": "Iránytű",
+        "ruler": "Vonalzó",
+        "dip": "Dőlés",
+        "logo": "Logó",
+        "viewHelper": "3D forgatás segéd",
+        "textColor": "Szöveg színe",
+        "textStroke": "Szöveg keret"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"

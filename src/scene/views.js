@@ -61,13 +61,44 @@ class View {
 
   }
 
-  #createRatioText() {
+  recreateAllTextSprites() {
+
+    let label = this.ratioText.label;
+    let prevVisible = this.ratioText.sprite.visible;
+    this.diposeSprite(this.ratioText.getSprite(), this.scene.sprites3DGroup);
+    this.ratioText = this.#createRatioText(label);
+    this.ratioText.sprite.visible = prevVisible;
+    const ratioTextSprite = this.ratioText.getSprite();
+    this.scene.sprites3DGroup.add(ratioTextSprite);
+    ratioTextSprite.onclick = () => {
+      this.#setRatio();
+    };
+
+    prevVisible = this.rotationText.sprite.visible;
+    label = this.rotationText.label;
+    this.diposeSprite(this.rotationText.getSprite(), this.scene.sprites3DGroup);
+    this.rotationText = this.#createRotationText(label);
+    this.rotationText.sprite.visible = prevVisible;
+    const rotationTextSprite = this.rotationText.getSprite();
+    this.scene.sprites3DGroup.add(rotationTextSprite);
+    rotationTextSprite.onclick = () => {
+      this.setCompassRotation();
+    };
+
+  }
+
+  #createRatioText(text = '0') {
     //https://discourse.threejs.org/t/how-to-update-text-in-real-time/39050/12
     const position = new THREE.Vector3(0, -this.scene.height / 2 + 40, 1);
     return new TextSprite(
-      '0',
+      text,
       position,
-      { size: 45, family: 'Helvetica Neue', strokeColor: 'black' },
+      {
+        size        : 45,
+        family      : 'Helvetica Neue',
+        strokeColor : this.scene.options.scene.sprites3D.textStroke,
+        color       : this.scene.options.scene.sprites3D.textColor
+      },
       0.4,
       `ratio text ${this.name}`
     );
@@ -76,7 +107,7 @@ class View {
   #createRatioIndicator(width) {
     const map = new THREE.TextureLoader().load(
       'images/ratio.png',
-      (texture) => {
+      () => {
         // Force a render update when texture loads
         this.scene.view.renderView();
 
@@ -100,7 +131,7 @@ class View {
   #createCompass(size) {
     const map = new THREE.TextureLoader().load(
       'images/compass.png',
-      (texture) => {
+      () => {
         // Force a render update when texture loads
         this.scene.view.renderView();
       },
@@ -119,12 +150,17 @@ class View {
     return sprite;
   }
 
-  #createRotationText() {
+  #createRotationText(text = '0°') {
     const position = new THREE.Vector3(this.scene.width / 2 - 60, -this.scene.height / 2 + 120, 1);
     return new TextSprite(
-      '0°',
+      text,
       position,
-      { size: 24, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
+      {
+        size        : 24,
+        family      : 'Helvetica Neue',
+        strokeColor : this.scene.options.scene.sprites3D.textStroke,
+        color       : this.scene.options.scene.sprites3D.textColor
+      },
       0.5,
       `rotation text ${this.name}`
     );
@@ -373,6 +409,27 @@ class View {
 
   }
 
+  diposeSprite(sprite, group) {
+    group.remove(sprite);
+    sprite.visible = false;
+    sprite.material.map.dispose();
+    sprite.geometry.dispose();
+    sprite.material.dispose();
+  }
+
+  toggleSpriteVisibility(spriteType, visible) {
+    switch (spriteType) {
+      case 'ruler':
+        this.ratioIndicator.visible = visible;
+        this.ratioText.sprite.visible = visible;
+        break;
+      case 'compass':
+        this.compass.visible = visible;
+        this.rotationText.sprite.visible = visible;
+        break;
+    }
+  }
+
   addEventListener(type, listener) {
     if (!this.listeners) this.listeners = new Map();
     if (!this.listeners.has(type)) this.listeners.set(type, []);
@@ -403,10 +460,10 @@ class View {
 
     if (this.initiated) {
       this.frustumFrame.visible = true;
-      this.ratioIndicator.visible = true;
-      this.ratioText.sprite.visible = true;
-      this.compass.visible = true;
-      this.rotationText.sprite.visible = true;
+      this.ratioIndicator.visible = this.scene.options.scene.sprites3D.ruler.show;
+      this.ratioText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
+      this.compass.visible = this.scene.options.scene.sprites3D.compass.show;
+      this.rotationText.sprite.visible = this.scene.options.scene.sprites3D.compass.show;
     }
 
     this.dispatchEvent('viewActivated', { name: this.name });
@@ -701,12 +758,17 @@ class SpatialView extends View {
     return sprite;
   }
 
-  #createDipText() {
+  #createDipText(text = '0°') {
     const position = new THREE.Vector3(this.scene.width / 2 - 170, -this.scene.height / 2 + 120, 1);
     return new TextSprite(
-      '0°',
+      text,
       position,
-      { size: 45, family: 'Helvetica Neue', strokeColor: 'black', color: 'white' },
+      {
+        size        : 45,
+        family      : 'Helvetica Neue',
+        strokeColor : this.scene.options.scene.sprites3D?.textStroke ?? '#000000',
+        color       : this.scene.options.scene.sprites3D?.textColor ?? '#ffffff'
+      },
       0.4,
       'dip text'
     );
@@ -809,6 +871,31 @@ class SpatialView extends View {
     // Update the texture
     this.dipIndicator.material.map.needsUpdate = true;
   }
+  recreateAllTextSprites() {
+
+    super.recreateAllTextSprites();
+    let label = this.dipText.label;
+    let prevVisible = this.dipText.sprite.visible;
+    this.diposeSprite(this.dipText.getSprite(), this.scene.sprites3DGroup);
+    this.dipText = this.#createDipText(label);
+    this.dipText.sprite.visible = prevVisible;
+    const dipTextSprite = this.dipText.getSprite();
+    this.scene.sprites3DGroup.add(dipTextSprite);
+    dipTextSprite.onclick = () => {
+      this.#updateDipIndicator();
+    };
+  }
+
+  toggleSpriteVisibility(spriteType, visible) {
+    super.toggleSpriteVisibility(spriteType, visible);
+
+    switch (spriteType) {
+      case 'dip':
+        this.dipIndicator.visible = visible;
+        this.dipText.sprite.visible = visible;
+        break;
+    }
+  }
 
   setCompassRotation() {
     const currentAzimuth = 2 * Math.PI - (this.control.azimuth + Math.PI);
@@ -835,8 +922,8 @@ class SpatialView extends View {
 
   activate(boundingBox) {
     super.activate(boundingBox);
-    this.dipIndicator.visible = true;
-    this.dipText.sprite.visible = true;
+    this.dipIndicator.visible = this.scene.options.scene.sprites3D.dip.show;
+    this.dipText.sprite.visible = this.scene.options.scene.sprites3D.dip.show;
     this.control.enabled = true;
     this.#updateRotationText();
     this.#updateDipIndicator();
@@ -1121,6 +1208,10 @@ class ProfileView extends View {
 
   onZoomLevelChange(level) {
     super.onZoomLevelChange(level);
+    this.#updateVerticalRuler(level);
+  }
+
+  #updateVerticalRuler(level) {
     const worldHeightInMeters = this.camera.height / level;
     // Use the same target distance as horizontal ruler for consistency
     const targetRulerDistance = this.getTargetRulerDistance(this.ratio);
@@ -1190,13 +1281,18 @@ class ProfileView extends View {
 
   }
 
-  #createVerticalRatioText() {
+  #createVerticalRatioText(text = '0') {
     // Create vertical ratio text similar to horizontal ratio text
     const position = new THREE.Vector3(this.scene.width / 2 - 80, 0, 1);
     return new TextSprite(
-      '0',
+      text,
       position,
-      { size: 35, family: 'Helvetica Neue', strokeColor: 'black' },
+      {
+        size        : 35,
+        family      : 'Helvetica Neue',
+        color       : this.scene.options.scene.sprites3D.textColor,
+        strokeColor : this.scene.options.scene.sprites3D.textStroke
+      },
       0.5,
       'vertical ratio text'
     );
@@ -1209,6 +1305,30 @@ class ProfileView extends View {
     if (compassRotation < 0) compassRotation += 2 * Math.PI;
     if (compassRotation === 2 * Math.PI) compassRotation = 0; // show 0 not 360
     this.rotationText.update(`N ${radsToDegrees(compassRotation).toFixed(1)}°`);
+  }
+
+  recreateAllTextSprites() {
+    super.recreateAllTextSprites();
+    let label = this.verticalRatioText.label;
+    let prevVisible = this.verticalRatioText.sprite.visible;
+    this.diposeSprite(this.verticalRatioText.getSprite(), this.scene.sprites3DGroup);
+    this.verticalRatioText = this.#createVerticalRatioText(label);
+    this.verticalRatioText.sprite.visible = prevVisible;
+    const verticalRatioTextSprite = this.verticalRatioText.getSprite();
+    this.scene.sprites3DGroup.add(verticalRatioTextSprite);
+    this.#updateRotationText();
+    this.#updateVerticalRuler(this.control.zoom);
+  }
+
+  toggleSpriteVisibility(spriteType, visible) {
+    super.toggleSpriteVisibility(spriteType, visible);
+
+    switch (spriteType) {
+      case 'ruler':
+        this.verticalRuler.visible = visible;
+        this.verticalRatioText.sprite.visible = visible;
+        break;
+    }
   }
 
   setCompassRotation() {
@@ -1239,8 +1359,8 @@ class ProfileView extends View {
   activate(boundingBox) {
     super.activate(boundingBox);
     this.control.enabled = true;
-    this.verticalRuler.visible = true;
-    this.verticalRatioText.sprite.visible = true;
+    this.verticalRuler.visible = this.scene.options.scene.sprites3D.ruler.show;
+    this.verticalRatioText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
     this.compass.material.rotation = -this.control.angle + Math.PI;
     this.#updateRotationText();
     this.renderView();

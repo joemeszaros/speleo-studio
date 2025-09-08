@@ -4,7 +4,6 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { ColorModeHelper } from './colormode.js';
 
-import { SurveyHelper } from '../survey.js';
 import { Grid } from './grid.js';
 import * as U from '../utils/utils.js';
 import { ShotType } from '../model/survey.js';
@@ -461,7 +460,7 @@ class MyScene {
       geometry.computeBoundingBox();
       const material = new LineMaterial({
         color        : new THREE.Color(color),
-        linewidth    : this.options.scene.centerLines.segments.width * this.options.scene.sectionLineMultiplier,
+        linewidth    : this.options.scene.sections.width,
         worldUnits   : false,
         vertexColors : false
       });
@@ -489,7 +488,7 @@ class MyScene {
     }
   }
 
-  showSectionAttribute(id, segments, attribute, format = '${name}', color, caveName) {
+  showFragmentAttribute(id, segments, attribute, format = '${name}', color, caveName) {
     if (!this.sectionAttributes.has(id)) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(segments);
@@ -525,10 +524,35 @@ class MyScene {
         text     : textMesh,
         label    : formattedAttribute,
         center   : center,
-        caveName : caveName
+        caveName : caveName,
+        segments : segments,
+        color    : color
       });
       this.view.renderView();
     }
+  }
+
+  updateSectionAttributesWidth() {
+    this.sectionAttributes.forEach((e) => {
+      e.tube.children.forEach((tubeMesh) => {
+        tubeMesh.geometry.dispose();
+        tubeMesh.material.dispose();
+      });
+      this.sectionAttributes3DGroup.remove(e.tube);
+
+      const newGroup = this.createTubeGeometryFromSegments(e.segments);
+      newGroup.children.forEach((tubeMesh) => {
+        tubeMesh.material = new THREE.MeshBasicMaterial({
+          color       : new THREE.Color(e.color),
+          transparent : false,
+          opacity     : 1.0
+        });
+      });
+      newGroup.layers.set(1);
+      this.sectionAttributes3DGroup.add(newGroup);
+      e.tube = newGroup;
+    });
+    this.view.renderView();
   }
 
   disposeSectionAttribute(id) {
@@ -668,9 +692,13 @@ class MyScene {
 
   rollSurface() {
     const config = this.options.scene.surface.color.mode;
-    Options.rotateOptionChoice(config);
+    // Rotate through surface color modes
+    const modes = ['gradientByZ', 'gradientByDistance'];
+    const currentIndex = modes.indexOf(config);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    this.options.scene.surface.color.mode = modes[nextIndex];
 
-    switch (config.value) {
+    switch (this.options.scene.surface.color.mode) {
       case 'gradientByZ':
         // don't need to recalculate color gradients because surface is not editable
         this.surfaceObjects.forEach((entry) => {
@@ -700,19 +728,8 @@ class MyScene {
   }
 
   updateSegmentsWidth(width) {
-    this.sectionAttributes.forEach((e) => {
-      e.segments.material.linewidth = width * this.options.scene.sectionLineMultiplier;
-    });
-    this.view.renderView();
-  }
-
-  updateCenterLinesOpacity(width) {
-    this.sectionAttributes.forEach((e) => {
-      e.segments.material.linewidth = width * this.options.scene.sectionLineMultiplier;
-      // Also update glow line width to maintain the glow effect
-      if (e.glow) {
-        e.glow.material.linewidth = width * this.options.scene.sectionLineMultiplier * 3;
-      }
+    this.segments3DGroup.children.forEach((e) => {
+      e.material.linewidth = width;
     });
     this.view.renderView();
   }
@@ -1301,7 +1318,7 @@ class MyScene {
     group.name = `tube-geometry-from-segments`;
 
     // Use fixed values for simplicity
-    const tubeRadius = this.options.scene.centerLines.segments.width * 0.15; // 15% of line width
+    const tubeRadius = this.options.scene.sections.width * 0.15; // 15% of line width
 
     // Process segments in pairs (start and end points)
     for (let i = 0; i < segments.length; i += 6) {

@@ -583,7 +583,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     return {
       id          : randomAlphaNumbericString(6),
       visible     : false,
-      color       : this.options.scene.sectionAttributes.color,
+      color       : this.options.scene.sections.color,
       start       : undefined,
       termination : undefined,
       path        : undefined,
@@ -704,7 +704,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       cell.setValue(!cell.getValue());
 
       if (cell.getValue() === true) {
-        this.scene.showSectionAttribute(
+        this.scene.showFragmentAttribute(
           data.id,
           SectionHelper.getComponentSegments(
             new CaveComponent(data.start, data.termination, data.path, data.distance),
@@ -740,7 +740,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         cell.getRow().update(data);
         if (data.visible) {
           this.scene.disposeSectionAttribute(data.id);
-          this.scene.showSectionAttribute(
+          this.scene.showFragmentAttribute(
             data.id,
             SectionHelper.getComponentSegments(component, this.cave.stations),
             data.attribute,
@@ -865,7 +865,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     return {
       id        : randomAlphaNumbericString(6),
       visible   : false,
-      color     : this.options.scene.sectionAttributes.color,
+      color     : this.options.scene.sections.color,
       from      : undefined,
       to        : undefined,
       path      : undefined,
@@ -941,7 +941,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       cell.setValue(!cell.getValue());
 
       if (cell.getValue() === true) {
-        this.scene.showSectionAttribute(
+        this.scene.showFragmentAttribute(
           data.id,
           SectionHelper.getSectionSegments(
             new CaveSection(data.from, data.to, data.path, data.distance),
@@ -977,7 +977,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
           cell.getRow().update(data);
           if (data.visible) {
             this.scene.disposeSectionAttribute(data.id);
-            this.scene.showSectionAttribute(
+            this.scene.showFragmentAttribute(
               data.id,
               SectionHelper.getSectionSegments(section, this.cave.stations),
               data.attribute,

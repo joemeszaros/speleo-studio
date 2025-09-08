@@ -81,6 +81,16 @@ class TextSprite {
     this.ctx.fillText(label, 0, 0);
   }
 
+  setColor(color) {
+    this.font.color = color;
+    this.update(this.label);
+  }
+
+  setStrokeColor(strokeColor) {
+    this.font.strokeColor = strokeColor;
+    this.update(this.label);
+  }
+
 }
 
 export { TextSprite };

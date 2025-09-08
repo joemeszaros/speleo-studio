@@ -161,7 +161,7 @@ class Editor extends BaseEditor {
           data.color = newColor;
           if (data.visible) {
             this.scene.disposeSectionAttribute(data.id);
-            this.scene.showSectionAttribute(
+            this.scene.showFragmentAttribute(
               data.id,
               data.start === undefined
                 ? SectionHelper.getSectionSegments(

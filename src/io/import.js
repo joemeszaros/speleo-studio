@@ -457,6 +457,8 @@ class TopodroidImporter extends Importer {
   }
 }
 
+//FIXME: check attibute name + id matching
+// check JSON serialization in Java
 class JsonImporter extends Importer {
   constructor(db, options, scene, manager, attributeDefs) {
     super(db, options, scene, manager);

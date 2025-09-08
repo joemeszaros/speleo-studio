@@ -63,7 +63,7 @@ export class ShortestPathTool {
               segmentsId,
               `shortest-path-${from}-${to}-${segmentsId}`,
               segments,
-              this.options.scene.sectionAttributes.color,
+              this.options.scene.sections.color,
               caveName
             );
             label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.from')}: ${from} ${i18n.t('ui.panels.shortestPath.to')}: ${to} ${i18n.t('ui.panels.shortestPath.length')}: ${section.distance.toFixed(2)}</div>`;
