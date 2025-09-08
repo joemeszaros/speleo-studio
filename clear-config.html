@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clear Configuration - Cave Visualization</title>
+    <style>
+      body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container {
+        text-align: center;
+        max-width: 600px;
+        padding: 40px;
+        background: rgba(45, 45, 45, 0.8);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid #404040;
+      }
+
+      .icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        color: #04aa6d;
+      }
+
+      h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #ffffff;
+        font-weight: 300;
+      }
+
+      .message {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 30px;
+        color: #cccccc;
+      }
+
+      .status {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 30px;
+        padding: 15px;
+        border-radius: 8px;
+        background: rgba(4, 170, 109, 0.1);
+        border: 1px solid #04aa6d;
+        color: #04aa6d;
+      }
+
+      .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #04aa6d;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+        border: none;
+        cursor: pointer;
+      }
+
+      .button:hover {
+        background: #059669;
+      }
+
+      .warning {
+        font-size: 14px;
+        color: #ff6b6b;
+        margin-top: 20px;
+        padding: 10px;
+        background: rgba(255, 107, 107, 0.1);
+        border-radius: 6px;
+        border: 1px solid #ff6b6b;
+      }
+
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon">🗑️</div>
+      <h1>Configuration Cleared</h1>
+
+      <div class="message">
+        The application configuration has been successfully cleared and reset to default values. All your custom
+        settings, preferences have been removed.
+      </div>
+
+      <div class="status" id="status"> ✅ Configuration cleared successfully </div>
+
+      <a href="index.html" class="button">Open Cave Visualization</a>
+
+      <div class="warning">
+        <strong>Warning:</strong> This action cannot be undone. You will need to reconfigure all your settings when you
+        return to the application.
+      </div>
+
+      <div class="footer"> Cave Visualization Tool - Configuration Reset Utility </div>
+    </div>
+
+    <script>
+      // Clear all configuration data from localStorage
+      function clearConfiguration() {
+        try {
+          localStorage.removeItem('speleo-studio-config');
+
+          // Update status message
+          document.getElementById('status').innerHTML = '✅ Configuration cleared successfully';
+          document.getElementById('status').style.background = 'rgba(4, 170, 109, 0.1)';
+          document.getElementById('status').style.borderColor = '#04aa6d';
+          document.getElementById('status').style.color = '#04aa6d';
+
+          console.log('Configuration cleared successfully');
+        } catch (error) {
+          console.error('Error clearing configuration:', error);
+          document.getElementById('status').innerHTML = '❌ Error clearing configuration';
+          document.getElementById('status').style.background = 'rgba(255, 107, 107, 0.1)';
+          document.getElementById('status').style.borderColor = '#ff6b6b';
+          document.getElementById('status').style.color = '#ff6b6b';
+        }
+      }
+
+      // Clear configuration when page loads
+      window.addEventListener('load', clearConfiguration);
+
+      // Also clear on page focus (in case user navigates back)
+      window.addEventListener('focus', clearConfiguration);
+    </script>
+  </body>
+</html>
