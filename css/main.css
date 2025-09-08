@@ -499,6 +499,13 @@ body {
   flex-grow: 1;
 }
 
+.about-version {
+  font-size: 12px;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
 .about-close-btn {
   cursor: pointer;
   font-weight: 300;

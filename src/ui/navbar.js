@@ -523,12 +523,21 @@ class NavigationBar {
     }
   }
 
-  #showAboutDialog() {
+  async #showAboutDialog() {
     let aboutDialog = document.getElementById('about-dialog');
     if (!aboutDialog) {
       aboutDialog = document.createElement('div');
       document.body.appendChild(aboutDialog);
     }
+
+    const response = await fetch('.version');
+    let version;
+    if (!response.ok) {
+      version = 'unavailable';
+    } else {
+      version = await response.text();
+    }
+
     aboutDialog.id = 'about-dialog';
     aboutDialog.className = 'about-dialog';
     aboutDialog.innerHTML = `
@@ -565,6 +574,7 @@ class NavigationBar {
               </a>
             </div>
           </div>
+          ${version !== 'unavailable' ? `<div class="about-version">${version}</div>` : ''}
         </div>
       `;
 
