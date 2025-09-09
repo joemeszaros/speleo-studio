@@ -720,6 +720,7 @@
     }
   },
   "attributes": {
+    "name": "name",
     "names": {
       "speleothem": "speleothem",
       "bedding": "bedding",

@@ -16,9 +16,15 @@ class I18nManager {
     ]);
   }
 
-  async init() {
+  async init(storage = localStorage) {
+    this.storage = storage;
     await this.detectPreferredLanguage();
     await this.loadTranslations(this.currentLanguage);
+
+    // we need english translation for attribute label visualization (format string)
+    if (this.currentLanguage !== 'en') {
+      await this.loadTranslations('en');
+    }
     this.initialzed = true;
   }
 
@@ -35,8 +41,8 @@ class I18nManager {
       this.currentLanguage = this.fallbackLanguage;
     }
 
-    // Check localStorage for previously selected language
-    const savedLang = localStorage.getItem('preferred-language');
+    // Check storage for previously selected language
+    const savedLang = this.storage.getItem('preferred-language');
     if (savedLang && this.supportedLanguages.has(savedLang)) {
       this.currentLanguage = savedLang;
     }
@@ -68,12 +74,12 @@ class I18nManager {
    * @param {Object} params - Parameters for template interpolation
    * @returns {string} Translated message
    */
-  t(key, params = {}) {
+  t(key, params = {}, language) {
     if (!this.initialzed) {
       throw new Error('I18n not initialized');
     }
 
-    const message = this.getNestedTranslation(key);
+    const message = this.getNestedTranslation(key, language);
 
     if (!message) {
       console.warn(`Translation key not found: ${key}`);
@@ -83,14 +89,38 @@ class I18nManager {
     return this.interpolateTemplate(message, params);
   }
 
+  // find what is the key for attributes.params.típus -> type
+  lookupKey(prefix, translatedValue, language) {
+    const keys = prefix.split('.');
+    let value = this.translations[language ?? this.currentLanguage];
+
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return null;
+      }
+    }
+
+    // value must be an object
+    for (const k of Object.keys(value)) {
+      if (value[k] === translatedValue) {
+        return k;
+      }
+    }
+
+    return null;
+
+  }
+
   /**
    * Get nested translation value
    * @param {string} key - Translation key (e.g., 'menu.file.new')
    * @returns {string} Translation value
    */
-  getNestedTranslation(key) {
+  getNestedTranslation(key, language) {
     const keys = key.split('.');
-    let value = this.translations[this.currentLanguage];
+    let value = this.translations[language ?? this.currentLanguage];
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
@@ -127,7 +157,7 @@ class I18nManager {
     this.currentLanguage = language;
     console.log(`Language changed to ${language}`);
 
-    localStorage.setItem('preferred-language', language);
+    this.storage.setItem('preferred-language', language);
     document.dispatchEvent(
       new CustomEvent('languageChanged', {
         detail : { language: language }

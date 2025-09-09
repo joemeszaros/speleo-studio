@@ -489,7 +489,46 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
       {
         title  : i18n.t('ui.editors.attributes.columns.format'),
         field  : 'format',
-        editor : 'input'
+        editor : (cell, onRendered, success) => {
+          const data = cell.getData();
+          const editor = document.createElement('input');
+          editor.setAttribute('type', 'text');
+
+          const localized = data.attribute.localizeFormatString(data.format, i18n);
+          console.log(`editor create: ${localized} (${data.format})`);
+          editor.value = localized;
+
+          onRendered(function () {
+            editor.focus();
+            editor.style.css = '100%';
+          });
+
+          function successFunc() {
+            const deLocalized = data.attribute.deLocalizeFormatString(editor.value, i18n);
+            console.log(`editor success: ${editor.value} (${data.format}) -> ${deLocalized}`);
+            success(editor.value); // after this mutator will deLocalize the value
+          }
+          editor.addEventListener('change', successFunc);
+          editor.addEventListener('blur', successFunc);
+          return editor;
+        },
+        formatter : (cell) => {
+          const data = cell.getData();
+          console.log(`formatter: ${data.attribute} fmt: '${data.format}'`);
+          if (data.attribute && data.format && data.format.length > 0) {
+            const result = data.attribute.localizeFormatString(data.format, i18n);
+            console.log(`formatter: ${data.format} -> ${result}`);
+            return result;
+          }
+        },
+        mutator : (value, data) => {
+          console.log(`mutator: ${data.attribute} fmt: '${data.format}'`);
+          if (data.attribute && value && value.length > 0) {
+            const result = data.attribute.deLocalizeFormatString(value, i18n);
+            console.log(`mutator: ${value} -> ${result}`);
+            return result;
+          }
+        }
       }
     ];
   }
@@ -1251,35 +1290,37 @@ class StationAttributeEditor extends BaseAttributeEditor {
     return rows;
   }
 
+  toggleVisibility(ev, cell) {
+    const data = cell.getData();
+    if (data.status !== 'ok' && !data.visible) {
+      this.showAlert(i18n.t('ui.editors.stationAttributes.errors.stationAttributeMissingArguments'));
+      return;
+    }
+
+    cell.setValue(!cell.getValue());
+
+    if (cell.getValue() === true) {
+      const station = this.cave.stations.get(data.station);
+      if (data.attribute && data.attribute.name) {
+        if (['bedding', 'fault'].includes(data.attribute.name)) {
+          this.scene.showPlaneFor(data.id, station, data.attribute);
+        } else {
+          this.scene.showIconFor(data.id, station, data.attribute);
+        }
+      }
+    } else {
+      if (data.attribute && data.attribute.name) {
+        if (['bedding', 'fault'].includes(data.attribute.name)) {
+          this.scene.disposePlaneFor(data.id);
+        } else {
+          this.scene.disposeIconFor(data.id);
+        }
+      }
+    }
+  }
+
   functions = {
-    toggleVisibility : (ev, cell) => {
-      const data = cell.getData();
-      if (data.status !== 'ok' && !data.visible) {
-        this.showAlert(i18n.t('ui.editors.stationAttributes.errors.stationAttributeMissingArguments'));
-        return;
-      }
 
-      cell.setValue(!cell.getValue());
-
-      if (cell.getValue() === true) {
-        const station = this.cave.stations.get(data.station);
-        if (data.attribute && data.attribute.name) {
-          if (['bedding', 'fault'].includes(data.attribute.name)) {
-            this.scene.showPlaneFor(data.id, station, data.attribute);
-          } else {
-            this.scene.showIconFor(data.id, station, data.attribute);
-          }
-        }
-      } else {
-        if (data.attribute && data.attribute.name) {
-          if (['bedding', 'fault'].includes(data.attribute.name)) {
-            this.scene.disposePlaneFor(data.id);
-          } else {
-            this.scene.disposeIconFor(data.id);
-          }
-        }
-      }
-    },
     stationEdited : (cell) => {
       const data = cell.getData();
       const station = this.cave.stations.get(data.station);

@@ -56,6 +56,7 @@ class Main {
 
       loader.load(
         'fonts/helvetiker_regular.typeface.json',
+        'fonts/helvetiker_bold.typeface.json',
         (font) => {
           // Initialize the application
           this.#initializeApp(db, options, observer, attributeDefs, font);

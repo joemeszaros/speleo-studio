@@ -416,12 +416,75 @@ class Attribute {
     return this.validate().size === 0;
   }
 
+  #getFormatVariables(formatString) {
+    const formatVariables = [];
+    const formatVariablePattern = /\$\{([^{}]+)\}/g;
+    let match;
+    let guardIndex = 100;
+    while ((match = formatVariablePattern.exec(formatString)) !== null) {
+      formatVariables.push(match[1]);
+      guardIndex--; //prevent infnitie loop for whatever reason
+      if (guardIndex === 0) {
+        break;
+      }
+    }
+    return formatVariables;
+  }
+
+  // converts "${name}-${year}" to "${név}-${év}"
+  localizeFormatString(formatString, i18n) {
+    if (!formatString || formatString.length === 0) {
+      return formatString;
+    }
+    const formatVariables = this.#getFormatVariables(formatString);
+    const nameLocalized = i18n.t(`attributes.name`);
+
+    return formatVariables.reduce((acc, v) => {
+      if (v === 'name') {
+        return acc.replace(`${v}`, nameLocalized);
+      } else {
+        let l = i18n.t(`attributes.params.${v}`);
+        if (l.startsWith('attributes.params.')) {
+          // not found in translations
+          l = v;
+        }
+
+        console.log(`localizeFormatString: ${v} -> ${l}`);
+        return acc.replace(v, l);
+      }
+    }, formatString);
+  }
+
+  // converts "${név}-${év}" to "${name}-${year}"
+  deLocalizeFormatString(formatString, i18n) {
+    if (!formatString || formatString.length === 0) {
+      return formatString;
+    }
+    const formatVariables = this.#getFormatVariables(formatString);
+    const nameLocalized = i18n.t(`attributes.name`);
+
+    return formatVariables.reduce((acc, v) => {
+      if (v === nameLocalized) {
+        return acc.replace(`${v}`, 'name');
+      } else {
+        const key = i18n.lookupKey(`attributes.params`, v);
+        const l = key ?? v;
+        console.log(`deLocalizeFormatString: ${v} -> ${l}`);
+        return acc.replace(v, l);
+      }
+    }, formatString);
+  }
+
   localize(i18n) {
     const localized = {};
     localized.name = i18n.t(`attributes.names.${this.name}`);
     this.paramNames.forEach((n) => {
-      const localizedParamValue = i18n.t(`attributes.values.${this[n]}`);
-      localized[n] = localizedParamValue.startsWith('attributes.values') ? this[n] : localizedParamValue;
+      if (this.params[n].values && this.params[n].values.length > 0 && this.params[n].values.includes(this[n])) {
+        const localizedParamValue = i18n.t(`attributes.values.${this[n]}`);
+        localized[n] = localizedParamValue.startsWith('attributes.values') ? this[n] : localizedParamValue;
+      } else {
+        localized[n] = this[n];
+      }
     });
     return localized;
   }

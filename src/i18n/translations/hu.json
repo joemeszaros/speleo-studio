@@ -719,6 +719,7 @@
     }
   },
   "attributes": {
+    "name": "név",
     "names": {
       "speleothem": "szpeleotéma",
       "bedding": "rétegdőlés",
