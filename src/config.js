@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ShotType } from './model/survey.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
+import { i18n } from './i18n/i18n.js';
 
 export const DEFAULT_OPTIONS = {
   isDefault : true,
@@ -446,18 +447,20 @@ export class ConfigManager {
             ConfigManager.deepMerge(options, loadedConfig);
             settingsPanel.render();
             console.log('✅ Configuration loaded successfully from file');
-            showSuccessPanel(`Configuration loaded successfully from ${file.name}`);
+            showSuccessPanel(i18n.t('messages.config.configurationLoadedSuccessfully', { fileName: file.name }));
           } else {
-            throw new Error('Invalid configuration file format');
+            throw new Error(i18n.t('errors.config.invalidConfigurationFileFormat'));
           }
         } catch (error) {
           console.error('Failed to load configuration:', error);
-          showErrorPanel(`Failed to load configuration from ${file.name}: ${error.message}`);
+          showErrorPanel(
+            i18n.t('errors.config.failedToLoadConfiguration', { fileName: file.name, error: error.message })
+          );
         }
       };
 
       reader.onerror = () => {
-        showErrorPanel(`Failed to read file ${file.name}`);
+        showErrorPanel(i18n.t('errors.config.failedToReadFile', { fileName: file.name }));
       };
 
       reader.readAsText(file);

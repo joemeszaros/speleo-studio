@@ -151,6 +151,7 @@ export class IconBar {
         icon    : 'icons/update.svg',
         click   : () => updateAttributes?.()
       }
+
     ];
   }
 

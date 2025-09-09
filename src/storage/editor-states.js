@@ -1,3 +1,5 @@
+import { i18n } from '../i18n/i18n.js';
+
 export class EditorStateSystem {
 
   constructor(databaseManager) {
@@ -21,7 +23,7 @@ export class EditorStateSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to save editor state'));
+        reject(new Error(i18n.t('errors.storage.editorStates.failedToSaveEditorState')));
       };
     });
   }
@@ -34,7 +36,7 @@ export class EditorStateSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to load editor state'));
+        reject(new Error(i18n.t('errors.storage.editorStates.failedToLoadEditorState')));
       };
 
     });
@@ -47,7 +49,7 @@ export class EditorStateSystem {
         resolve();
       };
       request.onerror = () => {
-        reject(new Error('Failed to delete editor state'));
+        reject(new Error(i18n.t('errors.storage.editorStates.failedToDeleteEditorState')));
       };
     });
   }

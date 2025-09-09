@@ -5,6 +5,7 @@ import { ShotType } from './model/survey.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
 import { EOVToWGS84Transformer } from './utils/geo.js';
+import { i18n } from './i18n/i18n.js';
 
 class SurveyHelper {
 
@@ -78,7 +79,7 @@ class SurveyHelper {
     const tryAddStation = (name, st, sh, otherSt) => {
       if (stations.has(name)) {
         // this should never happen
-        throw new Error(`Conflicting shot (${sh.from} -> ${sh.to})!`);
+        throw new Error(i18n.t('errors.survey.conflictingShot', { from: sh.from, to: sh.to }));
       } else {
         stations.set(name, st);
         sh.processed = true;
@@ -250,7 +251,7 @@ class SurveyHelper {
             auxiliarySegments.push(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z);
             break;
           default:
-            throw new Error(`Undefined segment type ${sh.type}`);
+            throw new Error(i18n.t('errors.survey.undefinedSegmentType', { type: sh.type }));
         }
       }
     });
@@ -420,7 +421,7 @@ class SurveyHelper {
 
   static interpolateColorByValue(value, sortedColors, valueKey = 'depth') {
     if (sortedColors.length < 2) {
-      throw new Error('At least 2 gradient colors are required');
+      throw new Error(i18n.t('errors.survey.atLeastTwoGradientColorsRequired'));
     }
 
     let lowerColor = sortedColors[0];

@@ -1,3 +1,5 @@
+import { i18n } from './i18n/i18n.js';
+
 class Database {
 
   constructor() {
@@ -73,7 +75,7 @@ class Database {
 
   renameCave(oldName, newName) {
     if (this.caves.has(newName)) {
-      throw new Error(`Cave with ${newName} already exists!`);
+      throw new Error(i18n.t('errors.db.caveAlreadyExists', { name: newName }));
     }
     const cave = this.caves.get(oldName);
     cave.name = newName;
@@ -84,10 +86,10 @@ class Database {
   renameSurvey(cave, oldName, newName) {
     const survey = this.getSurvey(cave.name, oldName);
     if (survey === undefined) {
-      throw new Error(`Survey '${oldName}' does not exists!`);
+      throw new Error(i18n.t('errors.db.surveyDoesNotExist', { name: oldName }));
     }
     if (this.getSurvey(cave.name, newName) !== undefined) {
-      throw new Error(`Survey '${newName}' already exists!`);
+      throw new Error(i18n.t('errors.db.surveyAlreadyExists', { name: newName }));
     }
     survey.name = newName;
   }
@@ -98,7 +100,7 @@ class Database {
 
   addSurface(surface) {
     if (this.surfaces.has(surface.name)) {
-      throw new Error(`Surface ${surface.name} has already been added!`);
+      throw new Error(i18n.t('errors.db.surfaceAlreadyAdded', { name: surface.name }));
     }
     this.surfaces.set(surface.name, surface);
   }

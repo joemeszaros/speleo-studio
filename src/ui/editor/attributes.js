@@ -433,7 +433,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         width            : 25,
         field            : 'visible',
         formatter        : 'tickCross',
-        cellClick        : this.functions.toggleVisibility,
+        cellClick        : (ev, cell) => this.toggleVisibility(ev, cell),
         mutatorClipboard : (str) => (str === 'true' ? true : false) //TODO:better parser here that considers other values (like 0, 1)
       },
       {
@@ -457,7 +457,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
       {
         title            : i18n.t('ui.editors.attributes.columns.attribute'),
         field            : 'attribute',
-        headerFilterFunc : this.baseTableFunctions.attributeHeaderFilter,
+        headerFilterFunc : this.baseTableFunctions.attributesHeaderFilter,
         headerFilter     : 'input',
         formatter        : (cell) =>
           this.baseTableFunctions.atrributesFormatter(
@@ -493,7 +493,50 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
       }
     ];
   }
+
+  showAllAttributes() {
+    const toShow = this.table.getData().filter((r) => r.visible === false);
+    if (toShow.length > 0) {
+      toShow.forEach((r) => {
+        this.showCycle(r);
+      });
+      this.table.updateData(
+        toShow.map((t) => {
+          return { id: t.id, visible: true };
+        })
+      );
+    }
+  }
+
+  hideAllAttributes() {
+    const toHide = this.table.getData().filter((r) => r.visible === true);
+    if (toHide.length > 0) {
+      toHide.forEach((r) => {
+        this.hideCycle(r.id);
+      });
+      this.table.updateData(
+        toHide.map((t) => {
+          return { id: t.id, visible: false };
+        })
+      );
+    }
+  }
+
+  showCycle(data) {
+    this.scene.showSegments(
+      data.id,
+      `cycle-${data.id}`,
+      SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
+      data.color,
+      this.cave.name
+    );
+  }
+
+  hideCycle(id) {
+    this.scene.disposeSegments(id);
+  }
 }
+
 class ComponentAttributeEditor extends FragmentAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
@@ -693,33 +736,33 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
 
   }
 
+  toggleVisibility(ev, cell) {
+    const data = cell.getData();
+    if (data.status !== 'ok' && !data.visible) {
+      this.showAlert(i18n.t('ui.editors.componentAttributes.errors.componentAttributeMissingArguments'));
+      return;
+    }
+
+    cell.setValue(!cell.getValue());
+
+    if (cell.getValue() === true) {
+      this.scene.showFragmentAttribute(
+        data.id,
+        SectionHelper.getComponentSegments(
+          new CaveComponent(data.start, data.termination, data.path, data.distance),
+          this.cave.stations
+        ),
+        data.attribute,
+        data.format,
+        data.color,
+        this.cave.name
+      );
+    } else {
+      this.scene.disposeSectionAttribute(data.id);
+    }
+  }
+
   functions = {
-    toggleVisibility : (ev, cell) => {
-      const data = cell.getData();
-      if (data.status !== 'ok' && !data.visible) {
-        this.showAlert(i18n.t('ui.editors.componentAttributes.errors.componentAttributeMissingArguments'));
-        return;
-      }
-
-      cell.setValue(!cell.getValue());
-
-      if (cell.getValue() === true) {
-        this.scene.showFragmentAttribute(
-          data.id,
-          SectionHelper.getComponentSegments(
-            new CaveComponent(data.start, data.termination, data.path, data.distance),
-            this.cave.stations
-          ),
-          data.attribute,
-          data.format,
-          data.color,
-          this.cave.name
-        );
-      } else {
-        this.scene.disposeSectionAttribute(data.id);
-      }
-    },
-
     startOrTerminationEdited : (cell) => {
       const data = cell.getData();
 
@@ -929,33 +972,34 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     return baseColumns;
   }
 
+  toggleVisibility(ev, cell) {
+    const data = cell.getData();
+    if (data.status !== 'ok' && !data.visible) {
+      this.showAlert(i18n.t('ui.editors.sectionAttributes.errors.sectionAttributeMissingArguments'));
+      return;
+    }
+
+    cell.setValue(!cell.getValue());
+
+    if (cell.getValue() === true) {
+      this.scene.showFragmentAttribute(
+        data.id,
+        SectionHelper.getSectionSegments(
+          new CaveSection(data.from, data.to, data.path, data.distance),
+          this.cave.stations
+        ),
+        data.attribute,
+        data.format,
+        data.color,
+        this.cave.name
+      );
+    } else {
+      this.scene.disposeSectionAttribute(data.id);
+    }
+  }
+
   functions = {
 
-    toggleVisibility : (ev, cell) => {
-      const data = cell.getData();
-      if (data.status !== 'ok' && !data.visible) {
-        this.showAlert(i18n.t('ui.editors.sectionAttributes.errors.sectionAttributeMissingArguments'));
-        return;
-      }
-
-      cell.setValue(!cell.getValue());
-
-      if (cell.getValue() === true) {
-        this.scene.showFragmentAttribute(
-          data.id,
-          SectionHelper.getSectionSegments(
-            new CaveSection(data.from, data.to, data.path, data.distance),
-            this.cave.stations
-          ),
-          data.attribute,
-          data.format,
-          data.color,
-          this.cave.name
-        );
-      } else {
-        this.scene.disposeSectionAttribute(data.id);
-      }
-    },
     fromOrToEdited : (cell) => {
       const data = cell.getData();
 
@@ -1053,7 +1097,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
         width            : 25,
         field            : 'visible',
         formatter        : 'tickCross',
-        cellClick        : this.functions.toggleVisibility,
+        cellClick        : (ev, cell) => this.toggleVisibility(ev, cell),
         mutatorClipboard : (str) => (str === 'true' ? true : false)
       },
       {

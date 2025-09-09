@@ -1,4 +1,5 @@
 import { Cave } from '../model/cave.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class CaveNotFoundError extends Error {
   constructor(caveName) {
@@ -30,7 +31,7 @@ export class CaveSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to save cave'));
+        reject(new Error(i18n.t('errors.storage.caveSystem.failedToSaveCave')));
       };
     });
   }
@@ -55,7 +56,7 @@ export class CaveSystem {
     };
 
     request.onerror = () => {
-      reject(new Error('Failed to load cave'));
+      reject(new Error(i18n.t('errors.storage.caveSystem.failedToLoadCave')));
     };
   }
 
@@ -69,7 +70,7 @@ export class CaveSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to load cave names for project'));
+        reject(new Error(i18n.t('errors.storage.caveSystem.failedToLoadCaveNames')));
       };
     });
   }
@@ -89,7 +90,7 @@ export class CaveSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to load caves for project'));
+        reject(new Error(i18n.t('errors.storage.caveSystem.failedToLoadCaves')));
       };
     });
   }
@@ -104,7 +105,7 @@ export class CaveSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to check cave existence'));
+        reject(new Error(i18n.t('errors.storage.caveSystem.failedToCheckCaveExistence')));
       };
     });
   }
@@ -118,7 +119,7 @@ export class CaveSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to delete cave'));
+        reject(new Error(i18n.t('errors.storage.caveSystem.failedToDeleteCave')));
       };
     });
   }
@@ -150,13 +151,13 @@ export class CaveSystem {
 
           deleteRequest.onerror = () => {
             hasError = true;
-            reject(new Error(`Failed to delete cave: ${caveId}`));
+            reject(new Error(i18n.t('errors.storage.caveSystem.failedToDeleteCave')));
           };
         });
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to get caves for deletion'));
+        reject(new Error(i18n.t('errors.storage.caveSystem.failedToGetCavesForDeletion')));
       };
     });
   }

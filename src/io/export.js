@@ -227,11 +227,11 @@ class Exporter {
           Exporter.exportPolygon(caves, filename);
           break;
         default:
-          throw new Error(`Unsupported export format: ${format}`);
+          throw new Error(i18n.t('ui.panels.export.unsupportedExportFormat', { format }));
       }
     } catch (error) {
       console.error('Export failed:', error);
-      showErrorPanel(`Export failed: ${error.message}`);
+      showErrorPanel(i18n.t('errors.export.exportFailed', { error: error.message }));
     }
   }
 }

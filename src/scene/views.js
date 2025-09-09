@@ -7,6 +7,7 @@ import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
 import { degreesToRads, formatDistance, radsToDegrees } from '../utils/utils.js';
 import { ProfileViewControl, PlanViewControl, SpatialViewControl } from './control.js';
+import { i18n } from '../i18n/i18n.js';
 
 class View {
 
@@ -167,15 +168,15 @@ class View {
   }
 
   #setRatio() {
-    const ratioRaw = prompt('Enter the ratio value', this.ratio);
+    const ratioRaw = prompt(i18n.t('errors.views.enterRatioValue'), this.ratio);
     if (ratioRaw === null) return;
     if (!Number.isInteger(Number.parseInt(ratioRaw, 10))) {
-      showWarningPanel(`Ratio '${ratioRaw}' is not an integer`);
+      showWarningPanel(i18n.t('errors.views.ratioNotInteger', { ratio: ratioRaw }));
       return;
     }
     const ratioValue = Number.parseInt(ratioRaw);
     if (ratioValue <= 0) {
-      showWarningPanel('Ratio must be a positive number');
+      showWarningPanel(i18n.t('errors.views.ratioMustBePositive'));
       return;
     } else {
       const cmInPixels = this.dpi / 2.54;
@@ -900,12 +901,12 @@ class SpatialView extends View {
   setCompassRotation() {
     const currentAzimuth = 2 * Math.PI - (this.control.azimuth + Math.PI);
     const currentRotation = radsToDegrees(currentAzimuth).toFixed(1);
-    const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
+    const rotationRaw = prompt(i18n.t('errors.views.enterRotationValue'), currentRotation);
     if (rotationRaw === null) return;
 
     const rotationValue = parseFloat(rotationRaw);
     if (isNaN(rotationValue)) {
-      showWarningPanel(`Rotation '${rotationRaw}' is not a valid number`);
+      showWarningPanel(i18n.t('errors.views.rotationNotValid', { rotation: rotationRaw }));
       return;
     }
 
@@ -1046,12 +1047,12 @@ class PlanView extends View {
 
   setCompassRotation() {
     const currentRotation = ((this.camera.rotation.z * 180) / Math.PI).toFixed(1);
-    const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
+    const rotationRaw = prompt(i18n.t('errors.views.enterRotationValue'), currentRotation);
     if (rotationRaw === null) return;
 
     const rotationValue = parseFloat(rotationRaw);
     if (isNaN(rotationValue)) {
-      showWarningPanel(`Rotation '${rotationRaw}' is not a valid number`);
+      showWarningPanel(i18n.t('errors.views.rotationNotValid', { rotation: rotationRaw }));
       return;
     }
 
@@ -1333,12 +1334,12 @@ class ProfileView extends View {
 
   setCompassRotation() {
     const currentRotation = ((this.control.angle * 180) / Math.PI).toFixed(1);
-    const rotationRaw = prompt('Enter rotation value in degrees', currentRotation);
+    const rotationRaw = prompt(i18n.t('errors.views.enterRotationValue'), currentRotation);
     if (rotationRaw === null) return;
 
     const rotationValue = parseFloat(rotationRaw);
     if (isNaN(rotationValue)) {
-      showWarningPanel(`Rotation '${rotationRaw}' is not a valid number`);
+      showWarningPanel(i18n.t('errors.views.rotationNotValid', { rotation: rotationRaw }));
       return;
     }
 

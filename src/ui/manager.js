@@ -175,7 +175,12 @@ class ProjectManager {
       );
       this.editor.setupPanel();
       this.editor.show();
-      showInfoPanel(`Opened survey editor because you have unsaved changes for cave ${cave.name} / ${survey.name}`);
+      showInfoPanel(
+        i18n.t('ui.editors.survey.messages.openedSurveyEditorUnsavedChanges', {
+          caveName   : cave.name,
+          surveyName : survey.name
+        })
+      );
     }
     console.log(`🚧 Loaded project: ${project.name}`);
   }

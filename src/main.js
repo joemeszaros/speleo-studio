@@ -224,7 +224,7 @@ class Main {
           handler = handlers.get(extension);
 
           if (handler === undefined) {
-            throw new Error(`Unsupported file type: ${extension}`);
+            throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
           }
 
           // Create a promise-based wrapper for the importFile callback

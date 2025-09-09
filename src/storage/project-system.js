@@ -1,4 +1,5 @@
 import { Project } from '../model/project.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class ProjectLoadError extends Error {
   constructor(message) {
@@ -44,7 +45,7 @@ export class ProjectSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to save project'));
+        reject(new Error(i18n.t('errors.storage.projectSystem.failedToSaveProject')));
       };
     });
   }
@@ -98,7 +99,7 @@ export class ProjectSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to check project existence'));
+        reject(new Error(i18n.t('errors.storage.projectSystem.failedToCheckProjectExistence')));
       };
     });
   }
@@ -112,7 +113,7 @@ export class ProjectSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to check project existence'));
+        reject(new Error(i18n.t('errors.storage.projectSystem.failedToCheckProjectExistence')));
       };
     });
   }
@@ -129,7 +130,7 @@ export class ProjectSystem {
       };
 
       request.onerror = () => {
-        reject(new Error('Failed to load projects'));
+        reject(new Error(i18n.t('errors.storage.projectSystem.failedToLoadProjects')));
       };
     });
   }
@@ -161,7 +162,7 @@ export class ProjectSystem {
   // Cave management methods
   async addCaveToProject(project, cave) {
     if (!project) {
-      throw new Error('Project not found');
+      throw new Error(i18n.t('errors.storage.projectSystem.projectNotFound'));
     }
 
     // Save cave to cave store
@@ -177,7 +178,7 @@ export class ProjectSystem {
   async removeCaveFromProject(projectId, caveId) {
     const project = await this.loadProjectById(projectId);
     if (!project) {
-      throw new Error('Project not found');
+      throw new Error(i18n.t('errors.storage.projectSystem.projectNotFound'));
     }
 
     // Remove cave from cave store
@@ -215,7 +216,7 @@ export class ProjectSystem {
 
       request.onerror = (e) => {
         console.error('Failed to delete project', e);
-        reject(new Error('Failed to delete project'));
+        reject(new Error(i18n.t('errors.storage.projectSystem.failedToDeleteProject')));
       };
     });
   }

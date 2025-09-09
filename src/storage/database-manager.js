@@ -1,3 +1,5 @@
+import { i18n } from '../i18n/i18n.js';
+
 /**
  * Database manager version history:
  * 1. Initial version
@@ -40,7 +42,7 @@ export class DatabaseManager {
       const request = indexedDB.open(this.dbName, this.dbVersion);
 
       request.onerror = () => {
-        reject(new Error('Failed to open IndexedDB'));
+        reject(new Error(i18n.t('errors.storage.databaseManager.failedToOpenIndexedDb')));
       };
 
       request.onsuccess = () => {
@@ -74,11 +76,11 @@ export class DatabaseManager {
 
   getStore(storeName, mode = 'readonly') {
     if (!this.indexedDb) {
-      throw new Error('Database not initialized');
+      throw new Error(i18n.t('errors.storage.databaseManager.databaseNotInitialized'));
     }
 
     if (!this.stores[storeName]) {
-      throw new Error(`Store '${storeName}' not found`);
+      throw new Error(i18n.t('errors.storage.databaseManager.storeNotFound', { storeName }));
     }
 
     const transaction = this.indexedDb.transaction([storeName], mode);

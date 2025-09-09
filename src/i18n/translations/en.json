@@ -65,7 +65,8 @@
       },
       "links": {
         "github": "View Source Code on GitHub",
-        "live": "Live Application"
+        "live": "Live Application",
+        "manual": "User Manual"
       }
     },
     "footer": {
@@ -315,7 +316,8 @@
         "title": "Export cave(s)",
         "format": "Format",
         "baseName": "Base name",
-        "baseNamePlaceholder": "Base name (without extension)"
+        "baseNamePlaceholder": "Base name (without extension)",
+        "unsupportedExportFormat": "Unsupported export format: {format}"
       },
       "rotation": {
         "title": "Rotation Tool",
@@ -429,7 +431,8 @@
           "incomplete": "Row is incomplete",
           "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
           "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}",
-          "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}"
+          "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}",
+          "openedSurveyEditorUnsavedChanges": "Opened survey editor because you have unsaved changes for cave {caveName} / {surveyName}"
         },
         "status": {
           "ok": "No errors",
@@ -457,6 +460,9 @@
           "locateTo": "Locate to",
           "detailsFrom": "Details about from",
           "detailsTo": "Details about to"
+        },
+        "errors": {
+          "invalidShotIdsMismatch": "Invalid shot ids do not match for survey '{surveyIds}' and rows '{rowIds}'"
         }
       },
       "attributes": {
@@ -558,11 +564,85 @@
       "noShotTopodroid": "No shot data found in TopoDroid CSV",
       "noShotDataSection": "No shot data section found in TopoDroid CSV",
       "noFromToInHeader": "No 'from' and 'to' columns found in header: {header}",
-      "noHeaderLine": "No header line found in TopoDroid CSV"
+      "noHeaderLine": "No header line found in TopoDroid CSV",
+      "importFailed": "Import of {name} failed",
+      "unsupportedFileType": "Unsupported file type: {extension}"
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",
       "failedToInitIndexedDb": "Failed to initialize database"
+    },
+    "config": {
+      "invalidConfigurationFileFormat": "Invalid configuration file format",
+      "failedToLoadConfiguration": "Failed to load configuration from {fileName}: {error}",
+      "failedToReadFile": "Failed to read file {fileName}"
+    },
+    "scene": {
+      "surveyObjectsAlreadyAdded": "Survey {caveName} / {surveyName} objects have already been added to the scene!",
+      "unknownSurfaceColorConfiguration": "Unknown configuration for surface colors: {value}",
+      "surfaceObjectAlreadyAdded": "Surface {name} object has already been added to the scene!",
+      "caveAlreadyExists": "Cave with {name} already exists!",
+      "surveyAlreadyExists": "Survey with {name} already exists!"
+    },
+    "attributes": {
+      "unsupportedDataType": "Not supported data type {dataType}"
+    },
+    "colormode": {
+      "unknownCaveLineColorConfiguration": "Unknown configuration for cave line colors: {mode}"
+    },
+    "db": {
+      "caveAlreadyExists": "Cave with {name} already exists!",
+      "surveyDoesNotExist": "Survey '{name}' does not exist!",
+      "surveyAlreadyExists": "Survey '{name}' already exists!",
+      "surfaceAlreadyAdded": "Surface {name} has already been added!"
+    },
+    "survey": {
+      "atLeastTwoGradientColorsRequired": "At least 2 gradient colors are required",
+      "conflictingShot": "Conflicting shot ({from} -> {to})!",
+      "undefinedSegmentType": "Undefined segment type {type}"
+    },
+    "storage": {
+      "caveSystem": {
+        "failedToSaveCave": "Failed to save cave",
+        "failedToLoadCave": "Failed to load cave",
+        "failedToLoadCaveNames": "Failed to load cave names for project",
+        "failedToLoadCaves": "Failed to load caves for project",
+        "failedToCheckCaveExistence": "Failed to check cave existence",
+        "failedToDeleteCave": "Failed to delete cave",
+        "failedToGetCavesForDeletion": "Failed to get caves for deletion"
+      },
+      "projectSystem": {
+        "failedToSaveProject": "Failed to save project",
+        "failedToCheckProjectExistence": "Failed to check project existence",
+        "failedToLoadProjects": "Failed to load projects",
+        "projectNotFound": "Project not found",
+        "failedToDeleteProject": "Failed to delete project"
+      },
+      "databaseManager": {
+        "failedToOpenIndexedDb": "Failed to open IndexedDB",
+        "databaseNotInitialized": "Database not initialized",
+        "storeNotFound": "Store '{storeName}' not found"
+      },
+      "editorStates": {
+        "failedToSaveEditorState": "Failed to save editor state",
+        "failedToLoadEditorState": "Failed to load editor state",
+        "failedToDeleteEditorState": "Failed to delete editor state"
+      }
+    },
+    "utils": {
+      "geo": {
+        "responseStatusError": "Response status: {status}"
+      }
+    },
+    "export": {
+      "exportFailed": "Export failed: {error}"
+    },
+    "views": {
+      "ratioNotInteger": "Ratio '{ratio}' is not an integer",
+      "ratioMustBePositive": "Ratio must be a positive number",
+      "rotationNotValid": "Rotation '{rotation}' is not a valid number",
+      "enterRatioValue": "Enter the ratio value",
+      "enterRotationValue": "Enter rotation value in degrees"
     }
   },
   "popups": {
@@ -570,6 +650,11 @@
     "warning": "Warning",
     "success": "Success",
     "info": "Info"
+  },
+  "messages": {
+    "config": {
+      "configurationLoadedSuccessfully": "Configuration loaded successfully from {fileName}"
+    }
   },
   "menu": {
     "station": {
@@ -658,6 +743,10 @@
       "month": "month",
       "day": "day",
       "popuplation": "popuplation"
+    },
+    "values": {
+      "dripstone": "dripstone",
+      "mammilary": "mammilary"
     }
   },
   "common": {

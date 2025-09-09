@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SurveyHelper } from '../survey.js';
+import { i18n } from '../i18n/i18n.js';
 
 export class ColorModeHelper {
 
@@ -114,7 +115,7 @@ export class ColorModeHelper {
         break;
       }
       default:
-        throw new Error(`unknown configuration for cave line colors: ${mode}`);
+        throw new Error(i18n.t('errors.colormode.unknownCaveLineColorConfiguration', { mode }));
     }
 
   }

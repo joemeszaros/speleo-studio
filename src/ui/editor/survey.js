@@ -39,7 +39,10 @@ class SurveyEditor extends Editor {
       const invalidShotIds = new Set(invalidShotIdsArray);
       if (invalidShotIds.symmetricDifference(this.survey.invalidShotIds).size > 0) {
         throw new Error(
-          `Invalid shot ids do not match for survey '${[...this.survey.invalidShotIds].join(',')}' and rows '${invalidShotIdsArray.join(',')}'`
+          i18n.t('ui.editors.survey.errors.invalidShotIdsMismatch', {
+            surveyIds : [...this.survey.invalidShotIds].join(','),
+            rowIds    : invalidShotIdsArray.join(',')
+          })
         );
       }
       if (invalidShotIds.size > 0 || survey.orphanShotIds.size > 0 || survey.duplicateShotIds.size > 0) {

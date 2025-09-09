@@ -1,4 +1,5 @@
 import { falsy, parseMyFloat, isFloatStr } from './utils/utils.js';
+import { i18n } from './i18n/i18n.js';
 
 const attributeDefintions = {
   verion : '1.0.0',
@@ -291,7 +292,7 @@ class Attribute {
           this[pName] = value;
           break;
         default:
-          throw new Error(`Not supported data type ${dataType}`);
+          throw new Error(i18n.t('errors.attributes.unsupportedDataType', { dataType }));
       }
 
     });
@@ -413,6 +414,16 @@ class Attribute {
 
   isValid() {
     return this.validate().size === 0;
+  }
+
+  localize(i18n) {
+    const localized = {};
+    localized.name = i18n.t(`attributes.names.${this.name}`);
+    this.paramNames.forEach((n) => {
+      const localizedParamValue = i18n.t(`attributes.values.${this[n]}`);
+      localized[n] = localizedParamValue.startsWith('attributes.values') ? this[n] : localizedParamValue;
+    });
+    return localized;
   }
 
   clone() {

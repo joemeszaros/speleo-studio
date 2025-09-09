@@ -1,5 +1,5 @@
 import { degreesToRads, radsToDegrees } from './utils.js';
-import { Vector } from '../model.js';
+import { i18n } from '../i18n/i18n.js';
 
 class MeridianConvergence {
 
@@ -63,7 +63,7 @@ class Declination {
     console.log(`Request took ${Date.now() - start}ms`);
 
     if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
+      throw new Error(i18n.t('errors.utils.geo.responseStatusError', { status: response.status }));
     }
 
     const declination = await response.json().then((json) => json.result[0].declination);

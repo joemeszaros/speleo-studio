@@ -3,6 +3,7 @@ import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { ColorModeHelper } from './colormode.js';
+import { i18n } from '../i18n/i18n.js';
 
 import { Grid } from './grid.js';
 import * as U from '../utils/utils.js';
@@ -240,7 +241,7 @@ class MyScene {
       this.caveObjects.set(caveName, new Map());
     }
     if (this.caveObjects.get(caveName).has(surveyName)) {
-      throw new Error(`Survey ${caveName} / ${surveyName} objects have already been added to the scene!`);
+      throw new Error(i18n.t('errors.scene.surveyObjectsAlreadyAdded', { caveName, surveyName }));
     }
     this.caveObjects.get(caveName).set(surveyName, entry);
 
@@ -513,15 +514,15 @@ class MyScene {
       const center = bb.getCenter(new THREE.Vector3());
       const maxZ = bb.min.z > bb.max.z ? bb.min.z : bb.max.z;
       center.z = maxZ;
-      //center.setComponent(2, maxZ + 10);
-      const formattedAttribute = U.interpolate(format, attribute);
-      const textMesh = this.addLabel(formattedAttribute, center, this.options.scene.labels.size);
-      this.sectionAttributes3DGroup.add(textMesh);
-      textMesh.layers.set(1);
+      const localized = attribute.localize(i18n);
+      const formattedAttribute = U.interpolate(format, localized);
+      let sprite = this.addSpriteLabel(formattedAttribute, center, this.options.scene.labels.size);
+      this.sectionAttributes3DGroup.add(sprite);
+      sprite.layers.set(1);
 
       this.sectionAttributes.set(id, {
         tube     : tubeGroup,
-        text     : textMesh,
+        text     : sprite,
         label    : formattedAttribute,
         center   : center,
         caveName : caveName,
@@ -711,7 +712,7 @@ class MyScene {
         });
         break;
       default:
-        throw new Error(`unknown configuration for surface colors: ${config.value}`);
+        throw new Error(i18n.t('errors.scene.unknownSurfaceColorConfiguration', { value: config.value }));
     }
     this.view.renderView();
 
@@ -855,6 +856,18 @@ class MyScene {
     textMesh.position.y = position.y;
     textMesh.position.z = position.z;
     return textMesh;
+  }
+
+  addSpriteLabel(label, position, size) {
+    const font = {
+      size  : size * 7, // magic number to match mesh based label size (with the scale factor of 0.2)
+      color : '#' + this.mats.text.color.getHexString(),
+      name  : 'Arial'
+    };
+
+    const textSprite = new TextSprite(label, position, font, 0.2, `station-label-${label}`);
+    const sprite = textSprite.getSprite();
+    return sprite;
   }
 
   addSphere(name, position, sphereGroup, geometry, material, meta) {
@@ -1148,7 +1161,7 @@ class MyScene {
 
   addSurface(surface, entry) {
     if (this.surfaceObjects.has(surface.name)) {
-      throw new Error(`Surface ${surface.name} object has already been added to the scene!`);
+      throw new Error(i18n.t('errors.scene.surfaceObjectAlreadyAdded', { name: surface.name }));
     }
     this.surfaceObjects.set(surface.name, entry);
   }
@@ -1264,7 +1277,7 @@ class MyScene {
 
   renameCave(oldName, newName) {
     if (this.caveObjects.has(newName)) {
-      throw new Error(`Cave with ${newName} already exists!`);
+      throw new Error(i18n.t('errors.scene.caveAlreadyExists', { name: newName }));
     }
     const surveyObjects = this.caveObjects.get(oldName);
     this.caveObjects.delete(oldName);
@@ -1285,7 +1298,7 @@ class MyScene {
   renameSurvey(oldName, newName, caveName) {
     const caveObjects = this.caveObjects.get(caveName);
     if (caveObjects.has(newName)) {
-      throw new Error(`Survey with ${newName} does exists!`);
+      throw new Error(i18n.t('errors.scene.surveyAlreadyExists', { name: newName }));
     }
     const surveyObjects = caveObjects.get(oldName);
     caveObjects.delete(oldName);

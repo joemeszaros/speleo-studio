@@ -65,7 +65,8 @@
       },
       "links": {
         "github": "Forráskód megtekintése GitHub-on",
-        "live": "Speleo Studio publikus alkalmazás"
+        "live": "Speleo Studio publikus alkalmazás",
+        "manual": "Felhasználói kézikönyv"
       }
     },
     "footer": {
@@ -324,7 +325,8 @@
         "title": "Barlang(ok) exportálása",
         "format": "Formátum",
         "baseName": "Előtag",
-        "baseNamePlaceholder": "Előtag (kiterjesztés nélkül)"
+        "baseNamePlaceholder": "Előtag (kiterjesztés nélkül)",
+        "unsupportedExportFormat": "Nem támogatott exportálási formátum: {format}"
       }
     },
     "editors": {
@@ -430,7 +432,8 @@
           "incomplete": "Hiányos sor",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
           "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}",
-          "duplicateRowWithIds": "{nrDuplicateRows} sor duplikált: {duplicateRowIds}"
+          "duplicateRowWithIds": "{nrDuplicateRows} sor duplikált: {duplicateRowIds}",
+          "openedSurveyEditorUnsavedChanges": "Felmérés szerkesztő megnyitva, mert vannak mentetlen változások a(z) {caveName} / {surveyName} barlang/felmérésnél"
         },
         "status": {
           "ok": "Nincs hiba",
@@ -458,6 +461,9 @@
           "locateTo": "Pontig megkeresése",
           "detailsFrom": "Ponttól részletei",
           "detailsTo": "Pontig részletei"
+        },
+        "errors": {
+          "invalidShotIdsMismatch": "A felmérés '{surveyIds}' és a sorok '{rowIds}' érvénytelen mérés azonosítói nem egyeznek"
         }
       },
       "attributes": {
@@ -558,11 +564,84 @@
       "noShotTopodroid": "Nem található mérési adat a TopoDroid CSV-ben",
       "noShotDataSection": "Nem található mérési adat szakasz a TopoDroid CSV-ben",
       "noFromToInHeader": "Nem található 'from' és 'to' oszlop a fejlécben: {header}",
-      "noHeaderLine": "Nem található fejléc sor a TopoDroid CSV-ben"
+      "noHeaderLine": "Nem található fejléc sor a TopoDroid CSV-ben",
+      "importFailed": "{errorMessage}: {error}",
+      "unsupportedFileType": "Nem támogatott fájltípus: {extension}"
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",
       "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist"
+    },
+    "config": {
+      "invalidConfigurationFileFormat": "Érvénytelen konfigurációs fájl formátum",
+      "failedToLoadConfiguration": "Nem lehet betölteni a konfigurációt a(z) {fileName} fájlból: {error}",
+      "failedToReadFile": "Nem lehet olvasni a(z) {fileName} fájlt"
+    },
+    "scene": {
+      "surveyObjectsAlreadyAdded": "A(z) {caveName} / {surveyName} felmérés objektumai már hozzá lettek adva a jelenethez!",
+      "unknownSurfaceColorConfiguration": "Ismeretlen konfiguráció a felszín színekhez: {value}",
+      "surfaceObjectAlreadyAdded": "A(z) {name} felszín objektum már hozzá lett adva a jelenethez!",
+      "caveAlreadyExists": "A(z) {name} nevű barlang már létezik!",
+      "surveyAlreadyExists": "A(z) {name} nevű felmérés már létezik!"
+    },
+    "attributes": {
+      "unsupportedDataType": "Nem támogatott adattípus: {dataType}"
+    },
+    "colormode": {
+      "unknownCaveLineColorConfiguration": "Ismeretlen konfiguráció a barlang vonal színekhez: {mode}"
+    },
+    "db": {
+      "caveAlreadyExists": "A(z) {name} nevű barlang már létezik!",
+      "surveyDoesNotExist": "A(z) '{name}' nevű felmérés nem létezik!",
+      "surveyAlreadyExists": "A(z) '{name}' nevű felmérés már létezik!",
+      "surfaceAlreadyAdded": "A(z) {name} felszín már hozzá lett adva!"
+    },
+    "storage": {
+      "caveSystem": {
+        "failedToSaveCave": "Nem lehet menteni a barlangot",
+        "failedToLoadCave": "Nem lehet betölteni a barlangot",
+        "failedToLoadCaveNames": "Nem lehet betölteni a barlang neveket a projekthez",
+        "failedToLoadCaves": "Nem lehet betölteni a barlangokat a projekthez",
+        "failedToCheckCaveExistence": "Nem lehet ellenőrizni a barlang létezését",
+        "failedToDeleteCave": "Nem lehet törölni a barlangot",
+        "failedToGetCavesForDeletion": "Nem lehet lekérni a barlangokat törléshez"
+      },
+      "projectSystem": {
+        "failedToSaveProject": "Nem lehet menteni a projektet",
+        "failedToCheckProjectExistence": "Nem lehet ellenőrizni a projekt létezését",
+        "failedToLoadProjects": "Nem lehet betölteni a projekteket",
+        "projectNotFound": "Projekt nem található",
+        "failedToDeleteProject": "Nem lehet törölni a projektet"
+      },
+      "databaseManager": {
+        "failedToOpenIndexedDb": "Nem lehet megnyitni az IndexedDB-t",
+        "databaseNotInitialized": "Az adatbázis nincs inicializálva"
+      },
+      "editorStates": {
+        "failedToSaveEditorState": "Nem lehet menteni a szerkesztő állapotot",
+        "failedToLoadEditorState": "Nem lehet betölteni a szerkesztő állapotot",
+        "failedToDeleteEditorState": "Nem lehet törölni a szerkesztő állapotot"
+      }
+    },
+    "survey": {
+      "atLeastTwoGradientColorsRequired": "Legalább 2 gradiens szín szükséges",
+      "conflictingShot": "Ütköző mérés ({from} -> {to})!",
+      "undefinedSegmentType": "Meghatározatlan szegmens típus: {type}"
+    },
+    "utils": {
+      "geo": {
+        "responseStatusError": "Válasz státusz: {status}"
+      }
+    },
+    "export": {
+      "exportFailed": "Exportálás sikertelen: {error}"
+    },
+    "views": {
+      "ratioNotInteger": "A(z) '{ratio}' arány nem egész szám",
+      "ratioMustBePositive": "Az aránynak pozitív számnak kell lennie",
+      "rotationNotValid": "A(z) '{rotation}' forgatás nem érvényes szám",
+      "enterRatioValue": "Adja meg az arány értékét",
+      "enterRotationValue": "Adja meg a forgatás értékét fokokban"
     }
   },
   "popups": {
@@ -570,6 +649,11 @@
     "warning": "Figyelmeztetés",
     "success": "Siker",
     "info": "Információ"
+  },
+  "messages": {
+    "config": {
+      "configurationLoadedSuccessfully": "Konfiguráció sikeresen betöltve a(z) {fileName} fájlból"
+    }
   },
   "menu": {
     "station": {
@@ -658,6 +742,10 @@
       "month": "hónap",
       "day": "nap",
       "popuplation": "populáció"
+    },
+    "values": {
+      "dripstone": "cseppkő",
+      "mammilary": "felhő"
     }
   },
   "common": {

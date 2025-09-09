@@ -26,10 +26,12 @@ class Importer {
     if (file) {
       const reader = new FileReader();
       const nameToUse = name ?? file.name;
-      const errorMessage = `Import of ${nameToUse.substring(nameToUse.lastIndexOf('/') + 1)} failed`;
+      const errorMessage = i18n.t('errors.import.importFailed', {
+        name : nameToUse.substring(nameToUse.lastIndexOf('/') + 1)
+      });
       reader.onload = async (event) => {
         try {
-          await this.importText(event.target.result, onLoadFn, nameToUse);
+          await this.importText(event.target.result, onLoadFn);
         } catch (e) {
           console.error(errorMessage, e);
           showErrorPanel(`${errorMessage}: ${e.message}`, 0);
@@ -451,7 +453,7 @@ class TopodroidImporter extends Importer {
     super.importFile(file, name, onSurveyLoad);
   }
 
-  async importText(csvTextData, onSurveyLoad, name) {
+  async importText(csvTextData, onSurveyLoad) {
     const survey = this.getSurvey(csvTextData);
     await onSurveyLoad(survey);
   }

@@ -564,6 +564,10 @@ class NavigationBar {
               </ul>
             </div>
             <div class="about-links">
+              <a href="manual/hu/index.html" target="_blank" class="about-link">
+                <span class="about-link-icon">📖</span>
+                ${i18n.t('ui.about.links.manual')}
+              </a>
               <a href="https://github.com/joemeszaros/speleo-studio/" target="_blank" class="about-link">
                 <span class="about-link-icon">📂</span>
                 ${i18n.t('ui.about.links.github')}
