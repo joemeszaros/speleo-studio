@@ -51,6 +51,12 @@
           <li>Internetkapcsolat az első betöltéshez</li>
         </ul>
       </div>
+      <div class="warning">
+        <h3>⚠️ Böngésző támogatás</h3>
+        <ul>
+          <li>A Firefox és Chrome böngészőket támogatjuk, más böngészők nem támogatottak.</li>
+        </ul>
+      </div>
 
       <h2>Alkalmazás elindítása</h2>
 
@@ -65,7 +71,17 @@
       </div>
 
       <div class="step">
-        <h3>2. lépés: Projekt létrehozása</h3>
+        <h3>2. lépés: Nyelv kiválasztása</h3>
+        <p
+          >Ha angolul jelent meg az üdvözlő panel és Ön a Speleo Studio-t magyarul szeretné használni, akkor kattintson
+          a nyelv választó gombra a navigációs sáv ikonjaitól jobbra és válassza a magyar nyelvet. A Speleo Studio
+          angolul és magyarul érhető el. A Speleo Studio magyar és angol nyelven érhető el jelenleg.</p
+        >
+        <div class="image-placeholder"> <img src="images/1-nyelv.png" alt="Nyelv" /> </div>
+      </div>
+
+      <div class="step">
+        <h3>3. lépés: Projekt létrehozása</h3>
         <p
           >Az alkalmazás automatikusan megnyitja a projekt kezelő panelt, ahol új projektet hozhat létre vagy meglévőt
           nyithat meg. Projekt nélkül nem lehet barlangokat importálni és azokat szerkeszteni és bizonyos funkciók nem
@@ -84,35 +100,165 @@
       <h3>1. Navigációs sáv (felső) - piros keret</h3>
       <p>A navigációs sáv tartalmazza a főbb menüket és ikonokat:</p>
       <ul>
-        <li><strong>Fájl menü:</strong> Új barlang, megnyitás, exportálás</li>
+        <li
+          ><strong>Fájl menü:</strong> Új barlang létrehozása, barlangok és modellek megnyitása, exportálás. Ha nincs
+          aktív projekt kiválasztva, akkor nem használható ez a menü.</li
+        >
         <li><strong>Projekt menü:</strong> Projekt kezelés</li>
-        <li><strong>Eszközök menü:</strong> Speciális eszközök</li>
-        <li><strong>Ikonok:</strong> Nagyítás, nézetek, színek</li>
+        <li><strong>Eszközök menü:</strong> Speciális eszközök (pl. legrövidebb út két pont között)</li>
+        <li
+          ><strong>Ikonok:</strong> Például Nagyítás, nézetek, vonal szín választó, stb. A 3D és vizualizációs
+          fejezetben részletesen ismerteti az egyes ikonok funkcióit.</li
+        >
       </ul>
 
       <h3>2. 3D nézetablak (középső terület) - narancssárga keret</h3>
       <p
         >Ez az a 3 dimenziós viurtális tér, ahol a barlangok megjelennek 3D-ben. Itt navigálhat a jelenetben,
-        kiválaszthat pontokat és használhatja a vizualizációs eszközöket.</p
+        kiválaszthat pontokat és használhatja a vizualizációs eszközöket. Egy későbbi fejezet részletesen ismerteti a
+        funkciókat.</p
       >
 
-      <h3>3. Oldalsáv (jobb vagy bal oldal) - zöld keret</h3>
+      <h3>3. Lábléc (alsó) - lila keret</h3>
+      <p>Itt látható a jelenlegi projekt információja és a felhasználó számára érdekes üzenetek.</p>
+
+      <h3>4. Oldalsáv (jobb vagy bal oldal) - zöld keret</h3>
+
       <p>Az oldalsáv két fő fület tartalmaz:</p>
       <ul>
-        <li><strong>Felfedező lap:</strong> Barlangok és felmérések listája</li>
-        <li><strong>Beállítások lap:</strong> Megjelenítési beállítások</li>
+        <li><strong>Felfedező panel:</strong> Barlangok és felmérések listája</li>
+        <li><strong>Beállítások panel:</strong> Megjelenítési beállítások</li>
       </ul>
-      <p>Az oldalsáv alján találja a 3D jelenet áttekintőt, ami kicsiben mutatja a 3D jelenetet.</p>
 
-      <h3>4. Lábléc (alsó) - lila keret</h3>
-      <p>Itt látható a jelenlegi projekt információja és a felhasználó számára érdekes üzenetek.</p>
+      <p>Az oldalsáv alján találja a <strong>3D jelenet áttekintőt</strong>, ami kicsiben mutatja a 3D jelenetet.</p>
+
+      <div clas="row" style="display: flex">
+        <!-- //row class doesn't work here somehow-->
+        <div class="column-2">
+          <p
+            >Az oldalsáv tetején az ábrán piros kerettel mutatott oldalra mutató nyíllal az
+            <strong>oldalsáv mérete minimalizálható</strong>, majd újra a nyílra kattintva visszaállítható. Ha
+            szeretnénk maximalizálni a 3D nézetablak méretét, akkor érdemes minimalizálni az olalsávot.
+          </p>
+          <p>
+            Az oldalsás <strong>szélessége tetszőleges méretűre állítható </strong> az oldalsáv szélére kattinva (lila
+            vonal az ábrán) az egeret lenyomva tartva és azt húzva a szélesság változik. Csak akkor nyomjuk le az egeret
+            a szélesség álításához, ha az egerünk megváltozik átméretező ikonra (<img
+              width="20"
+              style="margin: 0px"
+              src="images/1-resize.png"
+            />) és az oldalsáv széle zöld színűvé válik.
+          </p>
+
+          <h4>Felfedező panel</h4>
+          <p
+            >A felfedező panel listázzza a megnyitott barlangokat és modelleket és lehetővé teszi műveletek elvégzését
+            barlangokon és felméréseken (pl. adatlap szerkesztése)
+          </p>
+          <p>
+            A felfedező panelen a barlang neve melletti háromszögre kattintva a barlang lenyílik és megjelennek alatta a
+            felmérések. A háromszögre újra kattintva a lista záródik, újra csak a barlang neve látható. A barlang neve
+            után következő szem (👁) ikon <strong>a barlang láthatóságát változtatja</strong>. A felmérések láthatósága
+            szintén a nevük után következő szem (👁) ikon segítségével változik.
+          </p>
+          <p>
+            A felfedező panel tetején lévő kereső a <strong>barlangok és felmérések szűrésére </strong> szolgál (zöld
+            keret az ábrán). Ha a kereső mező bal szélén a barlang mód van kiválasztva (lila omega az ábrán), a keresés
+            a barlangok és felmérések neve alapján szűri a listát. Ha a tőle jobbra lévő pont kereső ikora kattintunk,
+            akkor a felmérések mérési adatainak egyezése alapján szűri a listát. Magyarán ha egy felmérésben
+            "mellekag-1" es "mellekag-2" nevű mérés van, akkor a kereső mezőbe "mellegag"-at írva az adott felmérés
+            biztosan megjelenik. Ez a funkció akkor hasznos, ha tudjuk egy mérési pont nevét, de nem tudjuk melyik
+            felmérésben szerepel, viszont szeretnénk szerkeszteni az adatait (hossz, irány, ...)
+          </p>
+          <p>
+            Az oldalság alján a <strong>3D jelenet áttekintő</strong> mutatja a 3D jelenetet kicsiben. Az áttekintő
+            mérete minimalizálható vagy a Ctrl+G billentyűvel vagy a fejlécében lévő kis lefele mutató háromszögre
+            kattintva.
+          </p>
+        </div>
+        <div class="image-placeholder column-2">
+          <img style="flex: 20%" width="400" class="small-padding" src="images/1-oldalsav.png" alt="Oldalsáv" />
+        </div>
+      </div>
+
+      <div class="image-placeholder black">
+        <img src="images/1-barlang-ikon-sav.png" alt="Ikonsáv" />
+      </div>
+
+      <div class="row">
+        <div class="column-2">
+          <p>
+            A balang vagy felfedezés nevére kattinva megjelenik egy <strong>ikonsáv</strong>, amely a barlang vagy
+            felfedezés szerkesztését, tulajdonságainak változtatását és törlését teszi lehetővé.
+          </p>
+          <p> Barlang esetén az ikonok a következők: </p
+          ><ul>
+            <li><strong>🔠 Adatlap:</strong> Adatlap szerkesztése</li>
+            <li><strong>❇️ Új felmérés:</strong> Új felmérés létrehozása</li>
+            <li
+              ><strong
+                ><img src="../../icons/topodroid.png" alt="TopoDroid" style="width: 20px; height: 20px; margin: 0px" />
+                Importálás:</strong
+              >
+              TopoDroid felmérés importálása</li
+            >
+            <li><strong>📍 Pont attribútumok:</strong> Pont attribútumok szerkesztése</li>
+            <li><strong>🔀 Szakasz attribútumok:</strong> Szakasz attribútumok szerkesztése</li>
+            <li><strong>🧩 Komponens attribútumok:</strong> Komponens attribútumok szerkesztése</li>
+            <li><strong>🔄 Hurkok:</strong> Hurkok keresése, megjelnítése és hibák eliminálása</li>
+            <li><strong>🎨 Szín</strong> Barlang színének változtatása</li>
+            <li
+              ><strong
+                ><span
+                  style="
+                    text-decoration: line-through;
+                    text-decoration-color: red;
+                    text-decoration-thickness: 2px;
+                    transform: rotate(45deg);
+                    display: inline-block;
+                  "
+                  >🎨</span
+                >
+                Szín</strong
+              >
+              Barlang színének törlése</li
+            >
+            <li><strong>🗑️ Törlés:</strong> Barlang törlése</li>
+          </ul>
+        </div>
+        <div class="column-2">
+          <p> Felmérés nevére kattinva megjelenik a felmérés ikonsávja, amely a következő funkciókat teszi lehetővé: </p
+          ><br /><ul>
+            <li><strong>📝 Mérések:</strong> Mérések szerkesztése</li>
+            <li><strong>🔠 Adatlap:</strong> Adatlap szerkesztése</li>
+            <li><strong>🎨 Szín</strong> Felmérés színének változtatása</li>
+            <li
+              ><strong
+                ><span
+                  style="
+                    text-decoration: line-through;
+                    text-decoration-color: red;
+                    text-decoration-thickness: 2px;
+                    transform: rotate(45deg);
+                    display: inline-block;
+                  "
+                  >🎨</span
+                >
+                Felmérés színének törlése</strong
+              >
+              Felmérés színének törlése</li
+            >
+            <li><strong>🗑️ Törlés:</strong> Felmérés törlése</li>
+          </ul>
+        </div>
+      </div>
 
       <h2>Alapvető navigáció</h2>
 
       <h3>Egér vezérlés</h3>
       <ul>
         <li><strong>Bal egérgomb + húzás:</strong> Kamera forgatása</li>
-        <li><strong>Jobb egérgomb + húzás:</strong> Kamera eltolása</li>
+        <li><strong>Jobb egérgomb + húzás (vagy Ctrl + bal egérgomb):</strong> Kamera eltolása</li>
         <li><strong>Görgő:</strong> Nagyítás/kicsinyítés</li>
         <li><strong>Középső gomb + húzás:</strong> Kamera eltolása</li>
       </ul>
