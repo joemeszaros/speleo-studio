@@ -440,7 +440,28 @@
         "addRow": "Pont megjegyzés hozzáadása",
         "delete": "Megjegyzés törlése",
         "save": "Mentés",
-        "cancel": "Mégse"
+        "cancel": "Mégse",
+        "buttons": {
+          "validate": "Validálás",
+          "update": "Kommentek frissítése"
+        },
+        "message": {
+          "missingFields": "Sor hiányzó mezői: {fields}",
+          "duplicateStationComment": "A(z) {station} pont megjegyzése már létezik",
+          "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}"
+        }
+      },
+      "base": {
+        "status": {
+          "new": "Új sor",
+          "ok": "Nincs hiba",
+          "invalid": "Sor érvénytelen: {errors}",
+          "incomplete": "Sor hiányzó mezői: {fields}"
+        },
+        "message": {
+          "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
+          "incomplete": "Hiányos sor"
+        }
       },
       "survey": {
         "title": "Felmérés: {name}",

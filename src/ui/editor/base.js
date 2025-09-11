@@ -3,6 +3,7 @@ import { AttributesDefinitions } from '../../attributes.js';
 import { SectionHelper } from '../../section.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { i18n } from '../../i18n/i18n.js';
+
 class BaseEditor {
   constructor(panel) {
     this.panel = panel;
@@ -21,6 +22,18 @@ class BaseEditor {
     }
 
     this.panel.style.display = 'none';
+  }
+
+  showAlert(msg, postAction = () => {}) {
+    if (this.table === undefined) return;
+    const closingButton = U.node`<button style="position: absolute; right: 4px; top: 4px; cursor: pointer; border: none; background: none; font-size: 1.5em; color: #666;">✕</button>`;
+    closingButton.onclick = () => {
+      this.table.clearAlert();
+      postAction();
+    };
+    const div = U.node`<div style="position: relative; padding:10px;"><div style="margin-right: 30px;">${msg}</div></div>`;
+    div.appendChild(closingButton);
+    this.table.alert(div);
   }
 
   renderListEditor({
@@ -74,18 +87,6 @@ class Editor extends BaseEditor {
     this.cave = cave;
     this.closed = false;
     this.attributesModified = false;
-  }
-
-  showAlert(msg, postAction = () => {}) {
-    if (this.table === undefined) return;
-    const closingButton = U.node`<button style="position: absolute; right: 4px; top: 4px; cursor: pointer; border: none; background: none; font-size: 1.5em; color: #666;">✕</button>`;
-    closingButton.onclick = () => {
-      this.table.clearAlert();
-      postAction();
-    };
-    const div = U.node`<div style="position: relative; padding:10px;"><div style="margin-right: 30px;">${msg}</div></div>`;
-    div.appendChild(closingButton);
-    this.table.alert(div);
   }
 
   baseTableFunctions = {

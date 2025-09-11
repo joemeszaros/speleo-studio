@@ -25,6 +25,11 @@ class StationComment {
     this.comment = comment;
   }
 
+  getEmptyFields() {
+    return ['name', 'comment']
+      .filter((f) => this[f] === undefined || this[f] === null);
+  }
+
   toExport() {
     return {
       name    : this.name,

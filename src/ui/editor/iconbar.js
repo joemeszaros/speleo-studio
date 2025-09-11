@@ -156,14 +156,20 @@ export class IconBar {
   }
 
   // Station comments editor-specific buttons
-  static getStationCommentsButtons(updateComments) {
+  static getStationCommentsButtons(validateComments, updateComments) {
     return [
       { separator: true },
+      {
+        id      : 'validate-comments',
+        tooltip : i18n.t('ui.editors.stationComments.buttons.validate'),
+        icon    : 'icons/validate.svg',
+        click   : () => validateComments()
+      },
       {
         id      : 'update-comments',
         tooltip : i18n.t('ui.editors.attributes.buttons.update'),
         icon    : 'icons/update.svg',
-        click   : () => updateComments?.()
+        click   : () => updateComments()
       }
 
     ];

@@ -432,31 +432,37 @@
       },
       "stationComments": {
         "title": "Station Comments: {name}",
-        "noShots": "No shots available for this survey",
         "station": "Station",
         "comment": "Comment",
-        "noComment": "No comment",
-        "addRow": "Add Station Comment",
-        "delete": "Delete comment",
-        "save": "Save",
-        "cancel": "Cancel"
+        "buttons": {
+          "validate": "Validate",
+          "update": "Update"
+        },
+        "message": {
+          "missingFields": "Row has missing fields: {fields}",
+          "duplicateStationComment": "Station comment for station {station} already exists"
+        }
+      },
+      "base": {
+        "status": {
+          "new": "New row",
+          "ok": "No errors",
+          "invalid": "Row is invalid: {errors}",
+          "duplicate": "Row is duplicate",
+          "incomplete": "Row has missing fields: {fields}"
+        },
+        "message": {
+          "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
+          "incomplete": "Row is incomplete"
+        }
       },
       "survey": {
         "title": "Survey editor: {name}",
         "message": {
           "missingFields": "Row has missing fields: {fields}",
-          "incomplete": "Row is incomplete",
-          "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
           "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}",
           "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}",
           "openedSurveyEditorUnsavedChanges": "Opened survey editor because you have unsaved changes for cave {caveName} / {surveyName}"
-        },
-        "status": {
-          "ok": "No errors",
-          "orphan": "Row is orphan",
-          "duplicate": "Row is duplicate",
-          "loop": "Shot is forming a loop",
-          "invalid": "Row is invalid: {errors}"
         },
         "columns": {
           "type": "Type",
@@ -488,12 +494,6 @@
 
         "buttons": {
           "update": "Update attributes"
-        },
-        "status": {
-          "new": "New row",
-          "ok": "No errors",
-          "invalid": "Row is invalid: {errors}",
-          "incomplete": "Row has missing fields: {fields}"
         },
         "columns": {
           "name": "Name",

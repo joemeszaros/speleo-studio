@@ -48,7 +48,7 @@ class SurveyEditor extends Editor {
       if (invalidShotIds.size > 0 || survey.orphanShotIds.size > 0 || survey.duplicateShotIds.size > 0) {
         let invalidMessage = '';
         if (invalidShotIds.size > 0) {
-          invalidMessage = i18n.t('ui.editors.survey.message.invalidRowWithIds', {
+          invalidMessage = i18n.t('ui.editors.base.message.invalidRowWithIds', {
             nrBadRows : invalidShotIds.size,
             badRowIds : invalidShotIdsArray.slice(0, 15).join(',')
           });
@@ -130,7 +130,7 @@ class SurveyEditor extends Editor {
           const status = 'invalid';
           const newRow = { ...r };
           newRow.status = status;
-          newRow.message = i18n.t('ui.editors.survey.status.invalid', { errors: validationErrors.join('<br>') });
+          newRow.message = i18n.t('ui.editors.base.status.invalid', { errors: validationErrors.join('<br>') });
           rowsToUpdated.push(newRow);
         }
       }
@@ -219,7 +219,7 @@ class SurveyEditor extends Editor {
         comment    : sh.comment,
         type       : sh.type,
         status     : 'ok',
-        message    : i18n.t('ui.editors.survey.status.ok'),
+        message    : i18n.t('ui.editors.base.status.ok'),
         attributes : attributes,
         x          : toStation?.position?.x,
         y          : toStation?.position?.y,
@@ -237,12 +237,12 @@ class SurveyEditor extends Editor {
     survey.orphanShotIds.forEach((id) => {
       const row = rows[rows.findIndex((r) => r.id === id)];
       row.status = 'orphan';
-      row.message = i18n.t('ui.editors.survey.status.orphan');
+      row.message = i18n.t('ui.editors.base.status.orphan');
     });
     survey.duplicateShotIds.forEach((id) => {
       const row = rows[rows.findIndex((r) => r.id === id)];
       row.status = 'duplicate';
-      row.message = i18n.t('ui.editors.survey.status.duplicate');
+      row.message = i18n.t('ui.editors.base.status.duplicate');
     });
 
     const rowsToUpdate = this.getValidationUpdates(rows);
@@ -264,7 +264,7 @@ class SurveyEditor extends Editor {
       clino      : undefined,
       type       : ShotType.CENTER,
       status     : 'incomplete',
-      message    : i18n.t('ui.editors.survey.message.incomplete'),
+      message    : i18n.t('ui.editors.base.message.incomplete'),
       attributes : [],
       x          : undefined,
       y          : undefined,
@@ -461,7 +461,7 @@ class SurveyEditor extends Editor {
         formatter         : this.baseTableFunctions.statusIcon,
         clickPopup        : function (x, cell) {
           const message = cell.getData().message;
-          return message === undefined ? i18n.t('ui.editors.survey.status.ok') : message;
+          return message === undefined ? i18n.t('ui.editors.base.status.ok') : message;
         },
         validator          : ['required'],
         bottomCalc         : this.baseTableFunctions.countBadRows,
@@ -800,7 +800,7 @@ class SurveySheetEditor extends BaseEditor {
   setupPanel() {
     wm.makeFloatingPanel(
       this.panel,
-      (contentElmnt) => this.build(contentElmnt),
+      (contentElmnt) => this.buildForm(contentElmnt),
       () =>
         i18n.t('ui.editors.surveySheet.title', {
           name : this.survey?.name || i18n.t('ui.editors.surveySheet.titleNew')
@@ -814,7 +814,7 @@ class SurveySheetEditor extends BaseEditor {
     );
   }
 
-  build(contentElmnt) {
+  buildForm(contentElmnt) {
 
     this.formData = {
       name        : this.survey?.name || '',

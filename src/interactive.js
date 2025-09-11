@@ -277,6 +277,8 @@ class SceneInteraction {
     // Comments in compact format
     if (config.comments) {
       const comments = st.meta.shots.map((shw) => shw.shot.comment).filter((c) => c !== undefined && c !== '');
+      const stationComments = st.meta.cave.stationComments ?? [];
+      comments.push(...stationComments.filter((sc) => sc.name === st.name).map((sc) => sc.comment));
       if (comments.length > 0) {
         details.push(`${i18n.t('common.comments')}: ${comments.join(', ')}`);
       }

@@ -51,15 +51,26 @@ class StationCommentsEditor extends BaseEditor {
       getEmptyRow : () => this.getEmptyRow()
     });
     commonButtons.forEach((button) => this.iconBar.addButton(button));
-    const commentsButtons = IconBar.getStationCommentsButtons(() => this.updateComments());
+    const commentsButtons = IconBar.getStationCommentsButtons(
+      () => this.validateComments(),
+      () => this.updateComments()
+    );
     commentsButtons.forEach((button) => this.iconBar.addButton(button));
   }
 
   getTableData() {
-    return this.cave.stationComments.map((sc) => ({
+    const rowsToBe = this.cave.stationComments.map((sc) => ({
+      id      : U.randomAlphaNumbericString(4),
+      status  : 'ok',
+      message : i18n.t('ui.editors.survey.status.ok'),
       station : sc.name,
       comment : sc.comment
     }));
+
+    const rowsToUpdate = this.getValidationUpdates(rowsToBe);
+    rowsToUpdate.forEach((u) => (rowsToBe[rowsToBe.findIndex((r) => r.id === u.id)] = u));
+
+    return rowsToBe;
   }
 
   getNewStationComments() {
@@ -68,9 +79,76 @@ class StationCommentsEditor extends BaseEditor {
 
   getEmptyRow() {
     return {
-      station : '',
-      comment : ''
+      id      : U.randomAlphaNumbericString(4),
+      status  : 'incomplete',
+      message : i18n.t('ui.editors.base.message.incomplete'),
+      station : undefined,
+      comment : undefined
     };
+  }
+
+  validateComments() {
+    const data = this.table.getData();
+    const rowsToUpdated = this.getValidationUpdates(data);
+    if (rowsToUpdated.length > 0) {
+      this.table.updateData(rowsToUpdated);
+      const badRowIds = rowsToUpdated
+        .filter((r) => ['invalid', 'incomplete'].includes(r.status))
+        .map((r) => `station: ${r.station ?? ''}`);
+      if (badRowIds.length > 0) {
+        this.showAlert(
+          i18n.t('ui.editors.stationComments.message.invalidRowWithIds', {
+            nrBadRows : badRowIds.length,
+            badRowIds : badRowIds.slice(0, 15).join(', ')
+          }) +
+            '<br>' +
+            i18n.t('ui.editors.common.error.checkWarningIcon')
+        );
+      }
+    }
+  }
+
+  getValidationUpdates(data) {
+    const rowsToUpdated = [];
+    const existingCommentIds = new Set();
+
+    data.forEach((r) => {
+      const comment = new StationComment(r.station, r.comment);
+      const emptyFields = comment.getEmptyFields();
+      const oldStatus = r.status;
+      let validationErrors = [];
+      if (emptyFields.length > 0) {
+        const newRow = { ...r };
+        newRow.status = 'incomplete';
+        newRow.message = i18n.t('ui.editors.stationComments.message.missingFields', { fields: emptyFields.join(',') });
+        rowsToUpdated.push(newRow);
+      } else {
+        if (r.station) {
+          if (existingCommentIds.has(r.station)) {
+            const newRow = { ...r };
+            newRow.status = 'invalid';
+            newRow.message = i18n.t('ui.editors.stationComments.message.duplicateStationComment', {
+              station : r.station
+            });
+            rowsToUpdated.push(newRow);
+            validationErrors.push(
+              i18n.t('ui.editors.stationComments.message.duplicateStationComment', { station: r.station })
+            );
+          }
+        }
+      }
+
+      existingCommentIds.add(r.station);
+
+      if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
+        const newRow = { ...r };
+        newRow.status = 'ok';
+        newRow.message = undefined;
+        rowsToUpdated.push(newRow);
+      }
+
+    });
+    return rowsToUpdated;
   }
 
   updateComments() {
@@ -85,7 +163,38 @@ class StationCommentsEditor extends BaseEditor {
   }
 
   getColumns() {
+
+    const statusIcon = (cell) => {
+      const data = cell.getData();
+      if (data.status === 'ok') {
+        return '<div class="ok-row"></div>';
+      } else {
+        return '<div class="warning-row"></div>';
+      }
+    };
+    const countBadRows = (_values, data) => {
+      const cnt = data.filter((v) => v.status !== 'ok').length;
+      return `${cnt}`;
+    };
+
     return [
+      {
+        width             : 25,
+        title             : '',
+        field             : 'status',
+        editor            : false,
+        download          : false,
+        accessorClipboard : (value) => value,
+        formatter         : statusIcon,
+        clickPopup        : function (x, cell) {
+          const message = cell.getData().message;
+          return message === undefined ? i18n.t('ui.editors.survey.status.ok') : message;
+        },
+        validator          : ['required'],
+        bottomCalc         : countBadRows,
+        headerFilter       : 'list',
+        headerFilterParams : { valuesLookup: true, clearable: true }
+      },
       {
         title        : i18n.t('ui.editors.stationComments.station'),
         field        : 'station',
@@ -151,6 +260,13 @@ class StationCommentsEditor extends BaseEditor {
         headerSort     : false,
         headerHozAlign : 'center',
         resizable      : 'header'
+      },
+      rowFormatter : function (row) {
+        const rowData = row.getData();
+
+        if (rowData.status === 'invalid') {
+          row.getElement().style.backgroundColor = '#b99922';
+        }
       }
 
     });

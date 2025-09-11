@@ -1239,14 +1239,14 @@ class StationAttributeEditor extends BaseAttributeEditor {
     if (emptyFields.length > 0) {
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = i18n.t('ui.editors.attributes.status.incomplete', { fields: emptyFields.join(',') });
+      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
     } else {
       const errors = sa.validate(i18n);
       if (errors.length > 0) {
         validationErrors.push(...errors);
         newRow = { ...r };
         newRow.status = 'invalid';
-        newRow.message = i18n.t('ui.editors.attributes.status.invalid', { errors: errors.join('<br>') });
+        newRow.message = i18n.t('ui.editors.base.status.invalid', { errors: errors.join('<br>') });
       }
     }
     if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
@@ -1266,7 +1266,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
       survey    : undefined,
       attribute : undefined,
       status    : 'incomplete',
-      message   : i18n.t('ui.editors.attributes.status.new')
+      message   : i18n.t('ui.editors.base.status.new')
     };
   }
 
