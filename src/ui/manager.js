@@ -2,8 +2,9 @@ import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor } from './editor/survey.js';
-import { showInfoPanel } from './popups.js';
+import { showInfoPanel, showSuccessPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
+import { showErrorPanel } from './popups.js';
 import { i18n } from '../i18n/i18n.js';
 import * as THREE from 'three';
 class ProjectManager {
@@ -365,6 +366,49 @@ class ProjectManager {
     if (survey.shots.length > 0) {
       this.reloadCave(cave);
     }
+  }
+
+  async tryAddSurveyToSurvey(surveyToAdd) {
+
+    const { cave, survey } = this.explorer.partialImport;
+    this.addSurveyToSurvey(surveyToAdd, cave, survey);
+    this.explorer.partialImport = undefined;
+  }
+
+  async addSurveyToSurvey(surveyToAdd, cave, survey) {
+
+    if (surveyToAdd.shots.length === 0) {
+      showErrorPanel(i18n.t('errors.import.noShotsToAdd', { survey: surveyToAdd.name }));
+      return;
+    }
+
+    const filteredShots = surveyToAdd.shots.filter((sh) => {
+      return !survey.shots.some((s) => {
+        return s.from === sh.from && s.to === sh.to;
+      });
+    });
+
+    filteredShots.forEach((sh) => {
+      sh.comment =
+        sh.comment ??
+        '' + (sh.comment ? ' ' : '') + `(TopoDroid ${i18n.t('common.survey').toLowerCase()}: ${surveyToAdd.name})`;
+    });
+    survey.shots.push(...filteredShots);
+    survey.updateShots(survey.shots); // due to survey.validShots
+    await this.onSurveyChanged({ detail: { cave: cave, survey: survey, reasons: ['shots'] } });
+    const skipped = surveyToAdd.shots.length - filteredShots.length;
+    if (skipped === surveyToAdd.shots.length) {
+      showErrorPanel(i18n.t('errors.import.allShotsSkipped', { survey: surveyToAdd.name }));
+      return;
+    }
+    showSuccessPanel(
+      i18n.t('messages.import.surveyAddedSuccessfully', {
+        survey   : surveyToAdd.name,
+        toSurvey : survey.name,
+        nrShots  : surveyToAdd.shots.length,
+        skipped  : skipped
+      })
+    );
   }
 
   addCave(cave) {

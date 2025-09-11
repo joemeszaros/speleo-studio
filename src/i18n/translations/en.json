@@ -561,6 +561,8 @@
   },
   "errors": {
     "import": {
+      "noShotsToAdd": "No shots to add from survey {survey}",
+      "allShotsSkipped": "All shots from survey {survey} were skipped",
       "unableToImportFile": "Unable to import file {name}: {error}",
       "surveyNameUndefined": "Survey name is undefined, please set a name in the file",
       "surveyAlreadyExists": "Survey {name} already exists in cave {cave}",
@@ -669,6 +671,9 @@
     "info": "Info"
   },
   "messages": {
+    "import": {
+      "surveyAddedSuccessfully": "Survey {survey} added successfully to {toSurvey}: {nrShots} shots, {skipped} skipped"
+    },
     "config": {
       "configurationLoadedSuccessfully": "Configuration loaded successfully from {fileName}"
     }

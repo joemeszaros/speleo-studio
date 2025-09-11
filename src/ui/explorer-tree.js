@@ -22,6 +22,8 @@ export class ExplorerTree {
     this.filteredNodes = new Map();
     this.searchMode = 'caveSurvey'; // 'caveSurvey' or 'shotNames'
 
+    this.partialImport = undefined;
+
     document.addEventListener('languageChanged', () => this.render());
     document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this));
     this.container.addEventListener('scroll', () => this.hideContextMenu());
@@ -523,6 +525,18 @@ export class ExplorerTree {
           );
           this.editor.setupPanel();
           this.editor.show();
+        }
+      },
+      {
+        icon    : '<img src="icons/topodroid.png" alt="TopoDroid" style="width: 20px; height: 20px;">',
+        title   : i18n.t('ui.explorer.menu.importSurvey'),
+        onclick : () => {
+          const surveyInput = document.getElementById('surveyInputPartial');
+          this.partialImport = {
+            cave   : surveyNode.parent.data,
+            survey : surveyNode.data
+          };
+          surveyInput.click();
         }
       },
       {

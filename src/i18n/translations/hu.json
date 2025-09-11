@@ -456,7 +456,9 @@
           "new": "Új sor",
           "ok": "Nincs hiba",
           "invalid": "Sor érvénytelen: {errors}",
-          "incomplete": "Sor hiányzó mezői: {fields}"
+          "incomplete": "Sor hiányzó mezői: {fields}",
+          "duplicate": "Duplikált sor",
+          "orphan": "Árva sor"
         },
         "message": {
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
@@ -582,6 +584,8 @@
   },
   "errors": {
     "import": {
+      "noShotsToAdd": "Nincsenek mérések  a(z) {survey} felmérésben",
+      "allShotsSkipped": "Az {survey} felmérésből minden mérés kihagyva",
       "unableToImportFile": "Nem lehet importálni a(z) {name} fájlt: {error}",
       "surveyNameUndefined": "A felmérés neve nincs megadva, kérem adja meg a nevet a fájlban",
       "surveyAlreadyExists": "A(z) {name} nevű felmérés már létezik a(z) {cave} barlangban",
@@ -689,6 +693,9 @@
     "info": "Információ"
   },
   "messages": {
+    "import": {
+      "surveyAddedSuccessfully": "A(z) {survey} felmérés sikeresen hozzáadva a(z) {toSurvey} felméréshez: {nrShots} mérés, {skipped} kihagyva"
+    },
     "config": {
       "configurationLoadedSuccessfully": "Konfiguráció sikeresen betöltve a(z) {fileName} fájlból"
     }

@@ -1,6 +1,6 @@
 import { Database } from './db.js';
 import { MyScene, SceneOverview } from './scene/scene.js';
-import { PlySurfaceImporter, PolygonImporter, TopodroidImporter, JsonImporter } from './io/import.js';
+import { PlySurfaceImporter, PolygonImporter, TopodroidImporter, JsonImporter, Importer } from './io/import.js';
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
@@ -200,7 +200,7 @@ class Main {
 
   #setupEventListeners() {
     this.#setupCaveFileInputListener();
-    this.#setupSurveyFileInputListener();
+    this.#setupSurveyFileInputListeners();
     this.#setupModelFileInputListener();
     ConfigManager.setupConfigFileInputListener(
       this.options,
@@ -209,71 +209,37 @@ class Main {
     );
   }
 
-  #setupFileInputListener(config) {
-    const { inputId, handlers, validationMethod } = config;
-
-    const input = document.getElementById(inputId);
-    input.addEventListener('change', async (e) => {
-      for (const file of e.target.files) {
-        try {
-          console.log(`🚧 Importing file ${file.name}`);
-
-          // Determine the appropriate importer based on file extension
-          let handler;
-          const extension = file.name.toLowerCase().split('.').pop();
-
-          handler = handlers.get(extension);
-
-          if (handler === undefined) {
-            throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
-          }
-
-          // Create a promise-based wrapper for the importFile callback
-          await new Promise((resolve, reject) => {
-            handler.importFile(file, file.name, async (importedData, arg1) => {
-              try {
-                await validationMethod(importedData, arg1);
-                resolve();
-              } catch (error) {
-                reject(error);
-              }
-            });
-          });
-        } catch (error) {
-          showErrorPanel(i18n.t('errors.import.unableToImportFile', { name: file.name, error: error.message }));
-          console.error(error);
-        }
-      }
-
-      input.value = '';
-    });
-  }
-
   #setupCaveFileInputListener() {
-    this.#setupFileInputListener({
+    Importer.setupFileInputListener({
       inputId : 'caveInput',
 
       handlers : new Map([
         ['cave', this.importers.polygon],
         ['json', this.importers.json]
       ]),
-      validationMethod : async (data) => await this.#tryAddCave(data)
+      onLoad : async (data) => await this.#tryAddCave(data)
     });
   }
 
-  #setupSurveyFileInputListener() {
-    this.#setupFileInputListener({
-      inputId          : 'surveyInput',
-      handlers         : new Map([['csv', this.importers.topodroid]]),
-      validationMethod : async (data) => await this.#tryAddSurvey(data)
+  #setupSurveyFileInputListeners() {
+    Importer.setupFileInputListener({
+      inputId  : 'surveyInput',
+      handlers : new Map([['csv', this.importers.topodroid]]),
+      onLoad   : async (survey) => await this.#tryAddSurvey(survey)
     });
+    Importer.setupFileInputListener({
+      inputId  : 'surveyInputPartial',
+      handlers : new Map([['csv', this.importers.topodroid]]),
+      onLoad   : async (survey) => await this.projectManager.tryAddSurveyToSurvey(survey)
+    });
+
   }
 
   #setupModelFileInputListener() {
-    this.#setupFileInputListener({
-      inputId          : 'modelInput',
-      handlers         : new Map([['ply', this.importers.ply]]),
-      validationMethod : async (surface, cloud) => await this.#tryAddModel(surface, cloud)
+    Importer.setupFileInputListener({
+      inputId  : 'modelInput',
+      handlers : new Map([['ply', this.importers.ply]]),
+      onLoad   : async (surface, cloud) => await this.#tryAddModel(surface, cloud)
     });
   }
 

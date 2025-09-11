@@ -44,6 +44,46 @@ class Importer {
       reader.readAsText(file, endcoding);
     }
   }
+
+  static setupFileInputListener(config) {
+    const { inputId, handlers, onLoad } = config;
+
+    const input = document.getElementById(inputId);
+    input.addEventListener('change', async (e) => {
+      for (const file of e.target.files) {
+        try {
+          console.log(`🚧 Importing file ${file.name}`);
+
+          // Determine the appropriate importer based on file extension
+          let handler;
+          const extension = file.name.toLowerCase().split('.').pop();
+
+          handler = handlers.get(extension);
+
+          if (handler === undefined) {
+            throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
+          }
+
+          // Create a promise-based wrapper for the importFile callback
+          await new Promise((resolve, reject) => {
+            handler.importFile(file, file.name, async (importedData, arg1) => {
+              try {
+                await onLoad(importedData, arg1);
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+            });
+          });
+        } catch (error) {
+          showErrorPanel(i18n.t('errors.import.unableToImportFile', { name: file.name, error: error.message }));
+          console.error(error);
+        }
+      }
+
+      input.value = '';
+    });
+  }
 }
 
 class PolygonImporter extends Importer {
@@ -522,4 +562,4 @@ class PlySurfaceImporter extends Importer {
   }
 }
 
-export { PolygonImporter, TopodroidImporter, JsonImporter, PlySurfaceImporter };
+export { PolygonImporter, TopodroidImporter, JsonImporter, PlySurfaceImporter, Importer };
