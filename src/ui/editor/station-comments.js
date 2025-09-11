@@ -62,7 +62,7 @@ class StationCommentsEditor extends BaseEditor {
     const rowsToBe = this.cave.stationComments.map((sc) => ({
       id      : U.randomAlphaNumbericString(4),
       status  : 'ok',
-      message : i18n.t('ui.editors.survey.status.ok'),
+      message : i18n.t('ui.editors.base.status.ok'),
       station : sc.name,
       comment : sc.comment
     }));
@@ -97,7 +97,7 @@ class StationCommentsEditor extends BaseEditor {
         .map((r) => `station: ${r.station ?? ''}`);
       if (badRowIds.length > 0) {
         this.showAlert(
-          i18n.t('ui.editors.stationComments.message.invalidRowWithIds', {
+          i18n.t('ui.editors.base.message.invalidRowWithIds', {
             nrBadRows : badRowIds.length,
             badRowIds : badRowIds.slice(0, 15).join(', ')
           }) +

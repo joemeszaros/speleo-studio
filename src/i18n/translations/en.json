@@ -449,7 +449,8 @@
           "ok": "No errors",
           "invalid": "Row is invalid: {errors}",
           "duplicate": "Row is duplicate",
-          "incomplete": "Row has missing fields: {fields}"
+          "incomplete": "Row has missing fields: {fields}",
+          "orphan": "Orphan row"
         },
         "message": {
           "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
@@ -461,7 +462,9 @@
         "message": {
           "missingFields": "Row has missing fields: {fields}",
           "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}",
-          "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}",
+          "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}"
+        },
+        "messages": {
           "openedSurveyEditorUnsavedChanges": "Opened survey editor because you have unsaved changes for cave {caveName} / {surveyName}"
         },
         "columns": {
@@ -491,7 +494,6 @@
       "attributes": {
         "placeHolderName": "Attribute name",
         "newAttribute": "New attribute",
-
         "buttons": {
           "update": "Update attributes"
         },

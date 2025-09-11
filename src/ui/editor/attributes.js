@@ -642,14 +642,14 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     if (emptyFields.length > 0) {
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = i18n.t('ui.editors.attributes.status.incomplete', { fields: emptyFields.join(',') });
+      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
     } else {
       const errors = sa.validate(i18n);
       if (errors.length > 0) {
         validationErrors.push(...errors);
         newRow = { ...r };
         newRow.status = 'invalid';
-        newRow.message = i18n.t('ui.editors.attributes.status.invalid', { errors: errors.join('<br>') });
+        newRow.message = i18n.t('ui.editors.base.status.invalid', { errors: errors.join('<br>') });
       }
     }
     if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
@@ -673,7 +673,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       attribute   : undefined,
       format      : '${name}',
       status      : 'incomplete',
-      message     : i18n.t('ui.editors.attributes.status.new')
+      message     : i18n.t('ui.editors.base.status.new')
     };
 
   }
@@ -692,7 +692,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         attribute   : r.attribute,
         format      : r.format === undefined ? '${name}' : r.format,
         status      : 'ok',
-        message     : i18n.t('ui.editors.attributes.status.ok')
+        message     : i18n.t('ui.editors.base.status.ok')
       };
     });
 
@@ -924,14 +924,14 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     if (emptyFields.length > 0) {
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = i18n.t('ui.editors.attributes.status.incomplete', { fields: emptyFields.join(',') });
+      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
     } else {
       const errors = sa.validate(i18n);
       if (errors.length > 0) {
         validationErrors.push(...errors);
         newRow = { ...r };
         newRow.status = 'invalid';
-        newRow.message = i18n.t('ui.editors.attributes.status.invalid', { errors: errors.join('<br>') });
+        newRow.message = i18n.t('ui.editors.base.status.invalid', { errors: errors.join('<br>') });
       }
     }
     if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
@@ -955,7 +955,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       attribute : undefined,
       format    : '${name}',
       status    : 'incomplete',
-      message   : i18n.t('ui.editors.attributes.status.new')
+      message   : i18n.t('ui.editors.base.status.new')
     };
 
   }
@@ -974,7 +974,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         attribute : r.attribute,
         format    : r.format === undefined ? '${name}' : r.format,
         status    : 'ok',
-        message   : i18n.t('ui.editors.attributes.status.ok')
+        message   : i18n.t('ui.editors.base.status.ok')
       };
     });
 
@@ -1280,7 +1280,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
         survey    : station ? station.survey.name : undefined,
         attribute : r.attribute,
         status    : 'ok',
-        message   : i18n.t('ui.editors.attributes.status.ok')
+        message   : i18n.t('ui.editors.base.status.ok')
       };
     });
 

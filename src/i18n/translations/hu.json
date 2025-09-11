@@ -270,7 +270,9 @@
         "calculate": "Számítás",
         "distance": "Távolság",
         "path": "Útvonal",
-        "length": "Hossz"
+        "length": "Hossz",
+        "cannotFindPath": "Nem található út a(z) '{from}' és '{to}' között",
+        "cannotFindStations": "Nem található a(z) '{from}' vagy '{to}' pont"
       },
       "rotation": {
         "title": "Forgatás eszköz",
@@ -471,8 +473,9 @@
           "missingFields": "Sor hiányzó mezői: {fields}",
           "incomplete": "Hiányos sor",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}",
-          "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}",
-          "duplicateRowWithIds": "{nrDuplicateRows} sor duplikált: {duplicateRowIds}",
+          "orphanRowWithIds": "{nrOrphanRows} sor árva: {orphanRowIds}"
+        },
+        "messages": {
           "openedSurveyEditorUnsavedChanges": "Felmérés szerkesztő megnyitva, mert vannak mentetlen változások a(z) {caveName} / {surveyName} barlang/felmérésnél"
         },
         "status": {
@@ -657,7 +660,8 @@
       },
       "databaseManager": {
         "failedToOpenIndexedDb": "Nem lehet megnyitni az IndexedDB-t",
-        "databaseNotInitialized": "Az adatbázis nincs inicializálva"
+        "databaseNotInitialized": "Az adatbázis nincs inicializálva",
+        "storeNotFound": "A(z) '{storeName}' tároló nem található"
       },
       "editorStates": {
         "failedToSaveEditorState": "Nem lehet menteni a szerkesztő állapotot",
