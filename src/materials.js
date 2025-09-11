@@ -48,7 +48,8 @@ class Materials {
         selected            : new THREE.MeshBasicMaterial({ color: 0xf00fff }),
         hover               : new THREE.MeshBasicMaterial({ color: 0x00ffff }),
         distanceMeasurement : new THREE.MeshBasicMaterial({ color: 0xff8800 }), // Orange color for distance measurement
-        startPoint          : new THREE.MeshBasicMaterial({ color: this.config.startPoint.color })
+        startPoint          : new THREE.MeshBasicMaterial({ color: this.config.startPoints.color }),
+        cameraTarget        : new THREE.MeshBasicMaterial({ color: this.config.camera.target.color })
       },
 
       distanceLine : new THREE.LineDashedMaterial({ color: 0xffffff, linewidth: 2, scale: 2, dashSize: 1, gapSize: 1 }),

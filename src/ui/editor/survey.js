@@ -376,7 +376,7 @@ class SurveyEditor extends Editor {
       () => {
         this.closeEditor();
       },
-      (_newWidth, newHeight) => {
+      () => {
         const h = this.panel.offsetHeight - 100;
         this.table.setHeight(h);
       },
@@ -661,7 +661,6 @@ class SurveyEditor extends Editor {
     });
 
     this.table.on('rowMoved', () => {
-      console.log('row moved');
       this.surveyModified = true;
       this.#emitSurveyDataEdited();
     });

@@ -634,7 +634,6 @@ body {
   margin-right: 12px;
   display: inline-block;
 }
-
 /* Responsive adjustments for about dialog */
 @media (max-width: 768px) {
   .about-container {
@@ -1273,6 +1272,10 @@ body {
 
 /* Make name input longer */
 .sheet-editor-field input[name='name'] {
+  min-width: 250px;
+}
+
+.sheet-editor-field input[name='creator'] {
   min-width: 250px;
 }
 

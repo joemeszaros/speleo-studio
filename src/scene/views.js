@@ -465,6 +465,7 @@ class View {
       this.ratioText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
       this.compass.visible = this.scene.options.scene.sprites3D.compass.show;
       this.rotationText.sprite.visible = this.scene.options.scene.sprites3D.compass.show;
+      this.scene.cameraTarget.position.copy(this.control.getTarget()); // we have just a single sphere for all views
     }
 
     this.dispatchEvent('viewActivated', { name: this.name });
@@ -596,6 +597,8 @@ class SpatialView extends View {
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       this.updateFrustumFrame();
+    } else if (e.type === 'pan') {
+      this.scene.cameraTarget.position.copy(this.control.getTarget());
     }
     //render for rotate and pan also
     this.renderView();
@@ -647,6 +650,7 @@ class SpatialView extends View {
     View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
 
     this.control.setTarget(this.target);
+    this.scene.cameraTarget.position.copy(this.control.getTarget());
     // wihtout the Math.PI / 2 - 0.0001 Firefox renders the initial view 90 degree clockwise
     // the first rotation fixes the view but I rather decided to apply this delta
     this.control.setCameraOrientation(settings.distance, Math.PI, Math.PI / 2 - 0.001); // looking down from above
@@ -980,6 +984,8 @@ class PlanView extends View {
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       this.updateFrustumFrame();
+    } else if (e.type === 'pan') {
+      this.scene.cameraTarget.position.copy(this.control.getTarget());
     }
     //render for rotate and pan also
     this.renderView();
@@ -1142,6 +1148,8 @@ class ProfileView extends View {
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       if (this.frustumFrame) this.updateFrustumFrame();
+    } else if (e.type === 'pan') {
+      this.scene.cameraTarget.position.copy(this.control.getTarget());
     }
     //render for rotate and pan also
     this.renderView();

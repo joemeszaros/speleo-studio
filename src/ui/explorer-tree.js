@@ -2,8 +2,8 @@ import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
 import { CaveEditor } from './editor/cave.js';
 import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
 import { CyclePanel } from './editor/cycle.js';
+import { StationCommentsEditor } from './editor/station-comments.js';
 import { i18n } from '../i18n/i18n.js';
-import { randomAlphaNumbericString } from '../utils/utils.js';
 
 export class ExplorerTree {
   constructor(db, options, scene, interaction, attributeDefs, declinationCache, container, contextMenuElement) {
@@ -411,6 +411,19 @@ export class ExplorerTree {
         }
       },
       {
+        icon    : '💬',
+        title   : i18n.t('ui.explorer.menu.editStationComments'),
+        onclick : () => {
+          this.editor = new StationCommentsEditor(
+            this.options,
+            caveNode.data,
+            document.getElementById('resizable-editor')
+          );
+          this.editor.setupPanel();
+          this.editor.show();
+        }
+      },
+      {
         icon    : '🔄',
         title   : i18n.t('ui.explorer.menu.cycles'),
         onclick : () => {
@@ -612,7 +625,7 @@ export class ExplorerTree {
   }
 
   closeEditorsForCave(caveName) {
-    if (this.editor !== undefined && !this.closed && this.editor.cave.name === caveName) {
+    if (this.editor !== undefined && !this.editor.closed && this.editor?.cave?.name === caveName) {
       this.editor.closeEditor();
     }
   }

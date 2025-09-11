@@ -54,6 +54,13 @@ export const DEFAULT_OPTIONS = {
       mode : 'top',
       step : 10
     },
+    camera : {
+      target : {
+        show   : false,
+        radius : 1,
+        color  : '#00ff00'
+      }
+    },
     surface : {
       color : {
         start : '#39b14d',
@@ -74,8 +81,11 @@ export const DEFAULT_OPTIONS = {
       }
     },
     sections : {
-      color : '#00ff2a',
-      width : 2.0
+      color  : '#00ff2a',
+      width  : 2.0,
+      labels : {
+        show : true
+      }
     },
     stationAttributes : {
       iconScale : 7.0
@@ -107,7 +117,7 @@ export const DEFAULT_OPTIONS = {
     background : {
       color : '#000000'
     },
-    startPoint : {
+    startPoints : {
       show   : true,
       color  : '#ffff00',
       radius : 1
@@ -154,7 +164,8 @@ export const DEFAULT_OPTIONS = {
       eovElevation : false,
       type         : false,
       position     : false, // x,y,z coordinates
-      shots        : false // list of shots in compact format
+      shots        : false, // list of shots in compact format
+      comments     : false // list of comments in compact format
     }
   },
   import : {
@@ -699,8 +710,8 @@ export class ConfigChanges {
    */
   handleStartingPointChanges(path, oldValue, newValue) {
     switch (path) {
-      case 'scene.startPoint.show':
-        this.scene.setStartingPointsVisibility(newValue);
+      case 'scene.startPoints.show':
+        this.scene.toggleStartingPointsVisibility(newValue);
         break;
 
       case 'scene.startPoint.color':
@@ -748,7 +759,12 @@ export class ConfigChanges {
         this.scene.updateSegmentsWidth(newValue);
         this.scene.updateSectionAttributesWidth(newValue);
         break;
+      case 'scene.sections.labels.show':
+        this.scene.toggleSectionsLabelVisibility(newValue);
+        break;
     }
+
+    this.scene.view.renderView();
   }
 
   /**
@@ -905,6 +921,16 @@ export class ConfigChanges {
     this.scene.view.renderView();
   }
 
+  handleCameraChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.camera.target.show':
+        this.scene.toggleCameraTargetVisibility(newValue);
+        break;
+    }
+
+    this.scene.view.renderView();
+  }
+
   /**
    * Main onChange handler that routes to specific handlers
    */
@@ -940,6 +966,8 @@ export class ConfigChanges {
       this.handleGridChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.sprites3D.')) {
       this.handleSprites3DChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.camera')) {
+      this.handleCameraChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('ui.stationDetails.')) {

@@ -437,7 +437,31 @@ export class SettingsPanel {
           (value) => {
             this.options.scene.grid.step = value;
           }
-        )
+        ),
+        // Column 1:
+        this.createCompactCheckboxGroup([
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.startPoint'),
+            this.options.scene.startPoints.show,
+            (value) => {
+              this.options.scene.startPoints.show = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.targetPoint'),
+            this.options.scene.camera.target.show,
+            (value) => {
+              this.options.scene.camera.target.show = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.sectionsLabel'),
+            this.options.scene.sections.labels.show,
+            (value) => {
+              this.options.scene.sections.labels.show = value;
+            }
+          )
+        ])
       ],
       true
     );
@@ -526,6 +550,13 @@ export class SettingsPanel {
             this.options.ui.stationDetails.shots,
             (value) => {
               this.options.ui.stationDetails.shots = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.comments'),
+            this.options.ui.stationDetails.comments,
+            (value) => {
+              this.options.ui.stationDetails.comments = value;
             }
           )
         ])

@@ -270,7 +270,15 @@ class SceneInteraction {
     if (config.shots) {
       const shots = st.meta.shots.map((shw) => `${shw.shot.from}→${shw.shot.to}(${shw.shot.length.toFixed(1)}m)`);
       if (shots.length > 0) {
-        details.push(`Shots: ${shots.join(', ')}`);
+        details.push(`${i18n.t('common.shots')}: ${shots.join(', ')}`);
+      }
+    }
+
+    // Comments in compact format
+    if (config.comments) {
+      const comments = st.meta.shots.map((shw) => shw.shot.comment).filter((c) => c !== undefined && c !== '');
+      if (comments.length > 0) {
+        details.push(`${i18n.t('common.comments')}: ${comments.join(', ')}`);
       }
     }
 
@@ -501,7 +509,7 @@ class SceneInteraction {
   }
 
   showDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
-
+    this.infoPanel.style.width = '600px';
     wm.makeFloatingPanel(
       this.infoPanel,
       (contentElmnt) => this.buildDistancePanel(contentElmnt, from, to, diffVector, left, top),
@@ -525,15 +533,24 @@ class SceneInteraction {
     const polar = toPolar(diffVector);
 
     content.innerHTML = `
-        ${i18n.t('common.from')}: ${from.name} (${formatCoords([fp.x, fp.y, fp.z])})<br>
-        ${i18n.t('common.to')}: ${to.name} (${formatCoords([tp.x, tp.y, tp.z])})<br>
+        ${i18n.t('common.from')}: ${from.meta.cave.name} → ${from.meta.survey.name} → ${from.name}<br>
+        X: ${fp.x.toFixed(3)}<br>
+        Y: ${fp.y.toFixed(3)}<br>
+        Z: ${fp.z.toFixed(3)}<br>
+        <br>
+        ${i18n.t('common.to')}: ${to.meta.cave.name} → ${to.meta.survey.name} → ${to.name}<br>
+        X: ${tp.x.toFixed(3)}<br>
+        Y: ${tp.y.toFixed(3)}<br>
+        Z: ${tp.z.toFixed(3)}<br>
+        <br>
         ${i18n.t('ui.panels.distance.x')}: ${diffVector.x.toFixed(3)}<br>
         ${i18n.t('ui.panels.distance.y')}: ${diffVector.y.toFixed(3)}<br>
         ${i18n.t('ui.panels.distance.z')}: ${diffVector.z.toFixed(3)}<br>
+        ${i18n.t('ui.panels.distance.spatial')}: ${polar.distance.toFixed(3)}<br>
         ${i18n.t('ui.panels.distance.azimuth')}: ${radsToDegrees(polar.azimuth).toFixed(3)}°<br>
         ${i18n.t('ui.panels.distance.clino')}: ${radsToDegrees(polar.clino).toFixed(3)}°<br>
         ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(diffVector.x * diffVector.x + diffVector.y * diffVector.y).toFixed(3)}<br>
-        ${i18n.t('ui.panels.distance.spatial')}: ${polar.distance.toFixed(3)}
+        <br>
         `;
     contentElmnt.appendChild(content);
 
@@ -546,7 +563,7 @@ class SceneInteraction {
   }
 
   showStationDetailsPanel(station, left, top) {
-
+    this.infoPanel.style.width = '450px';
     wm.makeFloatingPanel(
       this.infoPanel,
       (contentElmnt) => this.buildStationDetailsPanel(contentElmnt, station, left, top),

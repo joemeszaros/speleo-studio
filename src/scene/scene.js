@@ -118,6 +118,19 @@ class MyScene {
     this.raycaster.params.Mesh.threshold = 10;
     this.pointer = new THREE.Vector2();
 
+    const cameraTargetGeo = new THREE.SphereGeometry(this.options.scene.camera.target.radius, 10, 10);
+    this.cameraTarget = this.addSphere(
+      'camera target',
+      new THREE.Vector3(0, 0, 0),
+      this.spheres3DGroup,
+      cameraTargetGeo,
+      this.mats.sphere.cameraTarget,
+      {
+        type : 'camera target'
+      }
+    );
+    this.cameraTarget.visible = this.options.scene.camera.target.show;
+
     const sphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 10, 10);
     this.surfaceSphere = this.addSphere(
       'surface',
@@ -489,6 +502,7 @@ class MyScene {
     }
   }
 
+  // for section and component attributes
   showFragmentAttribute(id, segments, attribute, format = '${name}', color, caveName) {
     if (!this.sectionAttributes.has(id)) {
       const geometry = new LineSegmentsGeometry();
@@ -531,6 +545,13 @@ class MyScene {
       });
       this.view.renderView();
     }
+  }
+
+  toggleSectionsLabelVisibility(visible) {
+    this.sectionAttributes.forEach((e) => {
+      e.text.visible = visible;
+    });
+    this.view.renderView();
   }
 
   updateSectionAttributesWidth() {
@@ -639,7 +660,7 @@ class MyScene {
             this.options.scene.stationAttributes.iconScale,
             this.options.scene.stationAttributes.iconScale
           );
-
+          sprite.layers.set(1);
           this.stationAttributes3DGroup.add(sprite);
 
           this.stationAttributes.set(id, {
@@ -943,6 +964,14 @@ class MyScene {
     targetGroup.add(sprite);
   }
 
+  toggleCameraTargetVisibility(visible) {
+    this.cameraTarget.visible = visible;
+  }
+
+  toggleStartingPointsVisibility(visible) {
+    this.startPoints3DGroup.visible = visible;
+  }
+
   addOrUpdateStartingPoint(cave) {
     // Remove existing starting point if it exists
     if (this.startPointObjects.has(cave.name)) {
@@ -954,7 +983,7 @@ class MyScene {
     if (!firstStation) return;
 
     // Create a sphere geometry for the starting point
-    const startPointGeo = new THREE.SphereGeometry(this.options.scene.startPoint.radius, 7, 7);
+    const startPointGeo = new THREE.SphereGeometry(this.options.scene.startPoints.radius, 7, 7);
 
     // Create the starting point mesh
     const startPoint = new THREE.Mesh(startPointGeo, this.mats.sphere.startPoint);
@@ -962,7 +991,7 @@ class MyScene {
     startPoint.name = `startPoint_${cave.name}`;
 
     // Set visibility based on configuration
-    startPoint.visible = this.options.scene.startPoint.show;
+    startPoint.visible = this.options.scene.startPoints.show;
 
     // Add to the starting points group
     this.startPoints3DGroup.add(startPoint);
@@ -985,14 +1014,6 @@ class MyScene {
       startPointObj.material.dispose();
       this.startPointObjects.delete(caveName);
     }
-  }
-
-  setStartingPointsVisibility(visible) {
-    this.startPoints3DGroup.visible = visible;
-    // Also update individual objects for consistency
-    this.startPointObjects.forEach((obj) => {
-      obj.mesh.visible = visible;
-    });
   }
 
   updateStartingPointColor(color) {

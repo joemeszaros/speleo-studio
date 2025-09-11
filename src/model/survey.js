@@ -19,6 +19,24 @@ class ShotType {
   }
 }
 
+class StationComment {
+  constructor(name, comment) {
+    this.name = name;
+    this.comment = comment;
+  }
+
+  toExport() {
+    return {
+      name    : this.name,
+      comment : this.comment
+    };
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new StationComment(), pure);
+  }
+}
+
 class Shot {
   static export_fields = ['id', 'type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
 
@@ -407,6 +425,7 @@ class SurveyAlias {
 export {
   ShotType,
   Shot,
+  StationComment,
   SurveyStation,
   ShotWithSurvey,
   SurveyTeamMember,

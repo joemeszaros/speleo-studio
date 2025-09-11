@@ -1,6 +1,6 @@
 import { Vector, SectionAttribute, ComponentAttribute, StationAttribute } from '../model.js';
 import { GeoData } from './geo.js';
-import { Survey, SurveyAlias } from './survey.js';
+import { Survey, SurveyAlias, StationComment } from './survey.js';
 
 class CaveCycle {
 
@@ -238,6 +238,7 @@ class Cave {
    * @param {Survey[]} surveys - The surveys associated to a cave
    * @param {SurveyAlias[]} - Mapping of connection point between surveys
    * @param {CaveAttributes} attributes - The attributes of the cave (sections and components)
+   * @param {StationComment[]} stationComments - Comments for stations in this cave
    * @param {boolean} visible - The visibility property of a cave
    */
   constructor(
@@ -248,6 +249,7 @@ class Cave {
     surveys = [],
     aliases = [],
     attributes = new CaveAttributes(),
+    stationComments = [],
     visible = true
   ) {
     this.id = this.#generateId();
@@ -258,6 +260,7 @@ class Cave {
     this.surveys = surveys;
     this.aliases = aliases;
     this.attributes = attributes;
+    this.stationComments = stationComments;
     this.visible = visible;
   }
 
@@ -375,13 +378,14 @@ class Cave {
 
   toExport() {
     return {
-      id         : this.id,
-      name       : this.name,
-      metadata   : this?.metadata?.toExport(),
-      geoData    : this?.geoData?.toExport(),
-      aliases    : this.aliases.map((a) => a.toExport()),
-      attributes : this.attributes.toExport(),
-      surveys    : this.surveys.map((s) => s.toExport())
+      id              : this.id,
+      name            : this.name,
+      metadata        : this?.metadata?.toExport(),
+      geoData         : this?.geoData?.toExport(),
+      aliases         : this.aliases.map((a) => a.toExport()),
+      attributes      : this.attributes.toExport(),
+      stationComments : this.stationComments.map((sc) => sc.toExport()),
+      surveys         : this.surveys.map((s) => s.toExport())
     };
   }
 
@@ -395,6 +399,8 @@ class Cave {
     pure.startPosition = Vector.fromPure(pure.startPosition);
 
     pure.attributes = CaveAttributes.fromPure(pure.attributes, attributeDefs);
+    pure.stationComments =
+      pure.stationComments !== undefined ? pure.stationComments.map((sc) => StationComment.fromPure(sc)) : [];
 
     const cave = Object.assign(new Cave(), pure);
     return cave;

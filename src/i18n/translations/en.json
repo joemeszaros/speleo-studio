@@ -133,6 +133,7 @@
         "eovY": "EOV Y coordinate",
         "eovX": "EOV X coordinate",
         "eovElevation": "EOV elevation",
+        "comments": "Comments",
         "type": "Type",
         "position": "Position (X,Y,Z)",
         "shots": "Shots list",
@@ -142,7 +143,10 @@
         "logo": "Logo",
         "viewHelper": "3D rotation helper",
         "textColor": "Text color",
-        "textStroke": "Text stroke"
+        "textStroke": "Text stroke",
+        "startPoint": "Cave start point",
+        "targetPoint": "Camera target point",
+        "sectionsLabel": "Sections label"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"
@@ -195,7 +199,8 @@
         "deleteSurvey": "Delete survey",
         "setSurveyColor": "Set survey color",
         "clearSurveyColor": "Clear survey color",
-        "openSurveyEditor": "Open survey editor"
+        "openSurveyEditor": "Open survey editor",
+        "editStationComments": "Edit station comments"
       },
       "confirm": {
         "deleteCave": "Do you want to delete cave '{name}'?",
@@ -335,6 +340,7 @@
         "addRowToEnd": "Add row to end",
         "deleteActiveRows": "Delete active rows",
         "validateShots": "Validate shots",
+        "validateAttributes": "Validate attributes",
         "toggleColumns": "Columns visibility",
         "exportToCsv": "Export to CSV",
         "error": {
@@ -423,6 +429,17 @@
           "addMember": "Add member",
           "addInstrument": "Add instrument"
         }
+      },
+      "stationComments": {
+        "title": "Station Comments: {name}",
+        "noShots": "No shots available for this survey",
+        "station": "Station",
+        "comment": "Comment",
+        "noComment": "No comment",
+        "addRow": "Add Station Comment",
+        "delete": "Delete comment",
+        "save": "Save",
+        "cancel": "Cancel"
       },
       "survey": {
         "title": "Survey editor: {name}",
@@ -776,6 +793,7 @@
     "undo": "Undo",
     "redo": "Redo",
     "clear": "Clear",
-    "invalid": "Invalid"
+    "invalid": "Invalid",
+    "comments": "Comments"
   }
 }

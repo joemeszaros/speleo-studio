@@ -141,7 +141,7 @@ export class IconBar {
       { separator: true },
       {
         id      : 'validate-attributes',
-        tooltip : i18n.t('ui.editors.common.validateShots'),
+        tooltip : i18n.t('ui.editors.common.validateAttributes'),
         icon    : 'icons/validate.svg',
         click   : () => validateAttributes?.()
       },
@@ -150,6 +150,20 @@ export class IconBar {
         tooltip : i18n.t('ui.editors.attributes.buttons.update'),
         icon    : 'icons/update.svg',
         click   : () => updateAttributes?.()
+      }
+
+    ];
+  }
+
+  // Station comments editor-specific buttons
+  static getStationCommentsButtons(updateComments) {
+    return [
+      { separator: true },
+      {
+        id      : 'update-comments',
+        tooltip : i18n.t('ui.editors.attributes.buttons.update'),
+        icon    : 'icons/update.svg',
+        click   : () => updateComments?.()
       }
 
     ];

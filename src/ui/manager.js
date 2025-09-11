@@ -37,6 +37,7 @@ class ProjectManager {
     document.addEventListener('sectionAttributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('componentAttributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('stationAttributesChanged', (e) => this.onAttributesChanged(e));
+    document.addEventListener('surveyCommentsChanged', (e) => this.onSurveyCommentsChanged(e));
 
   }
 
@@ -63,6 +64,11 @@ class ProjectManager {
     // Included for legacy support, e.g. Chrome/Edge < 119
     event.returnValue = true;
   };
+
+  async onSurveyCommentsChanged(e) {
+    const cave = e.detail.cave;
+    await this.saveCave(cave);
+  }
 
   async onSurveyDataEdited(e) {
     if (this.firstEdit) {
