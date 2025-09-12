@@ -21,8 +21,8 @@
 
       <h2>Importálás áttekintése</h2>
       <p
-        >A Speleo Studio több különböző formátumot támogat a barlang adatok importálásához, amely lehetővé teszi, hogy
-        meglévő felmérési adatokat könnyedén betöltsön az alkalmazásba.</p
+        >A Speleo Studio több különböző formátumot támogat a barlang és felszíni adatok importálásához, amely lehetővé
+        teszi, hogy a meglévő felmérési adatokat könnyedén betöltse az alkalmazásba.</p
       >
 
       <div class="info">
@@ -56,7 +56,7 @@
           <p>A fájl kiválasztó ablakban navigáljon a kívánt fájlhoz és kattintson a "Megnyitás" gombra.</p>
         </div>
         <div class="image-placeholder column-2 black" style="flex: 70%">
-          <img width="500" src="images/4-file-panel.png" />
+          <img width="500" src="images/4-fajl-panel.png" />
         </div>
       </div>
 
@@ -174,7 +174,7 @@
       </div>
 
       <div class="step">
-        <h3>TopoDroid CSV importálása</h3>
+        <h3>TopoDroid felmérés hozzáadása egy barlanghoz</h3>
         <p
           >1. Az oldalsávban nyissuk meg a "Felfedező" panelt és kattintsunk annak a barlangnak a nevére, amelyhez a
           felmérést szeretnénk hozzáadni</p
@@ -189,18 +189,40 @@
         <img src="images/4-topodroid-4.png" />
       </div>
 
+      <div class="step">
+        <h3>TopoDroid felmérés hozzáadása egy felméréshez</h3>
+        <p
+          >1. Az oldalsávban nyissuk meg a "Felfedező" panelt és nyissuk ki a kiválasztott barlang felméréseinek
+          listáját. Kattintsunk arra a felmérésre, amelyhez a TopoDroid felmérést szeretnénk hozzáadni</p
+        >
+        <p>2. A megjelenő ikon sávból kattintsunk a TopoDroid ikonra</p>
+        <p>3. A felnyíló ablakban válasszuk ki az eszközön lévő CSV fájlt</p>
+        <p>4. A felmérés mérési pontjai automatikusan hozzáadódnak a kiválasztott felméréshez</p>
+      </div>
+
+      <div class="image-placeholder black small-padding">
+        <img style="width: 50%" src="images/4-topodroid-5.png" />
+      </div>
+
+      <div class="warning">
+        <h3
+          >⚠️ A már létező méréseket nem veszi figyelembe a TopoDroid felmérésből a Speleo Studio, azokat kihagyja!'</h3
+        >
+      </div>
+
+      <h4>TopoDroid CSV fájl példa</h4>
       <!-- prettier-ignore -->
       <div class="code-example">
-# 2025.09.07 [*] created by TopoDroid v 6.3.20 HB
-# name: Sisma_Vizes-akna
+# 2025.09.07 [*] created by TopoDroid v 6.3.20
+# name: Barlang neve
 # date: 2024.01.21
-# team: team
-# declination: 1.1
+# team: Jane,Joe
+# declination: 5.6
 # units: tape meter compass clino degree
 # from, to, tape, compass, clino, extend, flags, comment
-0@Sisma_Vizes-akna,1@Sisma_Vizes-akna,7.51,310.6,-6.8,1,,"Vizes-akna bejárat másik térkép 10 pontja"
-0@Sisma_Vizes-akna,-,6.26,314.06,-54.38,,,""
-0@Sisma_Vizes-akna,-,14.56,313.81,-45.78,,,""
+0@felmeres,1@felmeres,7.51,310.6,-6.8,1,,"A bejárat után jobbra a falon"
+0@felmeres,-,6.26,314.06,-54.38,,,""
+0@felmeres,-,14.56,313.81,-45.78,,,""
       </div>
 
       <div class="info">
@@ -264,6 +286,36 @@
         <p><strong>Megoldás:</strong> Ellenőrizze az EOV koordinátákat és a koordináta rendszer beállításait.</p>
       </div>
 
+      <div class="warning">
+        <h3
+          >A következő hibát kapom: A(z) <i>XX</i> nevű barlang túl messze van a korábban importált barlangoktól:
+          <i>YY</i> - <i>DD</i> km</h3
+        >
+        <p
+          ><strong>Probléma:</strong> Az imporálni kívánt barlang meghaladja a megengedett legnagyobb távolságot két
+          balang között, amely 2 km. Ezt a távolságot a Speleo Studio korábban importált barlangok között méri ki.</p
+        >
+        <p
+          ><strong>Megoldás:</strong> Csökkentse a barlangok távolságát, vagy importálja a barlangokat külön
+          projektekben.</p
+        >
+      </div>
+
+      <div class="warning">
+        <h3
+          >A következő hibát kapom: A(z) <i>XX</i> nevű barlang túl messze van a korábban importált barlangoktól:
+          Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál
+        </h3>
+        <p
+          ><strong>Probléma:</strong> Vagy a már importált barlangokhoz van EOV koordináta és az imporálni kívánt
+          barlanghoz nincs, vagy fordítva..</p
+        >
+        <p
+          ><strong>Megoldás:</strong> EOV koordináta felvétele annál a barlangnál, amelynek nem volt EOV
+          koordinátája.</p
+        >
+      </div>
+
       <h2>Importálás utáni ellenőrzés</h2>
 
       <div class="step">
@@ -295,15 +347,6 @@
           <li>Több JSON vagy .cave fájl kiválasztása</li>
           <li>Automatikus feldolgozás sorrendben</li>
           <li>Hibás fájlok kihagyása</li>
-        </ul>
-      </div>
-
-      <div class="format-box">
-        <h3>Adatminőség javítása</h3>
-        <ul>
-          <li>Importálás előtt tisztítsa meg a forrás adatokat</li>
-          <li>Ellenőrizze a koordináta rendszereket</li>
-          <li>Validálja a felmérési adatokat</li>
         </ul>
       </div>
 

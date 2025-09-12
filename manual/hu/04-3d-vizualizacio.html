@@ -19,34 +19,52 @@
         <a href="05-felmereek-szerkesztese.html">Következő: Felmérések szerkesztése →</a>
       </div>
 
-      <h2>3D viewport áttekintése</h2>
+      <h2>3D nézet (viewport) áttekintése</h2>
       <p
         >A 3D viewport a Speleo Studio központi területe, ahol a barlangrendszerek 3D-s megjelenítése és navigálása
-        történik. Itt vizualizálhatja a felmérési adatokat, navigálhat a jelenetben és használhatja a vizualizációs
-        eszközöket.</p
+        történik. Ha megnyitjuk az alkalmazást, akkor ez a nézet jelenik meg. Itt jelennek meg a felmérési adatok, az
+        egér és a billentyűzet segítségével navigálhatunk a jelenetben és használhatjuk a vizualizációs eszközöket.</p
       >
 
-      <div class="image-placeholder"> [KÉP HELYE: 3D viewport teljes megjelenítése címkékkel] </div>
+      <div class="image-placeholder black"> <img src="images/5-viewport.png" /> </div>
 
       <h3>Viewport komponensek</h3>
       <ul>
-        <li><strong>3D jelenet:</strong> A barlangrendszer 3D-s megjelenítése</li>
-        <li><strong>Navigációs eszközök:</strong> Kamera vezérlés és nézetek</li>
-        <li><strong>Koordináta rendszer:</strong> X, Y, Z tengelyek megjelenítése</li>
-        <li><strong>Rács:</strong> Referencia rács a méretezéshez</li>
+        <li><strong>3D jelenet (1):</strong> A barlangok és modellek 3D-s megjelenítése</li>
+        <li
+          ><strong>3d segédeszköz (2):</strong> Mutatja a koordináta rendszert és az X, Y, Z tengelyeket, fix nézőpontok
+          beállítását teszi lehetővé</li
+        >
+        <li><strong>Tájoló (3)</strong> Mutatja a barlang tájolását Északhoz képest</li>
+        <li
+          ><strong>Dőlés mutató (4):</strong> Azt a dőlés szöget mutatja, ahonnan a jelenet elemeire ránézünk. 90 fok
+          esetén a barlangokra fűggőlegesen lefele nézünk, -90 fok esetén a barlangokat alulról személjük, 0 fok esetén
+          pedig oldalról.</li
+        >
+        <li
+          ><strong>Méretarány és vonalzó (5):</strong> Mutatja az aktuális méretarányt és a vonalzó méretét a
+          jelenetben</li
+        >
+        <li><strong>Logó (6):</strong> A Speleo Studio elmaradhatatlan logója</li>
       </ul>
 
-      <h2>Alapvető navigáció</h2>
+      <h2>Alapvető navigáció </h2>
 
-      <h3>Egér vezérlés</h3>
+      <p>A 3D nézetben hasonlóan más 3D-s alkalmazásokhoz a jelenetben a következő műveleteket végezhetjük:</p>
+      <ul>
+        <li><strong>Forgatás (rotate):</strong> Az objektumok egy adott pont körül együtt forognak</li>
+        <li><strong>Eltolás (pan):</strong> Az objektumokat valamely irányba eltoljuk</li>
+        <li><strong>Nagyítás és kicsinyítés (zoom):</strong> Az objektumok méretet változtatjuk</li>
+      </ul>
+      <h3>Vezérlés egérrel</h3>
       <div class="control-box">
         <h4>Bal egérgomb + húzás</h4>
-        <p>Kamera forgatása a jelenet körül. Ez a fő navigációs mód.</p>
+        <p>Objektumok forgatása. Ez a fő navigációs mód.</p>
       </div>
 
       <div class="control-box">
         <h4>Jobb egérgomb + húzás</h4>
-        <p>Kamera eltolása (pan) vízszintes és függőleges irányban.</p>
+        <p>Eltolás (pan) valamely irányban.</p>
       </div>
 
       <div class="control-box">
@@ -56,152 +74,236 @@
 
       <div class="control-box">
         <h4>Középső gomb + húzás</h4>
-        <p>Kamera eltolása (pan) - alternatív módszer a jobb egérgombhoz.</p>
+        <p>Eltolás (pan) valamely irányban.</p>
       </div>
 
       <h3>Billentyűzet vezérlés</h3>
       <div class="info">
         <h4>Gyorsbillentyűk:</h4>
         <ul>
-          <li><span class="shortcut">F</span> - Képernyőre illesztés (zoom to fit)</li>
-          <li><span class="shortcut">+</span> - Nagyítás</li>
-          <li><span class="shortcut">-</span> - Kicsinyítés</li>
-          <li><span class="shortcut">0</span> - Alaphelyzet visszaállítása</li>
-          <li><span class="shortcut">1</span> - Alaprajz nézet</li>
-          <li><span class="shortcut">2</span> - Hosszmetszet nézet</li>
-          <li><span class="shortcut">3</span> - 3D nézet</li>
+          <li><span class="shortcut">ctrl</span>+<span class="shortcut">bal egérgomb</span> - Eltolás</li>
+          <li><span class="shortcut">ctrl</span>+<span class="shortcut">+</span> - Nagyítás</li>
+          <li><span class="shortcut">ctrl</span>+<span class="shortcut">-</span> - Kicsinyítés</li>
         </ul>
       </div>
 
-      <h2>Navigációs eszközök</h2>
+      <h2>Nézetek</h2>
 
-      <h3>Nagyítás eszközök</h3>
-      <div class="image-placeholder"> [KÉP HELYE: Navigációs eszközök sávja] </div>
-
-      <div class="control-box">
-        <h4>Nagyítás illesztése (Zoom to Fit)</h4>
-        <p>Automatikusan beállítja a kamerát, hogy az egész barlangrendszer látható legyen a viewportban.</p>
-        <p
-          ><strong>Használat:</strong> Kattintson a nagyítás illesztése gombra vagy használja az
-          <span class="shortcut">F</span> billentyűt.</p
+      <p>Az objektumokat három különböző nézetben tekinthetjük meg:</p>
+      <ul>
+        <li
+          ><strong>Alaprajz nézet:</strong> Az objektumok mutatása felülnézetből, mintha lefelé nézne rá. Ez a
+          klasszikus térkép nézet.</li
         >
-      </div>
+        <li
+          ><strong>Oldal nézet:</strong> Az objektumok mutatása oldalnézetből, amely a függőleges kiterjedést
+          mutatja.</li
+        >
+        <li><strong>3D nézet:</strong> Szabad 3D nézet, ahol bármilyen szögből megtekintheti az objektumokat.</li>
+      </ul>
 
       <div class="control-box">
-        <h4>Nagyítás/Kicsinyítés</h4>
-        <p>Fokozatos nagyítás és kicsinyítés a barlang részleteinek megtekintéséhez.</p>
-        <p><strong>Használat:</strong> Kattintson a + vagy - gombokra, vagy használja a görgőt.</p>
+        <h4>3D nézet (3D View)</h4>
+        <div class="image-placeholder black"> <img src="images/5-3d.png" /> </div>
       </div>
-
-      <h3>Nézet módok</h3>
 
       <div class="control-box">
         <h4>Alaprajz nézet (Plan View)</h4>
-        <p>A barlangrendszer felülnézetből, mintha lefelé nézne rá. Ez a klasszikus térkép nézet.</p>
+        <p>Alaprajz nézetben a dőlés mutató nem látszik, mert a dőlés nem változik ebben a nézetben.</p>
+        <div class="image-placeholder black"> <img src="images/5-plan.png" /> </div>
+      </div>
+
+      <div class="control-box">
+        <h4>Oldal nézet (Profile View)</h4>
+        <p>Oldal nézetben a dőlés mutató nem látszik, mert a dőlés nem változik ebben a nézetben.</p>
+        <div class="image-placeholder black"> <img src="images/5-profile.png" /> </div>
+      </div>
+
+      <div class="step">
+        <h4>Független nézetek</h4>
         <p
-          ><strong>Használat:</strong> Kattintson az alaprajz gombra vagy használja az
-          <span class="shortcut">1</span> billentyűt.</p
+          >A nézetek függetlenek egymástól, egymást nem befolyásolják, azaz az egyik nézetben végrehajtott műveletek
+          (forgatás, eltolás nagyítás/kicsinyítés) nem befolyásolják a többi nézetet. Ez egy jelentős eltérés a Polygon
+          programhoz képest.</p
         >
-        <div class="image-placeholder"> [KÉP HELYE: Alaprajz nézet példa] </div>
       </div>
 
-      <div class="control-box">
-        <h4>Hosszmetszet nézet (Profile View)</h4>
-        <p>A barlangrendszer oldalnézetből, amely a függőleges kiterjedést mutatja.</p>
+      <div class="step">
+        <h4>Kamera pozíció</h4>
         <p
-          ><strong>Használat:</strong> Kattintson a hosszmetszet gombra vagy használja a
-          <span class="shortcut">2</span> billentyűt.</p
-        >
-        <div class="image-placeholder"> [KÉP HELYE: Hosszmetszet nézet példa] </div>
+          >Minden nézet egy külön kamerán keresztül mutatja az objektumokat. A külön kamerák teszik függetlenné a
+          nézeteket egymástól. Alaprajzi nézetben a kamera az objektumok felett van és függőlegesen lefele néz, oldal
+          nézetben a kamera oldalról mutatja az objektumokat. A végrehajtott műveletek a kamera pozícióját változtatják
+          és nem ténylegesen az objektumokat, azok minden nézetben fix pozícióban maradnak. 3D nézetben a forgatás a
+          kamerát keringeti az objektumok körül tetszőleges helyzetből, az eltolás a kamerát mozgatja el valamilyen
+          irányban. Oldal nézetben a forgatás szintén a kamerát keringeti egy fix körpályán, az eltolás szintén a
+          kamerát mozgatja el valamilyen irányban. Alaprajzi nézetben a forgatás a kamerát forgatja a függőleges tengely
+          körül, az eltolás szintén a kamerát mozgatja el valamilyen irányban. A végrehajtott műveleteket ennek
+          függvényében kell értelmezni. Például ezért van az ha alaprazi nézetben eltoljuk a kamerát, akkor a forgatás
+          nem az objektumok középpontja körül fog forgatni, hanem a 3D jelenet középpontja körül, ahova a kamera mindig
+          néz.
+        </p>
+      </div>
+
+      <h2>Navigációs sáv eszközei</h2>
+
+      <div class="image-placeholder black"> <img src="images/5-navbar.png" /> </div>
+
+      <h3>Nagyítás/kicsinyítés/illesztés</h3>
+
+      <div class="control-box">
+        <h4><img class="icon" src="../../icons/zoom_fit.svg" /> Jelenet illesztése (Zoom to Fit)</h4>
+        <p>Automatikusan beállítja a kamerát, hogy minden objektum látható legyen a jelenetben.</p>
       </div>
 
       <div class="control-box">
-        <h4>3D nézet</h4>
-        <p>Szabad 3D nézet, ahol bármilyen szögből megtekintheti a barlangrendszert.</p>
-        <p
-          ><strong>Használat:</strong> Kattintson a 3D gombra vagy használja a
-          <span class="shortcut">3</span> billentyűt.</p
-        >
-        <div class="image-placeholder"> [KÉP HELYE: 3D nézet példa] </div>
-      </div>
-
-      <h2>Vizualizációs beállítások</h2>
-
-      <h3>Vonal szín módok</h3>
-      <p>A barlang vonalak színezését különböző módokban állíthatja be:</p>
-
-      <div class="control-box">
-        <h4>Globális szín</h4>
-        <p>Minden vonal ugyanazzal a színnel jelenik meg.</p>
+        <h4><img class="icon" src="../../icons/zoom_in.svg" />Nagyítás</h4>
+        <p>Fokozatos nagyítás az objektumok részleteinek megtekintéséhez.</p>
       </div>
 
       <div class="control-box">
-        <h4>Mélység szerinti átmenet</h4>
-        <p>A vonalak színe a Z koordináta (mélység) szerint változik.</p>
+        <h4><img class="icon" src="../../icons/zoom_out.svg" />Kicsinyítés</h4>
+        <p>Fokozatos kicsinyítés az objektumok részleteinek megtekintéséhez.</p>
+      </div>
+
+      <h3>Nézet módok</h3>
+      <p>Az aktuális nézet háttere zöld a navigációs sávban.</p>
+
+      <div class="control-box">
+        <h4><img class="icon" src="../../icons/3d.svg" />3D nézet</h4>
+        <p>Váltás 3D nézetre.</p>
       </div>
 
       <div class="control-box">
-        <h4>Távolság szerinti átmenet</h4>
-        <p>A vonalak színe a kezdőponttól való távolság szerint változik.</p>
+        <h4><img class="icon" src="../../icons/profile.svg" />Oldal nézet</h4>
+        <p>Váltás oldal nézetre.</p>
       </div>
 
       <div class="control-box">
-        <h4>Barlangonként</h4>
-        <p>Minden barlang különböző színnel jelenik meg.</p>
-      </div>
-
-      <div class="control-box">
-        <h4>Felmérésenként</h4>
-        <p>Minden felmérés különböző színnel jelenik meg.</p>
-      </div>
-
-      <h3>Rács beállítások</h3>
-      <div class="control-box">
-        <h4>Rács megjelenítése/elrejtése</h4>
-        <p>A referencia rács segít a méretezésben és orientációban.</p>
-        <p><strong>Használat:</strong> Kattintson a rács gombra a navigációs sávban.</p>
-      </div>
-
-      <div class="control-box">
-        <h4>Rács pozíció</h4>
-        <p>A rács pozícióját a barlang mélysége szerint állíthatja be.</p>
+        <h4><img class="icon" src="../../icons/plan.svg" />Alaprajz nézet</h4>
+        <p>Váltás alaprajz nézetre.</p>
       </div>
 
       <h3>Határoló doboz</h3>
       <div class="control-box">
-        <h4>Határoló doboz megjelenítése</h4>
-        <p>Egy doboz jelenik meg, amely körülveszi a teljes barlangrendszert.</p>
-        <p><strong>Használat:</strong> Kattintson a határoló doboz gombra a navigációs sávban.</p>
+        <h4><img class="icon" src="../../icons/bounding_box.svg" />Határoló doboz megjelenítése</h4>
+        <p>Egy doboz jelenik meg, amely körülveszi az összes objektumot.</p>
+      </div>
+
+      <h3>Vonal szín módok</h3>
+      <div class="control-box"
+        ><img class="icon" src="../../icons/cl_color.svg" /> A vonalak színezését különböző módokban állíthatja be:
+
+        <ul>
+          <li> <strong>Globális szín: </strong>Minden vonal ugyanazzal a színnel jelenik meg. </li>
+
+          <li> <strong>Mélység szerinti átmenet</strong>A vonalak színe a Z koordináta (mélység) szerint változik. </li>
+
+          <li>
+            <strong>Távolság szerinti átmenet</strong>A vonalak színe a kezdőponttól való távolság szerint változik.
+          </li>
+
+          <li>
+            <strong>Barlangonként</strong>Minden barlang különböző színnel jelenik meg (ha azokhoz állítottunk be külön
+            színt).
+          </li>
+
+          <li>
+            <strong>Felmérésenként</strong>Minden felmérés különböző színnel jelenik meg (ha azokhoz állítottunk be
+            külön színt).
+          </li>
+        </ul>
+      </div>
+
+      <h3>Rács beállítások</h3>
+      <div class="control-box">
+        <h4><img class="icon" src="../../icons/grid.svg" />Rács megjelenítése/elrejtése</h4>
+        <p
+          >A referencia rács segít az orientációban és méretezésben. A rács az objektumok felett, alatt látható, vagy
+          nem látható.</p
+        >
       </div>
 
       <h2>Pont kiválasztás és interakció</h2>
 
-      <h3>Raycasting engedélyezése</h3>
-      <div class="step">
-        <h4>1. lépés: Raycasting bekapcsolása</h4>
-        <p>Kattintson a raycasting gombra a navigációs sávban, vagy használja a megfelelő gyorsbillentyűt.</p>
+      <p
+        >A pont kiválasztás lehetővé teszi az egér mozgatásával a barlangok és felszíni objektumok pontjainak a
+        kiválasztását. Kattintás nélkül egy pont fölé húzva az egeret az egér mutatóra változik és egy piros kör jelenik
+        meg a pont felett, valamint az adott pont részletei jelennek még a láblécben. Kattintás hatására pedig egy
+        felugró kontextus menüből választhatunk opciókat (pl. távolság mérés).</p
+      >
+
+      <div class="control-box">
+        <h4><img class="icon" src="../../icons/raycasting.svg" />Pont kiválasztás engedélyezése/tiltása</h4>
+        <p
+          >A pont kiválasztás ikonra kattinva a navigációs sávban a kiválasztás ki-be kapcsolható. Aktív módban az ikon
+          háttere zöld. A kiválasztást akkor érdemes kikapcsolni, ha az egér mozgatásával a láblécben megjelenő
+          részletek zavaróak.</p
+        >
       </div>
 
-      <div class="step">
-        <h4>2. lépés: Pont kiválasztása</h4>
-        <p>Kattintson egy pontra a 3D jelenetben. A kiválasztott pont kiemelésre kerül.</p>
+      <div class="row">
+        <div class="column-2">
+          <h3>Pont kontextus menü</h3>
+          <p>Bal egérgomb kattintással egy pontra megnyílik a kontextus menü:</p>
+          <ul>
+            <li><strong>Pont részletei:</strong> Részletes információk a pontról</li>
+            <li><strong>Távolság innen:</strong> Távolság mérés indítása ettől a ponttól</li>
+            <li><strong>Távolság ide:</strong> Távolság mérés indítása eddig a pontig</li>
+            <li
+              ><strong>Forgáspont beállítása:</strong> Kamera beállítása az adott pontra, ezáltal a forgáspont
+              beállítása</li
+            >
+          </ul>
+        </div>
+        <div style="flex: 10%" class="image-placeholder black small-padding column-2">
+          <img src="images/5-context.png" />
+        </div>
       </div>
 
-      <div class="step">
-        <h4>3. lépés: Pont információi</h4>
-        <p>A kiválasztott pont információi megjelennek a láblécben és az info panelben.</p>
+      <div class="row">
+        <div class="column-2">
+          <h3>Pont részletek</h3>
+
+          Pont részletek panelben a következő adatok jelennek meg a pontról:
+          <ul>
+            <li><strong>Név:</strong> Pont egyedi neve</li>
+            <li><strong>Koordináták:</strong> Pont koordinátái (helyi, EOV, WGS84)</li>
+            <li><strong>Tipus:</strong> Pontot definiáló mérés típusa</li>
+            <li><strong>Barlang:</strong> Barlang neve, amelyben a pont található</li>
+            <li><strong>Felmérés:</strong> Felmérés neve, amely definiálta a pontot</li>
+            <li
+              ><strong>Mérések:</strong> A pontot érintő mérések, a mérés adatait a felmérét neve és a megjegyzés
+              követi</li
+            >
+          </ul>
+        </div>
+        <div style="flex: 20%" class="image-placeholder black small-padding column-2">
+          <img src="images/5-station-details.png" />
+        </div>
       </div>
 
-      <div class="image-placeholder"> [KÉP HELYE: Pont kiválasztás és info panel] </div>
+      <div class="row">
+        <div class="column-2">
+          <h3>Távolság mérése</h3>
 
-      <h3>Pont kontextus menü</h3>
-      <p>Jobb egérgomb kattintással egy pontra megnyílik a kontextus menü:</p>
-      <ul>
-        <li><strong>Pont részletei:</strong> Részletes koordináta információk</li>
-        <li><strong>Távolság innen:</strong> Távolság mérés más pontoktól</li>
-        <li><strong>Távolság ide:</strong> Távolság mérés más pontokból</li>
-        <li><strong>Forgáspont beállítása:</strong> Kamera forgáspont beállítása</li>
-      </ul>
+          Pont részletek panelben a következő adatok jelennek meg a pontról:
+          <ul>
+            <li><strong>Név:</strong> Pont egyedi neve</li>
+            <li><strong>Koordináták:</strong> Pont koordinátái (helyi, EOV, WGS84)</li>
+            <li><strong>Tipus:</strong> Pontot definiáló mérés típusa</li>
+            <li><strong>Barlang:</strong> Barlang neve, amelyben a pont található</li>
+            <li><strong>Felmérés:</strong> Felmérés neve, amely definiálta a pontot</li>
+            <li
+              ><strong>Mérések:</strong> A pontot érintő mérések, a mérés adatait a felmérét neve és a megjegyzés
+              követi</li
+            >
+          </ul>
+        </div>
+        <div style="flex: 60%" class="image-placeholder black small-padding column-2">
+          <img src="images/5-distance.png" />
+        </div>
+      </div>
 
       <h2>Jelenet áttekintő</h2>
 

@@ -37,6 +37,7 @@
                 <li>Saját nevet és metaadatokat tartalmaz (barlang adatlap)</li>
                 <li>Egy vagy több felmérést tartalmazhat</li>
                 <li>Attribútumokat tartalmazhat</li>
+                <li>Pont megjegyzéseket tartalmazhat</li>
               </ul>
               <p>Az attribútumokat egy későbbi fejezet taglalja, így azokra most nem térnénk ki.</p>
               <p>A barlang adatlapja a következőket tartalmazza:</p>
@@ -48,6 +49,14 @@
             </div>
             <div class="image-placeholder white column-2"> <img src="images/3-barlang-struktura.png" /> </div>
           </div>
+
+          <h4>Pont megjegyzések</h4>
+
+          <p
+            >Habár a felmérések során megadott megjegyzések lehetővé teszik a 'pontig' állomás jellemzését, de az induló
+            pont jellemzését ez a módszer nem teszi lehetővé. Az általános pont megjegyzések lehetővé teszik tetszőleges
+            pont jellemzését, leírását igazodva más szoftverekhez (pl. TopoDroid)</p
+          >
 
           <div class="row">
             <div class="column-2">
@@ -122,7 +131,7 @@
                 <li><strong>Középvonal (center - kék): </strong> A barlang fő poligon vonala</li>
                 <li
                   ><strong>Tüske (splay - piros): </strong> Egy adott pontból végzett, a barlang kontúrját rögzítő
-                  mérések, magyarok körében "sünizésnek" hívják.</li
+                  mérések, a magyarok körében "sünizésnek" hívott módszer mérései.</li
                 >
                 <li
                   ><strong>Segédvonal (auxiliary - zöld): </strong> Olyan kiegészítő mérések, amelyek a barlang
@@ -199,12 +208,6 @@
         </div>
       </div>
 
-      <h2>🔄 Adatvalidáció és ellenőrzés</h2>
-
-      <p
-        >A Speleo Studio automatikusan ellenőrzi a mérési adatokat és jelzi a hibákat, hogy a mérési eremények ne
-        vezessék félre a szakembereket és a barlangkutatókat.</p
-      >
       <div class="validation-section">
         <h3>Automatikus validáció</h3>
         <div class="validation-rules">
@@ -229,6 +232,94 @@
           </div>
         </div>
       </div>
+
+      <div class="data-model-diagram">
+        <div class="model-level">
+          <h3>Attribútumok</h3>
+
+          <p
+            >Az attribútumok segítségével plusz tulajdonságokat, információkat adhatunk meg a barlang egy adott
+            pontjához, szakaszához vagy részéhez. Például: hol van kötél, létra a baralngban, melyik szakasza
+            árvízveszéles, hol - milyen magas CO2 szint szokott lenni, milyen rétegdőlés mérhető egy akna felénél.
+          </p>
+
+          <p>Az attribútumok széles választéka sokrétűen leírhatja a barlangot, amely:</p>
+
+          <ul>
+            <li>hasznos a barlangkutatók számára</li>
+            <li>tudományos vizsgálatokat tesz lehetővé</li>
+            <li>jelentős mértékben kiegészíti a kataszteri adatokat</li>
+            <li>lehetővé teszik statisztikák készítését</li>
+          </ul>
+
+          <p
+            >Az attribútumok térbeli ábrázolása a Speleo Studio-t ebben az értelemben kiemeli a többi szoftver közül,
+            hiszen más szoftverek nem támogatják ennyire részletes és térbeli adatok felvételét és ábrázolását. Az
+            attríbútumok vizualizálása, amellett, hogy rendkívül informatív, rejtett összefüggések felismerését is
+            lehetővé teszi (pl. rétegdőlések közötti összefüggések)</p
+          >
+
+          <div class="row">
+            <div class="column-2">
+              <p>Az attribútumoknak három típusa támogatott</p>
+              <ul>
+                <li
+                  ><strong>Pont:</strong> Egy adott mérési pontra vonatkozik, például egy terem adott pontján mért
+                  vető.</li
+                >
+                <li
+                  ><strong>Szakasz:</strong> Az attríbutum a barlang két tetszőleges pontja közötti szakaszra
+                  vonatkozik, például egy akna esetén milyen hosszú kötél van beépítve az akna kezdő és vépgontja
+                  között. A szakasz attríbutum a két pont közötti legrövidebb út mentén van értelmezve, nem veszi
+                  figyelembe az ebből a szakaszből induló egyéb járatokat.</li
+                >
+                <li
+                  ><strong>Komponens (barlang rész):</strong> A barlang egy adott részére adhatunk meg tulajdonságokat a
+                  kompnens attribútumokkal. A komponens attribútumoknak mindig van egy kezdőpontja, ahonnan kiindulva
+                  minden járatra vonatkoztatja az adott tulajsonságot egészen addig, amíg egy megadott vépgponthoz nem
+                  ér. Gondoljunk a barlangra egy gráfként, a komponent attribútum a gráf egy adott komponensére
+                  vonatkozik, amelynek bejárása a kezdőponttól történik és a végpontokig tart. Végpontok megadása nélkül
+                  a komponens attribútum a teljes barlangra vonatkozik.
+                </li>
+              </ul>
+            </div>
+            <div class="image-placeholder column-2 white">
+              <img src="images/3-attributumok.png" />
+            </div>
+          </div>
+          <p>Az attribútumokat beosztottuk főbb csoportokba (kategóriákba):</p>
+          <ul>
+            <li>Geológia</li>
+            <li>Felszerelés</li>
+            <li>Képződmény</li>
+            <li>Fauna</li>
+            <li>Klimatológia</li>
+            <li>Metaadatok</li>
+          </ul>
+          <p
+            >Minden attribútumnak vannak kötelező és nem kötelező paraméterei, ezek az attríbutumtól függenek. Egy
+            <i>kötél</i> attríbutum esetén kötelező paraméter a hossz, nem kötelező mezők az állapot és a beépítés éve.
+            A paraméterek helyességét a Speleo Studio automatikusan ellenőrzi, például a kötél hossz értéke nem lehet
+            negatív.
+          </p>
+          <p
+            >Az <strong>attribútumok teljes listáját</strong> az
+            <a href="../../attributes.html">Attribútum referencia</a> oldalon részletesen megtalálja.</p
+          >
+
+          <p
+            >Az <strong>attribútumok szerkesztését </strong> a
+            <a href="06-attributumok.html">Attribútumok</a> fejezetben részletesen bemutatjuk.</p
+          >
+        </div>
+      </div>
+
+      <h2>🔄 Adatvalidáció és ellenőrzés</h2>
+
+      <p
+        >A Speleo Studio automatikusan ellenőrzi a mérési adatokat és jelzi a hibákat, hogy a mérési eremények ne
+        vezessék félre a szakembereket és a barlangkutatókat.</p
+      >
 
       <h2>💡 Gyakorlati tanácsok</h2>
 
