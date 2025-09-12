@@ -1,171 +1,13 @@
 import { falsy, parseMyFloat, isFloatStr } from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
 
-const attributeDefintions = {
-  verion : '1.0.0',
-  types  : [
-    {
-      id   : 1,
-      name : 'geology'
-    },
-    {
-      id   : 2,
-      name : 'equipment'
-    },
-    {
-      id   : 3,
-      name : 'formation'
-    },
-    {
-      id   : 4,
-      name : 'fauna'
-    },
-    {
-      id   : 5,
-      name : 'climatology'
-    },
-    {
-      id   : 6,
-      name : 'metadata'
-    }
-  ],
-  definitions : [
-    {
-      id       : 1,
-      category : 3,
-      name     : 'speleothem',
-      params   : {
-        type : {
-          required : true,
-          type     : 'string',
-          values   : ['dripstone', 'mammilary']
-        },
-        description : {
-          type : 'string'
-        }
-      }
-    },
-    {
-      id       : 2,
-      category : 1,
-      name     : 'bedding',
-      params   : {
-        azimuth : {
-          type     : 'float',
-          required : true
-        },
-        dip : {
-          type       : 'float',
-          required   : true,
-          validators : {
-            min : -90.0,
-            max : 90.0
-          }
-        },
-        width : {
-          type : 'int'
-        },
-        height : {
-          type : 'int'
-        }
-      }
-    },
-    {
-      id       : 3,
-      category : 1,
-      name     : 'fault',
-      params   : {
-        azimuth : {
-          type : 'float'
-        },
-        dip : {
-          type : 'float'
-        },
-        width : {
-          type : 'int'
-        },
-        height : {
-          type : 'int'
-        }
-      }
-    },
-    {
-      id       : 4,
-      category : 2,
-      name     : 'rope',
-      params   : {
-        type : {
-          type : 'string'
-        }
-      }
-    },
-    {
-      id       : 5,
-      category : 5,
-      name     : 'co',
-      params   : {
-        value : {
-          type : 'int'
-        }
-      }
-    },
-    {
-      id     : 6,
-      type   : 6,
-      name   : 'label',
-      params : {
-        value : {
-          type : 'string'
-        }
-      }
-    },
-    {
-      id       : 7,
-      category : 6,
-      name     : 'exploration',
-      params   : {
-        year : {
-          type     : 'int',
-          required : true
-        },
-        month : {
-          type       : 'int',
-          validators : {
-            min : 1,
-            max : 12
-          }
-        },
-        day : {
-          type       : 'int',
-          validators : {
-            min : 1,
-            max : 31
-          }
-        }
-      }
-    },
-    {
-      id       : 8,
-      category : 4,
-      name     : 'bat',
-      params   : {
-        popuplation : {
-          type       : 'int',
-          validators : {
-            min : 0
-          }
-        }
-      }
-    }
-  ]
-};
-
-class AttributesDefinitions {
+export class AttributesDefinitions {
 
   attributesPattern = /((?<name>[A-Za-z]+)(\((?<params>[A-Za-z0-9., ":{}]+)\))?)/g;
 
   constructor(attributeDefintions) {
     this.defs = attributeDefintions;
+    this.schemaVersion = attributeDefintions.version;
   }
 
   #getDefiniton(predicate) {
@@ -253,6 +95,7 @@ class AttributesDefinitions {
 
 }
 
+// not exporter, created by AttributesDefinitions
 class Attribute {
 
   paramNames;
@@ -519,5 +362,3 @@ class Attribute {
     return a;
   }
 }
-
-export { attributeDefintions, AttributesDefinitions };

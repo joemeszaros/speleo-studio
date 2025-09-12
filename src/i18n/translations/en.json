@@ -52,7 +52,7 @@
     },
     "about": {
       "title": "Speleo Studio",
-      "description": "A comprehensive web application for cave visualization and survey management. Speleo Studio provides professional tools for exploring, analyzing, and visualizing cave systems in 3D.",
+      "description": "A comprehensive web application for cave visualization and survey management. Speleo Studio provides professional tools for cave systems 3D visualization and analysis.",
       "keyFeatures": "Key Features:",
       "features": {
         "3d": "3D cave visualization with Three.js",
@@ -565,7 +565,6 @@
     "import": {
       "noShotsToAdd": "No shots to add from survey {survey}",
       "allShotsSkipped": "All shots from survey {survey} were skipped",
-      "unableToImportFile": "Unable to import file {name}: {error}",
       "surveyNameUndefined": "Survey name is undefined, please set a name in the file",
       "surveyAlreadyExists": "Survey {name} already exists in cave {cave}",
       "caveAlreadyImported": "Cave {name} has already been imported",
@@ -586,12 +585,15 @@
       "noShotDataSection": "No shot data section found in TopoDroid CSV",
       "noFromToInHeader": "No 'from' and 'to' columns found in header: {header}",
       "noHeaderLine": "No header line found in TopoDroid CSV",
-      "importFailed": "Import of {name} failed",
-      "unsupportedFileType": "Unsupported file type: {extension}"
+      "importCaveFailed": "Import of {name} failed",
+      "importFailed": "Import failed",
+      "unsupportedFileType": "Unsupported file type: {extension}",
+      "longFormatNotSupported": "Only the simplified format is supported"
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",
-      "failedToInitIndexedDb": "Failed to initialize database"
+      "failedToInitIndexedDb": "Failed to initialize database",
+      "failedToLoadAttributes": "Failed to load attributes from {url}"
     },
     "config": {
       "invalidConfigurationFileFormat": "Invalid configuration file format",
@@ -743,37 +745,6 @@
       "splay": "Splay"
     }
   },
-  "attributes": {
-    "name": "name",
-    "names": {
-      "speleothem": "speleothem",
-      "bedding": "bedding",
-      "fault": "fault",
-      "rope": "rope",
-      "co": "co",
-      "label": "label",
-      "exploration": "exploration",
-      "bat": "bat"
-    },
-    "params": {
-      "dip": "dip",
-      "strike": "strike",
-      "azimuth": "azimuth",
-      "width": "width",
-      "height": "height",
-      "type": "type",
-      "description": "description",
-      "value": "value",
-      "year": "year",
-      "month": "month",
-      "day": "day",
-      "popuplation": "popuplation"
-    },
-    "values": {
-      "dripstone": "dripstone",
-      "mammilary": "mammilary"
-    }
-  },
   "common": {
     "loading": "Loading...",
     "error": "Error",
@@ -802,5 +773,68 @@
     "clear": "Clear",
     "invalid": "Invalid",
     "comments": "Comments"
+  },
+  "attributes": {
+    "title": "Attribute Definitions Reference",
+    "overview": "Overview",
+    "cats": "Categories",
+    "attributes": "Attributes",
+    "parameters": "Parameters",
+    "categoryId": "Category ID",
+    "attributeId": "Attribute ID",
+    "noAttributes": "No attributes defined for this category",
+    "noParameters": "No parameters defined",
+    "type": "Type",
+    "required": "Required",
+    "yes": "Yes",
+    "validators": "Validators",
+    "valuesLabel": "Values",
+    "categories": {
+      "geology": "Geology",
+      "equipment": "Equipment",
+      "formation": "Formation",
+      "fauna": "Fauna",
+      "climatology": "Climatology",
+      "metadata": "Metadata"
+    },
+    "name": "name",
+    "names": {
+      "speleothem": "speleothem",
+      "bedding": "bedding",
+      "fault": "fault",
+      "rope": "rope",
+      "co": "co",
+      "label": "label",
+      "exploration": "exploration",
+      "bat": "bat"
+    },
+    "namesDescription": {
+      "bedding": "Allows the bedding to be set"
+    },
+    "params": {
+      "dip": "dip",
+      "strike": "strike",
+      "azimuth": "azimuth",
+      "width": "width",
+      "height": "height",
+      "type": "type",
+      "description": "description",
+      "value": "value",
+      "year": "year",
+      "month": "month",
+      "day": "day",
+      "popuplation": "popuplation"
+    },
+    "paramsDescription": {
+      "dip": "The dip value",
+      "strike": "The strike value",
+      "azimuth": "The azimuth value",
+      "width": "The width value",
+      "height": "The height value"
+    },
+    "values": {
+      "dripstone": "dripstone",
+      "mammilary": "mammilary"
+    }
   }
 }

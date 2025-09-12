@@ -12,7 +12,7 @@ import { Sidebar } from './ui/sidebar.js';
 import { ExplorerTree } from './ui/explorer-tree.js';
 import { SettingsPanel } from './ui/settings-panel.js';
 
-import { AttributesDefinitions, attributeDefintions } from './attributes.js';
+import { AttributesDefinitions } from './attributes.js';
 import { showErrorPanel } from './ui/popups.js';
 import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
@@ -45,30 +45,47 @@ class Main {
       const observer = new ObjectObserver();
       const options = observer.watchObject(loadedOptions);
 
-      const attributeDefs = new AttributesDefinitions(attributeDefintions);
+      this.#loadAttributes()
+        .then((attributeDefintions) => {
 
-      // Initialize IndexedDB database and project systems
-      this.databaseManager = new DatabaseManager();
-      this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
-      this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
-      this.editorStateSystem = new EditorStateSystem(this.databaseManager);
-      this.declinationCache = new DeclinationCache(this.databaseManager);
+          const attributeDefs = new AttributesDefinitions(attributeDefintions);
+          console.log(`Attributes definitions loaded: ${attributeDefintions.version}`);
 
-      loader.load(
-        'fonts/helvetiker_regular.typeface.json',
-        'fonts/helvetiker_bold.typeface.json',
-        (font) => {
-          // Initialize the application
-          this.#initializeApp(db, options, observer, attributeDefs, font);
-        },
-        () => {},
-        (error) => {
-          console.error(i18n.t('errors.init.failedToLoadFont'), error);
-          showErrorPanel(i18n.t('errors.init.failedToLoadFont'));
-        }
-      );
+          // Initialize IndexedDB database and project systems
+          this.databaseManager = new DatabaseManager();
+          this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
+          this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
+          this.editorStateSystem = new EditorStateSystem(this.databaseManager);
+          this.declinationCache = new DeclinationCache(this.databaseManager);
+
+          loader.load(
+            'fonts/helvetiker_regular.typeface.json',
+            (font) => {
+              // Initialize the application
+              this.#initializeApp(db, options, observer, attributeDefs, font);
+            },
+            () => {},
+            (error) => {
+              console.error(i18n.t('errors.init.failedToLoadFont'), error);
+              showErrorPanel(i18n.t('errors.init.failedToLoadFont'));
+            }
+          );
+        })
+        .catch((error) => {
+          console.error(i18n.t('errors.init.failedToLoadAttributes', { error: error.message }), error);
+          showErrorPanel(i18n.t('errors.init.failedToLoadAttributes', { error: error.message }));
+        });
     });
 
+  }
+
+  async #loadAttributes(url = 'attributes.json') {
+    console.log(`Loading attributes from ${url}`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(i18n.t('errors.init.failedAttributesHttpCode', { url, httpCode: response.status }));
+    }
+    return await response.json();
   }
 
   async #initializeApp(db, options, observer, attributeDefs, font) {
@@ -261,7 +278,6 @@ class Main {
       showErrorPanel(i18n.t('errors.import.surveyNameUndefined'));
       return;
     }
-
     const caveName = document.getElementById('surveyInput').caveName; // custom property
     if (this.db.getSurvey(caveName, survey.name) !== undefined) {
       showErrorPanel(i18n.t('errors.import.surveyAlreadyExists', { name: survey.name, cave: caveName }));
@@ -350,8 +366,9 @@ class Main {
             });
           })
           .catch((error) => {
-            showErrorPanel(i18n.t('errors.import.unableToImportFile', { name: caveNameUrl, error: error.message }));
-            console.error(error);
+            const msgPrefix = i18n.t('errors.import.importCaveFailed', { name: caveNameUrl });
+            showErrorPanel(`${msgPrefix}: ${error.message}`);
+            console.error(msgPrefix, error);
           });
       }
     } else {

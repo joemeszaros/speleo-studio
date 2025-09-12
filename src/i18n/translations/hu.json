@@ -52,7 +52,7 @@
     },
     "about": {
       "title": "Speleo Studio",
-      "description": "Átfogó webes alkalmazás barlang vizualizációhoz és felmérés kezeléséhez. A Speleo Studio professzionális eszközöket biztosít a barlangrendszerek 3D-s feltárásához, elemzéséhez és vizualizálásához.",
+      "description": "A Speleo Studio egy széleskörű funckiókkal rendelkező webes alkalmazás barlang vizualizációhoz és felmérés kezeléséhez, amely professzionális eszközöket biztosít a barlangkutatók számára.",
       "keyFeatures": "Főbb funkciók:",
       "features": {
         "3d": "3D barlang vizualizáció Three.js-sel",
@@ -589,7 +589,6 @@
     "import": {
       "noShotsToAdd": "Nincsenek mérések  a(z) {survey} felmérésben",
       "allShotsSkipped": "Az {survey} felmérésből minden mérés kihagyva",
-      "unableToImportFile": "Nem lehet importálni a(z) {name} fájlt: {error}",
       "surveyNameUndefined": "A felmérés neve nincs megadva, kérem adja meg a nevet a fájlban",
       "surveyAlreadyExists": "A(z) {name} nevű felmérés már létezik a(z) {cave} barlangban",
       "caveAlreadyImported": "A(z) {name} nevű barlang már importálva lett korábban",
@@ -610,12 +609,16 @@
       "noShotDataSection": "Nem található mérési adat szakasz a TopoDroid CSV-ben",
       "noFromToInHeader": "Nem található 'from' és 'to' oszlop a fejlécben: {header}",
       "noHeaderLine": "Nem található fejléc sor a TopoDroid CSV-ben",
-      "importFailed": "{errorMessage}: {error}",
-      "unsupportedFileType": "Nem támogatott fájltípus: {extension}"
+      "importCaveFailed": "A {name} fájl importálása sikertelen",
+      "importFailed": "Importálás sikertelen",
+      "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
+      "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott"
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",
-      "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist"
+      "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist",
+      "failedToLoadAttributes": "Nem lehet betölteni a attribútumokat: {error}",
+      "failedAttributesHttpCode": "Nem várt HTTP kód a(z) {url} betöltésekor: {httpCode}"
     },
     "config": {
       "invalidConfigurationFileFormat": "Érvénytelen konfigurációs fájl formátum",
@@ -767,7 +770,58 @@
       "splay": "Tüske"
     }
   },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "export": "Export",
+    "delete": "Delete",
+    "rename": "Rename",
+    "edit": "Edit",
+    "close": "Close",
+    "project": "Project",
+    "cave": "Cave",
+    "caves": "Caves",
+    "type": "Type",
+    "name": "Name",
+    "survey": "Survey",
+    "from": "From",
+    "to": "To",
+    "station": "Station",
+    "shots": "Shots",
+    "current": "Current",
+    "open": "Open",
+    "undo": "Undo",
+    "redo": "Redo",
+    "clear": "Clear",
+    "invalid": "Invalid",
+    "comments": "Comments"
+  },
   "attributes": {
+    "title": "Attribútum referencia",
+    "overview": "Áttekintés",
+    "cats": "Kategória",
+    "attributes": "Attribútum",
+    "parameters": "Paraméter",
+    "categoryId": "Kategória ID",
+    "attributeId": "Attribútum ID",
+    "noAttributes": "Nincsenek attribútumok definiálva ehhez a kategóriához",
+    "noParameters": "Nincsenek paraméterek definiálva",
+    "type": "Típus",
+    "required": "Kötelező",
+    "yes": "Igen",
+    "validators": "Validátorok",
+    "valuesLabel": "Értékek",
+    "categories": {
+      "geology": "Geológia",
+      "equipment": "Felszerelés",
+      "formation": "Képződmény",
+      "fauna": "Fauna",
+      "climatology": "Klimatológia",
+      "metadata": "Metaadatok"
+    },
     "name": "név",
     "names": {
       "speleothem": "szpeleotéma",
@@ -779,6 +833,10 @@
       "exploration": "felfedezés",
       "bat": "denevér"
     },
+    "namesDescription": {
+      "bedding": "Lehetővé teszi a rétegdőlés megadását"
+    },
+
     "params": {
       "dip": "dőlés",
       "strike": "irány",
@@ -791,40 +849,18 @@
       "year": "év",
       "month": "hónap",
       "day": "nap",
-      "popuplation": "populáció"
+      "population": "populáció"
+    },
+    "paramsDescription": {
+      "dip": "A dőlés értéke",
+      "strike": "A vető iránya",
+      "azimuth": "A vető iránya",
+      "width": "A szélesség értéke",
+      "height": "A magasság értéke"
     },
     "values": {
       "dripstone": "cseppkő",
       "mammilary": "felhő"
     }
-  },
-  "common": {
-    "loading": "Betöltés...",
-    "error": "Hiba",
-    "success": "Sikeres",
-    "cancel": "Mégse",
-    "save": "Mentés",
-    "export": "Exportálás",
-    "delete": "Törlés",
-    "rename": "Átnevezés",
-    "edit": "Szerkesztés",
-    "close": "Bezárás",
-    "project": "Projekt",
-    "cave": "Barlang",
-    "caves": "Barlangok",
-    "type": "Típus",
-    "name": "Név",
-    "survey": "Felmérés",
-    "from": "Ponttól",
-    "to": "Pontig",
-    "station": "Pont",
-    "shots": "Mérések",
-    "current": "Jelenlegi",
-    "open": "Megnyitás",
-    "undo": "Visszavonás",
-    "redo": "Újra",
-    "clear": "Törlés",
-    "invalid": "Érvénytelen",
-    "comments": "Megjegyzések"
   }
 }

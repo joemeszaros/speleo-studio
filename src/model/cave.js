@@ -16,7 +16,7 @@ class CaveCycle {
 
 class CaveAttributes {
 
-  constructor(stationAttributes = [], sectionAttributes = [], componentAttributes = [], schemaVersion = '1.0.0') {
+  constructor(stationAttributes = [], sectionAttributes = [], componentAttributes = [], schemaVersion) {
     this.stationAttributes = stationAttributes;
     this.sectionAttributes = sectionAttributes;
     this.componentAttributes = componentAttributes;
@@ -33,6 +33,15 @@ class CaveAttributes {
   }
 
   static fromPure(pure, attributeDefs) {
+    if (pure.schemaVersion === undefined) {
+      pure.schemaVersion = attributeDefs.schemaVersion;
+    } else if (pure.schemaVersion > attributeDefs.schemaVersion) {
+      throw new Error(
+        `Schema version of stored attributes${pure.schemaVersion} is greater than the current version ${attributeDefs.schemaVersion}`
+      );
+    }
+
+    //based on pure.schemaVersion we may need to migrate the attributes to the new format
     pure.sectionAttributes =
       pure.sectionAttributes === undefined
         ? []
@@ -45,6 +54,7 @@ class CaveAttributes {
       pure.stationAttributes === undefined
         ? []
         : pure.stationAttributes.map((sa) => StationAttribute.fromPure(sa, attributeDefs));
+
     return Object.assign(new CaveAttributes(), pure);
   }
 }

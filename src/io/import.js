@@ -23,65 +23,75 @@ class Importer {
   }
 
   importFile(file, name, onLoadFn, endcoding = 'utf8') {
-    if (file) {
-      const reader = new FileReader();
-      const nameToUse = name ?? file.name;
-      const errorMessage = i18n.t('errors.import.importFailed', {
-        name : nameToUse.substring(nameToUse.lastIndexOf('/') + 1)
-      });
-      reader.onload = async (event) => {
-        try {
-          await this.importText(event.target.result, onLoadFn);
-        } catch (e) {
-          console.error(errorMessage, e);
-          showErrorPanel(`${errorMessage}: ${e.message}`, 0);
-        }
-      };
-      reader.onerror = (error) => {
-        console.error(errorMessage, error);
-        showErrorPanel(`${errorMessage}: ${error}`, 0);
-      };
-      reader.readAsText(file, endcoding);
+    if (!file) {
+      return;
     }
+
+    const reader = new FileReader();
+    const nameToUse = name ?? file.name;
+    const errorMessage = i18n.t('errors.import.importCaveFailed', {
+      name : nameToUse.substring(nameToUse.lastIndexOf('/') + 1)
+    });
+
+    reader.onload = async (event) => {
+      try {
+        await this.importText(event.target.result, onLoadFn);
+      } catch (e) {
+        console.error(errorMessage, e);
+        showErrorPanel(`${errorMessage}: ${e.message}`, 0);
+      }
+    };
+
+    reader.onerror = (error) => {
+      console.error(errorMessage, error);
+      showErrorPanel(`${errorMessage}: ${error}`, 0);
+    };
+
+    reader.readAsText(file, endcoding);
   }
 
   static setupFileInputListener(config) {
     const { inputId, handlers, onLoad } = config;
 
     const input = document.getElementById(inputId);
+
     input.addEventListener('change', async (e) => {
-      for (const file of e.target.files) {
-        try {
-          console.log(`🚧 Importing file ${file.name}`);
+      const files = Array.from(e.target.files);
 
-          // Determine the appropriate importer based on file extension
-          let handler;
-          const extension = file.name.toLowerCase().split('.').pop();
+      try {
+        for (const file of files) {
+          try {
+            let handler;
+            const extension = file.name.toLowerCase().split('.').pop();
 
-          handler = handlers.get(extension);
+            handler = handlers.get(extension);
 
-          if (handler === undefined) {
-            throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
-          }
+            if (handler === undefined) {
+              throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
+            }
 
-          // Create a promise-based wrapper for the importFile callback
-          await new Promise((resolve, reject) => {
             handler.importFile(file, file.name, async (importedData, arg1) => {
               try {
                 await onLoad(importedData, arg1);
-                resolve();
-              } catch (error) {
-                reject(error);
+              } catch (onLoadError) {
+                console.error('Error in onLoad callback:', onLoadError);
+                const msgPrefix = i18n.t('errors.import.importCaveFailed', { name: file.name });
+                showErrorPanel(`${msgPrefix}: ${onLoadError.message}`);
               }
             });
-          });
-        } catch (error) {
-          showErrorPanel(i18n.t('errors.import.unableToImportFile', { name: file.name, error: error.message }));
-          console.error(error);
+          } catch (error) {
+            const msgPrefix = i18n.t('errors.import.importCaveFailed', { name: file.name });
+            showErrorPanel(`${msgPrefix}: ${error.message}`);
+            console.error(msgPrefix, error);
+          }
         }
+      } catch (error) {
+        console.error(i18n.t('errors.import.importFailed'), error);
+      } finally {
+        console.log('🚧 Clearing input value');
+        // Always clear the input value, regardless of success or failure
+        input.value = '';
       }
-
-      input.value = '';
     });
   }
 }
@@ -355,6 +365,10 @@ class TopodroidImporter extends Importer {
 
       // Look for header line that contains "from" and "to"
       if (line.startsWith('#') && line.includes('from') && line.includes('to')) {
+        if (line.includes('status')) {
+          // TopoDroid long format
+          throw new Error(i18n.t('errors.import.longFormatNotSupported'));
+        }
         headerLine = line.substring(1).trim();
         shotDataStart = i + 1;
         continue;

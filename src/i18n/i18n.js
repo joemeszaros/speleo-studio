@@ -74,7 +74,7 @@ class I18nManager {
    * @param {Object} params - Parameters for template interpolation
    * @returns {string} Translated message
    */
-  t(key, params = {}, language) {
+  t(key, params = {}, language = this.currentLanguage, showWarning = true) {
     if (!this.initialzed) {
       throw new Error('I18n not initialized');
     }
@@ -82,7 +82,9 @@ class I18nManager {
     const message = this.getNestedTranslation(key, language);
 
     if (!message) {
-      console.warn(`Translation key not found: ${key}`);
+      if (showWarning) {
+        console.warn(`Translation key not found: ${key}`);
+      }
       return key;
     }
 
