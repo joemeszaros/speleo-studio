@@ -117,7 +117,7 @@ export class IconBar {
   }
 
   // Survey-specific buttons
-  static getSurveyButtons(validateSurvey, updateSurvey) {
+  static getSurveyButtons(validateSurvey, updateSurvey, cancelSurvey) {
     return [
       { separator: true },
       {
@@ -131,6 +131,12 @@ export class IconBar {
         tooltip : i18n.t('ui.editors.survey.buttons.update'),
         icon    : 'icons/update.svg',
         click   : () => updateSurvey?.()
+      },
+      {
+        id      : 'cancel-survey',
+        tooltip : i18n.t('ui.editors.base.buttons.cancel'),
+        icon    : 'icons/cancel.svg',
+        click   : () => cancelSurvey?.()
       }
     ];
   }

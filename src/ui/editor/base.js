@@ -63,7 +63,7 @@ class BaseEditor {
         row.appendChild(el);
       });
 
-      const removeBtn = U.node`<button type="button">Remove</button>`;
+      const removeBtn = U.node`<button type="button">${i18n.t('common.remove')}</button>`;
       removeBtn.onclick = (e) => {
         e.preventDefault();
         onRemove(idx);
@@ -81,12 +81,13 @@ class BaseEditor {
 }
 
 class Editor extends BaseEditor {
-  constructor(panel, scene, cave) {
+  constructor(panel, scene, cave, attributeDefs) {
     super(panel);
     this.scene = scene;
     this.cave = cave;
     this.closed = false;
     this.attributesModified = false;
+    this.attributeDefs = attributeDefs;
   }
 
   baseTableFunctions = {
@@ -210,7 +211,7 @@ class Editor extends BaseEditor {
         return false;
       }
     },
-    attributesToClipboard : (value, extractor) => {
+    attributesToClipboard : (value, extractor = (value) => value) => {
       const attributes = extractor(value);
       if (attributes !== undefined) {
         return AttributesDefinitions.getAttributesAsString(attributes);
@@ -221,12 +222,12 @@ class Editor extends BaseEditor {
     clipboardFormatter : (cell, extractor) => {
       const attrs = extractor(cell.getData());
       if (Array.isArray(attrs) && attrs.length > 0) {
-        return AttributesDefinitions.getAttributesAsString(attrs);
+        return this.attributeDefs.getAttributesAsString(attrs);
       } else {
         return '';
       }
     },
-    attributesFromClipboard : (value, converter) => {
+    attributesFromClipboard : (value, converter = (attrs) => attrs) => {
       if (value === undefined || typeof value !== 'string' || value.length === 0) {
         return [];
       }

@@ -15,7 +15,7 @@ class ProjectManager {
    * @param {MyScene} scene - The 3D scene
    * @param {ProjectExplorer} explorer - The project explorer that displays caves and surveys in a tree view
    */
-  constructor(db, options, scene, interaction, explorer, projectSystem, editorStateSystem) {
+  constructor(db, options, scene, interaction, explorer, projectSystem, editorStateSystem, attributeDefs) {
     this.db = db;
     this.options = options;
     this.scene = scene;
@@ -23,7 +23,9 @@ class ProjectManager {
     this.explorer = explorer;
     this.projectSystem = projectSystem;
     this.editorStateSystem = editorStateSystem;
+    this.attributeDefs = attributeDefs;
     this.firstEdit = true;
+
     document.addEventListener('surveyChanged', (e) => this.onSurveyChanged(e));
     document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
@@ -178,7 +180,8 @@ class ProjectManager {
         this.scene,
         this.interaction,
         document.getElementById('resizable-editor'),
-        editorState.state
+        editorState.state,
+        this.attributeDefs
       );
       this.editor.setupPanel();
       this.editor.show();
@@ -232,10 +235,15 @@ class ProjectManager {
 
       if (cave.attributes.sectionAttributes.length > 0) {
         cave.attributes.sectionAttributes.forEach((sa) => {
-          if (sa.section.from === undefined || sa.section.to === undefined) {
+          const from = sa.section.from;
+          const to = sa.section.to;
+          if (from === undefined || to === undefined) {
             return;
           }
-          const cs = SectionHelper.getSection(g, sa.section.from, sa.section.to);
+          if (!cave.stations.has(from) || !cave.stations.has(to)) {
+            return;
+          }
+          const cs = SectionHelper.getSection(g, from, to);
           if (cs !== undefined) {
             sa.section = cs;
           } else {
@@ -247,6 +255,9 @@ class ProjectManager {
       if (cave.attributes.componentAttributes.length > 0) {
         cave.attributes.componentAttributes.forEach((ca) => {
           if (ca.component.start === undefined) {
+            return;
+          }
+          if (!cave.stations.has(ca.component.start) || !cave.stations.has(ca.component.termination)) {
             return;
           }
           const cs = SectionHelper.getComponent(g, ca.component.start, ca.component.termination);

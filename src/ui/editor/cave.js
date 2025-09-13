@@ -9,7 +9,7 @@ import { i18n } from '../../i18n/i18n.js';
 
 class CaveEditor extends Editor {
   constructor(db, options, cave, scene, panel) {
-    super(panel, scene, cave);
+    super(panel, scene, cave, undefined); // no attributes thus attributeDefs is undefined
     this.db = db;
     this.options = options;
     this.graph = undefined; // sort of a lazy val

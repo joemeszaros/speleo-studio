@@ -76,7 +76,7 @@ export class AttributesDefinitions {
         const params = match.groups.params.split(',');
         attrs.push(a(...params));
       } else {
-        errors.push(`Cannot find attribute by name '${n}'.`);
+        errors.push(i18n.t('validation.attributes.fromStringNotFound', { name: n }));
       }
     }
     return { errors: errors, attributes: attrs };

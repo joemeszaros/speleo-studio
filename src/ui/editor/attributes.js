@@ -472,7 +472,6 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs[0]),
         formatterClipboard : (cell) =>
           this.baseTableFunctions.clipboardFormatter(cell, (cv) => (cv.attribute === undefined ? [] : [cv.attribute])),
-
         editor : (cell, onRendered, success) =>
           this.attributesEditor(
             cell,
@@ -643,6 +642,16 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       newRow = { ...r };
       newRow.status = 'incomplete';
       newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
+    } else if (
+      r.start &&
+      !this.cave.stations.has(r.start) &&
+      (!r.termination || (r.termination && r.termination.every((t) => !this.cave.stations.has(t))))
+    ) {
+      newRow = { ...r };
+      newRow.status = 'invalid';
+      newRow.message = i18n.t('ui.editors.base.status.invalid', {
+        errors : i18n.t('ui.editors.componentAttributes.errors.fromOrTerminationsNotFound')
+      });
     } else {
       const errors = sa.validate(i18n);
       if (errors.length > 0) {
@@ -925,6 +934,12 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       newRow = { ...r };
       newRow.status = 'incomplete';
       newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
+    } else if (r.from && r.to && (!this.cave.stations.has(r.from) || !this.cave.stations.has(r.to))) {
+      newRow = { ...r };
+      newRow.status = 'invalid';
+      newRow.message = i18n.t('ui.editors.base.status.invalid', {
+        errors : i18n.t('ui.editors.sectionAttributes.errors.fromOrToNotFound', { from: r.from, to: r.to })
+      });
     } else {
       const errors = sa.validate(i18n);
       if (errors.length > 0) {
@@ -1240,6 +1255,12 @@ class StationAttributeEditor extends BaseAttributeEditor {
       newRow = { ...r };
       newRow.status = 'incomplete';
       newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
+    } else if (r.station && !this.cave.stations.has(r.station)) {
+      newRow = { ...r };
+      newRow.status = 'invalid';
+      newRow.message = i18n.t('ui.editors.base.status.invalid', {
+        errors : i18n.t('ui.editors.stationAttributes.errors.stationNotFound', { station: r.station })
+      });
     } else {
       const errors = sa.validate(i18n);
       if (errors.length > 0) {
@@ -1249,6 +1270,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
         newRow.message = i18n.t('ui.editors.base.status.invalid', { errors: errors.join('<br>') });
       }
     }
+
     if (['invalid', 'incomplete'].includes(oldStatus) && emptyFields.length === 0 && validationErrors.length === 0) {
       newRow = { ...r };
       newRow.status = 'ok';

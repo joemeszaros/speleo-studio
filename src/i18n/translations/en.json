@@ -455,6 +455,9 @@
         "message": {
           "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}",
           "incomplete": "Row is incomplete"
+        },
+        "buttons": {
+          "cancel": "Cancel"
         }
       },
       "survey": {
@@ -462,7 +465,8 @@
         "message": {
           "missingFields": "Row has missing fields: {fields}",
           "orphanRowWithIds": "{nrOrphanRows} row(s) are orphan: {orphanRowIds}",
-          "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}"
+          "duplicateRowWithIds": "{nrDuplicateRows} row(s) are duplicate: {duplicateRowIds}",
+          "invalidRowWithIds": "{nrBadRows} row(s) are invalid: {badRowIds}"
         },
         "messages": {
           "openedSurveyEditorUnsavedChanges": "Opened survey editor because you have unsaved changes for cave {caveName} / {surveyName}"
@@ -517,14 +521,16 @@
         "title": "Section attributes: {name}",
         "errors": {
           "sectionAttributeMissingArguments": "Section attribute has missing arguments or is invalid. <br>Cannot change visibility!",
-          "unableToFindPath": "Unable to find path between {from} -> {to}.<br>Restoring previous value ({oldValue})."
+          "unableToFindPath": "Unable to find path between {from} -> {to}.<br>Restoring previous value ({oldValue}).",
+          "fromOrToNotFound": "The {from} and {to} stations are not found in the cave or are orphan"
         }
       },
       "componentAttributes": {
         "title": "Component attributes: {name}",
         "errors": {
           "componentAttributeMissingArguments": "Component attribute has missing arguments or is invalid. <br>Cannot change visibility!",
-          "unableToTraverseGraph": "Unable to traverse graph from {from}.<br>Restoring previous value ({oldValue})."
+          "unableToTraverseGraph": "Unable to traverse graph from {from}.<br>Restoring previous value ({oldValue}).",
+          "fromOrTerminationsNotFound": "The from or termination stations are not found in the cave or are orphan"
         }
       },
       "stationAttributes": {
@@ -533,7 +539,8 @@
           "stationAttributeMissingArguments": "Station attribute has missing arguments or is invalid. <br>Cannot change visibility!",
           "emptyName": "Station name is empty",
           "emptyAttribute": "Attribute is empty",
-          "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
+          "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}",
+          "stationNotFound": "Station {station} not found in the cave or is orphan"
         },
         "columns": {
           "station": "Station",
@@ -608,7 +615,8 @@
       "surveyAlreadyExists": "Survey with {name} already exists!"
     },
     "attributes": {
-      "unsupportedDataType": "Not supported data type {dataType}"
+      "unsupportedDataType": "Not supported data type {dataType}",
+      "fromStringNotFound": "Cannot find attribute by name '{name}'."
     },
     "colormode": {
       "unknownCaveLineColorConfiguration": "Unknown configuration for cave line colors: {mode}"
@@ -772,7 +780,8 @@
     "redo": "Redo",
     "clear": "Clear",
     "invalid": "Invalid",
-    "comments": "Comments"
+    "comments": "Comments",
+    "remove": "Remove"
   },
   "attributes": {
     "title": "Attribute Definitions Reference",

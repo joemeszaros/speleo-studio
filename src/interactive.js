@@ -511,7 +511,7 @@ class SceneInteraction {
   }
 
   showDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
-    this.infoPanel.style.width = '600px';
+    this.infoPanel.style.width = '400px';
     wm.makeFloatingPanel(
       this.infoPanel,
       (contentElmnt) => this.buildDistancePanel(contentElmnt, from, to, diffVector, left, top),
@@ -528,7 +528,6 @@ class SceneInteraction {
   buildDistancePanel(contentElmnt, from, to, diffVector, left, top) {
 
     const fp = from.position;
-    const formatCoords = (a) => a.map((x) => x.toFixed(2)).join(',');
     const tp = to.position;
     const content = node`<div class="infopanel-content"></div>`;
 

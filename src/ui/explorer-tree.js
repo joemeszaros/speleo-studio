@@ -1,4 +1,5 @@
-import { SurveyEditor, SurveySheetEditor } from './editor/survey.js';
+import { SurveyEditor } from './editor/survey.js';
+import { SurveySheetEditor } from './editor/survey-sheet.js';
 import { CaveEditor } from './editor/cave.js';
 import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
 import { CyclePanel } from './editor/cycle.js';
@@ -505,7 +506,9 @@ export class ExplorerTree {
             surveyNode.data,
             this.scene,
             this.interaction,
-            document.getElementById('resizable-editor')
+            document.getElementById('resizable-editor'),
+            undefined, // unsaved changes
+            this.attributeDefs
           );
           this.editor.setupPanel();
           this.editor.show();

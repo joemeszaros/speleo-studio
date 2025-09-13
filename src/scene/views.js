@@ -1360,10 +1360,12 @@ class ProfileView extends View {
     // Update max Z text position (top of ruler)
     const maxYPosition = rulerY + rulerHeight / 2 + 20;
     this.verticalMaxZText.sprite.position.y = maxYPosition;
+    this.verticalMaxZText.sprite.position.x = this.scene.width / 2 - 30;
 
     // Update min Z text position (bottom of ruler)
     const minYPosition = rulerY - rulerHeight / 2 - 20;
     this.verticalMinZText.sprite.position.y = minYPosition;
+    this.verticalMinZText.sprite.position.x = this.scene.width / 2 - 30;
   }
 
   #updateRotationText() {

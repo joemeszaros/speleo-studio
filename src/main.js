@@ -160,7 +160,7 @@ class Main {
       this.explorerTree,
       this.projectSystem,
       this.editorStateSystem,
-      this.declinationCache
+      this.attributeDefs
     );
 
     // Initialize project panel
