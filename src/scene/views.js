@@ -1112,11 +1112,16 @@ class ProfileView extends View {
     this.verticalRuler.visible = false;
     scene.sprites3DGroup.add(this.verticalRuler);
 
-    // Add vertical ratio text
-    this.verticalRatioText = this.#createVerticalRatioText();
-    this.verticalRatioText.sprite.visible = false;
-    const verticalRatioTextSprite = this.verticalRatioText.getSprite();
-    scene.sprites3DGroup.add(verticalRatioTextSprite);
+    // Add vertical Z coordinate texts (max at top, min at bottom)
+    this.verticalMaxZText = this.#createVerticalZText('max');
+    this.verticalMaxZText.sprite.visible = false;
+    const verticalMaxZTextSprite = this.verticalMaxZText.getSprite();
+    scene.sprites3DGroup.add(verticalMaxZTextSprite);
+
+    this.verticalMinZText = this.#createVerticalZText('min');
+    this.verticalMinZText.sprite.visible = false;
+    const verticalMinZTextSprite = this.verticalMinZText.getSprite();
+    scene.sprites3DGroup.add(verticalMinZTextSprite);
 
     this.initiated = false;
     this.enabled = false;
@@ -1209,9 +1214,13 @@ class ProfileView extends View {
   }
 
   onResize(width, height) {
-
     this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
-    this.verticalRatioText.getSprite().position.set(this.scene.width / 2 - 80, 0, 1);
+
+    // Update text positions if they exist
+    if (this.verticalMaxZText && this.verticalMinZText) {
+      this.#updateVerticalTextPositions();
+    }
+
     super.onResize(width, height);
   }
 
@@ -1228,7 +1237,22 @@ class ProfileView extends View {
     const verticalIndicatorHeightInPixels = (verticalIndicatorHeightInMeters / worldHeightInMeters) * this.scene.height;
     this.verticalRatioIndicatorHeight = Math.max(50, Math.min(600, verticalIndicatorHeightInPixels));
     this.verticalRuler.scale.set(15, this.verticalRatioIndicatorHeight, 1);
-    this.verticalRatioText.update(`${formatDistance(verticalIndicatorHeightInMeters)}`);
+
+    // Update text positions based on new ruler height
+    this.#updateVerticalTextPositions();
+
+    // Get min and max Z coordinates from the scene's bounding box
+    const boundingBox = this.scene.computeBoundingBox();
+    if (boundingBox) {
+      const minZ = boundingBox.min.z;
+      const maxZ = boundingBox.max.z;
+      this.verticalMaxZText.update(formatDistance(maxZ));
+      this.verticalMinZText.update(formatDistance(minZ));
+    } else {
+      // Fallback to original behavior if no bounding box
+      this.verticalMaxZText.update(formatDistance(verticalIndicatorHeightInMeters));
+      this.verticalMinZText.update('0');
+    }
   }
 
   #createVerticalRuler() {
@@ -1263,14 +1287,24 @@ class ProfileView extends View {
     ctx.font = '10px Arial';
     ctx.textAlign = 'left';
 
-    // Add tick marks every 50px
+    // Get min and max Z coordinates for labels
+    const boundingBox = this.scene.computeBoundingBox();
+    let minZ = 0;
+    let maxZ = 100;
+
+    if (boundingBox) {
+      minZ = boundingBox.min.z;
+      maxZ = boundingBox.max.z;
+    }
+
+    // Add tick marks every 50px with Z coordinate labels
     for (let i = 0; i <= height; i += 50) {
       const y = height - i; // Invert Y so 0 is at bottom
       ctx.fillRect(0, y, width, 1);
 
-      // Add depth label
-      const depth = Math.round((i / height) * 100);
-      ctx.fillText(`${depth}m`, width + 2, y + 3);
+      // Calculate Z coordinate for this position
+      const zValue = minZ + (i / height) * (maxZ - minZ);
+      ctx.fillText(`${formatDistance(zValue)}`, width + 2, y + 3);
     }
 
     // Create texture from canvas
@@ -1290,9 +1324,20 @@ class ProfileView extends View {
 
   }
 
-  #createVerticalRatioText(text = '0') {
-    // Create vertical ratio text similar to horizontal ratio text
-    const position = new THREE.Vector3(this.scene.width / 2 - 80, 0, 1);
+  #createVerticalZText(type, text = '0') {
+    // Create vertical Z coordinate text positioned relative to the vertical ruler
+    // The ruler is positioned at (scene.width / 2 - 30, 0, 1) and has height = verticalRatioIndicatorHeight
+    const rulerX = this.scene.width / 2 - 30;
+    const rulerHeight = this.verticalRatioIndicatorHeight;
+    const rulerY = 0; // ruler center Y position
+
+    // Position texts at the top and bottom of the ruler
+    const yPosition =
+      type === 'max'
+        ? rulerY + rulerHeight / 2 + 20 // top of ruler + offset
+        : rulerY - rulerHeight / 2 - 20; // bottom of ruler - offset
+
+    const position = new THREE.Vector3(this.scene.width / 2 - 30, yPosition, 1);
     return new TextSprite(
       text,
       position,
@@ -1303,8 +1348,22 @@ class ProfileView extends View {
         strokeColor : this.scene.options.scene.sprites3D.textStroke
       },
       0.5,
-      'vertical ratio text'
+      `vertical ${type} z text`
     );
+  }
+
+  #updateVerticalTextPositions() {
+    // Update text positions based on current ruler height
+    const rulerY = 0; // ruler center Y position
+    const rulerHeight = this.verticalRatioIndicatorHeight;
+
+    // Update max Z text position (top of ruler)
+    const maxYPosition = rulerY + rulerHeight / 2 + 20;
+    this.verticalMaxZText.sprite.position.y = maxYPosition;
+
+    // Update min Z text position (bottom of ruler)
+    const minYPosition = rulerY - rulerHeight / 2 - 20;
+    this.verticalMinZText.sprite.position.y = minYPosition;
   }
 
   #updateRotationText() {
@@ -1318,13 +1377,25 @@ class ProfileView extends View {
 
   recreateAllTextSprites() {
     super.recreateAllTextSprites();
-    let label = this.verticalRatioText.label;
-    let prevVisible = this.verticalRatioText.sprite.visible;
-    this.diposeSprite(this.verticalRatioText.getSprite(), this.scene.sprites3DGroup);
-    this.verticalRatioText = this.#createVerticalRatioText(label);
-    this.verticalRatioText.sprite.visible = prevVisible;
-    const verticalRatioTextSprite = this.verticalRatioText.getSprite();
-    this.scene.sprites3DGroup.add(verticalRatioTextSprite);
+
+    // Recreate max Z text
+    let maxZLabel = this.verticalMaxZText.label;
+    let maxZPrevVisible = this.verticalMaxZText.sprite.visible;
+    this.diposeSprite(this.verticalMaxZText.getSprite(), this.scene.sprites3DGroup);
+    this.verticalMaxZText = this.#createVerticalZText('max', maxZLabel);
+    this.verticalMaxZText.sprite.visible = maxZPrevVisible;
+    const verticalMaxZTextSprite = this.verticalMaxZText.getSprite();
+    this.scene.sprites3DGroup.add(verticalMaxZTextSprite);
+
+    // Recreate min Z text
+    let minZLabel = this.verticalMinZText.label;
+    let minZPrevVisible = this.verticalMinZText.sprite.visible;
+    this.diposeSprite(this.verticalMinZText.getSprite(), this.scene.sprites3DGroup);
+    this.verticalMinZText = this.#createVerticalZText('min', minZLabel);
+    this.verticalMinZText.sprite.visible = minZPrevVisible;
+    const verticalMinZTextSprite = this.verticalMinZText.getSprite();
+    this.scene.sprites3DGroup.add(verticalMinZTextSprite);
+
     this.#updateRotationText();
     this.#updateVerticalRuler(this.control.zoom);
   }
@@ -1335,7 +1406,8 @@ class ProfileView extends View {
     switch (spriteType) {
       case 'ruler':
         this.verticalRuler.visible = visible;
-        this.verticalRatioText.sprite.visible = visible;
+        this.verticalMaxZText.sprite.visible = visible;
+        this.verticalMinZText.sprite.visible = visible;
         break;
     }
   }
@@ -1368,8 +1440,20 @@ class ProfileView extends View {
   activate(boundingBox) {
     super.activate(boundingBox);
     this.control.enabled = true;
+
+    // Recreate vertical ruler with current bounding box data
+    if (this.verticalRuler) {
+      this.scene.sprites3DGroup.remove(this.verticalRuler);
+    }
+    this.verticalRuler = this.#createVerticalRuler();
     this.verticalRuler.visible = this.scene.options.scene.sprites3D.ruler.show;
-    this.verticalRatioText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
+    this.scene.sprites3DGroup.add(this.verticalRuler);
+
+    // Update text positions and show both Z coordinate texts
+    this.#updateVerticalTextPositions();
+    this.verticalMaxZText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
+    this.verticalMinZText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
+
     this.compass.material.rotation = -this.control.angle + Math.PI;
     this.#updateRotationText();
     this.renderView();
@@ -1379,7 +1463,8 @@ class ProfileView extends View {
     super.deactivate();
     this.control.enabled = false;
     this.verticalRuler.visible = false;
-    this.verticalRatioText.sprite.visible = false;
+    this.verticalMaxZText.sprite.visible = false;
+    this.verticalMinZText.sprite.visible = false;
   }
 }
 
