@@ -1,356 +1,406 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Felmérések szerkesztése - Speleo Studio</title>
     <link rel="stylesheet" href="manual.css" />
-</head>
-<body>
-        <div class="container">
+  </head>
+  <body>
+    <div class="container">
       <div class="logo">
         <img src="../../images/logo.png" alt="Speleo Studio Logo" />
       </div>
       <h1>Felmérések szerkesztése</h1>
-        
-        <div class="nav">
-            <a href="04-3d-vizualizacio.html">← Előző: 3D vizualizáció</a>
-            <a href="index.html">Főoldal</a>
-            <a href="06-attributumok.html">Következő: Attribútumok →</a>
+
+      <div class="nav">
+        <a href="04-3d-vizualizacio.html">← Előző: 3D vizualizáció</a>
+        <a href="index.html">Főoldal</a>
+        <a href="06-attributumok.html">Következő: Attribútumok →</a>
+      </div>
+
+      <h2>Felmérés szerkesztés áttekintése</h2>
+      <p
+        >A felmérés szerkesztés lehetővé teszi a barlang felmérési adatainak és alapvető adatainak módosítását a Speleo
+        Studio által nyújtott fejlett szerkesztő eszközökkel.</p
+      >
+
+      <div class="row">
+        <div class="column-2">
+          <p
+            >A felmérés szerkesztéséhez az oldalsávban nyissa meg a <i>Felfedező</i> panelt, majd nyissa ki a felmérést
+            tartalmazó barlang felméréseinek lisáját a barlang neve melletti háromszögre kattinva (az ábrán piros
+            keret). A lenyílő listában kattintson a felmérés nevére, ekkor az adott felmérés ikon sávja jelenik meg. Az
+            ikonok funkciói:</p
+          >
+          <ul>
+            <li><strong>📝 Méréssek szerkesztés:</strong> Felmérés méréseinek szerkesztése</li>
+            <li><strong>🔠 Adatlap szerkesztése:</strong> Pontok és mérések módosítása</li>
+            <li
+              ><img src="../../icons/topodroid.png" style="margin: 0px; width: 20px; height: 20px" />
+              <strong>TopoDroid importálás:</strong> TopoDroid felmérés hozzáadása a felméréshez</li
+            >
+            <li><strong>🎨 Szín beállítása:</strong> A felmérés színének beállítása</li>
+            <li
+              ><strong
+                ><span
+                  style="
+                    text-decoration: line-through;
+                    text-decoration-color: red;
+                    text-decoration-thickness: 2px;
+                    transform: rotate(45deg);
+                    display: inline-block;
+                  "
+                  >🎨</span
+                >
+                Szín törlése:</strong
+              >
+              A felmérés színének törlése</li
+            >
+          </ul>
+          <p
+            >A <strong>felmérés láthatóságát </strong>a jelenetben az ábrán zöld kerettel jelzett szem ikonra kattintva
+            lehet szabályozni.</p
+          >
+          <p
+            >A <strong>felmérés színét </strong> akkor van értelme beállítani, ha a jelnetben a felmérésünket más
+            színnel szeretnénk megjeleníteni. A kiválasztott vonal szín módtól függetlenül a felmérésünk mindig az adott
+            színnel fog megjelenni.
+          </p>
+          <p>
+            Az importálásról egy korábbi fejezetben már részletesen írtunk, ebben a fejezetben inkább az adatlap és a
+            mérések szerkesztéséről lesz szó.</p
+          >
         </div>
+        <div class="image-placeholder black"> <img src="images/6-felmeres-sav.png" /></div>
+      </div>
 
-        <h2>Felmérés szerkesztés áttekintése</h2>
-        <p>A felmérés szerkesztés lehetővé teszi a barlang felmérési adatainak módosítását, validálását és optimalizálását. A Speleo Studio fejlett szerkesztő eszközöket biztosít a felmérési adatok kezeléséhez.</p>
+      <h2>Felmérés adatlap szerkesztése</h2>
 
-        <div class="info">
-            <h3>Felmérés szerkesztő funkciók:</h3>
-            <ul>
-                <li><strong>Adatlap szerkesztés:</strong> Felmérés metaadatainak módosítása</li>
-                <li><strong>Mérések szerkesztése:</strong> Pontok és mérések módosítása</li>
-                <li><strong>Validálás:</strong> Adatok ellenőrzése és hibák javítása</li>
-                <li><strong>Hurok kezelés:</strong> Hurok mérések kezelése</li>
-                <li><strong>Attribútumok:</strong> Pontok és szakaszok attribútumainak kezelése</li>
-            </ul>
-        </div>
+      <h3>Metaadatok szerkesztése</h3>
+      <p>A felmérés adatlap tartalmazza a felmérés alapvető információit:</p>
 
-        <h2>Felmérés szerkesztő megnyitása</h2>
-        
-        <div class="step">
-            <h3>1. lépés: Felmérés kiválasztása</h3>
-            <p>A felfedező panelben bontsa ki a barlangot és kattintson jobb egérgombbal a szerkeszteni kívánt felmérésre.</p>
-            <div class="image-placeholder">
-                [KÉP HELYE: Felmérés jobb egérgomb menü]
-            </div>
-        </div>
+      <div class="editor-box">
+        <h4>Felmérés alapadatok</h4>
+        <ul>
+          <li><strong>Név:</strong> Felmérés egyedi neve</li>
+          <li><strong>Induló pont:</strong> A felmérés kezdőpontja</li>
+          <li><strong>Dátum:</strong> Felmérés dátuma</li>
+          <li><strong>Deklináció:</strong> Mágneses deklináció</li>
+        </ul>
+      </div>
 
-        <div class="step">
-            <h3>2. lépés: Szerkesztő megnyitása</h3>
-            <p>A kontextus menüből válassza a "Felmérés szerkesztése" opciót.</p>
-        </div>
+      <div class="editor-box">
+        <h4>Csapat információk</h4>
+        <ul>
+          <li><strong>Csapat neve:</strong> Felmérési csapat neve</li>
+          <li><strong>Csapat tagok:</strong> Felmérésben résztvevő személyek</li>
+        </ul>
+      </div>
 
-        <div class="step">
-            <h3>3. lépés: Szerkesztő panel</h3>
-            <p>Megnyílik a felmérés szerkesztő panel, amely több lapot tartalmaz.</p>
-            <div class="image-placeholder">
-                [KÉP HELYE: Felmérés szerkesztő panel megnyitása]
-            </div>
-        </div>
+      <div class="editor-box">
+        <h4>Mérőeszközök</h4>
+        <ul>
+          <li><strong>Mérőeszköz neve:</strong> Használt mérőeszköz neve</li>
+          <li><strong>Mérőeszköz jellemzése:</strong> Mérőeszköz jellemzése/li> </li></ul
+        >
+      </div>
 
-        <h2>Felmérés adatlap szerkesztése</h2>
-        
-        <h3>Metaadatok szerkesztése</h3>
-        <p>A felmérés adatlap tartalmazza a felmérés alapvető információit:</p>
+      <div class="image-placeholder black"> <img src="images/6-felmeres-adatlap.png" /></div>
 
-        <div class="editor-box">
-            <h4>Felmérés alapadatok</h4>
-            <ul>
-                <li><strong>Név:</strong> Felmérés egyedi neve</li>
-                <li><strong>Induló pont:</strong> A felmérés kezdőpontja</li>
-                <li><strong>Dátum:</strong> Felmérés dátuma</li>
-                <li><strong>Deklináció:</strong> Mágneses deklináció</li>
-                <li><strong>Meridián konvergencia:</strong> Koordináta rendszer konvergencia</li>
-            </ul>
-        </div>
+      <div class="step">
+        <h3>Adatok módosítása</h3>
+        <p>1. Kattintson a szerkeszteni kívánt mezőre</p>
+        <p>2. Módosítsa az értéket</p>
+        <p>3. Kattintson a "Mentés" gombra</p>
+      </div>
 
-        <div class="editor-box">
-            <h4>Csapat információk</h4>
-            <ul>
-                <li><strong>Csapat neve:</strong> Felmérési csapat neve</li>
-                <li><strong>Csapat tagok:</strong> Felmérésben résztvevő személyek</li>
-                <li><strong>Mérőeszközök:</strong> Használt mérőeszközök listája</li>
-            </ul>
-        </div>
+      <div class="info">
+        Az adatlap alján két fontos értéket találunk a meridián konvergenciát és az felmérés létrehozásakor az adott
+        barlang helyén <strong>hivatalos mágneses deklináció</strong> értéket (piros nyíllal jelölve). A mágneses
+        deklináció historikus értékét az amerikai Nemzeti Óceán- és Légkörkutatási Hivataltól (NOAA) kéredzi le a Speleo
+        Studio az interneten keresztül. A hivatalos mágneses deklináció érték függvényében érdemes lehet a felmérés
+        deklinációját módosítani! A hivatalos deklináció csak akkor jelenik meg, ha a barlang koordinátáit WSG84
+        koordinátákra lehet konvertálni, pl. EOV koordinátákból, illetve ha a dátum meg van adva.
+      </div>
+      <div class="info">
+        A <strong>meridián konvergencia</strong> a rács észak és a földrajzi észak közötti szög egy adott földrajzi
+        helyen. Ez a jelenség azért lép fel, mert a Föld görbült felszínén a hosszúsági körök (meridiánok) az Északi- és
+        a Déli-sarknál összetartanak. Egy sík térképi vetületben azonban ezeket az összetartó meridiánokat egyenes,
+        egymással párhuzamos vonalakként ábrázolják, ami szögeltérést hoz létre a földrajzi északhoz képest.
+      </div>
 
-        <div class="step">
-            <h3>Adatok módosítása</h3>
-            <p>1. Kattintson a szerkeszteni kívánt mezőre</p>
-            <p>2. Módosítsa az értéket</p>
-            <p>3. Kattintson a "Mentés" gombra</p>
-        </div>
+      <h2>Mérések szerkesztése</h2>
 
-        <h2>Mérések szerkesztése</h2>
-        
-        <h3>Mérési adatok táblázata</h3>
-        <p>A mérések egy táblázatos formában jelennek meg, ahol minden sor egy mérést reprezentál:</p>
+      <h3>Mérési adatok táblázata</h3>
+      <p>A mérések egy táblázatos formában jelennek meg, ahol minden sor egy mérést reprezentál:</p>
 
-        <div class="table-example">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Típus</th>
-                        <th>Ponttól</th>
-                        <th>Pontig</th>
-                        <th>Irány</th>
-                        <th>Dőlés</th>
-                        <th>Hossz</th>
-                        <th>Attribútumok</th>
-                        <th>Megjegyzés</th>
-                        <th>Státusz</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Közép</td>
-                        <td>1</td>
-                        <td>2</td>
-                        <td>45.0</td>
-                        <td>10.0</td>
-                        <td>5.2</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td class="status-ok">✓ OK</td>
-                    </tr>
-                    <tr>
-                        <td>Tüske</td>
-                        <td>2</td>
-                        <td>-</td>
-                        <td>90.0</td>
-                        <td>-5.0</td>
-                        <td>3.8</td>
-                        <td>-</td>
-                        <td>Fal részlet</td>
-                        <td class="status-ok">✓ OK</td>
-                    </tr>
-                    <tr>
-                        <td>Közép</td>
-                        <td>2</td>
-                        <td>3</td>
-                        <td>180.0</td>
-                        <td>0.0</td>
-                        <td>7.1</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td class="status-error">✗ Hiba</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+      <div class="table-example">
+        <table>
+          <thead>
+            <tr>
+              <th>Típus</th>
+              <th>Ponttól</th>
+              <th>Pontig</th>
+              <th>Irány</th>
+              <th>Dőlés</th>
+              <th>Hossz</th>
+              <th>Attribútumok</th>
+              <th>Megjegyzés</th>
+              <th>Státusz</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Közép</td>
+              <td>1</td>
+              <td>2</td>
+              <td>45.0</td>
+              <td>10.0</td>
+              <td>5.2</td>
+              <td>-</td>
+              <td>-</td>
+              <td class="status-ok">✓ OK</td>
+            </tr>
+            <tr>
+              <td>Tüske</td>
+              <td>2</td>
+              <td>-</td>
+              <td>90.0</td>
+              <td>-5.0</td>
+              <td>3.8</td>
+              <td>-</td>
+              <td>Fal részlet</td>
+              <td class="status-ok">✓ OK</td>
+            </tr>
+            <tr>
+              <td>Közép</td>
+              <td>2</td>
+              <td>3</td>
+              <td>180.0</td>
+              <td>0.0</td>
+              <td>7.1</td>
+              <td>-</td>
+              <td>-</td>
+              <td class="status-error">✗ Hiba</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        <h3>Mérés típusok</h3>
-        <div class="info">
-            <h4>Középvonal (Center)</h4>
-            <p>A barlang fő útvonalát követő mérések. Minden középvonal mérésnek van kezdő és végpontja.</p>
-        </div>
+      <h3>Mérés típusok</h3>
+      <div class="info">
+        <h4>Középvonal (Center)</h4>
+        <p>A barlang fő útvonalát követő mérések. Minden középvonal mérésnek van kezdő és végpontja.</p>
+      </div>
 
-        <div class="info">
-            <h4>Tüske (Splay)</h4>
-            <p>Mellékágak, fal részletek és egyéb mellékmérések. A végpont "-" jelzéssel van megadva.</p>
-        </div>
+      <div class="info">
+        <h4>Tüske (Splay)</h4>
+        <p>Mellékágak, fal részletek és egyéb mellékmérések. A végpont "-" jelzéssel van megadva.</p>
+      </div>
 
-        <div class="info">
-            <h4>Segédvonal (Auxiliary)</h4>
-            <p>Segédeszközök és referenciák. Speciális attribútumokkal rendelkezhetnek.</p>
-        </div>
+      <div class="info">
+        <h4>Segédvonal (Auxiliary)</h4>
+        <p>Segédeszközök és referenciák. Speciális attribútumokkal rendelkezhetnek.</p>
+      </div>
 
-        <h3>Mérések szerkesztése</h3>
-        
-        <div class="step">
-            <h4>1. Sor kiválasztása</h4>
-            <p>Kattintson a szerkeszteni kívánt sorra a táblázatban.</p>
-        </div>
+      <h3>Mérések szerkesztése</h3>
 
-        <div class="step">
-            <h4>2. Mezők szerkesztése</h4>
-            <p>Kattintson a szerkeszteni kívánt mezőre és módosítsa az értéket.</p>
-        </div>
+      <div class="step">
+        <h4>1. Sor kiválasztása</h4>
+        <p>Kattintson a szerkeszteni kívánt sorra a táblázatban.</p>
+      </div>
 
-        <div class="step">
-            <h4>3. Változtatások mentése</h4>
-            <p>Kattintson a "Felmérés frissítése" gombra a változtatások mentéséhez.</p>
-        </div>
+      <div class="step">
+        <h4>2. Mezők szerkesztése</h4>
+        <p>Kattintson a szerkeszteni kívánt mezőre és módosítsa az értéket.</p>
+      </div>
 
-        <h3>Új mérések hozzáadása</h3>
-        
-        <div class="step">
-            <h4>1. Sor hozzáadása</h4>
-            <p>Használja a "Sor hozzáadása" gombokat:</p>
-            <ul>
-                <li><strong>Előtte:</strong> Új sor hozzáadása a kiválasztott sor előtt</li>
-                <li><strong>Utána:</strong> Új sor hozzáadása a kiválasztott sor után</li>
-                <strong>Végéhez:</strong> Új sor hozzáadása a táblázat végéhez</li>
-            </ul>
-        </div>
+      <div class="step">
+        <h4>3. Változtatások mentése</h4>
+        <p>Kattintson a "Felmérés frissítése" gombra a változtatások mentéséhez.</p>
+      </div>
 
-        <div class="step">
-            <h4>2. Adatok megadása</h4>
-            <p>Töltse ki az új sor adatait:</p>
-            <ul>
-                <li>Válassza ki a mérés típusát</li>
-                <li>Adja meg a ponttól és pontig értékeket</li>
-                <li>Írja be az irány, dőlés és hossz értékeket</li>
-            </ul>
-        </div>
+      <h3>Új mérések hozzáadása</h3>
 
-        <h3>Mérések törlése</h3>
-        
-        <div class="step">
-            <h4>1. Sorok kiválasztása</h4>
-            <p>Válassza ki a törölni kívánt sorokat (Ctrl+klikk több sor kiválasztásához).</p>
-        </div>
+      <div class="step">
+        <h4>1. Sor hozzáadása</h4>
+        <p>Használja a "Sor hozzáadása" gombokat:</p>
+        <ul>
+          <li><strong>Előtte:</strong> Új sor hozzáadása a kiválasztott sor előtt</li>
+          <li><strong>Utána:</strong> Új sor hozzáadása a kiválasztott sor után</li>
+          <li><strong>Végéhez:</strong> Új sor hozzáadása a táblázat végéhez</li>
+        </ul>
+      </div>
 
-        <div class="step">
-            <h4>2. Törlés megerősítése</h4>
-            <p>Kattintson az "Aktív sorok törlése" gombra és erősítse meg a törlést.</p>
-        </div>
+      <div class="step">
+        <h4>2. Adatok megadása</h4>
+        <p>Töltse ki az új sor adatait:</p>
+        <ul>
+          <li>Válassza ki a mérés típusát</li>
+          <li>Adja meg a ponttól és pontig értékeket</li>
+          <li>Írja be az irány, dőlés és hossz értékeket</li>
+        </ul>
+      </div>
 
-        <h2>Validálás és hibakezelés</h2>
-        
-        <h3>Automatikus validálás</h3>
-        <p>A Speleo Studio automatikusan ellenőrzi a felmérési adatokat és jelzi a hibákat:</p>
+      <h3>Mérések törlése</h3>
 
-        <div class="editor-box">
-            <h4>Validálási szabályok</h4>
-            <ul>
-                <li><strong>Pont nevek:</strong> Nem lehetnek üresek</li>
-                <li><strong>Koordináták:</strong> Érvényes számértékek</li>
-                <li><strong>Szögek:</strong> Irány -360° és 360° között, dőlés -90° és 90° között</li>
-                <li><strong>Hossz:</strong> Pozitív érték</li>
-                <li><strong>Duplikáció:</strong> Nem lehetnek duplikált mérések</li>
-            </ul>
-        </div>
+      <div class="step">
+        <h4>1. Sorok kiválasztása</h4>
+        <p>Válassza ki a törölni kívánt sorokat (Ctrl+klikk több sor kiválasztásához).</p>
+      </div>
 
-        <h3>Hibák javítása</h3>
-        
-        <div class="step">
-            <h4>1. Hiba azonosítása</h4>
-            <p>A hibás sorok piros színnel vannak kiemelve és figyelmeztető ikonnal jelölve.</p>
-        </div>
+      <div class="step">
+        <h4>2. Törlés megerősítése</h4>
+        <p>Kattintson az "Aktív sorok törlése" gombra és erősítse meg a törlést.</p>
+      </div>
 
-        <div class="step">
-            <h4>2. Hiba részleteinek megtekintése</h4>
-            <p>Kattintson a figyelmeztető ikonra a hiba részletes leírásának megtekintéséhez.</p>
-        </div>
+      <h2>Validálás és hibakezelés</h2>
 
-        <div class="step">
-            <h4>3. Hiba javítása</h4>
-            <p>Módosítsa a hibás értékeket a javasolt értékekre vagy a helyes adatokra.</p>
-        </div>
+      <h3>Automatikus validálás</h3>
+      <p>A Speleo Studio automatikusan ellenőrzi a felmérési adatokat és jelzi a hibákat:</p>
 
-        <h3>Validálás futtatása</h3>
-        <div class="step">
-            <h4>Manuális validálás</h4>
-            <p>Kattintson a "Mérések validálása" gombra a teljes felmérés ellenőrzéséhez.</p>
-        </div>
+      <div class="editor-box">
+        <h4>Validálási szabályok</h4>
+        <ul>
+          <li><strong>Pont nevek:</strong> Nem lehetnek üresek</li>
+          <li><strong>Koordináták:</strong> Érvényes számértékek</li>
+          <li><strong>Szögek:</strong> Irány -360° és 360° között, dőlés -90° és 90° között</li>
+          <li><strong>Hossz:</strong> Pozitív érték</li>
+          <li><strong>Duplikáció:</strong> Nem lehetnek duplikált mérések</li>
+        </ul>
+      </div>
 
-        <h2>Hurok kezelés</h2>
-        
-        <h3>Hurok azonosítása</h3>
-        <p>A hurkok olyan mérési útvonalak, amelyek visszatérnek a kiindulási ponthoz. A Speleo Studio automatikusan azonosítja a hurkokat.</p>
+      <h3>Hibák javítása</h3>
 
-        <div class="image-placeholder">
-            [KÉP HELYE: Hurok mérések megjelenítése a 3D viewportban]
-        </div>
+      <div class="step">
+        <h4>1. Hiba azonosítása</h4>
+        <p>A hibás sorok piros színnel vannak kiemelve és figyelmeztető ikonnal jelölve.</p>
+      </div>
 
-        <h3>Hurok szerkesztő</h3>
-        <div class="step">
-            <h4>1. Hurok szerkesztő megnyitása</h4>
-            <p>A felmérés szerkesztőben kattintson a "Hurkok" gombra.</p>
-        </div>
+      <div class="step">
+        <h4>2. Hiba részleteinek megtekintése</h4>
+        <p>Kattintson a figyelmeztető ikonra a hiba részletes leírásának megtekintéséhez.</p>
+      </div>
 
-        <div class="step">
-            <h4>2. Hurok kiválasztása</h4>
-            <p>Válassza ki a szerkeszteni kívánt hurkot a listából.</p>
-        </div>
+      <div class="step">
+        <h4>3. Hiba javítása</h4>
+        <p>Módosítsa a hibás értékeket a javasolt értékekre vagy a helyes adatokra.</p>
+      </div>
 
-        <div class="step">
-            <h4>3. Hurok módosítása</h4>
-            <p>Módosítsa a hurok méréseit vagy használja a hurok záródási hibák elosztását.</p>
-        </div>
+      <h3>Validálás futtatása</h3>
+      <div class="step">
+        <h4>Manuális validálás</h4>
+        <p>Kattintson a "Mérések validálása" gombra a teljes felmérés ellenőrzéséhez.</p>
+      </div>
 
-        <h3>Hurok záródási hibák</h3>
-        <div class="warning">
-            <h4>Hurok hiba kezelése</h4>
-            <p>Ha egy hurok nem záródik pontosan, a Speleo Studio lehetővé teszi a hiba elosztását a hurok mérései között:</p>
-            <ul>
-                <li><strong>Automatikus elosztás:</strong> A hiba egyenletesen eloszlik</li>
-                <li><strong>Manuális elosztás:</strong> Kézi beállítás a mérések között</li>
-                <li><strong>Mérés korrekció:</strong> Egyedi mérések javítása</li>
-            </ul>
-        </div>
+      <h2>Hurok kezelés</h2>
 
-        <h2>Felmérés exportálása</h2>
-        
-        <h3>CSV exportálás</h3>
-        <div class="step">
-            <h4>1. Exportálás indítása</h4>
-            <p>A felmérés szerkesztőben kattintson az "Exportálás CSV-be" gombra.</p>
-        </div>
+      <h3>Hurok azonosítása</h3>
+      <p
+        >A hurkok olyan mérési útvonalak, amelyek visszatérnek a kiindulási ponthoz. A Speleo Studio automatikusan
+        azonosítja a hurkokat.</p
+      >
 
-        <div class="step">
-            <h4>2. Fájl mentése</h4>
-            <p>Válassza ki a mentési helyet és adja meg a fájlnevet.</p>
-        </div>
+      <div class="image-placeholder"> [KÉP HELYE: Hurok mérések megjelenítése a 3D viewportban] </div>
 
-        <h2>Szerkesztési tippek</h2>
-        
-        <div class="info">
-            <h3>Hatékony szerkesztés</h3>
-            <ul>
-                <li>Használja a gyorsbillentyűket a gyors navigációhoz</li>
-                <li>Rendszeresen validálja a felmérést a hibák azonosítása érdekében</li>
-                <li>Mentsen rendszeresen a változtatások mentése érdekében</li>
-                <li>Használja a kontextus menüket a gyors műveletekhez</li>
-            </ul>
-        </div>
+      <h3>Hurok szerkesztő</h3>
+      <div class="step">
+        <h4>1. Hurok szerkesztő megnyitása</h4>
+        <p>A felmérés szerkesztőben kattintson a "Hurkok" gombra.</p>
+      </div>
 
-        <div class="info">
-            <h3>Adatminőség javítása</h3>
-            <ul>
-                <li>Ellenőrizze a koordináta rendszereket</li>
-                <li>Validálja a szögeket és távolságokat</li>
-                <li>Dokumentálja a változtatásokat</li>
-                <li>Készítsen biztonsági másolatokat</li>
-            </ul>
-        </div>
+      <div class="step">
+        <h4>2. Hurok kiválasztása</h4>
+        <p>Válassza ki a szerkeszteni kívánt hurkot a listából.</p>
+      </div>
 
-        <h2>Gyakori problémák és megoldások</h2>
-        
-        <div class="warning">
-            <h3>Felmérés nem nyílik meg</h3>
-            <p><strong>Probléma:</strong> A felmérés szerkesztő nem nyílik meg.</p>
-            <p><strong>Megoldás:</strong> Ellenőrizze, hogy a felmérés érvényes adatokat tartalmaz-e.</p>
-        </div>
+      <div class="step">
+        <h4>3. Hurok módosítása</h4>
+        <p>Módosítsa a hurok méréseit vagy használja a hurok záródási hibák elosztását.</p>
+      </div>
 
-        <div class="warning">
-            <h3>Változtatások nem mentődnek</h3>
-            <p><strong>Probléma:</strong> A szerkesztett adatok nem kerülnek mentésre.</p>
-            <p><strong>Megoldás:</strong> Kattintson a "Felmérés frissítése" gombra a mentéshez.</p>
-        </div>
+      <h3>Hurok záródási hibák</h3>
+      <div class="warning">
+        <h4>Hurok hiba kezelése</h4>
+        <p
+          >Ha egy hurok nem záródik pontosan, a Speleo Studio lehetővé teszi a hiba elosztását a hurok mérései
+          között:</p
+        >
+        <ul>
+          <li><strong>Automatikus elosztás:</strong> A hiba egyenletesen eloszlik</li>
+          <li><strong>Manuális elosztás:</strong> Kézi beállítás a mérések között</li>
+          <li><strong>Mérés korrekció:</strong> Egyedi mérések javítása</li>
+        </ul>
+      </div>
 
-        <div class="warning">
-            <h3>Validálási hibák</h3>
-            <p><strong>Probléma:</strong> Sok validálási hiba jelenik meg.</p>
-            <p><strong>Megoldás:</strong> Ellenőrizze a forrás adatokat és javítsa a hibákat egyenként.</p>
-        </div>
+      <h2>Felmérés exportálása</h2>
 
-        <h2>Következő lépések</h2>
-        <p>Most, hogy megismerte a felmérések szerkesztését, folytathatja az <a href="06-attributumok.html">attribútumok kezelése</a> fejezettel, ahol megtanulja, hogyan adhat hozzá és kezelhet attribútumokat a pontokhoz és szakaszokhoz.</p>
+      <h3>CSV exportálás</h3>
+      <div class="step">
+        <h4>1. Exportálás indítása</h4>
+        <p>A felmérés szerkesztőben kattintson az "Exportálás CSV-be" gombra.</p>
+      </div>
 
-        <div class="nav">
-            <a href="04-3d-vizualizacio.html">← Előző: 3D vizualizáció</a>
-            <a href="index.html">Főoldal</a>
-            <a href="06-attributumok.html">Következő: Attribútumok →</a>
-              </div>
+      <div class="step">
+        <h4>2. Fájl mentése</h4>
+        <p>Válassza ki a mentési helyet és adja meg a fájlnevet.</p>
+      </div>
+
+      <h2>Szerkesztési tippek</h2>
+
+      <div class="info">
+        <h3>Hatékony szerkesztés</h3>
+        <ul>
+          <li>Használja a gyorsbillentyűket a gyors navigációhoz</li>
+          <li>Rendszeresen validálja a felmérést a hibák azonosítása érdekében</li>
+          <li>Mentsen rendszeresen a változtatások mentése érdekében</li>
+          <li>Használja a kontextus menüket a gyors műveletekhez</li>
+        </ul>
+      </div>
+
+      <div class="info">
+        <h3>Adatminőség javítása</h3>
+        <ul>
+          <li>Ellenőrizze a koordináta rendszereket</li>
+          <li>Validálja a szögeket és távolságokat</li>
+          <li>Dokumentálja a változtatásokat</li>
+          <li>Készítsen biztonsági másolatokat</li>
+        </ul>
+      </div>
+
+      <h2>Gyakori problémák és megoldások</h2>
+
+      <div class="warning">
+        <h3>Felmérés nem nyílik meg</h3>
+        <p><strong>Probléma:</strong> A felmérés szerkesztő nem nyílik meg.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze, hogy a felmérés érvényes adatokat tartalmaz-e.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Változtatások nem mentődnek</h3>
+        <p><strong>Probléma:</strong> A szerkesztett adatok nem kerülnek mentésre.</p>
+        <p><strong>Megoldás:</strong> Kattintson a "Felmérés frissítése" gombra a mentéshez.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Validálási hibák</h3>
+        <p><strong>Probléma:</strong> Sok validálási hiba jelenik meg.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze a forrás adatokat és javítsa a hibákat egyenként.</p>
+      </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte a felmérések szerkesztését, folytathatja az
+        <a href="06-attributumok.html">attribútumok kezelése</a> fejezettel, ahol megtanulja, hogyan adhat hozzá és
+        kezelhet attribútumokat a pontokhoz és szakaszokhoz.</p
+      >
+
+      <div class="nav">
+        <a href="04-3d-vizualizacio.html">← Előző: 3D vizualizáció</a>
+        <a href="index.html">Főoldal</a>
+        <a href="06-attributumok.html">Következő: Attribútumok →</a>
+      </div>
 
       <div class="donation-footer">
         <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>

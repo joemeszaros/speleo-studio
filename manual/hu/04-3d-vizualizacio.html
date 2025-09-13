@@ -48,6 +48,15 @@
         <li><strong>Logó (6):</strong> A Speleo Studio elmaradhatatlan logója</li>
       </ul>
 
+      <h4>3D segédeszköz</h4>
+      <p
+        >A 3D segédeszköz a koodináta rendszer tengelyeit mutatja. Az adott tengelyre kattinva (halvány vagy markáns
+        zöld, kék, piros pontok) a kamerát a megfelelő tengelyre állítja, ezáltal nagyon gyorsan válthatunk fix
+        nézőpontok között.
+      </p>
+
+      <div class="image-placeholder black small-padding"> <img src="images/5-3d-seged.gif" /> </div>
+
       <h2>Alapvető navigáció </h2>
 
       <p>A 3D nézetben hasonlóan más 3D-s alkalmazásokhoz a jelenetben a következő műveleteket végezhetjük:</p>
@@ -197,19 +206,21 @@
         <ul>
           <li> <strong>Globális szín: </strong>Minden vonal ugyanazzal a színnel jelenik meg. </li>
 
-          <li> <strong>Mélység szerinti átmenet</strong>A vonalak színe a Z koordináta (mélység) szerint változik. </li>
-
           <li>
-            <strong>Távolság szerinti átmenet</strong>A vonalak színe a kezdőponttól való távolság szerint változik.
+            <strong>Mélység szerinti átmenet: </strong>A vonalak színe a Z koordináta (mélység) szerint változik.
           </li>
 
           <li>
-            <strong>Barlangonként</strong>Minden barlang különböző színnel jelenik meg (ha azokhoz állítottunk be külön
-            színt).
+            <strong>Távolság szerinti átmenet: </strong>A vonalak színe a kezdőponttól való távolság szerint változik.
           </li>
 
           <li>
-            <strong>Felmérésenként</strong>Minden felmérés különböző színnel jelenik meg (ha azokhoz állítottunk be
+            <strong>Barlangonként: </strong>Minden barlang különböző színnel jelenik meg (ha azokhoz állítottunk be
+            külön színt).
+          </li>
+
+          <li>
+            <strong>Felmérésenként: </strong>Minden felmérés különböző színnel jelenik meg (ha azokhoz állítottunk be
             külön színt).
           </li>
         </ul>
@@ -287,18 +298,24 @@
         <div class="column-2">
           <h3>Távolság mérése</h3>
 
-          Pont részletek panelben a következő adatok jelennek meg a pontról:
+          Ha kontextus menüből a "Távolság innen" vagy "Távolság ide" opciót választjuk, akkor átlépünk a távolság mérés
+          módba. Ekkor a kiválasztott pontunknál egy fehér pont jelenik meg és egy másik pontot kiválasztva
+          (rákattintva) a távolság mérés eredménye megjelenik egy új ablakban, valamint a két pont között egy szaggatott
+          vonal jelenik meg A másodikként kiválasztott pont pedig narancssárga színű lesz. A távolság mérés eredménye a
+          következő adatokat tartalmazza:
           <ul>
-            <li><strong>Név:</strong> Pont egyedi neve</li>
-            <li><strong>Koordináták:</strong> Pont koordinátái (helyi, EOV, WGS84)</li>
-            <li><strong>Tipus:</strong> Pontot definiáló mérés típusa</li>
-            <li><strong>Barlang:</strong> Barlang neve, amelyben a pont található</li>
-            <li><strong>Felmérés:</strong> Felmérés neve, amely definiálta a pontot</li>
+            <li><strong>Pont részletei:</strong>A két kiválasztott pont felmérés neve és koordinátái</li>
+            <li><strong>X, Y, Z távolság:</strong> A távolság X, Y és Z komponensei</li>
             <li
-              ><strong>Mérések:</strong> A pontot érintő mérések, a mérés adatait a felmérét neve és a megjegyzés
-              követi</li
+              ><strong>Térbeli távolság, irány, dőlés:</strong> A két pont közötti távolság, iránya és dőlésszöge,
+              hasonlóan mint ahogy a méréseket vesszük fel.</li
             >
+            <li><strong>Vízszintes távolság:</strong> A távolság vektorának vízszintes síkra (X-Y) vetített hossza</li>
           </ul>
+          <p
+            >A távolság mérés eredményeit mutató ablak bezárása után a szaggatott vonal és a pontok kiemelése
+            eltűnik..</p
+          >
         </div>
         <div style="flex: 60%" class="image-placeholder black small-padding column-2">
           <img src="images/5-distance.png" />
@@ -310,64 +327,19 @@
       <div class="info">
         <h3>Jelenet áttekintő panel</h3>
         <p
-          >A jelenet áttekintő egy kisebb ablak, amely a teljes barlangrendszer felülnézetét mutatja. Ez segít a
-          navigációban és orientációban.</p
+          >A jelenet áttekintő egy kisebb ablak az oldalsávban, amely mindig az összes objektumot mutatja felülnézetből,
+          függetlenül a forgatástól, eltolástól és nagyítástól. Ha a jelenet nem fér ki a képernyőre, akkor egy fehér
+          téglalap jelzi, hogy az objektumok mely részét látjuk a képernyőn. Ez különösen hasznos funkció nagy barlangok
+          esetén.</p
         >
       </div>
+
+      <div class="image-placeholder black small-padding"> <img src="images/5-jelenet-attekinto.png" /> </div>
 
       <div class="step">
         <h4>Áttekintő megnyitása</h4>
         <p>1. Kattintson a jelenet áttekintő gombra az oldalsávban</p>
         <p>2. Vagy használja a <span class="shortcut">Ctrl + G</span> gyorsbillentyűt</p>
-      </div>
-
-      <div class="step">
-        <h4>Áttekintő használata</h4>
-        <p>1. Kattintson az áttekintőben egy területre a kamera gyors mozgatásához</p>
-        <p>2. Húzza az áttekintőben a kamerát a nézet módosításához</p>
-      </div>
-
-      <div class="image-placeholder"> [KÉP HELYE: Jelenet áttekintő panel] </div>
-
-      <h2>Teljes képernyős mód</h2>
-
-      <div class="control-box">
-        <h4>Teljes képernyős mód be/kikapcsolása</h4>
-        <p>A teljes képernyős mód eltávolítja az összes UI elemet, csak a 3D viewport marad látható.</p>
-        <p
-          ><strong>Használat:</strong> Kattintson a teljes képernyő gombra a navigációs sávban, vagy használja az
-          <span class="shortcut">F11</span> billentyűt.</p
-        >
-      </div>
-
-      <div class="warning">
-        <h3>⚠️ Teljes képernyős mód megjegyzések</h3>
-        <ul>
-          <li>Az ESC billentyű kilép a teljes képernyős módból</li>
-          <li>A navigációs eszközök továbbra is elérhetők</li>
-          <li>Az egér vezérlés változatlan marad</li>
-        </ul>
-      </div>
-
-      <h2>Nyomtatás és exportálás</h2>
-
-      <h3>Képernyő kép mentése</h3>
-      <div class="step">
-        <h4>1. lépés: Nézet beállítása</h4>
-        <p>Állítsa be a kívánt nézetet és nagyítást a mentéshez.</p>
-      </div>
-
-      <div class="step">
-        <h4>2. lépés: Nyomtatás indítása</h4>
-        <p
-          >Kattintson a nyomtatás gombra a navigációs sávban, vagy használja a
-          <span class="shortcut">Ctrl + P</span> gyorsbillentyűt.</p
-        >
-      </div>
-
-      <div class="step">
-        <h4>3. lépés: Fájl mentése</h4>
-        <p>A böngésző nyomtatási párbeszédpanelében válassza a "Mentés PDF-ként" opciót.</p>
       </div>
 
       <h2>Navigációs tippek és trükkök</h2>
@@ -378,17 +350,7 @@
           <li>Használja a nézet módokat a gyors orientációhoz</li>
           <li>A nagyítás illesztése gomb gyakran hasznos a teljes barlang megtekintéséhez</li>
           <li>A jelenet áttekintő segít a nagy barlangrendszerekben való navigációban</li>
-          <li>A pont kiválasztás segít a specifikus területek megkeresésében</li>
-        </ul>
-      </div>
-
-      <div class="info">
-        <h3>Teljesítmény optimalizálás</h3>
-        <ul>
-          <li>Nagy barlangrendszerek esetén csökkentse a részletességet</li>
-          <li>Használja a szín módokat a jobb áttekinthetőséghez</li>
-          <li>Rendszeresen használja a nagyítás illesztése funkciót</li>
-          <li>Zárja be a felesleges paneleket a teljesítmény javításához</li>
+          <li>A pont kiválasztás segít a pont részleteinek kiderítésében</li>
         </ul>
       </div>
 
@@ -397,22 +359,25 @@
       <div class="warning">
         <h3>Kamera elveszett</h3>
         <p><strong>Probléma:</strong> A kamera olyan pozícióba került, ahol nem látható a barlang.</p>
+        <p><strong>Megoldás:</strong> Használja a nagyítás illesztése gombot.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Lassú, akadozó navigáció</h3>
         <p
-          ><strong>Megoldás:</strong> Használja a nagyítás illesztése gombot vagy az
-          <span class="shortcut">F</span> billentyűt.</p
+          ><strong>Probléma:</strong> A 3D jelenet lassan válaszol a navigációs parancsokra, akadozik, amely leginkább
+          sok betöltött objektum, vagy teljesítmény problémák miatt fordul elő.</p
+        >
+        <p
+          ><strong>Megoldás:</strong> Csökkentse a megjelenített objektumok számát (pl. feliratok) vagy lépjen
+          kapcsolatba a fejlesztőkkel.</p
         >
       </div>
 
       <div class="warning">
-        <h3>Lassú navigáció</h3>
-        <p><strong>Probléma:</strong> A 3D jelenet lassan válaszol a navigációs parancsokra.</p>
-        <p><strong>Megoldás:</strong> Csökkentse a részletességet vagy zárja be a felesleges paneleket.</p>
-      </div>
-
-      <div class="warning">
         <h3>Pontok nem választhatók ki</h3>
-        <p><strong>Probléma:</strong> A raycasting nincs engedélyezve.</p>
-        <p><strong>Megoldás:</strong> Kapcsolja be a raycasting funkciót a navigációs sávban.</p>
+        <p><strong>Probléma:</strong> A pont kiválasztás nincs engedélyezve.</p>
+        <p><strong>Megoldás:</strong> Kapcsolja be a pont kiválasztás funkciót a navigációs sávban.</p>
       </div>
 
       <h2>Következő lépések</h2>
@@ -430,7 +395,7 @@
 
       <div class="donation-footer">
         <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
-        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
         <div class="donation-actions">
           <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
           <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
