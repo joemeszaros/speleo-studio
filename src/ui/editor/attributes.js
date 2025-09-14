@@ -1,4 +1,5 @@
 import { SectionAttribute, ComponentAttribute, StationAttribute } from '../../model.js';
+import { ShotType } from '../../model/survey.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
 import { randomAlphaNumbericString } from '../../utils/utils.js';
@@ -47,7 +48,7 @@ class BaseAttributeEditor extends Editor {
   setupPanel() {
     wm.makeFloatingPanel(
       this.panel,
-      (contentElmnt) => this.buildPanel(contentElmnt),
+      (contentElmnt, close) => this.buildPanel(contentElmnt, close),
       () => {
         return i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
       },
@@ -65,9 +66,9 @@ class BaseAttributeEditor extends Editor {
     );
   }
 
-  buildPanel(contentElmnt) {
+  buildPanel(contentElmnt, close) {
 
-    this.setupButtons(contentElmnt);
+    this.setupButtons(contentElmnt, close);
     this.setupTable(contentElmnt);
   }
 
@@ -391,6 +392,12 @@ class BaseAttributeEditor extends Editor {
     return errors;
   }
 
+  nonSplayStationNames() {
+    return [...this.cave.stations.entries()]
+      .filter(([_, s]) => s.type != ShotType.SPLAY)
+      .map(([name, _]) => name);
+  }
+
   tableFunctions = {
 
     checkAttributesLength : (attributes) => {
@@ -586,11 +593,12 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     super.closeEditor();
   }
 
-  setupButtons(contentElmnt) {
+  setupButtons(contentElmnt, close) {
     super.setupCommonButtons(contentElmnt); // sets this.iconbar
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
-      () => this.setCaveComponentAttributes()
+      () => this.setCaveComponentAttributes(),
+      () => close()
     );
     specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
@@ -752,7 +760,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         title        : i18n.t('ui.editors.attributes.columns.start'),
         field        : 'start',
         editor       : 'list',
-        editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
+        editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.startOrTerminationEdited
@@ -879,11 +887,12 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     super.closeEditor();
   }
 
-  setupButtons(contentElmnt) {
+  setupButtons(contentElmnt, close) {
     super.setupCommonButtons(contentElmnt); // sets this.iconbar
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
-      () => this.setCaveSectionAttributes()
+      () => this.setCaveSectionAttributes(),
+      () => close()
     );
     specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
@@ -1002,12 +1011,13 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   }
 
   getColumns() {
+
     const specificColumns = [
       {
         title        : i18n.t('common.from'),
         field        : 'from',
         editor       : 'list',
-        editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
+        editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.fromOrToEdited
@@ -1016,7 +1026,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         title        : i18n.t('common.to'),
         field        : 'to',
         editor       : 'list',
-        editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
+        editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.fromOrToEdited
@@ -1125,11 +1135,12 @@ class StationAttributeEditor extends BaseAttributeEditor {
     super.closeEditor();
   }
 
-  setupButtons(contentElmnt) {
+  setupButtons(contentElmnt, close) {
     super.setupCommonButtons(contentElmnt); // sets this.iconbar
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
-      () => this.setCaveStationAttributes()
+      () => this.setCaveStationAttributes(),
+      () => close()
     );
     specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
@@ -1160,7 +1171,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
         title        : i18n.t('ui.editors.attributes.columns.station'),
         field        : 'station',
         editor       : 'list',
-        editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
+        editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.stationEdited

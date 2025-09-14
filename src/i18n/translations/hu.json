@@ -378,7 +378,7 @@
           "componentAttributes": "Komponens attribútumok",
           "length": "Hossz",
           "orphanLength": "Hossz (árva)",
-          "invalidLength": "Hossz (érvénytelen)",
+          "invalidLength": "Hossz (hibás)",
           "auxiliaryLength": "Hossz (segéd)",
           "depth": "Mélység",
           "height": "Magasság",

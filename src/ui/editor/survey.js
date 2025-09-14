@@ -143,10 +143,10 @@ export class SurveyEditor extends Editor {
     return rowsToUpdated;
   }
 
-  cancelSurvey() {
+  cancelSurvey(wmCloseFn) {
     this.surveyModified = false;
     this.unsavedChanges = undefined;
-    this.closeEditor();
+    wmCloseFn(); // this is the window manager close function to remove the window from the active window list
   }
 
   updateSurvey() {
@@ -372,7 +372,7 @@ export class SurveyEditor extends Editor {
 
     wm.makeFloatingPanel(
       this.panel,
-      (contentElmnt) => this.buildPanel(contentElmnt),
+      (contentElmnt, close) => this.buildPanel(contentElmnt, close),
       () => i18n.t('ui.editors.survey.title', { name: this.survey.name }),
       true,
       true,
@@ -388,7 +388,7 @@ export class SurveyEditor extends Editor {
     );
   }
 
-  buildPanel(contentElmnt) {
+  buildPanel(contentElmnt, close) {
 
     // Create iconbar with common buttons
     this.iconBar = new IconBar(contentElmnt);
@@ -403,7 +403,7 @@ export class SurveyEditor extends Editor {
     const surveyButtons = IconBar.getSurveyButtons(
       () => this.validateSurvey(),
       () => this.updateSurvey(),
-      () => this.cancelSurvey()
+      () => this.cancelSurvey(close)
     );
     surveyButtons.forEach((button) => this.iconBar.addButton(button));
 

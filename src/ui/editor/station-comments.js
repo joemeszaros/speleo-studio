@@ -2,7 +2,7 @@ import { BaseEditor } from './base.js';
 import { wm } from '../window.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
-import { StationComment } from '../../model/survey.js';
+import { ShotType, StationComment } from '../../model/survey.js';
 import { IconBar } from './iconbar.js';
 
 class StationCommentsEditor extends BaseEditor {
@@ -17,7 +17,7 @@ class StationCommentsEditor extends BaseEditor {
   setupPanel() {
     wm.makeFloatingPanel(
       this.panel,
-      (contentElmnt) => this.build(contentElmnt),
+      (contentElmnt, close) => this.build(contentElmnt, close),
       () => i18n.t('ui.editors.stationComments.title', { name: this.cave.name }),
       true,
       true,
@@ -38,12 +38,12 @@ class StationCommentsEditor extends BaseEditor {
     );
   }
 
-  build(contentElmnt) {
+  build(contentElmnt, close) {
     this.setupButtons(contentElmnt);
     this.setupTable(contentElmnt);
   }
 
-  setupButtons(contentElmnt) {
+  setupButtons(contentElmnt, close) {
     this.iconBar = new IconBar(contentElmnt);
 
     // Add common buttons (undo, redo, add row, delete row)
@@ -53,9 +53,13 @@ class StationCommentsEditor extends BaseEditor {
     commonButtons.forEach((button) => this.iconBar.addButton(button));
     const commentsButtons = IconBar.getStationCommentsButtons(
       () => this.validateComments(),
-      () => this.updateComments()
+      () => this.updateComments(),
+      () => this.cancelComments(close)
     );
     commentsButtons.forEach((button) => this.iconBar.addButton(button));
+
+    const exportButton = IconBar.getExportButton(() => this.table, this.cave.name + ' - station-comments.csv');
+    exportButton.forEach((button) => this.iconBar.addButton(button));
   }
 
   getTableData() {
@@ -154,10 +158,15 @@ class StationCommentsEditor extends BaseEditor {
     return rowsToUpdated;
   }
 
+  cancelComments(wmCloseFn) {
+    this.modified = false;
+    wmCloseFn(); // this is the window manager close function to remove the window from the active window list
+  }
+
   updateComments() {
 
     if (this.modified) {
-
+      this.validateComments();
       this.cave.stationComments = this.getNewStationComments();
       this.modified = false;
       this.#emitSurveyCommentsChanged();
@@ -179,6 +188,10 @@ class StationCommentsEditor extends BaseEditor {
       const cnt = data.filter((v) => v.status !== 'ok').length;
       return `${cnt}`;
     };
+
+    const nonSplayStationNames = [...this.cave.stations.entries()]
+      .filter(([_, s]) => s.type != ShotType.SPLAY)
+      .map(([name, _]) => name);
 
     return [
       {
@@ -203,7 +216,7 @@ class StationCommentsEditor extends BaseEditor {
         field        : 'station',
         width        : 200,
         editor       : 'list',
-        editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
+        editorParams : { values: [...nonSplayStationNames], autocomplete: true },
         validator    : ['required'],
         headerFilter : 'input',
         bottomCalc   : 'count'

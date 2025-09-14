@@ -142,7 +142,7 @@ export class IconBar {
   }
 
   // Attribute editor-specific buttons
-  static getAttributesButtons(validateAttributes, updateAttributes) {
+  static getAttributesButtons(validateAttributes, updateAttributes, cancelAttributes) {
     return [
       { separator: true },
       {
@@ -156,13 +156,19 @@ export class IconBar {
         tooltip : i18n.t('ui.editors.attributes.buttons.update'),
         icon    : 'icons/update.svg',
         click   : () => updateAttributes?.()
+      },
+      {
+        id      : 'cancel-attributes',
+        tooltip : i18n.t('ui.editors.base.buttons.cancel'),
+        icon    : 'icons/cancel.svg',
+        click   : () => cancelAttributes?.()
       }
 
     ];
   }
 
   // Station comments editor-specific buttons
-  static getStationCommentsButtons(validateComments, updateComments) {
+  static getStationCommentsButtons(validateComments, updateComments, cancelComments) {
     return [
       { separator: true },
       {
@@ -173,9 +179,15 @@ export class IconBar {
       },
       {
         id      : 'update-comments',
-        tooltip : i18n.t('ui.editors.attributes.buttons.update'),
+        tooltip : i18n.t('ui.editors.stationComments.buttons.update'),
         icon    : 'icons/update.svg',
         click   : () => updateComments()
+      },
+      {
+        id      : 'cancel-comments',
+        tooltip : i18n.t('ui.editors.base.buttons.cancel'),
+        icon    : 'icons/cancel.svg',
+        click   : () => cancelComments()
       }
 
     ];

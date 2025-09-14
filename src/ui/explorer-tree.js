@@ -983,7 +983,6 @@ export class ExplorerTree {
       nodeElement.classList.add('draggable-survey');
 
       nodeElement.addEventListener('dragstart', (e) => {
-        console.log('Dragstart on survey node:', node.id);
         e.dataTransfer.setData('text/plain', node.id);
         e.dataTransfer.effectAllowed = 'move';
         nodeElement.classList.add('dragging');
@@ -995,7 +994,6 @@ export class ExplorerTree {
 
         // Fallback: if we have a current drop target but no drop event was triggered
         if (this.draggedNode && this.currentDropTarget && this.currentDropTarget !== nodeElement) {
-          console.log('Fallback drop handling triggered');
           const draggedNodeId = this.draggedNode.id;
           const targetNodeId = this.currentDropTarget.getAttribute('data-node-id');
           if (targetNodeId) {
@@ -1011,7 +1009,6 @@ export class ExplorerTree {
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
-        console.log('Dragover on survey node:', node.id);
         this.showDropIndicator(nodeElement, e);
       });
 
@@ -1026,7 +1023,6 @@ export class ExplorerTree {
         e.preventDefault();
         e.stopPropagation();
         const draggedNodeId = e.dataTransfer.getData('text/plain');
-        console.log('Drop event triggered:', { draggedNodeId, targetNodeId: node.id });
         this.handleSurveyDrop(draggedNodeId, node.id);
         this.clearDropIndicators();
       });
@@ -1137,10 +1133,7 @@ export class ExplorerTree {
    * @param {string} targetNodeId - ID of the target survey node
    */
   handleSurveyDrop(draggedNodeId, targetNodeId) {
-    console.log('handleSurveyDrop called:', { draggedNodeId, targetNodeId });
-
     if (draggedNodeId === targetNodeId) {
-      console.log('Same node, no change needed');
       return; // No change needed
     }
 
@@ -1164,8 +1157,6 @@ export class ExplorerTree {
       }
     }
 
-    console.log('Nodes found:', { draggedNode: !!draggedNode, targetNode: !!targetNode, caveNode: !!caveNode });
-
     if (
       !draggedNode ||
       !targetNode ||
@@ -1173,11 +1164,6 @@ export class ExplorerTree {
       targetNode.type !== 'survey' ||
       draggedNode.parent !== targetNode.parent
     ) {
-      console.log('Invalid drop conditions:', {
-        draggedNodeType : draggedNode?.type,
-        targetNodeType  : targetNode?.type,
-        sameParent      : draggedNode?.parent === targetNode?.parent
-      });
       return; // Can only reorder surveys within the same cave
     }
 
@@ -1188,10 +1174,7 @@ export class ExplorerTree {
     const draggedIndex = caveNode.children.findIndex((child) => child.id === draggedNodeId);
     const targetIndex = caveNode.children.findIndex((child) => child.id === targetNodeId);
 
-    console.log('Indices found:', { draggedIndex, targetIndex });
-
     if (draggedIndex === -1 || targetIndex === -1) {
-      console.log('Invalid indices, aborting');
       return;
     }
 
@@ -1201,19 +1184,15 @@ export class ExplorerTree {
       newIndex = targetIndex - 1; // Adjust for the removal of the dragged item
     }
 
-    console.log('Reordering survey:', { caveName, draggedSurveyName, newIndex });
-
     // Update the database
     const success = this.db.reorderSurvey(caveName, draggedSurveyName, newIndex);
-
-    console.log('Database reorder success:', success);
 
     if (success) {
       document.dispatchEvent(
         new CustomEvent('surveyReordered', {
           detail : {
-            cave     : caveName,
-            survey   : draggedSurveyName,
+            cave     : caveNode.data,
+            survey   : draggedNode.data,
             newIndex : newIndex
           }
         })
@@ -1224,9 +1203,6 @@ export class ExplorerTree {
 
       // Re-render the tree to reflect the changes
       this.render();
-      console.log('Survey reordered successfully');
-    } else {
-      console.log('Failed to reorder survey in database');
     }
   }
 

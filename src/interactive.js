@@ -587,6 +587,7 @@ class SceneInteraction {
         .filter((sh) => (sh.isCenter() && sh.from === station.name) || sh.to === station.name)
         .map((sh) => ({ survey: st, shot: sh }))
     );
+    const comments = station.meta.cave.stationComments.filter((c) => c.name === station.name).map((c) => c.comment);
     const shotDetails = shots
       .map((r) => {
         const comment = r.shot.comment
@@ -612,6 +613,7 @@ class SceneInteraction {
         ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${station.meta.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.eov, ['x', 'y', 'elevation'])}<br>
         ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${station.meta.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.wgs, ['lat', 'lon'], 6)}<br>
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br>
+        <br>${i18n.t('common.comments')}:${comments.join('<br>')}<br>
         `;
     contentElmnt.appendChild(content);
 
