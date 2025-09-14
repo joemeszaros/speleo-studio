@@ -24,6 +24,8 @@ export class ExplorerTree {
     this.searchMode = 'caveSurvey'; // 'caveSurvey' or 'shotNames'
 
     this.partialImport = undefined;
+    this.draggedNode = null; // Track the currently dragged survey node
+    this.currentDropTarget = null; // Track the current drop target
 
     document.addEventListener('languageChanged', () => this.render());
     document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this));
@@ -276,6 +278,8 @@ export class ExplorerTree {
       if (nodeId === this.selectedNode.id) {
         this.hideContextMenu();
         this.selectedNode = undefined;
+        // Re-render to hide up arrow
+        this.render();
         return;
       }
     }
@@ -294,6 +298,9 @@ export class ExplorerTree {
       if (node.element) {
         node.element.classList.add('selected');
       }
+
+      // Re-render to show/hide up arrow for selected survey
+      this.render();
 
       // Show context popup for surveys after render is complete
       if (node.type === 'survey') {
@@ -957,6 +964,74 @@ export class ExplorerTree {
       this.selectNode(node.id);
     };
 
+    // Add move up button for selected survey nodes (before visibility icon)
+    if (node.type === 'survey' && node.selected) {
+      const moveUpButton = document.createElement('div');
+      moveUpButton.className = 'explorer-tree-move-up';
+      moveUpButton.innerHTML = '⇧';
+      moveUpButton.title = 'Move to top';
+      moveUpButton.onclick = (e) => {
+        e.stopPropagation();
+        this.moveSurveyToTop(node.id);
+      };
+      nodeElement.appendChild(moveUpButton);
+    }
+
+    // Add drag and drop functionality for survey nodes
+    if (node.type === 'survey') {
+      nodeElement.draggable = true;
+      nodeElement.classList.add('draggable-survey');
+
+      nodeElement.addEventListener('dragstart', (e) => {
+        console.log('Dragstart on survey node:', node.id);
+        e.dataTransfer.setData('text/plain', node.id);
+        e.dataTransfer.effectAllowed = 'move';
+        nodeElement.classList.add('dragging');
+        this.draggedNode = node;
+      });
+
+      nodeElement.addEventListener('dragend', () => {
+        nodeElement.classList.remove('dragging');
+
+        // Fallback: if we have a current drop target but no drop event was triggered
+        if (this.draggedNode && this.currentDropTarget && this.currentDropTarget !== nodeElement) {
+          console.log('Fallback drop handling triggered');
+          const draggedNodeId = this.draggedNode.id;
+          const targetNodeId = this.currentDropTarget.getAttribute('data-node-id');
+          if (targetNodeId) {
+            this.handleSurveyDrop(draggedNodeId, targetNodeId);
+          }
+        }
+
+        this.draggedNode = null;
+        this.clearDropIndicators();
+      });
+
+      nodeElement.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        console.log('Dragover on survey node:', node.id);
+        this.showDropIndicator(nodeElement, e);
+      });
+
+      nodeElement.addEventListener('dragleave', (e) => {
+        // Only clear indicators if we're leaving the entire element
+        if (!nodeElement.contains(e.relatedTarget)) {
+          this.clearDropIndicators();
+        }
+      });
+
+      nodeElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const draggedNodeId = e.dataTransfer.getData('text/plain');
+        console.log('Drop event triggered:', { draggedNodeId, targetNodeId: node.id });
+        this.handleSurveyDrop(draggedNodeId, node.id);
+        this.clearDropIndicators();
+      });
+    }
+
     // Visibility toggle
     const visibility = document.createElement('div');
     visibility.className = `explorer-tree-visibility ${node.visible ? 'visible' : 'hidden'}`;
@@ -1017,5 +1092,206 @@ export class ExplorerTree {
     this.updateFilterInputUI();
 
     this.render();
+  }
+
+  /**
+   * Shows a visual indicator for where a survey can be dropped
+   * @param {HTMLElement} targetElement - The element being dragged over
+   * @param {DragEvent} e - The drag event
+   */
+  showDropIndicator(targetElement, e) {
+    this.clearDropIndicators();
+
+    const rect = targetElement.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const height = rect.height;
+
+    // Create drop indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'drop-indicator';
+
+    // Position indicator above or below the target based on mouse position
+    if (y < height / 2) {
+      indicator.classList.add('top');
+      targetElement.style.position = 'relative';
+      targetElement.insertBefore(indicator, targetElement.firstChild);
+    } else {
+      indicator.classList.add('bottom');
+      targetElement.style.position = 'relative';
+      targetElement.appendChild(indicator);
+    }
+
+    // Store reference to current drop target
+    this.currentDropTarget = targetElement;
+  }
+
+  clearDropIndicators() {
+    const indicators = document.querySelectorAll('.drop-indicator');
+    indicators.forEach((indicator) => indicator.remove());
+    this.currentDropTarget = null;
+  }
+
+  /**
+   * Handles the drop operation for survey reordering
+   * @param {string} draggedNodeId - ID of the dragged survey node
+   * @param {string} targetNodeId - ID of the target survey node
+   */
+  handleSurveyDrop(draggedNodeId, targetNodeId) {
+    console.log('handleSurveyDrop called:', { draggedNodeId, targetNodeId });
+
+    if (draggedNodeId === targetNodeId) {
+      console.log('Same node, no change needed');
+      return; // No change needed
+    }
+
+    // Find the nodes by searching through all cave children
+    let draggedNode = null;
+    let targetNode = null;
+    let caveNode = null;
+
+    for (const [, cave] of this.nodes) {
+      if (cave.children) {
+        for (const child of cave.children) {
+          if (child.id === draggedNodeId) {
+            draggedNode = child;
+            caveNode = cave;
+          }
+          if (child.id === targetNodeId) {
+            targetNode = child;
+            if (!caveNode) caveNode = cave;
+          }
+        }
+      }
+    }
+
+    console.log('Nodes found:', { draggedNode: !!draggedNode, targetNode: !!targetNode, caveNode: !!caveNode });
+
+    if (
+      !draggedNode ||
+      !targetNode ||
+      draggedNode.type !== 'survey' ||
+      targetNode.type !== 'survey' ||
+      draggedNode.parent !== targetNode.parent
+    ) {
+      console.log('Invalid drop conditions:', {
+        draggedNodeType : draggedNode?.type,
+        targetNodeType  : targetNode?.type,
+        sameParent      : draggedNode?.parent === targetNode?.parent
+      });
+      return; // Can only reorder surveys within the same cave
+    }
+
+    const caveName = caveNode.data.name;
+    const draggedSurveyName = draggedNode.data.name;
+
+    // Find current indices
+    const draggedIndex = caveNode.children.findIndex((child) => child.id === draggedNodeId);
+    const targetIndex = caveNode.children.findIndex((child) => child.id === targetNodeId);
+
+    console.log('Indices found:', { draggedIndex, targetIndex });
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      console.log('Invalid indices, aborting');
+      return;
+    }
+
+    // Calculate new index for the database
+    let newIndex = targetIndex;
+    if (draggedIndex < targetIndex) {
+      newIndex = targetIndex - 1; // Adjust for the removal of the dragged item
+    }
+
+    console.log('Reordering survey:', { caveName, draggedSurveyName, newIndex });
+
+    // Update the database
+    const success = this.db.reorderSurvey(caveName, draggedSurveyName, newIndex);
+
+    console.log('Database reorder success:', success);
+
+    if (success) {
+      document.dispatchEvent(
+        new CustomEvent('surveyReordered', {
+          detail : {
+            cave     : caveName,
+            survey   : draggedSurveyName,
+            newIndex : newIndex
+          }
+        })
+      );
+      // Update the node order in the explorer tree
+      const [draggedChild] = caveNode.children.splice(draggedIndex, 1);
+      caveNode.children.splice(newIndex, 0, draggedChild);
+
+      // Re-render the tree to reflect the changes
+      this.render();
+      console.log('Survey reordered successfully');
+    } else {
+      console.log('Failed to reorder survey in database');
+    }
+  }
+
+  /**
+   * Moves a survey to the top of its cave's survey list
+   * @param {string} surveyNodeId - ID of the survey node to move
+   */
+  moveSurveyToTop(surveyNodeId) {
+    // Find the survey node and its cave
+    let surveyNode = null;
+    let caveNode = null;
+
+    for (const [, cave] of this.nodes) {
+      if (cave.children) {
+        for (const child of cave.children) {
+          if (child.id === surveyNodeId) {
+            surveyNode = child;
+            caveNode = cave;
+            break;
+          }
+        }
+      }
+      if (surveyNode) break;
+    }
+
+    if (!surveyNode || !caveNode) {
+      return;
+    }
+
+    const caveName = caveNode.data.name;
+    const surveyName = surveyNode.data.name;
+
+    // Find current index
+    const currentIndex = caveNode.children.findIndex((child) => child.id === surveyNodeId);
+
+    if (currentIndex === -1) {
+      return;
+    }
+
+    // If already at the top, do nothing
+    if (currentIndex === 0) {
+      return;
+    }
+
+    // Move to top (index 0) in the database
+    const success = this.db.reorderSurvey(caveName, surveyName, 0);
+
+    if (success) {
+      // Update the node order in the explorer tree
+      const [movedSurvey] = caveNode.children.splice(currentIndex, 1);
+      caveNode.children.unshift(movedSurvey); // Add to beginning (index 0)
+
+      // Re-render the tree to reflect the changes
+      this.render();
+
+      // Dispatch custom event
+      document.dispatchEvent(
+        new CustomEvent('surveyReordered', {
+          detail : {
+            cave     : caveNode.data,
+            survey   : surveyNode.data,
+            newIndex : 0
+          }
+        })
+      );
+    }
   }
 }

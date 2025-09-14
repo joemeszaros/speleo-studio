@@ -33,6 +33,7 @@ class ProjectManager {
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
     document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
+    document.addEventListener('surveyReordered', (e) => this.onSurveyReordered(e));
     document.addEventListener('surveyDataEdited', (e) => this.onSurveyDataEdited(e));
     document.addEventListener('surveyDataUpdated', (e) => this.onSurveyDataUpdated(e));
     document.addEventListener('currentProjectChanged', (e) => this.onCurrentProjectChanged(e));
@@ -51,6 +52,12 @@ class ProjectManager {
   async onCaveAdded(e) {
     const cave = e.detail.cave;
     this.addCave(cave);
+    await this.saveCave(cave);
+  }
+
+  async onSurveyReordered(e) {
+    const cave = e.detail.cave;
+    await this.reloadCave(cave);
     await this.saveCave(cave);
   }
 
@@ -117,6 +124,7 @@ class ProjectManager {
     const caveName = e.detail.cave;
     const surveyName = e.detail.survey;
     this.scene.disposeSurvey(caveName, surveyName);
+    this.scene.deleteSurvey(caveName, surveyName);
     const cave = this.db.getCave(caveName);
     this.recalculateCave(cave);
     this.reloadOnScene(cave);

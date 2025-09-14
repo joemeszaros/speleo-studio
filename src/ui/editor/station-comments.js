@@ -118,9 +118,12 @@ class StationCommentsEditor extends BaseEditor {
       const oldStatus = r.status;
       let validationErrors = [];
       if (emptyFields.length > 0) {
+        const translatedFields = emptyFields.map((f) => i18n.t('ui.editors.stationComments.columns.' + f));
         const newRow = { ...r };
         newRow.status = 'incomplete';
-        newRow.message = i18n.t('ui.editors.stationComments.message.missingFields', { fields: emptyFields.join(',') });
+        newRow.message = i18n.t('ui.editors.stationComments.message.missingFields', {
+          fields : translatedFields.join(',')
+        });
         rowsToUpdated.push(newRow);
       } else {
         if (r.station) {

@@ -117,8 +117,9 @@ export class SurveyEditor extends Editor {
       let validationErrors = [];
       if (emptyFields.length > 0) {
         const newRow = { ...r };
+        const translatedFields = emptyFields.map((f) => i18n.t('ui.editors.survey.columns.' + f));
         newRow.status = 'incomplete';
-        newRow.message = i18n.t('ui.editors.survey.message.missingFields', { fields: emptyFields.join(',') });
+        newRow.message = i18n.t('ui.editors.survey.message.missingFields', { fields: translatedFields.join(',') });
         rowsToUpdated.push(newRow);
       } else {
         const shotErrors = shot.validate(i18n);
@@ -557,6 +558,7 @@ export class SurveyEditor extends Editor {
           i18n
         ),
       accessorClipboard : (value) => this.baseTableFunctions.attributesToClipboard(value),
+      accessorDownload  : (value) => this.baseTableFunctions.attributesToClipboard(value),
       mutatorClipboard  : (value) => this.baseTableFunctions.attributesFromClipboard(value)
 
     });

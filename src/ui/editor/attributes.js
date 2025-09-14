@@ -639,9 +639,10 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     const oldStatus = r.status;
     let validationErrors = [];
     if (emptyFields.length > 0) {
+      const translatedFields = emptyFields.map((f) => i18n.t('ui.editors.attributes.columns.' + f));
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
+      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: translatedFields.join(',') });
     } else if (
       r.start &&
       !this.cave.stations.has(r.start) &&
@@ -931,9 +932,10 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     const oldStatus = r.status;
     let validationErrors = [];
     if (emptyFields.length > 0) {
+      const translatedFields = emptyFields.map((f) => i18n.t('ui.editors.attributes.columns.' + f));
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
+      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: translatedFields.join(',') });
     } else if (r.from && r.to && (!this.cave.stations.has(r.from) || !this.cave.stations.has(r.to))) {
       newRow = { ...r };
       newRow.status = 'invalid';
@@ -1155,7 +1157,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
         mutatorClipboard : (str) => (str === 'true' ? true : false)
       },
       {
-        title        : i18n.t('ui.editors.stationAttributes.columns.station'),
+        title        : i18n.t('ui.editors.attributes.columns.station'),
         field        : 'station',
         editor       : 'list',
         editorParams : { values: [...this.cave.stations.keys()], autocomplete: true },
@@ -1164,7 +1166,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
         cellEdited   : this.functions.stationEdited
       },
       {
-        title        : i18n.t('ui.editors.stationAttributes.columns.survey'),
+        title        : i18n.t('ui.editors.attributes.columns.survey'),
         field        : 'survey',
         editor       : false,
         headerFilter : 'input'
@@ -1252,9 +1254,10 @@ class StationAttributeEditor extends BaseAttributeEditor {
     const oldStatus = r.status;
     let validationErrors = [];
     if (emptyFields.length > 0) {
+      const translatedFields = emptyFields.map((f) => i18n.t('ui.editors.attributes.columns.' + f));
       newRow = { ...r };
       newRow.status = 'incomplete';
-      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: emptyFields.join(',') });
+      newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: translatedFields.join(',') });
     } else if (r.station && !this.cave.stations.has(r.station)) {
       newRow = { ...r };
       newRow.status = 'invalid';

@@ -438,6 +438,10 @@
           "validate": "Validate",
           "update": "Update"
         },
+        "columns": {
+          "name": "Name",
+          "comment": "Comment"
+        },
         "message": {
           "missingFields": "Row has missing fields: {fields}",
           "duplicateStationComment": "Station comment for station {station} already exists"
@@ -458,6 +462,11 @@
         },
         "buttons": {
           "cancel": "Cancel"
+        },
+        "menu": {
+          "deleteRow": "Delete row",
+          "addRowAbove": "Add row above",
+          "addRowBelow": "Add row below"
         }
       },
       "survey": {
@@ -508,7 +517,9 @@
           "attribute": "Attribute",
           "format": "Format",
           "start": "Start",
-          "termination": "Termination"
+          "termination": "Termination",
+          "station": "Station",
+          "survey": "Survey"
         },
         "errors": {
           "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",
@@ -541,10 +552,6 @@
           "emptyAttribute": "Attribute is empty",
           "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}",
           "stationNotFound": "Station {station} not found in the cave or is orphan"
-        },
-        "columns": {
-          "station": "Station",
-          "survey": "Survey"
         }
       },
       "cycles": {

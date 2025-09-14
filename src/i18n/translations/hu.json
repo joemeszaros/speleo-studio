@@ -447,6 +447,10 @@
           "validate": "Validálás",
           "update": "Kommentek frissítése"
         },
+        "columns": {
+          "name": "Név",
+          "comment": "Megjegyzés"
+        },
         "message": {
           "missingFields": "Sor hiányzó mezői: {fields}",
           "duplicateStationComment": "A(z) {station} pont megjegyzése már létezik",
@@ -468,6 +472,11 @@
         },
         "buttons": {
           "cancel": "Módosítások elvetése"
+        },
+        "menu": {
+          "deleteRow": "Sor törlése",
+          "addRowAbove": "Sor hozzáadása előtte",
+          "addRowBelow": "Sor hozzáadása után"
         }
       },
       "survey": {
@@ -531,7 +540,9 @@
           "attribute": "Attribútum",
           "format": "Formátum",
           "start": "Induló pont",
-          "termination": "Végpont"
+          "termination": "Végpont",
+          "station": "Pont",
+          "survey": "Felmérés"
         },
         "errors": {
           "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot",
@@ -564,10 +575,6 @@
           "emptyAttribute": "Attribútum üres",
           "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}",
           "stationNotFound": "A(z) {station} pont nem található a barlangban vagy árva"
-        },
-        "columns": {
-          "station": "Pont",
-          "survey": "Felmérés"
         }
       },
       "cycles": {

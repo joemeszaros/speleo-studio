@@ -116,6 +116,22 @@ class Database {
     this.surfaces.clear();
   }
 
+  reorderSurvey(caveName, surveyName, newIndex) {
+    if (this.caves.has(caveName)) {
+      const cave = this.caves.get(caveName);
+      const surveyIndex = cave.surveys.findIndex((s) => s.name === surveyName);
+
+      if (surveyIndex !== -1 && newIndex >= 0 && newIndex < cave.surveys.length) {
+        // Remove the survey from its current position
+        const [survey] = cave.surveys.splice(surveyIndex, 1);
+        // Insert it at the new position
+        cave.surveys.splice(newIndex, 0, survey);
+        return true;
+      }
+    }
+    return false;
+  }
+
 }
 
 export { Database };

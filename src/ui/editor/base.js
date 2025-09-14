@@ -110,20 +110,20 @@ class Editor extends BaseEditor {
     getContextMenu : () => {
       return [
         {
-          label  : '<span class="delete-row"></span><span>Delete row<span/> ',
+          label  : `<span class="delete-row"></span><span>${i18n.t('ui.editors.base.menu.deleteRow')}<span/> `,
           action : function (e, row) {
             row.delete();
           }
         },
         {
-          label  : '<span class="add-row"></span><span>Add row above<span/> ',
+          label  : `<span class="add-row"></span><span>${i18n.t('ui.editors.base.menu.addRowAbove')}<span/> `,
           action : (e, row) => {
             const newRow = this.getEmptyRow();
             row.getTable().addRow(newRow, true, row.getIndex());
           }
         },
         {
-          label  : '<span class="add-row"></span><span>Add row below<span/> ',
+          label  : `<span class="add-row"></span><span>${i18n.t('ui.editors.base.menu.addRowBelow')}<span/> `,
           action : (e, row) => {
             const newRow = this.getEmptyRow();
             row.getTable().addRow(newRow, false, row.getIndex());

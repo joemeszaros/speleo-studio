@@ -804,7 +804,7 @@ class MyScene {
   }
 
   #getCaveObjectsFlattened() {
-    return [...this.caveObjects.values()].flatMap((c) => Array.from(c.values()));
+    return [...this.caveObjects.values()].filter((c) => c && c.size > 0).flatMap((c) => Array.from(c.values()));
   }
 
   #initializeCameraTracking() {
