@@ -14,7 +14,7 @@
       <h1>Felmérések szerkesztése</h1>
 
       <div class="nav">
-        <a href="04-3d-vizualizacio.html">← Előző: 3D vizualizáció</a>
+        <a href="04b-barlang-szerkesztese.html">← Előző: Barlang szerkesztése</a>
         <a href="index.html">Főoldal</a>
         <a href="06-attributumok.html">Következő: Attribútumok →</a>
       </div>
@@ -34,7 +34,7 @@
             ikonok funkciói:</p
           >
           <ul>
-            <li><strong>📝 Méréssek szerkesztés:</strong> Felmérés méréseinek szerkesztése</li>
+            <li><strong>📝 Mérések szerkesztés:</strong> Felmérés méréseinek szerkesztése</li>
             <li><strong>🔠 Adatlap szerkesztése:</strong> Pontok és mérések módosítása</li>
             <li
               ><img src="../../icons/topodroid.png" style="margin: 0px; width: 20px; height: 20px" />
@@ -67,6 +67,10 @@
             színnel szeretnénk megjeleníteni. A kiválasztott vonal szín módtól függetlenül a felmérésünk mindig az adott
             színnel fog megjelenni.
           </p>
+          <p
+            >A <strong>felmérés sorrendjét </strong> a felfedezőben a drag & drop funkcióval lehet módosítani. vagy a
+            kék kerettel jelzett felfele nyíllal.</p
+          >
           <p>
             Az importálásról egy korábbi fejezetben már részletesen írtunk, ebben a fejezetben inkább az adatlap és a
             mérések szerkesztéséről lesz szó.</p
@@ -132,76 +136,194 @@
 
       <h2>Mérések szerkesztése</h2>
 
-      <h3>Mérési adatok táblázata</h3>
-      <p>A mérések egy táblázatos formában jelennek meg, ahol minden sor egy mérést reprezentál:</p>
+      <h3>Szerkesztő ablak áttekintése</h3>
+      <p>A mérések szerkesztés ikonra kattinva megnyílik a szerkesztő ablak a mérések táblázatos megjelenítésével.</p>
+       <div class="image-placeholder black"><img src="images/6-felmeres-tablazat.png" /></div>
 
-      <div class="table-example">
-        <table>
-          <thead>
-            <tr>
-              <th>Típus</th>
-              <th>Ponttól</th>
-              <th>Pontig</th>
-              <th>Irány</th>
-              <th>Dőlés</th>
-              <th>Hossz</th>
-              <th>Attribútumok</th>
-              <th>Megjegyzés</th>
-              <th>Státusz</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Közép</td>
-              <td>1</td>
-              <td>2</td>
-              <td>45.0</td>
-              <td>10.0</td>
-              <td>5.2</td>
-              <td>-</td>
-              <td>-</td>
-              <td class="status-ok">✓ OK</td>
-            </tr>
-            <tr>
-              <td>Tüske</td>
-              <td>2</td>
-              <td>-</td>
-              <td>90.0</td>
-              <td>-5.0</td>
-              <td>3.8</td>
-              <td>-</td>
-              <td>Fal részlet</td>
-              <td class="status-ok">✓ OK</td>
-            </tr>
-            <tr>
-              <td>Közép</td>
-              <td>2</td>
-              <td>3</td>
-              <td>180.0</td>
-              <td>0.0</td>
-              <td>7.1</td>
-              <td>-</td>
-              <td>-</td>
-              <td class="status-error">✗ Hiba</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Mérés típusok</h3>
-      <div class="info">
-        <h4>Középvonal (Center)</h4>
-        <p>A barlang fő útvonalát követő mérések. Minden középvonal mérésnek van kezdő és végpontja.</p>
-      </div>
+      <p>A szerkesztő ablak felépítése a következő:</p>
+      <ul>
+        <li><strong>Ikon sáv (piros keret): </strong>A mérések szerkesztésére szolgáló ikonok</li>
+        <li
+          ><strong>Táblázat fejléc (kék keret): </strong>A táblázat oszlopait megjelenítő fejléc, amely a sorok
+          szűrésére is szolgál. Az oszlop neve alatt lévő beviteli mező (piros nyíl)
+          <strong>segítségével szűrhetjük a sorokat.</strong> Például a Megjegyzés oszlop beviteli mezőjébe "Fal
+          részlet" értéket írva a táblázatban lévő sorok közül csak a Megjegyzés oszlopban "Fal részlet" értéket
+          tartalmazó sorok lesznek megjelenítve. Az első két oszlop (Típus és Státusz) esetén a beviteli mezőre kattinva
+          (zöld nyíl) az adott oszlop lehetséges fix értékei közül választhatunk, amellyel szintén szűrhetjük a sorokat.
+          Például a Típus oszlopban a <i>Center</i> értéket választva a táblázatban csak a középvonal mérések jelennek
+          meg.
+        </li>
+        <li
+          ><strong>Mérések táblázata (lila keret): </strong>A mérések listája, a táblázatban minden sor egy mérést
+          reprezentál. A táblázatban nem mindig mérés látható egyszerre, ilyen esetben ne felejtsünk el görgetni a jobb
+          oldalon.</li
+        >
+        <li
+          ><strong>Táblázat lábléc (zöld keret): </strong>A mérések táblázatának lábléce. A státusz oszlop esetén az
+          érvénytelen sorok számát mutatja, a ponttól oszlop esetén a mérések számát, míg a hossz esetén a mérések össz
+          hosszát.</li
+        >
+      </ul>
 
       <div class="info">
-        <h4>Tüske (Splay)</h4>
-        <p>Mellékágak, fal részletek és egyéb mellékmérések. A végpont "-" jelzéssel van megadva.</p>
+        Az ablak jobb felső sarkában található bezárás piros ikonra kattintva a mérés változtatásai mentődnek és a mérés
+        frissül!
+      </div>
+
+      <div class="editor-box">
+        <h4>Ikonsáv részletezése</h4>
+        <p>Az egyes ikonok funkciói a következők:</p>
+        <ul>
+          <li
+            ><img src="../../icons/undo.svg" class="icon" /> <strong> Visszavonás:</strong> Változtatások
+            visszavonása</li
+          >
+          <li
+            ><img src="../../icons/redo.svg" class="icon" /> <strong> Újra:</strong> Változtatások újra alkalmazása</li
+          >
+          <li
+            ><img src="../../icons/add_before.svg" class="icon" /><strong> Sor hozzáadása előtte:</strong> Új sor
+            beszúrása a kiválasztott sor előtt</li
+          >
+          <li
+            ><img src="../../icons/add_after.svg" class="icon" /><strong> Sor hozzáadása után:</strong> Új sor beszúrása
+            a kiválasztott sor után</li
+          >
+          <li
+            ><img src="../../icons/add_white.svg" class="icon" /><strong> Sor hozzáadása a végéhez:</strong> Új sor
+            beszúrása a táblázat végéhez</li
+          >
+          <li
+            ><img src="../../icons/trash_white.svg" class="icon" /><strong> Sor(ok) törlése:</strong> Aktuális /
+            Kiválasztott sor vagy sorok törlése</li
+          >
+          <li
+            ><img src="../../icons/validate.svg" class="icon" /><strong> Sor(ok) validálása:</strong> Mérési sorok
+            validálása</li
+          >
+          <li
+            ><img src="../../icons/update.svg" class="icon" /><strong> Sor(ok) frissítése:</strong> Mérési adatok
+            frissítése és elmentése</li
+          >
+          <li
+            ><img src="../../icons/cancel.svg" class="icon" /><strong> Módosítások elvetése:</strong> Változtatások
+            elvetése, szerkesztő bezárása</li
+          >
+          <li
+            ><img src="../../icons/hamburger.svg" class="icon" /><strong> Oszlopok láthatósága:</strong> Segítségével az
+            egyes oszlopok láthatóságát lehet szabályozni</li
+          ><li
+            ><img src="../../icons/export.svg" class="icon" /><strong> Exportálás CSV-be:</strong> Táblázat mentése CSV
+            formátumban</li
+          >
+        </ul>
+      </div>
+
+      <div class="editor-box">
+        <h4>Mérési sorok részletezése</h4>
+        <p>A mérési sorok a következő mezőket tartalmazzák:</p>
+        <ul>
+          <li
+            ><strong>Státusz:</strong>A mérés státásza, amely helyes sorok esetén zöld ikon, minden más esetben
+            narancssárga ikon jelenik meg.
+          </li>
+          <li
+            ><strong>Típus:</strong> Mérés típusa, részletek az adat modell oldalon. A típus állítható a cellára
+            kattintva.</li
+          >
+          <li><strong>Ponttól:</strong> Mérés kezdőpontja</li>
+          <li><strong>Pontig:</strong> Mérés végpontja, lehet üres</li>
+          <li><strong>Irány:</strong> Mérés iránya fokban, 0 és 360 között változhat</li>
+          <li><strong>Dőlés:</strong> Mérés dőlése fokban, -90 és 90 között változhat</li>
+          <li><strong>Hossz:</strong> Mérés hossza méterben. Nem lehet negatiív érték</li>
+          <li><strong>Attribútumok:</strong> A mérés vépgpontjánt érintő attribútumok listája</li>
+          <li><strong>Megjegyzés:</strong> Mérés szöveges megjegyzése, lehet üres</li>
+          <li><strong>Számított mezők:</strong>A mérés adataiból kiszámított értékek, amelyek nem szerkeszthetők</li
+          ><ul>
+            <li><strong>X, Y, Z:</strong> A végpont X, Y és Z koordinátái</li>
+            <li><strong>EOV X, EOV Y, EOV Z:</strong> A végpont EOV X, Y és Z koordinátái</li>
+            <li><strong>Lat, Lon:</strong> A végpont WSG84 koordinátái</li>
+          </ul>
+        </ul>
+
+        <div class="table-example">
+          <table>
+            <thead>
+              <tr>
+                <th>Státusz</th>
+                <th>Típus</th>
+                <th>Ponttól</th>
+                <th>Pontig</th>
+                <th>Irány</th>
+                <th>Dőlés</th>
+                <th>Hossz</th>
+                <th>Attribútumok</th>
+                <th>Megjegyzés</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="status-ok"></td>
+                <td>Közép</td>
+                <td>1</td>
+                <td>2</td>
+                <td>45.0</td>
+                <td>10.0</td>
+                <td>5.2</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="status-ok"></td>
+                <td>Tüske</td>
+                <td>2</td>
+                <td></td>
+                <td>90.0</td>
+                <td>-5.0</td>
+                <td>3.8</td>
+                <td></td>
+                <td>Fal részlet</td>
+              </tr>
+              <tr>
+                <td class="status-warning"></td>
+                <td>Közép</td>
+                <td>2</td>
+                <td>3</td>
+                <td>180.0</td>
+                <td>110.0</td>
+                <td>7.1</td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="info">
-        <h4>Segédvonal (Auxiliary)</h4>
-        <p>Segédeszközök és referenciák. Speciális attribútumokkal rendelkezhetnek.</p>
+        Ne felejtsük, hogy az oszlopok láthatóságát a hamburger ikonra (ikon sáv) kattintva lehet szabályozni.
+      </div>
+
+      <div class="row">
+        <div class="column-2">
+          <p>A mérési soron jobb egérbommbal megjelenik a kontextus menü, amely a következő opciókat tartalmazza:</p>
+          <ul>
+            <li><strong>Sor törlése:</strong> A sor törlése</li>
+            <li><strong>Sor hozzáadása előtte:</strong> Új sor beszúrása a kiválasztott sor előtt</li>
+            <li><strong>Sor hozzáadása után:</strong> Új sor beszúrása a kiválasztott sor után</li>
+            <li
+              ><strong>Mérés megfordítása:</strong> A mérés megfordítása, invertálása, amely a dőlés és irány értékeket
+              módosítja
+            </li>
+            <li><strong>Ponttól megkeresése:</strong> A ponttól pont megkeresése a jelenetben</li>
+            <li><strong>Pontig megkeresése:</strong> A pontig pont megkeresése a jelenetben</li>
+            <li><strong>Ponttól részletei:</strong> A ponttól pont részletes adatainak megjelenítése</li>
+            <li><strong>Pontig részletei:</strong> A pontig pont részletes adatainak megjelenítése</li>
+          </ul>
+        </div>
+        <div class="image-placeholder black column-2 small-padding" style="flex: 30%">
+          <img src="images/6-context.png" />
+        </div>
       </div>
 
       <h3>Mérések szerkesztése</h3>
@@ -219,6 +341,10 @@
       <div class="step">
         <h4>3. Változtatások mentése</h4>
         <p>Kattintson a "Felmérés frissítése" gombra a változtatások mentéséhez.</p>
+      </div>
+
+      <div class="info">
+        <p>A cellák között kényelmesen navigálhat a TAB billentyűvel vagy a nyilakkal.</p>
       </div>
 
       <h3>Új mérések hozzáadása</h3>
@@ -239,7 +365,7 @@
         <ul>
           <li>Válassza ki a mérés típusát</li>
           <li>Adja meg a ponttól és pontig értékeket</li>
-          <li>Írja be az irány, dőlés és hossz értékeket</li>
+          <li>Írja be az irány, dőlés és hossz értékeket, valamint a megjegyzést</li>
         </ul>
       </div>
 
@@ -247,91 +373,141 @@
 
       <div class="step">
         <h4>1. Sorok kiválasztása</h4>
-        <p>Válassza ki a törölni kívánt sorokat (Ctrl+klikk több sor kiválasztásához).</p>
+        <p>Válassza ki a törölni kívánt sorokat.</p>
       </div>
 
       <div class="step">
-        <h4>2. Törlés megerősítése</h4>
-        <p>Kattintson az "Aktív sorok törlése" gombra és erősítse meg a törlést.</p>
+        <h4>2. Törlés</h4>
+        <p>Kattintson az "Aktív sorok törlése" gombra.</p>
       </div>
 
-      <h2>Validálás és hibakezelés</h2>
+      <div class="info">
+        <p
+          >A Speleo Studio támogatja az <strong>fordított mérések felvételét</strong> is, amikor a ponttól érték a
+          vépgont és a pontig érték a kezdőpont (1 -> 2 helyett 2 -> 1).</p
+        >
+      </div>
 
-      <h3>Automatikus validálás</h3>
-      <p>A Speleo Studio automatikusan ellenőrzi a felmérési adatokat és jelzi a hibákat:</p>
+      <div class="info">
+        <p
+          >A táblázatkezelő támogatja a <strong>sorok másolását és beillesztését</strong>, a szokásos Ctrl + C és Ctrl +
+          V billentyűkombinációval. Sőt akár több sort is másolhatunk és beilleszthetünk! A másolt sorokat akár más
+          táblázatkezelőbe (Excel, Google Sheets, stb.) is beilleszthetjük.</p
+        >
+      </div>
+
+      <div class="info">
+        <p
+          >A táblázatkezelő támogatja a <strong>sorok átrendezését</strong>, ha az egérrel a sor bal szélére a sorszámra
+          kattintunk és húzzuk a sort le vagy fel. A mérések nem kell, hogy szigorúan egymás kövessék, a Speleo Studio
+          felismeri az ilyen helyzeteket.</p
+        >
+      </div>
+
+      <h2>Függő változtatások</h2>
+      <p>
+        Ha egy felmérés szerkesztése közben próbáljuk bezárni a böngészőt, vagy a Speleo Studio fület, akkor a böngésző
+        rákérdez, hogy biztosan ezt szeretnénk-e tenni. A Speleo Studio elmenti a függő változtatásokat és a projekt
+        legközelebbi megnyitásakor a szerkesztőt automatikusan megnyitja a változtatásokkal.
+      </p>
+
+      <div class="image-placeholder black column-2 small-padding">
+        <div class="row">
+          <div class="column-2" style="flex: 10%"><img src="images/6-leave.png" /></div>
+          <div class="column-2 small-padding"><img src="images/6-unsaved.png" /></div>
+        </div>
+      </div>
+
+      <h2>Mérések validálása és frissítése</h2>
+
+      <p
+        >A Speleo Studio a validálás vagy a mérés frissítés gombra kattintva ellenőrzi a felmérési adatok helyességét és
+        integritását. Ha a mérési adatok nem helyesek, akkor a státusz oszlopban narancssárga ikon jelenik meg, amelyre
+        kattinva a hiba részletes leírását kapjuk meg. A mérés frissítése során
+        <strong> hibás sorok is elmentődnek</strong>, ugyanakkor a
+        <strong>hibás sorokat a Speleo Studio nem használja fel a középvonal (poligon) számításánál.</strong>
+      </p>
+
+      <div class="image-placeholder black"><img src="images/6-hibas-sorok.png" /></div>
 
       <div class="editor-box">
         <h4>Validálási szabályok</h4>
         <ul>
-          <li><strong>Pont nevek:</strong> Nem lehetnek üresek</li>
-          <li><strong>Koordináták:</strong> Érvényes számértékek</li>
+          <li><strong>Ponttól:</strong> Nem lehet üres</li>
+          <li><strong>Pontig:</strong> Lehet üres</li>
+          <li><strong>Hossz, irány, dőlés:</strong> Érvényes számértékek</li>
           <li><strong>Szögek:</strong> Irány -360° és 360° között, dőlés -90° és 90° között</li>
           <li><strong>Hossz:</strong> Pozitív érték</li>
           <li><strong>Duplikáció:</strong> Nem lehetnek duplikált mérések</li>
         </ul>
       </div>
 
-      <h3>Hibák javítása</h3>
-
-      <div class="step">
-        <h4>1. Hiba azonosítása</h4>
-        <p>A hibás sorok piros színnel vannak kiemelve és figyelmeztető ikonnal jelölve.</p>
+      <div class="row">
+        <div class="column-2"
+          ><h3>Árva mérések</h3>
+          <p
+            >Árva mérésnek akkor nevezünk egy mérést, ha a mérés nem csatlakozik egy másik méréshez. Ez lehet azért,
+            mert a mérés kezdő vagy végpontja egy nem létező pont, vagy a kezdő és a végpont egy érvénytelen / hibás
+            mérés része. Tipikus példa lehet egy TopoDroid mésés impportálása, amelynek kezdőpontja nem egy korábbi
+            mérés végpontja, hanem követi a mérés során használt név konvenciót. A problémát megoldhatjuk a kezdőpont
+            átírásával, vagy pont megfeleltetés (aliasz) felvételével.
+          </p>
+          <p
+            >Az ábrán piros vonalak jelzik az árva méréseket. Ebben az esetben az első árva mérés kezdőpontja egy nem
+            létező pont. Javasolt pont megfeleltetés felvétele.</p
+          >
+        </div>
+        <div class="image-placeholder white column-2"> <img src="images/6-arva.png" /> </div>
       </div>
 
-      <div class="step">
-        <h4>2. Hiba részleteinek megtekintése</h4>
-        <p>Kattintson a figyelmeztető ikonra a hiba részletes leírásának megtekintéséhez.</p>
+      <h3>Felmérések integritása és hibák jelzése</h3>
+
+      <div class="row">
+        <div class="column-2">
+          <p
+            >Az érvénytelen - hibás mérések kihatnak nemcsak az adott mérésre, hanem más mérésekre is. Ha egy
+            felmérésben egy mérés hibás és a kezdő vagy végpont hivatkozva van más mérésekben, akkor a hibás mérés
+            hatással lehet ezekre a mérésekre. Ez ererdményezheti azt, hogy az érintett felmérések minden mérése árva
+            mérés lesz és a felmérés egyetlen mérése sem csatlakozik korábbi középvonalhoz (poligonhoz). A Speleo Studio
+            a mérés frissítésekor ellenőrzi a felmérés integritását és jelzi a hibákat a Felfedezőben. A felmérés neve
+            meleltt figyelmeztető ikon jelenik meg, ha hibás - érvénytelen mérések vannak a felmérésben, piros X pedig a
+            nem csatlakozó, árva mérések jelzésére szolgál. Az ábrán az első felmérés hibás méréseket tartalmaz, a
+            második felmérés pedig árva.
+          </p>
+        </div>
+        <div class="image-placeholder black column-2 small-padding" style="flex: 30%">
+          <img src="images/6-integritas.png" />
+        </div>
       </div>
 
-      <div class="step">
-        <h4>3. Hiba javítása</h4>
-        <p>Módosítsa a hibás értékeket a javasolt értékekre vagy a helyes adatokra.</p>
-      </div>
-
-      <h3>Validálás futtatása</h3>
-      <div class="step">
-        <h4>Manuális validálás</h4>
-        <p>Kattintson a "Mérések validálása" gombra a teljes felmérés ellenőrzéséhez.</p>
-      </div>
-
-      <h2>Hurok kezelés</h2>
-
-      <h3>Hurok azonosítása</h3>
-      <p
-        >A hurkok olyan mérési útvonalak, amelyek visszatérnek a kiindulási ponthoz. A Speleo Studio automatikusan
-        azonosítja a hurkokat.</p
-      >
-
-      <div class="image-placeholder"> [KÉP HELYE: Hurok mérések megjelenítése a 3D viewportban] </div>
-
-      <h3>Hurok szerkesztő</h3>
-      <div class="step">
-        <h4>1. Hurok szerkesztő megnyitása</h4>
-        <p>A felmérés szerkesztőben kattintson a "Hurkok" gombra.</p>
-      </div>
-
-      <div class="step">
-        <h4>2. Hurok kiválasztása</h4>
-        <p>Válassza ki a szerkeszteni kívánt hurkot a listából.</p>
-      </div>
-
-      <div class="step">
-        <h4>3. Hurok módosítása</h4>
-        <p>Módosítsa a hurok méréseit vagy használja a hurok záródási hibák elosztását.</p>
-      </div>
-
-      <h3>Hurok záródási hibák</h3>
-      <div class="warning">
-        <h4>Hurok hiba kezelése</h4>
+      <div class="info">
         <p
-          >Ha egy hurok nem záródik pontosan, a Speleo Studio lehetővé teszi a hiba elosztását a hurok mérései
-          között:</p
+          >A Felfedezőben a hibás felmérés neve felett tartva az egeret megjelenik a hibás sorok száma és összesítése</p
         >
-        <ul>
-          <li><strong>Automatikus elosztás:</strong> A hiba egyenletesen eloszlik</li>
-          <li><strong>Manuális elosztás:</strong> Kézi beállítás a mérések között</li>
-          <li><strong>Mérés korrekció:</strong> Egyedi mérések javítása</li>
-        </ul>
+      </div>
+
+      <h2>Felmérések sorrendje</h2>
+
+      <div class="row">
+        <div class="column-2">
+          <p
+            >A <strong>felmérések sorrendje nem mindegy a Felfedezőben</strong>, mert a középvonal (poligon) számítását
+            a Speleo Studio a felmérések sorrendjében végzi el. Ha pl. a kezdő felmérés nem a felmérés lista elején van,
+            akkor minden felmérésünk árva felmérés lesz. A
+            <strong>felmérések sorrendjét a felfedezőben a drag & drop funkcióval lehet módosítani</strong>, azaz
+            kattintsunk a felmérésre és lenyomva tarva az egeret a felmérést mozgassuk a megfelelő helyre. A felmérés
+            neve mellett megjelenítő felfele nyíllal a felmérés az első helyre mozgatható drag & drop funkció nélkül. Ez
+            akkor különösen hasznos, ha sok felmérésünk van és nem akarjuk drag & drop funkcióval mozgatni.</p
+          >
+          <p>A felmérések átrendeződésével a Speleo Studio automatikusan frissíti a középvonal (poligon) számítását.</p>
+          <p
+            >Az ábrán egy felmérést mozgatunk feljebb drag & drop funkcióval, majd egy másik felmérést mozgatunk a lista
+            elejéra, amely árva felméréseket eredményez.</p
+          >
+        </div>
+        <div class="image-placeholder black column-2 small-padding" style="flex: 30%">
+          <img src="images/6-felmeres-sorrend.gif" />
+        </div>
       </div>
 
       <h2>Felmérés exportálása</h2>
@@ -347,48 +523,6 @@
         <p>Válassza ki a mentési helyet és adja meg a fájlnevet.</p>
       </div>
 
-      <h2>Szerkesztési tippek</h2>
-
-      <div class="info">
-        <h3>Hatékony szerkesztés</h3>
-        <ul>
-          <li>Használja a gyorsbillentyűket a gyors navigációhoz</li>
-          <li>Rendszeresen validálja a felmérést a hibák azonosítása érdekében</li>
-          <li>Mentsen rendszeresen a változtatások mentése érdekében</li>
-          <li>Használja a kontextus menüket a gyors műveletekhez</li>
-        </ul>
-      </div>
-
-      <div class="info">
-        <h3>Adatminőség javítása</h3>
-        <ul>
-          <li>Ellenőrizze a koordináta rendszereket</li>
-          <li>Validálja a szögeket és távolságokat</li>
-          <li>Dokumentálja a változtatásokat</li>
-          <li>Készítsen biztonsági másolatokat</li>
-        </ul>
-      </div>
-
-      <h2>Gyakori problémák és megoldások</h2>
-
-      <div class="warning">
-        <h3>Felmérés nem nyílik meg</h3>
-        <p><strong>Probléma:</strong> A felmérés szerkesztő nem nyílik meg.</p>
-        <p><strong>Megoldás:</strong> Ellenőrizze, hogy a felmérés érvényes adatokat tartalmaz-e.</p>
-      </div>
-
-      <div class="warning">
-        <h3>Változtatások nem mentődnek</h3>
-        <p><strong>Probléma:</strong> A szerkesztett adatok nem kerülnek mentésre.</p>
-        <p><strong>Megoldás:</strong> Kattintson a "Felmérés frissítése" gombra a mentéshez.</p>
-      </div>
-
-      <div class="warning">
-        <h3>Validálási hibák</h3>
-        <p><strong>Probléma:</strong> Sok validálási hiba jelenik meg.</p>
-        <p><strong>Megoldás:</strong> Ellenőrizze a forrás adatokat és javítsa a hibákat egyenként.</p>
-      </div>
-
       <h2>Következő lépések</h2>
       <p
         >Most, hogy megismerte a felmérések szerkesztését, folytathatja az
@@ -397,14 +531,14 @@
       >
 
       <div class="nav">
-        <a href="04-3d-vizualizacio.html">← Előző: 3D vizualizáció</a>
+        <a href="04b-barlang-szerkesztese.html">← Előző: Barlang szerkesztése</a>
         <a href="index.html">Főoldal</a>
         <a href="06-attributumok.html">Következő: Attribútumok →</a>
       </div>
 
       <div class="donation-footer">
         <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
-        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
         <div class="donation-actions">
           <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
           <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>

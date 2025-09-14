@@ -10,6 +10,7 @@ class ManualSearch {
       { url: '02b-adatmodell.html', title: 'Adatmodell és struktúra' },
       { url: '03-adatok-importalasa.html', title: 'Adatok importálása' },
       { url: '04-3d-vizualizacio.html', title: '3D vizualizáció és navigáció' },
+      { url: '04b-barlang-szerkesztese.html', title: 'Barlang szerkesztése' },
       { url: '05-felmereek-szerkesztese.html', title: 'Felmérések szerkesztése' },
       { url: '06-attributumok.html', title: 'Attribútumok kezelése' },
       { url: '07-eszkozok.html', title: 'Eszközök és számítások' },

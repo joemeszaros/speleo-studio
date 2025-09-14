@@ -1480,6 +1480,18 @@ a:hover {
   margin-top: 0;
 }
 
+.status-ok {
+  width: 20px;
+  height: 20px;
+  background: no-repeat center / 25% url(../..//icons/ok.svg);
+}
+
+.status-warning {
+  width: 20px;
+  height: 20px;
+  background: no-repeat center / 25% url(../..//icons/warning.svg);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .container {
