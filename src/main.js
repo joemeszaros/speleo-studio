@@ -265,8 +265,8 @@ class Main {
     //FIXME: check if surface already exists and is not too far from previously imported caves / objects
     this.db.addSurface(surface);
     const colorGradients = SurfaceHelper.getColorGradients(surface.points, this.options.scene.surface.color);
-    const _3dobjects = this.scene.addSurfaceToScene(cloud, colorGradients);
-    this.scene.addSurface(surface, _3dobjects);
+    const _3dobjects = this.scene.models.getSurfaceObjects(cloud, colorGradients);
+    this.scene.models.addSurface(surface, _3dobjects);
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
     this.scene.view.fitScreen(boundingBox);

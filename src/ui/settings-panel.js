@@ -262,21 +262,7 @@ export class SettingsPanel {
           (value) => {
             this.options.scene.auxiliaries.spheres.show = value;
           }
-        ),
-
-        // General Station Settings Group
-        this.createSubGroup(i18n.t('ui.settingsPanel.groups.generalSettings'), [
-          this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.stationIconScale'),
-            this.options.scene.stationAttributes.iconScale,
-            0.1,
-            20,
-            0.1,
-            (value) => {
-              this.options.scene.stationAttributes.iconScale = value;
-            }
-          )
-        ])
+        )
       ],
       true
     );
@@ -384,6 +370,7 @@ export class SettingsPanel {
             this.options.scene.background.color = value;
           }
         ),
+
         this.createColorInput(
           i18n.t('ui.settingsPanel.labels.labelColor'),
           this.options.scene.labels.color,
@@ -416,6 +403,16 @@ export class SettingsPanel {
           1,
           (value) => {
             this.options.scene.sections.width = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.stationIconScale'),
+          this.options.scene.stationAttributes.iconScale,
+          0.1,
+          20,
+          0.1,
+          (value) => {
+            this.options.scene.stationAttributes.iconScale = value;
           }
         ),
         this.createRangeInput(

@@ -162,8 +162,8 @@ class Editor extends BaseEditor {
           const data = cell.getData();
           data.color = newColor;
           if (data.visible) {
-            this.scene.disposeSectionAttribute(data.id);
-            this.scene.showFragmentAttribute(
+            this.scene.attributes.disposeSectionAttribute(data.id);
+            this.scene.attributes.showFragmentAttribute(
               data.id,
               data.start === undefined
                 ? SectionHelper.getSectionSegments(

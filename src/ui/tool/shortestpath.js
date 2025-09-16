@@ -2,6 +2,7 @@ import { wm } from '../window.js';
 import { node } from '../../utils/utils.js';
 import { SectionHelper } from '../../section.js';
 import { i18n } from '../../i18n/i18n.js';
+import { ShotType } from '../../model/survey.js';
 
 export class ShortestPathTool {
 
@@ -24,7 +25,7 @@ export class ShortestPathTool {
       false,
       {},
       () => {
-        this.scene.disposeSegments(segmentsId);
+        this.scene.segments.disposeSegments(segmentsId);
       }
     );
   }
@@ -33,7 +34,7 @@ export class ShortestPathTool {
 
     const addStationSelectors = (caveName) => {
       const form = node`<form id="container-shortest-path"></form>`;
-      const stNames = this.db.getStationNames(caveName);
+      const stNames = this.db.getStationNames(caveName, (s) => s.type !== ShotType.SPLAY);
       const options = stNames.map((n) => `<option value="${n}">`).join('');
       const datalist = node`<datalist id="stations">${options}</datalist>`;
       const button = node`<button type="submit">${i18n.t('ui.panels.shortestPath.find')}</button>`;
@@ -49,7 +50,7 @@ export class ShortestPathTool {
       form.onsubmit = (e) => {
         e.preventDefault();
 
-        this.scene.disposeSegments(segmentsId);
+        this.scene.segments.disposeSegments(segmentsId);
         const cave = this.db.getCave(caveName);
         const g = SectionHelper.getGraph(cave);
         let label;
@@ -59,7 +60,7 @@ export class ShortestPathTool {
           const section = SectionHelper.getSection(g, from, to);
           if (section !== undefined) {
             const segments = SectionHelper.getSectionSegments(section, cave.stations);
-            this.scene.showSegments(
+            this.scene.segments.showSegments(
               segmentsId,
               `shortest-path-${from}-${to}-${segmentsId}`,
               segments,

@@ -256,14 +256,15 @@ export class ExplorerTree {
 
     node.visible = !node.visible;
     if (node.type === 'survey') {
-      this.scene.setSurveyVisibility(node.parent.data.name, node.data.name, node.visible);
+      node.data.visible = node.visible;
+      this.scene.speleo.setSurveyVisibility(node.parent.data.name, node.data.name, node.visible);
     } else if (node.type === 'cave') {
       node.data.visible = node.visible;
 
       // Update all survey nodes' visibility to match the cave
       node.children.forEach((surveyNode) => {
         surveyNode.visible = node.visible;
-        this.scene.setSurveyVisibility(node.data.name, surveyNode.data.name, node.visible);
+        this.scene.speleo.setSurveyVisibility(node.data.name, surveyNode.data.name, node.visible);
       });
     }
     this.render();

@@ -239,7 +239,7 @@ class StationCommentsEditor extends BaseEditor {
     this.table = new Tabulator(tableContainer, {
       data                      : this.getTableData(),
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.survey.height - 36 - 48, // header + iconbar
+      height                    : this.options.ui.editor.survey.height - 36 - 48 - 5, // header + iconbar
       layout                    : 'fitDataStretch',
       columns                   : this.getColumns(),
       //enable range selection

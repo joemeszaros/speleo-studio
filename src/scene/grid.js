@@ -11,7 +11,7 @@ class Grid {
     this.grid.name = 'grid helper';
     this.grid.visible = this.options.scene.grid.mode !== 'hidden';
     this.grid.layers.set(1);
-    this.scene.threejsScene.add(this.grid);
+    this.scene.addObjectToScene(this.grid);
 
   }
 
@@ -24,23 +24,22 @@ class Grid {
     const [width, height] = boundingBox.getSize(new THREE.Vector3());
     this.grid.geometry.dispose();
     this.grid.material.dispose();
-    this.scene.threejsScene.remove(this.grid);
+    this.scene.removeObjectFromScene(this.grid);
     this.grid = new GridHelper(width, height, this.options.scene.grid.step, 0.4);
     this.grid.layers.set(1);
-    this.grid.boundingBox = boundingBox; // custom property
-    this.scene.threejsScene.add(this.grid);
+    this.center = boundingBox.getCenter(new THREE.Vector3());
+    this.minZ = Math.min(boundingBox.min.z, boundingBox.max.z);
+    this.maxZ = Math.max(boundingBox.min.z, boundingBox.max.z);
+    this.scene.addObjectToScene(this.grid);
   }
 
   adjustPosition(mode) {
-    const boundingBox = this.grid.boundingBox;
-    if (boundingBox === undefined) return;
-    const center = boundingBox.getCenter(new THREE.Vector3());
-    const minZ = Math.min(boundingBox.min.z, boundingBox.max.z);
-    const maxZ = Math.max(boundingBox.min.z, boundingBox.max.z);
+
+    if (this.center === undefined) return;
     if (mode === 'top') {
-      this.grid.position.set(center.x, center.y, maxZ);
+      this.grid.position.set(this.center.x, this.center.y, this.maxZ);
     } else if (mode === 'bottom') {
-      this.grid.position.set(center.x, center.y, minZ);
+      this.grid.position.set(this.center.x, this.center.y, this.minZ);
     }
   }
 
@@ -67,15 +66,11 @@ class Grid {
     }
     this.scene.view.renderView();
 
-    // Save configuration after changing grid mode
-    if (this.scene.saveConfig) {
-      this.scene.saveConfig();
-    }
   }
 
   refreshGrid() {
-    if (this.grid.boundingBox) {
-      this.adjustSize(this.grid.boundingBox);
+    if (this.center) {
+      this.adjustSize(this.boundingBox);
       this.adjustPosition(this.options.scene.grid.mode);
     }
     this.scene.view.renderView();

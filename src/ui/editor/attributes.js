@@ -99,7 +99,7 @@ class BaseAttributeEditor extends Editor {
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#sectionattributes', {
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.attributes.height - 36 - 48, // header + iconbar
+      height                    : this.options.ui.editor.attributes.height - 36 - 48 - 5, // header + iconbar
       autoResize                : false,
       data                      : this.getTableData(),
       layout                    : 'fitColumns',
@@ -421,6 +421,17 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   getColumns() {
+
+    const formatEdited = (cell) => {
+      const data = cell.getData();
+      if (data.attribute !== undefined && data.format) {
+        const localized = data.attribute.localize(i18n);
+        const formattedAttribute = U.interpolate(data.format, localized);
+        data.interpolated = formattedAttribute;
+        cell.getRow().update(data);
+      }
+    };
+
     return [
       {
         width      : 25,
@@ -459,7 +470,6 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         mutatorClipboard : this.baseTableFunctions.floatAccessor,
         formatter        : this.baseTableFunctions.floatFormatter('0'),
         bottomCalc       : this.baseTableFunctions.sumDistance
-
       },
       {
         title            : i18n.t('ui.editors.attributes.columns.attribute'),
@@ -500,9 +510,14 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
           const editor = document.createElement('input');
           editor.setAttribute('type', 'text');
 
-          const localized = data.attribute.localizeFormatString(data.format, i18n);
-          console.log(`editor create: ${localized} (${data.format})`);
-          editor.value = localized;
+          if (data.attribute && data.format) {
+            const localized = data.attribute.localizeFormatString(data.format, i18n);
+            editor.value = localized;
+          } else if (data.format && data.format.length > 0) {
+            editor.value = data.format;
+          } else {
+            editor.value = '';
+          }
 
           onRendered(function () {
             editor.focus();
@@ -510,31 +525,37 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
           });
 
           function successFunc() {
-            const deLocalized = data.attribute.deLocalizeFormatString(editor.value, i18n);
-            console.log(`editor success: ${editor.value} (${data.format}) -> ${deLocalized}`);
             success(editor.value); // after this mutator will deLocalize the value
           }
           editor.addEventListener('change', successFunc);
           editor.addEventListener('blur', successFunc);
           return editor;
         },
-        formatter : (cell) => {
+        cellEdited : formatEdited,
+        formatter  : (cell) => {
           const data = cell.getData();
-          console.log(`formatter: ${data.attribute} fmt: '${data.format}'`);
           if (data.attribute && data.format && data.format.length > 0) {
             const result = data.attribute.localizeFormatString(data.format, i18n);
-            console.log(`formatter: ${data.format} -> ${result}`);
             return result;
+          } else if (data.format && data.format.length > 0) {
+            return data.format;
+          } else {
+            return '';
           }
         },
         mutator : (value, data) => {
-          console.log(`mutator: ${data.attribute} fmt: '${data.format}'`);
           if (data.attribute && value && value.length > 0) {
             const result = data.attribute.deLocalizeFormatString(value, i18n);
-            console.log(`mutator: ${value} -> ${result}`);
             return result;
+          } else {
+            return value;
           }
         }
+      },
+      {
+        title  : i18n.t('ui.editors.attributes.columns.interpolated'),
+        field  : 'interpolated',
+        editor : false
       }
     ];
   }
@@ -568,7 +589,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   showCycle(data) {
-    this.scene.showSegments(
+    this.scene.segments.showSegments(
       data.id,
       `cycle-${data.id}`,
       SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
@@ -578,7 +599,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   hideCycle(id) {
-    this.scene.disposeSegments(id);
+    this.scene.segments.disposeSegments(id);
   }
 }
 
@@ -699,18 +720,27 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   getTableData() {
 
     const rows = this.cave.attributes.componentAttributes.map((r) => {
+      let interpolated;
+      const format = r.format === undefined ? '${name}' : r.format;
+
+      if (format && r.attribute) {
+        const localized = r.attribute.localize(i18n);
+        interpolated = U.interpolate(format, localized);
+
+      }
       return {
-        id          : r.id,
-        visible     : r.visible,
-        color       : r.color,
-        start       : r.component.start,
-        termination : r.component.termination,
-        path        : r.component.path, //hidden
-        distance    : r.component.distance,
-        attribute   : r.attribute,
-        format      : r.format === undefined ? '${name}' : r.format,
-        status      : 'ok',
-        message     : i18n.t('ui.editors.base.status.ok')
+        id           : r.id,
+        visible      : r.visible,
+        color        : r.color,
+        start        : r.component.start,
+        termination  : r.component.termination,
+        path         : r.component.path, //hidden
+        distance     : r.component.distance,
+        attribute    : r.attribute,
+        format       : format,
+        interpolated : interpolated,
+        status       : 'ok',
+        message      : i18n.t('ui.editors.base.status.ok')
       };
     });
 
@@ -803,7 +833,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     cell.setValue(!cell.getValue());
 
     if (cell.getValue() === true) {
-      this.scene.showFragmentAttribute(
+      this.scene.attributes.showFragmentAttribute(
         data.id,
         SectionHelper.getComponentSegments(
           new CaveComponent(data.start, data.termination, data.path, data.distance),
@@ -815,7 +845,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         this.cave.name
       );
     } else {
-      this.scene.disposeSectionAttribute(data.id);
+      this.scene.attributes.disposeSectionAttribute(data.id);
     }
   }
 
@@ -839,8 +869,8 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         data.distance = component.distance;
         cell.getRow().update(data);
         if (data.visible) {
-          this.scene.disposeSectionAttribute(data.id);
-          this.scene.showFragmentAttribute(
+          this.scene.attributes.disposeSectionAttribute(data.id);
+          this.scene.attributes.showFragmentAttribute(
             data.id,
             SectionHelper.getComponentSegments(component, this.cave.stations),
             data.attribute,
@@ -1048,7 +1078,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     cell.setValue(!cell.getValue());
 
     if (cell.getValue() === true) {
-      this.scene.showFragmentAttribute(
+      this.scene.attributes.showFragmentAttribute(
         data.id,
         SectionHelper.getSectionSegments(
           new CaveSection(data.from, data.to, data.path, data.distance),
@@ -1060,7 +1090,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         this.cave.name
       );
     } else {
-      this.scene.disposeSectionAttribute(data.id);
+      this.scene.attributes.disposeSectionAttribute(data.id);
     }
   }
 
@@ -1086,8 +1116,8 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
           data.distance = section.distance;
           cell.getRow().update(data);
           if (data.visible) {
-            this.scene.disposeSectionAttribute(data.id);
-            this.scene.showFragmentAttribute(
+            this.scene.attributes.disposeSectionAttribute(data.id);
+            this.scene.attributes.showFragmentAttribute(
               data.id,
               SectionHelper.getSectionSegments(section, this.cave.stations),
               data.attribute,
@@ -1339,17 +1369,17 @@ class StationAttributeEditor extends BaseAttributeEditor {
       const station = this.cave.stations.get(data.station);
       if (data.attribute && data.attribute.name) {
         if (['bedding', 'fault'].includes(data.attribute.name)) {
-          this.scene.showPlaneFor(data.id, station, data.attribute);
+          this.scene.attributes.showPlaneFor(data.id, station, data.attribute);
         } else {
-          this.scene.showIconFor(data.id, station, data.attribute);
+          this.scene.attributes.showIconFor(data.id, station, data.attribute);
         }
       }
     } else {
       if (data.attribute && data.attribute.name) {
         if (['bedding', 'fault'].includes(data.attribute.name)) {
-          this.scene.disposePlaneFor(data.id);
+          this.scene.attributes.disposePlaneFor(data.id);
         } else {
-          this.scene.disposeIconFor(data.id);
+          this.scene.attributes.disposeIconFor(data.id);
         }
       }
     }

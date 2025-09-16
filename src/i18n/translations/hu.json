@@ -73,7 +73,8 @@
       "project": "Projekt",
       "noProjectLoaded": "Nincs betöltött projekt",
       "raycastingEnabled": "Pont kiválasztás engedélyezve",
-      "raycastingDisabled": "Pont kiválasztás letiltva"
+      "raycastingDisabled": "Pont kiválasztás letiltva",
+      "surfacePoint": "Felszíni pont ({x}, {y}, {z})"
     },
     "settingsPanel": {
       "buttons": {
@@ -302,6 +303,10 @@
           "allSurveyDataDefined": "Kérem, adja meg a hossz, irány és dőlés értékeit a három pontnál.",
           "calculationError": "Számítási hiba: {error}"
         }
+      },
+      "surfacePointDetails": {
+        "title": "Felszíni pont részletei",
+        "fileName": "Fájl neve"
       },
       "stationDetails": {
         "title": "Pont részletei",
@@ -542,7 +547,10 @@
           "start": "Induló pont",
           "termination": "Végpont",
           "station": "Pont",
-          "survey": "Felmérés"
+          "survey": "Felmérés",
+          "interpolated": "Interpolált",
+          "from": "Ponttól",
+          "to": "Pontig"
         },
         "errors": {
           "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot",
@@ -587,13 +595,22 @@
         },
         "contextMenu": {
           "propagateLoopClosureError": "Hurok hiba elosztása szakaszok között",
-          "adjustLoopDeviationShots": "Hurok eltérést okzó mérések korrigálása"
+          "adjustLoopDeviationShots": "Hurok eltérést okozó mérések korrigálása"
         },
         "buttons": {
           "showAllCycles": "Összes hurok megjelenítése",
           "hideAllCycles": "Összes hurok elrejtése",
           "showAllDeviatingShots": "Összes eltérést okozó mérés megjelenítése",
           "hideAllDeviatingShots": "Összes eltérést okozó mérés elrejtése"
+        },
+        "columns": {
+          "path": "Út",
+          "distance": "Távolság",
+          "color": "Szín",
+          "errorDistance": "Δ Távolság",
+          "errorAzimuth": "Δ Irány",
+          "errorClino": "Δ Dőlés",
+          "errorPercentage": "Δ Százalék"
         }
       }
     }

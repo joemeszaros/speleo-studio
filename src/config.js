@@ -572,7 +572,7 @@ export class ConfigChanges {
   handleCenterLineChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.centerLines.segments.show':
-        this.scene.setObjectsVisibility('centerLines', newValue);
+        this.scene.speleo.setObjectsVisibility('centerLines', newValue);
         break;
 
       case 'scene.centerLines.segments.color': {
@@ -594,12 +594,12 @@ export class ConfigChanges {
         this.mats.segments.centerLine.opacity = newValue;
         this.materias.setSurveyOrCaveMaterial('center', 'opacity', newValue);
         this.mats.whiteLine.get('center').opacity = newValue;
-        this.scene.setObjectsOpacity('centerLines', newValue);
+        this.scene.speleo.setObjectsOpacity('centerLines', newValue);
         this.scene.view.renderView();
         break;
 
       case 'scene.centerLines.spheres.show':
-        this.scene.setObjectsVisibility('centerLinesSpheres', newValue);
+        this.scene.speleo.setObjectsVisibility('centerLinesSpheres', newValue);
         break;
 
       case 'scene.centerLines.spheres.color':
@@ -608,7 +608,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.centerLines.spheres.radius':
-        this.scene.changeStationSpheresRadius(ShotType.CENTER);
+        this.scene.speleo.changeStationSpheresRadius(ShotType.CENTER);
         break;
     }
   }
@@ -619,7 +619,7 @@ export class ConfigChanges {
   handleSplayChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.splays.segments.show':
-        this.scene.setObjectsVisibility('splays', newValue);
+        this.scene.speleo.setObjectsVisibility('splays', newValue);
         break;
 
       case 'scene.splays.segments.color': {
@@ -640,12 +640,12 @@ export class ConfigChanges {
         this.mats.segments.splay.opacity = newValue;
         this.materias.setSurveyOrCaveMaterial('splay', 'opacity', newValue);
         this.mats.whiteLine.get('splay').opacity = newValue;
-        this.scene.setObjectsOpacity('splays', newValue);
+        this.scene.speleo.setObjectsOpacity('splays', newValue);
         this.scene.view.renderView();
         break;
 
       case 'scene.splays.spheres.show':
-        this.scene.setObjectsVisibility('splaysSpheres', newValue);
+        this.scene.speleo.setObjectsVisibility('splaysSpheres', newValue);
         break;
 
       case 'scene.splays.spheres.color':
@@ -654,7 +654,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.splays.spheres.radius':
-        this.scene.changeStationSpheresRadius(ShotType.SPLAY);
+        this.scene.speleo.changeStationSpheresRadius(ShotType.SPLAY);
         break;
     }
   }
@@ -665,7 +665,7 @@ export class ConfigChanges {
   handleAuxiliaryChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.auxiliaries.segments.show':
-        this.scene.setObjectsVisibility('auxiliaries', newValue);
+        this.scene.speleo.setObjectsVisibility('auxiliaries', newValue);
         break;
 
       case 'scene.auxiliaries.segments.color': {
@@ -687,20 +687,21 @@ export class ConfigChanges {
         this.mats.segments.auxiliary.opacity = newValue;
         this.materias.setSurveyOrCaveMaterial('auxiliary', 'opacity', newValue);
         this.mats.whiteLine.get('auxiliary').opacity = newValue;
-        this.scene.setObjectsOpacity('auxiliaries', newValue);
+        this.scene.speleo.setObjectsOpacity('auxiliaries', newValue);
         this.scene.view.renderView();
         break;
 
       case 'scene.auxiliaries.spheres.show':
-        this.scene.setObjectsVisibility('auxiliaries', newValue);
+        this.scene.speleo.setObjectsVisibility('auxiliariesSpheres', newValue);
         break;
 
       case 'scene.auxiliaries.spheres.color':
         this.mats.sphere.auxiliary.color = new THREE.Color(newValue);
+        this.scene.view.renderView();
         break;
 
       case 'scene.auxiliaries.spheres.radius':
-        this.scene.changeStationSpheresRadius(ShotType.AUXILIARY);
+        this.scene.speleo.changeStationSpheresRadius(ShotType.AUXILIARY);
         break;
     }
   }
@@ -711,7 +712,7 @@ export class ConfigChanges {
   handleStartingPointChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.startPoints.show':
-        this.scene.toggleStartingPointsVisibility(newValue);
+        this.scene.startPoint.toggleStartingPointsVisibility(newValue);
         break;
 
       case 'scene.startPoint.color':
@@ -719,7 +720,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.startPoint.radius':
-        this.scene.updateStartingPointRadius(newValue);
+        this.scene.startPoint.updateStartingPointRadius(newValue);
         break;
     }
 
@@ -737,7 +738,7 @@ export class ConfigChanges {
         break;
 
       case 'scene.labels.size':
-        this.scene.updateLabelSize(newValue);
+        this.scene.attributes.updateSectionAttributesLabelSize(newValue);
         this.scene.view.renderView();
         break;
     }
@@ -756,11 +757,12 @@ export class ConfigChanges {
         // Section attributes color changed - no immediate visual update needed
         break;
       case 'scene.sections.width':
-        this.scene.updateSegmentsWidth(newValue);
-        this.scene.updateSectionAttributesWidth(newValue);
+        this.scene.segments.updateSegmentsWidth(newValue);
+        this.scene.segments.updateSegmentsTubesWidth();
+        this.scene.attributes.updateSectionAttributesWidth();
         break;
       case 'scene.sections.labels.show':
-        this.scene.toggleSectionsLabelVisibility(newValue);
+        this.scene.attributes.toggleSectionsLabelVisibility(newValue);
         break;
     }
 
@@ -784,15 +786,15 @@ export class ConfigChanges {
 
     switch (path) {
       case 'scene.caveLines.color.trigger':
-        this.scene.changeCenterLineColorMode(existingMode, newValue);
+        this.scene.speleo.changeCenterLineColorMode(existingMode, newValue);
         break;
       case 'scene.caveLines.color.mode':
-        this.scene.changeCenterLineColorMode(newValue);
+        this.scene.speleo.changeCenterLineColorMode(newValue);
         break;
       case 'scene.caveLines.color.gradientColors':
         if (['gradientByZ', 'gradientByDistance'].includes(existingMode)) {
           // Update the scene with new gradient colors
-          this.scene.changeCenterLineColorMode(existingMode);
+          this.scene.speleo.changeCenterLineColorMode(existingMode);
         }
 
         if (this.scene.views.get('profile')) {
@@ -830,7 +832,7 @@ export class ConfigChanges {
   handleStationAttributeChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.stationAttributes.iconScale':
-        this.scene.updateStationAttributeIconScales(newValue);
+        this.scene.attributes.updateStationAttributeIconScales(newValue);
         break;
     }
   }
@@ -841,38 +843,38 @@ export class ConfigChanges {
   handleStationLabelChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.stationLabels.mode':
-        this.scene.recreateAllStationLabels();
+        this.scene.speleo.recreateAllStationLabels();
         break;
       case 'scene.stationLabels.stroke':
-        this.scene.recreateAllStationLabels();
+        this.scene.speleo.recreateAllStationLabels();
         break;
       case 'scene.stationLabels.show': {
-        const c = this.scene.getStationsLabelCount();
+        const c = this.scene.speleo.getStationsLabelCount();
         if (newValue === true && c === 0) {
-          this.scene.addStationLabels();
+          this.scene.speleo.addStationLabels();
         }
-        this.scene.setObjectsVisibility('stationLabels', newValue);
+        this.scene.speleo.setObjectsVisibility('stationLabels', newValue);
         break;
       }
 
       case 'scene.stationLabels.color':
-        this.scene.recreateAllStationLabels();
+        this.scene.speleo.recreateAllStationLabels();
         break;
 
       case 'scene.stationLabels.size':
-        this.scene.recreateAllStationLabels();
+        this.scene.speleo.recreateAllStationLabels();
         break;
 
       case 'scene.stationLabels.offset':
-        this.scene.recreateAllStationLabels();
+        this.scene.speleo.recreateAllStationLabels();
         break;
 
       case 'scene.stationLabels.offsetDirection':
-        this.scene.recreateAllStationLabels();
+        this.scene.speleo.recreateAllStationLabels();
         break;
 
       case 'scene.stationLabels.strokeColor':
-        this.scene.recreateAllStationLabels();
+        this.scene.speleo.recreateAllStationLabels();
         break;
     }
 

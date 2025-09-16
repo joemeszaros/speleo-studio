@@ -3,6 +3,7 @@ import { wm } from './ui/window.js';
 import { showErrorPanel } from './ui/popups.js';
 import { get3DCoordsStr, node, radsToDegrees, toPolar } from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
+import { Raycasting } from './scene/raycasting.js';
 
 class SceneInteraction {
 
@@ -37,6 +38,8 @@ class SceneInteraction {
 
     this.mouseOnEditor = false;
 
+    this.raycasting = new Raycasting(this.scene);
+
     document.addEventListener('pointermove', (event) => this.onPointerMove(event));
     sceneDOMElement.addEventListener('click', () => this.onClick(), false);
     sceneDOMElement.addEventListener('dblclick', () => this.onDoubleClick(), false);
@@ -61,7 +64,15 @@ class SceneInteraction {
         name    : i18n.t('menu.station.details'),
         onclick : (event) => {
           const rect = this.scene.getBoundingClientRect();
-          this.showStationDetailsPanel(this.selectedStation, event.clientX - rect.left, event.clientY - rect.top);
+          if (this.selectedStation.type === 'station') {
+            this.showStationDetailsPanel(this.selectedStation, event.clientX - rect.left, event.clientY - rect.top);
+          } else if (this.selectedStation.type === 'surface') {
+            this.showSurfacePointDetailsPanel(
+              this.selectedStation,
+              event.clientX - rect.left,
+              event.clientY - rect.top
+            );
+          }
         }
       },
       {
@@ -93,9 +104,9 @@ class SceneInteraction {
     } else {
       // Set distance measurement mode and change the visual appearance
       this.distanceMeasurementMode = true;
-      this.scene.focusSphere.visible = false;
-      this.scene.distanceSphere.position.copy(this.selectedStation.position);
-      this.showSphere(this.scene.distanceSphere);
+      this.scene.points.focusSphere.visible = false;
+      this.scene.points.distanceSphere.position.copy(this.selectedStation.position);
+      this.showSphere(this.scene.points.distanceSphere);
       this.scene.view.renderView();
 
       // Show message that user should click on another station
@@ -143,7 +154,7 @@ class SceneInteraction {
       this.mouseCoordinates.x - rect.left + 50,
       this.mouseCoordinates.y - rect.top + 50,
       () => {
-        this.scene.removeFromScene(line);
+        this.scene.removeObjectFromScene(line);
         this.#clearSelected();
         this.scene.view.renderView();
       }
@@ -172,7 +183,7 @@ class SceneInteraction {
       this.footer.showMessage(i18n.t('ui.footer.raycastingDisabled'));
     }
     if (this.raycastingEnabled === false) {
-      this.scene.focusSphere.visible = false;
+      this.scene.points.focusSphere.visible = false;
     }
   }
 
@@ -181,7 +192,7 @@ class SceneInteraction {
     return this.getPointedStationDetails(st);
   }
 
-  getPointedStationDetails(st) {
+  getPointedStationDetails(stationMeta) {
     // Ensure stationDetails configuration exists
     if (!this.options.ui.stationDetails) {
       this.options.ui.stationDetails = {
@@ -200,27 +211,28 @@ class SceneInteraction {
       };
     }
 
+    const st = stationMeta.station;
     const config = this.options.ui.stationDetails;
     const details = [];
 
     // Check if cave name, survey name, and station name are all enabled
-    const hasCaveName = config.caveName && st.meta.cave !== undefined;
-    const hasSurveyName = config.surveyName && st.meta.survey !== undefined;
+    const hasCaveName = config.caveName && stationMeta.cave !== undefined;
+    const hasSurveyName = config.surveyName && st.survey !== undefined;
     const hasStationName = config.stationName;
 
     // Use arrow format for cave -> survey -> station if all three are enabled
     if (hasCaveName && hasSurveyName && hasStationName) {
-      details.push(`${st.meta.cave.name} → ${st.meta.survey.name} → ${st.name}`);
+      details.push(`${stationMeta.cave.name} → ${st.survey.name} → ${stationMeta.name}`);
     } else {
       // Use individual names with pipe separators
       if (hasCaveName) {
-        details.push(st.meta.cave.name);
+        details.push(stationMeta.cave.name);
       }
       if (hasSurveyName) {
-        details.push(st.meta.survey.name);
+        details.push(st.survey.name);
       }
       if (hasStationName) {
-        details.push(st.name);
+        details.push(stationMeta.name);
       }
     }
 
@@ -240,16 +252,16 @@ class SceneInteraction {
     }
 
     // EOV coordinates
-    if (st.meta.coordinates && st.meta.coordinates.eov) {
+    if (st.coordinates && st.coordinates.eov) {
       const eovCoords = [];
       if (config.eovY) {
-        eovCoords.push(`EOV Y: ${st.meta.coordinates.eov.y.toFixed(2)}`);
+        eovCoords.push(`EOV Y: ${st.coordinates.eov.y.toFixed(2)}`);
       }
       if (config.eovX) {
-        eovCoords.push(`EOV X: ${st.meta.coordinates.eov.x.toFixed(2)}`);
+        eovCoords.push(`EOV X: ${st.coordinates.eov.x.toFixed(2)}`);
       }
       if (config.eovElevation) {
-        eovCoords.push(`EOV Elev: ${st.meta.coordinates.eov.elevation.toFixed(2)}`);
+        eovCoords.push(`EOV Elev: ${st.coordinates.eov.elevation.toFixed(2)}`);
       }
       if (eovCoords.length > 0) {
         details.push('(' + eovCoords.join(', ') + ')');
@@ -258,7 +270,7 @@ class SceneInteraction {
 
     // Type
     if (config.type) {
-      details.push(`${i18n.t('common.type')}: ${i18n.t(`params.shotType.${st.meta.type}`)}`);
+      details.push(`${i18n.t('common.type')}: ${i18n.t(`params.shotType.${st.type}`)}`);
     }
 
     // Position (x,y,z)
@@ -268,7 +280,7 @@ class SceneInteraction {
 
     // Shots in compact format
     if (config.shots) {
-      const shots = st.meta.shots.map((shw) => `${shw.shot.from}→${shw.shot.to}(${shw.shot.length.toFixed(1)}m)`);
+      const shots = st.shots.map((shw) => `${shw.shot.from}→${shw.shot.to}(${shw.shot.length.toFixed(1)}m)`);
       if (shots.length > 0) {
         details.push(`${i18n.t('common.shots')}: ${shots.join(', ')}`);
       }
@@ -276,9 +288,9 @@ class SceneInteraction {
 
     // Comments in compact format
     if (config.comments) {
-      const comments = st.meta.shots.map((shw) => shw.shot.comment).filter((c) => c !== undefined && c !== '');
-      const stationComments = st.meta.cave.stationComments ?? [];
-      comments.push(...stationComments.filter((sc) => sc.name === st.name).map((sc) => sc.comment));
+      const comments = st.shots.map((shw) => shw.shot.comment).filter((c) => c !== undefined && c !== '');
+      const stationComments = stationMeta.cave.stationComments ?? [];
+      comments.push(...stationComments.filter((sc) => sc.name === stationMeta.name).map((sc) => sc.comment));
       if (comments.length > 0) {
         details.push(`${i18n.t('common.comments')}: ${comments.join(', ')}`);
       }
@@ -286,7 +298,7 @@ class SceneInteraction {
 
     // If no details are configured, fall back to basic name
     if (details.length === 0) {
-      return st.name;
+      return stationMeta.name;
     }
 
     return details.join(' | ');
@@ -307,15 +319,25 @@ class SceneInteraction {
   #setSelected(st) {
     this.selectedStation = st;
     this.selectedPosition = st.position.clone();
-    this.scene.focusSphere.position.copy(st.position);
-    this.showSphere(this.scene.focusSphere);
-    this.footer.showMessage(this.getSelectedStationDetails(st));
+    this.scene.points.setFocusSpherePosition(st.position);
+    this.showSphere(this.scene.points.focusSphere);
+    if (st.type === 'station') {
+      this.footer.showMessage(this.getSelectedStationDetails(st));
+    } else if (st.type === 'surface') {
+      this.footer.showMessage(
+        i18n.t('ui.footer.surfacePoint', {
+          x : st.position.x.toFixed(2),
+          y : st.position.y.toFixed(2),
+          z : st.position.z.toFixed(2)
+        })
+      );
+    }
   }
 
   #clearSelected() {
     this.selectedPosition = undefined;
-    this.scene.focusSphere.visible = false;
-    this.scene.distanceSphere.visible = false;
+    this.scene.points.focusSphere.visible = false;
+    this.scene.points.distanceSphere.visible = false;
     this.selectedStation = undefined;
     this.distanceMeasurementMode = false;
     this.hideContextMenu();
@@ -331,21 +353,21 @@ class SceneInteraction {
     this.mouseCoordinates.y = event.clientY;
 
     const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
-    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates, worldUnitsFor5Pixels);
+    const intersectedStation = this.raycasting.getIntersectedStationMeta(this.mouseCoordinates, worldUnitsFor5Pixels);
 
     if (intersectedStation !== undefined) {
       this.scene.domElement.style.cursor = 'pointer';
-      this.scene.focusSprite.position.copy(intersectedStation.position);
+      this.scene.points.setFocusTorusPosition(intersectedStation.position);
       const worldUnitsFor30Pixels = this.scene.view.control.getWorldUnitsForPixels(30);
-      this.scene.focusSprite.scale.set(worldUnitsFor30Pixels, worldUnitsFor30Pixels, worldUnitsFor30Pixels);
-      this.scene.focusSprite.visible = true;
+      this.scene.points.focusSprite.scale.set(worldUnitsFor30Pixels, worldUnitsFor30Pixels, worldUnitsFor30Pixels);
+      this.scene.points.focusSprite.visible = true;
 
       this.footer.showMessage(this.getPointedStationDetails(intersectedStation));
       this.pointedStation = intersectedStation;
       this.scene.view.renderView();
     } else if (this.pointedStation !== undefined) {
       this.scene.domElement.style.cursor = 'default';
-      this.scene.focusSprite.visible = false;
+      this.scene.points.focusSprite.visible = false;
       // do not call clearmessage every time
       this.footer.clearMessage();
       this.pointedStation = undefined;
@@ -354,7 +376,7 @@ class SceneInteraction {
   }
 
   onDoubleClick() {
-    const intersectedSprite = this.scene.getFirstIntersectedSprite(this.mouseCoordinates);
+    const intersectedSprite = this.raycasting.getFirstIntersectedSprite(this.mouseCoordinates);
     if (intersectedSprite !== undefined && typeof intersectedSprite.onclick === 'function') {
       intersectedSprite.onclick(); // custom function
     }
@@ -362,7 +384,7 @@ class SceneInteraction {
 
   onClick() {
 
-    const firstSprite = this.scene.getFirstIntersectedViewHelperSprite(this.mouseCoordinates);
+    const firstSprite = this.raycasting.getFirstIntersectedViewHelperSprite(this.mouseCoordinates);
     if (firstSprite !== undefined && typeof firstSprite.onclick === 'function') {
       firstSprite.onclick(); // custom function
       return; // Exit early if viewhelper was clicked
@@ -373,8 +395,8 @@ class SceneInteraction {
     }
 
     const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
-    const intersectedStation = this.scene.getIntersectedStationSphere(this.mouseCoordinates, worldUnitsFor5Pixels);
-    const intersectsSurfacePoint = this.scene.getIntersectedSurfacePoint(this.mouseCoordinates, 'selected');
+    const intersectedStation = this.raycasting.getIntersectedStationMeta(this.mouseCoordinates, worldUnitsFor5Pixels);
+    const intersectsSurfacePoint = this.raycasting.getIntersectedSurfacePointMeta(this.mouseCoordinates);
     const hasIntersection = intersectedStation !== undefined || intersectsSurfacePoint !== undefined;
 
     if (hasIntersection) {
@@ -388,11 +410,11 @@ class SceneInteraction {
         }
       }
 
-      if (intersectedObject.meta.type !== 'surface' && intersectedObject === this.selectedStation) {
+      if (intersectedObject.type !== 'surface' && intersectedObject === this.selectedStation) {
         // clicked on the same sphere again
         this.#clearSelected();
       } else if (
-        intersectedObject.meta.type === 'surface' &&
+        intersectedObject.type === 'surface' &&
         intersectedObject === this.selectedStation &&
         intersectedObject.position.distanceTo(this.selectedPosition) < 0.2
       ) {
@@ -461,16 +483,26 @@ class SceneInteraction {
   }
 
   locateStation(caveName, stationName) {
-    const stationSphere = this.scene.getStationSphere(stationName, caveName);
-    if (stationSphere !== undefined) {
+
+    const cave = this.db.getCave(caveName);
+    let stationMeta;
+
+    for (const [name, station] of cave.stations) {
+      if (station.survey.visible && stationName === name) {
+        stationMeta = { name, station, position: station.position, cave: cave, type: 'station' };
+        break;
+      }
+    }
+
+    if (stationMeta !== undefined) {
       if (this.selectedStation !== undefined) {
         this.#clearSelected();
       }
 
       // Always use regular selection now
-      this.#setSelected(stationSphere);
+      this.#setSelected(stationMeta);
 
-      this.scene.view.panCameraTo(stationSphere.position);
+      this.scene.view.panCameraTo(stationMeta.position);
       this.scene.view.zoomCameraTo(4);
     }
   }
@@ -533,13 +565,16 @@ class SceneInteraction {
 
     const polar = toPolar(diffVector);
 
+    const fromDetails =
+      from.type === 'surface' ? from.name : `${from.cave.name} → ${from.station.survey.name} → ${from.name}`;
+    const toDetails = to.type === 'surface' ? to.name : `${to.cave.name} → ${to.station.survey.name} → ${to.name}`;
     content.innerHTML = `
-        ${i18n.t('common.from')}: ${from.meta.cave.name} → ${from.meta.survey.name} → ${from.name}<br>
+        ${i18n.t('common.from')}: ${fromDetails}<br>
         X: ${fp.x.toFixed(3)}<br>
         Y: ${fp.y.toFixed(3)}<br>
         Z: ${fp.z.toFixed(3)}<br>
         <br>
-        ${i18n.t('common.to')}: ${to.meta.cave.name} → ${to.meta.survey.name} → ${to.name}<br>
+        ${i18n.t('common.to')}: ${toDetails}<br>
         X: ${tp.x.toFixed(3)}<br>
         Y: ${tp.y.toFixed(3)}<br>
         Z: ${tp.z.toFixed(3)}<br>
@@ -563,11 +598,41 @@ class SceneInteraction {
 
   }
 
-  showStationDetailsPanel(station, left, top) {
+  showSurfacePointDetailsPanel(stationMeta, left, top) {
+    this.infoPanel.style.width = '350px';
+    wm.makeFloatingPanel(
+      this.infoPanel,
+      (contentElmnt) => this.buildSurfacePointDetailsPanel(contentElmnt, stationMeta, left, top),
+      'ui.panels.surfacePointDetails.title',
+      false,
+      false,
+      {},
+      () => {
+        this.#clearSelected();
+        this.scene.view.renderView();
+      }
+    );
+  }
+
+  buildSurfacePointDetailsPanel(contentElmnt, pointMeta, left, top) {
+    const content = node`<div class="infopanel-content"></div>`;
+    content.innerHTML = `
+        ${i18n.t('ui.panels.surfacePointDetails.fileName')}: ${pointMeta.name}<br><br>
+        X: ${pointMeta.position.x.toFixed(3)}<br>
+        Y: ${pointMeta.position.y.toFixed(3)}<br>
+        Z: ${pointMeta.position.z.toFixed(3)}<br>`;
+    contentElmnt.appendChild(content);
+    const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
+    this.infoPanel.style.left = adjustedPosition.left + 'px';
+    this.infoPanel.style.top = adjustedPosition.top + 'px';
+
+  }
+
+  showStationDetailsPanel(stationMeta, left, top) {
     this.infoPanel.style.width = '450px';
     wm.makeFloatingPanel(
       this.infoPanel,
-      (contentElmnt) => this.buildStationDetailsPanel(contentElmnt, station, left, top),
+      (contentElmnt) => this.buildStationDetailsPanel(contentElmnt, stationMeta, left, top),
       'ui.panels.stationDetails.title',
       false,
       false,
@@ -579,15 +644,15 @@ class SceneInteraction {
     );
   }
 
-  buildStationDetailsPanel(contentElmnt, station, left, top) {
+  buildStationDetailsPanel(contentElmnt, stationMeta, left, top) {
 
-    // do not use station.meta.shots here, because it contains all shots, not only the ones that are valid and connected
-    const shots = station.meta.cave.surveys.flatMap((st) =>
+    // do not use stationMeta.survey.shots here, because it contains all shots, not only the ones that are valid and connected
+    const shots = stationMeta.cave.surveys.flatMap((st) =>
       st.shots
-        .filter((sh) => (sh.isCenter() && sh.from === station.name) || sh.to === station.name)
+        .filter((sh) => (sh.isCenter() && sh.from === stationMeta.name) || sh.to === stationMeta.name)
         .map((sh) => ({ survey: st, shot: sh }))
     );
-    const comments = station.meta.cave.stationComments.filter((c) => c.name === station.name).map((c) => c.comment);
+    const comments = stationMeta.cave.stationComments.filter((c) => c.name === stationMeta.name).map((c) => c.comment);
     const shotDetails = shots
       .map((r) => {
         const comment = r.shot.comment
@@ -602,16 +667,16 @@ class SceneInteraction {
 
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
-        ${i18n.t('common.name')}: ${station.name}<br><br>
-        X: ${station.position.x.toFixed(3)}<br>
-        Y: ${station.position.y.toFixed(3)}<br>
-        Z: ${station.position.z.toFixed(3)}<br>
-        ${i18n.t('common.type')}: ${i18n.t(`params.shotType.${station.meta.type}`)}<br>
-        ${i18n.t('common.survey')}: ${station.meta.survey.name}<br>
-        ${i18n.t('common.cave')}: ${station.meta.cave.name}<br>
-        ${i18n.t('ui.panels.stationDetails.localCoordinates')}: ${get3DCoordsStr(station.meta.coordinates.local)}<br>
-        ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${station.meta.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.eov, ['x', 'y', 'elevation'])}<br>
-        ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${station.meta.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(station.meta.coordinates.wgs, ['lat', 'lon'], 6)}<br>
+        ${i18n.t('common.name')}: ${stationMeta.name}<br><br>
+        X: ${stationMeta.position.x.toFixed(3)}<br>
+        Y: ${stationMeta.position.y.toFixed(3)}<br>
+        Z: ${stationMeta.position.z.toFixed(3)}<br>
+        ${i18n.t('common.type')}: ${i18n.t(`params.shotType.${stationMeta.station.type}`)}<br>
+        ${i18n.t('common.survey')}: ${stationMeta.station.survey.name}<br>
+        ${i18n.t('common.cave')}: ${stationMeta.cave.name}<br>
+        ${i18n.t('ui.panels.stationDetails.localCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.local)}<br>
+        ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${stationMeta.station.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(stationMeta.station.coordinates.eov, ['x', 'y', 'elevation'])}<br>
+        ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${stationMeta.station.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(stationMeta.station.coordinates.wgs, ['lat', 'lon'], 6)}<br>
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br>
         <br>${i18n.t('common.comments')}:${comments.join('<br>')}<br>
         `;

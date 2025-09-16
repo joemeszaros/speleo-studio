@@ -127,6 +127,11 @@ export class BaseViewControl {
     return this._100pixelsInWorldUnites / (100 / pixels);
   }
 
+  onResize() {
+    this._100pixelsInWorldUnites =
+      ((100 / this.domElement.getBoundingClientRect().width) * this.camera.width) / this.zoom;
+  }
+
   setZoomLevel(level) {
 
     if (this.zoom === level) return;

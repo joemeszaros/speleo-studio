@@ -73,7 +73,8 @@
       "project": "Project",
       "noProjectLoaded": "No project loaded",
       "raycastingEnabled": "Point selection enabled",
-      "raycastingDisabled": "Point selection disabled"
+      "raycastingDisabled": "Point selection disabled",
+      "surfacePoint": "Surface point ({x}, {y}, {z})"
     },
     "settingsPanel": {
       "buttons": {
@@ -291,6 +292,10 @@
         "to": "To",
         "cannotFindPath": "Cannot find path between '{from}' and '{to}'",
         "cannotFindStations": "Cannot find stations '{from}' or '{to}'"
+      },
+      "surfacePointDetails": {
+        "title": "Surface point details",
+        "fileName": "File name"
       },
       "stationDetails": {
         "title": "Station details",
@@ -519,7 +524,10 @@
           "start": "Start",
           "termination": "Termination",
           "station": "Station",
-          "survey": "Survey"
+          "survey": "Survey",
+          "interpolated": "Interpolated",
+          "from": "From",
+          "to": "To"
         },
         "errors": {
           "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",
@@ -571,6 +579,15 @@
           "hideAllCycles": "Hide all cycles",
           "showAllDeviatingShots": "Show all deviating shots",
           "hideAllDeviatingShots": "Hide all deviating shots"
+        },
+        "columns": {
+          "path": "Path",
+          "distance": "Distance",
+          "color": "Color",
+          "errorDistance": "Δ Distance",
+          "errorAzimuth": "Δ Azimuth",
+          "errorClino": "Δ Clino",
+          "errorPercentage": "Δ Percentage"
         }
       }
     }

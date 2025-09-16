@@ -224,7 +224,7 @@ class NavigationBar {
       {
         tooltip : i18n.t('ui.navbar.tooltips.boundingBox'),
         icon    : 'icons/bounding_box.svg',
-        click   : () => this.scene.toogleBoundingBox()
+        click   : () => this.scene.speleo.toogleBoundingBox()
       },
       {
         tooltip  : i18n.t('ui.navbar.tooltips.lineColor'),

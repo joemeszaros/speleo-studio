@@ -577,7 +577,7 @@ export class SurveyEditor extends Editor {
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#surveydata', {
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.survey.height - 36 - 48, // header + iconbar
+      height                    : this.options.ui.editor.survey.height - 36 - 48 - 5, // header + iconbar
       data                      : this.#getTableData(this.survey, this.cave.stations),
       layout                    : 'fitDataStretch',
       validationMode            : 'highlight',

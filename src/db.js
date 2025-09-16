@@ -30,8 +30,12 @@ class Database {
     return [...this.caves.values()];
   }
 
-  getStationNames(caveName) {
-    return [...(this.caves.get(caveName)?.stations?.keys() ?? [])];
+  getStationNames(caveName, filter = () => true) {
+    const cave = this.caves.get(caveName);
+    if (!cave.stations) return [];
+    return [...cave.stations]
+      .filter(([_, value]) => filter(value))
+      .map(([key]) => key);
   }
 
   getAllStationNames() {

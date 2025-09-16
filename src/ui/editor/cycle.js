@@ -1,7 +1,7 @@
 import * as U from '../../utils/utils.js';
 import { SectionHelper } from '../../section.js';
 import { wm } from '../window.js';
-import { Color, Polar } from '../../model.js';
+import { Polar } from '../../model.js';
 import { CaveCycle } from '../../model/cave.js';
 import { CycleUtil } from '../../utils/cycle.js';
 import { IconBar } from './iconbar.js';
@@ -80,7 +80,7 @@ class CyclePanel {
   }
 
   #getTableData() {
-    const palette = ['#118B50', '#F26B0F', '#c92435'];
+    const palette = ['#f49b0d', '#0092ff', '#c92435', '#5bd825', '#820eef', '#fc03d7'];
     const g = SectionHelper.getGraph(this.cave);
     return SectionHelper.getCycles(g).map((c) => {
 
@@ -90,7 +90,7 @@ class CyclePanel {
         id              : c.id,
         path            : c.path,
         distance        : c.distance,
-        color           : new Color(palette[Math.floor(Math.random() * palette.length)]),
+        color           : palette[Math.floor(Math.random() * palette.length)],
         visible         : false,
         error           : loopError,
         errorDistance   : loopError.error.distance,
@@ -103,54 +103,59 @@ class CyclePanel {
   }
 
   #getColumns() {
+
+    const sumErrorDistance = (_values, data) => {
+      return data.reduce((sum, v) => sum + (v.errorDistance || 0), 0).toFixed(2);
+    };
     return [
       {
         width            : 25,
         field            : 'visible',
         formatter        : 'tickCross',
         cellClick        : this.functions.toggleVisibility,
-        mutatorClipboard : (str) => (str === 'true' ? true : false) //TODO:better parser here that considers other values (like 0, 1)
+        mutatorClipboard : (str) => (str === 'true' ? true : false), //TODO:better parser here that considers other values (like 0, 1)
+        bottomCalc       : 'count'
       },
       {
-        title             : 'Color',
-        field             : 'color',
-        formatter         : this.functions.colorIcon,
-        accessorClipboard : (color) => color.hexString(),
-        mutatorClipboard  : (hex) => new Color(hex),
-        width             : 45,
-        cellClick         : (_e, cell) => this.functions.changeColor(_e, cell)
+        title      : i18n.t('ui.editors.cycles.columns.color'),
+        field      : 'color',
+        formatter  : this.functions.colorIcon,
+        width      : 45,
+        cellClick  : (_e, cell) => this.functions.changeColor(_e, cell),
+        bottomCalc : 'count'
       },
       {
-        title        : 'Path',
-        field        : 'path',
-        headerFilter : 'input',
-        formatter    : (cell) => U.fitString(cell.getValue().join(','), 100)
-      },
-      {
-        title     : 'Distance',
+        title     : i18n.t('ui.editors.cycles.columns.distance'),
         field     : 'distance',
         formatter : (cell) => cell.getValue().toFixed(3)
       },
       {
-        title     : 'Δ Distance',
-        field     : 'errorDistance',
-        formatter : (cell) => cell.getValue().toFixed(3)
+        title      : i18n.t('ui.editors.cycles.columns.errorDistance'),
+        field      : 'errorDistance',
+        formatter  : (cell) => cell.getValue().toFixed(3),
+        bottomCalc : sumErrorDistance
       },
       {
-        title     : 'Δ Azimuth',
+        title     : i18n.t('ui.editors.cycles.columns.errorAzimuth'),
         field     : 'errorAzimuth',
         formatter : (cell) => cell.getValue().toFixed(3)
       },
       {
-        title     : 'Δ Clino',
+        title     : i18n.t('ui.editors.cycles.columns.errorClino'),
         field     : 'errorClino',
         formatter : (cell) => cell.getValue().toFixed(3)
       },
       {
-        title     : 'Δ Percentage',
+        title     : i18n.t('ui.editors.cycles.columns.errorPercentage'),
         field     : 'errorPercentage',
         formatter : (cell) => cell.getValue().toFixed(2) + ' %',
         sorter    : 'number'
+      },
+      {
+        title        : i18n.t('ui.editors.cycles.columns.path'),
+        field        : 'path',
+        headerFilter : 'input',
+        formatter    : (cell) => U.fitString(cell.getValue().join(','), 100)
       }
 
     ];
@@ -177,7 +182,7 @@ class CyclePanel {
     contentElmnt.appendChild(U.node`<div id="cycle-table"></div>`);
     // eslint-disable-next-line no-undef
     this.table = new Tabulator('#cycle-table', {
-      height         : this.options.ui.editor.cycles.height - 30,
+      height         : this.options.ui.editor.cycles.height - 36 - 48 - 5, // header + iconbar
       data           : this.#getTableData(),
       layout         : 'fitDataStretch',
       reactiveData   : false,
@@ -257,7 +262,7 @@ class CyclePanel {
   }
 
   showCycle(data) {
-    this.scene.showSegments(
+    this.scene.segments.showSegmentsTube(
       data.id,
       `cycle-${data.id}`,
       SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
@@ -267,7 +272,7 @@ class CyclePanel {
   }
 
   hideCycle(id) {
-    this.scene.disposeSegments(id);
+    this.scene.segments.disposeSegmentsTube(id);
   }
 
   showAllDeviatingShots() {
@@ -296,13 +301,19 @@ class CyclePanel {
           }
         }
       });
-      this.scene.showSegments(`deviating-shots-${id}`, `deviating-shots-${id}`, segments, '#ff0000', this.cave.name);
+      this.scene.segments.showSegments(
+        `deviating-shots-${id}`,
+        `deviating-shots-${id}`,
+        segments,
+        '#ff0000',
+        this.cave.name
+      );
     }
   }
 
   hideAllDeviatingShots() {
     this.table.getData().forEach((r) => {
-      this.scene.disposeSegments(`deviating-shots-${r.id}`);
+      this.scene.segments.disposeSegments(`deviating-shots-${r.id}`);
     });
   }
 
@@ -319,7 +330,7 @@ class CyclePanel {
     },
     colorIcon : (cell) => {
       const data = cell.getData();
-      const color = data.color.hexString();
+      const color = data.color;
       const style = `style="background: ${color}"`;
       return `<input type="color" id="color-picker-${data.id}" value="${color}"><label id="color-picker-${data.id}-label" for="color-picker-${data.id}" ${style}></label>`;
     },
@@ -328,7 +339,7 @@ class CyclePanel {
         e.target.oninput = (e2) => {
           const newColor = e2.target.value;
           const data = cell.getData();
-          data.color = new Color(newColor);
+          data.color = newColor;
           if (data.visible) {
             this.hideCycle(data.id);
             this.showCycle(data);

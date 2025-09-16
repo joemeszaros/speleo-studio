@@ -35,7 +35,7 @@ class Importer {
 
     reader.onload = async (event) => {
       try {
-        await this.importText(event.target.result, onLoadFn);
+        await this.importText(event.target.result, onLoadFn, name);
       } catch (e) {
         console.error(errorMessage, e);
         showErrorPanel(`${errorMessage}: ${e.message}`, 0);

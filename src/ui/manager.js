@@ -123,8 +123,8 @@ class ProjectManager {
   async onSurveyDeleted(e) {
     const caveName = e.detail.cave;
     const surveyName = e.detail.survey;
-    this.scene.disposeSurvey(caveName, surveyName);
-    this.scene.deleteSurvey(caveName, surveyName);
+    this.scene.speleo.disposeSurvey(caveName, surveyName);
+    this.scene.speleo.deleteSurvey(caveName, surveyName);
     const cave = this.db.getCave(caveName);
     this.recalculateCave(cave);
     this.reloadOnScene(cave);
@@ -137,7 +137,7 @@ class ProjectManager {
   async onCaveRenamed(e) {
     const oldName = e.detail.oldName;
     const cave = e.detail.cave;
-    this.scene.renameCave(oldName, cave.name);
+    this.scene.speleo.renameCave(oldName, cave.name);
     this.explorer.renameCave(oldName, cave.name);
     //indexed db caves object store is indexed by id
     await this.saveCave(cave);
@@ -148,7 +148,7 @@ class ProjectManager {
     const survey = e.detail.survey;
     const newName = survey.name;
     const cave = e.detail.cave;
-    this.scene.renameSurvey(oldName, newName, cave.name);
+    this.scene.speleo.renameSurvey(oldName, newName, cave.name);
     this.explorer.renameSurvey(oldName, newName, cave.name);
     await this.saveCave(cave);
   }
@@ -213,8 +213,8 @@ class ProjectManager {
   }
 
   disposeCave(caveName) {
-    this.scene.disposeCave(caveName);
-    this.scene.deleteCave(caveName);
+    this.scene.speleo.disposeCave(caveName);
+    this.scene.speleo.deleteCave(caveName);
     this.scene.view.renderView();
     this.explorer.removeCave(caveName);
     this.explorer.closeEditorsForCave(caveName);
@@ -300,12 +300,12 @@ class ProjectManager {
     }
 
     cave.surveys.forEach((es) => {
-      this.scene.disposeSurvey(cave.name, es.name);
-      this.scene.deleteSurvey(cave.name, es.name);
+      this.scene.speleo.disposeSurvey(cave.name, es.name);
+      this.scene.speleo.deleteSurvey(cave.name, es.name);
 
       const [clSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(es, caveStations);
       if (clSegments.length !== 0) {
-        const _3dObjects = this.scene.addSurveyToScene(
+        const _3dObjects = this.scene.speleo.getSurveyObjects(
           es,
           cave,
           clSegments,
@@ -313,13 +313,13 @@ class ProjectManager {
           auxiliarySegments,
           cave.visible && es.visible
         );
-        this.scene.addSurvey(cave.name, es.name, _3dObjects);
-        this.scene.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
+        this.scene.speleo.addSurvey(cave.name, es.name, _3dObjects);
+        this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
       }
     });
 
     // Update starting point position after recalculation
-    this.scene.addOrUpdateStartingPoint(cave);
+    this.scene.startPoint.addOrUpdateStartingPoint(cave);
 
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
@@ -439,7 +439,7 @@ class ProjectManager {
 
       cave.surveys.forEach((s) => {
         const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
-        const _3dobjects = this.scene.addSurveyToScene(
+        const _3dobjects = this.scene.speleo.getSurveyObjects(
           s,
           cave,
           centerLineSegments,
@@ -447,24 +447,24 @@ class ProjectManager {
           auxiliarySegments,
           true
         );
-        this.scene.addSurvey(cave.name, s.name, _3dobjects);
+        this.scene.speleo.addSurvey(cave.name, s.name, _3dobjects);
       });
 
-      this.scene.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
+      this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
 
       // Add starting point for the cave
-      this.scene.addOrUpdateStartingPoint(cave);
+      this.scene.startPoint.addOrUpdateStartingPoint(cave);
 
       cave.attributes.sectionAttributes.forEach((sa) => {
         if (sa.visible) {
           const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
-          this.scene.showFragmentAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
+          this.scene.attributes.showFragmentAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
         }
       });
       cave.attributes.componentAttributes.forEach((ca) => {
         if (ca.visible) {
           const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
-          this.scene.showFragmentAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
+          this.scene.attributes.showFragmentAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
         }
       });
 

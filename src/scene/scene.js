@@ -1,14 +1,11 @@
 import * as THREE from 'three';
-import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
-import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
-import { ColorModeHelper } from './colormode.js';
-import { i18n } from '../i18n/i18n.js';
-
 import { Grid } from './grid.js';
-import * as U from '../utils/utils.js';
-import { ShotType } from '../model/survey.js';
-
+import { SpeleoScene } from './cosmos/speleo.js';
+import { StartPointScene } from './cosmos/start-point.js';
+import { ModelScene } from './cosmos/model.js';
+import { PointScene } from './cosmos/points.js';
+import { SegmentScene } from './cosmos/segments.js';
+import { AttributesScene } from './cosmos/attributes.js';
 import { SpatialView, PlanView, ProfileView } from './views.js';
 import { TextSprite } from './textsprite.js';
 
@@ -40,28 +37,9 @@ class MyScene {
     this.db = db;
     this.mats = materials.materials;
     this.materials = materials;
-    this.caveObjects = new Map(); // for centerlines, splays ... for a cave
-    this.surfaceObjects = new Map();
-    this.sectionAttributes = new Map();
-    this.stationAttributes = new Map();
-    this.segments = new Map(); // for shortest path segments
-    this.caveObject3DGroup = new THREE.Group();
-    this.caveObject3DGroup.name = 'cave object';
+
     this.sprites3DGroup = new THREE.Group();
     this.sprites3DGroup.name = 'sprites';
-    this.surfaceObject3DGroup = new THREE.Group();
-    this.surfaceObject3DGroup.name = 'surface objects';
-    this.sectionAttributes3DGroup = new THREE.Group();
-    this.sectionAttributes3DGroup.name = 'section attributes';
-    this.stationAttributes3DGroup = new THREE.Group();
-    this.stationAttributes3DGroup.name = 'station attributes';
-    this.segments3DGroup = new THREE.Group();
-    this.segments3DGroup.name = 'segments';
-    this.spheres3DGroup = new THREE.Group();
-    this.spheres3DGroup.name = 'spheres';
-    this.startPoints3DGroup = new THREE.Group();
-    this.startPoints3DGroup.name = 'starting points';
-    this.startPointObjects = new Map(); // Map to store starting point objects for each cave
     this.stationFont = font;
 
     // Camera tracking for optimized billboarding
@@ -94,6 +72,13 @@ class MyScene {
     this.threejsScene.name = 'main scene';
     this.threejsScene.background = new THREE.Color(this.options.scene.background.color);
 
+    this.speleo = new SpeleoScene(db, options, materials, this);
+    this.startPoint = new StartPointScene(options, materials, this);
+    this.models = new ModelScene(this);
+    this.segments = new SegmentScene(options, this);
+    this.points = new PointScene(options, materials, this);
+    this.attributes = new AttributesScene(options, materials, this);
+
     this.views = new Map([
       ['plan', new PlanView(this, this.domElement)],
       ['profile', new ProfileView(this, this.domElement)],
@@ -102,79 +87,7 @@ class MyScene {
 
     this.grid = new Grid(this.options, this);
 
-    this.colorModeHelper = new ColorModeHelper(this.db, this.options, this.caveObjects, materials);
-
-    this.threejsScene.add(this.caveObject3DGroup);
-    this.threejsScene.add(this.surfaceObject3DGroup);
-    this.threejsScene.add(this.sectionAttributes3DGroup);
-    this.threejsScene.add(this.stationAttributes3DGroup);
-    this.threejsScene.add(this.segments3DGroup);
-    this.threejsScene.add(this.spheres3DGroup);
-    this.threejsScene.add(this.startPoints3DGroup);
-
     this.boundingBox = undefined;
-
-    this.raycaster = new THREE.Raycaster();
-    this.raycaster.params.Mesh.threshold = 10;
-    this.pointer = new THREE.Vector2();
-
-    const cameraTargetGeo = new THREE.SphereGeometry(this.options.scene.camera.target.radius, 10, 10);
-    this.cameraTarget = this.addSphere(
-      'camera target',
-      new THREE.Vector3(0, 0, 0),
-      this.spheres3DGroup,
-      cameraTargetGeo,
-      this.mats.sphere.cameraTarget,
-      {
-        type : 'camera target'
-      }
-    );
-    this.cameraTarget.visible = this.options.scene.camera.target.show;
-
-    const sphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 10, 10);
-    this.surfaceSphere = this.addSphere(
-      'surface',
-      new THREE.Vector3(0, 0, 0),
-      this.surfaceObject3DGroup,
-      sphereGeo,
-      this.mats.sphere.surface,
-      {
-        type : 'surface'
-      }
-    );
-
-    const map = new THREE.TextureLoader().load('icons/focus.svg');
-    map.colorSpace = THREE.SRGBColorSpace;
-    const material = new THREE.SpriteMaterial({ map: map });
-
-    const focusSprite = new THREE.Sprite(material);
-    focusSprite.name = 'focus sprite';
-    this.focusSprite = focusSprite;
-    this.threejsScene.add(focusSprite);
-
-    const geometry = new THREE.TorusGeometry(1.3, 0.2, 16, 100);
-    this.focusSphere = this.addSphere(
-      'selected station sphere',
-      new THREE.Vector3(0, 0, 0),
-      this.spheres3DGroup,
-      sphereGeo,
-      this.mats.sphere.selectedStation,
-      {
-        type : 'selected station'
-      }
-    );
-    this.focusSphere.visible = false;
-    this.distanceSphere = this.addSphere(
-      'distance sphere',
-      new THREE.Vector3(0, 0, 0),
-      this.spheres3DGroup,
-      geometry,
-      this.mats.sphere.distanceMeasurement,
-      {
-        type : 'distance station'
-      }
-    );
-    this.distanceSphere.visible = false;
 
     this.view = this.views.get('spatial');
     this.view.activate(this.computeBoundingBox());
@@ -192,214 +105,8 @@ class MyScene {
     this.view.renderView();
   }
 
-  setSurveyVisibility(cave, survey, value) {
-    const entry = this.caveObjects.get(cave).get(survey);
-    const s = this.options.scene;
-    entry.centerLines.visible = value && s.centerLines.segments.show;
-    entry.centerLines.hidden = !value; // hidden is a custom attribute set by me, used in setObjectsVisibility
-    entry.splays.visible = value && s.splays.segments.show;
-    entry.splays.hidden = !value;
-    entry.centerLinesSpheres.visible = value && s.centerLines.spheres.show;
-    entry.centerLinesSpheres.hidden = !value;
-    entry.splaysSpheres.visible = value && s.splays.spheres.show;
-    entry.splaysSpheres.hidden = !value;
-    this.view.renderView();
-  }
-
-  setObjectsVisibility(fieldName, val) {
-    const entries = this.#getCaveObjectsFlattened();
-    entries.forEach((e) => {
-      e[fieldName].visible = !e.centerLines.hidden && val;
-    });
-    this.view.renderView();
-  }
-
-  setObjectsOpacity(fieldName, val) {
-    const entries = this.#getCaveObjectsFlattened();
-    entries.forEach((e) => {
-      e[fieldName].material.transparent = true;
-      e[fieldName].material.opacity = val;
-    });
-    this.view.renderView();
-  }
-
-  changeStationSpheresRadius(type) {
-    let spheres, radius;
-    if (type === ShotType.CENTER) {
-      spheres = this.getAllCenterLineStationSpheres();
-      radius = this.options.scene.centerLines.spheres.radius;
-    } else if (type === ShotType.SPLAY) {
-      spheres = this.getAllSplaysStationSpheres();
-      radius = this.options.scene.splays.spheres.radius;
-    } else if (type === ShotType.AUXILIARY) {
-      spheres = this.getAllAuxiliaryStationSpheres();
-      radius = this.options.scene.auxiliaries.spheres.radius;
-    }
-    const geometry = new THREE.SphereGeometry(radius, 5, 5);
-    spheres.forEach((s) => {
-      s.geometry.dispose();
-      s.geometry = geometry;
-    });
-    this.view.renderView();
-  }
-
-  deleteSurvey(caveName, surveyName) {
-    if (this.caveObjects.has(caveName) && this.caveObjects.get(caveName).has(surveyName)) {
-      this.caveObjects.get(caveName).delete(surveyName);
-    }
-  }
-
-  addSurvey(caveName, surveyName, entry) {
-    if (!this.caveObjects.has(caveName)) {
-      this.caveObjects.set(caveName, new Map());
-    }
-    if (this.caveObjects.get(caveName).has(surveyName)) {
-      throw new Error(i18n.t('errors.scene.surveyObjectsAlreadyAdded', { caveName, surveyName }));
-    }
-    this.caveObjects.get(caveName).set(surveyName, entry);
-
-  }
-
-  getAllCenterLineStationSpheres() {
-    const entries = Array.from(this.#getCaveObjectsFlattened());
-    return entries.flatMap((e) => e.centerLinesSpheres.children);
-  }
-
-  getAllSplaysStationSpheres() {
-    const entries = Array.from(this.#getCaveObjectsFlattened());
-    return entries.flatMap((e) => e.splaysSpheres.children);
-  }
-
-  getAllAuxiliaryStationSpheres() {
-    const entries = Array.from(this.#getCaveObjectsFlattened());
-    return entries.flatMap((e) => e.auxiliarySpheres.children);
-  }
-
   getBoundingClientRect() {
     return this.domElement.getBoundingClientRect();
-  }
-
-  getAllSurfacePoints() {
-    return [...this.surfaceObjects.values()].map((s) => s.cloud);
-  }
-
-  getStationSphere(stationName, caveName) {
-    const clSpheres = this.getAllCenterLineStationSpheres();
-    const splaySpheres = this.getAllSplaysStationSpheres();
-    const auxiliarySpheres = this.getAllAuxiliaryStationSpheres();
-    return clSpheres
-      .concat(splaySpheres)
-      .concat(auxiliarySpheres)
-      .find((s) => s.name === stationName && s.meta.cave.name === caveName);
-  }
-
-  // this function is required because threejs canvas is 48 px from top
-  getMousePosition(mouseCoordinates) {
-    const { x, y } = mouseCoordinates;
-    const rect = this.container.getBoundingClientRect();
-    return new THREE.Vector2((x - rect.left) / rect.width, (y - rect.top) / rect.height);
-  }
-
-  setPointer(mousePosition) {
-    this.pointer.x = mousePosition.x * 2 - 1;
-    this.pointer.y = -mousePosition.y * 2 + 1;
-  }
-
-  getFirstIntersectedSprite(mouseCoordinates) {
-    if (this.view.spriteCamera === undefined) return;
-    this.setPointer(this.getMousePosition(mouseCoordinates));
-    const sprites = this.sprites3DGroup.children.filter((s) => s.visible);
-    this.raycaster.setFromCamera(this.pointer, this.view.spriteCamera);
-    const intersectedSprites = this.raycaster.intersectObjects(sprites);
-    if (intersectedSprites.length) {
-      return intersectedSprites[0].object;
-    } else {
-      return undefined;
-    }
-  }
-
-  getIntersectedStationSphere(mouseCoordinates, radius) {
-    this.setPointer(this.getMousePosition(mouseCoordinates));
-    const clSpheres = this.getAllCenterLineStationSpheres();
-    const splaySpheres = this.getAllSplaysStationSpheres();
-    const auxiliarySpheres = this.getAllAuxiliaryStationSpheres();
-    const stationSpheres = clSpheres.concat(splaySpheres).concat(auxiliarySpheres);
-
-    const camera = this.view.camera;
-    const origin = new THREE.Vector3(
-      this.pointer.x,
-      this.pointer.y,
-      (camera.near + camera.far) / (camera.near - camera.far)
-    ).unproject(camera);
-    const direction = new THREE.Vector3(0, 0, -1).transformDirection(camera.matrixWorld);
-    const spheres = stationSpheres.map((s) => {
-      const sphere = new THREE.Sphere(s.position, radius);
-      sphere.station = s; // custom property
-      sphere.distance = origin.distanceTo(s.position); // custom property
-      return sphere;
-    });
-
-    const ray = new THREE.Ray(origin, direction);
-    const intersectedSpheres = spheres.filter((s) => ray.intersectSphere(s, new THREE.Vector3()));
-    if (intersectedSpheres.length) {
-      intersectedSpheres.sort((a, b) => a.distance - b.distance); // get the closest sphere
-      return intersectedSpheres[0].station;
-    } else {
-      return undefined;
-    }
-  }
-
-  /**
-   * Get the first intersected sprite from the viewhelper. It converts mouse coordinates to viewhelper's coordinate system,
-   * which is in the top right corner of the canvas.
-   * @param {*} mouseCoordinates
-   * @returns
-   */
-
-  getFirstIntersectedViewHelperSprite(mouseCoordinates) {
-    if (this.view.name !== 'spatialView') return;
-
-    const viewHelper = this.view.viewHelper;
-    const dim = viewHelper.size;
-
-    const sceneRect = this.domElement.getBoundingClientRect();
-
-    const relativeX = mouseCoordinates.x - sceneRect.left;
-    const relativeY = mouseCoordinates.y - sceneRect.top;
-
-    if (relativeX < sceneRect.width - dim || relativeY > dim) {
-      return undefined;
-    }
-
-    // Convert mouse coordinates to viewhelper's coordinate system
-    const localX = (relativeX - (sceneRect.width - dim)) / dim;
-    const localY = relativeY / dim;
-
-    // Convert to normalized device coordinates for the orthographic camera
-    const ndcX = localX * 2 - 1;
-    const ndcY = -(localY * 2 - 1);
-    // Set up raycaster with viewhelper's orthographic camera
-    this.raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), viewHelper.orthoCamera);
-    const intersectedSprites = this.raycaster.intersectObjects(viewHelper.interactiveObjects);
-
-    return intersectedSprites.length > 0 ? intersectedSprites[0].object : undefined;
-  }
-
-  getIntersectedSurfacePoint(mouseCoordinates, purpose) {
-    this.setPointer(this.getMousePosition(mouseCoordinates));
-    const clouds = this.getAllSurfacePoints();
-    this.raycaster.setFromCamera(this.pointer, this.view.camera);
-    this.raycaster.params.Points.threshold = 0.1;
-    const intersectedPoints = this.raycaster.intersectObjects(clouds);
-    if (intersectedPoints.length) {
-      if (purpose === 'selected') {
-        this.surfaceSphere.position.copy(intersectedPoints[0].point);
-        this.surfaceSphere.visible = true;
-        return this.surfaceSphere;
-      }
-    } else {
-      return undefined;
-    }
   }
 
   onViewportResized() {
@@ -419,324 +126,8 @@ class MyScene {
   }
 
   computeBoundingBox() {
-    if (this.caveObjects.size > 0 || this.surfaceObjects.size > 0) {
-      const bb = new THREE.Box3();
-      // eslint-disable-next-line no-unused-vars
-      this.caveObjects.forEach((sMap, _caveName) => {
-        // eslint-disable-next-line no-unused-vars
-        sMap.forEach((e, _surveyName) => {
-          if (e.centerLines.visible) {
-            bb.expandByObject(e.centerLines);
-          }
-          if (e.splays.visible) {
-            bb.expandByObject(e.splays);
-          }
-        });
-      });
-      // eslint-disable-next-line no-unused-vars
-      this.surfaceObjects.forEach((entry, surfaceName) => {
-        if (entry.cloud.visible) {
-          bb.expandByObject(entry.cloud);
-        }
-      });
-      return bb;
-    } else {
-      return undefined;
-    }
-  }
-
-  toogleBoundingBox() {
-    this.options.scene.boundingBox.show = !this.options.scene.boundingBox.show;
-
-    if (this.options.scene.boundingBox.show === true) {
-      const bb = this.computeBoundingBox();
-      if (bb !== undefined) {
-        const boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
-        this.boundingBoxHelper = boundingBoxHelper;
-        this.boundingBoxHelper.layers.set(1);
-        this.threejsScene.add(boundingBoxHelper);
-      }
-    } else {
-      if (this.boundingBoxHelper !== undefined) {
-        this.threejsScene.remove(this.boundingBoxHelper);
-        this.boundingBoxHelper.dispose();
-        this.boundingBoxHelper = undefined;
-      }
-    }
-    this.view.renderView();
-
-  }
-
-  showSegments(id, name, segments, color, caveName) {
-    if (!this.segments.has(id)) {
-      const geometry = new LineSegmentsGeometry();
-      geometry.setPositions(segments);
-      geometry.computeBoundingBox();
-      const material = new LineMaterial({
-        color        : new THREE.Color(color),
-        linewidth    : this.options.scene.sections.width,
-        worldUnits   : false,
-        vertexColors : false
-      });
-      const lineSegments = new LineSegments2(geometry, material);
-      lineSegments.name = name;
-      lineSegments.layers.set(1);
-      this.segments3DGroup.add(lineSegments);
-      this.segments.set(id, {
-        segments : lineSegments,
-        caveName : caveName
-      });
-      this.view.renderView();
-    }
-  }
-
-  disposeSegments(id) {
-    if (this.segments.has(id)) {
-      const e = this.segments.get(id);
-      const lineSegments = e.segments;
-      lineSegments.geometry.dispose();
-      lineSegments.material.dispose();
-      this.segments3DGroup.remove(lineSegments);
-      this.segments.delete(id);
-      this.view.renderView();
-    }
-  }
-
-  // for section and component attributes
-  showFragmentAttribute(id, segments, attribute, format = '${name}', color, caveName) {
-    if (!this.sectionAttributes.has(id)) {
-      const geometry = new LineSegmentsGeometry();
-      geometry.setPositions(segments);
-      geometry.computeBoundingBox();
-
-      // Create tube geometry for the attribute path
-      const tubeGroup = this.createTubeGeometryFromSegments(segments);
-
-      // Apply material to all tube segments in the group
-      tubeGroup.children.forEach((tubeMesh) => {
-        tubeMesh.material = new THREE.MeshBasicMaterial({
-          color       : new THREE.Color(color),
-          transparent : false,
-          opacity     : 1.0
-        });
-      });
-
-      tubeGroup.layers.set(1);
-      this.sectionAttributes3DGroup.add(tubeGroup);
-
-      const bb = geometry.boundingBox;
-      const center = bb.getCenter(new THREE.Vector3());
-      const maxZ = bb.min.z > bb.max.z ? bb.min.z : bb.max.z;
-      center.z = maxZ;
-      const localized = attribute.localize(i18n);
-      const formattedAttribute = U.interpolate(format, localized);
-      let sprite = this.addSpriteLabel(formattedAttribute, center, this.options.scene.labels.size);
-      this.sectionAttributes3DGroup.add(sprite);
-      sprite.layers.set(1);
-
-      this.sectionAttributes.set(id, {
-        tube     : tubeGroup,
-        text     : sprite,
-        label    : formattedAttribute,
-        center   : center,
-        caveName : caveName,
-        segments : segments,
-        color    : color
-      });
-      this.view.renderView();
-    }
-  }
-
-  toggleSectionsLabelVisibility(visible) {
-    this.sectionAttributes.forEach((e) => {
-      e.text.visible = visible;
-    });
-    this.view.renderView();
-  }
-
-  updateSectionAttributesWidth() {
-    this.sectionAttributes.forEach((e) => {
-      e.tube.children.forEach((tubeMesh) => {
-        tubeMesh.geometry.dispose();
-        tubeMesh.material.dispose();
-      });
-      this.sectionAttributes3DGroup.remove(e.tube);
-
-      const newGroup = this.createTubeGeometryFromSegments(e.segments);
-      newGroup.children.forEach((tubeMesh) => {
-        tubeMesh.material = new THREE.MeshBasicMaterial({
-          color       : new THREE.Color(e.color),
-          transparent : false,
-          opacity     : 1.0
-        });
-      });
-      newGroup.layers.set(1);
-      this.sectionAttributes3DGroup.add(newGroup);
-      e.tube = newGroup;
-    });
-    this.view.renderView();
-  }
-
-  disposeSectionAttribute(id) {
-    if (this.sectionAttributes.has(id)) {
-      const e = this.sectionAttributes.get(id);
-
-      const tubeGroup = e.tube;
-
-      // Dispose tube mesh if it exists
-      if (tubeGroup) {
-        tubeGroup.children.forEach((tubeMesh) => {
-          tubeMesh.geometry.dispose();
-          tubeMesh.material.dispose();
-        });
-        this.sectionAttributes3DGroup.remove(tubeGroup);
-      }
-
-      const textMesh = e.text;
-      this.sectionAttributes3DGroup.remove(textMesh);
-      textMesh.geometry.dispose();
-      this.sectionAttributes.delete(id);
-      this.view.renderView();
-    }
-  }
-
-  showPlaneFor(id, station, attribute) {
-    if (!this.stationAttributes.has(id)) {
-      const position = station.position;
-      const geometry = new THREE.PlaneGeometry(attribute.width, attribute.height, 10, 10);
-      const plane = new THREE.Mesh(geometry, this.mats.planes.get(attribute.name));
-      plane.name = `plane-${attribute.name}-${id}`;
-      plane.position.set(0, 0, 0);
-      const dir = U.normal(U.degreesToRads(attribute.azimuth), U.degreesToRads(attribute.dip));
-      plane.lookAt(dir.x, dir.y, dir.z);
-      const v = new THREE.Vector3(position.x, position.y, position.z);
-      plane.position.copy(v);
-
-      this.stationAttributes3DGroup.add(plane);
-
-      this.stationAttributes.set(id, {
-        plane     : plane,
-        station   : station,
-        attribute : attribute
-      });
-      this.view.renderView();
-    }
-  }
-
-  disposePlaneFor(id) {
-    if (this.stationAttributes.has(id)) {
-      const e = this.stationAttributes.get(id);
-      const plane = e.plane;
-      plane.geometry.dispose();
-      this.stationAttributes3DGroup.remove(plane);
-      this.stationAttributes.delete(id);
-      this.view.renderView();
-    }
-  }
-
-  showIconFor(id, station, attribute) {
-    if (!this.stationAttributes.has(id)) {
-      const position = station.position;
-
-      // Create a sprite with the SVG icon
-      const iconPath = `icons/${attribute.name}.svg`;
-      const textureLoader = new THREE.TextureLoader();
-
-      textureLoader.load(
-        iconPath,
-        (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          const spriteMaterial = new THREE.SpriteMaterial({
-            map         : texture,
-            transparent : false,
-            opacity     : 1.0
-          });
-
-          const sprite = new THREE.Sprite(spriteMaterial);
-          sprite.name = `icon-${attribute.name}-${id}`;
-          sprite.position.set(position.x, position.y, position.z);
-          sprite.scale.set(
-            this.options.scene.stationAttributes.iconScale,
-            this.options.scene.stationAttributes.iconScale,
-            this.options.scene.stationAttributes.iconScale
-          );
-          sprite.layers.set(1);
-          this.stationAttributes3DGroup.add(sprite);
-
-          this.stationAttributes.set(id, {
-            sprite    : sprite,
-            station   : station,
-            attribute : attribute
-          });
-
-          this.view.renderView();
-        },
-        undefined,
-        (error) => {
-          console.warn(`Failed to load icon for ${attribute.name}:`, error);
-        }
-      );
-    }
-  }
-
-  disposeIconFor(id) {
-    if (this.stationAttributes.has(id)) {
-      const e = this.stationAttributes.get(id);
-      const sprite = e.sprite;
-
-      if (sprite.material && sprite.material.map) {
-        sprite.material.map.dispose();
-      }
-      sprite.material.dispose();
-      sprite.geometry?.dispose();
-
-      this.stationAttributes3DGroup.remove(sprite);
-      this.stationAttributes.delete(id);
-      this.view.renderView();
-    }
-  }
-
-  updateStationAttributeIconScales(newScale) {
-    // Update the scale of all existing station attribute icons
-    this.stationAttributes.forEach((entry) => {
-      if (entry.sprite && entry.sprite.type === 'Sprite') {
-        entry.sprite.scale.set(newScale, newScale, newScale);
-      }
-    });
-    this.view.renderView();
-  }
-
-  changeCenterLineColorMode(mode, trigger) {
-    this.colorModeHelper.setColorMode(mode, trigger);
-    this.view.renderView();
-
-  }
-
-  rollSurface() {
-    const config = this.options.scene.surface.color.mode;
-    // Rotate through surface color modes
-    const modes = ['gradientByZ', 'gradientByDistance'];
-    const currentIndex = modes.indexOf(config);
-    const nextIndex = (currentIndex + 1) % modes.length;
-    this.options.scene.surface.color.mode = modes[nextIndex];
-
-    switch (this.options.scene.surface.color.mode) {
-      case 'gradientByZ':
-        // don't need to recalculate color gradients because surface is not editable
-        this.surfaceObjects.forEach((entry) => {
-          entry.cloud.visible = true;
-        });
-        break;
-      case 'hidden':
-        this.surfaceObjects.forEach((entry) => {
-          entry.cloud.visible = false;
-        });
-        break;
-      default:
-        throw new Error(i18n.t('errors.scene.unknownSurfaceColorConfiguration', { value: config.value }));
-    }
-    this.view.renderView();
-
+    //FIXME: incorporate surface
+    return this.speleo.computeBoundingBox();
   }
 
   changeView(viewName) {
@@ -749,32 +140,13 @@ class MyScene {
     }
   }
 
-  updateSegmentsWidth(width) {
-    this.segments3DGroup.children.forEach((e) => {
-      e.material.linewidth = width;
-    });
-    this.view.renderView();
-  }
-
-  updateLabelSize(size) {
-    this.sectionAttributes.forEach((e) => {
-      this.sectionAttributes3DGroup.remove(e.text);
-      e.text.geometry.dispose();
-      const newText = this.addLabel(e.label, e.center, size);
-      newText.layers.set(1);
-      this.sectionAttributes3DGroup.add(newText);
-      e.text = newText;
-    });
-    this.view.renderView();
-  }
-
   animate() {
     const delta = this.clock.getDelta();
     this.view.animate(delta);
   }
 
   renderScene(camera, overViewCamera, spriteCamera, helper) {
-    this.sectionAttributes.forEach((e) => {
+    this.attributes.sectionAttributes?.forEach((e) => {
       const pos = e.center.clone();
       pos.z = pos.z + 100;
       e.text.lookAt(pos);
@@ -801,10 +173,6 @@ class MyScene {
       this.overview.renderer.render(this.threejsScene, overViewCamera);
     }
 
-  }
-
-  #getCaveObjectsFlattened() {
-    return [...this.caveObjects.values()].filter((c) => c && c.size > 0).flatMap((c) => Array.from(c.values()));
   }
 
   #initializeCameraTracking() {
@@ -840,14 +208,15 @@ class MyScene {
       return;
     }
 
-    const entries = this.#getCaveObjectsFlattened();
-    entries.forEach((e) => {
-      e.stationLabels.children.forEach((label) => {
-        if (label.userData && label.userData.textSprite) {
-          label.lookAt(this.view.camera.position);
-        }
-      });
-    });
+    //FIXME: rotate if needed
+    // const entries = []; //this.#getCaveObjectsFlattened();
+    // entries.forEach((e) => {
+    //   e.stationLabels.children.forEach((label) => {
+    //     if (label.userData && label.userData.textSprite) {
+    //       label.lookAt(this.view.camera.position);
+    //     }
+    //   });
+    // });
 
     this.lastCameraPosition.copy(this.view.camera.position);
     this.lastCameraQuaternion.copy(this.view.camera.quaternion);
@@ -858,7 +227,7 @@ class MyScene {
     this.threejsScene.add(object);
   }
 
-  removeFromScene(object) {
+  removeObjectFromScene(object) {
     this.threejsScene.remove(object);
   }
 
@@ -891,502 +260,23 @@ class MyScene {
     return sprite;
   }
 
-  addSphere(name, position, sphereGroup, geometry, material, meta) {
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.position.x = position.x;
-    sphere.position.y = position.y;
-    sphere.position.z = position.z;
-    sphere.name = name;
-    sphere.type = meta.type; // custom property
-    sphere.meta = meta; // custom property
-    sphereGroup.add(sphere);
-    return sphere;
-  }
-
-  /**
-   * Options for 3D labels in three.js
-
-    CSS3DRenderer (HTML overlay)
-        Pros: crisp text, easy styling, fixed pixel size, trivial offsets.
-        Cons: no automatic occlusion by 3D objects, lots of DOM nodes hurt performance (>300–500), z-order is DOM-based.
-        Good for: dozens to a few hundred labels, quick UI, when occlusion isn’t critical.
-    WebGL sprites with canvas textures (THREE.Sprite or libraries like three-spritetext)
-        Pros: occludes correctly, simple to billboard, OK for a few hundred.
-        Cons: each label has its own texture; blurry at varying scales; memory-heavy with many labels.
-    Signed-distance-field (SDF/MSDF) text meshes (troika-three-text)
-        Pros: crisp at any scale, participates in depth, occludes correctly, good performance, easy billboarding, outlines/shadows.
-        Cons: still one mesh per label; very large counts require culling/decluttering.
-        Good for: hundreds to a few thousand labels with culling.
-    look at addLabel for a 4th option where ShapeGeometry is used to create the text mesh
-   */
-  addStationLabel(stationLabel, stationName, position, targetGroup) {
-    const labelConfig = this.options.scene.stationLabels;
-    const labelPosition = position.clone();
-
-    if (labelConfig.offsetDirection === 'up') {
-      labelPosition.y += labelConfig.offset; // offset above the station
-    } else if (labelConfig.offsetDirection === 'down') {
-      labelPosition.y -= labelConfig.offset; // offset below the station
-    } else if (labelConfig.offsetDirection === 'left') {
-      labelPosition.x -= labelConfig.offset; // offset left of the station
-    } else if (labelConfig.offsetDirection === 'right') {
-      labelPosition.x += labelConfig.offset; // offset right of the station
-    }
-
-    const font = {
-      size  : labelConfig.size,
-      color : labelConfig.color,
-      name  : 'Arial'
-
-    };
-
-    if (labelConfig.stroke) {
-      font.strokeColor = labelConfig.strokeColor;
-    }
-
-    const textSprite = new TextSprite(
-      stationLabel,
-      labelPosition,
-      font,
-      labelConfig.scale,
-      `station-label-${stationLabel}`
-    );
-
-    const sprite = textSprite.getSprite();
-    sprite.userData = {
-      label           : stationLabel,
-      textSprite,
-      stationName,
-      stationPosition : position.clone()
-    };
-    sprite.layers.set(1);
-
-    targetGroup.add(sprite);
-  }
-
   toggleCameraTargetVisibility(visible) {
-    this.cameraTarget.visible = visible;
-  }
-
-  toggleStartingPointsVisibility(visible) {
-    this.startPoints3DGroup.visible = visible;
-  }
-
-  addOrUpdateStartingPoint(cave) {
-    // Remove existing starting point if it exists
-    if (this.startPointObjects.has(cave.name)) {
-      this.removeStartingPoint(cave.name);
-    }
-
-    // Get the first station of the first survey
-    const firstStation = cave.getFirstStation();
-    if (!firstStation) return;
-
-    // Create a sphere geometry for the starting point
-    const startPointGeo = new THREE.SphereGeometry(this.options.scene.startPoints.radius, 7, 7);
-
-    // Create the starting point mesh
-    const startPoint = new THREE.Mesh(startPointGeo, this.mats.sphere.startPoint);
-    startPoint.position.copy(firstStation.position);
-    startPoint.name = `startPoint_${cave.name}`;
-
-    // Set visibility based on configuration
-    startPoint.visible = this.options.scene.startPoints.show;
-
-    // Add to the starting points group
-    this.startPoints3DGroup.add(startPoint);
-
-    // Store reference for later management
-    this.startPointObjects.set(cave.name, {
-      mesh     : startPoint,
-      geometry : startPointGeo,
-      material : this.mats.sphere.startPoint
-    });
-
-    return startPoint;
-  }
-
-  removeStartingPoint(caveName) {
-    const startPointObj = this.startPointObjects.get(caveName);
-    if (startPointObj) {
-      this.startPoints3DGroup.remove(startPointObj.mesh);
-      startPointObj.geometry.dispose();
-      startPointObj.material.dispose();
-      this.startPointObjects.delete(caveName);
-    }
-  }
-
-  updateStartingPointColor(color) {
-    this.startPointObjects.forEach((obj) => {
-      obj.material.color.setHex(color);
-    });
-  }
-
-  updateStartingPointRadius(radius) {
-    this.startPointObjects.forEach((obj) => {
-      // Create new geometry with new radius
-      const newGeometry = new THREE.SphereGeometry(radius, 7, 7);
-      obj.mesh.geometry.dispose();
-      obj.mesh.geometry = newGeometry;
-    });
-  }
-
-  addSurveyToScene(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility) {
-
-    const geometryStations = new LineSegmentsGeometry();
-    geometryStations.setPositions(polygonSegments);
-    const splaysGeometry = new LineSegmentsGeometry();
-    splaysGeometry.setPositions(splaySegments);
-    const auxiliaryGeometry = new LineSegmentsGeometry();
-    auxiliaryGeometry.setPositions(auxiliarySegments);
-
-    //We set simple materials here, color mode helper will set the correct materials after
-    // this function is called
-    const clLineMat = this.mats.segments.centerLine;
-    const splayLineMat = this.mats.segments.splay;
-    const auxiliaryLineMat = this.mats.segments.auxiliary;
-
-    const lineSegmentsPolygon = new LineSegments2(geometryStations, clLineMat);
-    lineSegmentsPolygon.name = `centerline-segments-${cave.name}-${survey.name}`;
-    lineSegmentsPolygon.visible = visibility && this.options.scene.centerLines.segments.show;
-
-    const lineSegmentsSplays = new LineSegments2(splaysGeometry, splayLineMat);
-    lineSegmentsSplays.name = `splay-segments-${cave.name}-${survey.name}`;
-    lineSegmentsSplays.visible = visibility && this.options.scene.splays.segments.show;
-
-    const lineSegmentsAuxiliaries = new LineSegments2(auxiliaryGeometry, auxiliaryLineMat);
-    lineSegmentsAuxiliaries.name = `auxiliary-segments-${cave.name}-${survey.name}`;
-    lineSegmentsAuxiliaries.visible = visibility && this.options.scene.auxiliaries.segments.show;
-
-    const group = new THREE.Group();
-    group.name = `segments-cave-${cave.name}-survey-${survey.name}`;
-
-    group.add(lineSegmentsPolygon);
-    group.add(lineSegmentsSplays);
-    group.add(lineSegmentsAuxiliaries);
-
-    const clStationSpheresGroup = new THREE.Group();
-    clStationSpheresGroup.name = `center-line-spheres-${cave.name}-${survey.name}`;
-    const splayStationSpheresGroup = new THREE.Group();
-    splayStationSpheresGroup.name = `splay-spheres-${cave.name}-${survey.name}`;
-    const auxiliaryStationSpheresGroup = new THREE.Group();
-    auxiliaryStationSpheresGroup.name = `auxiliary-spheres-${cave.name}-${survey.name}`;
-
-    const clSphereGeo = new THREE.SphereGeometry(this.options.scene.centerLines.spheres.radius, 5, 5);
-    const splaySphereGeo = new THREE.SphereGeometry(this.options.scene.splays.spheres.radius, 5, 5);
-    const auxiliarySphereGeo = new THREE.SphereGeometry(this.options.scene.auxiliaries.spheres.radius, 5, 5);
-
-    const stationLabelsGroup = new THREE.Group();
-    stationLabelsGroup.name = `station-labels-${cave.name}-${survey.name}`;
-    const stationNameMode = this.options.scene.stationLabels.mode;
-
-    for (const [stationName, station] of cave.stations) {
-      if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
-      const stationLabel = stationNameMode === 'name' ? stationName : station.position.z.toFixed(2);
-      if (station.type === ShotType.CENTER) {
-        this.addSphere(stationName, station.position, clStationSpheresGroup, clSphereGeo, this.mats.sphere.centerLine, {
-          cave        : cave,
-          survey      : station.survey,
-          shots       : station.shots,
-          type        : station.type,
-          coordinates : station.coordinates
-        });
-        // Add station label
-        if (this.options.scene.stationLabels.show) {
-          // adding sprites for a cave with 3k stations is roughly 25 MB, let's try to save memory by not adding them if they are not visible
-          this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
-        }
-
-      } else if (station.type === ShotType.SPLAY) {
-        this.addSphere(
-          stationName,
-          station.position,
-          splayStationSpheresGroup,
-          splaySphereGeo,
-          this.mats.sphere.splay,
-          {
-            cave        : cave,
-            survey      : station.survey,
-            shots       : station.shots,
-            type        : station.type,
-            coordinates : station.coordinates
-          }
-        );
-        // no station label for splays
-      } else if (station.type === ShotType.AUXILIARY) {
-        this.addSphere(
-          stationName,
-          station.position,
-          auxiliaryStationSpheresGroup,
-          auxiliarySphereGeo,
-          this.mats.sphere.auxiliary,
-          {
-            cave        : cave,
-            survey      : station.survey,
-            shots       : station.shots,
-            type        : station.type,
-            coordinates : station.coordinates
-          }
-        );
-        if (this.options.scene.stationLabels.show) {
-          this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
-        }
-      }
-    }
-    clStationSpheresGroup.visible = visibility && this.options.scene.centerLines.spheres.show;
-    splayStationSpheresGroup.visible = visibility && this.options.scene.splays.spheres.show;
-    auxiliaryStationSpheresGroup.visible = visibility && this.options.scene.auxiliaries.spheres.show;
-    stationLabelsGroup.visible = visibility && this.options.scene.stationLabels.show;
-
-    group.add(clStationSpheresGroup);
-    group.add(splayStationSpheresGroup);
-    group.add(auxiliaryStationSpheresGroup);
-    group.add(stationLabelsGroup);
-    this.caveObject3DGroup.add(group);
-
-    return {
-      id                 : U.randomAlphaNumbericString(5),
-      centerLines        : lineSegmentsPolygon,
-      centerLinesSpheres : clStationSpheresGroup,
-      splays             : lineSegmentsSplays,
-      splaysSpheres      : splayStationSpheresGroup,
-      auxiliaries        : lineSegmentsAuxiliaries,
-      auxiliarySpheres   : auxiliaryStationSpheresGroup,
-      stationLabels      : stationLabelsGroup,
-      group              : group
-    };
-  }
-
-  addSurfaceToScene(cloud, colorGradients) {
-    cloud.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorGradients, 3));
-    cloud.name = `surface-${cloud.name}`;
-    this.surfaceObject3DGroup.add(cloud);
-    this.view.renderView();
-
-    return {
-      id    : U.randomAlphaNumbericString(5),
-      cloud : cloud
-    };
-  }
-
-  addSurfaceSphere(position, sphereGroup, geometry, material) {
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.name = `surface-sphere-${position.x}-${position.y}-${position.z}`;
-    sphere.position.x = position.x;
-    sphere.position.y = position.y;
-    sphere.position.z = position.z;
-    sphere.name = 'surface';
-    sphere.type = 'surface'; // custom property
-    sphereGroup.add(sphere);
-  }
-
-  addSurface(surface, entry) {
-    if (this.surfaceObjects.has(surface.name)) {
-      throw new Error(i18n.t('errors.scene.surfaceObjectAlreadyAdded', { name: surface.name }));
-    }
-    this.surfaceObjects.set(surface.name, entry);
-  }
-
-  disposeSurvey(caveName, surveyName) {
-    if (this.caveObjects.has(caveName) && this.caveObjects.get(caveName).has(surveyName)) {
-      const e = this.caveObjects.get(caveName).get(surveyName);
-      this.#disposeSurveyObjects(e);
-    }
-  }
-
-  #disposeSurveyObjects(e) {
-    e.centerLines.geometry.dispose();
-    e.splays.geometry.dispose();
-    e.auxiliaries.geometry.dispose();
-    e.centerLinesSpheres.children.forEach((c) => c.geometry.dispose()); // all stations spheres use the same geometry
-    e.centerLinesSpheres.clear();
-    e.splaysSpheres.children.forEach((c) => c.geometry.dispose()); // all stations spheres use the same geometry
-    e.splaysSpheres.clear();
-    e.auxiliarySpheres.children.forEach((c) => c.geometry.dispose());
-    e.auxiliarySpheres.clear();
-    e.stationLabels.children.forEach((sprite) => {
-
-      if (sprite.material && sprite.material.map) {
-        sprite.material.map.dispose();
-      }
-      sprite.material.dispose();
-      sprite.geometry.dispose();
-
-    });
-    e.stationLabels.clear();
-    e.group.clear();
-    this.caveObject3DGroup.remove(e.group);
-  }
-
-  addStationLabels() {
-    const mode = this.options.scene.stationLabels.mode;
-    this.caveObjects.forEach((surveyEntries, caveName) => {
-      const cave = this.db.getCave(caveName);
-      surveyEntries.forEach((surveyObject, surveyName) => {
-        cave.stations.forEach((station, stationName) => {
-          if (station.survey.name === surveyName) {
-            const stationLabel = mode === 'name' ? stationName : station.position.z.toFixed(2);
-            this.addStationLabel(stationLabel, stationName, station.position, surveyObject.stationLabels);
-          }
-        });
-      });
-    });
-  }
-
-  getStationsLabelCount() {
-    let count = 0;
-    this.caveObjects.forEach((caveObject) => {
-      caveObject.forEach((surveyObject) => {
-        if (surveyObject.stationLabels) {
-          count += surveyObject.stationLabels.children.length;
-        }
-      });
-    });
-    return count;
-  }
-
-  recreateAllStationLabels() {
-    if (!this.options.scene.stationLabels.show) return;
-    const mode = this.options.scene.stationLabels.mode;
-
-    this.caveObjects.forEach((caveObject) => {
-      caveObject.forEach((surveyObject) => {
-        // Store all existing label data
-        const labelData = [];
-
-        surveyObject.stationLabels.children.forEach((label) => {
-          if (label.userData) {
-            labelData.push({
-              stationName : label.userData.stationName,
-              position    : label.userData.stationPosition.clone()
-            });
-          }
-        });
-
-        // Dispose old labels and clear the group
-        surveyObject.stationLabels.children.forEach((label) => {
-          if (label.userData && label.userData.textSprite) {
-            // Dispose the texture
-            if (label.userData.textSprite.sprite.material.map) {
-              label.userData.textSprite.sprite.material.map.dispose();
-            }
-
-            label.userData.textSprite.sprite.material.dispose();
-          }
-        });
-        surveyObject.stationLabels.clear();
-
-        // Recreate labels with current configuration
-        labelData.forEach((data) => {
-          const stationLabel = mode === 'name' ? data.stationName : data.position.z.toFixed(2);
-          this.addStationLabel(stationLabel, data.stationName, data.position, surveyObject.stationLabels);
-        });
-
-      });
-    });
-  }
-
-  #dipostSectionAttributes(caveName) {
-    const matchingIds = [];
-    for (const [id, entry] of this.sectionAttributes) {
-      if (entry.caveName === caveName) {
-        matchingIds.push(id);
-      }
-    }
-    matchingIds.forEach((id) => this.disposeSectionAttribute(id));
+    this.points.cameraTarget.visible = visible;
   }
 
   renameCave(oldName, newName) {
-    if (this.caveObjects.has(newName)) {
-      throw new Error(i18n.t('errors.scene.caveAlreadyExists', { name: newName }));
-    }
-    const surveyObjects = this.caveObjects.get(oldName);
-    this.caveObjects.delete(oldName);
-    this.caveObjects.set(newName, surveyObjects);
-    this.sectionAttributes.forEach((sa) => (sa.caveName = newName)); //TODO: what to do with component attributes here?
-
-    // Update starting point for renamed cave
-    if (this.startPointObjects.has(oldName)) {
-      const startPointObj = this.startPointObjects.get(oldName);
-      this.startPointObjects.delete(oldName);
-      this.startPointObjects.set(newName, startPointObj);
-      startPointObj.mesh.name = `startPoint_${newName}`;
-    }
-
+    this.speleo.renameCave(oldName, newName);
+    this.attributes.renameCaveTo(newName);
+    this.points.renameCave(oldName, newName);
     this.materials.renameCave(oldName, newName);
   }
 
-  renameSurvey(oldName, newName, caveName) {
-    const caveObjects = this.caveObjects.get(caveName);
-    if (caveObjects.has(newName)) {
-      throw new Error(i18n.t('errors.scene.surveyAlreadyExists', { name: newName }));
-    }
-    const surveyObjects = caveObjects.get(oldName);
-    caveObjects.delete(oldName);
-    caveObjects.set(newName, surveyObjects);
-    this.materials.renameSurvey(oldName, newName, caveName);
-  }
-
   disposeCave(caveName) {
-    if (this.caveObjects.has(caveName)) {
-      const caveObject = this.caveObjects.get(caveName);
-      caveObject.forEach((surveyObject) => {
-        this.#disposeSurveyObjects(surveyObject);
-      });
-    }
-
-    // Remove starting point for this cave
-    this.removeStartingPoint(caveName);
-
-    // Dispose section attributes for this cave
-    this.#dipostSectionAttributes(caveName);
+    this.startPoint.removeStartingPoint(caveName);
+    this.speleo.disposeCave(caveName);
+    this.attributes.disposeSectionAttributes(caveName);
   }
 
-  deleteCave(caveName) {
-    this.caveObjects.delete(caveName);
-  }
-
-  createTubeGeometryFromSegments(segments) {
-    // Create a simpler approach: create individual tube segments for each line segment
-    const group = new THREE.Group();
-    group.name = `tube-geometry-from-segments`;
-
-    // Use fixed values for simplicity
-    const tubeRadius = this.options.scene.sections.width * 0.15; // 15% of line width
-
-    // Process segments in pairs (start and end points)
-    for (let i = 0; i < segments.length; i += 6) {
-      if (i + 5 < segments.length) {
-        const startPoint = new THREE.Vector3(segments[i], segments[i + 1], segments[i + 2]);
-        const endPoint = new THREE.Vector3(segments[i + 3], segments[i + 4], segments[i + 5]);
-
-        // Create a tube segment between these two points
-        const direction = new THREE.Vector3().subVectors(endPoint, startPoint);
-        const distance = direction.length();
-
-        if (distance > 0.001) {
-          // Avoid very short segments
-          const tubeGeometry = new THREE.CylinderGeometry(tubeRadius, tubeRadius, distance, 6, 1, false);
-
-          // Position the tube at the midpoint
-          const midPoint = new THREE.Vector3().addVectors(startPoint, endPoint).multiplyScalar(0.5);
-
-          // Rotate to align with the direction
-          const up = new THREE.Vector3(0, 1, 0);
-          const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction.normalize());
-
-          const tubeMesh = new THREE.Mesh(tubeGeometry);
-          tubeMesh.name = `tube-geometry-from-segments-${i}-${i + 5}`;
-          tubeMesh.position.copy(midPoint);
-          tubeMesh.setRotationFromQuaternion(quaternion);
-
-          group.add(tubeMesh);
-        }
-      }
-    }
-
-    return group;
-  }
 }
 
 export { MyScene, SceneOverview };
