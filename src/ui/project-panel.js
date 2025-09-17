@@ -4,9 +4,10 @@ import { i18n } from '../i18n/i18n.js';
 import { FatProject } from '../model/project.js';
 
 export class ProjectPanel {
-  constructor(panel, projectSystem, projectInput = 'projectInput') {
+  constructor(panel, projectSystem, attributeDefs, projectInput = 'projectInput') {
     this.panel = panel;
     this.projectSystem = projectSystem;
+    this.attributeDefs = attributeDefs;
     this.isVisible = false;
     this.fileInputElement = document.getElementById(projectInput);
 
@@ -18,9 +19,9 @@ export class ProjectPanel {
       reader.onload = async (event) => {
         try {
           const text = event.target.result;
-          await this.importProject(text);
+          await this.importProject(text, this.attributeDefs);
         } catch (error) {
-          console.error(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
+          console.error(i18n.t('ui.panels.projectManager.errors.projectImportFailed'), error);
           showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
         }
       };
@@ -279,9 +280,9 @@ export class ProjectPanel {
     }
   }
 
-  async importProject(projectText) {
+  async importProject(projectText, attributeDefs) {
     const pure = JSON.parse(projectText);
-    const project = FatProject.fromPure(pure);
+    const project = FatProject.fromPure(pure, attributeDefs);
     const nameExists = await this.projectSystem.checkProjectExistsByName(project.project.name);
 
     if (nameExists) {
@@ -326,7 +327,8 @@ export class ProjectPanel {
     const project = await this.projectSystem.loadProjectById(projectId);
     try {
 
-      const projectWithCaves = new FatProject(project, await this.projectSystem.getCavesForProject(projectId));
+      const caves = await this.projectSystem.getCavesForProject(projectId);
+      const projectWithCaves = new FatProject(project, caves);
       const projectData = projectWithCaves.toExport();
       const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

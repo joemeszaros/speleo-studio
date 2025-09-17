@@ -39,7 +39,7 @@ class StationCommentsEditor extends BaseEditor {
   }
 
   build(contentElmnt, close) {
-    this.setupButtons(contentElmnt);
+    this.setupButtons(contentElmnt, close);
     this.setupTable(contentElmnt);
   }
 
@@ -295,11 +295,12 @@ class StationCommentsEditor extends BaseEditor {
       this.modified = true;
     });
 
+    this.setupCustomEditMode(['comment']);
+
   }
 
   closeEditor() {
     this.updateComments();
-
     super.closeEditor();
   }
 

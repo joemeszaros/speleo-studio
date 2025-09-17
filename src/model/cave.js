@@ -33,7 +33,7 @@ class CaveAttributes {
   }
 
   static fromPure(pure, attributeDefs) {
-    if (pure.schemaVersion === undefined) {
+    if (pure.schemaVersion === undefined || pure.schemaVersion === '1.0.0') {
       pure.schemaVersion = attributeDefs.schemaVersion;
     } else if (pure.schemaVersion > attributeDefs.schemaVersion) {
       throw new Error(

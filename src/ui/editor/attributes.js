@@ -50,7 +50,7 @@ class BaseAttributeEditor extends Editor {
       this.panel,
       (contentElmnt, close) => this.buildPanel(contentElmnt, close),
       () => {
-        return i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
+        return this.getTitle();
       },
       true,
       true,
@@ -163,33 +163,9 @@ class BaseAttributeEditor extends Editor {
       }
     });
 
-    // Prevent range selection keyboard events when editing cells
-    let isEditing = false;
-
-    this.table.on('cellEditing', () => {
-      isEditing = true;
-    });
-
-    this.table.on('cellEdited', () => {
-      isEditing = false;
-    });
-
-    this.table.on('cellEditCancelled', () => {
-      isEditing = false;
-    });
-
-    // Add event listener to prevent arrow key events from reaching range selection when editing
-    this.table.element.addEventListener(
-      'keydown',
-      (e) => {
-        if (isEditing && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-          // Stop the event from reaching Tabulator's keyboard binding system
-          e.stopImmediatePropagation();
-        }
-      },
-      true
-    ); // Use capture phase to intercept before Tabulator
-
+    // custom editing on keydown didn't work for format column
+    // so we do not allow custom editing
+    // this.setupCustomEditMode([]);
   }
 
   getAttributeEditorDiv(a, attributes, index, i18n) {
@@ -609,6 +585,10 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     super(db, options, cave, scene, attributeDefs, panel);
   }
 
+  getTitle() {
+    return i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
+  }
+
   closeEditor() {
     this.setCaveComponentAttributes();
     super.closeEditor();
@@ -912,6 +892,10 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     super(db, options, cave, scene, attributeDefs, panel);
   }
 
+  getTitle() {
+    return i18n.t('ui.editors.sectionAttributes.title', { name: this.cave.name });
+  }
+
   closeEditor() {
     this.setCaveSectionAttributes();
     super.closeEditor();
@@ -1158,6 +1142,10 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
     super(db, options, cave, scene, attributeDefs, panel);
+  }
+
+  getTitle() {
+    return i18n.t('ui.editors.stationAttributes.title', { name: this.cave.name });
   }
 
   closeEditor() {

@@ -78,6 +78,108 @@ class BaseEditor {
     };
     container.appendChild(addBtn);
   }
+
+  setupCustomEditMode(allowedColumns) {
+    // Prevent range selection keyboard events when editing cells
+    let isEditing = false;
+
+    this.table.on('cellEditing', () => {
+      isEditing = true;
+    });
+
+    this.table.on('cellEdited', () => {
+      isEditing = false;
+    });
+
+    this.table.on('cellEditCancelled', () => {
+      isEditing = false;
+    });
+
+    let activeCell = undefined;
+
+    // Add event listener to prevent arrow key events from reaching range selection when editing
+    this.table.element.addEventListener(
+      'keydown',
+      (e) => {
+        if (isEditing && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+          // Stop the event from reaching Tabulator's keyboard binding system
+          e.stopImmediatePropagation();
+        }
+
+        //navigate to an other cell
+        if (!isEditing && e.key.startsWith('Arrow')) {
+          activeCell = undefined;
+        }
+
+        if (
+          !isEditing &&
+          !e.key.startsWith('Arrow') &&
+          !e.ctrlKey &&
+          //!e.shiftKey &&
+          !e.altKey &&
+          !e.metaKey &&
+          e.key.length === 1 &&
+          e.key !== 'Enter' &&
+          e.key !== 'Tab' &&
+          e.key !== 'Backspace' &&
+          e.key !== 'Delete' &&
+          e.key !== 'Escape' &&
+          e.key !== 'PageUp' &&
+          e.key !== 'PageDown' &&
+          e.key !== 'Home' &&
+          e.key !== 'End' &&
+          e.key !== 'Insert' &&
+          e.key !== 'F1' &&
+          e.key !== 'F2' &&
+          e.key !== 'F3' &&
+          e.key !== 'F4' &&
+          e.key !== 'F5' &&
+          e.key !== 'F6' &&
+          e.key !== 'F7' &&
+          e.key !== 'F8' &&
+          e.key !== 'F9' &&
+          e.key !== 'F10' &&
+          e.key !== 'F11' &&
+          e.key !== 'F12' &&
+          e.key !== 'F13' &&
+          e.key !== 'F14' &&
+          e.key !== 'F15' &&
+          e.key !== 'F16' &&
+          e.key !== 'F17' &&
+          e.key !== 'F18' &&
+          e.key !== 'F19' &&
+          e.key !== 'F20' &&
+          e.key !== 'F21' &&
+          e.key !== 'F22' &&
+          e.key !== 'F23' &&
+          e.key !== 'F24' &&
+          e.key !== 'F25' &&
+          e.key !== 'F26' &&
+          e.key !== 'F27' &&
+          e.key !== 'F28' &&
+          e.key !== 'F29' &&
+          e.key !== 'F30'
+        ) {
+          const ranges = this.table.getRanges();
+          if (ranges && ranges.length > 0 && ranges[0].getCells().length > 0 && ranges[0].getCells()[0].length > 0) {
+            const cell = ranges[0].getCells()[0][0];
+            if (allowedColumns && allowedColumns.includes(cell.getColumn().getField())) {
+              if (!activeCell || activeCell !== cell) {
+                cell.setValue(e.key);
+                activeCell = cell;
+              } else {
+                cell.setValue((cell.getValue() ?? '') + e.key);
+              }
+              e.preventDefault();
+            }
+
+          }
+
+        }
+      },
+      true
+    ); // Use capture phase to intercept before Tabulator
+  }
 }
 
 class Editor extends BaseEditor {
@@ -142,8 +244,9 @@ class Editor extends BaseEditor {
     },
     floatFormatter : (defaultValue = '0', decimals = 2) => {
       return (cell) => {
-        if (cell.getValue() !== undefined) {
-          return cell.getValue().toFixed(decimals);
+        const value = cell.getValue();
+        if (value !== undefined && typeof value === 'number') {
+          return value.toFixed(decimals);
         } else {
           return defaultValue;
         }

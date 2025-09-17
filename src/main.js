@@ -160,11 +160,11 @@ class Main {
       this.explorerTree,
       this.projectSystem,
       this.editorStateSystem,
-      this.attributeDefs
+      attributeDefs
     );
 
     // Initialize project panel
-    this.projectPanel = new ProjectPanel(document.getElementById('project-panel'), this.projectSystem);
+    this.projectPanel = new ProjectPanel(document.getElementById('project-panel'), this.projectSystem, attributeDefs);
     this.projectPanel.setupPanel();
     this.projectPanel.show();
 

@@ -456,13 +456,13 @@ class ProjectManager {
       this.scene.startPoint.addOrUpdateStartingPoint(cave);
 
       cave.attributes.sectionAttributes.forEach((sa) => {
-        if (sa.visible) {
+        if (sa.visible && sa.section.path !== undefined && sa.section.path.length > 0) {
           const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
           this.scene.attributes.showFragmentAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
         }
       });
       cave.attributes.componentAttributes.forEach((ca) => {
-        if (ca.visible) {
+        if (ca.visible && ca.component.path !== undefined && ca.component.path.length > 0) {
           const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
           this.scene.attributes.showFragmentAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
         }

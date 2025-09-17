@@ -14,9 +14,9 @@ export class FatProject {
     };
   }
 
-  static fromPure(pure) {
+  static fromPure(pure, attributeDefs) {
     const project = Project.fromPure(pure.project);
-    const caves = pure.caves.map((cave) => Cave.fromPure(cave));
+    const caves = pure.caves.map((cave) => Cave.fromPure(cave, attributeDefs));
     return new FatProject(project, caves);
 
   }

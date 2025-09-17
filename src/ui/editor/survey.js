@@ -590,7 +590,7 @@ export class SurveyEditor extends Editor {
       movableRows : true,
 
       //change edit trigger mode to make cell navigation smoother
-      editTriggerEvent : 'click',
+      editTriggerEvent : 'dblclick',
 
       //configure clipboard to allow copy and paste of range format data
       clipboard           : true,
@@ -651,32 +651,7 @@ export class SurveyEditor extends Editor {
       this.#emitSurveyDataEdited();
     });
 
-    // Prevent range selection keyboard events when editing cells
-    let isEditing = false;
-
-    this.table.on('cellEditing', () => {
-      isEditing = true;
-    });
-
-    this.table.on('cellEdited', () => {
-      isEditing = false;
-    });
-
-    this.table.on('cellEditCancelled', () => {
-      isEditing = false;
-    });
-
-    // Add event listener to prevent arrow key events from reaching range selection when editing
-    this.table.element.addEventListener(
-      'keydown',
-      (e) => {
-        if (isEditing && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-          // Stop the event from reaching Tabulator's keyboard binding system
-          e.stopImmediatePropagation();
-        }
-      },
-      true
-    ); // Use capture phase to intercept before Tabulator
+    this.setupCustomEditMode(['from', 'to', 'length', 'azimuth', 'clino', 'comment']);
 
     contentElmnt.appendChild(this.#buildToggleColumnMenu(columns));
 
