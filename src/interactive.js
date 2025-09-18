@@ -38,7 +38,7 @@ class SceneInteraction {
 
     this.mouseOnEditor = false;
 
-    this.raycasting = new Raycasting(this.scene);
+    this.raycasting = new Raycasting(this.options, this.scene);
 
     document.addEventListener('pointermove', (event) => this.onPointerMove(event));
     sceneDOMElement.addEventListener('click', () => this.onClick(), false);
@@ -288,7 +288,10 @@ class SceneInteraction {
 
     // Comments in compact format
     if (config.comments) {
-      const comments = st.shots.map((shw) => shw.shot.comment).filter((c) => c !== undefined && c !== '');
+      const comments = st.shots
+        .filter((shw) => shw.shot.to === stationMeta.name)
+        .map((shw) => shw.shot.comment)
+        .filter((c) => c !== undefined && c !== '');
       const stationComments = stationMeta.cave.stationComments ?? [];
       comments.push(...stationComments.filter((sc) => sc.name === stationMeta.name).map((sc) => sc.comment));
       if (comments.length > 0) {

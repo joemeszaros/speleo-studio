@@ -59,7 +59,12 @@ function radsToDegrees(rad) {
 function interpolate(template, params) {
   const names = Object.keys(params);
   const vals = Object.values(params);
-  return new Function(...names, `return \`${template}\`;`)(...vals);
+  try {
+    return new Function(...names, `return \`${template}\`;`)(...vals);
+  } catch (error) {
+    console.error(`Interpolation failed for ${template} with params ${params}`, error);
+    return template;
+  }
 }
 
 function randomAlphaNumbericString(maxLength) {

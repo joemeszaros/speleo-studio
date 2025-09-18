@@ -52,7 +52,7 @@ export class ColorModeHelper {
     switch (mode) {
       case 'gradientByZ':
       case 'gradientByDistance': {
-        const colors = SurveyHelper.getColorGradientsForCaves(this.db.caves, this.options.scene.caveLines);
+        const colors = SurveyHelper.getColorGradientsForCaves(this.db.getCavesMap(), this.options.scene.caveLines);
         this.caveObjects.forEach((surveyEntrires, cName) => {
           surveyEntrires.forEach((e, sName) => {
             const sColor = this.db.getSurvey(cName, sName).color;

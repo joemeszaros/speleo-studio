@@ -26,6 +26,10 @@ class Database {
     return this.caves.values().flatMap((c) => c.surveys);
   }
 
+  getCavesMap() {
+    return this.caves;
+  }
+
   getAllCaves() {
     return [...this.caves.values()];
   }
@@ -71,10 +75,18 @@ class Database {
 
   addCave(cave) {
     this.caves.set(cave.name, cave);
+    // sort by name
+    const sortedByName = [...this.caves].sort((a, b) => a[0] > b[0]);
+    this.caves = new Map(sortedByName);
+
   }
 
   getCave(caveName) {
     return this.caves.get(caveName);
+  }
+
+  hasCave(caveName) {
+    return this.caves.has(caveName);
   }
 
   renameCave(oldName, newName) {

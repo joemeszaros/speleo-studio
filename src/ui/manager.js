@@ -137,7 +137,7 @@ class ProjectManager {
   async onCaveRenamed(e) {
     const oldName = e.detail.oldName;
     const cave = e.detail.cave;
-    this.scene.speleo.renameCave(oldName, cave.name);
+    this.scene.renameCave(oldName, cave.name);
     this.explorer.renameCave(oldName, cave.name);
     //indexed db caves object store is indexed by id
     await this.saveCave(cave);
@@ -213,7 +213,7 @@ class ProjectManager {
   }
 
   disposeCave(caveName) {
-    this.scene.speleo.disposeCave(caveName);
+    this.scene.disposeCave(caveName);
     this.scene.speleo.deleteCave(caveName);
     this.scene.view.renderView();
     this.explorer.removeCave(caveName);
@@ -265,7 +265,7 @@ class ProjectManager {
           if (ca.component.start === undefined) {
             return;
           }
-          if (!cave.stations.has(ca.component.start) || !cave.stations.has(ca.component.termination)) {
+          if (!cave.stations.has(ca.component.start) || ca.component.termination.some((t) => !cave.stations.has(t))) {
             return;
           }
           const cs = SectionHelper.getComponent(g, ca.component.start, ca.component.termination);
@@ -362,13 +362,13 @@ class ProjectManager {
 
     if (cave.getFirstStation()) {
       cavesReallyFar = this.getFarCaves(
-        this.db.caves,
+        this.db.getCavesMap(),
         cave.getFirstStation().coordinates.eov,
         cave.getFirstStation()?.position
       );
     }
 
-    if (this.db.caves.has(cave.name)) {
+    if (this.db.hasCave(cave.name)) {
       return i18n.t('errors.import.caveAlreadyImported', { name: cave.name });
     } else if (cavesReallyFar.length > 0) {
       return i18n.t('errors.import.cavesReallyFar', { name: cave.name, caves: cavesReallyFar.join('<br>') });
@@ -431,7 +431,7 @@ class ProjectManager {
   }
 
   addCave(cave) {
-    this.db.caves.set(cave.name, cave);
+    this.db.addCave(cave);
 
     const allShots = cave.surveys.flatMap((s) => s.shots);
 
@@ -451,9 +451,6 @@ class ProjectManager {
       });
 
       this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
-
-      // Add starting point for the cave
-      this.scene.startPoint.addOrUpdateStartingPoint(cave);
 
       cave.attributes.sectionAttributes.forEach((sa) => {
         if (sa.visible && sa.section.path !== undefined && sa.section.path.length > 0) {
@@ -480,6 +477,10 @@ class ProjectManager {
         });
 
         this.scene.view.activate(boundingBox);
+
+        // Add starting point for the cave
+        // it is displayed based on world units in pixels that's why it is here
+        this.scene.startPoint.addOrUpdateStartingPoint(cave);
       }
     }
 

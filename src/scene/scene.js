@@ -248,14 +248,18 @@ class MyScene {
     return textMesh;
   }
 
-  addSpriteLabel(label, position, size) {
+  addSpriteLabel(label, position, size, color, strokeColor) {
     const font = {
-      size  : size * 7, // magic number to match mesh based label size (with the scale factor of 0.2)
-      color : '#' + this.mats.text.color.getHexString(),
+      size  : size * 30, // magic number to match mesh based label size (with the scale factor of 0.2)
+      color : color,
       name  : 'Arial'
     };
 
-    const textSprite = new TextSprite(label, position, font, 0.2, `station-label-${label}`);
+    if (strokeColor) {
+      font.strokeColor = strokeColor;
+    }
+
+    const textSprite = new TextSprite(label, position, font, 0.03, `station-label-${label}`);
     const sprite = textSprite.getSprite();
     return sprite;
   }

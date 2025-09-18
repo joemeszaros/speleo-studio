@@ -1,9 +1,11 @@
 import * as THREE from 'three';
+import { ShotType } from '../model/survey.js';
 
 export class Raycasting {
 
-  constructor(scene) {
+  constructor(options, scene) {
     this.scene = scene;
+    this.options = options;
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
 
@@ -41,6 +43,21 @@ export class Raycasting {
     caves.forEach((c) => {
       for (const [name, station] of c.stations) {
         if (station.survey.visible) {
+          switch (station.type) {
+            case ShotType.CENTER:
+              if (!this.options.scene.centerLines.segments.show) continue;
+              break;
+            case ShotType.SPLAY:
+              if (!this.options.scene.splays.segments.show) continue;
+              break;
+            case ShotType.AUXILIARY:
+              if (!this.options.scene.auxiliaries.segments.show) continue;
+              break;
+            default:
+              console.log(station);
+              throw new Error(`Invalid shot type: ${station.type}`);
+
+          }
           visibleStations.push({ name, station, position: station.position, cave: c, type: 'station' });
         }
       }

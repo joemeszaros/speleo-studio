@@ -84,7 +84,10 @@ export const DEFAULT_OPTIONS = {
       color  : '#00ff2a',
       width  : 2.0,
       labels : {
-        show : true
+        size        : 5,
+        show        : true,
+        strokeColor : '#000000',
+        color       : '#00ff2a'
       }
     },
     stationAttributes : {
@@ -728,23 +731,6 @@ export class ConfigChanges {
   }
 
   /**
-   * Handle label configuration changes
-   */
-  handleLabelChanges(path, oldValue, newValue) {
-    switch (path) {
-      case 'scene.labels.color':
-        this.mats.text.color = new THREE.Color(newValue);
-        this.scene.view.renderView();
-        break;
-
-      case 'scene.labels.size':
-        this.scene.attributes.updateSectionAttributesLabelSize(newValue);
-        this.scene.view.renderView();
-        break;
-    }
-  }
-
-  /**
    * Handle scene configuration changes
    */
   handleSceneChanges(path, oldValue, newValue) {
@@ -753,8 +739,11 @@ export class ConfigChanges {
         this.scene.setBackground(newValue);
         break;
 
-      case 'scene.sections.color':
-        // Section attributes color changed - no immediate visual update needed
+      case 'scene.sections.labels.size':
+      case 'scene.sections.labels.color':
+      case 'scene.sections.labels.strokeColor':
+        this.scene.attributes.updateSectionAttributesLabels(newValue);
+        this.scene.view.renderView();
         break;
       case 'scene.sections.width':
         this.scene.segments.updateSegmentsWidth(newValue);
@@ -950,8 +939,6 @@ export class ConfigChanges {
       this.handleStartingPointChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.caveLines.color')) {
       this.handleCaveLineColorChanges(path, oldValue, newValue);
-    } else if (path.startsWith('scene.labels')) {
-      this.handleLabelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.background') || path.startsWith('scene.sections')) {
       this.handleSceneChanges(path, oldValue, newValue);
     } else if (path.startsWith('screen.')) {

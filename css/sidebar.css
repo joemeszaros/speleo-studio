@@ -426,6 +426,8 @@
   margin-left: 8px;
   cursor: pointer;
   opacity: 0.7;
+  margin-right: 10px;
+  margin-bottom: 5px;
 }
 
 .explorer-tree-visibility:hover {
@@ -1054,6 +1056,24 @@ body {
 }
 
 .draggable-survey.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+  transform: rotate(2deg);
+  z-index: 1000;
+  position: relative;
+}
+
+.draggable-cave {
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.draggable-cave:hover {
+  background: rgba(4, 170, 109, 0.1) !important;
+  transform: translateX(2px);
+}
+
+.draggable-cave.dragging {
   opacity: 0.5;
   cursor: grabbing;
   transform: rotate(2deg);

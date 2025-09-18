@@ -82,6 +82,12 @@ class BaseAttributeEditor extends Editor {
     });
     commonButtons.forEach((button) => this.iconBar.addButton(button));
 
+    const visibleButtons = IconBar.getVisibleButtons(
+      () => this.showAllAttributes(),
+      () => this.hideAllAttributes()
+    );
+    visibleButtons.forEach((button) => this.iconBar.addButton(button));
+
     // Add export button
     const exportButton = IconBar.getExportButton(() => this.table, this.cave.name + ' - attributes.csv');
     exportButton.forEach((button) => this.iconBar.addButton(button));
@@ -537,10 +543,10 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   showAllAttributes() {
-    const toShow = this.table.getData().filter((r) => r.visible === false);
+    const toShow = this.table.getData().filter((r) => r.visible === false && r.status === 'ok');
     if (toShow.length > 0) {
       toShow.forEach((r) => {
-        this.showCycle(r);
+        this.showAttribute(r);
       });
       this.table.updateData(
         toShow.map((t) => {
@@ -554,7 +560,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
     const toHide = this.table.getData().filter((r) => r.visible === true);
     if (toHide.length > 0) {
       toHide.forEach((r) => {
-        this.hideCycle(r.id);
+        this.hideAttribute(r);
       });
       this.table.updateData(
         toHide.map((t) => {
@@ -564,19 +570,6 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
     }
   }
 
-  showCycle(data) {
-    this.scene.segments.showSegmentsTube(
-      data.id,
-      `cycle-${data.id}`,
-      SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
-      data.color,
-      this.cave.name
-    );
-  }
-
-  hideCycle(id) {
-    this.scene.segments.disposeSegmentsTube(id);
-  }
 }
 
 class ComponentAttributeEditor extends FragmentAttributeEditor {
@@ -801,6 +794,25 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     baseColumns.splice(3, 0, ...specificColumns);
     return baseColumns;
 
+  }
+
+  showAttribute(r) {
+    this.scene.attributes.showFragmentAttribute(
+      r.id,
+      SectionHelper.getComponentSegments(
+        new CaveComponent(r.start, r.termination, r.path, r.distance),
+        this.cave.stations
+      ),
+      r.attribute,
+      r.format,
+      r.color,
+      this.cave.name
+    );
+
+  }
+
+  hideAttribute(r) {
+    this.scene.attributes.disposeSectionAttribute(r.id);
   }
 
   toggleVisibility(ev, cell) {
@@ -1052,6 +1064,22 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     return baseColumns;
   }
 
+  showAttribute(r) {
+    this.scene.attributes.showFragmentAttribute(
+      r.id,
+      SectionHelper.getSectionSegments(new CaveSection(r.from, r.to, r.path, r.distance), this.cave.stations),
+      r.attribute,
+      r.format,
+      r.color,
+      this.cave.name
+    );
+
+  }
+
+  hideAttribute(r) {
+    this.scene.attributes.disposeSectionAttribute(r.id);
+  }
+
   toggleVisibility(ev, cell) {
     const data = cell.getData();
     if (data.status !== 'ok' && !data.visible) {
@@ -1233,6 +1261,44 @@ class StationAttributeEditor extends BaseAttributeEditor {
           )
       }
     ];
+  }
+
+  showAllAttributes() {
+    const toShow = this.table.getData().filter((r) => r.visible === false && r.status === 'ok');
+    if (toShow.length > 0) {
+      toShow.forEach((r) => {
+        const station = this.cave.stations.get(r.station);
+        if (['bedding', 'fault'].includes(r.attribute.name)) {
+          this.scene.attributes.showPlaneFor(r.id, station, r.attribute);
+        } else {
+          this.scene.attributes.showIconFor(r.id, station, r.attribute);
+        }
+      });
+      this.table.updateData(
+        toShow.map((t) => {
+          return { id: t.id, visible: true };
+        })
+      );
+    }
+
+  }
+
+  hideAllAttributes() {
+    const toHide = this.table.getData().filter((r) => r.visible === true);
+    if (toHide.length > 0) {
+      toHide.forEach((r) => {
+        if (['bedding', 'fault'].includes(r.attribute.name)) {
+          this.scene.attributes.disposePlaneFor(r.id);
+        } else {
+          this.scene.attributes.disposeIconFor(r.id);
+        }
+      });
+      this.table.updateData(
+        toHide.map((t) => {
+          return { id: t.id, visible: false };
+        })
+      );
+    }
   }
 
   tableFunctions = {

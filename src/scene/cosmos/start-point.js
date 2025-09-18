@@ -5,14 +5,17 @@ export class StartPointScene {
   constructor(options, materials, scene) {
     this.options = options;
     this.mats = materials.materials;
+    this.scene = scene;
     this.startPoints3DGroup = new THREE.Group();
     this.startPoints3DGroup.name = 'starting points';
     this.startPointObjects = new Map(); // Map to store starting point objects for each cave
-    scene.addObjectToScene(this.startPoints3DGroup);
+    this.scene.addObjectToScene(this.startPoints3DGroup);
 
   }
   toggleStartingPointsVisibility(visible) {
-    this.startPoints3DGroup.visible = visible;
+    this.startPoints3DGroup.children.forEach((child) => {
+      child.visible = visible;
+    });
   }
 
   addOrUpdateStartingPoint(cave) {
@@ -26,7 +29,8 @@ export class StartPointScene {
     if (!firstStation) return;
 
     // Create a sphere geometry for the starting point
-    const startPointGeo = new THREE.SphereGeometry(this.options.scene.startPoints.radius, 7, 7);
+    const radius = this.scene.view.control.getWorldUnitsForPixels(8);
+    const startPointGeo = new THREE.SphereGeometry(radius, 8, 8);
 
     // Create the starting point mesh
     const startPoint = new THREE.Mesh(startPointGeo, this.mats.sphere.startPoint);

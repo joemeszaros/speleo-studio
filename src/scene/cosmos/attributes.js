@@ -47,7 +47,13 @@ export class AttributesScene {
       center.z = maxZ;
       const localized = attribute.localize(i18n);
       const formattedAttribute = U.interpolate(format, localized);
-      let sprite = this.scene.addSpriteLabel(formattedAttribute, center, this.options.scene.labels.size);
+      let sprite = this.scene.addSpriteLabel(
+        formattedAttribute,
+        center,
+        this.options.scene.sections.labels.size,
+        this.options.scene.sections.labels.color,
+        this.options.scene.sections.labels.strokeColor
+      );
       this.sectionAttributes3DGroup.add(sprite);
       sprite.layers.set(1);
 
@@ -71,14 +77,20 @@ export class AttributesScene {
     this.scene.view.renderView();
   }
 
-  updateSectionAttributesLabelSize() {
+  updateSectionAttributesLabels() {
     this.sectionAttributes.forEach((e) => {
       const visible = e.text.visible;
       e.text.material.map.dispose();
       e.text.material.dispose();
       e.text.geometry.dispose();
       this.sectionAttributes3DGroup.remove(e.text);
-      let newSprite = this.scene.addSpriteLabel(e.label, e.center, this.options.scene.labels.size);
+      let newSprite = this.scene.addSpriteLabel(
+        e.label,
+        e.center,
+        this.options.scene.sections.labels.size,
+        this.options.scene.sections.labels.color,
+        this.options.scene.sections.labels.strokeColor
+      );
       newSprite.visible = visible;
       newSprite.layers.set(1);
       e.text = newSprite;

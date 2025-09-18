@@ -109,8 +109,9 @@
         "opacity": "Átlátszóság",
         "size": "Méret",
         "backgroundColor": "Háttér szín",
-        "labelColor": "Címke szín",
-        "labelSize": "Címke méret",
+        "labelColor": "Attr. címke szín",
+        "labelStrokeColor": "Attr. címke körvonal szín",
+        "labelSize": "Attr. címke méret",
         "scale": "Méretezés",
         "offset": "Eltolás",
         "offsetDirection": "Eltolás iránya",
@@ -530,7 +531,9 @@
         "placeHolderName": "Attribútum neve",
         "newAttribute": "Új attribútum",
         "buttons": {
-          "update": "Attribútumok frissítése"
+          "update": "Attribútumok frissítése",
+          "showAll": "Összes megjelenítése",
+          "hideAll": "Összes elrejtése"
         },
         "status": {
           "new": "Új sor",

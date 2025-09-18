@@ -4,7 +4,7 @@ import { wm } from '../window.js';
 import { showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
 import { GeoData, EOVCoordinateWithElevation, CoordinateSytem, StationWithCoordinate } from '../../model/geo.js';
-import { SurveyAlias } from '../../model/survey.js';
+import { SurveyAlias, ShotType } from '../../model/survey.js';
 import { i18n } from '../../i18n/i18n.js';
 
 class CaveEditor extends Editor {
@@ -209,7 +209,10 @@ class CaveEditor extends Editor {
     this.renderCoords();
 
     const getStationOptions = () => {
-      const stationNames = this.db.getStationNames(this.caveData.name);
+      if (this.cave === undefined) {
+        return '';
+      }
+      const stationNames = this.db.getStationNames(this.caveData.name, (s) => s.type !== ShotType.SPLAY);
       return stationNames
         .map((name) => `<option station="${name}" value="${name}">`)
         .join('');

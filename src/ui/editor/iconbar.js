@@ -167,6 +167,24 @@ export class IconBar {
     ];
   }
 
+  static getVisibleButtons(showAll, hideAll) {
+    return [
+      { separator: true },
+      {
+        id      : 'show-all',
+        tooltip : i18n.t('ui.editors.attributes.buttons.showAll'),
+        icon    : 'icons/visible.svg',
+        click   : () => showAll()
+      },
+      {
+        id      : 'hide-all',
+        tooltip : i18n.t('ui.editors.attributes.buttons.hideAll'),
+        icon    : 'icons/invisible.svg',
+        click   : () => hideAll()
+      }
+    ];
+  }
+
   // Station comments editor-specific buttons
   static getStationCommentsButtons(validateComments, updateComments, cancelComments) {
     return [

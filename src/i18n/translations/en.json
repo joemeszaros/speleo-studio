@@ -109,8 +109,9 @@
         "opacity": "Opacity",
         "size": "Size",
         "backgroundColor": "Background color",
-        "labelColor": "Label color",
-        "labelSize": "Label size",
+        "labelColor": "Attr. label color",
+        "labelStrokeColor": "Attr. label stroke color",
+        "labelSize": "Attr. label size",
         "scale": "Scale",
         "offset": "Offset",
         "offsetDirection": "Offset direction",
@@ -513,7 +514,9 @@
         "placeHolderName": "Attribute name",
         "newAttribute": "New attribute",
         "buttons": {
-          "update": "Update attributes"
+          "update": "Update attributes",
+          "showAll": "Show all",
+          "hideAll": "Hide all"
         },
         "columns": {
           "name": "Name",

@@ -37,7 +37,7 @@ export class PointScene {
       }
     );
 
-    const map = new THREE.TextureLoader().load('../icons/focus.svg');
+    const map = new THREE.TextureLoader().load('icons/focus.svg');
     map.colorSpace = THREE.SRGBColorSpace;
     const material = new THREE.SpriteMaterial({ map: map });
 

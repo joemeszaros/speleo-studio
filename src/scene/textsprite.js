@@ -1,5 +1,17 @@
 import * as THREE from 'three';
 
+/**
+ * TextSprite class for rendering crisp text labels in 3D space
+ *
+ * Improvements made:
+ * 1. High-DPI support: Uses devicePixelRatio for crisp rendering on retina displays
+ * 2. Proper canvas sizing: Separates logical text size from canvas resolution
+ * 3. Better texture filtering: Uses LinearFilter for both min and mag filters
+ * 4. Efficient updates: Only recreates texture when canvas size changes
+ *
+ * The scale parameter now works with actual text dimensions instead of canvas dimensions,
+ * eliminating the need for arbitrary scale factors to combat blurriness.
+ */
 class TextSprite {
 
   constructor(label, position, font, scale = 0.5, name = 'text sprite') {
@@ -18,20 +30,42 @@ class TextSprite {
   }
 
   #createSprite(label, position, scale, name) {
+    // Calculate device pixel ratio for crisp rendering on high-DPI displays
+    const devicePixelRatio = window.devicePixelRatio || 1;
+
+    // Set up canvas with proper dimensions
     const fontStyle = `${this.font.size}px ${this.font.family}`;
     this.ctx.font = fontStyle;
-    this.canvas.width = Math.ceil(this.ctx.measureText(label).width);
-    this.canvas.height = this.font.size;
+
+    // Calculate text dimensions
+    const textMetrics = this.ctx.measureText(label);
+    const textWidth = Math.ceil(textMetrics.width);
+    const textHeight = this.font.size;
+
+    // Set canvas size with device pixel ratio for crisp rendering
+    this.canvas.width = textWidth * devicePixelRatio;
+    this.canvas.height = textHeight * devicePixelRatio;
+
+    // Set display size (CSS size)
+    this.canvas.style.width = textWidth + 'px';
+    this.canvas.style.height = textHeight + 'px';
+
+    // Scale the context to match device pixel ratio
+    this.ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    // Draw the text
     this.#drawText(label, fontStyle);
 
     const spriteMap = new THREE.CanvasTexture(this.canvas);
     spriteMap.colorSpace = THREE.SRGBColorSpace;
     spriteMap.minFilter = THREE.LinearFilter;
+    spriteMap.magFilter = THREE.LinearFilter;
     spriteMap.generateMipmaps = false;
     spriteMap.needsUpdate = true;
 
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteMap, toneMapped: false }));
-    sprite.scale.set(scale * this.canvas.width, scale * this.canvas.height, 1);
+    // Use actual text dimensions for scaling, not canvas dimensions
+    sprite.scale.set(scale * textWidth, scale * textHeight, 1);
     sprite.position.copy(position);
     sprite.name = name;
     return sprite;
@@ -48,23 +82,45 @@ class TextSprite {
     this.ctx.reset();
 
     const fontStyle = `${this.font.size}px ${this.font.family}`;
+    this.ctx.font = fontStyle;
 
-    if (label.length > this.label.length) {
-      this.ctx.font = fontStyle;
-      this.canvas.width = Math.ceil(this.ctx.measureText(label).width);
-      this.canvas.style.width = this.canvas.width + 'px';
+    // Calculate new text dimensions
+    const textMetrics = this.ctx.measureText(label);
+    const textWidth = Math.ceil(textMetrics.width);
+    const textHeight = this.font.size;
+
+    // Check if we need to resize canvas
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const currentCanvasWidth = this.canvas.width / devicePixelRatio;
+    const currentCanvasHeight = this.canvas.height / devicePixelRatio;
+
+    if (textWidth > currentCanvasWidth || textHeight > currentCanvasHeight) {
+      // Resize canvas with device pixel ratio
+      this.canvas.width = textWidth * devicePixelRatio;
+      this.canvas.height = textHeight * devicePixelRatio;
+
+      // Set display size (CSS size)
+      this.canvas.style.width = textWidth + 'px';
+      this.canvas.style.height = textHeight + 'px';
+
+      // Scale the context to match device pixel ratio
+      this.ctx.scale(devicePixelRatio, devicePixelRatio);
+
+      // Recreate texture with new canvas
+      this.sprite.material.map.dispose();
+      this.sprite.material.map = new THREE.CanvasTexture(this.canvas);
+      this.sprite.material.map.colorSpace = THREE.SRGBColorSpace;
+      this.sprite.material.map.minFilter = THREE.LinearFilter;
+      this.sprite.material.map.magFilter = THREE.LinearFilter;
+      this.sprite.material.map.generateMipmaps = false;
+
+      // Update sprite scale with actual text dimensions
+      this.sprite.scale.set(this.scale * textWidth, this.scale * textHeight, 1);
     }
 
     this.#drawText(label, fontStyle);
-
-    if (label.length > this.label.length) {
-      this.sprite.material.map.dispose();
-      this.sprite.material.map = new THREE.CanvasTexture(this.canvas);
-      this.sprite.scale.set(this.scale * this.canvas.width, this.scale * this.canvas.height, 1);
-    }
     this.sprite.material.map.needsUpdate = true;
     this.label = label;
-
   }
 
   #drawText(label, fontStyle) {

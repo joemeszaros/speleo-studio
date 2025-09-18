@@ -74,7 +74,7 @@ export class ExplorerTree {
       expanded : false
     };
 
-    this.nodes.set(node.id, node);
+    this.insertCaveInAlphabeticalOrder(node);
 
     // Reapply filter if active
     if (this.filterText) {
@@ -83,6 +83,33 @@ export class ExplorerTree {
 
     this.render();
     return node;
+  }
+
+  /**
+   * Inserts a cave node in alphabetical order within the nodes map
+   * @param {Object} caveNode - The cave node to insert
+   */
+  insertCaveInAlphabeticalOrder(caveNode) {
+    // Convert current nodes to array and sort alphabetically
+    const currentNodes = Array.from(this.nodes.values()).sort((a, b) => a.label.localeCompare(b.label));
+
+    // Find the correct position for the new cave
+    let insertIndex = currentNodes.length;
+    for (let i = 0; i < currentNodes.length; i++) {
+      if (caveNode.label.localeCompare(currentNodes[i].label) < 0) {
+        insertIndex = i;
+        break;
+      }
+    }
+
+    // Insert the new cave at the correct position
+    currentNodes.splice(insertIndex, 0, caveNode);
+
+    // Rebuild the nodes map with the new order
+    this.nodes.clear();
+    currentNodes.forEach((node) => {
+      this.nodes.set(node.id, node);
+    });
   }
 
   addSurvey(cave, survey) {
@@ -705,7 +732,6 @@ export class ExplorerTree {
       noResultsMessage.style.color = '#666';
       treeContentContainer.appendChild(noResultsMessage);
     } else {
-      // Render the matching nodes
       nodesToRender.values().forEach((caveNode) => {
         this.renderNode(caveNode, 0, treeContentContainer);
       });
@@ -1029,6 +1055,57 @@ export class ExplorerTree {
       });
     }
 
+    // Add drag and drop functionality for cave nodes
+    if (node.type === 'cave') {
+      nodeElement.draggable = true;
+      nodeElement.classList.add('draggable-cave');
+
+      nodeElement.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', node.id);
+        e.dataTransfer.effectAllowed = 'move';
+        nodeElement.classList.add('dragging');
+        this.draggedNode = node;
+      });
+
+      nodeElement.addEventListener('dragend', () => {
+        nodeElement.classList.remove('dragging');
+
+        // Fallback: if we have a current drop target but no drop event was triggered
+        if (this.draggedNode && this.currentDropTarget && this.currentDropTarget !== nodeElement) {
+          const draggedNodeId = this.draggedNode.id;
+          const targetNodeId = this.currentDropTarget.getAttribute('data-node-id');
+          if (targetNodeId) {
+            this.handleCaveDrop(draggedNodeId, targetNodeId);
+          }
+        }
+
+        this.draggedNode = null;
+        this.clearDropIndicators();
+      });
+
+      nodeElement.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        this.showDropIndicator(nodeElement, e);
+      });
+
+      nodeElement.addEventListener('dragleave', (e) => {
+        // Only clear indicators if we're leaving the entire element
+        if (!nodeElement.contains(e.relatedTarget)) {
+          this.clearDropIndicators();
+        }
+      });
+
+      nodeElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const draggedNodeId = e.dataTransfer.getData('text/plain');
+        this.handleCaveDrop(draggedNodeId, node.id);
+        this.clearDropIndicators();
+      });
+    }
+
     // Visibility toggle
     const visibility = document.createElement('div');
     visibility.className = `explorer-tree-visibility ${node.visible ? 'visible' : 'hidden'}`;
@@ -1205,6 +1282,53 @@ export class ExplorerTree {
       // Re-render the tree to reflect the changes
       this.render();
     }
+  }
+
+  /**
+   * Handles the drop operation for cave reordering
+   * @param {string} draggedNodeId - ID of the dragged cave node
+   * @param {string} targetNodeId - ID of the target cave node
+   */
+  handleCaveDrop(draggedNodeId, targetNodeId) {
+    if (draggedNodeId === targetNodeId) {
+      return; // No change needed
+    }
+
+    // Find the cave nodes
+    const draggedCaveNode = this.nodes.get(draggedNodeId);
+    const targetCaveNode = this.nodes.get(targetNodeId);
+
+    if (!draggedCaveNode || !targetCaveNode || draggedCaveNode.type !== 'cave' || targetCaveNode.type !== 'cave') {
+      return; // Can only reorder caves
+    }
+
+    // Convert nodes map to array for reordering (preserve current order)
+    const caveNodesArray = Array.from(this.nodes.values());
+    const draggedIndex = caveNodesArray.findIndex((node) => node.id === draggedNodeId);
+    const targetIndex = caveNodesArray.findIndex((node) => node.id === targetNodeId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      return;
+    }
+
+    // Calculate new index for the array
+    let newIndex = targetIndex;
+    if (draggedIndex < targetIndex) {
+      newIndex = targetIndex - 1; // Adjust for the removal of the dragged item
+    }
+
+    // Reorder the cave nodes array
+    const [draggedCave] = caveNodesArray.splice(draggedIndex, 1);
+    caveNodesArray.splice(newIndex, 0, draggedCave);
+
+    // Clear the nodes map and rebuild it with the new order
+    this.nodes.clear();
+    caveNodesArray.forEach((caveNode) => {
+      this.nodes.set(caveNode.id, caveNode);
+    });
+
+    // Re-render the tree to reflect the changes
+    this.render();
   }
 
   /**

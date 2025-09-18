@@ -373,19 +373,27 @@ export class SettingsPanel {
 
         this.createColorInput(
           i18n.t('ui.settingsPanel.labels.labelColor'),
-          this.options.scene.labels.color,
+          this.options.scene.sections.labels.color,
           (value) => {
-            this.options.scene.labels.color = value;
+            this.options.scene.sections.labels.color = value;
           }
         ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.labelStrokeColor'),
+          this.options.scene.sections.labels.strokeColor,
+          (value) => {
+            this.options.scene.sections.labels.strokeColor = value;
+          }
+        ),
+
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.labelSize'),
-          this.options.scene.labels.size,
-          0.1,
+          this.options.scene.sections.labels.size,
+          1,
           32,
           1,
           (value) => {
-            this.options.scene.labels.size = value;
+            this.options.scene.sections.labels.size = value;
           }
         ),
         this.createColorInput(
