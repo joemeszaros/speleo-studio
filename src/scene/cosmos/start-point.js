@@ -39,6 +39,7 @@ export class StartPointScene {
 
     // Set visibility based on configuration
     startPoint.visible = this.options.scene.startPoints.show;
+    startPoint.layers.set(1);
 
     // Add to the starting points group
     this.startPoints3DGroup.add(startPoint);

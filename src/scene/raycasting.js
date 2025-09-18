@@ -125,7 +125,7 @@ export class Raycasting {
   getIntersectedSurfacePointMeta(mouseCoordinates) {
     this.setPointer(this.getMousePosition(mouseCoordinates));
     this.raycaster.setFromCamera(this.pointer, this.scene.view.camera);
-    this.raycaster.params.Points.threshold = 0.1;
+    this.raycaster.params.Points.threshold = 0.3;
 
     for (const [name, cloud] of this.scene.models.surfaceObjects) {
       const intersectedPoints = this.raycaster.intersectObject(cloud.cloud, false);

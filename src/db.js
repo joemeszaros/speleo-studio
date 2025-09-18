@@ -75,10 +75,6 @@ class Database {
 
   addCave(cave) {
     this.caves.set(cave.name, cave);
-    // sort by name
-    const sortedByName = [...this.caves].sort((a, b) => a[0] > b[0]);
-    this.caves = new Map(sortedByName);
-
   }
 
   getCave(caveName) {

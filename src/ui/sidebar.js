@@ -330,6 +330,9 @@ export class Sidebar {
         this.positionToggle.style.background = 'no-repeat center/70% url(icons/sidebar_left.svg)';
       }
     }
+
+    // Emit viewport resize event to notify other components
+    this.#emitViewportResized();
   }
 
   initFromConfig() {

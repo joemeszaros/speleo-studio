@@ -495,6 +495,7 @@ class CaveEditor extends Editor {
 
       { id: 'stations', label: i18n.t('ui.editors.caveSheet.stats.stations'), field: 'stations', formatter: (v) => v },
       { id: 'surveys', label: i18n.t('ui.editors.caveSheet.stats.surveys'), field: 'surveys', formatter: (v) => v },
+      { id: 'splays', label: i18n.t('ui.editors.caveSheet.stats.splays'), field: 'splays', formatter: (v) => v },
       { id: 'isolated', label: i18n.t('ui.editors.caveSheet.stats.isolated'), field: 'isolated', formatter: (v) => v },
       { break: true },
       {

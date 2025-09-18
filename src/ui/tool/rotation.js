@@ -8,7 +8,6 @@ export class RotationTool {
   constructor(scene, panel = '#tool-panel') {
     this.scene = scene;
     this.panel = document.querySelector(panel);
-    this.panel.style.width = '400px';
 
     // Rotation state
     this.currentRotation = 0;
@@ -37,6 +36,8 @@ export class RotationTool {
   }
 
   show() {
+    this.panel.style.width = '450px';
+
     wm.makeFloatingPanel(
       this.panel,
       (contentElmnt) => this.build(contentElmnt),

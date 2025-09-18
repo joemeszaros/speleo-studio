@@ -21,14 +21,13 @@ class StationCommentsEditor extends BaseEditor {
       () => i18n.t('ui.editors.stationComments.title', { name: this.cave.name }),
       true,
       true,
-      this.options.ui.editor.survey,
+      this.options.ui.editor.stationComments,
       () => {
         this.closeEditor();
       },
       () => {
-        if (this.table) {
-          this.table.redraw(true);
-        }
+        const h = this.panel.offsetHeight - 100;
+        this.table.setHeight(h);
       },
       () => {
         if (this.table) {
@@ -239,7 +238,7 @@ class StationCommentsEditor extends BaseEditor {
     this.table = new Tabulator(tableContainer, {
       data                      : this.getTableData(),
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.survey.height - 36 - 48 - 5, // header + iconbar
+      height                    : this.options.ui.editor.stationComments.height - 36 - 48 - 5, // header + iconbar
       layout                    : 'fitDataStretch',
       columns                   : this.getColumns(),
       //enable range selection

@@ -309,6 +309,7 @@ class Cave {
     var invalidLength = 0;
     var isolated = 0;
     var surveys = 0;
+    var splays = 0;
 
     this.surveys.forEach((survey) => {
       surveys += 1;
@@ -318,7 +319,7 @@ class Cave {
       }
       survey.shots.forEach((shot) => {
 
-        if (shot.length === undefined || shot.length === null || shot.length.isNaN) {
+        if (shot.length === undefined || shot.length === null || shot.length.isNaN || typeof shot.length !== 'number') {
           return;
         }
 
@@ -328,10 +329,15 @@ class Cave {
         if (survey.invalidShotIds.has(shot.id)) {
           invalidLength += shot.length;
         }
+
         if (shot.isAuxiliary()) {
           auxiliaryLength += shot.length;
-        } else {
+        } else if (shot.isCenter()) {
           length += shot.length;
+        }
+
+        if (shot.isSplay()) {
+          splays += 1;
         }
 
       });
@@ -363,7 +369,7 @@ class Cave {
       }
     });
 
-    const verticalSplays = maxZSplay - minZSplay;
+    const verticalSplays = Math.max(maxZSplay, maxZ) - Math.min(minZSplay, minZ);
     const firstStationZ = this.getFirstStation()?.position?.z;
 
     return {
@@ -373,6 +379,7 @@ class Cave {
       componentAttributes : this.attributes.componentAttributes.length,
       surveys             : surveys,
       isolated            : isolated,
+      splays              : splays,
       length              : length,
       orphanLength        : orphanLength,
       invalidLength       : invalidLength,

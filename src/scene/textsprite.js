@@ -1,17 +1,5 @@
 import * as THREE from 'three';
 
-/**
- * TextSprite class for rendering crisp text labels in 3D space
- *
- * Improvements made:
- * 1. High-DPI support: Uses devicePixelRatio for crisp rendering on retina displays
- * 2. Proper canvas sizing: Separates logical text size from canvas resolution
- * 3. Better texture filtering: Uses LinearFilter for both min and mag filters
- * 4. Efficient updates: Only recreates texture when canvas size changes
- *
- * The scale parameter now works with actual text dimensions instead of canvas dimensions,
- * eliminating the need for arbitrary scale factors to combat blurriness.
- */
 class TextSprite {
 
   constructor(label, position, font, scale = 0.5, name = 'text sprite') {
@@ -30,30 +18,21 @@ class TextSprite {
   }
 
   #createSprite(label, position, scale, name) {
-    // Calculate device pixel ratio for crisp rendering on high-DPI displays
     const devicePixelRatio = window.devicePixelRatio || 1;
-
-    // Set up canvas with proper dimensions
     const fontStyle = `${this.font.size}px ${this.font.family}`;
     this.ctx.font = fontStyle;
 
-    // Calculate text dimensions
     const textMetrics = this.ctx.measureText(label);
     const textWidth = Math.ceil(textMetrics.width);
     const textHeight = this.font.size;
 
-    // Set canvas size with device pixel ratio for crisp rendering
     this.canvas.width = textWidth * devicePixelRatio;
     this.canvas.height = textHeight * devicePixelRatio;
-
-    // Set display size (CSS size)
     this.canvas.style.width = textWidth + 'px';
     this.canvas.style.height = textHeight + 'px';
 
-    // Scale the context to match device pixel ratio
     this.ctx.scale(devicePixelRatio, devicePixelRatio);
 
-    // Draw the text
     this.#drawText(label, fontStyle);
 
     const spriteMap = new THREE.CanvasTexture(this.canvas);

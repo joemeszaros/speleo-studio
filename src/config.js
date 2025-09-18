@@ -148,6 +148,10 @@ export const DEFAULT_OPTIONS = {
       cycles : {
         height : 300,
         width  : 700
+      },
+      stationComments : {
+        height : 300,
+        width  : 500
       }
     },
     sidebar : {

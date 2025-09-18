@@ -373,6 +373,7 @@
           "eovelevation": "Elevation"
         },
         "stats": {
+          "splays": "Splays",
           "stations": "Stations",
           "surveys": "Surveys",
           "isolated": "Isolated surveys",

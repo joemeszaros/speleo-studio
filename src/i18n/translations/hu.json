@@ -376,6 +376,7 @@
           "eovelevation": "Magasság"
         },
         "stats": {
+          "splays": "Tüskék",
           "stations": "Pontok",
           "surveys": "Felmérések",
           "isolated": "Izolált felmérések",
