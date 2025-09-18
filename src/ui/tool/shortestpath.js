@@ -25,7 +25,7 @@ export class ShortestPathTool {
       false,
       {},
       () => {
-        this.scene.segments.disposeSegments(segmentsId);
+        this.scene.segments.disposeSegmentsTube(segmentsId);
       }
     );
   }
@@ -50,7 +50,7 @@ export class ShortestPathTool {
       form.onsubmit = (e) => {
         e.preventDefault();
 
-        this.scene.segments.disposeSegments(segmentsId);
+        this.scene.segments.disposeSegmentsTube(segmentsId);
         const cave = this.db.getCave(caveName);
         const g = SectionHelper.getGraph(cave);
         let label;
@@ -60,7 +60,7 @@ export class ShortestPathTool {
           const section = SectionHelper.getSection(g, from, to);
           if (section !== undefined) {
             const segments = SectionHelper.getSectionSegments(section, cave.stations);
-            this.scene.segments.showSegments(
+            this.scene.segments.showSegmentsTube(
               segmentsId,
               `shortest-path-${from}-${to}-${segmentsId}`,
               segments,

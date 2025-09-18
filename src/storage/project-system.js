@@ -38,6 +38,7 @@ export class ProjectSystem {
   async saveProject(project) {
     return new Promise((resolve, reject) => {
 
+      console.log(`💾 Saving project ${project.id}`);
       const request = this.dbManager.getReadWriteStore(this.storeName).put(project.toExport());
 
       request.onsuccess = () => {
@@ -165,11 +166,7 @@ export class ProjectSystem {
       throw new Error(i18n.t('errors.storage.projectSystem.projectNotFound'));
     }
 
-    // Save cave to cave store
     await this.caveSystem.saveCave(cave, project.id);
-
-    // Add cave ID to project
-    project.addCaveId(cave.id);
     await this.saveProject(project);
 
     return cave;
@@ -180,12 +177,7 @@ export class ProjectSystem {
     if (!project) {
       throw new Error(i18n.t('errors.storage.projectSystem.projectNotFound'));
     }
-
-    // Remove cave from cave store
     await this.caveSystem.deleteCave(caveId);
-
-    // Remove cave ID from project
-    project.removeCaveId(caveId);
     await this.saveProject(project);
   }
 

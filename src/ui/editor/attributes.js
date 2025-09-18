@@ -565,7 +565,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   showCycle(data) {
-    this.scene.segments.showSegments(
+    this.scene.segments.showSegmentsTube(
       data.id,
       `cycle-${data.id}`,
       SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
@@ -575,7 +575,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   hideCycle(id) {
-    this.scene.segments.disposeSegments(id);
+    this.scene.segments.disposeSegmentsTube(id);
   }
 }
 

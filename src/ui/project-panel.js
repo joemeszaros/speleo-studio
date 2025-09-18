@@ -297,17 +297,6 @@ export class ProjectPanel {
       return;
     }
 
-    const projectCaveIds = new Set(project.project.caveIds);
-    const caveIds = new Set(project.caves.map((cave) => cave.id));
-    if (projectCaveIds.size !== caveIds.size || ![...projectCaveIds].every((id) => caveIds.has(id))) {
-      showErrorPanel(
-        i18n.t('ui.panels.projectManager.errors.projectImportFailed', {
-          error : i18n.t('ui.panels.projectManager.errors.nonMatchingCaveIds')
-        })
-      );
-      return;
-    }
-
     for (const cave of project.caves) {
       const caveExists = await this.projectSystem.caveSystem.checkCaveExistsById(cave.id);
       if (caveExists) {
