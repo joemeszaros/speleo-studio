@@ -18,7 +18,7 @@ class TextSprite {
   }
 
   #createSprite(label, position, scale, name) {
-    const devicePixelRatio = window.devicePixelRatio || 1;
+    const devicePixelRatio = 1; //window.devicePixelRatio || 1;
     const fontStyle = `${this.font.size}px ${this.font.family}`;
     this.ctx.font = fontStyle;
 

@@ -299,10 +299,11 @@ class ComponentAttribute extends FragmentAttribute {
 
 class StationAttribute {
 
-  constructor(id, name, attribute) {
+  constructor(id, name, attribute, visible = true) {
     this.id = id;
     this.name = name;
     this.attribute = attribute;
+    this.visible = visible;
   }
 
   getEmptyFields() {
@@ -342,6 +343,7 @@ class StationAttribute {
     if (!other) return false;
     return this.id === other.id &&
       this.name === other.name &&
+      this.visible === other.visible &&
       ((this.attribute === undefined && other.attribute === undefined) ||
         (this.attribute !== undefined && other.attribute !== undefined && this.attribute.isEqual(other.attribute)));
   }
@@ -350,7 +352,8 @@ class StationAttribute {
     return {
       id        : this.id,
       name      : this.name,
-      attribute : this.attribute?.toExport()
+      attribute : this.attribute?.toExport(),
+      visible   : this.visible
     };
   }
 

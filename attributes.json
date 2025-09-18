@@ -153,6 +153,19 @@
           }
         }
       }
+    },
+    {
+      "id": 9,
+      "category": 2,
+      "name": "ladder",
+      "params": {
+        "length": {
+          "type": "int"
+        },
+        "year": {
+          "type": "int"
+        }
+      }
     }
   ]
 }

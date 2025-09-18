@@ -843,7 +843,8 @@
       "co": "co",
       "label": "label",
       "exploration": "exploration",
-      "bat": "bat"
+      "bat": "bat",
+      "ladder": "ladder"
     },
     "namesDescription": {
       "bedding": "Allows the bedding to be set"
@@ -860,14 +861,16 @@
       "year": "year",
       "month": "month",
       "day": "day",
-      "popuplation": "popuplation"
+      "popuplation": "popuplation",
+      "length": "length"
     },
     "paramsDescription": {
       "dip": "The dip value",
       "strike": "The strike value",
       "azimuth": "The azimuth value",
       "width": "The width value",
-      "height": "The height value"
+      "height": "The height value",
+      "length": "The length value"
     },
     "values": {
       "dripstone": "dripstone",

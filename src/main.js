@@ -95,7 +95,6 @@ class Main {
       console.error(i18n.t('errors.init.failedToInitIndexedDb'), error);
       showErrorPanel(i18n.t('errors.init.failedToInitIndexedDb'));
     }
-
     const materials = new Materials(options);
 
     const sceneOverview = new SceneOverview(document.querySelector('#scene-overview'));

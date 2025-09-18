@@ -464,6 +464,11 @@ class ProjectManager {
           this.scene.attributes.showFragmentAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
         }
       });
+      cave.attributes.stationAttributes.forEach((sa) => {
+        if (sa.visible && cave.stations.has(sa.name)) {
+          this.scene.attributes.showStationAttribute(sa.id, cave.stations.get(sa.name), sa.attribute);
+        }
+      });
 
       const boundingBox = this.scene.computeBoundingBox();
       const [w, h, d] = boundingBox.getSize(new THREE.Vector3());

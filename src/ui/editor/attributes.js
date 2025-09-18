@@ -1268,11 +1268,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
     if (toShow.length > 0) {
       toShow.forEach((r) => {
         const station = this.cave.stations.get(r.station);
-        if (['bedding', 'fault'].includes(r.attribute.name)) {
-          this.scene.attributes.showPlaneFor(r.id, station, r.attribute);
-        } else {
-          this.scene.attributes.showIconFor(r.id, station, r.attribute);
-        }
+        this.scene.attributes.showStationAttribute(r.id, station, r.attribute);
       });
       this.table.updateData(
         toShow.map((t) => {
@@ -1287,11 +1283,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
     const toHide = this.table.getData().filter((r) => r.visible === true);
     if (toHide.length > 0) {
       toHide.forEach((r) => {
-        if (['bedding', 'fault'].includes(r.attribute.name)) {
-          this.scene.attributes.disposePlaneFor(r.id);
-        } else {
-          this.scene.attributes.disposeIconFor(r.id);
-        }
+        this.scene.attributes.disposeStationAttribute(r.id, r.attribute);
       });
       this.table.updateData(
         toHide.map((t) => {
@@ -1339,12 +1331,12 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
     return this.table
       .getData()
-      .map((r) => new StationAttribute(r.id, r.station, r.attribute));
+      .map((r) => new StationAttribute(r.id, r.station, r.attribute, r.visible));
   }
 
   getValidationUpdate(r) {
     let newRow;
-    const sa = new StationAttribute(r.id, r.station, r.attribute);
+    const sa = new StationAttribute(r.id, r.station, r.attribute, r.visible);
     const emptyFields = sa.getEmptyFields();
     const oldStatus = r.status;
     let validationErrors = [];
@@ -1395,7 +1387,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
       const station = this.cave.stations.get(r.name);
       return {
         id        : r.id,
-        visible   : false, // Station attributes don't have visibility by default
+        visible   : r.visible,
         station   : r.name,
         survey    : station ? station.survey.name : undefined,
         attribute : r.attribute,
@@ -1422,19 +1414,11 @@ class StationAttributeEditor extends BaseAttributeEditor {
     if (cell.getValue() === true) {
       const station = this.cave.stations.get(data.station);
       if (data.attribute && data.attribute.name) {
-        if (['bedding', 'fault'].includes(data.attribute.name)) {
-          this.scene.attributes.showPlaneFor(data.id, station, data.attribute);
-        } else {
-          this.scene.attributes.showIconFor(data.id, station, data.attribute);
-        }
+        this.scene.attributes.showStationAttribute(data.id, station, data.attribute);
       }
     } else {
       if (data.attribute && data.attribute.name) {
-        if (['bedding', 'fault'].includes(data.attribute.name)) {
-          this.scene.attributes.disposePlaneFor(data.id);
-        } else {
-          this.scene.attributes.disposeIconFor(data.id);
-        }
+        this.scene.attributes.disposeStationAttribute(data.id, data.attribute);
       }
     }
   }

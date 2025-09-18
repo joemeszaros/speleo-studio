@@ -155,6 +155,16 @@ export class AttributesScene {
     }
   }
 
+  showStationAttribute(id, station, attribute) {
+    if (!this.stationAttributes.has(id)) {
+      if (['bedding', 'fault'].includes(attribute.name)) {
+        this.showPlaneFor(id, station, attribute);
+      } else {
+        this.showIconFor(id, station, attribute);
+      }
+    }
+  }
+
   showPlaneFor(id, station, attribute) {
     if (!this.stationAttributes.has(id)) {
       const position = station.position;
@@ -174,17 +184,6 @@ export class AttributesScene {
         station   : station,
         attribute : attribute
       });
-      this.scene.view.renderView();
-    }
-  }
-
-  disposePlaneFor(id) {
-    if (this.stationAttributes.has(id)) {
-      const e = this.stationAttributes.get(id);
-      const plane = e.plane;
-      plane.geometry.dispose();
-      this.stationAttributes3DGroup.remove(plane);
-      this.stationAttributes.delete(id);
       this.scene.view.renderView();
     }
   }
@@ -234,6 +233,16 @@ export class AttributesScene {
     }
   }
 
+  disposeStationAttribute(id, attribute) {
+    if (this.stationAttributes.has(id)) {
+      if (['bedding', 'fault'].includes(attribute.name)) {
+        this.scene.attributes.disposePlaneFor(id);
+      } else {
+        this.scene.attributes.disposeIconFor(id);
+      }
+    }
+  }
+
   disposeIconFor(id) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
@@ -246,6 +255,17 @@ export class AttributesScene {
       sprite.geometry?.dispose();
 
       this.stationAttributes3DGroup.remove(sprite);
+      this.stationAttributes.delete(id);
+      this.scene.view.renderView();
+    }
+  }
+
+  disposePlaneFor(id) {
+    if (this.stationAttributes.has(id)) {
+      const e = this.stationAttributes.get(id);
+      const plane = e.plane;
+      plane.geometry.dispose();
+      this.stationAttributes3DGroup.remove(plane);
       this.stationAttributes.delete(id);
       this.scene.view.renderView();
     }

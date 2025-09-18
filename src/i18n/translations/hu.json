@@ -867,7 +867,8 @@
       "co": "co",
       "label": "címke",
       "exploration": "felfedezés",
-      "bat": "denevér"
+      "bat": "denevér",
+      "ladder": "létra"
     },
     "namesDescription": {
       "bedding": "Lehetővé teszi a rétegdőlés megadását"
@@ -885,14 +886,16 @@
       "year": "év",
       "month": "hónap",
       "day": "nap",
-      "population": "populáció"
+      "population": "populáció",
+      "length": "hossz"
     },
     "paramsDescription": {
       "dip": "A dőlés értéke",
       "strike": "A vető iránya",
       "azimuth": "A vető iránya",
       "width": "A szélesség értéke",
-      "height": "A magasság értéke"
+      "height": "A magasság értéke",
+      "length": "A hossz értéke"
     },
     "values": {
       "dripstone": "cseppkő",
