@@ -93,6 +93,21 @@ export const DEFAULT_OPTIONS = {
     stationAttributes : {
       iconScale : 7.0
     },
+    attributes : {
+      tectonic : {
+        circle : {
+          color : {
+            bedding : '#8b4513',
+            fault   : '#dc143c'
+          },
+          opacity : 0.7
+        },
+        lines : {
+          color : '#ffffff',
+          width : 2
+        }
+      }
+    },
     stationLabels : {
       mode            : 'name', // or depth
       show            : false,
@@ -570,7 +585,7 @@ export class ConfigChanges {
     this.watchedConfig = watchedConfig;
     this.scene = scene;
     this.mats = materials.materials;
-    this.materias = materials;
+    this.materials = materials;
   }
 
   /**
@@ -585,21 +600,21 @@ export class ConfigChanges {
       case 'scene.centerLines.segments.color': {
         const newColor = new THREE.Color(newValue);
         this.mats.segments.centerLine.color = newColor;
-        this.materias.setSurveyOrCaveMaterial('center', 'color', newColor);
+        this.materials.setSurveyOrCaveMaterial('center', 'color', newColor);
         this.scene.view.renderView();
         break;
       }
 
       case 'scene.centerLines.segments.width':
         this.mats.segments.centerLine.linewidth = newValue;
-        this.materias.setSurveyOrCaveMaterial('center', 'linewidth', newValue);
+        this.materials.setSurveyOrCaveMaterial('center', 'linewidth', newValue);
         this.mats.whiteLine.get('center').linewidth = newValue;
         this.scene.view.renderView();
         break;
 
       case 'scene.centerLines.segments.opacity':
         this.mats.segments.centerLine.opacity = newValue;
-        this.materias.setSurveyOrCaveMaterial('center', 'opacity', newValue);
+        this.materials.setSurveyOrCaveMaterial('center', 'opacity', newValue);
         this.mats.whiteLine.get('center').opacity = newValue;
         this.scene.speleo.setObjectsOpacity('centerLines', newValue);
         this.scene.view.renderView();
@@ -632,20 +647,20 @@ export class ConfigChanges {
       case 'scene.splays.segments.color': {
         const newColor = new THREE.Color(newValue);
         this.mats.segments.splay.color = newColor;
-        this.materias.setSurveyOrCaveMaterial('splay', 'color', newColor);
+        this.materials.setSurveyOrCaveMaterial('splay', 'color', newColor);
         this.scene.view.renderView();
         break;
       }
       case 'scene.splays.segments.width':
         this.mats.segments.splay.linewidth = newValue;
         this.mats.whiteLine.get('splay').linewidth = newValue;
-        this.materias.setSurveyOrCaveMaterial('splay', 'linewidth', newValue);
+        this.materials.setSurveyOrCaveMaterial('splay', 'linewidth', newValue);
         this.scene.view.renderView();
         break;
 
       case 'scene.splays.segments.opacity':
         this.mats.segments.splay.opacity = newValue;
-        this.materias.setSurveyOrCaveMaterial('splay', 'opacity', newValue);
+        this.materials.setSurveyOrCaveMaterial('splay', 'opacity', newValue);
         this.mats.whiteLine.get('splay').opacity = newValue;
         this.scene.speleo.setObjectsOpacity('splays', newValue);
         this.scene.view.renderView();
@@ -679,20 +694,20 @@ export class ConfigChanges {
         const newColor = new THREE.Color(newValue);
         this.mats.segments.auxiliary.color = newColor;
         this.mats.whiteLine.get('auxiliary').color = newColor;
-        this.materias.setSurveyOrCaveMaterial('auxiliary', 'color', newColor);
+        this.materials.setSurveyOrCaveMaterial('auxiliary', 'color', newColor);
         this.scene.view.renderView();
         break;
       }
       case 'scene.auxiliaries.segments.width':
         this.mats.segments.auxiliary.linewidth = newValue;
-        this.materias.setSurveyOrCaveMaterial('auxiliary', 'linewidth', newValue);
+        this.materials.setSurveyOrCaveMaterial('auxiliary', 'linewidth', newValue);
         this.mats.whiteLine.get('auxiliary').linewidth = newValue;
         this.scene.view.renderView();
         break;
 
       case 'scene.auxiliaries.segments.opacity':
         this.mats.segments.auxiliary.opacity = newValue;
-        this.materias.setSurveyOrCaveMaterial('auxiliary', 'opacity', newValue);
+        this.materials.setSurveyOrCaveMaterial('auxiliary', 'opacity', newValue);
         this.mats.whiteLine.get('auxiliary').opacity = newValue;
         this.scene.speleo.setObjectsOpacity('auxiliaries', newValue);
         this.scene.view.renderView();
@@ -747,6 +762,7 @@ export class ConfigChanges {
       case 'scene.sections.labels.color':
       case 'scene.sections.labels.strokeColor':
         this.scene.attributes.updateSectionAttributesLabels(newValue);
+        this.scene.attributes.updateStationAttributesLabels(newValue);
         this.scene.view.renderView();
         break;
       case 'scene.sections.width':
@@ -826,6 +842,14 @@ export class ConfigChanges {
     switch (path) {
       case 'scene.stationAttributes.iconScale':
         this.scene.attributes.updateStationAttributeIconScales(newValue);
+        break;
+    }
+  }
+
+  handleTectonicAttributeChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.attributes.tectonic.circle.opacity':
+        this.scene.attributes.updateTectonicCircleOpacity(newValue);
         break;
     }
   }
@@ -955,6 +979,8 @@ export class ConfigChanges {
       this.handleStationAttributeChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.stationLabels')) {
       this.handleStationLabelChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.attributes.tectonic')) {
+      this.handleTectonicAttributeChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.grid.')) {
       this.handleGridChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.sprites3D.')) {

@@ -249,7 +249,7 @@ export class IconBar {
         id      : 'export-to-csv',
         tooltip : i18n.t('ui.editors.common.exportToCsv'),
         icon    : 'icons/export.svg',
-        click   : () => getTable()?.download?.('csv', filename, { delimiter: ';' })
+        click   : () => getTable()?.download?.('csv', filename, { delimiter: '	' })
       }
     ];
   }

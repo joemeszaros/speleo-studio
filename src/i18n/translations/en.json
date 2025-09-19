@@ -90,7 +90,8 @@
         "colorGradient": "Color Gradient",
         "stationDetails": "Station details (in footer)",
         "sprites3D": "3D helpers",
-        "print": "Print"
+        "print": "Print",
+        "attributes": "Attributes"
       },
       "groups": {
         "centerLines": "Center Lines",
@@ -109,9 +110,9 @@
         "opacity": "Opacity",
         "size": "Size",
         "backgroundColor": "Background color",
-        "labelColor": "Attr. label color",
-        "labelStrokeColor": "Attr. label stroke color",
-        "labelSize": "Attr. label size",
+        "labelColor": "Label color",
+        "labelStrokeColor": "Label stroke color",
+        "labelSize": "Label size",
         "scale": "Scale",
         "offset": "Offset",
         "offsetDirection": "Offset direction",
@@ -148,7 +149,8 @@
         "textStroke": "Text stroke",
         "startPoint": "Cave start point",
         "targetPoint": "Camera target point",
-        "sectionsLabel": "Sections label"
+        "sectionsLabel": "Sections label",
+        "circleOpacity": "Circle opacity"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"

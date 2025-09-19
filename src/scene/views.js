@@ -595,6 +595,7 @@ class SpatialView extends View {
       this.compass.material.rotation = compassRotation;
       this.#updateRotationText();
       this.#updateDipIndicator();
+      this.scene.onRotate();
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       this.updateFrustumFrame();
@@ -982,6 +983,7 @@ class PlanView extends View {
       this.compass.material.rotation = -e.rotation;
       // Update rotation text during rotation
       this.#updateRotationText();
+      this.scene.onRotate();
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       this.updateFrustumFrame();
@@ -1151,6 +1153,7 @@ class ProfileView extends View {
       this.compass.material.rotation = e.angle + Math.PI;
       // Update rotation text during rotation
       this.#updateRotationText();
+      this.scene.onRotate();
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       if (this.frustumFrame) this.updateFrustumFrame();

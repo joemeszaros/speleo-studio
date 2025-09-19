@@ -73,7 +73,7 @@ export class AttributesDefinitions {
       const n = match.groups.name;
       const a = this.createByName(n);
       if (a !== undefined) {
-        const params = match.groups.params.split(',');
+        const params = match.groups.params.split('◌̦');
         attrs.push(a(...params));
       } else {
         errors.push(i18n.t('validation.attributes.fromStringNotFound', { name: n }));
@@ -87,7 +87,7 @@ export class AttributesDefinitions {
       .map((a) => {
         const nameOrTranslated = i18n === undefined ? a.name : i18n.t(`attributes.names.${a.name}`);
         const paramNames = Object.keys(a.params);
-        const paramValues = paramNames.map((n) => a[n]).join(',');
+        const paramValues = paramNames.map((n) => a[n]).join('◌̦');
         return `${nameOrTranslated}(${paramValues})`;
       })
       .join('|');
@@ -109,7 +109,7 @@ class Attribute {
     const paramDef = this.params[paramName];
     switch (paramDef.type) {
       case 'string':
-        this[paramName] = str;
+        this[paramName] = str.replace(/\t/g, '');
         break;
       case 'float':
         this[paramName] = parseMyFloat(str);

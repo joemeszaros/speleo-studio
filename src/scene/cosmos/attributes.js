@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { i18n } from '../../i18n/i18n.js';
 import * as U from '../../utils/utils.js';
 import { SegmentScene } from './segments.js';
@@ -47,13 +48,14 @@ export class AttributesScene {
       center.z = maxZ;
       const localized = attribute.localize(i18n);
       const formattedAttribute = U.interpolate(format, localized);
-      let sprite = this.scene.addSpriteLabel(
+      let textSprite = this.scene.addSpriteLabel(
         formattedAttribute,
         center,
         this.options.scene.sections.labels.size,
         this.options.scene.sections.labels.color,
         this.options.scene.sections.labels.strokeColor
       );
+      const sprite = textSprite.getSprite();
       this.sectionAttributes3DGroup.add(sprite);
       sprite.layers.set(1);
 
@@ -79,24 +81,35 @@ export class AttributesScene {
 
   updateSectionAttributesLabels() {
     this.sectionAttributes.forEach((e) => {
-      const visible = e.text.visible;
-      e.text.material.map.dispose();
-      e.text.material.dispose();
-      e.text.geometry.dispose();
-      this.sectionAttributes3DGroup.remove(e.text);
-      let newSprite = this.scene.addSpriteLabel(
+      e.text = this.updateAttributeLabel(
         e.label,
-        e.center,
         this.options.scene.sections.labels.size,
-        this.options.scene.sections.labels.color,
-        this.options.scene.sections.labels.strokeColor
+        e.text,
+        e.center,
+        this.sectionAttributes3DGroup
       );
-      newSprite.visible = visible;
-      newSprite.layers.set(1);
-      e.text = newSprite;
-      this.sectionAttributes3DGroup.add(newSprite);
     });
     this.scene.view.renderView();
+  }
+
+  updateAttributeLabel(label, newSize, sprite, position, group) {
+    const visible = sprite.visible;
+    sprite.material.map.dispose();
+    sprite.material.dispose();
+    sprite.geometry.dispose();
+    group.remove(sprite);
+    let newTextSprite = this.scene.addSpriteLabel(
+      label,
+      position,
+      newSize,
+      this.options.scene.sections.labels.color,
+      this.options.scene.sections.labels.strokeColor
+    );
+    const newSprite = newTextSprite.getSprite();
+    newSprite.visible = visible;
+    newSprite.layers.set(1);
+    group.add(newSprite);
+    return newSprite;
   }
 
   updateSectionAttributesWidth() {
@@ -165,27 +178,205 @@ export class AttributesScene {
     }
   }
 
+  repositionPlaneLabels() {
+    this.stationAttributes.forEach((e) => {
+      if (e.label) {
+        this.updateLabelPosition(e);
+      }
+    });
+  }
+
+  updateLabelPosition(entry) {
+    const { circle, sprite, attribute } = entry;
+
+    const cameraDirection = new THREE.Vector3();
+    this.scene.view.control.camera.getWorldDirection(cameraDirection);
+    cameraDirection.negate();
+
+    // Get the circle's normal vector (perpendicular to the circle plane)
+    const circleNormal = new THREE.Vector3();
+    circle.getWorldDirection(circleNormal);
+
+    // Calculate the dot product to determine how "edge-on" the circle appears
+    // 1 = circle facing camera (width = diameter), 0 = edge-on (width = 0)
+    const dotProduct = Math.abs(cameraDirection.dot(circleNormal));
+
+    const baseOffset = 1.3;
+    const offsetMultiplier = (1 - dotProduct) * attribute.width;
+    const offsetDistance = 3 + baseOffset * offsetMultiplier;
+
+    // Calculate label position in world coordinates
+    const circleWorldPosition = new THREE.Vector3();
+    circle.getWorldPosition(circleWorldPosition);
+
+    const labelPosition = circleWorldPosition.clone();
+    labelPosition.add(cameraDirection.clone().multiplyScalar(offsetDistance));
+    sprite.position.copy(labelPosition);
+  }
+
+  updateStationAttributesLabels() {
+    this.stationAttributes.forEach((e) => {
+      if (e.sprite && e.label) {
+        e.sprite = this.updateAttributeLabel(
+          e.label,
+          this.options.scene.sections.labels.size * 0.7,
+          e.sprite,
+          e.center,
+          this.stationAttributes3DGroup
+        );
+      }
+    });
+
+    this.scene.view.renderView();
+  }
+
   showPlaneFor(id, station, attribute) {
     if (!this.stationAttributes.has(id)) {
       const position = station.position;
-      const geometry = new THREE.PlaneGeometry(attribute.width, attribute.height, 10, 10);
-      const plane = new THREE.Mesh(geometry, this.mats.planes.get(attribute.name));
-      plane.name = `plane-${attribute.name}-${id}`;
-      plane.position.set(0, 0, 0);
+
+      // Create a group to hold all tectonic feature elements
+      const tectonicGroup = new THREE.Group();
+      tectonicGroup.name = `tectonic-${attribute.name}-${id}`;
+
+      const radius = Math.min(attribute.width, attribute.height) / 2;
+      const circleGeometry = new THREE.CircleGeometry(radius, 32);
+      const circle = new THREE.Mesh(circleGeometry, this.mats.planes.get(attribute.name));
+      circle.name = `circle-${attribute.name}-${id}`;
+
+      const strokeGeometry = new LineSegmentsGeometry();
+      const points = [];
+      const segments = attribute.width * 2;
+
+      let prevPoint = undefined;
+      for (let i = 0; i <= segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        const z = 0.001;
+        const point = new THREE.Vector3(x, y, z);
+
+        if (prevPoint) {
+          points.push(prevPoint.x, prevPoint.y, prevPoint.z);
+          points.push(point.x, point.y, point.z);
+        }
+        prevPoint = point;
+      }
+
+      strokeGeometry.setPositions(points);
+      const stroke = new LineSegments2(strokeGeometry, this.mats.tectonicLine);
+      stroke.name = `stroke-${attribute.name}-${id}`;
+      tectonicGroup.add(circle);
+      tectonicGroup.add(stroke);
+
+      this.addGeologicalSymbols(tectonicGroup, attribute, radius);
+      const textSprite = this.addTectonicLabels(attribute);
+
       const dir = U.normal(U.degreesToRads(attribute.azimuth), U.degreesToRads(attribute.dip));
-      plane.lookAt(dir.x, dir.y, dir.z);
-      const v = new THREE.Vector3(position.x, position.y, position.z);
-      plane.position.copy(v);
-
-      this.stationAttributes3DGroup.add(plane);
-
-      this.stationAttributes.set(id, {
-        plane     : plane,
-        station   : station,
-        attribute : attribute
+      tectonicGroup.children.forEach((child) => {
+        child.lookAt(dir.x, dir.y, dir.z);
+        child.layers.set(1);
       });
+
+      const v = new THREE.Vector3(position.x, position.y, position.z);
+      tectonicGroup.position.copy(v);
+
+      this.stationAttributes3DGroup.add(tectonicGroup);
+      const entry = {
+        group     : tectonicGroup,
+        circle    : circle,
+        stroke    : stroke,
+        center    : v,
+        label     : textSprite.label,
+        sprite    : textSprite.getSprite(),
+        attribute : attribute,
+        hasPlane  : true
+      };
+      this.stationAttributes.set(id, entry);
+      this.updateLabelPosition(entry);
+
       this.scene.view.renderView();
     }
+  }
+
+  addGeologicalSymbols(group, attribute, radius) {
+    if (attribute.name === 'bedding') {
+      this.addBeddingSymbol(group, radius);
+    } else if (attribute.name === 'fault') {
+      this.addFaultSymbol(group, radius);
+    }
+  }
+
+  addBeddingSymbol(group, radius) {
+    const symbolSize = radius * 0.6;
+
+    const strikeGeometry = new LineSegmentsGeometry();
+    const strikePoints = [-symbolSize, 0, 0, symbolSize, 0, 0];
+    strikeGeometry.setPositions(strikePoints);
+    const strikeLine = new LineSegments2(strikeGeometry, this.mats.tectonicLine);
+    strikeLine.name = 'bedding-strike';
+    group.add(strikeLine);
+
+    const dipGeometry = new LineSegmentsGeometry();
+    const dipLength = symbolSize * 0.4;
+    const dipPoints = [0, 0, 0, 0, dipLength, 0];
+    dipGeometry.setPositions(dipPoints);
+    const dipIndicator = new LineSegments2(dipGeometry, this.mats.tectonicLine);
+    dipIndicator.name = 'bedding-dip';
+    group.add(dipIndicator);
+  }
+
+  addFaultSymbol(group, radius) {
+    const sSize = radius * 0.5; // symbol size
+    const arrowLength = sSize * 0.8;
+    const arrowWidth = sSize * 0.2;
+
+    // Create two opposing half-arrows that lie ON the plane surface
+    const faultGeometry = new LineSegmentsGeometry();
+    const points = [];
+
+    const sfc = sSize / 2; // shift from center
+    const dY = 1; // shift y
+    // Left arrow (pointing left) - all points at Z = 0 to lie on plane
+    points.push(sfc - sSize, -dY, 0, sfc - sSize + arrowLength, -dY, 0);
+    points.push(sfc - sSize + arrowLength, -dY, 0, sfc - sSize + arrowLength - arrowWidth, -dY - arrowWidth, 0);
+    //right arrow
+    points.push(-sfc + sSize, dY, 0, -sfc + sSize - arrowLength, dY, 0);
+    points.push(-sfc + sSize - arrowLength, dY, 0, -sfc + sSize - arrowLength + arrowWidth, dY + arrowWidth, 0);
+
+    faultGeometry.setPositions(points);
+    const faultSymbol = new LineSegments2(faultGeometry, this.mats.tectonicLine);
+    faultSymbol.name = 'fault-symbol';
+    group.add(faultSymbol);
+  }
+
+  addTectonicLabels(attribute) {
+    const dip = attribute.dip;
+    const azimuth = attribute.azimuth;
+    const value = `${Math.floor(dip)}°       ${Math.floor(azimuth)}°`;
+    // Create dip label that always faces the camera
+    const textSprite = this.scene.addSpriteLabel(
+      value,
+      new THREE.Vector3(0, 0, 0), // Will be positioned in world coordinates
+      this.options.scene.sections.labels.size * 0.7,
+      this.options.scene.sections.labels.color,
+      this.options.scene.sections.labels.strokeColor
+    );
+    const sprite = textSprite.getSprite();
+    sprite.name = 'dip-label';
+    sprite.layers.set(1);
+
+    // Add to scene group instead of the rotating group
+    this.stationAttributes3DGroup.add(sprite);
+    return textSprite;
+  }
+
+  updateTectonicCircleOpacity(opacity) {
+    this.stationAttributes.forEach((e) => {
+      if (e.circle) {
+        e.circle.material.opacity = opacity;
+      }
+    });
+    this.scene.view.renderView();
   }
 
   showIconFor(id, station, attribute) {
@@ -220,7 +411,8 @@ export class AttributesScene {
           this.stationAttributes.set(id, {
             sprite    : sprite,
             station   : station,
-            attribute : attribute
+            attribute : attribute,
+            hasIcon   : true
           });
 
           this.scene.view.renderView();
@@ -263,9 +455,31 @@ export class AttributesScene {
   disposePlaneFor(id) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
-      const plane = e.plane;
-      plane.geometry.dispose();
-      this.stationAttributes3DGroup.remove(plane);
+      const group = e.group;
+
+      // Dispose all geometries in the group
+      group.traverse((child) => {
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+
+      // Dispose the label if it exists
+      if (e.label) {
+        if (e.label.material) {
+          e.label.material.dispose();
+        }
+        this.stationAttributes3DGroup.remove(e.label);
+      }
+
+      this.stationAttributes3DGroup.remove(group);
       this.stationAttributes.delete(id);
       this.scene.view.renderView();
     }
@@ -274,7 +488,7 @@ export class AttributesScene {
   updateStationAttributeIconScales(newScale) {
     // Update the scale of all existing station attribute icons
     this.stationAttributes.forEach((entry) => {
-      if (entry.sprite && entry.sprite.type === 'Sprite') {
+      if (entry?.hasIcon && entry.sprite && entry.sprite.type === 'Sprite') {
         entry.sprite.scale.set(newScale, newScale, newScale);
       }
     });

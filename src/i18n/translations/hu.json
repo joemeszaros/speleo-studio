@@ -90,7 +90,8 @@
         "colorGradient": "Szín átmenet",
         "stationDetails": "Pont részletek (láblécben)",
         "sprites3D": "3D segédek",
-        "print": "Nyomtatás"
+        "print": "Nyomtatás",
+        "attributes": "Attribútumok"
       },
       "groups": {
         "centerLines": "Középvonalak",
@@ -109,9 +110,9 @@
         "opacity": "Átlátszóság",
         "size": "Méret",
         "backgroundColor": "Háttér szín",
-        "labelColor": "Attr. címke szín",
-        "labelStrokeColor": "Attr. címke körvonal szín",
-        "labelSize": "Attr. címke méret",
+        "labelColor": "Címke szín",
+        "labelStrokeColor": "Címke körvonal szín",
+        "labelSize": "Címke méret",
         "scale": "Méretezés",
         "offset": "Eltolás",
         "offsetDirection": "Eltolás iránya",
@@ -148,7 +149,8 @@
         "textStroke": "Szöveg keret",
         "startPoint": "Barlang kezdőpont",
         "targetPoint": "Kamera célpont",
-        "sectionsLabel": "Szakasz címkék"
+        "sectionsLabel": "Szakasz címkék",
+        "circleOpacity": "Kör átlátszóság"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"

@@ -157,11 +157,10 @@ export class ProjectPanel {
 
       const projectListItems = await Promise.all(
         projects.map(async (project) => {
-          const caves = await this.projectSystem.getCavesForProject(project.id);
-          const caveCount = caves.length;
+          const caveNames = await this.projectSystem.getCaveNamesForProject(project.id);
+          const caveCount = caveNames.length;
           const lastModified = new Date(project.updatedAt).toLocaleDateString();
           const isCurrent = this.projectSystem.getCurrentProject()?.id === project.id;
-          const caveNames = caves.map((cave) => cave.name).join(', ');
 
           const panel = U.node`
            <div class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">

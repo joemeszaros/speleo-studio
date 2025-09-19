@@ -53,9 +53,32 @@ class Materials {
       },
 
       distanceLine : new THREE.LineDashedMaterial({ color: 0xffffff, linewidth: 2, scale: 2, dashSize: 1, gapSize: 1 }),
-      planes       : new Map([
-        ['bedding', new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide })],
-        ['fault', new THREE.MeshBasicMaterial({ color: 0xfff0f, side: THREE.DoubleSide })]
+      tectonicLine : new LineMaterial({
+        color           : this.config.attributes.tectonic.lines.color,
+        linewidth       : this.config.attributes.tectonic.lines.width,
+        worldUnits      : false,
+        vertexColors    : false,
+        alphaToCoverage : false
+      }),
+      planes : new Map([
+        [
+          'bedding',
+          new THREE.MeshBasicMaterial({
+            color       : this.config.attributes.tectonic.circle.color.bedding, // Saddle Brown for bedding
+            side        : THREE.DoubleSide,
+            transparent : true,
+            opacity     : this.config.attributes.tectonic.circle.opacity
+          })
+        ],
+        [
+          'fault',
+          new THREE.MeshBasicMaterial({
+            color       : this.config.attributes.tectonic.circle.color.fault, // Crimson for fault
+            side        : THREE.DoubleSide,
+            transparent : true,
+            opacity     : this.config.attributes.tectonic.circle.opacity
+          })
+        ]
       ]),
       whiteLine : new Map([
         // used for gradient materials

@@ -135,6 +135,7 @@ class MyScene {
       this.view.deactivate();
       this.view = this.views.get(viewName);
       this.view.activate(this.computeBoundingBox());
+      this.attributes.repositionPlaneLabels();
       // Reinitialize camera tracking for billboard optimization
       this.#initializeCameraTracking();
     }
@@ -143,6 +144,10 @@ class MyScene {
   animate() {
     const delta = this.clock.getDelta();
     this.view.animate(delta);
+  }
+
+  onRotate() {
+    this.attributes.repositionPlaneLabels();
   }
 
   renderScene(camera, overViewCamera, spriteCamera, helper) {
@@ -259,9 +264,7 @@ class MyScene {
       font.strokeColor = strokeColor;
     }
 
-    const textSprite = new TextSprite(label, position, font, 0.03, `station-label-${label}`);
-    const sprite = textSprite.getSprite();
-    return sprite;
+    return new TextSprite(label, position, font, 0.03, `station-label-${label}`);
   }
 
   toggleCameraTargetVisibility(visible) {

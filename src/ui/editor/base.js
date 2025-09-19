@@ -106,6 +106,9 @@ class BaseEditor {
           e.stopImmediatePropagation();
         }
 
+        if (!allowedColumns) {
+          return;
+        }
         //navigate to an other cell
         if (!isEditing && e.key.startsWith('Arrow')) {
           activeCell = undefined;

@@ -170,8 +170,8 @@ class BaseAttributeEditor extends Editor {
     });
 
     // custom editing on keydown didn't work for format column
-    // so we do not allow custom editing
-    // this.setupCustomEditMode([]);
+    // so we do not allow custom editing of the format column but we need the left right arrow key fix
+    this.setupCustomEditMode([]);
   }
 
   getAttributeEditorDiv(a, attributes, index, i18n) {
@@ -264,7 +264,7 @@ class BaseAttributeEditor extends Editor {
         if (errors.length > 0) {
           param.classList.remove('requiredInput');
           param.classList.add('invalidInput');
-          a[paramName] = newValue; // set the invalid value
+          a[paramName] = newValue.replace(/\t/g, ''); // set the invalid value, replace tab characters
           this.showAlert(
             i18n.t('common.invalid') + ` '${i18n.t(`attributes.params.${paramName}`)}': ${errors.join('<br>')}`
           );
@@ -289,7 +289,7 @@ class BaseAttributeEditor extends Editor {
   }
 
   attributesEditor(cell, onRendered, success, extractor, mutator, extraValidators, i18n) {
-    const attributes = extractor(cell.getData());
+    const attributes = extractor(cell.getData()).map((a) => a.clone());
 
     const panel = U.node`<div tabindex="0" id="attributes-editor" class="attributes-editor"></div>`;
 
@@ -297,8 +297,7 @@ class BaseAttributeEditor extends Editor {
     const closeButton = U.node`<span class="close-button">&times;</span>`;
     closeButton.onclick = () => {
       if (extraValidators(attributes) === true) {
-        const cloned = attributes.map((a) => a.clone());
-        const toSuccess = mutator(cloned);
+        const toSuccess = mutator(attributes);
         success(toSuccess);
       }
     };
@@ -311,8 +310,7 @@ class BaseAttributeEditor extends Editor {
       }
       if (e.key === 'Escape') {
         if (extraValidators(attributes) === true) {
-          const cloned = attributes.map((a) => a.clone()); // we need to clone the attribute otherwise tabulator won't detect a change (this.value ===  value) in setValueProcessData(value, mutate, force) internal
-          const toSuccess = mutator(cloned);
+          const toSuccess = mutator(attributes);
           success(toSuccess);
         }
       }
@@ -465,6 +463,10 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
             i18n
           ),
         accessorClipboard : (value) =>
+          this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
+            attribute === undefined ? undefined : [attribute]
+          ),
+        accessorDownload : (value) =>
           this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
             attribute === undefined ? undefined : [attribute]
           ),
@@ -777,7 +779,9 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         },
         accessorClipboard : (value) => {
           return value.join(',');
-
+        },
+        accessorDownload : (value) => {
+          return value?.join(',') ?? '';
         },
         formatterClipboard : (value) => {
           return value.join(',');
@@ -1243,7 +1247,11 @@ class StationAttributeEditor extends BaseAttributeEditor {
           this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
             attribute === undefined ? undefined : [attribute]
           ),
-        mutatorClipboard   : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs[0]),
+        mutatorClipboard : (value) => this.baseTableFunctions.attributesFromClipboard(value, (attrs) => attrs[0]),
+        accessorDownload : (value) =>
+          this.baseTableFunctions.attributesToClipboard(value, (attribute) =>
+            attribute === undefined ? undefined : [attribute]
+          ),
         formatterClipboard : (cell) =>
           this.baseTableFunctions.clipboardFormatter(cell, (cv) => (cv.attribute === undefined ? [] : [cv.attribute])),
 
@@ -1312,17 +1320,12 @@ class StationAttributeEditor extends BaseAttributeEditor {
     const oldAttributes = this.cave.attributes.stationAttributes;
     const isEqual =
       newAttributes.length === oldAttributes.length &&
-      newAttributes.every((element, index) => this.isStationAttributeEqual(element, oldAttributes[index]));
+      newAttributes.every((element, index) => element.isEqual(oldAttributes[index]));
 
     if (!isEqual) {
       this.cave.attributes.stationAttributes = newAttributes;
       this.#emitStationAttributesChanged();
     }
-  }
-
-  isStationAttributeEqual(a, b) {
-    if (!a || !b) return false;
-    return a.isEqual(b);
   }
 
   getNewStationAttributes() {

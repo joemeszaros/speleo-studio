@@ -371,58 +371,6 @@ export class SettingsPanel {
           }
         ),
 
-        this.createColorInput(
-          i18n.t('ui.settingsPanel.labels.labelColor'),
-          this.options.scene.sections.labels.color,
-          (value) => {
-            this.options.scene.sections.labels.color = value;
-          }
-        ),
-        this.createColorInput(
-          i18n.t('ui.settingsPanel.labels.labelStrokeColor'),
-          this.options.scene.sections.labels.strokeColor,
-          (value) => {
-            this.options.scene.sections.labels.strokeColor = value;
-          }
-        ),
-
-        this.createRangeInput(
-          i18n.t('ui.settingsPanel.labels.labelSize'),
-          this.options.scene.sections.labels.size,
-          1,
-          32,
-          1,
-          (value) => {
-            this.options.scene.sections.labels.size = value;
-          }
-        ),
-        this.createColorInput(
-          i18n.t('ui.settingsPanel.labels.sectionColor'),
-          this.options.scene.sections.color,
-          (value) => {
-            this.options.scene.sections.color = value;
-          }
-        ),
-        this.createRangeInput(
-          i18n.t('ui.settingsPanel.labels.sectionSize'),
-          this.options.scene.sections.width,
-          0.1,
-          32,
-          1,
-          (value) => {
-            this.options.scene.sections.width = value;
-          }
-        ),
-        this.createRangeInput(
-          i18n.t('ui.settingsPanel.labels.stationIconScale'),
-          this.options.scene.stationAttributes.iconScale,
-          0.1,
-          20,
-          0.1,
-          (value) => {
-            this.options.scene.stationAttributes.iconScale = value;
-          }
-        ),
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.screenDPI'),
           this.options.screen.DPI,
@@ -441,6 +389,23 @@ export class SettingsPanel {
           1,
           (value) => {
             this.options.scene.grid.step = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.sectionColor'),
+          this.options.scene.sections.color,
+          (value) => {
+            this.options.scene.sections.color = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.sectionSize'),
+          this.options.scene.sections.width,
+          0.1,
+          32,
+          1,
+          (value) => {
+            this.options.scene.sections.width = value;
           }
         ),
         // Column 1:
@@ -467,6 +432,59 @@ export class SettingsPanel {
             }
           )
         ])
+      ],
+      true
+    );
+
+    this.createSection(
+      '🅰️ ' + i18n.t('ui.settingsPanel.sections.attributes'),
+      [
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.labelColor'),
+          this.options.scene.sections.labels.color,
+          (value) => {
+            this.options.scene.sections.labels.color = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.labelStrokeColor'),
+          this.options.scene.sections.labels.strokeColor,
+          (value) => {
+            this.options.scene.sections.labels.strokeColor = value;
+          }
+        ),
+
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.labelSize'),
+          this.options.scene.sections.labels.size,
+          1,
+          32,
+          1,
+          (value) => {
+            this.options.scene.sections.labels.size = value;
+          }
+        ),
+
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.stationIconScale'),
+          this.options.scene.stationAttributes.iconScale,
+          0.1,
+          20,
+          0.1,
+          (value) => {
+            this.options.scene.stationAttributes.iconScale = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.circleOpacity'),
+          this.options.scene.attributes.tectonic.circle.opacity,
+          0.1,
+          1,
+          0.1,
+          (value) => {
+            this.options.scene.attributes.tectonic.circle.opacity = value;
+          }
+        )
       ],
       true
     );
