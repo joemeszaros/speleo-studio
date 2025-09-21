@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beállítások és testreszabás - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Beállítások és testreszabás</h1>
+
+      <div class="nav">
+        <a href="10-exportalas.html">← Előző: Exportálás</a>
+        <a href="index.html">Főoldal</a>
+        <a href="12-tamogatas.html">Következő: Támogatás és adományozás →</a>
+      </div>
+
+      <h2>Beállítások áttekintése</h2>
+      <p
+        >A Speleo Studio beállítások panel lehetővé teszi az alkalmazás működésének és megjelenésének testreszabását. A
+        beállítások segítenek optimalizálni a munkafolyamatot és személyre szabni a felhasználói élményt.</p
+      >
+
+      <div class="info">
+        <h3>Beállítások kategóriái:</h3>
+        <ul>
+          <li><strong>🖨️ Nyomtatás:</strong> Nyomtatási elrendezés beállításai</li>
+          <li><strong>➜ Felmérés vonalak:</strong> Vonalak megjelenítési beállításai</li>
+          <li><strong>📍 Pontok:</strong> Pontok megjelenítése és méretezése</li>
+          <li><strong>🏷️ Pont címkék:</strong> Pont címkék megjelenítése és formázása</li>
+          <li><strong>🖼️ Megjelenés:</strong> Általános vizualizációs beállítások</li>
+          <li><strong>🅰️ Attribútumok:</strong> Attribútum megjelenítési beállítások</li>
+          <li><strong>ⓘ Pont részletek:</strong> Footer-ben megjelenő pont információk</li>
+          <li><strong>🎯 3D segédek:</strong> Iránytű, vonalzó és egyéb segédeszközök</li>
+          <li><strong>🌈 Szín átmenet:</strong> Színezési módok és átmenetek</li>
+        </ul>
+      </div>
+
+      <h2>Beállítások panel megnyitása</h2>
+
+      <div class="step">
+        <h3>1. lépés: Beállítások lap</h3>
+        <p
+          >Kattintson a "Beállítások" lapra az oldalsávban, vagy használja a
+          <strong>Ctrl + D</strong> gyorsbillentyűt.</p
+        >
+      </div>
+
+      <div class="step">
+        <h3>2. lépés: Beállítások panel</h3>
+        <p>Megnyílik a beállítások panel, amely különböző kategóriákba szervezett beállításokat tartalmaz.</p>
+        <div class="image-placeholder black small-padding">
+          <img src="images/9-beallitasok-panel.png" alt="Beállítások panel" />
+        </div>
+      </div>
+
+      <h2>Konfiguráció kezelése</h2>
+      <p>A beállítások panel tetején találhatóak a konfiguráció kezelő gombok:</p>
+
+      <div class="settings-box">
+        <h4>Konfiguráció gombok</h4>
+
+        <div class="setting-item">
+          <h5>📥 Letöltés</h5>
+          <p>Letölti a jelenlegi beállításokat JSON formátumban a számítógépre.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>📤 Betöltés</h5>
+          <p>Betölt egy korábban mentett konfiguráció fájlt és alkalmazza a beállításokat.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>🔄 Visszaállítás</h5>
+          <p>Visszaállítja az összes beállítást az alapértelmezett értékekre.</p>
+        </div>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ Visszaállítás figyelmeztetés</h3>
+        <p>A visszaállítás művelet nem vonható vissza és az összes egyéni beállítást felülír.</p>
+      </div>
+
+      <h2>Beállítások változtatása</h2>
+      <p>A beállítások panelen különböző típusú beállítások állíthatunk:</p>
+      <ul>
+        <li
+          ><strong>Számok:</strong> Számok esetén egy csúszkával, vagy a csúszka végén lévő beviteli mező
+          szerkesztésével állíthatjuk be a kívánt értéket, pl. egy szakasz vastagsága.</li
+        >
+        <li
+          ><strong>Színek:</strong> Színek esetén a színválasztóval állíthatjuk be a kívánt értéket, pl. egy szakasz
+          színe.</li
+        >
+        <li
+          ><strong>Logikai értékek:</strong> Logikai értékek esetén a jelölőnégyzettel (checkbox) állíthatjuk be a
+          kívánt értéket, pl. láthatóak-e a szakasz címkéke vagy sem. Egyes kategóriák (pl. középvonalak) esetén a
+          láthatóságot a szem (👁️) ikonra kattinva szabályozhatjuk.</li
+        >
+        <li
+          ><strong>Listák:</strong> Listák esetén a legördülő menüből választhatjuk ki a kívánt értéket, pl. a címkék a
+          Z koordinátákat jelenítsék meg, ne a neveket.</li
+        >
+        <li><strong>Szín átmenetek:</strong> Szín átmenetek szerkesztése teljesen egyedi módon történik.</li>
+      </ul>
+
+      <p
+        >A következő képen egy példa látható a középvonalak beállítására, ahol a láthatóságot, a vonalak színét,
+        szélességét és átlátszóságát állíthatjuk be.</p
+      >
+
+      <div class="image-placeholder black small-padding">
+        <img src="images/9-kozepvonalak.png" alt="Középvonalak beállítások" />
+      </div>
+
+      <h2>🖨️ Nyomtatás beállításai</h2>
+      <p>A nyomtatás beállítások a nyomtatás elrendezését szabályozzák.</p>
+
+      <div class="settings-box">
+        <h4>Nyomtatási elrendezés</h4>
+
+        <div class="setting-item">
+          <h5>Elrendezés</h5>
+          <p>Válassza ki a nyomtatási elrendezést:</p>
+          <ul>
+            <li><strong>Álló:</strong> Portré orientáció (magasabb, mint széles)</li>
+            <li><strong>Fekvő:</strong> Tájoló orientáció (szélesebb, mint magas)</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>➜ Felmérés vonalak beállításai</h2>
+
+      <h3>Középvonalak beállítása</h3>
+      <div class="settings-box">
+        <h4>Középvonalak megjelenítése</h4>
+        <p>A középvonalak a barlang fő poligonvonalát határozzák meg..</p>
+
+        <div class="setting-item">
+          <h5>Szín</h5>
+          <p>Állítsa be a középvonalak színét. Kattintson a színválasztóra a szín módosításához.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Szélesség</h5>
+          <p>Állítsa be a vonalak szélességét pixelben. Nagyobb értékek vastagabb vonalakat eredményeznek.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Átlátszóság</h5>
+          <p>Állítsa be a vonalak átlátszóságát 0-100% között. 100% = teljesen átlátszatlan.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Láthatóság</h5>
+          <p>Állítsa be a vonalak láthatóságát a szem (👁️) ikonra kattinva.</p>
+        </div>
+      </div>
+
+      <h3>Tüskék beállítása</h3>
+      <div class="settings-box">
+        <h4>Tüskék megjelenítése</h4>
+        <p>A tüskék a sünizés eredményeként kapott, a barlang kontúrját letapogató mérések eredményei.</p>
+
+        <div class="setting-item">
+          <h5>Szín</h5>
+          <p>Állítsa be a tüskék színét. Általában más színű, mint a középvonalak.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Szélesség</h5>
+          <p>Állítsa be a tüskék szélességét. Általában vékonyabbak, mint a középvonalak.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Láthatóság</h5>
+          <p>Állítsa be a tüskék láthatóságát a szem (👁️) ikonra kattinva.</p>
+        </div>
+      </div>
+
+      <h3>Segédvonalak beállítása</h3>
+      <div class="settings-box">
+        <h4>Segédvonalak megjelenítése</h4>
+        <p>A segédvonalak segéd mérések eredményei.</p>
+
+        <div class="setting-item">
+          <h5>Szín</h5>
+          <p>Állítsa be a segédvonalak színét. Általában semleges színt használjanak.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Szélesség</h5>
+          <p>Állítsa be a segédvonalak szélességét. Általában a legvékonyabbak.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Átlátszóság</h5>
+          <p>Állítsa be a vonalak átlátszóságát 0-100% között. 100% = teljesen átlátszatlan.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Láthatóság</h5>
+          <p>Állítsa be a segédvonalak láthatóságát a szem (👁️) ikonra kattinva.</p>
+        </div>
+      </div>
+
+      <h2>Pontok beállításai</h2>
+
+      <h3>Közép pontok beállítása</h3>
+      <div class="settings-box">
+        <h4>Közép pontok megjelenítése</h4>
+        <p>A fő poligonvonal mentén lévő pontokat nevezzük közép pontoknak.</p>
+
+        <div class="setting-item">
+          <h5>Szín</h5>
+          <p>Állítsa be a közép pontok színét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Méret</h5>
+          <p>Állítsa be a pontok méretét pixelben.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Átlátszóság</h5>
+          <p>Állítsa be a pontok átlátszóságát.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Láthatóság</h5>
+          <p>Állítsa be a közép pontok láthatóságát a szem (👁️) ikonra kattinva.</p>
+        </div>
+      </div>
+
+      <h3>Tüske pontok beállítása</h3>
+      <div class="settings-box">
+        <h4>Tüske pontok megjelenítése</h4>
+        <p>A tüske pontok tüske mérések végén lévő pontok.</p>
+
+        <div class="setting-item">
+          <h5>Szín</h5>
+          <p>Állítsa be a tüske pontok színét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Méret</h5>
+          <p>Állítsa be a tüske pontok méretét. Általában kisebbek, mint a közép pontok.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Láthatóság</h5>
+          <p>Állítsa be a tüske pontok láthatóságát a szem (👁️) ikonra kattinva.</p>
+        </div>
+      </div>
+
+      <h3>Segéd pontok beállítása</h3>
+      <div class="settings-box">
+        <h4>Segéd pontok megjelenítése</h4>
+        <p>A segéd pontok segéd mérések mentén lévő pontok.</p>
+
+        <div class="setting-item">
+          <h5>Szín</h5>
+          <p>Állítsa be a segéd pontok színét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Méret</h5>
+          <p>Állítsa be a segéd pontok méretét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Láthatóság</h5>
+          <p>Állítsa be a segéd pontok láthatóságát a szem (👁️) ikonra kattinva.</p>
+        </div>
+      </div>
+
+      <h2>🏷️ Pont címkék beállításai</h2>
+
+      <div class="settings-box">
+        <h4>Pont címkék megjelenítése</h4>
+        <p>A pont címkék megjelenítik a pont részleteit a 3D jelenetben.</p>
+
+        <div class="setting-item">
+          <h5>Címke mód</h5>
+          <p>Válassza ki, hogy milyen információ jelenjen meg a címkékben:</p>
+          <ul>
+            <li><strong>Név:</strong> Csak a pont neve</li>
+            <li><strong>Z koordináta:</strong> A pont Z koordinátája (méysége)</li>
+          </ul>
+        </div>
+
+        <div class="setting-item">
+          <h5>Címke szín</h5>
+          <p>Állítsa be a címkék színét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Címke méret</h5>
+          <p>Állítsa be a címkék betűméretét (15-60 között).</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Eltolás</h5>
+          <p>Állítsa be a címkék eltolását a pontokhoz képest (0.1-10 egység között).</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Eltolás iránya</h5>
+          <p>Válassza ki az eltolás irányát:</p>
+          <ul>
+            <li><strong>Fent:</strong> A pont felett</li>
+            <li><strong>Lent:</strong> A pont alatt</li>
+            <li><strong>Balra:</strong> A ponttól balra</li>
+            <li><strong>Jobbra:</strong> A ponttól jobbra</li>
+          </ul>
+        </div>
+
+        <div class="setting-item">
+          <h5>Körvonal</h5>
+          <p>Kapcsolja be/ki a címkék körvonalának megjelenítését.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Körvonal szín</h5>
+          <p>Állítsa be a címkék körvonalának színét.</p>
+        </div>
+      </div>
+
+      <h2>🖼️ Megjelenés beállításai</h2>
+
+      <div class="settings-box">
+        <h4>Általános megjelenés</h4>
+
+        <div class="setting-item">
+          <h5>Háttér szín</h5>
+          <p>Állítsa be a 3D jelenet háttér színét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Képernyő DPI</h5>
+          <p>Állítsa be a képernyő DPI értékét a megfelelő méretezéshez (72-300 között).</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Rács lépés</h5>
+          <p>Állítsa be a rács lépését méterben (1-100 között).</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Szakasz szín</h5>
+          <p
+            >Állítsa be a szakaszok színét. A legrövidebb út során megjelenített szakaszok színét és az újonnan
+            létrehozott szakasz és komponens attribútumok színét lehet vele szabályozni.</p
+          >
+        </div>
+
+        <div class="setting-item">
+          <h5>Szakasz vastagság</h5>
+          <p>Állítsa be a szakaszok vastagságát (0.1-32 között). </p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Barlang kezdőpont</h5>
+          <p>Kapcsolja be/ki a barlang kezdőpontjának megjelenítését.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Kamera célpont</h5>
+          <p
+            >Kapcsolja be/ki a kamera célpontjának megjelenítését. Bekapcsolt állatpan a kamera céltponja látszik a
+            képernyő közepén.</p
+          >
+        </div>
+
+        <div class="setting-item">
+          <h5>Szakasz címkék</h5>
+          <p
+            >Kapcsolja be/ki a szakasz címkék megjelenítését. Szakasz címének tekintjük a szakasz és komponens
+            attribútumok címkéit.</p
+          >
+        </div>
+      </div>
+
+      <h2>🅰️ Attribútumok beállításai</h2>
+
+      <div class="settings-box">
+        <h4>Attribútum megjelenítés</h4>
+
+        <div class="setting-item">
+          <h5>Címke szín</h5>
+          <p>Állítsa be az attribútum címkék színét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Címke körvonal szín</h5>
+          <p>Állítsa be a attribútum címkék körvonalának színét.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Címke méret</h5>
+          <p>Állítsa be a attribútum címkék méretét (1-32 között).</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Pont ikon méretezés</h5>
+          <p>Állítsa be a pont attribútum ikonok méretét (0.1-20 között).</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Kör átlátszóság</h5>
+          <p>Állítsa be a rétegdőlés vagy vetőt reprezentáló körök átlátszóságát (0.1-1 között).</p>
+        </div>
+      </div>
+
+      <h2>ⓘ Pont részletek beállításai</h2>
+      <p
+        >A pont részletek a láblécben jelennek meg, amikor egy pontot kiválasztanak, vagy egérrel a pont felett
+        vagyunk.</p
+      >
+
+      <div class="settings-box">
+        <h4>Megjelenítendő információk</h4>
+
+        <div class="setting-item">
+          <h5>Alapvető információk</h5>
+          <ul>
+            <li><strong>Barlang név:</strong> A barlang neve</li>
+            <li><strong>Felmérés név:</strong> A felmérés neve</li>
+            <li><strong>Pont név:</strong> A pont neve</li>
+          </ul>
+        </div>
+
+        <div class="setting-item">
+          <h5>Helyi koordináták</h5>
+          <ul>
+            <li><strong>X koordináta:</strong> X tengely menti pozíció</li>
+            <li><strong>Y koordináta:</strong> Y tengely menti pozíció</li>
+            <li><strong>Z koordináta:</strong> Z tengely menti pozíció (mélység)</li>
+          </ul>
+        </div>
+
+        <div class="setting-item">
+          <h5>EOV koordináták</h5>
+          <ul>
+            <li><strong>EOV Y koordináta:</strong> EOV rendszer Y koordinátája</li>
+            <li><strong>EOV X koordináta:</strong> EOV rendszer X koordinátája</li>
+            <li><strong>EOV magasság:</strong> Valójában a pont Z koordinátája, az EOV-ben nincs magasság</li>
+          </ul>
+        </div>
+
+        <div class="setting-item">
+          <h5>Egyéb információk</h5>
+          <ul>
+            <li><strong>Típus:</strong> Pont típusa</li>
+            <li><strong>Pozíció (X,Y,Z):</strong> Teljes pozíció információ</li>
+            <li><strong>Mérések listája:</strong> A pontból X,Y,Z koordinátái</li>
+            <li><strong>Megjegyzések:</strong> Pont megjegyzések</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>🎯 3D segédek beállításai</h2>
+      <p>A 3D segédeszközök segítik a navigációt és orientációt a 3D jelenetben.</p>
+
+      <div class="settings-box">
+        <h4>Segédeszközök megjelenítése</h4>
+
+        <div class="setting-item">
+          <h5>Iránytű</h5>
+          <p>Kapcsolja be/ki az iránytű megjelenítését a 3D jelenetben.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Vonalzó</h5>
+          <p>Kapcsolja be/ki a vonalzó megjelenítését a 3D jelenetben.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Dőlés</h5>
+          <p>Kapcsolja be/ki a dőlés indikátor megjelenítését a 3D jelenetben.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Logó</h5>
+          <p>Kapcsolja be/ki a Speleo Studio logó megjelenítését.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>3D forgatás segéd</h5>
+          <p>Kapcsolja be/ki a 3D forgatás segédeszköz megjelenítését.</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Szöveg színe</h5>
+          <p>Állítsa be a segédeszközök szövegeinek színét (pl. méretarány).</p>
+        </div>
+
+        <div class="setting-item">
+          <h5>Szöveg körvonal színe</h5>
+          <p>Állítsa be a segédeszközök szövegeinek körvonalának színét.</p>
+        </div>
+      </div>
+
+      <h2>🌈 Szín átmenet beállításai</h2>
+
+      <div class="settings-box">
+        <h4>Szín átmenet konfigurálása</h4>
+        <p
+          >A szín átmenetek lehetővé teszik a vonalak színezését különböző mélység vagy a bejárattól mért távolság
+          szerint. Az átmenet során a vonalak színe változik lineárisan a megadott színek között. Minden színátmenetnél
+          megadhat egy relatív értéket 0-100 között és egy színt. A relatív érték a színátmenet kezdetén a 0, a végén a
+          100. A mélység szerinti színezésnél 0 érték a legmagasabb pont, 100 érték a legmélyebb pont. Tehát ha egy
+          színátmenetet 60-as értékkel veszünk fel, és egy 250 m mély barlangot jelenítünk meg, akkor a megadott szín
+          150 méternél lesz jelen.
+        </p>
+
+        <div class="image-placeholder black small-padding"> <img src="images/9-szin-atmenet.png" /> </div>
+
+        <h3>Szín átmenet hozzáadása</h3>
+        <div class="step">
+          <h4>1. Átmenet hozzáadása</h4>
+          <p>Kattintson az "Átmenet hozzáadása" gombra egy új szín átmenet pont hozzáadásához.</p>
+        </div>
+
+        <div class="step">
+          <h4>2. Szín beállítása</h4>
+          <p>Válassza ki a színt az új átmenet ponthoz.</p>
+        </div>
+
+        <div class="step">
+          <h4>3. Relatív érték beállítása</h4>
+          <p>Állítsa be az átmenet pont relatív értékét - pozícióját (0-100% között).</p>
+        </div>
+
+        <h3>Szín átmenet eltávolítása</h3>
+
+        <div class="step">
+          <h4>1. Átmenet eltávolítása</h4>
+          <p>Kattintson az "Eltávolítás" gombra egy átmeneti szín törléséhez.</p>
+        </div>
+
+        <h2>Beállítások mentése és betöltése</h2>
+
+        <h3>Beállítások mentése</h3>
+        <div class="step">
+          <h4>1. Beállítások letöltése</h4>
+          <p>Kattintson a "Letöltés" gombra a beállítások panelben a jelenlegi beállítások JSON fájlba mentéséhez.</p>
+        </div>
+
+        <div class="step">
+          <h4>2. Fájl mentése</h4>
+          <p>Válassza ki a mentési helyet és adja meg a fájlnevet.</p>
+        </div>
+
+        <h3>Beállítások betöltése</h3>
+        <div class="step">
+          <h4>1. Beállítások betöltése</h4>
+          <p>Kattintson a "Betöltés" gombra a beállítások panelben egy korábban mentett beállítás fájl betöltéséhez.</p>
+        </div>
+
+        <div class="step">
+          <h4>2. Fájl kiválasztása</h4>
+          <p>Válassza ki a korábban mentett beállítás JSON fájlt.</p>
+        </div>
+
+        <div class="step">
+          <h4>3. Beállítások alkalmazása</h4>
+          <p>A beállítások automatikusan alkalmazásra kerülnek.</p>
+        </div>
+
+        <h3>Beállítások visszaállítása</h3>
+        <div class="step">
+          <h4>1. Visszaállítás megerősítése</h4>
+          <p>Kattintson a "Visszaállítás" gombra a beállítások panelben.</p>
+        </div>
+
+        <div class="step">
+          <h4>2. Megerősítés</h4>
+          <p>Erősítse meg a visszaállítást a párbeszédpanelben.</p>
+        </div>
+
+        <div class="warning">
+          <h3>⚠️ Visszaállítás figyelmeztetés</h3>
+          <p>A visszaállítás művelet nem vonható vissza és az összes egyéni beállítást törli.</p>
+        </div>
+      </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte a beállításokat, folytathatja a
+        <a href="12-tamogatas.html">támogatás és adományozás</a> fejezettel, ahol megtanulja, hogyan támogathatja a
+        projektet.</p
+      >
+
+      <div class="nav">
+        <a href="10-exportalas.html">← Előző: Exportálás</a>
+        <a href="index.html">Főoldal</a>
+        <a href="12-tamogatas.html">Következő: Támogatás és adományozás →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>Ez a kézikönyv ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="12-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="12-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

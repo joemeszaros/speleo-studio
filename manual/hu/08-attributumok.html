@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attribútumok kezelése - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Attribútumok kezelése</h1>
+
+      <div class="nav">
+        <a href="07-felmereek-szerkesztese.html">← Előző: Felmérések szerkesztése</a>
+        <a href="index.html">Főoldal</a>
+        <a href="09-eszkozok.html">Következő: Eszközök →</a>
+      </div>
+
+      <h2>Attribútumok áttekintése</h2>
+      <p
+        >Az attribútumok segítségével plusz tulajdonságokat, információkat vehetünk fel a barlang egy adott pontjához,
+        szakaszához vagy részéhez és azokat térben is megjeleníthetjük. Az attribútumok részletes ismertetése az
+        <a href="02b-adatmodell.html">Adatmodell és struktúra oldalon</a> található, ebben a fejezetben a
+        szerkesztésüket mutatjuk be.
+      </p>
+      <p
+        >Az <strong>attribútumok teljes listáját</strong> az
+        <a href="../../attributes.html">Attribútum referencia</a> oldalon részletesen megtalálja.</p
+      >
+
+      <h3>Attribútumok megjelenítése</h3>
+      <p
+        >Az attribútumokat különböző módon jeleníti meg a Speleo Studio, függően az attribútum típusától és
+        fajtájától.</p
+      >
+      <ul>
+        <li
+          ><strong>Pont attribútumok:</strong> A legtöbb attribútum esetén a pontok helyén az attribútum típusának
+          megfelelő ikon jelenik meg, speciális esetekben (pl. rétegdőlés) a típusra jellemző ábrázolás (pl. sík).</li
+        >
+        <li
+          ><strong>Szakasz attribútumok:</strong> A barlang érintett szakasza külön színnel jelenik meg egy szakasz
+          címke mellett, amelynek tartalma testre szabható.</li
+        >
+        <li
+          ><strong>Komponens attribútumok:</strong> Az attribútum által érintett része a barlangnak külön színnel
+          jelenik meg, illetve egy címke is megjelenik, amelynek tartalma testre szabható.</li
+        >
+      </ul>
+      <p
+        >A következő képen egy példa látható pont, szakasz és komponens attribútumokkal. A pont attribútumokat ikonok
+        jelzik a térképen, pontosan jelezve a létrák, kötelek, cseppkövek és denevérek helyét. Piros szakasz jelez egy
+        szén-dioxidos járatot a szén-dioxid tipikus szintjével. Észrevehetünk még egy rétegdőlést és egy vetőt ábrázoló
+        síkot, a csapásirány és dőlés értékekkel. Végül két komponens attribútumot látunk, amelyek az adott rész
+        felfedezésének évét és hónapját jelzik.
+      </p>
+      <div class="image-placeholder black"> <img src="images/6-attributumok.png" /> </div>
+
+      <h2>Pont attribútumok</h2>
+
+      <h3>Pont attribútum szerkesztő megnyitása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Barlang kiválasztása</h4>
+        <p
+          >A Felfedező panelben kattintson a barlang nevére és a megjelenő ikon sávon kattintson a pont attribútumok
+          (📍) ikonra.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Attribútum szerkesztő</h4>
+        <p>Megjelenik a pont attribútum szerkesztő ablak.</p>
+      </div>
+
+      <h3>Szerkesztő ablak áttekintése</h3>
+      <p>A pont attribútum ikonra kattinva megnyílik a szerkesztő ablak az attribútumok táblázatos megjelenítésével.</p>
+      <div class="image-placeholder black"><img src="images/6-pont-attributumok.png" /></div>
+
+      <p>A szerkesztő ablak felépítése a következő:</p>
+      <ul>
+        <li><strong>Ikon sáv (piros keret): </strong>Az attribútumok szerkesztésére szolgáló ikonok</li>
+        <li
+          ><strong>Táblázat fejléc (kék keret): </strong>A táblázat oszlopait megjelenítő fejléc, amely a sorok
+          szűrésére is szolgál. Az oszlop neve alatt lévő beviteli mező (piros nyíl)
+          <strong>segítségével szűrhetjük a sorokat.</strong> Például az Attribútumok oszlop beviteli mezőjébe "kötél"
+          értéket írva a táblázatban lévő sorok közül csak a Attribútumok oszlopban "kötél" értéket tartalmazó sorok
+          lesznek megjelenítve.
+        </li>
+        <li
+          ><strong>Attribútumok táblázata (lila keret): </strong>Az attribútumok listája, a táblázatban minden sor egy
+          attribútumot reprezentál. A táblázatban nem minden attribútum látható egyszerre, ilyen esetben ne felejtsünk
+          el görgetni a jobb oldalon.</li
+        >
+      </ul>
+
+      <div class="info">
+        Az ablak jobb felső sarkában található bezárás piros ikonra kattintva a táblázat változtatásai mentődnek!
+      </div>
+
+      <div class="editor-box">
+        <h4>Ikonsáv részletezése</h4>
+        <p>Az egyes ikonok funkciói a következők:</p>
+        <ul>
+          <li
+            ><img src="../../icons/undo.svg" class="icon" /> <strong> Visszavonás:</strong> Változtatások
+            visszavonása</li
+          >
+          <li
+            ><img src="../../icons/redo.svg" class="icon" /> <strong> Újra:</strong> Változtatások újra alkalmazása</li
+          >
+          <li
+            ><img src="../../icons/add_before.svg" class="icon" /><strong> Sor hozzáadása előtte:</strong> Új sor
+            beszúrása a kiválasztott sor előtt</li
+          >
+          <li
+            ><img src="../../icons/add_after.svg" class="icon" /><strong> Sor hozzáadása után:</strong> Új sor beszúrása
+            a kiválasztott sor után</li
+          >
+          <li
+            ><img src="../../icons/add_white.svg" class="icon" /><strong> Sor hozzáadása a végéhez:</strong> Új sor
+            beszúrása a táblázat végéhez</li
+          >
+          <li
+            ><img src="../../icons/trash_white.svg" class="icon" /><strong> Sor(ok) törlése:</strong> Aktuális /
+            Kiválasztott sor vagy sorok törlése</li
+          >
+          <li
+            ><img src="../../icons/visible.svg" class="icon" /><strong> Minden sor láthatóvá tétele:</strong> Minden
+            attribútum láthatóvá tétele</li
+          >
+          <li
+            ><img src="../../icons/invisible.svg" class="icon" /><strong> Minden sor elrejtése:</strong> Minden
+            attribútum elrejtése</li
+          >
+          <li
+            ><img src="../../icons/export.svg" class="icon" /><strong> Exportálás CSV-be:</strong> Táblázat mentése CSV
+            formátumban</li
+          >
+
+          <li
+            ><img src="../../icons/validate.svg" class="icon" /><strong> Sor(ok) validálása:</strong> Attribútumok
+            validálása</li
+          >
+          <li
+            ><img src="../../icons/update.svg" class="icon" /><strong> Sor(ok) frissítése:</strong> Módosítások
+            mentése</li
+          >
+          <li
+            ><img src="../../icons/cancel.svg" class="icon" /><strong> Módosítások elvetése:</strong> Változtatások
+            elvetése, szerkesztő bezárása</li
+          >
+        </ul>
+      </div>
+
+      <div class="editor-box">
+        <h4>Oszlopok részletezése</h4>
+        <ul>
+          <li
+            ><strong>Státusz:</strong>Az attribútum státusza, amely helyes sorok esetén zöld ikon, minden más esetben
+            narancssárga ikon jelenik meg.
+          </li>
+          <li><strong>Láthatóság:</strong> Az adott attribútum láthatóságát lehet vele szabályozni.</li>
+          <li><strong>Pont:</strong> A pont attribútumhoz tartozó pont neve</li>
+          <li><strong>Felmérés:</strong> A pont felmérésének neve (nem szerkeszthető)</li>
+          <li
+            ><strong>Attribútum:</strong> Az attribútum szerkesztését / felvételét és törlését teszi lehetővé. Az
+            attribútum neve után zárójelben a paraméterek listája következik egy speciális ◌̦ karakterrel
+            elválasztva.</li
+          >
+        </ul>
+      </div>
+
+      <h3>Pont attribútumok hozzáadása</h3>
+
+      <div class="step">
+        <h4>1. Új sor hozzáadása</h4>
+        <p>Kattintson az "Sor hozzáadása a végéhez" gombra a szerkesztő panelben.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Pont nevének kiválasztása</h4>
+        <p>Kattintson kettőt a pont oszlop cellájára és válassza ki a pont nevét a legördülő listából.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Attribútum hozzáadása</h4>
+        <p>Az attribútum oszlop cellájára duplán kattintva megnyílik a kompakt attribútum szerkesztő.</p>
+        <div class="row">
+          <div class="column-2">
+            <ul>
+              <li
+                ><strong>Típus kiválasztása:</strong> Elsőként válassza ki az attribútum típusát a legördülő listából,
+                majd kattintson a + gombra</li
+              >
+              <li><strong>Paraméterek megadása:</strong> Adja meg az attribútum paramétereit</li>
+              <li
+                ><strong>Attribútum mentése:</strong> Mentse az attribútumot az Esc billentyűvel vagy a szerkesztő jobb
+                szélén lévő (X) bezárás gombbal</li
+              >
+            </ul>
+          </div>
+          <div class="image-placeholder column-2 black" style="flex: 30%">
+            <img src="images/6-attributum-szerkeszto.gif" />
+          </div>
+        </div>
+      </div>
+
+      <h3>Attribútumok validálása</h3>
+
+      <p
+        >A Speleo Studio hasonlóan a többi szerkesztőhöz ellenőrzi az attribútumok paramétereinek helyességét a
+        megfelelő adat konzisztencia érdekében. Minden validálási szabályt megtalálunk az
+        <a href="../../attributes.html">Attribútum referencia</a> oldalon. A hibás attribútumokat a státusz oszlopban
+        narancssárga ikon jelenik meg, amelyre kattinva a hiba részletes leírását kapjuk meg.</p
+      >
+      <div class="image-placeholder black"><img src="images/6-attributum-validalas.png" /></div>
+
+      <h3>Pont attribútumok megjelenítése</h3>
+
+      <div class="step">
+        <h4>1. Láthatóság szabályozása</h4>
+        <p
+          >Kattintson a megjeleníteni kívánt attribútum láthatóság ikonjára (piros x vagy zöld pipa) vagy a táblázat
+          felett lévő ikonsávból az "Összes megjelenítése" gombra.</p
+        >
+      </div>
+
+      <h4>Megjelenítés a 3D jelentben</h4>
+      <div class="row">
+        <div class="column-2">
+          <p>A legtöbb pont attribútum a 3D jelentben a következőképpen jeleníthetők meg:</p>
+
+          <ul>
+            <li
+              ><strong>Síkok:</strong> A rétegdőlés és a vető attribútumok síkként jelennek meg a jelentben. A sík
+              dőlése és csapásiránya megegyezik az attribútum dőlésével és csapásirányával, mérete pedig a szélesség és
+              magasság értékek szerint változik. A jelentben szintén megjelenik elsőként a csapárirány majd a dőlés
+              értéke is. A síkok átlátszósága szabályozható a Beállítások panelen. A jobb oldali képen egy vetőt
+              reprezentáló sík látható a csapásirány / dőlés értékekkel.</li
+            >
+            <li
+              ><strong>Ikonok:</strong> A pont attribútumok többsége egyedi ikonokkal jelenik meg a jelentben. Az ikonok
+              típusa a pont attribútum típusától függ. Az ikonok mérete a Beállítások panelen szabályozható.
+            </li>
+          </ul>
+        </div>
+        <div class="image-placeholder column-2 small-padding black" style="flex: 10%">
+          <img width="200" src="images/6-attributum-sik.png" />
+        </div>
+      </div>
+
+      <h3>Attribútumok exportálása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Szerkesztő megnyitása</h4>
+        <p>Nyissa meg a pont attribútum szerkesztőt</p>
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Exportálás</h4>
+        <p>Az "Exportálás CSV-be" ikonra kattintva mentse a táblázatot TSV (tab separated values) formátumban.</p>
+      </div>
+      <!-- prettier-ignore -->
+      <div class="code-example">
+""	""	"Pont"	"Felmérés"	"Attribútum"
+"ok"	"true"	"4"	"Laci-zsomboly"	"ladder(12◌̦2023)"
+"ok"	"true"	"Ka11"	"Felhő-ág"	"bat(1)"
+"ok"	"true"	"Lapi20"	"Lapidárium"	"ladder(5◌̦2022)"
+"ok"	"true"	"34z7"	"Zacsis eleje"	"speleothem(dripstone◌̦)"
+      </div>
+
+      <h3>Attribútumok törlése</h3>
+
+      <div class="step">
+        <h4>1a. Sor törlése</h4>
+        <p>Kattintson az "Aktív sor(ok) törlése" ikonra a szerkesztő panelben.</p>
+      </div>
+
+      <div class="step">
+        <h4>1b. Attribútum törlése</h4>
+        <p
+          >Kattintson adott sor attribútum oszlopában, majd a megjelenő kompakt attribútum szerkesztőben az attribútum
+          melletti <img src="../../icons/trash_white.svg" class="icon" /> gombra.</p
+        >
+      </div>
+
+      <h2>Szakasz attribútumok</h2>
+
+      <h3>Szakasz attribútum szerkesztő megnyitása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Barlang kiválasztása</h4>
+        <p
+          >A Felfedező panelben kattintson a barlang nevére és a megjelenő ikon sávon kattintson a szakasz attribútumok
+          (🔀) ikonra.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Attribútum szerkesztő</h4>
+        <p>Megjelenik a szakasz attribútum szerkesztő ablak.</p>
+      </div>
+
+      <h3>Szerkesztő ablak áttekintése</h3>
+      <p
+        >A szakasz attribútum ikonra kattinva megnyílik a szerkesztő ablak az attribútumok táblázatos
+        megjelenítésével.</p
+      >
+      <div class="image-placeholder black"><img src="images/6-szakasz-attributum.png" /></div>
+      <p
+        >A szerkesztő ablak felépítése ugyanaz, mint a pont attribútum szerkesztő ablaké, így itt nem ismételjük meg a
+        leírtakat.</p
+      >
+      <div class="editor-box">
+        <h4>Oszlopok részletezése</h4>
+        <ul>
+          <li
+            ><strong>Státusz:</strong>Az attribútum státusza, amely helyes sorok esetén zöld ikon, minden más esetben
+            narancssárga ikon jelenik meg.
+          </li>
+          <li><strong>Láthatóság:</strong> Az adott attribútum láthatóságát lehet vele szabályozni</li>
+          <li><strong>Szín:</strong> A jelentben a szakasz színét lehet vele szabályozni</li>
+          <li><strong>Ponttól:</strong> A szakasz attribútum kezdő pontjának neve</li>
+          <li><strong>Pontig:</strong> A szakasz attribútum végpontjának neve</li>
+          <li><strong>Távolság:</strong> A szakasz hossza (nem szerkeszthető)</li>
+          <li
+            ><strong>Attribútum:</strong> Az attribútum szerkesztését / felvételét és törlését teszi lehetővé. Az
+            attribútum neve után zárójelben a paraméterek listája következik egy speciális ◌̦ karakterrel
+            elválasztva.</li
+          >
+          <li><strong>Formátum:</strong> A szakasz címke testreszabását teszi lehetővé</li>
+          <li><strong>Interpolált:</strong> A szakasz címke formátumnak megfelelő testreszabott értéke</li>
+        </ul>
+      </div>
+
+      <h3>Szakasz attribútumok megjelenítése</h3>
+
+      <div class="step">
+        <h4>1. Láthatóság szabályozása</h4>
+        <p
+          >Kattintson a megjeleníteni kívánt attribútum láthatóság ikonjára (piros x vagy zöld pipa) vagy a táblázat
+          felett lévő ikonsávból az "Összes megjelenítése" gombra.</p
+        >
+      </div>
+
+      <div class="info">
+        <p
+          >A szakasz attribútumok hozzáadása, törlése és exportálása a pont attribútumoknál leírtak szerint történik.</p
+        >
+      </div>
+
+      <h4>Megjelenítés a 3D jelentben</h4>
+      <div class="row">
+        <div class="column-2">
+          <p
+            >Eltérően a pont attribútumoktól, a szakasz attribútumok a 3D jelentben egy színezett szakaszként (vonal)
+            jelenik meg egy címkével. A szakasz színe és a címke tartalmát a szerkesztőben testre szabhatjuk. A színt
+            egyszerűen a szín oszlopban lévő színes körre kattintva választhatjuk ki. A címke tartalmát a
+            <strong>formátum</strong>
+            oszlopban lévő érték határozza meg.
+          </p>
+          <div class="info"
+            >A szakasz vastagságát, színét, valamint a címke színét és méretét a Beállítások panelen
+            szabályozhatjuk.</div
+          >
+          <h4>Címke formátum</h4>
+          <p
+            >A címke formátum tetszőleges szöveget tartalmazhat, illetve hivatkozásokat az attribútum nevére és
+            paramétereire. A szakasz nevére a <code>${név}</code>-el hivatkozhatunk, a paraméterekre pedig a paraméter
+            nevével <code>(${paraméter név})</code>. Példaként vegyünk egy <i>Felfedezés</i> attribútumot, amelynek
+            három paramétere van: év, hónap, nap. Legyen ezek értéke 2023,05,21. A formátumban
+            <code>${név} - ${hónap}</code>-ot írva a címke a következőképpen jelenik meg: <i>2023 - 05</i>. A formátumot
+            megváltoztatva <code>Felfedezve: ${név}</code>-re a címke a következőképpen jelenik meg:
+            <i>Felfedezve: 2023</i>. Ha a formátumban nem létező paraméterre hivatkozunk, akkor az a címkében a
+            hivatkozás nem lesz feloldva.
+          </p>
+        </div>
+        <div class="image-placeholder column-2 small-padding black" style="flex: 10%">
+          <img width="200" src="images/6-attributum-szakasz.png" />
+        </div>
+      </div>
+
+      <p
+        >A formátumnak megfelelő címke értéke a <strong>interpolált</strong> oszlopban is látható. Az interpolált érték
+        megjelenik a szakasz attribútumok exportálásakor is a fájlban, amely
+        <strong>az attribútumok további feldolgozgását, összesítését, aggregálását teszi lehetővé</strong>. Például
+        minden felfedezés attribútumnál a formátumban <code>${év}</code> értéket használva, majd az attribútumok
+        exportálása után az exportált fájlt importáltva pl. Excelben könnyedén összesíthetjük, hogy az adott évben hány
+        métert fedeztek fel a barlangban.
+      </p>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte az attribútumok kezelését, folytathatja az
+        <a href="09-eszkozok.html">eszközök és számítások</a> fejezettel, ahol megtanulja a Speleo Studio speciális
+        eszközeinek használatát.</p
+      >
+
+      <h2>Komponens attribútumok</h2>
+
+      <h3>Komponens attribútum szerkesztő megnyitása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Barlang kiválasztása</h4>
+        <p
+          >A Felfedező panelben kattintson a barlang nevére és a megjelenő ikon sávon kattintson a komponens
+          attribútumok (🧩) ikonra.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Attribútum szerkesztő</h4>
+        <p>Megjelenik a komponens attribútum szerkesztő ablak.</p>
+      </div>
+
+      <h3>Szerkesztő ablak áttekintése</h3>
+      <p
+        >A komponens attribútum ikonra kattinva megnyílik a szerkesztő ablak az attribútumok táblázatos
+        megjelenítésével.</p
+      >
+      <div class="image-placeholder black"><img src="images/6-komponens-attributum.png" /></div>
+      <p
+        >A szerkesztő ablak felépítése ugyanaz, mint a szakasz és pont attribútum szerkesztő ablaké, így itt nem
+        ismételjük meg a leírtakat.</p
+      >
+      <div class="editor-box">
+        <h4>Oszlopok részletezése</h4>
+        <ul>
+          <li
+            ><strong>Státusz:</strong>Az attribútum státusza, amely helyes sorok esetén zöld ikon, minden más esetben
+            narancssárga ikon jelenik meg.
+          </li>
+          <li><strong>Láthatóság:</strong> Az adott attribútum láthatóságát lehet vele szabályozni</li>
+          <li><strong>Szín:</strong> A jelentben az érintett rész színét lehet vele szabályozni</li>
+          <li><strong>Induló pont:</strong> A komponens attribútum kezdő pontjának neve</li>
+          <li><strong>Végpontok:</strong> A komponens attribútum végpontjainak listája vesszővel elválasztva</li>
+          <li><strong>Távolság:</strong> Az érintett barlang rész hossza (nem szerkeszthető)</li>
+          <li
+            ><strong>Attribútum:</strong> Az attribútum szerkesztését / felvételét és törlését teszi lehetővé. Az
+            attribútum neve után zárójelben a paraméterek listája következik egy speciális ◌̦ karakterrel
+            elválasztva.</li
+          >
+          <li><strong>Formátum:</strong> A komponens címke testreszabását teszi lehetővé</li>
+          <li><strong>Interpolált:</strong> A komponens címke formátumnak megfelelő testreszabott értéke</li>
+        </ul>
+      </div>
+
+      <h3>Komponens attribútumok megjelenítése</h3>
+
+      <div class="step">
+        <h4>1. Láthatóság szabályozása</h4>
+        <p
+          >Kattintson a megjeleníteni kívánt attribútum láthatóság ikonjára (piros x vagy zöld pipa) vagy a táblázat
+          felett lévő ikonsávból az "Összes megjelenítése" gombra.</p
+        >
+      </div>
+
+      <div class="info">
+        <p
+          >A komponens attribútumok hozzáadása, törlése és exportálása a pont attribútumoknál leírtak szerint történik.
+          <strong>
+            Új attribútumok hozzáadásakor sose feledkezzünk meg a végpontok megadásáról, ellenkező esetben a teljes
+            barlangra fog vonatkozni az attribútum!</strong
+          ></p
+        >
+      </div>
+
+      <h4>Megjelenítés a 3D jelentben</h4>
+      <div class="row">
+        <div class="column-2">
+          <p
+            >A komponens attribútumok a 3D jelentben egy színezett barlang részként jelenik meg egy címkével. A
+            megjelenített rész színe és a címke tartalmát a szerkesztőben testre szabhatjuk. A színt egyszerűen a szín
+            oszlopban lévő színes körre kattintva választhatjuk ki. A címke tartalmát a
+            <strong>formátum</strong>
+            oszlopban lévő érték határozza meg.
+          </p>
+          <div class="info"
+            >A megjelenített rész vastagságát, színét, valamint a címke színét és méretét a Beállítások panelen
+            szabályozhatjuk.</div
+          >
+          <h4>Címke formátum</h4>
+          <p
+            >A címke formátum tetszőleges szöveget tartalmazhat, illetve hivatkozásokat az attribútum nevére és
+            paramétereire. A szakasz nevére a <code>${név}</code>-el hivatkozhatunk, a paraméterekre pedig a paraméter
+            nevével <code>(${paraméter név})</code>. Példaként vegyünk egy <i>Felfedezés</i> attribútumot, amelynek
+            három paramétere van: év, hónap, nap. Legyen ezek értéke 2023,05,21. A formátumban
+            <code>${név} - ${hónap}</code>-ot írva a címke a következőképpen jelenik meg: <i>2023 - 05</i>. A formátumot
+            megváltoztatva <code>Felfedezve: ${név}</code>-re a címke a következőképpen jelenik meg:
+            <i>Felfedezve: 2023</i>. Ha a formátumban nem létező paraméterre hivatkozunk, akkor az a címkében a
+            hivatkozás nem lesz feloldva.
+          </p>
+        </div>
+        <div class="image-placeholder column-2 small-padding black" style="flex: 10%">
+          <img width="200" src="images/6-attributum-resz.png" />
+        </div>
+      </div>
+
+      <div class="nav">
+        <a href="07-felmereek-szerkesztese.html">← Előző: Felmérések szerkesztése</a>
+        <a href="index.html">Főoldal</a>
+        <a href="09-eszkozok.html">Következő: Eszközök →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

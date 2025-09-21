@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eszközök áttekintése - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Eszközök áttekintése</h1>
+
+      <div class="nav">
+        <a href="08-attributumok.html">← Előző: Attribútumok</a>
+        <a href="index.html">Főoldal</a>
+        <a href="10-exportalas.html">Következő: Exportálás →</a>
+      </div>
+
+      <h2>Eszközök áttekintése</h2>
+      <p
+        >A Speleo Studio számos speciális eszközt biztosít a számítások elvégzéséhez, vagy egyes műveletek
+        megkönnyítéséhez.</p
+      >
+
+      <div class="info">
+        <h3>Elérhető eszközök:</h3>
+        <ul>
+          <li
+            ><strong>Dőlés és irány számító:</strong> Rétegdőlés és vető esetén számítja ki a dőlés és irány
+            értékeket</li
+          >
+          <li><strong>Legrövidebb út:</strong> Útvonal optimalizálás</li>
+          <li><strong>Távolság mérés:</strong> Pontok közötti távolság mérése</li>
+          <li><strong>Pont megkeresés:</strong> Pont megkeresése a jelenetben</li>
+          <li><strong>Forgatás eszköz:</strong> Jelenet forgatása</li>
+        </ul>
+      </div>
+
+      <h2>Dőlés és irány számító</h2>
+
+      <div class="tool-box">
+        <h4>Dőlés és irány számító</h4>
+        <p
+          >Ez az eszköz segít meghatározni a rétegdőlés és a vető csapásirányát, valamint dőlését három pont alapján. A
+          barlangban sokszor nincs lehetőségünk egy vető vagy rétegdőlés mérésére, mert fizikailag sokszor nem férünk
+          hozzá (pl. messze van a kötéltől). Ilyen esetekben egy meglévő mérési pontból (amely akár lehet segéd pont is)
+          a vető, rétegdőlés három pontját mérjük meg DistoX-el, és ezekkel a pontokkal számítjuk ki a dőlés és irány
+          értékeket. Olyan három pontot válasszunk, amely alapján a vető / rétegdőlés síkja jól meghatározható!
+        </p>
+        <p
+          >Ha nem a DistoX mérési eredményeit szeretnénk felhasználni, akkor tetszőleges három pont koordinátája alapján
+          is kiszámíthatjuk a dőlés és csapásirány értékeket.</p
+        >
+      </div>
+
+      <div class="row">
+        <div class="column-2">
+          <h3>Eszköz megnyitása</h3>
+
+          <div class="step">
+            <h4>1. lépés: Eszköz menü</h4>
+            <p>Kattintson a "Eszközök" menüre a navigációs sávban.</p>
+          </div>
+
+          <div class="step">
+            <h4>2. lépés: Dőlés és irány számító</h4>
+            <p>Válassza a "Dőlés és irány számító" opciót a menüből.</p>
+          </div>
+
+          <div class="step">
+            <h4>3. lépés: Szerkesztő panel</h4>
+            <p>Megnyílik a dőlés és irány számító panel.</p>
+          </div>
+        </div>
+        <div class="column-2 image-placeholder black" style="flex: 30%; margin-left: 20px">
+          <img src="images/7-dipstrike.png"
+        /></div>
+      </div>
+
+      <div class="row">
+        <div class="column-2">
+          <h3>Számítás 3D koordinátákkal</h3>
+
+          <div class="step">
+            <h4>1. Bemeneti mód kiválasztása</h4>
+            <p>Válassza a "3D koordináták" opciót a bemeneti módok közül.</p>
+          </div>
+
+          <div class="step">
+            <h4>2. Pontok koordinátáinak megadása</h4>
+            <p>Adja meg a három pont 3D koordinátáit:</p>
+            <ul>
+              <li><strong>Pont 1:</strong> X, Y, Z koordináták</li>
+              <li><strong>Pont 2:</strong> X, Y, Z koordináták</li>
+              <li><strong>Pont 3:</strong> X, Y, Z koordináták</li>
+            </ul>
+          </div>
+
+          <div class="step">
+            <h4>3. Számítás indítása</h4>
+            <p>Kattintson a "Számítás" gombra az eredmények megjelenítéséhez.</p>
+          </div>
+
+          <div class="calculation-box">
+            <strong>Eredmények:</strong><br />
+            Irány: 45.2°<br />
+            Dőlés: 12.8°<br />
+            Normál vektor: (0.123, 0.456, 0.789)
+          </div>
+        </div>
+        <div class="column-2" style="margin-left: 20px">
+          <h3>Számítás felmérési adatokkal</h3>
+
+          <div class="step">
+            <h4>1. Bemeneti mód kiválasztása</h4>
+            <p>Válassza a "Felmérési adatok" opciót a bemeneti módok közül.</p>
+          </div>
+
+          <div class="step">
+            <h4>2. Felmérési adatok megadása</h4>
+            <p>Adja meg a három pont felmérési adatait:</p>
+            <ul>
+              <li><strong>Hossz:</strong> Távolság a pontok között</li>
+              <li><strong>Irány:</strong> Irány szögek</li>
+              <li><strong>Dőlés:</strong> Dőlés szögek</li>
+            </ul>
+          </div>
+
+          <div class="step">
+            <h4>3. Számítás és eredmények</h4>
+            <p>Kattintson a "Számítás" gombra és tekintse meg az eredményeket.</p>
+          </div>
+          <div class="calculation-box">
+            <strong>Eredmények:</strong><br />
+            Irány: 41.2°<br />
+            Dőlés: 22.9°<br />
+            Normál vektor: (0.123, 0.456, 0.789)
+          </div>
+        </div>
+      </div>
+
+      <h2>Legrövidebb út keresés</h2>
+
+      <div class="tool-box">
+        <h4>Legrövidebb út eszköz</h4>
+        <p>Ez az eszköz segít megtalálni a legrövidebb útvonalat két pont között ugyanabban a barlangban.</p>
+      </div>
+
+      <div class="row">
+        <div class="column-2">
+          <h3>Eszköz megnyitása</h3>
+
+          <div class="step">
+            <h4>1. lépés: Eszköz menü</h4>
+            <p>Kattintson a "Eszközök" menüre a navigációs sávban.</p>
+          </div>
+
+          <div class="step">
+            <h4>2. lépés: Legrövidebb út</h4>
+            <p>Válassza a "Legrövidebb út" opciót a menüből.</p>
+          </div>
+
+          <div class="step">
+            <h4>3. lépés: Szerkesztő panel</h4>
+            <p>Megnyílik a legrövidebb út kereső panel.</p>
+          </div>
+        </div>
+        <div class="column-2 image-placeholder black" style="flex: 30%; margin-left: 20px">
+          <img src="images/7-legrovidebb-ut.png"
+        /></div>
+      </div>
+
+      <h3>Útvonal keresése</h3>
+
+      <div class="step">
+        <h4>1. Kezdőpont kiválasztása</h4>
+        <p>Adja meg a kezdőpont nevét a "Ponttól" mezőben.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Végpont kiválasztása</h4>
+        <p>Adja meg a végpont nevét a "Pontig" mezőben.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Útvonal számítása</h4>
+        <p>Kattintson a "Legrövidebb út keresése" gombra a számítás indításához.</p>
+      </div>
+
+      <div class="step">
+        <h4>4. Eredmények megtekintése</h4>
+        <p>Az eredmények megjelennek a panelben:</p>
+        <ul>
+          <li><strong>Hossz:</strong> Teljes útvonal hossza</li>
+          <li
+            ><strong>Vizuális megjelenítés:</strong> Az útvonal megjelenik a 3D jelentben is, mint ahogy az a következő
+            képen is látható</li
+          >
+        </ul>
+      </div>
+      <div class="image-placeholder black"> <img src="images/7-legrovidebb-ut-pelda.png" /> </div>
+      <div class="info">A jeletben megjelenített útvonal színe és vastagsága a Beállítások panelen állítható.</div>
+
+      <h2>Távolság mérés</h2>
+
+      <div class="tool-box">
+        <h4>Távolság mérés eszköz</h4>
+        <p
+          >Ez az eszköz segít mérni a távolságokat pontok között és megjeleníti a részletes információkat a
+          távolságról.</p
+        >
+      </div>
+
+      <h3>Távolság mérés használata</h3>
+
+      <div class="step">
+        <h4>1. Pont kiválasztása</h4>
+        <p>Kattintson a 3D jelentben egy tetszőleges pontra</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Távolság menü</h4>
+        <p>A kontextus menüből válassza a "Távolság innen" vagy "Távolság ide" opciót.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Második pont kiválasztása</h4>
+        <p>Kattintson egy másik pontra a 3D jelentben a távolság méréséhez.</p>
+      </div>
+
+      <div class="step">
+        <h4>4. Eredmények megjelenítése</h4>
+        <p>A távolság információk megjelennek:</p>
+        <ul>
+          <li><strong>X távolság:</strong> X tengely irányú távolság</li>
+          <li><strong>Y távolság:</strong> Y tengely irányú távolság</li>
+          <li><strong>Z távolság:</strong> Z tengely irányú távolság</li>
+          <li><strong>Vízszintes távolság:</strong> XY síkbeli távolság</li>
+          <li><strong>Térbeli távolság:</strong> 3D távolság</li>
+          <li><strong>Irány:</strong> Irány szög</li>
+          <li><strong>Dőlés:</strong> Dőlés szög</li>
+        </ul>
+        <strong>Vizuális megjelenítés:</strong> Egy távolságot reprezentáló vonal megjelenik a 3D jelentben is, mint
+        ahogy az a következő képen is látható, ez a panel bezárása után eltűnik.
+      </div>
+      <div class="image-placeholder black"> <img src="images/7-tavolsag.png" /> </div>
+
+      <h2>Pont megkeresés</h2>
+
+      <div class="tool-box">
+        <h4>Pont megkeresés eszköz</h4>
+        <p>Ez az eszköz segít gyorsan megtalálni és lokalizálni egy pontot a 3D jelenetben.</p>
+      </div>
+
+      <h3>Pont megkeresése</h3>
+
+      <div class="step">
+        <h4>1. Eszköz aktiválása</h4>
+        <p>Kattintson a "Pont megkeresése" gombra a navigációs sávban.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Pont neve megadása</h4>
+        <p>Írja be a keresett pont nevét a megkeresés mezőbe.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Keresés indítása</h4>
+        <p>Kattintson a "Keresése" gombra.</p>
+      </div>
+
+      <div class="step">
+        <h4>4. Pont lokalizálása</h4>
+        <p>Ha a pont megtalálható, a kamera automatikusan odanavigál és kiemeli a pontot egy fehér körrel</p>
+      </div>
+
+      <div class="image-placeholder black"> <img src="images/7-lokalizalas.png" /> </div>
+
+      <h2>Forgatás eszköz</h2>
+
+      <div class="tool-box">
+        <h4>Forgatás eszköz</h4>
+        <p>Ez az eszköz segít a jelenet orientációjának beállításában és a kamera pozíciójának finomhangolásában.</p>
+      </div>
+
+      <h3>Forgatás eszköz használata</h3>
+
+      <div class="step">
+        <h4>1. Eszköz megnyitása</h4>
+        <p>Kattintson a "Forgatás eszköz" gombra a navigációs sávban.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Forgatás beállítása</h4>
+        <p
+          >A forgatás eszköz panelben állítsa be a kívánt szögeket vagy az értékek megadásával, vagy a piros nyilak
+          mozgatásával:</p
+        >
+        <ul>
+          <li><strong>Szög:</strong> Forgatási szög</li>
+          <li><strong>Dőlés:</strong> Dőlési szög (csak a 3D nézetben működik)</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h4>3. Forgatás alkalmazása</h4>
+        <p>A beállított szögek automatikusan alkalmazódnak a jelenetre.</p>
+      </div>
+
+      <div class="image-placeholder black"> <img src="images/7-forgatas.gif" /> </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte az eszközöket, folytathatja az
+        <a href="10-exportalas.html">exportálás és megosztás</a> fejezettel, ahol megtanulja, hogyan exportálhatja és
+        ossza meg a barlang adatokat.</p
+      >
+
+      <div class="nav">
+        <a href="08-attributumok.html">← Előző: Attribútumok</a>
+        <a href="index.html">Főoldal</a>
+        <a href="10-exportalas.html">Következő: Exportálás →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

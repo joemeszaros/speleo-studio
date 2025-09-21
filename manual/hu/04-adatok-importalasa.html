@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adatok importálása - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Adatok importálása</h1>
+
+      <div class="nav">
+        <a href="03-adatmodell.html">← Előző: Adatmodell és struktúra</a>
+        <a href="index.html">Főoldal</a>
+        <a href="05-3d-vizualizacio.html">Következő: 3D vizualizáció →</a>
+      </div>
+
+      <h2>Importálás áttekintése</h2>
+      <p
+        >A Speleo Studio több különböző formátumot támogat a barlang és felszíni adatok importálásához, amely lehetővé
+        teszi, hogy a meglévő felmérési adatokat könnyedén betöltse az alkalmazásba.</p
+      >
+
+      <div class="info">
+        <h3>Támogatott formátumok:</h3>
+        <ul>
+          <li><strong>JSON:</strong> Speleo Studio natív formátuma</li>
+          <li><strong>Polygon (.cave):</strong> Polygon szoftver formátuma</li>
+          <li><strong>TopoDroid (.csv):</strong> TopoDroid Android alkalmazás exportja</li>
+          <li><strong>PLY:</strong> 3D felszín modellek</li>
+        </ul>
+      </div>
+
+      <h2>Importálás menete</h2>
+
+      <div class="step row">
+        <div class="column-2">
+          <h3>1. lépés: Importálás indítása</h3>
+          <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő importálási opciót:</p>
+          <ul>
+            <li><strong>"Barlang(ok) megnyitása":</strong> JSON és .cave fájlokhoz</li>
+            <li><strong>"Model megnyitása":</strong> PLY fájlokhoz</li>
+          </ul>
+        </div>
+
+        <div class="image-placeholder column-2 black"> <img width="200" src="images/4-file-menu.png" /></div>
+      </div>
+
+      <div class="step row">
+        <div class="column-2">
+          <h3>2. lépés: Fájl kiválasztása</h3>
+          <p>A fájl kiválasztó ablakban navigáljon a kívánt fájlhoz és kattintson a "Megnyitás" gombra.</p>
+        </div>
+        <div class="image-placeholder column-2 black" style="flex: 70%">
+          <img width="500" src="images/4-fajl-panel.png" />
+        </div>
+      </div>
+
+      <div class="step row">
+        <div class="column-2">
+          <h3>3. lépés: Importálás feldolgozása</h3>
+          <p
+            >Az alkalmazás automatikusan feldolgozza a fájlt és betölti a barlangot. Ha nem volt semmi probléma az
+            importálás során, a barlang megjelenik a felfedező panelben és a 3D nézetablakban. Gratulálunk! 🎉🎊✨</p
+          >
+        </div>
+        <div class="image-placeholder column-2 black small-padding" style="flex: 70%">
+          <img src="images/4-barlang.png" />
+        </div>
+      </div>
+
+      <h2>JSON formátum importálása</h2>
+
+      <div class="format-box">
+        <h4>JSON formátum</h4>
+        <p
+          >A JSON a Speleo Studio natív formátuma, amely teljes barlang adatokat tartalmaz, beleértve a felméréseket,
+          attribútumokat és metaadatokat.</p
+        >
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>Teljes adatmegőrzés</li>
+          <li>Attribútumok és metaadatok</li>
+          <li>EOV koordináták</li>
+          <li>Elterjedt adatformátum, amelyet más szoftverek is feldolgozhatnak</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>JSON importálása</h3>
+        <p>1. Kattintson a "Fájl" → "Barlang(ok) megnyitása" menüre</p>
+        <p>2. Válassza ki a .json fájlt</p>
+        <p>3. Az alkalmazás automatikusan betölti a teljes barlang adatokat</p>
+      </div>
+
+      <div class="code-example">
+        { "name": "Példa Barlang", "metadata": { "settlement": "Példa Város", "catasterCode": "12345", "date":
+        "2024-01-01" }, "surveys": [...], "stations": [...], "attributes": [...] }
+      </div>
+
+      <h2>Polygon (.cave) formátum importálása</h2>
+
+      <div class="format-box">
+        <h4>Polygon formátum</h4>
+        <p
+          >A Polygon szoftver régi motoros, nem kell bemutatni senkinek. A .cave fájlok tartalmazhatják a felmérési
+          adatokat és néhány alapvető adatot a barlangról és a felmérésekről.</p
+        >
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>Polygon szoftver kompatibilitás</li>
+          <li>Felmérési adatok megőrzése</li>
+          <li>Alapvető tulajdonságok</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>Polygon fájl importálása</h3>
+        <p>1. Kattintson a "Fájl" → "Barlang(ok) megnyitása" menüre</p>
+        <p>2. Válassza ki a .cave fájlt</p>
+        <p>3. Az alkalmazás megnyitja a Polygon fájlt</p>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ Polygon importálás megjegyzések</h3>
+        <ul>
+          <li>A Polygon formátum nem támogatja az attribútumokat</li>
+          <li>A Polygon formátum csak a legalapvetőbb felmérési és barlang adatokat tartalmazza</li>
+          <li>A Polygon formátum karakterkészlete eléggé limitált (ISO8859-2)</li>
+        </ul>
+      </div>
+
+      <h2>TopoDroid (.csv) formátum importálása</h2>
+
+      <div class="format-box">
+        <h4>TopoDroid formátum</h4>
+        <p
+          >A TopoDroid egy elterjedt Android alkalmazás, amellyel felméréseket végezhetünk a barlangokban. A CSV export
+          tartalmazza a felmérési adatokat egyszerű szöveges formátumban, amelyet exportálnunk kell a TopoDroid
+          alkalmazásból.</p
+        >
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>Sokak által használt alkalmazás, támogatása alapvető fontosságú</li>
+          <li>Egyszerű formátum</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>TopoDroid CSV exportálása</h3>
+        <p>1. Menjünk TopoDroidban a felmérés adatlapjára (Survey Info)</p>
+        <p>2. Kattintsunk a jobb felső sarokban lévő három pontra</p>
+        <p>3. A lenyíló menüben válasszuk a "Export" opciót</p>
+        <p
+          >4. A megnyíló ablakban válasszuk ki a "CSV" opciót és távolítsuk el a pipát az "Összed adat" (Whole record)
+          négyzetből</p
+        >
+        <p
+          >4. Az exportált fájlt töltsük fel a Speleo Studio-t futtató eszközre (pl. laptop). A fájl a TopoDroid
+          mappáján belül a felmérés "out" mappájában lesz (TDX/TopoDroid/felmérés/out/felmérés.csv)</p
+        >
+      </div>
+
+      <div class="image-placeholder column-2 black small-padding" style="flex: 70%">
+        <img style="max-width: 300px" src="images/4-topodroid-1.png" />
+        <img style="max-width: 300px" src="images/4-topodroid-2.png" />
+      </div>
+
+      <div class="step">
+        <h3>TopoDroid felmérés hozzáadása egy barlanghoz</h3>
+        <p
+          >1. Az oldalsávban nyissuk meg a "Felfedező" panelt és kattintsunk annak a barlangnak a nevére, amelyhez a
+          felmérést szeretnénk hozzáadni</p
+        >
+        <p>2. A megjelenő ikon sávból kattintsunk a TopoDroid ikonra</p>
+        <p>3. A felnyíló ablakban válasszuk ki az eszközön lévő CSV fájlt</p>
+        <p>4. A felmérés megjelenik a barlang felmérései között</p>
+      </div>
+
+      <div class="image-placeholder column-2 black small-padding" style="flex: 70%">
+        <img src="images/4-topodroid-3.png" />
+        <img src="images/4-topodroid-4.png" />
+      </div>
+
+      <div class="step">
+        <h3>TopoDroid felmérés hozzáadása egy felméréshez</h3>
+        <p
+          >1. Az oldalsávban nyissuk meg a "Felfedező" panelt és nyissuk ki a kiválasztott barlang felméréseinek
+          listáját. Kattintsunk arra a felmérésre, amelyhez a TopoDroid felmérést szeretnénk hozzáadni</p
+        >
+        <p>2. A megjelenő ikon sávból kattintsunk a TopoDroid ikonra</p>
+        <p>3. A felnyíló ablakban válasszuk ki az eszközön lévő CSV fájlt</p>
+        <p>4. A felmérés mérési pontjai automatikusan hozzáadódnak a kiválasztott felméréshez</p>
+      </div>
+
+      <div class="image-placeholder black small-padding">
+        <img style="width: 50%" src="images/4-topodroid-5.png" />
+      </div>
+
+      <div class="warning">
+        <h3
+          >⚠️ A már létező méréseket nem veszi figyelembe a TopoDroid felmérésből a Speleo Studio, azokat kihagyja!'</h3
+        >
+      </div>
+
+      <h4>TopoDroid CSV fájl példa</h4>
+      <!-- prettier-ignore -->
+      <div class="code-example">
+# 2025.09.07 [*] created by TopoDroid v 6.3.20
+# name: Barlang neve
+# date: 2024.01.21
+# team: Jane,Joe
+# declination: 5.6
+# units: tape meter compass clino degree
+# from, to, tape, compass, clino, extend, flags, comment
+0@felmeres,1@felmeres,7.51,310.6,-6.8,1,,"A bejárat után jobbra a falon"
+0@felmeres,-,6.26,314.06,-54.38,,,""
+0@felmeres,-,14.56,313.81,-45.78,,,""
+      </div>
+
+      <div class="info">
+        <h3>CSV formátum struktúra</h3>
+        <p
+          >A CSV fájl formátuma a TopoDroid verziótól függően változhat, ezért az importert Holl Balázs javaslatára
+          megpróbáltam felkészíteni ezekre a változásokra és robosztusan kezelni az adatokat.</p
+        >
+      </div>
+
+      <h2>PLY felszín modellek importálása</h2>
+
+      <div class="format-box">
+        <h4>PLY formátum</h4>
+        <p
+          >A PLY (Polygon File Format) egy 3D felszín modell formátum, amelyet 3D szkennelés vagy fotogrammetria
+          eredményeként kaphat.</p
+        >
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>3D felszín megjelenítés</li>
+          <li>Magas részletesség</li>
+          <li>Színes textúrák</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>PLY fájl importálása</h3>
+        <p>1. Kattintson a "Fájl" → "Model megnyitása" menüre</p>
+        <p>2. Válassza ki a .ply fájlt</p>
+        <p>3. Az alkalmazás betölti a 3D modellt</p>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ PLY importálás megjegyzések</h3>
+        <ul>
+          <li>Nagy fájlok lassú betöltést okozhatnak</li>
+          <li>Memória igényes lehet</li>
+          <li>Nem szerkeszthető</li>
+        </ul>
+      </div>
+
+      <h2>Importált felmérés sorrendjének módosítása</h2>
+      <p
+        >A Speleo Studio támogatja a importált felmérés sorrendjének módosítását. A sorrend módosításához kattintsunk a
+        felmérésre és lenyomva tarva az egeret a felmérést mozgassuk a megfelelő helyre (drag & drop funkcióval) vagy a
+        felmérés nevére kattintva a jobb oldalon megjelenő felfele nyílra kattintva.</p
+      >
+      <p
+        >Ez akkor különösen hasznos, ha sok felmérésünk van és nem akarjuk drag & drop funkcióval mozgatni a felmérést a
+        megfelelő helyre.</p
+      >
+      <p>A felmérések átrendeződésével a Speleo Studio automatikusan frissíti a középvonal (poligon) számítását.</p>
+
+      <h2>Importálási hibák és megoldások</h2>
+
+      <div class="warning">
+        <h3>Fájl nem nyílik meg</h3>
+        <p><strong>Probléma:</strong> A fájl formátuma nem támogatott vagy sérült.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze a fájl kiterjesztését és integritását.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Adatok hiányoznak</h3>
+        <p><strong>Probléma:</strong> Az importálás után nem minden adat jelenik meg.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze a forrás fájl formátumát és a Speleo Studio kompatibilitását.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Koordináta problémák</h3>
+        <p><strong>Probléma:</strong> A barlang rossz helyen jelenik meg a térben.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze az EOV koordinátákat és a koordináta rendszer beállításait.</p>
+      </div>
+
+      <div class="warning">
+        <h3
+          >A következő hibát kapom: A(z) <i>XX</i> nevű barlang túl messze van a korábban importált barlangoktól:
+          <i>YY</i> - <i>DD</i> km</h3
+        >
+        <p
+          ><strong>Probléma:</strong> Az imporálni kívánt barlang meghaladja a megengedett legnagyobb távolságot két
+          barlang között, amely 2 km. Ezt a távolságot a Speleo Studio korábban importált barlangok között méri ki.</p
+        >
+        <p
+          ><strong>Megoldás:</strong> Csökkentse a barlangok távolságát, vagy importálja a barlangokat külön
+          projektekben.</p
+        >
+      </div>
+
+      <div class="warning">
+        <h3
+          >A következő hibát kapom: A(z) <i>XX</i> nevű barlang túl messze van a korábban importált barlangoktól:
+          Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál
+        </h3>
+        <p
+          ><strong>Probléma:</strong> Vagy a már importált barlangokhoz van EOV koordináta és az imporálni kívánt
+          barlanghoz nincs, vagy fordítva..</p
+        >
+        <p
+          ><strong>Megoldás:</strong> EOV koordináta felvétele annál a barlangnál, amelynek nem volt EOV
+          koordinátája.</p
+        >
+      </div>
+
+      <h2>Importálás utáni ellenőrzés</h2>
+
+      <div class="step">
+        <h3>1. Felfedező panel ellenőrzése</h3>
+        <p>Ellenőrizze, hogy a barlang megjelent-e a felfedező panelben a megfelelő névvel.</p>
+      </div>
+
+      <div class="step">
+        <h3>2. 3D megjelenítés ellenőrzése</h3>
+        <p>Nézze meg a 3D viewportban, hogy a barlang megfelelően jelenik-e meg.</p>
+      </div>
+
+      <div class="step">
+        <h3>3. Felmérések ellenőrzése</h3>
+        <p>Bontsa ki a barlangot a felfedező panelben és ellenőrizze a felmérések listáját.</p>
+      </div>
+
+      <div class="step">
+        <h3>4. Attribútumok ellenőrzése</h3>
+        <p>Ellenőrizze, hogy az attribútumok megfelelően importálódtak-e.</p>
+      </div>
+
+      <h2>Több fájl importálása</h2>
+
+      <div class="info">
+        <h3>Tömeges importálás</h3>
+        <p>A Speleo Studio támogatja több fájl egyszerre történő importálását:</p>
+        <ul>
+          <li>Több JSON vagy .cave fájl kiválasztása</li>
+          <li>Automatikus feldolgozás sorrendben</li>
+          <li>Hibás fájlok kihagyása</li>
+        </ul>
+      </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy importálta az adatokat, folytathatja a
+        <a href="05-3d-vizualizacio.html">3D vizualizáció és navigáció</a> fejezettel, ahol megtanulja, hogyan
+        navigáljon és vizualizálja a barlang adatokat.</p
+      >
+
+      <div class="nav">
+        <a href="03-adatmodell.html">← Előző: Adatmodell és struktúra</a>
+        <a href="index.html">Főoldal</a>
+        <a href="05-3d-vizualizacio.html">Következő: 3D vizualizáció →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

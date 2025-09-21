@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Projekt kezelés - Speleo Studio</title>
     <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
   </head>
   <body>
     <div class="container">
@@ -16,7 +30,7 @@
       <div class="nav">
         <a href="01-bevezetes.html">← Előző: Bevezetés</a>
         <a href="index.html">Főoldal</a>
-        <a href="02b-adatmodell.html">Következő: Adatmodell és struktúra →</a>
+        <a href="03-adatmodell.html">Következő: Adatmodell és struktúra →</a>
       </div>
 
       <h2>Mi az a projekt?</h2>
@@ -32,14 +46,14 @@
           <li><strong>Barlangok:</strong> Egy vagy több barlang adatai (pl. kataszteri szám)</li>
           <li><strong>Felmérések:</strong> Minden barlanghoz tartozó felmérési adatok</li>
           <li><strong>Attribútumok:</strong> Kiegészítő információk a barlang egyes pontjaihoz vagy szakaszaihoz</li>
-          <li><strong>3D modellek:</strong> 3D moellek, mint például a felszín</li>
+          <li><strong>3D modellek:</strong> 3D modellek, mint például a felszín</li>
         </ul>
       </div>
 
       <h2>Projekt kezelő panel</h2>
       <p>A projekt kezelő panel az alkalmazás központi eleme, ahol létrehozhat, megnyithat és kezelhet projekteket.</p>
 
-      <div class="image-placeholder"> <img src="images/2-projekt-kezelo.png" alt="Projekt kezelő panel" /> </div>
+      <div class="image-placeholder black"> <img src="images/2-projekt-kezelo.png" alt="Projekt kezelő panel" /> </div>
 
       <h3>Panel megnyitása</h3>
       <p>A projekt kezelő panelt több módon is megnyithatja:</p>
@@ -207,7 +221,7 @@
       <div class="warning">
         <h3>Projekt nem nyílik meg</h3>
         <p><strong>Probléma:</strong> A projekt fájl sérült vagy nem kompatibilis.</p>
-        <p><strong>Megoldás:</strong> Ellenőrizze a fájl integritását, vagy importálja újra a adatokat.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze a fájl integritását, vagy importálja újra az adatokat.</p>
       </div>
 
       <div class="warning">
@@ -225,13 +239,13 @@
       <h2>Következő lépések</h2>
       <p
         >Most, hogy megismerte a projekt kezelést, folytathatja az
-        <a href="02b-adatmodell.html">adatok modelljének</a> megértésével.</p
+        <a href="03-adatmodell.html">adatok modelljének</a> megértésével.</p
       >
 
       <div class="nav">
         <a href="01-bevezetes.html">← Előző: Bevezetés</a>
         <a href="index.html">Főoldal</a>
-        <a href="02b-adatmodell.html">Következő: Adatmodell és struktúra →</a>
+        <a href="03-adatmodell.html">Következő: Adatmodell és struktúra →</a>
       </div>
 
       <div class="donation-footer">

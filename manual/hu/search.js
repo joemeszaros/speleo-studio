@@ -7,18 +7,17 @@ class ManualSearch {
     this.pages = [
       { url: '01-bevezetes.html', title: 'Bevezetés és első lépések' },
       { url: '02-projekt-kezeles.html', title: 'Projekt kezelés' },
-      { url: '02b-adatmodell.html', title: 'Adatmodell és struktúra' },
-      { url: '03-adatok-importalasa.html', title: 'Adatok importálása' },
-      { url: '04-3d-vizualizacio.html', title: '3D vizualizáció és navigáció' },
-      { url: '04b-barlang-szerkesztese.html', title: 'Barlang szerkesztése' },
-      { url: '05-felmereek-szerkesztese.html', title: 'Felmérések szerkesztése' },
-      { url: '06-attributumok.html', title: 'Attribútumok kezelése' },
-      { url: '07-eszkozok.html', title: 'Eszközök és számítások' },
-      { url: '08-exportalas.html', title: 'Exportálás és megosztás' },
-      { url: '09-beallitasok.html', title: 'Beállítások és testreszabás' },
-      { url: '10-tippek-trukkok.html', title: 'Tippek és trükkök' },
-      { url: '11-tamogatas.html', title: 'Támogatás és adományozás' },
-      { url: '12-about.html', title: 'A projektről' }
+      { url: '03-adatmodell.html', title: 'Adatmodell és struktúra' },
+      { url: '04-adatok-importalasa.html', title: 'Adatok importálása' },
+      { url: '05-3d-vizualizacio.html', title: '3D vizualizáció és navigáció' },
+      { url: '06-barlang-szerkesztese.html', title: 'Barlang szerkesztése' },
+      { url: '07-felmereek-szerkesztese.html', title: 'Felmérések szerkesztése' },
+      { url: '08-attributumok.html', title: 'Attribútumok kezelése' },
+      { url: '09-eszkozok.html', title: 'Eszközök és számítások' },
+      { url: '10-exportalas.html', title: 'Exportálás és megosztás' },
+      { url: '11-beallitasok.html', title: 'Beállítások és testreszabás' },
+      { url: '12-tamogatas.html', title: 'Támogatás és adományozás' },
+      { url: '13-about.html', title: 'A projektről' }
     ];
     this.pageContent = new Map();
     this.init();

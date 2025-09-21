@@ -1520,3 +1520,252 @@ a:hover {
     font-size: 1.3em;
   }
 }
+
+/* Print-specific styles for PDF generation */
+@media print {
+  /* Hide search functionality */
+  .search-container {
+    display: none !important;
+  }
+
+  /* Hide manual cards grid */
+  .manual-grid {
+    display: none !important;
+  }
+
+  /* Hide donation highlight section */
+  .donation-highlight {
+    display: none !important;
+  }
+
+  /* Hide donation footer */
+  .donation-footer {
+    display: none !important;
+  }
+
+  /* Hide PDF generation buttons */
+  .intro a[href*='pdf-instructions.html'],
+  .intro a[href*='single-pdf-guide.html'] {
+    display: none !important;
+  }
+
+  /* Ensure proper page breaks */
+  .toc {
+    page-break-after: always;
+  }
+
+  /* Optimize spacing for print */
+  .container {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+  }
+
+  /* Remove any background colors and margins from body */
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  /* Ensure full width for all content */
+  .intro,
+  .toc,
+  .step,
+  .info,
+  .warning,
+  .note,
+  .format-box,
+  .settings-box,
+  .comparison-table {
+    margin: 0 !important;
+    padding: 10px !important;
+    background: transparent !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Remove any box shadows or borders that create the "box" effect */
+  .container,
+  .intro,
+  .toc,
+  .step,
+  .info,
+  .warning,
+  .note,
+  .format-box,
+  .settings-box,
+  .comparison-table {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Hide navigation elements that are not needed in PDF */
+  .nav {
+    display: none !important;
+  }
+
+  /* Hide logo from content - it will be in header instead */
+  .logo {
+    display: none !important;
+  }
+
+  /* Fix Unicode character display in PDF */
+  body {
+    font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif !important;
+  }
+
+  /* Ensure proper Unicode support */
+  * {
+    font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif !important;
+  }
+
+  /* Hide problematic Unicode characters */
+  h1,
+  h2,
+  h3 {
+    font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif !important;
+  }
+
+  /* Force text rendering for better Unicode support */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Compact layout for PDF - reduce font sizes */
+  body {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  h1 {
+    font-size: 16px !important;
+    margin: 8px 0 6px 0 !important;
+    padding: 0 !important;
+  }
+
+  h2 {
+    font-size: 14px !important;
+    margin: 6px 0 4px 0 !important;
+    padding: 0 !important;
+  }
+
+  h3 {
+    font-size: 12px !important;
+    margin: 4px 0 3px 0 !important;
+    padding: 0 !important;
+  }
+
+  h4 {
+    font-size: 11px !important;
+    margin: 3px 0 2px 0 !important;
+    padding: 0 !important;
+  }
+
+  h5 {
+    font-size: 10px !important;
+    margin: 2px 0 1px 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reduce paragraph spacing */
+  p {
+    margin: 2px 0 !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Compact lists */
+  ul,
+  ol {
+    margin: 2px 0 !important;
+    padding: 0 0 0 15px !important;
+  }
+
+  li {
+    margin: 1px 0 !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Reduce spacing in content boxes */
+  .intro,
+  .toc,
+  .step,
+  .info,
+  .warning,
+  .note,
+  .format-box,
+  .settings-box,
+  .comparison-table {
+    margin: 2px 0 !important;
+    padding: 5px !important;
+  }
+
+  /* Compact tables */
+  table {
+    font-size: 9px !important;
+    margin: 2px 0 !important;
+  }
+
+  th,
+  td {
+    padding: 2px 4px !important;
+    font-size: 9px !important;
+  }
+
+  /* Reduce image sizes */
+  img {
+    max-width: 60% !important;
+    max-height: 200px !important;
+    height: auto !important;
+    margin: 2px 0 !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Smaller images for screenshots and diagrams */
+  .image-placeholder img,
+  .step img,
+  .info img,
+  .warning img,
+  .note img {
+    max-width: 90% !important;
+    max-height: 350px !important;
+    height: auto !important;
+    margin: 3px auto !important;
+  }
+
+  /* Very small images for icons */
+  img[alt*='icon'],
+  img[alt*='Icon'],
+  img[alt*='logo'],
+  img[alt*='Logo'] {
+    max-width: 30px !important;
+    max-height: 30px !important;
+    height: auto !important;
+    margin: 1px auto !important;
+  }
+
+  /* Compact code blocks */
+  code,
+  pre {
+    font-size: 9px !important;
+    margin: 1px 0 !important;
+    padding: 2px !important;
+  }
+
+  /* Reduce margins between sections */
+  .step + .step,
+  .info + .info,
+  .warning + .warning {
+    margin-top: 5px !important;
+  }
+}

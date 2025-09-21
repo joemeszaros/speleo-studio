@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bevezetés és első lépések - Speleo Studio</title>
     <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <!-- The following 14 lines are required to fix emojis in the generated PDF file -->
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
   </head>
   <body>
     <div class="container">
@@ -32,7 +47,7 @@
           <li><strong>3D vizualizáció:</strong> Interaktív 3D barlangrendszerek megjelenítése</li>
           <li><strong>Adatimportálás:</strong> Több formátum támogatása (TopoDroid, Polygon, JSON, PLY)</li>
           <li><strong>Felmérés szerkesztés:</strong> Felmérési adatok szerkesztése és validálása</li>
-          <li><strong>Attribútumok:</strong>Kiegészíétő információk rendelése pontokhoz vagy szakaszokhoz</li>
+          <li><strong>Attribútumok:</strong>Kiegészítő információk rendelése pontokhoz vagy szakaszokhoz</li>
           <li><strong>Segédeszközök:</strong> Dőlés-irány számító, legrövidebb út keresés és még több segédeszköz</li>
           <li><strong>Exportálás:</strong> Különböző formátumokba exportálás (PNG, DXF, JSON)</li>
           <li><strong>Projekt kezelés:</strong> Több barlang és felmérés szervezése projektekben</li>
@@ -71,7 +86,9 @@
           betöltődik. Első indításkor megjelenik az üdvözlő panel, amely bemutatja az alkalmazás főbb funkcióit.
           Kattintson a "Kezdjük el" gombra a folytatáshoz.</p
         >
-        <div class="image-placeholder"> <img src="images/1-welcome.png" alt="Üdvözlő panel" /> </div>
+        <div class="image-placeholder black small-padding">
+          <img src="images/1-welcome.png" alt="Üdvözlő panel" />
+        </div>
       </div>
 
       <div class="step">
@@ -79,9 +96,9 @@
         <p
           >Ha angolul jelent meg az üdvözlő panel és Ön a Speleo Studio-t magyarul szeretné használni, akkor kattintson
           a nyelv választó gombra a navigációs sáv ikonjaitól jobbra és válassza a magyar nyelvet. A Speleo Studio
-          angolul és magyarul érhető el. A Speleo Studio magyar és angol nyelven érhető el jelenleg.</p
+          magyar és angol nyelven érhető el jelenleg.</p
         >
-        <div class="image-placeholder"> <img src="images/1-nyelv.png" alt="Nyelv" /> </div>
+        <div class="image-placeholder black small-padding"> <img src="images/1-nyelv.png" alt="Nyelv" /> </div>
       </div>
 
       <div class="step">
@@ -91,13 +108,15 @@
           nyithat meg. Projekt nélkül nem lehet barlangokat importálni és azokat szerkeszteni és bizonyos funkciók nem
           elérhetőek. A projekt kezelő bezárásával a Speleo Studio kezelői felülete válik láthatóvá.</p
         >
-        <div class="image-placeholder"> <img src="images/1-projekt-panel.png" alt="Projekt kezelő panel" /> </div>
+        <div class="image-placeholder black small-padding">
+          <img src="images/1-projekt-panel.png" alt="Projekt kezelő panel" />
+        </div>
       </div>
 
       <h2>Felület áttekintése</h2>
 
       <h3>Főbb területek</h3>
-      <div class="image-placeholder">
+      <div class="image-placeholder black small-padding">
         <img src="images/1-opening-screen.png" alt="Speleo Studio felület áttekintése" />
       </div>
 
@@ -118,7 +137,7 @@
 
       <h3>2. 3D nézetablak (középső terület) - narancssárga keret</h3>
       <p
-        >Ez az a 3 dimenziós viurtális tér, ahol a barlangok megjelennek 3D-ben. Itt navigálhat a jelenetben,
+        >Ez az a 3 dimenziós virtuális tér, ahol a barlangok megjelennek 3D-ben. Itt navigálhat a jelenetben,
         kiválaszthat pontokat és használhatja a vizualizációs eszközöket. Egy későbbi fejezet részletesen ismerteti a
         funkciókat.</p
       >
@@ -142,12 +161,12 @@
           <p
             >Az oldalsáv tetején az ábrán piros kerettel mutatott oldalra mutató nyíllal az
             <strong>oldalsáv mérete minimalizálható</strong>, majd újra a nyílra kattintva visszaállítható. Ha
-            szeretnénk maximalizálni a 3D nézetablak méretét, akkor érdemes minimalizálni az olalsávot.
+            szeretnénk maximalizálni a 3D nézetablak méretét, akkor érdemes minimalizálni az oldalsávot.
           </p>
           <p>
-            Az oldalsás <strong>szélessége tetszőleges méretűre állítható </strong> az oldalsáv szélére kattinva (lila
+            Az oldalsáv <strong>szélessége tetszőleges méretűre állítható </strong> az oldalsáv szélére kattinva (lila
             vonal az ábrán) az egeret lenyomva tartva és azt húzva a szélesság változik. Csak akkor nyomjuk le az egeret
-            a szélesség álításához, ha az egerünk megváltozik átméretező ikonra (<img
+            a szélesség állításához, ha az egerünk megváltozik átméretező ikonra (<img
               width="20"
               style="margin: 0px"
               src="images/1-resize.png"
@@ -168,20 +187,20 @@
           <p>
             A felfedező panel tetején lévő kereső a <strong>barlangok és felmérések szűrésére </strong> szolgál (zöld
             keret az ábrán). Ha a kereső mező bal szélén a barlang mód van kiválasztva (lila omega az ábrán), a keresés
-            a barlangok és felmérések neve alapján szűri a listát. Ha a tőle jobbra lévő pont kereső ikora kattintunk,
+            a barlangok és felmérések neve alapján szűri a listát. Ha a tőle jobbra lévő pont kereső ikonra kattintunk,
             akkor a felmérések mérési adatainak egyezése alapján szűri a listát. Magyarán ha egy felmérésben
-            "mellekag-1" es "mellekag-2" nevű mérés van, akkor a kereső mezőbe "mellegag"-at írva az adott felmérés
+            "mellekag-1" es "mellekag-2" nevű mérés van, akkor a kereső mezőbe "mellekag"-at írva az adott felmérés
             biztosan megjelenik. Ez a funkció akkor hasznos, ha tudjuk egy mérési pont nevét, de nem tudjuk melyik
             felmérésben szerepel, viszont szeretnénk szerkeszteni az adatait (hossz, irány, ...)
           </p>
           <p>
-            Az oldalság alján a <strong>3D jelenet áttekintő</strong> mutatja a 3D jelenetet kicsiben. Az áttekintő
+            Az oldalsáv alján a <strong>3D jelenet áttekintő</strong> mutatja a 3D jelenetet kicsiben. Az áttekintő
             mérete minimalizálható vagy a Ctrl+G billentyűvel vagy a fejlécében lévő kis lefele mutató háromszögre
             kattintva.
           </p>
         </div>
-        <div class="image-placeholder column-2">
-          <img style="flex: 20%" width="400" class="small-padding" src="images/1-oldalsav.png" alt="Oldalsáv" />
+        <div class="image-placeholder column-2 black small-padding">
+          <img style="flex: 20%; max-width: 400px" class="small-padding" src="images/1-oldalsav.png" alt="Oldalsáv" />
         </div>
       </div>
 
@@ -192,7 +211,7 @@
       <div class="row">
         <div class="column-2">
           <p>
-            A balang vagy felfedezés nevére kattinva megjelenik egy <strong>ikonsáv</strong>, amely a barlang vagy
+            A barlang vagy felfedezés nevére kattinva megjelenik egy <strong>ikonsáv</strong>, amely a barlang vagy
             felfedezés szerkesztését, tulajdonságainak változtatását és törlését teszi lehetővé.
           </p>
           <p> Barlang esetén az ikonok a következők: </p
@@ -209,7 +228,7 @@
             <li><strong>📍 Pont attribútumok:</strong> Pont attribútumok szerkesztése</li>
             <li><strong>🔀 Szakasz attribútumok:</strong> Szakasz attribútumok szerkesztése</li>
             <li><strong>🧩 Komponens attribútumok:</strong> Komponens attribútumok szerkesztése</li>
-            <li><strong>🔄 Hurkok:</strong> Hurkok keresése, megjelnítése és hibák eliminálása</li>
+            <li><strong>🔄 Hurkok:</strong> Hurkok keresése, megjelenítése és hibák eliminálása</li>
             <li><strong>🎨 Szín</strong> Barlang színének változtatása</li>
             <li
               ><strong
@@ -257,6 +276,40 @@
         </div>
       </div>
 
+      <h2>Ablakok áttekintése</h2>
+      <div class="image-placeholder black small-padding">
+        <img src="images/1-ablak.png" alt="Ablakok" />
+      </div>
+      <p
+        >A Speleo Studio az adatok szerkesztését, információk megjelenítését és a különböző eszközök használatát ablakok
+        segítségével végzi hasonlóan az operációs rendszerekhez. Az ablakoknak mindig van egy fejléce (piros nyíl jelzi
+        a fenti képen), amelyre kattinva és azt húzva <strong>az ablak mozgatható</strong> a képernyőn.</p
+      >
+      <p
+        >Az ablakok a 3D jelenet felett jelennek meg, így egyszerre láthatjuk a jelenet és az ablakokat. Ez például
+        szerkesztéskor jó, hogy nem kell átkattintani a jelenet és az ablakok között.</p
+      >
+      <p
+        >A fejléc jobb szélén található piros ikonra (<img
+          width="20"
+          style="margin: 0px"
+          src="../../icons/close.svg"
+        />) kattinva vagy a <code>Ctrl + w</code> billentyű kombinációval a <strong>az ablak bezárható</strong>.</p
+      >
+
+      <p
+        >A fejléc jobb szélén gyakran találunk egy narancsárga ikont (<img
+          width="20"
+          style="margin: 0px"
+          src="../../icons/minimize.svg"
+        />) amelyre kattintva <strong>az ablak összecsukható</strong>, azaz csak a fejléc látszik, az ablak tartalma
+        nem.</p
+      >
+      <p
+        >Az ablak jobb szélét, illetve az alját kattintva és az egeret húzva <strong>az ablak átméretezhető</strong>.
+        Ezt a fenti képen zöld sávok jelzik.</p
+      >
+
       <h2>Alapvető navigáció</h2>
 
       <h3>Egér vezérlés</h3>
@@ -283,6 +336,7 @@
         <li><strong>Ctrl + 2:</strong> Oldal nézet</li>
         <li><strong>Ctrl + 3:</strong> 3D nézet</li>
         <li><strong>Ctrl + R:</strong> Forgatás eszköz</li>
+        <li><strong>Ctrl + W:</strong> Aktív ablak bezárása</li>
       </ul>
 
       <h2>Első lépések</h2>
@@ -332,7 +386,7 @@
             időközönként exportálni a projekteket és a beállításokat.
           </p>
         </div>
-        <div class="image-placeholder column-2 white" style="flex: 20%"> <img src="images/1-bongeszok.svg" /></div>
+        <div class="image-placeholder column-2 white" style="flex: 20%"> <img src="images/1-bongeszok.png" /></div>
       </div>
 
       <div class="warning">

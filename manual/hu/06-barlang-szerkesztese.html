@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Barlang szerkesztése - Speleo Studio Kézikönyv</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Barlang szerkesztése</h1>
+
+      <div class="nav">
+        <a href="05-3d-vizualizacio.html">← Előző: 3D vizualizáció és navigáció</a>
+        <a href="index.html">Főoldal</a>
+        <a href="07-felmereek-szerkesztese.html">Következő: Felmérések szerkesztése →</a>
+      </div>
+
+      <h2>Barlang szerkesztés áttekintése</h2>
+      <p>
+        A barlang szerkesztés a Speleo Studio egyik legfontosabb funkciója. Itt kezelheti a barlang alapvető
+        információit, pont megjegyzéseket és attribútumokat, valamint a hurkok kezelése is lehetséges. Ez a fejezet a
+        barlang szintű szerkesztésre fókuszál, a felmérés és attribútum szerkesztés külön fejezetekben kerül
+        bemutatásra.
+      </p>
+
+      <div class="row">
+        <div class="column-2">
+          <p
+            >A barlang szerkesztéséhez az oldalsávban nyissa meg a <i>Felfedező</i> panelt, majd kattintson a barlang
+            nevére, ekkor az adott barlang ikon sávja jelenik meg. Az ikonok funkciói:</p
+          >
+          <ul>
+            <li><strong>🔠 Adatlap:</strong> Adatlap szerkesztése</li>
+            <li><strong>❇️ Új felmérés:</strong> Új felmérés létrehozása</li>
+            <li
+              ><strong
+                ><img src="../../icons/topodroid.png" alt="TopoDroid" style="width: 20px; height: 20px; margin: 0px" />
+                Importálás:</strong
+              >
+              TopoDroid felmérés importálása</li
+            >
+            <li><strong>📍 Pont attribútumok:</strong> Pont attribútumok szerkesztése</li>
+            <li><strong>🔀 Szakasz attribútumok:</strong> Szakasz attribútumok szerkesztése</li>
+            <li><strong>🧩 Komponens attribútumok:</strong> Komponens attribútumok szerkesztése</li>
+            <li><strong>🔄 Hurkok:</strong> Hurkok keresése, megjelenítése és hibák eliminálása</li>
+            <li><strong>🎨 Szín</strong> Barlang színének változtatása</li>
+            <li
+              ><strong
+                ><span
+                  style="
+                    text-decoration: line-through;
+                    text-decoration-color: red;
+                    text-decoration-thickness: 2px;
+                    transform: rotate(45deg);
+                    display: inline-block;
+                  "
+                  >🎨</span
+                >
+                Szín</strong
+              >
+              Barlang színének törlése</li
+            >
+            <li><strong>🗑️ Törlés:</strong> Barlang törlése</li>
+          </ul>
+        </div>
+        <div class="image-placeholder black" style="flex: 30%"> <img src="images/4b-ikon-sav.png" /></div>
+      </div>
+
+      <p
+        >A <strong>barlang láthatóságát </strong>a jelenetben az ábrán piros kerettel jelzett szem ikonra kattintva
+        lehet szabályozni.</p
+      >
+      <p
+        >A <strong>barlang színét </strong> akkor van értelme beállítani, ha a jelnetben a barlangunkat más színnel
+        szeretnénk megjeleníteni. Ez csak akkor látszódik, ha a vonal szín mód <i>Barlangonként</i> módra van állítva.
+      </p>
+      <p
+        >Felmérések importálás ebben a fejezetben nem tárgyaljuk, egy korábbi fejezet részletesen foglalkozott már
+        ezzel.</p
+      >
+
+      <h2>Barlang adatlap szerkesztése</h2>
+
+      <h3>Metaadatok szerkesztése</h3>
+      <p>Az adatlap tartalmazza a barlang alapvető információit:</p>
+
+      <div class="editor-box">
+        <h4>Barlang alapadatok</h4>
+        <ul>
+          <li><strong>Név:</strong> Barlang egyedi neve</li>
+          <li><strong>Kataszteri szám:</strong> A barlang kataszteri száma</li>
+          <li><strong>Dátum:</strong> Az adatlap létrehozásának dátuma</li>
+          <li><strong>Készítő:</strong> Az adatlap készítője</li>
+          <li><strong>Ország:</strong> Mely országban található a barlang</li>
+          <li><strong>Régió / Tájegység:</strong> Mely régióban vagy tájegységben található a barlang</li>
+          <li><strong>Település:</strong> Mely településen található a barlang</li>
+        </ul>
+      </div>
+
+      <div class="editor-box">
+        <h4>EOV koordináták</h4>
+        <p
+          >A barlang kezdőpontjának EOV koordinátái lehet megadni, egyéb pontokhoz egyelőre nem tudunk fix koordinátákat
+          adni.</p
+        >
+        <ul>
+          <li><strong>Pont neve:</strong> A pont neve, amelyhez az EOV koordináták tartoznak</li>
+          <li><strong>EOV Y:</strong> EOV Y koordináta</li>
+          <li><strong>EOV X:</strong> EOV X koordináta</li>
+          <li><strong>Magasság:</strong> Tengerszint feletti magasság</li>
+        </ul>
+      </div>
+
+      <div class="editor-box">
+        <h4>Pont megfeleltetések (aliaszok)</h4>
+        <ul>
+          <li><strong>Pont neve:</strong> A pont eredeti neve</li>
+          <li><strong>Pont megfeleltetése:</strong> Az aliasz neve, azaz milyen más néven érhető még el ez a pont</li>
+        </ul>
+      </div>
+
+      <div class="image-placeholder black"> <img src="images/4b-adatlap.png" /></div>
+
+      <div class="step">
+        <h3>Adatok módosítása</h3>
+        <p>1. Kattintson a szerkeszteni kívánt mezőre</p>
+        <p>2. Módosítsa az értéket</p>
+        <p>3. Kattintson a "Mentés" gombra</p>
+      </div>
+
+      <h3>Statisztikák</h3>
+      <p>A barlang statisztikáit a barlang adatlapján találhatjuk meg. A statisztikák jelentése a következő:</p>
+      <ul>
+        <li
+          ><strong>Hossz:</strong> A barlang teljes hossza nem számítva a tüskéket és a kiegészítő, árva valamint a
+          hibás méréseket</li
+        >
+        <li><strong>Mélység:</strong> A barlang mélysége a bejárattól mérve</li>
+        <li><strong>Magasság:</strong> A barlang teljes magassága a bejárattól mérve</li>
+        <li
+          ><strong>Vertikális kiterjedés:</strong> A barlang vertikális kiterjedése, amely a magasság és mélység
+          összege</li
+        >
+        <li><strong>Pontok:</strong> A pontok száma, nem számítva az árva és hibás középvonal mérések pontjait</li>
+        <li><strong>Felmérések:</strong> Felmérések száma</li>
+        <li><strong>Izolált felmérések:</strong> Izolált felmérések száma</li>
+        <li><strong>Pont attribútumok:</strong> Pont attribútumok száma</li>
+        <li><strong>Szakasz attribútumok:</strong> Szakasz attribútumok száma</li>
+        <li><strong>Komponens attribútumok:</strong> Komponens attribútumok száma</li>
+        <li><strong>Hossz (árva):</strong> Árva mérések hossza</li>
+        <li><strong>Hossz (hibás):</strong> Érvénytelen vagy hibás mérések hossza</li>
+        <li><strong>Hossz (segéd):</strong> Segéd mérések hossza</li>
+        <li><strong>Legmélyebb pont:</strong> A barlang legmélyebb pontja</li>
+        <li><strong>Legmagasabb pont:</strong> A barlang legmagasabb pontja</li>
+        <li
+          ><strong>Vertikális kiterjedés (tüskékkel):</strong> A barlang vertikális kiterjedése figyelembe véve a
+          tüskéket</li
+        >
+      </ul>
+      <h2>Barlang színének szerkesztése</h2>
+      <p
+        >A barlang színét abban az esetben érdemes állítani, ha a vonal szín mód <i>Barlangonként</i> módra van
+        állítva.</p
+      >
+
+      <div class="step">
+        <h3>Szín módosítása</h3>
+        <p>1. Kattintson a szín ikonra</p>
+        <p>2. Válassza ki a kívánt színt a megnyílő szín palettából</p>
+        <p>3. Kattintson szín választó palettán kívül, hogy a paletta eltűnjön</p>
+        <p>4. Állítja a vonal szín módot <i>Barlangonként</i> módra</p>
+      </div>
+
+      <div class="image-placeholder black">
+        <img src="images/4b-szin1.png" alt="Barlang színének szerkesztése" />
+        <img src="images/4b-szin2.png" alt="Barlang színének szerkesztése" />
+      </div>
+      <div class="info">
+        <p>A szín beállítása után a felmérés az adott színnel jelenik meg a Felfedezőben.</p>
+      </div>
+
+      <h2>Pont megjegyzések szerkesztése</h2>
+      <p>
+        A pont megjegyzések lehetővé teszik, hogy minden felmérési ponthoz részletes információkat tároljon.
+        Természetesen a felmérések méréseivel is megjegyzéseket fűzhet a <i>Pontig</i> pontra vonatkozólag, a pont
+        attribútumok ezen felül teszik lehetővé a pontok jellemzését.
+      </p>
+      <div class="warning">
+        <p
+          >A pont megjegyzések nem jelennek meg a felmérés szerkesztőben, viszont a láblécben és a pont részleteinél, ha
+          az adott pontra kattint a jelentben, igen.</p
+        >
+      </div>
+
+      <h3>Szerkesztő ablak áttekintése</h3>
+      <p
+        >A kommentek szerkesztés ikonra (💬) kattinva megnyílik a szerkesztő ablak a kommentek táblázatos
+        megjelenítésével.</p
+      >
+      <div class="image-placeholder black"><img src="images/4b-kommentek.png" /></div>
+
+      <p>A szerkesztő ablak felépítése a következő:</p>
+      <ul>
+        <li><strong>Ikon sáv (piros keret): </strong>A pont megjegyzések szerkesztésére szolgáló ikonok</li>
+        <li
+          ><strong>Táblázat fejléc (kék keret): </strong>A táblázat oszlopait megjelenítő fejléc, amely a sorok
+          szűrésére is szolgál. Az oszlop neve alatt lévő beviteli mező (piros nyíl)
+          <strong>segítségével szűrhetjük a sorokat.</strong> Például a Megjegyzés oszlop beviteli mezőjébe "Fal
+          részlet" értéket írva a táblázatban lévő sorok közül csak a Megjegyzés oszlopban "Fal részlet" értéket
+          tartalmazó sorok lesznek megjelenítve.
+        </li>
+        <li
+          ><strong>Kommentek táblázata (lila keret): </strong>A kommentek listája, a táblázatban minden sor egy
+          kommentet reprezentál. A táblázatban nem mindig sor látható egyszerre, ilyen esetben ne felejtsünk el görgetni
+          a jobb oldalon.</li
+        >
+        <li><strong>Táblázat lábléc (zöld keret): </strong>Pont oszlop esetén a kommentek számát adja meg.</li>
+      </ul>
+
+      <div class="info">
+        Az ablak jobb felső sarkában található bezárás piros ikonra kattintva a pont megjegyzések változtatásai
+        mentődnek!
+      </div>
+
+      <div class="editor-box">
+        <h4>Ikonsáv részletezése</h4>
+        <p>Az egyes ikonok funkciói a következők:</p>
+        <ul>
+          <li
+            ><img src="../../icons/undo.svg" class="icon" /> <strong> Visszavonás:</strong> Változtatások
+            visszavonása</li
+          >
+          <li
+            ><img src="../../icons/redo.svg" class="icon" /> <strong> Újra:</strong> Változtatások újra alkalmazása</li
+          >
+          <li
+            ><img src="../../icons/add_before.svg" class="icon" /><strong> Sor hozzáadása előtte:</strong> Új sor
+            beszúrása a kiválasztott sor előtt</li
+          >
+          <li
+            ><img src="../../icons/add_after.svg" class="icon" /><strong> Sor hozzáadása után:</strong> Új sor beszúrása
+            a kiválasztott sor után</li
+          >
+          <li
+            ><img src="../../icons/add_white.svg" class="icon" /><strong> Sor hozzáadása a végéhez:</strong> Új sor
+            beszúrása a táblázat végéhez</li
+          >
+          <li
+            ><img src="../../icons/trash_white.svg" class="icon" /><strong> Sor(ok) törlése:</strong> Aktuális /
+            Kiválasztott sor vagy sorok törlése</li
+          >
+          <li
+            ><img src="../../icons/validate.svg" class="icon" /><strong> Sor(ok) validálása:</strong> Sorok
+            validálása</li
+          >
+          <li
+            ><img src="../../icons/update.svg" class="icon" /><strong> Sor(ok) frissítése:</strong> Adatok frissítése és
+            elmentése</li
+          >
+          <li
+            ><img src="../../icons/cancel.svg" class="icon" /><strong> Módosítások elvetése:</strong> Változtatások
+            elvetése, szerkesztő bezárása</li
+          >
+          <li
+            ><img src="../../icons/hamburger.svg" class="icon" /><strong> Oszlopok láthatósága:</strong> Segítségével az
+            egyes oszlopok láthatóságát lehet szabályozni</li
+          ><li
+            ><img src="../../icons/export.svg" class="icon" /><strong> Exportálás CSV-be:</strong> Táblázat mentése CSV
+            formátumban</li
+          >
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>Pont megjegyzés felvétele</h3>
+        <p>1. Kattintson a barlang nevére a Felfedezőben, majd a pont megjegyzés ikonra az ikon sávon</p>
+        <p>2. A megjelenő szerkesztőben vegyen fel új sort a <i>Sor hozzáadása a végéhez</i> gombra kattintva</p>
+        <p>3. Az új sorban adja meg a pont nevét, ezt a létező pontok listájából választhatja ki</p>
+        <p>4. Az új sorban adja meg a megjegyzést</p>
+        <p>5. Kattintson a <i>Kommentek frissítése</i> gombra a táblázat feletti ikon sorban</p>
+      </div>
+
+      <h3>Pont megjegyzések törlése</h3>
+
+      <div class="step">
+        <h4>1. Sorok kiválasztása</h4>
+        <p>Válassza ki a törölni kívánt sorokat.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Törlés</h4>
+        <p>Kattintson az "Aktív sorok törlése" gombra.</p>
+      </div>
+
+      <h2>Pont megjegyzések validálása és frissítése</h2>
+
+      <p
+        >A Speleo Studio a validálás vagy a frissítés gombra kattintva ellenőrzi az adatok helyességét. Ha a pont
+        megjegyzések nem helyesek, akkor a státusz oszlopban narancssárga ikon jelenik meg, amelyre kattinva a hiba
+        részletes leírását kapjuk meg. A frissítése során <strong> hibás sorok is elmentődnek</strong>.
+      </p>
+
+      <div class="image-placeholder black"><img src="images/4b-validalas.png" /></div>
+
+      <div class="editor-box">
+        <h4>Validálási szabályok</h4>
+        <ul>
+          <li><strong>Pont:</strong> Nem lehet üres</li>
+          <li><strong>Megjegyzés:</strong> Nem lehet üres</li>
+          <li><strong>Duplikáció:</strong> Nem lehetnek duplikált sorok ugyanazzal a ponttal</li>
+        </ul>
+      </div>
+
+      <h2>Pont megjegyzések exportálása</h2>
+
+      <h3>CSV exportálás</h3>
+      <div class="step">
+        <h4>1. Exportálás indítása</h4>
+        <p>A szerkesztőben kattintson az "Exportálás CSV-be" gombra.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Fájl mentése</h4>
+        <p>Válassza ki a mentési helyet és adja meg a fájlnevet.</p>
+      </div>
+
+      <h2>Hurkok kezelése</h2>
+
+      <p>Mit nevezünk huroknak?</p>
+      <p
+        >Huroknak nevezzük a pontok egy sorozatát, amellyel egy mérési pont önmagába vezet. Tekintve, hogy a barlang egy
+        irányított gráf, a hurkot a következőképpen is definiálhatjuk: A hurok egy olyan út (egymást követő pontok
+        sorozata), amely ugyanabban a pontban kezdődik és végződik, és a kezdő/végpont kivételével pontok nem
+        ismétlődnek. A hurkok kezelésekor a barlangot irányítatlan gráfként kezeljük, azaz függetlenül a mérés
+        irányától.
+      </p>
+      <div class="image-placeholder white small-padding"><img src="images/4b-hurok.png" /></div>
+      <p>A fenti ábrán összesen 4 hurkot találunk.</p>
+      <ul>
+        <li><strong>1. hurok:</strong> 1, 2, 3 pontokból áll</li>
+        <li><strong>2. hurok:</strong> A,B,C,D ... X pontokból áll</li>
+        <li><strong>3. hurok:</strong> B,C,α,β ... pontokból áll</li>
+        <li><strong>4. hurok:</strong> A,B ... β,α,C,D ... X pontokból áll</li>
+      </ul>
+
+      <p>Mit nevezünk hurok hibának?</p>
+      <p
+        >A Speleo Studio a középvonalak számításakor a méréseken megy végig és az adatok alapján (hossz, irány, dőlés)
+        számítja ki a mérés pontjainak koordinátáit. Egy hurok esetén a hurkot egy záró mérés zárja, amely egy már
+        ismert, kiszámolt koordinátákkal rendelkező pontba vezet. A záró mérés adataiból (hossz, irány, dőlés) kiszámolt
+        koodináták soha nem egyeznek meg a már ismert pont koordinátáival, amely a mérés módszer pontatlanságából
+        adódik. A két koordináta közötti eltérést, különbséget nevezzük <strong>hurok hibának</strong>.
+      </p>
+      <p
+        >A fenti ábrán a zölddel jelölt hurok esetén az X -> A zárómérés (piros vonal) által meghatározott koordináta
+        eltér az A pont koordinátáitól, amelyet a szaggatott piros vonal jelez.</p
+      >
+
+      <div class="warning"
+        >A Speleo Studio a barlangot a hurok hibák figyelmen kívül hagyásával jeleníti meg, azaz a záró mérések hibáit
+        figyelmen kívül hagyja és csak a már ismert pontokat jeleníti meg. A hurok hibák csak a Hurokkezelőben
+        jeleníthetőek meg.</div
+      >
+      <h3>Hurokkezelő</h3>
+
+      <p>A hurokkezelő a barlang nevére kattinva megjelenő ikon sávban a 🔄 ikonra kattinva érhető el.</p>
+      <div class="image-placeholder black"><img src="images/4b-hurok-kezelo.png" /></div>
+
+      <p>A szerkesztő ablak felépítése a következő:</p>
+      <ul>
+        <li><strong>Ikon sáv (piros keret): </strong>A hurkok megjelenítésére szolgáló ikonok</li>
+        <li
+          ><strong>Táblázat fejléc (kék keret): </strong>A táblázat oszlopait megjelenítő fejléc, amely a sorok
+          szűrésére és rendezésére is szolgál. Az ábrán fehér nyíllal jelzett háromszögre kattintva a táblázat az adott
+          <strong>oszlop értékei szerint rendezhető növekvő vagy csökkenő sorrendben</strong>. Az oszlop neve alatt lévő
+          beviteli mező (piros nyíl) <strong>segítségével szűrhetjük a sorokat.</strong> Például az Út oszlop beviteli
+          mezőjébe "12" értéket írva a táblázatban lévő sorok közül csak a Út oszlopban "12" értéket tartalmazó sorok
+          lesznek megjelenítve.
+        </li>
+        <li
+          ><strong>Hurkok táblázata (lila keret): </strong>A hurkok listája, a táblázatban minden sor egy hurkot
+          reprezentál. A táblázatban nem mindig sor látható egyszerre, ilyen esetben ne felejtsünk el görgetni a jobb
+          oldalon.</li
+        >
+        <li
+          ><strong>Táblázat lábléc (zöld keret): </strong>Delta távolság oszlop esetén a hurok hibák össz távolságát
+          adja meg.</li
+        >
+      </ul>
+
+      <div class="editor-box">
+        <h4>Ikonsáv részletezése</h4>
+        <p>Az egyes ikonok funkciói a következők:</p>
+        <ul>
+          <li
+            ><img src="../../icons/cycle.svg" class="icon" /> <strong> Összes hurok megjelenítése:</strong> Összes hurok
+            megjelenítése a jelenetben. Érdemes lehet az ablakot minimalizálni, hogy jól lássuk a jelenetben a hurkokat.
+            Az ablak bezárásával a hurkok elrejtődnek. </li
+          ><li
+            ><img src="../../icons/cycle_hide.svg" class="icon" /> <strong> Összes hurok elrejtése:</strong> Összes
+            megjelenített hurok elrejtése a jelenetben</li
+          >
+          <li
+            ><img src="../../icons/deviating_shots.svg" class="icon" /><strong>
+              Összes eltérést okozó mérés megjelenítése:</strong
+            >
+            A jelenetben azok a mérések jelennek meg, amelyek egy hurkon vannak, de mérés alapján számított koordinátáik
+            nem egyeznek meg meg mérés kezdő vagy végpontjának kezdő koordinátáival. A hurok zárás egy ilyen tipikus
+            mérés, amely sok esetben a hurok hibát okozza. Ha a hurkon van másik olyan pont, ami már két ismert pontot
+            köt össze, akkor azok hibája is megjelenthet. A jelenetben ezek a mérések piros színnel jelennek meg akkor,
+            ha a hosszuk a 10 centimétert meghaladja. Az ablak bezárásával ezek a mérések nem jelennek meg.
+          </li>
+          <li
+            ><img src="../../icons/deviating_shots_hide.svg" class="icon" /><strong>
+              Összes eltérést okozó mérés elrejtése:</strong
+            >
+            Az összes megjelenített eltérést okozó mérés elrejtése a jelenetben</li
+          >
+        </ul>
+      </div>
+
+      <div class="editor-box">
+        <h4>Oszlopok részletezése</h4>
+        <ul>
+          <li> <strong>Láthatóság:</strong> Az adott hurok láthatóságát lehet vele szabályozni </li
+          ><li
+            ><strong>Szín:</strong> A megjelenített hurok színét lehet vele szabályozni. A kis piros X-re kattinva az
+            adott hurok láthatóvá válik és az ikon kis zöld pipára változik.
+          </li>
+          <li><strong>Távolság:</strong> A hurok hosszát adja meg. Az oszlop sorrendje változtatható. </li>
+          <li><strong>Δ Távolság:</strong> A hurok hibák hossza az adott hurkon. Az oszlop sorrendje változtatható.</li>
+          <li><strong>Δ Irány:</strong> Az összevont hurok hibák irány eltérése.Az oszlop sorrendje változtatható. </li>
+          <li
+            ><strong>Δ Dőlés:</strong> Az összevont hurok hibák dőlés eltérését adja meg. Az oszlop sorrendje
+            változtatható.</li
+          >
+          <li
+            ><strong>Δ Százalék:</strong> A hurok hibák hosszának a hurok hosszához viszonyított százalékát adja meg. Az
+            oszlop sorrendje változtatható.
+          </li>
+          <li><strong>Út:</strong> A hurkot alkotó pontok sorozata. </li>
+        </ul>
+      </div>
+
+      <p
+        >A következő képen a Pál-völgyi-barlangban található hurkok láthatóak, amelyeket az első ikonnal jelöltünk
+        meg.</p
+      >
+      <div class="image-placeholder black"><img src="images/4b-hurkok.png" /></div>
+
+      <p
+        >A következő képen a Pál-völgyi-barlangban található hurk hibák láthatóak piros vonallal, amelyeket a harmadik
+        ikonnal jelöltünk meg.</p
+      >
+      <div class="image-placeholder black"><img src="images/4b-hurok-hibak.png" /></div>
+
+      <h3>Hurok hibák megszűntetése</h3>
+
+      <p
+        >A hurok hibákat két módszerrel szüntethetjük meg a hurokkezelőben. Az első módszer lényege, hogy
+        <strong>hurok hibát okozó méréseket korrigáljuk</strong> a már létező pontok koordinátái alapján, ezt a módszert
+        az első ábra mutatja. Az zölddel jelzett 1, 2, A, B, C, X hurok záró mérése (X -> 1') jelentős hurok hibát okoz.
+        Ennél a módszernél ezt a mérés egyszerűen módosítja az algoritmus és úgy állítja be a hosszát, irányát és
+        dőlését, hogy a zárómérés pontosan az 1-es pontba mutasson, ezt reprezentálja a sárgával jelzett mérés. Ennek a
+        megoldásnak a nagy előnye, hogy más méréseket és magát a középvonalat nem módosítja.
+      </p>
+
+      <div class="image-placeholder white"><img src="images/4b-hurok-hiba-megszuntetes.png" /></div>
+      <p
+        >A második módszer lényege, hogy <strong>a hurok hibát elosztjuk úgy a hurok mérései között</strong>, hogy a
+        végén a korrigált mérésekkel a hurok pontosan az 1-es pontban záródjon. A korrigálás során a Bowditch szabályt
+        használjuk, azaz a hurok hibát a mérések hosszának arányában osztjuk el. Egy hosszabb mérés nagyobb korrekciót
+        kap, egy kisebb mérés kisebbet. Ezzel a módszerrel nem csak a hurok többi pontját, hanem esetleg a középvonalat
+        (poligon) is módosíthatjuk. A második ábrán sárga szaggatott vonalak jelzik a korrigált hurkot és kék szaggatott
+        vonal a módosult középvonalat.
+      </p>
+
+      <div class="step">
+        A hurok hibák megszüntetéséhez
+        <ul>
+          <li>1. Kattintsunk a hurokkezelőben jobb egér gombbal az adott hurkon</li>
+          <li>2. Ekkor megjelenik a kontextus menü</li>
+          <li
+            >3. Vagy válasszuk a <strong>Hurok hiba elosztása szakaszok között</strong> vagy a
+            <strong>Hurok eltérést okozó mérések korrigálása</strong> opciót</li
+          >
+        </ul>
+      </div>
+
+      <div class="nav">
+        <a href="05-3d-vizualizacio.html">← Előző: 3D vizualizáció és navigáció</a>
+        <a href="index.html">Főoldal</a>
+        <a href="07-felmereek-szerkesztese.html">Következő: Felmérések szerkesztése →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="11-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="11-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

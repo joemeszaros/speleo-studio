@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adatmodell és struktúra - Speleo Studio Kézikönyv</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+
+      <h1>🗂️ Adatmodell és struktúra</h1>
+      <div class="nav">
+        <a href="02-projekt-kezeles.html">← Előző: Projekt kezelés</a>
+        <a href="index.html">Főoldal</a>
+        <a href="04-adatok-importalasa.html">Következő: Adatok importálása →</a>
+      </div>
+
+      <div class="content">
+        <p class="intro">
+          Ez a fejezet részletesen bemutatja az alkalmazás hierarchikus adatstruktúráját és az egyes elemek közötti
+          kapcsolatokat.
+        </p>
+
+        <h2>📊 Általános adatmodell áttekintése</h2>
+
+        <div class="model-level">
+          <h3>Barlangok</h3>
+
+          <div class="row">
+            <div class="column-2">
+              <p
+                >Egy projektben több barlangot is kezelhet, minden barlang nevének egyedinek kell lennie. Minden
+                barlang:</p
+              >
+              <ul>
+                <li>Saját nevet és metaadatokat tartalmaz (barlang adatlap)</li>
+                <li>Egy vagy több felmérést tartalmazhat</li>
+                <li>Attribútumokat tartalmazhat</li>
+                <li>Pont megjegyzéseket tartalmazhat</li>
+              </ul>
+              <p>Az attribútumokat egy későbbi fejezet taglalja, így azokra most nem térnénk ki.</p>
+              <p>A barlang adatlapja a következőket tartalmazza:</p>
+              <ul>
+                <li>Barlang alapvető adatait (mint például a barlang neve, vagy kataszteri száma)</li>
+                <li>Pontok neveinek megfeleltetését (aliaszok)</li>
+                <li>Fix koordinátákat (EOV)</li>
+              </ul>
+            </div>
+            <div class="image-placeholder white column-2"> <img src="images/3-barlang-struktura.png" /> </div>
+          </div>
+
+          <h4>Pont megjegyzések</h4>
+
+          <p
+            >Habár a felmérések során megadott megjegyzések lehetővé teszik a 'pontig' állomás jellemzését, de az induló
+            pont jellemzését ez a módszer nem teszi lehetővé. Az általános pont megjegyzések lehetővé teszik tetszőleges
+            pont jellemzését, leírását igazodva más szoftverekhez (pl. TopoDroid)</p
+          >
+
+          <div class="row">
+            <div class="column-2">
+              <h4>Pont megfeleltetések (aliaszok)</h4>
+
+              <p
+                >Az aliaszok lehetővé teszik, hogy az akár különböző felmérésekben lévő pontokat egymásnak
+                megfeleltessük. Gyakori megoldás egy új felmérés kezdőpontjának valamely régebbi felmérés egy már létező
+                pontját adjuk meg, hiszen enélkül az új felmérés nem kapcsolódna a régebbi felmérésekhez. A Speleo
+                Studio-val erre már nincs szükség. Az új felmérés kezdőpontja tetszőleges lehet, a korábbi felmérésekhez
+                kapcsolását a pont aliaszok teszik lehetővé. TopoDroid-ban ezt a hasonló funkciót Project Equates-nek
+                vagy Kapcsolódó pontoknak hívják. Az ábrán az 'ag-1' es a '3' mérési pontokat feleltetjük meg egymásnak.
+              </p>
+            </div>
+            <div class="column-2" style="margin-top: 40px"> <img src="images/3-alias.png" /> </div>
+          </div>
+          <h4>Fix koordináták</h4>
+          <p
+            >A fix koordináták lehetővé teszik, hogy a barlangokat egy olyan koordináta rendszerben jelenítsük meg,
+            amelyet más alkalmazások is használnak. Jelenleg csak az EOV koordináta rendszert támogatja a Speleo Studio
+            (csak a kezdőpont koordinátája adható meg). Tervbe van véve más rendszerek támogatása is pl. a WGS84
+            koordináta rendszer.
+          </p>
+        </div>
+      </div>
+
+      <div class="data-model-diagram">
+        <div class="model-level">
+          <h3>📏 Felmérések (Survey)</h3>
+          <div class="row">
+            <div class="column-2">
+              <p>A felmérések a barlang egy részének vagy egészének mérési adatait tartalmazza. Minden felmérés:</p>
+
+              <ul>
+                <li>Tartalmaz saját nevet és metaadatokat (felmérés adatlap)</li>
+                <li>Mérések sorozatát tartalmazhatja</li>
+              </ul>
+
+              <p>A felmérés adatlapja a következőket tartalmazza:</p>
+              <ul>
+                <li><strong>Név:</strong> A felmérés azonosító neve</li>
+                <li><strong>Dátum:</strong> A felmérés végrehajtásának dátuma</li>
+                <li
+                  ><strong>Induló pont:</strong> A felmérés kezdőpontja (csak a barlang első felmérésénél van figyelembe
+                  véve)</li
+                >
+                <li><strong>Deklináció:</strong> A mágneses deklináció értéke</li>
+                <li><strong>Mérőeszközök:</strong> Mérési eszközök listája</li>
+              </ul>
+            </div>
+            <div class="image-placeholder white column-2" style="padding: 0px; flex: 30%">
+              <img src="images/3-felmeres-struktura.png" />
+            </div>
+          </div>
+          <div class="warning">
+            <h3>⚠️ Fontos megjegyzések</h3>
+            <ul>
+              <li>A felmérés neve egyedi kell legyen</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="model-level">
+          <h3> Mérések (Shots)</h3>
+          <div class="row">
+            <div class="column-2">
+              <p>
+                A mérések a barlangban végzett hossz, irányszög és lejtés adatokat tartalmazzák, ezen kívül még
+                megjegyzéseket és típust. A mérés típusa a következő lehet:</p
+              >
+              <ul>
+                <li><strong>Középvonal (center - kék): </strong> A barlang fő poligon vonala</li>
+                <li
+                  ><strong>Tüske (splay - piros): </strong> Egy adott pontból végzett, a barlang kontúrját rögzítő
+                  mérések, a magyarok körében "sünizésnek" hívott módszer mérései.</li
+                >
+                <li
+                  ><strong>Segédvonal (auxiliary - zöld): </strong> Olyan kiegészítő mérések, amelyek a barlang
+                  hosszához ugyan nem számítanak bele, de lehetővé teszik egyéb (nem középvonal) mérések felvételét,
+                  például egyes attribútumok (mondjuk egy rétegdőlés) pontos helyét. Olyan esetekben használható, ha a
+                  középvonalról nem tudunk egy adott mérést elvégezni. Remek lehetőség segédmérések felvétele után
+                  ezekből indítani a sünizést olyan helyen, ahol a középvonalról nem tudunk egy adott mérést elvégezni,
+                  például egy széles terem.
+                </li>
+              </ul>
+            </div>
+            <div class="white column-2" style="padding: 60px; flex: 30%">
+              <img src="images/3-meres-tipusok.png" />
+            </div>
+          </div>
+
+          <div class="data-types">
+            <h3>Mérések adattípusai</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Név</th>
+                  <th>Adattípus</th>
+                  <th>Magyarázat</th>
+                  <th>Példa érték</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Ponttól</td>
+                  <td>String</td>
+                  <td>A mérés kezdőpontja</td>
+                  <td>"1", "1.1", "A1"</td>
+                </tr>
+                <tr>
+                  <td>Pontig</td>
+                  <td>String</td>
+                  <td>A mérés végpontja</td>
+                  <td>"2", "1.2", "A2"</td>
+                </tr>
+                <tr>
+                  <td>Hossz</td>
+                  <td>Number</td>
+                  <td>A mérés hossza (méter)</td>
+                  <td>18.90</td>
+                </tr>
+                <tr>
+                  <td>Irány</td>
+                  <td>Number</td>
+                  <td>A mérés irányszöge (fokban), 0 és 360 között változik</td>
+                  <td>123.45</td>
+                </tr>
+                <tr>
+                  <td>Dőlés</td>
+                  <td>Number</td>
+                  <td>A mérés lejtése (fokban), -90 és +90 között változik</td>
+                  <td>-5.25</td>
+                </tr>
+                <tr>
+                  <td>Megjegyzés</td>
+                  <td>String</td>
+                  <td>A mérés szövegesmegjegyzése</td>
+                  <td>Jobb falon kidudorodás, térdmagasságban</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="warning">
+            <h3>⚠️ Fontos megjegyzés</h3>
+            <ul>
+              <li>A Speleo Studio a számoknál pontot és nem vesszőt használ tizedesjegyek elválasztásához</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="validation-section">
+        <h3>Automatikus validáció</h3>
+        <div class="validation-rules">
+          <div class="validation-rule">
+            <h4>✅ Kötelező mezők ellenőrzése</h4>
+            <p>Minden mérési pontnak rendelkeznie kell azonosítóval és koordinátákkal.</p>
+          </div>
+
+          <div class="validation-rule">
+            <h4>📐 Geometriai konzisztencia</h4>
+            <p>A mérési adatok geometriai konzisztenciájának ellenőrzése.</p>
+          </div>
+
+          <div class="validation-rule">
+            <h4>🔗 Kapcsolatok ellenőrzése</h4>
+            <p>A pontok közötti kapcsolatok helyességének validálása.</p>
+          </div>
+
+          <div class="validation-rule">
+            <h4>📊 Adattartomány ellenőrzése</h4>
+            <p>A szögek és távolságok ésszerű tartományban vannak-e.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-model-diagram">
+        <div class="model-level">
+          <h3>Attribútumok</h3>
+
+          <p
+            >Az attribútumok segítségével plusz tulajdonságokat, információkat adhatunk meg a barlang egy adott
+            pontjához, szakaszához vagy részéhez. Például: hol van kötél, létra a barlangban, melyik szakasza
+            árvízveszéles, hol - milyen magas CO2 szint szokott lenni, milyen rétegdőlés mérhető egy akna felénél.
+          </p>
+
+          <p>Az attribútumok széles választéka sokrétűen leírhatja a barlangot, amely:</p>
+
+          <ul>
+            <li>hasznos a barlangkutatók számára</li>
+            <li>tudományos vizsgálatokat tesz lehetővé</li>
+            <li>jelentős mértékben kiegészíti a kataszteri adatokat</li>
+            <li>lehetővé teszik statisztikák készítését</li>
+          </ul>
+
+          <p
+            >Az attribútumok térbeli ábrázolása a Speleo Studio-t ebben az értelemben kiemeli a többi szoftver közül,
+            hiszen más szoftverek nem támogatják ennyire részletes és térbeli adatok felvételét és ábrázolását. Az
+            attribútumok vizualizálása, amellett, hogy rendkívül informatív, rejtett összefüggések felismerését is
+            lehetővé teszi (pl. rétegdőlések közötti összefüggések)</p
+          >
+
+          <div class="row">
+            <div class="column-2">
+              <p>Az attribútumoknak három típusa támogatott</p>
+              <ul>
+                <li
+                  ><strong>Pont:</strong> Egy adott mérési pontra vonatkozik, például egy terem adott pontján mért
+                  vető.</li
+                >
+                <li
+                  ><strong>Szakasz:</strong> Az attribútum a barlang két tetszőleges pontja közötti szakaszra
+                  vonatkozik, például egy akna esetén milyen hosszú kötél van beépítve az akna kezdő és végpontja
+                  között. A szakasz attribútum a két pont közötti legrövidebb út mentén van értelmezve, nem veszi
+                  figyelembe az ebből a szakaszből induló egyéb járatokat.</li
+                >
+                <li
+                  ><strong>Komponens (barlang rész):</strong> A barlang egy adott részére adhatunk meg tulajdonságokat a
+                  komponens attribútumokkal. A komponens attribútumoknak mindig van egy kezdőpontja, ahonnan kiindulva
+                  minden járatra vonatkoztatja az adott tulajsonságot egészen addig, amíg egy megadott végponthoz nem
+                  ér. Gondoljunk a barlangra egy gráfként, a komponens attribútum a gráf egy adott komponensére
+                  vonatkozik, amelynek bejárása a kezdőponttól történik és a végpontokig tart. Végpontok megadása nélkül
+                  a komponens attribútum a teljes barlangra vonatkozik.
+                </li>
+              </ul>
+            </div>
+            <div class="image-placeholder column-2 white">
+              <img src="images/3-attributumok.png" />
+            </div>
+          </div>
+          <p>Az attribútumokat beosztottuk főbb csoportokba (kategóriákba):</p>
+          <ul>
+            <li>Geológia</li>
+            <li>Felszerelés</li>
+            <li>Képződmény</li>
+            <li>Fauna</li>
+            <li>Klimatológia</li>
+            <li>Metaadatok</li>
+          </ul>
+          <p
+            >Minden attribútumnak vannak kötelező és nem kötelező paraméterei, ezek az attribútumtól függenek. Egy
+            <i>kötél</i> attribútum esetén kötelező paraméter a hossz, nem kötelező mezők az állapot és a beépítés éve.
+            A paraméterek helyességét a Speleo Studio automatikusan ellenőrzi, például a kötél hossz értéke nem lehet
+            negatív.
+          </p>
+          <p
+            >Az <strong>attribútumok teljes listáját</strong> az
+            <a href="../../attributes.html">Attribútum referencia</a> oldalon részletesen megtalálja.</p
+          >
+
+          <p
+            >Az <strong>attribútumok szerkesztését </strong> a
+            <a href="06-attributumok.html">Attribútumok</a> fejezetben részletesen bemutatjuk.</p
+          >
+        </div>
+      </div>
+
+      <h2>🔄 Adatvalidáció és ellenőrzés</h2>
+
+      <p
+        >A Speleo Studio automatikusan ellenőrzi a mérési adatokat és jelzi a hibákat, hogy a mérési eredmények ne
+        vezessék félre a szakembereket és a barlangkutatókat.</p
+      >
+
+      <h2>💡 Gyakorlati tanácsok</h2>
+
+      <div class="tips-section">
+        <div class="tip">
+          <h4>📝 Konzisztens elnevezés</h4>
+          <p>A mérési pontok elnevezésénél kövesse a barlangkutató szakmai szabványokat és konvenciókat.</p>
+        </div>
+
+        <div class="tip">
+          <h4>📊 Adatminőség</h4>
+          <p
+            >Az automatikus validáció hibáinak javításán túl ellenőrizze az importált adatokat a vizualizációban, hogy
+            észrevegye a lehetséges hibákat.</p
+          >
+        </div>
+      </div>
+
+      <div class="nav">
+        <a href="02-projekt-kezeles.html">← Előző: Projekt kezelés</a>
+        <a href="index.html">Főoldal</a>
+        <a href="04-adatok-importalasa.html">Következő: Adatok importálása →</a>
+      </div>
+
+      <div class="donation-footer">
+        <p>
+          💝 <strong>Támogassa a Speleo Studio fejlesztését!</strong> Minden támogatás segít a folyamatos fejlesztésben
+          és a barlangkutató közösség erősítésében.
+          <a href="11-tamogatas.html">Támogatás</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
