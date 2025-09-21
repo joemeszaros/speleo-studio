@@ -293,7 +293,7 @@ class NavigationBar {
       {
         tooltip : i18n.t('ui.navbar.tooltips.donate'),
         icon    : 'icons/donate.svg',
-        click   : () => window.open('https://joemeszaros.github.io/speleo-studio/manual/hu/11-tamogatas.html', '_blank')
+        click   : () => window.open('https://joemeszaros.github.io/speleo-studio/manual/hu/12-tamogatas.html', '_blank')
       }
 
     ];

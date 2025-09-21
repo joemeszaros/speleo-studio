@@ -490,7 +490,7 @@ export class SpatialViewControl extends BaseViewControl {
       this.azimuth = this.startAzimuth + deltaX * azimuthSpeed; // azimuth is inverted
 
       // Update clino (vertical rotation) with constraints
-      let newClino = this.startClino - deltaY * clinoSpeed;
+      let newClino = this.startClino + deltaY * clinoSpeed;
       newClino = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, newClino)); // Prevent gimbal lock
       this.clino = newClino;
 

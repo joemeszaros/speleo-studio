@@ -106,6 +106,10 @@ class Main {
 
   async #initializeApp(db, options, observer, attributeDefs, font) {
     try {
+      if (navigator.storage && navigator.storage.persist) {
+        const isPersisted = await navigator.storage.persist();
+        console.log(`Persisted storage granted: ${isPersisted}`);
+      }
       await this.databaseManager.init();
     } catch (error) {
       console.error(i18n.t('errors.init.failedToInitIndexedDb'), error);
