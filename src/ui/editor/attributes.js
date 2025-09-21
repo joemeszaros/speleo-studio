@@ -228,7 +228,7 @@ class BaseAttributeEditor extends Editor {
     paramNames.forEach((paramName) => {
       const value = a[paramName] === undefined ? '' : a[paramName];
       const paramDef = a.params[paramName];
-      const errors = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check, no localization
+      const { errors } = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check, no localization
       let underScoreClass;
       const requiredField = paramDef.required ?? false;
       if (errors.length > 0) {
@@ -259,19 +259,23 @@ class BaseAttributeEditor extends Editor {
       const param = U.node`<input placeholder="${i18n.t(`attributes.params.${paramName}`)}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
       param.onchange = (e) => {
         this.attributesModified = true;
-        const newValue = e.target.value === '' ? undefined : e.target.value;
-        const errors = a.validateFieldValue(paramName, newValue, true, false, i18n);
+        let newValue = e.target.value === '' ? undefined : e.target.value;
+        newValue = newValue?.replace(/\t/g, ''); //replace tab characters
+        const { errors, reasons } = a.validateFieldValue(paramName, newValue, true, false, i18n);
         if (errors.length > 0) {
           param.classList.remove('requiredInput');
           param.classList.add('invalidInput');
-          a[paramName] = newValue.replace(/\t/g, ''); // set the invalid value, replace tab characters
-          this.showAlert(
-            i18n.t('common.invalid') + ` '${i18n.t(`attributes.params.${paramName}`)}': ${errors.join('<br>')}`
-          );
+          if (reasons.has('typeMismatch')) {
+            a[paramName] = newValue;
+          } else {
+            a.setParamFromString(paramName, newValue);
+          }
         } else {
           param.classList.remove('invalidInput');
           param.classList.add(requiredField ? 'requiredInput' : 'optionalInput');
-          a.setParamFromString(paramName, newValue);
+          if (newValue !== undefined) {
+            a.setParamFromString(paramName, newValue);
+          }
         }
       };
       if (paramIndex !== 0) {
@@ -402,7 +406,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
 
   getColumns() {
 
-    const formatEdited = (cell) => {
+    const updateInterpolated = (cell) => {
       const data = cell.getData();
       if (data.attribute !== undefined && data.format) {
         const localized = data.attribute.localize(i18n);
@@ -484,7 +488,8 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
             },
             this.tableFunctions.checkAttributesLength,
             i18n
-          )
+          ),
+        cellEdited: updateInterpolated
       },
       {
         title  : i18n.t('ui.editors.attributes.columns.format'),
@@ -515,7 +520,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
           editor.addEventListener('blur', successFunc);
           return editor;
         },
-        cellEdited : formatEdited,
+        cellEdited : updateInterpolated,
         formatter  : (cell) => {
           const data = cell.getData();
           if (data.attribute && data.format && data.format.length > 0) {
@@ -750,7 +755,12 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       //when the value has been set, trigger the cell to update
       function successFunc() {
         const value = editor.value;
-        success(value.split(',').filter((f) => f.length > 0));
+        success(
+          value
+            .split(',')
+            .map((f) => f.trim())
+            .filter((f) => f.length > 0)
+        );
       }
 
       editor.addEventListener('change', successFunc);

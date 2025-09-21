@@ -40,7 +40,8 @@
         "locate": "Pont megkeresése",
         "rotation": "Forgatás eszköz",
         "fullscreen": "Teljes képernyő be/kikapcsolása",
-        "raycasting": "Pont kiválasztás"
+        "raycasting": "Pont kiválasztás",
+        "donate": "Speleo Studio támogatása"
       },
       "lineColorModes": {
         "global": "Globális",
@@ -122,7 +123,7 @@
         "sectionSize": "Szakasz vastagság",
         "screenDPI": "Képernyő DPI",
         "stationIconScale": "Pont ikon méretezés",
-        "depth": "Mélység",
+        "depth": "Relatív érték",
         "addColorStop": "Átmenet hozzáadása",
         "remove": "Eltávolítás",
         "printLayout": "Elrendezés",
@@ -341,7 +342,8 @@
         "format": "Formátum",
         "baseName": "Előtag",
         "baseNamePlaceholder": "Előtag (kiterjesztés nélkül)",
-        "unsupportedExportFormat": "Nem támogatott exportálási formátum: {format}"
+        "unsupportedExportFormat": "Nem támogatott exportálási formátum: {format}",
+        "image": "Kép"
       }
     },
     "editors": {
@@ -551,7 +553,7 @@
           "attribute": "Attribútum",
           "format": "Formátum",
           "start": "Induló pont",
-          "termination": "Végpont",
+          "termination": "Végpont(ok)",
           "station": "Pont",
           "survey": "Felmérés",
           "interpolated": "Interpolált",

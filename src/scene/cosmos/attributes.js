@@ -352,7 +352,7 @@ export class AttributesScene {
   addTectonicLabels(attribute) {
     const dip = attribute.dip;
     const azimuth = attribute.azimuth;
-    const value = `${Math.floor(dip)}°       ${Math.floor(azimuth)}°`;
+    const value = `${Math.floor(dip)}° / ${Math.floor(azimuth)}°`;
     // Create dip label that always faces the camera
     const textSprite = this.scene.addSpriteLabel(
       value,

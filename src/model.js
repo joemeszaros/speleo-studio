@@ -219,9 +219,7 @@ class SectionAttribute extends FragmentAttribute {
       this.visible === other.visible &&
       this.color === other.color &&
       this.format === other.format &&
-      ((this.attribute === undefined && other.attribute !== undefined) ||
-        (this.attribute !== undefined && other.attribute === undefined) ||
-        (this.attribute === undefined && other.attribute === undefined) ||
+      ((this.attribute === undefined && other.attribute === undefined) ||
         (this.attribute !== undefined && this.attribute.isEqual(other.attribute))) &&
       this.section.from === other.section.from &&
       this.section.to === other.section.to;
@@ -275,9 +273,7 @@ class ComponentAttribute extends FragmentAttribute {
       this.visible === other.visible &&
       this.color === other.color &&
       this.format === other.format &&
-      ((this.attribute === undefined && other.attribute !== undefined) ||
-        (this.attribute !== undefined && other.attribute === undefined) ||
-        (this.attribute === undefined && other.attribute === undefined) ||
+      ((this.attribute === undefined && other.attribute === undefined) ||
         (this.attribute !== undefined && this.attribute.isEqual(other.attribute))) &&
       this.component.start === other.component.start &&
       this.component.termination.every((t, i) => t === other.component.termination[i]);
@@ -348,9 +344,7 @@ class StationAttribute {
     return this.id === other.id &&
       this.name === other.name &&
       this.visible === other.visible &&
-      ((this.attribute === undefined && other.attribute !== undefined) ||
-        (this.attribute !== undefined && other.attribute === undefined) ||
-        (this.attribute === undefined && other.attribute === undefined) ||
+      ((this.attribute === undefined && other.attribute === undefined) ||
         (this.attribute !== undefined && other.attribute !== undefined && this.attribute.isEqual(other.attribute)));
   }
 

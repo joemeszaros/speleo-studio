@@ -3,7 +3,7 @@ import { i18n } from './i18n/i18n.js';
 
 export class AttributesDefinitions {
 
-  attributesPattern = /((?<name>[A-Za-z]+)(\((?<params>[A-Za-z0-9., ":{}]+)\))?)/g;
+  attributesPattern = /((?<name>[A-Za-z0-9]+)(\((?<params>[^()]+)\))?)/g;
 
   constructor(attributeDefintions) {
     this.defs = attributeDefintions;
@@ -164,6 +164,7 @@ class Attribute {
 
     const paramDef = this.params[paramName];
     const errors = [];
+    const reasons = new Set();
 
     if (!skipEmptyCheck && (paramDef.required ?? false) && falsy(value)) {
       errors.push(t('validation.attribute.required'));
@@ -187,16 +188,24 @@ class Attribute {
           errors.push(
             t('validation.attribute.typeMismatch', { value, type: typeof value, expectedType: paramDef.type })
           );
+          reasons.add('typeMismatch');
         } else {
           if (paramDef.type === 'int' && !Number.isInteger(value)) {
             errors.push(t('validation.attribute.notInteger', { value }));
+            reasons.add('typeMismatch');
           }
 
           if (paramDef.type === 'float' && (isNaN(value) || Infinity === value || -Infinity === value)) {
             errors.push(t('validation.attribute.nanOrInfinity'));
+            reasons.add('typeMismatch');
           }
 
-          errors.push(...runFieldValidators(paramDef, value));
+          const fieldErrors = runFieldValidators(paramDef, value);
+          if (fieldErrors.length > 0) {
+            reasons.add('fieldValidators');
+            errors.push(...fieldErrors);
+          }
+
         }
 
       } else {
@@ -206,6 +215,7 @@ class Attribute {
             case 'int':
               if (!Number.isInteger(parseInt(value, 10))) {
                 errors.push(t('validation.attribute.notInteger', { value }));
+                reasons.add('typeMismatch');
               } else {
                 validForType = true;
                 parsedValue = parseInt(value, 10);
@@ -214,6 +224,7 @@ class Attribute {
             case 'float':
               if (!isFloatStr(value)) {
                 errors.push(t('validation.attribute.notFloat', { value }));
+                reasons.add('typeMismatch');
               } else {
                 validForType = true;
                 parsedValue = parseMyFloat(value);
@@ -226,7 +237,12 @@ class Attribute {
           }
 
           if (validForType) {
-            errors.push(...runFieldValidators(paramDef, parsedValue));
+
+            const fieldErrors = runFieldValidators(paramDef, parsedValue);
+            if (fieldErrors.length > 0) {
+              reasons.add('fieldValidators');
+              errors.push(...fieldErrors);
+            }
           }
         }
       }
@@ -234,25 +250,26 @@ class Attribute {
       if (paramDef.type === 'string') {
         if ((paramDef.values?.length ?? 0) > 0 && !paramDef.values.includes(value)) {
           errors.push(t('validation.attribute.notOneOf', { value, values: paramDef.values.join(', ') }));
+          reasons.add('valuesMismatch');
         }
       }
 
     }
-    return errors;
+    return { errors, reasons };
 
   }
 
   validate(validateAsString = false, i18n) {
-    const errors = new Map();
+    const errorMap = new Map();
 
     this.paramNames.forEach((n) => {
-      const fieldErrors = this.validateFieldValue(n, this[n], validateAsString, false, i18n);
-      if (fieldErrors.length > 0) {
-        errors.set(n, fieldErrors);
+      const { errors } = this.validateFieldValue(n, this[n], validateAsString, false, i18n);
+      if (errors.length > 0) {
+        errorMap.set(n, errors);
       }
 
     });
-    return errors;
+    return errorMap;
   }
 
   isValid() {
@@ -292,7 +309,6 @@ class Attribute {
           l = v;
         }
 
-        console.log(`localizeFormatString: ${v} -> ${l}`);
         return acc.replace(v, l);
       }
     }, formatString);
@@ -312,7 +328,6 @@ class Attribute {
       } else {
         const key = i18n.lookupKey(`attributes.params`, v);
         const l = key ?? v;
-        console.log(`deLocalizeFormatString: ${v} -> ${l}`);
         return acc.replace(v, l);
       }
     }, formatString);

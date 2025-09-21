@@ -273,6 +273,11 @@ class NavigationBar {
         tooltip : i18n.t('ui.navbar.tooltips.fullscreen'),
         icon    : 'icons/fullscreen.svg',
         click   : () => this.#toggleFullscreen()
+      },
+      {
+        tooltip : i18n.t('ui.navbar.tooltips.donate'),
+        icon    : 'icons/donate.svg',
+        click   : () => window.open('https://joemeszaros.github.io/speleo-studio/manual/hu/11-tamogatas.html', '_blank')
       }
 
     ];

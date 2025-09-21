@@ -23,10 +23,10 @@ export class SettingsPanel {
     // Configuration Management Buttons
     this.container.appendChild(
       this.createButtonRow([
-        this.createButton(i18n.t('ui.settingsPanel.buttons.download'), () => {
+        this.createButton('📥 ' + i18n.t('ui.settingsPanel.buttons.download'), () => {
           this.downloadConfig();
         }),
-        this.createButton(i18n.t('ui.settingsPanel.buttons.load'), () => {
+        this.createButton('📤 ' + i18n.t('ui.settingsPanel.buttons.load'), () => {
           this.loadConfig();
         }),
         this.createButton(i18n.t('ui.settingsPanel.buttons.reset'), () => {

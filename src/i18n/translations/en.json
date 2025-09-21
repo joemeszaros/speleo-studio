@@ -40,7 +40,8 @@
         "locate": "Locate point",
         "rotation": "Rotation tool",
         "fullscreen": "Enter / exit fullscreen",
-        "raycasting": "Point selection"
+        "raycasting": "Point selection",
+        "donate": "Donate Speleo Studio"
       },
       "lineColorModes": {
         "global": "Global color",
@@ -122,7 +123,7 @@
         "sectionSize": "Section size",
         "screenDPI": "Screen DPI",
         "stationIconScale": "Station icon scale",
-        "depth": "Depth",
+        "depth": "Relative value",
         "addColorStop": "Add Color Stop",
         "remove": "Remove",
         "printLayout": "Print Layout",
@@ -330,7 +331,8 @@
         "format": "Format",
         "baseName": "Base name",
         "baseNamePlaceholder": "Base name (without extension)",
-        "unsupportedExportFormat": "Unsupported export format: {format}"
+        "unsupportedExportFormat": "Unsupported export format: {format}",
+        "image": "Image"
       },
       "rotation": {
         "title": "Rotation Tool",
@@ -528,7 +530,7 @@
           "attribute": "Attribute",
           "format": "Format",
           "start": "Start",
-          "termination": "Termination",
+          "termination": "Terminations",
           "station": "Station",
           "survey": "Survey",
           "interpolated": "Interpolated",

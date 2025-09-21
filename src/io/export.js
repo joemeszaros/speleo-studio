@@ -273,7 +273,7 @@ class ExportWindow {
             <label for="export-format">${i18n.t('ui.panels.export.format')}:</label>
             <select id="export-format">
               <option value="json">JSON</option>
-              <option value="png">PNG Image</option>
+              <option value="png">PNG ${i18n.t('ui.panels.export.image')}</option>
               <option value="dxf">DXF</option>
               <option value="polygon">Polygon (.cave)</option>
             </select>
