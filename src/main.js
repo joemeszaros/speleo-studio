@@ -50,10 +50,6 @@ class Main {
       // Setup welcome panel translations
       this.setupWelcomePanel();
 
-      if (localStorage.getItem('welcome') === null) {
-        document.querySelector('#welcome-panel').style.display = 'block';
-      }
-
       const db = new Database();
       this.db = db;
       // Load saved configuration or use defaults
@@ -106,10 +102,6 @@ class Main {
 
   async #initializeApp(db, options, observer, attributeDefs, font) {
     try {
-      if (navigator.storage && navigator.storage.persist) {
-        const isPersisted = await navigator.storage.persist();
-        console.log(`Persisted storage granted: ${isPersisted}`);
-      }
       await this.databaseManager.init();
     } catch (error) {
       console.error(i18n.t('errors.init.failedToInitIndexedDb'), error);

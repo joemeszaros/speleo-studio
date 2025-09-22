@@ -363,7 +363,6 @@ limitations under the License.
         border-radius: 3px;
         padding: 2px 6px;
         font-size: 0.8em;
-        white-space: nowrap;
       }
 
       .values-list strong {
@@ -443,8 +442,13 @@ limitations under the License.
 
       <div class="search-section">
         <div class="search-container">
-          <input type="text" id="search-input" placeholder="Search categories, attributes, or parameters..." />
-          <button id="clear-search" title="Clear search">×</button>
+          <input
+            type="text"
+            id="search-input"
+            data-i18n-placeholder="attributes.search.placeholder"
+            placeholder="Search categories, attributes, or parameters..."
+          />
+          <button id="clear-search" data-i18n-title="attributes.search.clearButton" title="Clear search">×</button>
         </div>
         <div class="search-info">
           <span id="search-results-info"></span>
@@ -479,6 +483,7 @@ limitations under the License.
     <script type="module">
       // Import i18n library
       import { i18n } from './src/i18n/i18n.js';
+      import { AttributesDefinitions } from './src/attributes.js';
 
       // Wait for i18n to be ready
       await i18n.init();
@@ -489,6 +494,19 @@ limitations under the License.
         elements.forEach((element) => {
           const key = element.getAttribute('data-i18n');
           element.textContent = i18n.t(key);
+        });
+
+        // Apply placeholder and title translations
+        const placeholderElements = document.querySelectorAll('[data-i18n-placeholder]');
+        placeholderElements.forEach((element) => {
+          const key = element.getAttribute('data-i18n-placeholder');
+          element.placeholder = i18n.t(key);
+        });
+
+        const titleElements = document.querySelectorAll('[data-i18n-title]');
+        titleElements.forEach((element) => {
+          const key = element.getAttribute('data-i18n-title');
+          element.title = i18n.t(key);
         });
       }
 
@@ -506,6 +524,7 @@ limitations under the License.
       loadAttributes()
         .then((attributesData) => {
           console.log(`Attributes definitions loaded: ${attributesData.version}`);
+          attributesData.definitions = AttributesDefinitions.resolveReferences(attributesData);
           currentAttributesData = attributesData; // Store for search functionality
           updateStats(attributesData);
           renderAttributes(attributesData);
@@ -679,12 +698,19 @@ limitations under the License.
             const attributeName = i18n.t(`attributes.names.${attribute.name}`) || attribute.name;
             const attributeMatches = attributeName.toLowerCase().includes(query);
 
-            const paramMatches = Object.keys(attribute.params || {}).some((paramName) => {
+            const paramNameMatches = Object.keys(attribute.params || {}).some((paramName) => {
               const paramNameTranslated = i18n.t(`attributes.params.${paramName}`) || paramName;
               return paramNameTranslated.toLowerCase().includes(query);
             });
 
-            return attributeMatches || paramMatches;
+            const paramValuesMatches = Object.values(attribute.params || {}).some((x) => {
+              return (x?.values ?? []).some((value) => {
+                const paramValueTranslated = i18n.t(`attributes.values.${value}`) || value;
+                return paramValueTranslated.toLowerCase().includes(query);
+              });
+            });
+
+            return attributeMatches || paramNameMatches || paramValuesMatches;
           });
 
           // Group filtered attributes by category
@@ -768,9 +794,13 @@ limitations under the License.
             0
           );
 
+          const resultsFor = i18n.t('attributes.search.resultsFor');
+          const resultsSummary = i18n.t('attributes.search.resultsSummary');
+          const [categoriesLabel, attributesLabel, parametersLabel] = resultsSummary.split(', ');
+
           searchInfo.innerHTML = `
-            <strong>Search results for "${query}":</strong> 
-            ${totalCategories} categories, ${totalAttributes} attributes, ${totalParameters} parameters
+            <strong>${resultsFor} "${query}":</strong> 
+            ${totalCategories} ${categoriesLabel}, ${totalAttributes} ${attributesLabel}, ${totalParameters} ${parametersLabel}
           `;
         }
       }

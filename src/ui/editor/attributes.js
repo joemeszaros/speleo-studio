@@ -242,8 +242,10 @@ class BaseAttributeEditor extends Editor {
     const paramNames = Object.keys(a.params);
     var paramIndex = 0;
     paramNames.forEach((paramName) => {
-      const value = a[paramName] === undefined ? '' : a[paramName];
+      let value = a[paramName] === undefined ? '' : a[paramName];
       const paramDef = a.params[paramName];
+      const hasValues = (paramDef.values ?? []).length > 0;
+
       const { errors } = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check, no localization
       let underScoreClass;
       const requiredField = paramDef.required ?? false;
@@ -267,8 +269,9 @@ class BaseAttributeEditor extends Editor {
       }
 
       let datalist;
-      if ((paramDef.values ?? []).length > 0) {
-        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.values.map((n) => '<option value="' + n + '">').join('')}</datalist>`;
+      if (hasValues) {
+        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.values.map((n) => '<option value="' + i18n.t(`attributes.values.${n}`) + '">').join('')}</datalist>`;
+        value = i18n.t(`attributes.values.${value}`);
       }
       const inputType = datalist === undefined ? 'text' : 'search';
       const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
@@ -276,7 +279,10 @@ class BaseAttributeEditor extends Editor {
       param.onchange = (e) => {
         this.attributesModified = true;
         let newValue = e.target.value === '' ? undefined : e.target.value;
-        newValue = newValue?.replace(/\t/g, ''); //replace tab characters
+        if (hasValues) {
+          newValue = paramDef.values.find((n) => i18n.t(`attributes.values.${n}`) === newValue);
+        }
+        newValue = newValue?.replace(/\t/g, ''); //replace tab characters not to cause issues in the export
         const { errors, reasons } = a.validateFieldValue(paramName, newValue, true, false, i18n);
         if (errors.length > 0) {
           param.classList.remove('requiredInput');

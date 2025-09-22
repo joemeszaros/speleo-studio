@@ -61,16 +61,17 @@ class CaveAttributes {
     pure.sectionAttributes =
       pure.sectionAttributes === undefined
         ? []
-        : pure.sectionAttributes.map((sa) => SectionAttribute.fromPure(sa, attributeDefs));
+        : pure.sectionAttributes.map((sa) => SectionAttribute.fromPure(sa, attributeDefs, pure.schemaVersion));
     pure.componentAttributes =
       pure.componentAttributes === undefined
         ? []
-        : pure.componentAttributes.map((ca) => ComponentAttribute.fromPure(ca, attributeDefs));
+        : pure.componentAttributes.map((ca) => ComponentAttribute.fromPure(ca, attributeDefs, pure.schemaVersion));
     pure.stationAttributes =
       pure.stationAttributes === undefined
         ? []
-        : pure.stationAttributes.map((sa) => StationAttribute.fromPure(sa, attributeDefs));
+        : pure.stationAttributes.map((sa) => StationAttribute.fromPure(sa, attributeDefs, pure.schemaVersion));
 
+    pure.schemaVersion = attributeDefs.schemaVersion;
     return Object.assign(new CaveAttributes(), pure);
   }
 }

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "categories": [
     {
       "id": 1,
@@ -7,11 +7,11 @@
     },
     {
       "id": 2,
-      "name": "equipment"
+      "name": "installation"
     },
     {
       "id": 3,
-      "name": "formation"
+      "name": "infill"
     },
     {
       "id": 4,
@@ -24,8 +24,69 @@
     {
       "id": 6,
       "name": "metadata"
+    },
+    {
+      "id": 7,
+      "name": "archeology"
     }
   ],
+  "references": {
+    "state": {
+      "type": "int",
+      "required": false,
+      "validators": {
+        "min": 1,
+        "max": 5
+      }
+    },
+    "year": {
+      "type": "int",
+      "required": false,
+      "validators": {
+        "min": 1960,
+        "max": "${currentYear}"
+      }
+    },
+    "month": {
+      "type": "int",
+      "required": false,
+      "validators": {
+        "min": 1,
+        "max": 12
+      }
+    },
+    "day": {
+      "type": "int",
+      "required": false,
+      "validators": {
+        "min": 1,
+        "max": 31
+      }
+    },
+    "azimuth": {
+      "type": "float",
+      "required": true,
+      "validators": {
+        "min": -360.0,
+        "max": 360.0
+      }
+    },
+    "dip": {
+      "type": "float",
+      "required": true,
+      "validators": {
+        "min": -90.0,
+        "max": 90.0
+      }
+    },
+    "length": {
+      "type": "int",
+      "required": true,
+      "validators": {
+        "min": 1
+      }
+    }
+  },
   "definitions": [
     {
       "id": 1,
@@ -48,22 +109,17 @@
       "name": "bedding",
       "params": {
         "azimuth": {
-          "type": "float",
-          "required": true
+          "ref": "azimuth"
         },
         "dip": {
-          "type": "float",
+          "ref": "dip"
+        },
+        "size": {
+          "type": "int",
           "required": true,
           "validators": {
-            "min": -90.0,
-            "max": 90.0
+            "min": 1.0
           }
-        },
-        "width": {
-          "type": "int"
-        },
-        "height": {
-          "type": "int"
         }
       }
     },
@@ -73,16 +129,17 @@
       "name": "fault",
       "params": {
         "azimuth": {
-          "type": "float"
+          "ref": "azimuth"
         },
         "dip": {
-          "type": "float"
+          "ref": "dip"
         },
-        "width": {
-          "type": "int"
-        },
-        "height": {
-          "type": "int"
+        "size": {
+          "type": "int",
+          "required": true,
+          "validators": {
+            "min": 1.0
+          }
         }
       }
     },
@@ -91,8 +148,14 @@
       "category": 2,
       "name": "rope",
       "params": {
-        "type": {
-          "type": "string"
+        "length": {
+          "ref": "length"
+        },
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
         }
       }
     },
@@ -102,7 +165,12 @@
       "name": "co",
       "params": {
         "value": {
-          "type": "int"
+          "type": "int",
+          "required": true,
+          "validators": {
+            "min": 0.0,
+            "max": 7.0
+          }
         }
       }
     },
@@ -122,22 +190,13 @@
       "name": "exploration",
       "params": {
         "year": {
-          "type": "int",
-          "required": true
+          "ref": "year"
         },
         "month": {
-          "type": "int",
-          "validators": {
-            "min": 1,
-            "max": 12
-          }
+          "ref": "month"
         },
         "day": {
-          "type": "int",
-          "validators": {
-            "min": 1,
-            "max": 31
-          }
+          "ref": "day"
         }
       }
     },
@@ -149,7 +208,7 @@
         "population": {
           "type": "int",
           "validators": {
-            "min": 0
+            "min": 1
           }
         }
       }
@@ -160,10 +219,305 @@
       "name": "ladder",
       "params": {
         "length": {
-          "type": "int"
+          "ref": "length"
         },
         "year": {
-          "type": "int"
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "category": 2,
+      "name": "pavement",
+      "params": {
+        "length": {
+          "ref": "length"
+        },
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "category": 2,
+      "name": "adit",
+      "params": {
+        "length": {
+          "ref": "length"
+        },
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "category": 2,
+      "name": "wall",
+      "params": {
+        "length": {
+          "ref": "length"
+        },
+        "area": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1
+          }
+        },
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "category": 2,
+      "name": "breakthrough",
+      "params": {
+        "length": {
+          "ref": "length"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "category": 6,
+      "name": "draft",
+      "params": {
+        "season": {
+          "type": "string",
+          "values": ["summer", "winter"],
+          "required": true
+        },
+        "direction": {
+          "type": "string",
+          "required": false
+        },
+        "strength": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1,
+            "max": 5
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "category": 3,
+      "name": "sediment",
+      "params": {
+        "type": {
+          "values": ["colloid", "clay", "sand", "gravel", "breakdown", "cobble", "boulder", "other"],
+          "required": true
+        }
+      }
+    },
+    {
+      "id": 15,
+      "category": 3,
+      "name": "breakdown",
+      "params": {
+        "position": {
+          "type": "string",
+          "values": ["front", "back", "left", "right", "top", "bottom", "surrounding"],
+          "required": true
+        },
+        "area": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1
+          }
+        },
+        "stability": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1,
+            "max": 5
+          }
+        }
+      }
+    },
+    {
+      "id": 16,
+      "category": 6,
+      "name": "curiosity",
+      "params": {
+        "description": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "id": 16,
+      "category": 6,
+      "name": "condition",
+      "params": {
+        "state": {
+          "ref": "state"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "category": 1,
+      "name": "rock",
+      "params": {
+        "type": {
+          "type": "string",
+          "values": [
+            "basalt",
+            "andesite",
+            "diorite",
+            "gneiss",
+            "granite",
+            "quartzite",
+            "limestone",
+            "dolomite",
+            "other"
+          ],
+          "required": true
+        },
+        "period": {
+          "type": "string",
+          "values": [
+            "cambrian",
+            "devonian",
+            "silurian",
+            "ordovician",
+            "carboniferous",
+            "permian",
+            "triassic",
+            "jurassic",
+            "cretaceous",
+            "paleogene",
+            "neogene",
+            "quaternary"
+          ],
+          "required": false
+        },
+        "epoch": {
+          "type": "string",
+          "values": [
+            "holocene",
+            "pleistocene",
+            "pliocene",
+            "miocene",
+            "oligocene",
+            "eocene",
+            "palaeocene",
+            "upper cretaceous",
+            "lower cretaceous",
+            "upper jurassic",
+            "middle jurassic",
+            "lower jurassic",
+            "upper triassic",
+            "middle triassic",
+            "lower triassic",
+            "upper permian",
+            "middle permian",
+            "lower permian",
+            "upper carboniferous",
+            "middle carboniferous",
+            "lower carboniferous",
+            "upper devonian",
+            "middle devonian",
+            "lower devonian",
+            "upper silurian",
+            "middle silurian",
+            "lower silurian",
+            "upper ordovician",
+            "middle ordovician",
+            "lower ordovician",
+            "upper cambrian",
+            "middle cambrian",
+            "lower cambrian"
+          ],
+          "required": false
+        },
+        "formation": {
+          "type": "string",
+          "required": false
+        },
+        "description": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": 18,
+      "category": 6,
+      "name": "danger",
+      "params": {
+        "type": {
+          "values": ["falling rock", "flooding", "breakdown", "other"],
+          "required": true
+        }
+      }
+    },
+    {
+      "id": 19,
+      "category": 6,
+      "name": "underwater",
+      "params": {
+        "type": {
+          "values": ["permanent", "temporary"],
+          "required": true
+        }
+      }
+    },
+    {
+      "id": 20,
+      "category": 7,
+      "name": "artefact",
+      "params": {
+        "year": {
+          "ref": "year"
+        },
+        "type": {
+          "type": "string",
+          "values": ["human", "artifact", "ecofact", "feature", "other"],
+          "required": false
+        },
+        "context": {
+          "type": "string",
+          "required": false
+        },
+        "finder": {
+          "type": "string",
+          "required": false
+        },
+        "description": {
+          "type": "string",
+          "required": false
+        },
+        "state": {
+          "ref": "state"
+        },
+        "period": {
+          "type": "string",
+          "required": false,
+          "values": ["paleolithic", "mesolithic", "neolithic", "bronze age", "iron age", "roman", "medieval", "modern"]
         }
       }
     }

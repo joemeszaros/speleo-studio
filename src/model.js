@@ -16,6 +16,7 @@
 
 import { CaveSection, CaveComponent } from './model/cave.js';
 import { fromPolar, toPolar } from './utils/utils.js';
+import { MigrationSupportV1 } from './attributes.js';
 
 class Vector {
 
@@ -252,8 +253,14 @@ class SectionAttribute extends FragmentAttribute {
     };
   }
 
-  static fromPure(pure, attributeDefs) {
-    pure.attribute = pure.attribute === undefined ? undefined : attributeDefs.createFromPure(pure.attribute);
+  static fromPure(pure, attributeDefs, schemaVersionLoaded) {
+    if (pure.attribute !== undefined) {
+      if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
+        pure.attribute = MigrationSupportV1.migrate(pure.attribute);
+      }
+      pure.attribute = attributeDefs.createFromPure(pure.attribute);
+    }
+
     pure.section = CaveSection.fromPure(pure.section);
     return Object.assign(new SectionAttribute(), pure);
   }
@@ -306,8 +313,13 @@ class ComponentAttribute extends FragmentAttribute {
     };
   }
 
-  static fromPure(pure, attributeDefs) {
-    pure.attribute = pure.attribute === undefined ? undefined : attributeDefs.createFromPure(pure.attribute);
+  static fromPure(pure, attributeDefs, schemaVersionLoaded) {
+    if (pure.attribute !== undefined) {
+      if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
+        pure.attribute = MigrationSupportV1.migrate(pure.attribute);
+      }
+      pure.attribute = attributeDefs.createFromPure(pure.attribute);
+    }
     pure.component = CaveComponent.fromPure(pure.component);
     return Object.assign(new ComponentAttribute(), pure);
   }
@@ -373,8 +385,13 @@ class StationAttribute {
     };
   }
 
-  static fromPure(pure, attributeDefs) {
-    pure.attribute = pure.attribute === undefined ? undefined : attributeDefs.createFromPure(pure.attribute);
+  static fromPure(pure, attributeDefs, schemaVersionLoaded) {
+    if (pure.attribute !== undefined) {
+      if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
+        pure.attribute = MigrationSupportV1.migrate(pure.attribute);
+      }
+      pure.attribute = attributeDefs.createFromPure(pure.attribute);
+    }
     return Object.assign(new StationAttribute(), pure);
   }
 }

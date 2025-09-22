@@ -469,20 +469,36 @@ class ProjectManager {
       this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
 
       cave.attributes.sectionAttributes.forEach((sa) => {
-        if (sa.visible && sa.section.path !== undefined && sa.section.path.length > 0) {
+        if (
+          sa.visible &&
+          sa.section.path !== undefined &&
+          sa.section.path.length > 0 &&
+          sa.attribute?.isValid() === true
+        ) {
           const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
           this.scene.attributes.showFragmentAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
+        } else if (sa.visible) {
+          sa.visible = false;
         }
       });
       cave.attributes.componentAttributes.forEach((ca) => {
-        if (ca.visible && ca.component.path !== undefined && ca.component.path.length > 0) {
+        if (
+          ca.visible &&
+          ca.component.path !== undefined &&
+          ca.component.path.length > 0 &&
+          ca.attribute?.isValid() === true
+        ) {
           const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
           this.scene.attributes.showFragmentAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
+        } else if (ca.visible) {
+          ca.visible = false;
         }
       });
       cave.attributes.stationAttributes.forEach((sa) => {
-        if (sa.visible && cave.stations.has(sa.name)) {
+        if (sa.visible && cave.stations.has(sa.name) && sa.attribute?.isValid() === true) {
           this.scene.attributes.showStationAttribute(sa.id, cave.stations.get(sa.name), sa.attribute);
+        } else if (sa.visible) {
+          sa.visible = false;
         }
       });
 

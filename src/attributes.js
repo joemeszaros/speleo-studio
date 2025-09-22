@@ -22,8 +22,20 @@ export class AttributesDefinitions {
   attributesPattern = /((?<name>[A-Za-z0-9]+)(\((?<params>[^()]+)\))?)/g;
 
   constructor(attributeDefintions) {
+    attributeDefintions.definitions = AttributesDefinitions.resolveReferences(attributeDefintions);
     this.defs = attributeDefintions;
     this.schemaVersion = attributeDefintions.version;
+  }
+
+  static resolveReferences(attributeDefintions) {
+    return attributeDefintions.definitions.map((d) => {
+      return {
+        ...d,
+        params : Object.fromEntries(
+          Object.entries(d.params).map(([k, v]) => [k, v.ref ? attributeDefintions.references[v.ref] : v])
+        )
+      };
+    });
   }
 
   #getDefiniton(predicate) {
@@ -103,10 +115,28 @@ export class AttributesDefinitions {
       .map((a) => {
         const nameOrTranslated = i18n === undefined ? a.name : i18n.t(`attributes.names.${a.name}`);
         const paramNames = Object.keys(a.params);
-        const paramValues = paramNames.map((n) => a[n]).join('◌̦');
+        const paramValues = paramNames
+          .map((n) =>
+            i18n === undefined || a[n] === undefined || (a.params[n].values?.length ?? 0) === 0
+              ? a[n]
+              : i18n.t(`attributes.values.${a[n]}`)
+          ).join('◌̦');
         return `${nameOrTranslated}(${paramValues})`;
       })
       .join('|');
+  }
+
+}
+
+export class MigrationSupportV1 {
+
+  static migrate(attribute) {
+    if (attribute.name === 'bedding' || attribute.name === 'fault') {
+      attribute.size = attribute.width;
+      delete attribute.width;
+      delete attribute.height;
+    }
+    return attribute;
   }
 
 }
@@ -133,6 +163,8 @@ class Attribute {
       case 'int':
         this[paramName] = parseInt(str, 10);
         break;
+      default:
+        throw new Error(i18n.t('errors.attributes.unsupportedDataType', { dataType: paramDef.type }));
     }
   }
 

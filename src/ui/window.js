@@ -145,7 +145,6 @@ class WindowManager {
    */
   handleWindowResize() {
     // Reposition and resize all open windows to ensure they stay within viewport
-    console.log('handleWindowResize');
     this.windows.forEach((windowData) => {
       const panel = windowData.window;
       const currentRect = panel.getBoundingClientRect();

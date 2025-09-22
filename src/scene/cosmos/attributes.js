@@ -218,7 +218,7 @@ export class AttributesScene {
     const dotProduct = Math.abs(cameraDirection.dot(circleNormal));
 
     const baseOffset = 1.3;
-    const offsetMultiplier = (1 - dotProduct) * attribute.width;
+    const offsetMultiplier = (1 - dotProduct) * attribute.size;
     const offsetDistance = 3 + baseOffset * offsetMultiplier;
 
     // Calculate label position in world coordinates
@@ -254,14 +254,14 @@ export class AttributesScene {
       const tectonicGroup = new THREE.Group();
       tectonicGroup.name = `tectonic-${attribute.name}-${id}`;
 
-      const radius = Math.min(attribute.width, attribute.height) / 2;
+      const radius = attribute.size / 2;
       const circleGeometry = new THREE.CircleGeometry(radius, 32);
       const circle = new THREE.Mesh(circleGeometry, this.mats.planes.get(attribute.name));
       circle.name = `circle-${attribute.name}-${id}`;
 
       const strokeGeometry = new LineSegmentsGeometry();
       const points = [];
-      const segments = attribute.width * 2;
+      const segments = attribute.size * 2;
 
       let prevPoint = undefined;
       for (let i = 0; i <= segments; i++) {
