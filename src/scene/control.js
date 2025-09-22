@@ -519,15 +519,18 @@ export class SpatialViewControl extends BaseViewControl {
       const cameraUp = new THREE.Vector3();
       cameraUp.crossVectors(cameraRight, cameraDirection).normalize();
 
-      // Calculate pan offset in world space
-      const panOffsetX = -worldDeltaX * cameraRight.x - worldDeltaY * cameraUp.x;
-      const panOffsetY = -worldDeltaX * cameraRight.y - worldDeltaY * cameraUp.y;
-      const panOffsetZ = worldDeltaX * cameraRight.z - worldDeltaY * cameraUp.z;
+      const panOffset = new THREE.Vector3()
+        .addScaledVector(cameraRight, -worldDeltaX)
+        .addScaledVector(cameraUp, +worldDeltaY);
+
+      const panOffsetX = panOffset.x;
+      const panOffsetY = panOffset.y;
+      const panOffsetZ = panOffset.z;
 
       // Apply pan to target
       this.target.x += panOffsetX;
       this.target.y += panOffsetY;
-      this.target.z -= panOffsetZ; // z axis is inverted
+      this.target.z += panOffsetZ;
 
       // Update camera position to maintain distance
       this.updateCameraPosition();
