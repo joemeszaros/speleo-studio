@@ -275,8 +275,6 @@ class CaveEditor extends Editor {
         );
         let geoData;
         if (this.caveData.coordinates.length > 0) {
-          geoData = undefined;
-        } else {
           geoData = new GeoData(
             CoordinateSytem.EOV,
             this.caveData.coordinates.map(
@@ -287,11 +285,13 @@ class CaveEditor extends Editor {
                 )
             )
           );
+        } else {
+          geoData = undefined;
         }
 
         // validate coordinates
         let errors = [];
-        geoData.coordinates.forEach((coord) => {
+        geoData?.coordinates?.forEach((coord) => {
           const coordErrors = coord.coordinate.validate();
           if (coordErrors.length > 0) {
             errors.push(...coordErrors);
@@ -342,13 +342,13 @@ class CaveEditor extends Editor {
           const oldGeoData = this.cave.geoData;
           this.cave.metadata = caveMetadata;
           this.cave.geoData = geoData;
+          const geoDataIsEqual =
+            (oldGeoData === undefined && geoData === undefined) ||
+            (geoData !== undefined && geoData.isEqual(oldGeoData));
 
           // deleting an eov coordinate will change the survey data
           // an alias can change survey data
-          if (
-            this.metadataHasChanged ||
-            ((aliasesHasChanged || !this.cave.geoData.isEqual(oldGeoData)) && this.cave.surveys.length > 0)
-          ) {
+          if (this.metadataHasChanged || ((aliasesHasChanged || !geoDataIsEqual) && this.cave.surveys.length > 0)) {
             const reasons = [];
             if (this.metadataHasChanged) {
               reasons.push('metadata');
@@ -356,7 +356,7 @@ class CaveEditor extends Editor {
             if (aliasesHasChanged) {
               reasons.push('alias');
             }
-            if (this.cave.geoData && !this.cave.geoData.isEqual(oldGeoData)) {
+            if (!geoDataIsEqual) {
               reasons.push('geodata');
             }
             document.dispatchEvent(

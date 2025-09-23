@@ -925,14 +925,14 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     startOrTerminationEdited : (cell) => {
       const data = cell.getData();
 
-      // new row
-      if (data.status !== 'ok' || !data.visible || data.attribute === undefined) {
+      if (data.start === undefined || data.termination === undefined) {
         return;
       }
 
       if (this.graph === undefined) {
         this.graph = SectionHelper.getGraph(this.cave);
       }
+
       const component = SectionHelper.getComponent(this.graph, data.start, data.termination);
       if (component !== undefined && component.distance !== 'Infinity') {
         data.start = component.start;
@@ -941,15 +941,8 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         data.distance = component.distance;
         cell.getRow().update(data);
         if (data.visible) {
-          this.scene.attributes.disposeSectionAttribute(data.id);
-          this.scene.attributes.showFragmentAttribute(
-            data.id,
-            SectionHelper.getComponentSegments(component, this.cave.stations),
-            data.attribute,
-            data.format,
-            data.color,
-            this.cave.name
-          );
+          this.hideAttribute(data);
+          this.showAttribute(data);
         }
       } else {
         this.showAlert(
@@ -1230,15 +1223,8 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
           data.distance = section.distance;
           cell.getRow().update(data);
           if (data.visible) {
-            this.scene.attributes.disposeSectionAttribute(data.id);
-            this.scene.attributes.showFragmentAttribute(
-              data.id,
-              SectionHelper.getSectionSegments(section, this.cave.stations),
-              data.attribute,
-              data.format,
-              data.color,
-              this.cave.name
-            );
+            this.hideAttribute(data);
+            this.showAttribute(data);
           }
         } else {
           this.showAlert(
@@ -1373,11 +1359,11 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
   showAttribute(r) {
     const station = this.cave.stations.get(r.station);
-    this.scene.attributes.showStationAttribute(r.id, station, r.attribute);
+    this.scene.attributes.showStationAttribute(r.id, station, r.attribute, this.cave.name);
   }
 
   hideAttribute(r) {
-    this.scene.attributes.disposeStationAttribute(r.id, r.attribute);
+    this.scene.attributes.disposeStationAttribute(r.id);
   }
 
   showAllAttributes() {

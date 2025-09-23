@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as THREE from 'three';
 import { ExportWindow } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
 import { RotationTool } from './tool/rotation.js';
@@ -198,7 +199,16 @@ class NavigationBar {
       {
         tooltip : i18n.t('ui.navbar.tooltips.zoomFit'),
         icon    : 'icons/zoom_fit.svg',
-        click   : () => this.scene.view.fitScreen(this.scene.computeBoundingBox())
+        click   : () => {
+          const scenebb = this.scene.computeBoundingBox();
+          const gridbb = new THREE.Box3().setFromObject(this.scene.grid.grid);
+          const boundingBox = scenebb ?? gridbb;
+          const center = boundingBox.getCenter(new THREE.Vector3()) ?? new THREE.Vector3(0, 0, 0);
+          this.scene.view.panCameraTo(center);
+          this.scene.view.fitScreen(boundingBox);
+          this.scene.view.renderView();
+        }
+
       },
       {
         tooltip   : i18n.t('ui.navbar.tooltips.zoomIn'),

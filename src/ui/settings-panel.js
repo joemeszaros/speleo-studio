@@ -419,7 +419,7 @@ export class SettingsPanel {
           this.options.scene.sections.width,
           0.1,
           32,
-          1,
+          0.1,
           (value) => {
             this.options.scene.sections.width = value;
           }

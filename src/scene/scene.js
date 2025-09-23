@@ -292,6 +292,7 @@ class MyScene {
     this.startPoint.removeStartingPoint(caveName);
     this.speleo.disposeCave(caveName);
     this.attributes.disposeSectionAttributes(caveName);
+    this.attributes.diposeStationAttributes(caveName);
   }
 
 }

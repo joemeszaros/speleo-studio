@@ -20,6 +20,7 @@ import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { i18n } from '../../i18n/i18n.js';
 import * as U from '../../utils/utils.js';
 import { SegmentScene } from './segments.js';
+import { SectionHelper } from '../../section.js';
 
 export class AttributesScene {
 
@@ -184,21 +185,80 @@ export class AttributesScene {
       }
 
       if (e.text) {
-        const textMesh = e.text;
-        this.sectionAttributes3DGroup.remove(textMesh);
-        textMesh.geometry.dispose();
+        const sprite = e.text;
+        this.sectionAttributes3DGroup.remove(sprite);
+        sprite.material.map.dispose();
+        sprite.material.dispose();
+        sprite.geometry.dispose();
       }
       this.sectionAttributes.delete(id);
       this.scene.view.renderView();
     }
   }
 
-  showStationAttribute(id, station, attribute) {
+  reloadSectionAttributes(cave) {
+    if (this.sectionAttributes.size === 0) {
+      return;
+    }
+    const graph = SectionHelper.getGraph(cave);
+
+    const matchingIds = [...this.sectionAttributes]
+      .filter(([_, entry]) => entry.caveName === cave.name)
+      .map(([id]) => id);
+
+    matchingIds.forEach((id) => {
+      const sa = cave.attributes.sectionAttributes.find((sa) => sa.id === id);
+      if (sa !== undefined) {
+        const section = SectionHelper.getSection(graph, sa.section.from, sa.section.to);
+        const segments = SectionHelper.getSectionSegments(section, cave.stations);
+        const oldSegments = this.sectionAttributes.get(id).segments;
+        if (!U.arraysEqual(segments, oldSegments)) {
+          this.disposeSectionAttribute(id);
+          this.showFragmentAttribute(id, segments, sa.attribute, sa.format, sa.color, cave.name);
+        }
+      }
+
+      const ca = cave.attributes.componentAttributes.find((ca) => ca.id === id);
+      if (ca !== undefined) {
+        const component = SectionHelper.getComponent(graph, ca.component.start, ca.component.termination);
+        const segments = SectionHelper.getComponentSegments(component, cave.stations);
+        const oldSegments = this.sectionAttributes.get(id).segments;
+        if (!U.arraysEqual(segments, oldSegments)) {
+          this.disposeSectionAttribute(id);
+          this.showFragmentAttribute(id, segments, ca.attribute, ca.format, ca.color, cave.name);
+        }
+      }
+
+    });
+  }
+
+  reloadStationAttributes(cave) {
+    if (this.stationAttributes.size === 0) {
+      return;
+    }
+    const caveName = cave.name;
+    const stations = cave.stations;
+    [...this.stationAttributes]
+      .filter(([_, entry]) => entry.caveName === caveName)
+      .forEach(([id, entry]) => {
+        const oldStation = entry.station;
+        const newStation = stations.get(oldStation.name);
+        if (newStation !== undefined && !newStation.position.equals(oldStation.position)) {
+          this.disposeStationAttribute(id);
+          this.showStationAttribute(id, newStation, entry.attribute, caveName);
+        } else {
+          // station doesn't exist anymore
+          this.disposeStationAttribute(id);
+        }
+      });
+  }
+
+  showStationAttribute(id, station, attribute, caveName) {
     if (!this.stationAttributes.has(id)) {
       if (['bedding', 'fault'].includes(attribute.name)) {
-        this.showPlaneFor(id, station, attribute);
+        this.showPlaneFor(id, station, attribute, caveName);
       } else {
-        this.showIconFor(id, station, attribute);
+        this.showIconFor(id, station, attribute, caveName);
       }
     }
   }
@@ -255,7 +315,7 @@ export class AttributesScene {
     this.scene.view.renderView();
   }
 
-  showPlaneFor(id, station, attribute) {
+  showPlaneFor(id, station, attribute, caveName) {
     if (!this.stationAttributes.has(id)) {
       const position = station.position;
 
@@ -314,6 +374,8 @@ export class AttributesScene {
         label     : textSprite.label,
         sprite    : textSprite.getSprite(),
         attribute : attribute,
+        station   : station,
+        caveName  : caveName,
         hasPlane  : true
       };
       this.stationAttributes.set(id, entry);
@@ -404,7 +466,7 @@ export class AttributesScene {
     this.scene.view.renderView();
   }
 
-  showIconFor(id, station, attribute) {
+  showIconFor(id, station, attribute, caveName) {
     if (!this.stationAttributes.has(id)) {
       const position = station.position;
 
@@ -435,6 +497,7 @@ export class AttributesScene {
 
           this.stationAttributes.set(id, {
             sprite    : sprite,
+            caveName  : caveName,
             station   : station,
             attribute : attribute,
             hasIcon   : true
@@ -450,9 +513,21 @@ export class AttributesScene {
     }
   }
 
-  disposeStationAttribute(id, attribute) {
+  diposeStationAttributes(caveName) {
+    const matchingIds = [];
+    for (const [id, entry] of this.stationAttributes) {
+      if (entry.caveName === caveName) {
+        matchingIds.push(id);
+      }
+    }
+    matchingIds.forEach((id) => this.disposeStationAttribute(id));
+  }
+
+  disposeStationAttribute(id) {
     if (this.stationAttributes.has(id)) {
-      if (['bedding', 'fault'].includes(attribute.name)) {
+      const entry = this.stationAttributes.get(id);
+      const attributeName = entry.attribute.name;
+      if (['bedding', 'fault'].includes(attributeName)) {
         this.scene.attributes.disposePlaneFor(id);
       } else {
         this.scene.attributes.disposeIconFor(id);
@@ -463,6 +538,7 @@ export class AttributesScene {
   disposeIconFor(id) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
+
       const sprite = e.sprite;
 
       if (sprite.material && sprite.material.map) {
@@ -497,11 +573,13 @@ export class AttributesScene {
       });
 
       // Dispose the label if it exists
-      if (e.label) {
-        if (e.label.material) {
-          e.label.material.dispose();
+      if (e.sprite) {
+        if (e.sprite.material && e.sprite.material.map) {
+          e.sprite.material.map.dispose();
         }
-        this.stationAttributes3DGroup.remove(e.label);
+        e.sprite.material.dispose();
+        e.sprite.geometry?.dispose();
+        this.stationAttributes3DGroup.remove(e.sprite);
       }
 
       this.stationAttributes3DGroup.remove(group);

@@ -339,13 +339,16 @@ class View {
 
   panCameraTo(position) {
     const pos = position.clone();
-    const dir = this.camera.position.clone().sub(this.target);
-    const camPos = pos.clone().add(dir);
     this.target.copy(pos);
-    this.control.target.copy(pos);
-    this.camera.position.copy(camPos);
-    this.camera.updateProjectionMatrix();
+    this.control.setTarget(pos);
+    this.control.updateCameraPosition();
     this.renderView();
+  }
+
+  setOverviewCameraTo(position) {
+    this.overviewCamera.position.copy(position);
+    this.overviewCamera.lookAt(this.target);
+    this.overviewCamera.updateProjectionMatrix();
   }
 
   zoomCameraTo(level) {
@@ -661,7 +664,7 @@ class SpatialView extends View {
     };
   }
 
-  adjustCamera(boundingBox) {
+  adjustCamera(boundingBox, changeOrientation = true) {
     const settings = this.getViewSettings(boundingBox);
 
     View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
@@ -669,17 +672,17 @@ class SpatialView extends View {
 
     this.control.setTarget(this.target);
     this.scene.points.setCameraTargetPosition(this.control.getTarget());
-    // wihtout the Math.PI / 2 - 0.0001 Firefox renders the initial view 90 degree clockwise
-    // the first rotation fixes the view but I rather decided to apply this delta
-    this.control.setCameraOrientation(settings.distance, Math.PI, Math.PI / 2 - 0.001); // looking down from above
+    if (changeOrientation) {
+      // wihtout the Math.PI / 2 - 0.0001 Firefox renders the initial view 90 degree clockwise
+      // the first rotation fixes the view but I rather decided to apply this delta
+      this.control.setCameraOrientation(settings.distance, Math.PI, Math.PI / 2 - 0.001); // looking down from above
+    }
 
     // Update camera position
     this.control.updateCameraPosition();
 
     // Update overview camera to match
-    this.overviewCamera.position.copy(this.camera.position);
-    this.overviewCamera.lookAt(this.target);
-    this.overviewCamera.updateProjectionMatrix();
+    this.setOverviewCameraTo(this.camera.position);
   }
 
   renderView() {
@@ -705,9 +708,7 @@ class SpatialView extends View {
       this.control.updateCameraPosition();
 
       const newpos = this.camera.position.clone().sub(this.control.target);
-      this.overviewCamera.position.copy(this.target.clone().add(newpos));
-      this.overviewCamera.lookAt(this.target);
-      this.overviewCamera.updateProjectionMatrix();
+      this.setOverviewCameraTo(this.target.clone().add(newpos));
       this.renderView();
 
       this.animatedPreviously = false;
@@ -1056,9 +1057,7 @@ class PlanView extends View {
     this.control.setTarget(this.target);
     this.control.setHeight(settings.distance);
     this.control.updateCameraPosition();
-    this.overviewCamera.position.copy(this.control.getCameraPosition());
-    this.overviewCamera.lookAt(this.target);
-    this.overviewCamera.updateProjectionMatrix();
+    this.setOverviewCameraTo(this.control.getCameraPosition());
   }
 
   onResize(width, height) {
@@ -1185,9 +1184,7 @@ class ProfileView extends View {
 
     if (params.type === 'rotate') {
       const diff = this.control.getCameraPosition().sub(this.control.getTarget());
-      this.overviewCamera.position.copy(this.target.clone().add(diff));
-      this.overviewCamera.lookAt(this.target);
-      this.overviewCamera.updateProjectionMatrix();
+      this.setOverviewCameraTo(this.target.clone().add(diff));
       if (this.frustumFrame) this.updateFrustumFrame();
     } else if (params.type === 'pan') {
       if (this.frustumFrame) this.updateFrustumFrame();
@@ -1228,9 +1225,7 @@ class ProfileView extends View {
     this.control.setRadius(settings.distance);
     this.control.updateCameraPosition();
     const diff = this.control.getCameraPosition().sub(this.control.getTarget());
-    this.overviewCamera.position.copy(this.target.clone().add(diff));
-    this.overviewCamera.lookAt(this.target);
-    this.overviewCamera.updateProjectionMatrix();
+    this.setOverviewCameraTo(this.target.clone().add(diff));
   }
 
   onResize(width, height) {

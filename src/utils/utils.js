@@ -171,6 +171,10 @@ function formatDistance(distanceInMeters, decimals = 2) {
   }
 }
 
+function arraysEqual(a, b) {
+  return a.length === b.length && a.every((element, index) => element === b[index]);
+}
+
 function fitString(str, maxLength) {
   if (str.length > maxLength) {
     return str.substr(0, maxLength - 3) + '...';
@@ -305,5 +309,6 @@ export {
   fitString,
   falsy,
   toAscii,
-  textToIso88592Bytes
+  textToIso88592Bytes,
+  arraysEqual
 };

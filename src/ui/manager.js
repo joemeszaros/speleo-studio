@@ -336,9 +336,13 @@ class ProjectManager {
 
     // Update starting point position after recalculation
     this.scene.startPoint.addOrUpdateStartingPoint(cave);
+    this.scene.attributes.reloadStationAttributes(cave);
+    this.scene.attributes.reloadSectionAttributes(cave);
 
     const boundingBox = this.scene.computeBoundingBox();
+    const center = boundingBox.getCenter(new THREE.Vector3());
     this.scene.grid.adjust(boundingBox);
+    this.scene.view.panCameraTo(center);
     this.scene.view.fitScreen(boundingBox);
   }
 
@@ -496,7 +500,7 @@ class ProjectManager {
       });
       cave.attributes.stationAttributes.forEach((sa) => {
         if (sa.visible && cave.stations.has(sa.name) && sa.attribute?.isValid() === true) {
-          this.scene.attributes.showStationAttribute(sa.id, cave.stations.get(sa.name), sa.attribute);
+          this.scene.attributes.showStationAttribute(sa.id, cave.stations.get(sa.name), sa.attribute, cave.name);
         } else if (sa.visible) {
           sa.visible = false;
         }

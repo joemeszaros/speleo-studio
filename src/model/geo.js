@@ -172,7 +172,8 @@ class GeoData {
   }
 
   isEqual(other) {
-    return this.coordinateSystem === other.coordinateSystem &&
+    return other !== undefined &&
+      this.coordinateSystem === other.coordinateSystem &&
       this.coordinates.length === other.coordinates.length &&
       this.coordinates.every((c, i) => c.isEqual(other.coordinates[i]));
   }
