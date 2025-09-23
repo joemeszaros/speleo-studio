@@ -71,8 +71,8 @@ class BaseAttributeEditor extends Editor {
       true,
       true,
       this.options.ui.editor.attributes,
-      () => {
-        this.closeEditor();
+      (content, saveOnExit) => {
+        this.closeEditor(saveOnExit);
       },
       (_newWidth, newHeight) => {
         const h = this.panel.offsetHeight - 100;
@@ -175,14 +175,35 @@ class BaseAttributeEditor extends Editor {
       columns : columns
     });
 
-    this.table.on('cellEdited', (cell) => {
+    const onUpdate = (cell) => {
       const data = cell.getData();
       const invalidRow = this.getValidationUpdate(data);
       if (invalidRow !== undefined) {
         data.status = invalidRow.status;
         data.message = invalidRow.message;
+        if (data.visible) {
+          //hide invalid visible attribute
+          this.hideAttribute(data);
+          data.visible = false;
+        }
+
         cell.getRow().reformat();
+      } else {
+        this.reRenderAttribute(cell);
       }
+      this.updateDerivedColumns(cell);
+    };
+
+    this.table.on('clipboardPasted', function (clipboard, rowData, rows) {
+      rows.forEach((row) => {
+        const cells = row.getCells();
+        onUpdate(cells[0].component); // choose a random cell
+      });
+    });
+
+    this.table.on('cellEdited', (cell) => {
+      onUpdate(cell);
+
     });
 
     // custom editing on keydown didn't work for format column
@@ -271,7 +292,9 @@ class BaseAttributeEditor extends Editor {
       let datalist;
       if (hasValues) {
         datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.values.map((n) => '<option value="' + i18n.t(`attributes.values.${n}`) + '">').join('')}</datalist>`;
-        value = i18n.t(`attributes.values.${value}`);
+        if (value !== '') {
+          value = i18n.t(`attributes.values.${value}`);
+        }
       }
       const inputType = datalist === undefined ? 'text' : 'search';
       const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
@@ -426,17 +449,24 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
     super(db, options, cave, scene, attributeDefs, panel);
   }
 
-  getColumns() {
-
-    const updateInterpolated = (cell) => {
-      const data = cell.getData();
-      if (data.attribute !== undefined && data.format) {
-        const localized = data.attribute.localize(i18n);
-        const formattedAttribute = U.interpolate(data.format, localized);
-        data.interpolated = formattedAttribute;
-        cell.getRow().update(data);
+  updateInterpolated(cell) {
+    const data = cell.getData();
+    if (data.attribute !== undefined && data.format) {
+      const localized = data.attribute.localize(i18n);
+      const { interpolated, success } = U.interpolate(data.format, localized);
+      if (success) {
+        data.interpolated = interpolated;
+      } else {
+        data.interpolated = i18n.t('ui.editors.attributes.errors.failedToInterpolate');
       }
-    };
+      cell.getRow().update(data);
+    } else if (data.format === undefined) {
+      data.interpolated = '';
+      cell.getRow().update(data);
+    }
+  }
+
+  getColumns() {
 
     return [
       {
@@ -511,7 +541,8 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
             this.tableFunctions.checkAttributesLength,
             i18n
           ),
-        cellEdited: updateInterpolated
+        cellEdited: this.updateInterpolated
+
       },
       {
         title  : i18n.t('ui.editors.attributes.columns.format'),
@@ -542,7 +573,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
           editor.addEventListener('blur', successFunc);
           return editor;
         },
-        cellEdited : updateInterpolated,
+        cellEdited : this.updateInterpolated,
         formatter  : (cell) => {
           const data = cell.getData();
           if (data.attribute && data.format && data.format.length > 0) {
@@ -611,8 +642,10 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     return i18n.t('ui.editors.componentAttributes.title', { name: this.cave.name });
   }
 
-  closeEditor() {
-    this.setCaveComponentAttributes();
+  closeEditor(saveOnExit = true) {
+    if (saveOnExit) {
+      this.setCaveComponentAttributes();
+    }
     super.closeEditor();
   }
 
@@ -621,7 +654,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
       () => this.setCaveComponentAttributes(),
-      () => close()
+      () => close(false) // do not save on exit
     );
     specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
@@ -722,28 +755,30 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   getTableData() {
 
     const rows = this.cave.attributes.componentAttributes.map((r) => {
-      let interpolated;
-      const format = r.format === undefined ? '${name}' : r.format;
-
-      if (format && r.attribute) {
-        const localized = r.attribute.localize(i18n);
-        interpolated = U.interpolate(format, localized);
-
-      }
-      return {
-        id           : r.id,
-        visible      : r.visible,
-        color        : r.color,
-        start        : r.component.start,
-        termination  : r.component.termination,
-        path         : r.component.path, //hidden
-        distance     : r.component.distance,
-        attribute    : r.attribute,
-        format       : format,
-        interpolated : interpolated,
-        status       : 'ok',
-        message      : i18n.t('ui.editors.base.status.ok')
+      const newRow = {
+        id          : r.id,
+        visible     : r.visible,
+        color       : r.color,
+        start       : r.component.start,
+        termination : r.component.termination,
+        path        : r.component.path, //hidden
+        distance    : r.component.distance,
+        attribute   : r.attribute,
+        format      : r.format,
+        status      : 'ok',
+        message     : i18n.t('ui.editors.base.status.ok')
       };
+
+      if (r.attribute !== undefined && r.format) {
+        const localized = r.attribute.localize(i18n);
+        const { interpolated, success } = U.interpolate(r.format, localized);
+        if (success) {
+          newRow.interpolated = interpolated;
+        } else {
+          newRow.interpolated = i18n.t('ui.editors.attributes.errors.failedToInterpolate');
+        }
+      }
+      return newRow;
     });
 
     const rowsToUpdate = this.getValidationUpdates(rows);
@@ -851,6 +886,25 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     this.scene.attributes.disposeSectionAttribute(r.id);
   }
 
+  updateDerivedColumns(cell) {
+    this.updateInterpolated(cell);
+  }
+
+  reRenderAttribute(cell) {
+    const data = cell.getData();
+
+    if (data.status !== 'ok' || !data.visible || data.attribute === undefined) {
+      return;
+    }
+
+    if (!['start', 'termination', 'attribute', 'format'].includes(cell.getField())) {
+      return;
+    }
+    this.hideAttribute(data);
+    this.showAttribute(data);
+
+  }
+
   toggleVisibility(ev, cell) {
     const data = cell.getData();
     if (data.status !== 'ok' && !data.visible) {
@@ -861,19 +915,9 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     cell.setValue(!cell.getValue());
 
     if (cell.getValue() === true) {
-      this.scene.attributes.showFragmentAttribute(
-        data.id,
-        SectionHelper.getComponentSegments(
-          new CaveComponent(data.start, data.termination, data.path, data.distance),
-          this.cave.stations
-        ),
-        data.attribute,
-        data.format,
-        data.color,
-        this.cave.name
-      );
+      this.showAttribute(data);
     } else {
-      this.scene.attributes.disposeSectionAttribute(data.id);
+      this.hideAttribute(data);
     }
   }
 
@@ -882,7 +926,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       const data = cell.getData();
 
       // new row
-      if (data.start === undefined || data.termination === undefined) {
+      if (data.status !== 'ok' || !data.visible || data.attribute === undefined) {
         return;
       }
 
@@ -944,8 +988,10 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     return i18n.t('ui.editors.sectionAttributes.title', { name: this.cave.name });
   }
 
-  closeEditor() {
-    this.setCaveSectionAttributes();
+  closeEditor(saveOnExit = true) {
+    if (saveOnExit) {
+      this.setCaveSectionAttributes();
+    }
     super.closeEditor();
   }
 
@@ -954,7 +1000,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
       () => this.setCaveSectionAttributes(),
-      () => close()
+      () => close(false) // do not save on exit
     );
     specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
@@ -1051,7 +1097,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   getTableData() {
 
     const rows = this.cave.attributes.sectionAttributes.map((r) => {
-      return {
+      const newRow = {
         id        : r.id,
         visible   : r.visible,
         color     : r.color,
@@ -1060,10 +1106,22 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         path      : r.section.path, //hidden
         distance  : r.section.distance,
         attribute : r.attribute,
-        format    : r.format === undefined ? '${name}' : r.format,
+        format    : r.format,
         status    : 'ok',
         message   : i18n.t('ui.editors.base.status.ok')
       };
+
+      if (r.attribute !== undefined && r.format) {
+        const localized = r.attribute.localize(i18n);
+        const { interpolated, success } = U.interpolate(r.format, localized);
+        if (success) {
+          newRow.interpolated = interpolated;
+        } else {
+          newRow.interpolated = i18n.t('ui.editors.attributes.errors.failedToInterpolate');
+        }
+      }
+
+      return newRow;
     });
 
     const rowsToUpdate = this.getValidationUpdates(rows);
@@ -1116,6 +1174,24 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     this.scene.attributes.disposeSectionAttribute(r.id);
   }
 
+  updateDerivedColumns(cell) {
+    this.updateInterpolated(cell);
+  }
+
+  reRenderAttribute(cell) {
+    const data = cell.getData();
+
+    if (data.status !== 'ok' || !data.visible || data.attribute === undefined) {
+      return;
+    }
+    if (!['from', 'to', 'attribute', 'format'].includes(cell.getField())) {
+      return;
+    }
+
+    this.hideAttribute(data);
+    this.showAttribute(data);
+  }
+
   toggleVisibility(ev, cell) {
     const data = cell.getData();
     if (data.status !== 'ok' && !data.visible) {
@@ -1126,19 +1202,9 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     cell.setValue(!cell.getValue());
 
     if (cell.getValue() === true) {
-      this.scene.attributes.showFragmentAttribute(
-        data.id,
-        SectionHelper.getSectionSegments(
-          new CaveSection(data.from, data.to, data.path, data.distance),
-          this.cave.stations
-        ),
-        data.attribute,
-        data.format,
-        data.color,
-        this.cave.name
-      );
+      this.showAttribute(data);
     } else {
-      this.scene.attributes.disposeSectionAttribute(data.id);
+      this.hideAttribute(data);
     }
   }
 
@@ -1212,8 +1278,10 @@ class StationAttributeEditor extends BaseAttributeEditor {
     return i18n.t('ui.editors.stationAttributes.title', { name: this.cave.name });
   }
 
-  closeEditor() {
-    this.setCaveStationAttributes();
+  closeEditor(saveOnExit = true) {
+    if (saveOnExit) {
+      this.setCaveStationAttributes();
+    }
     super.closeEditor();
   }
 
@@ -1222,7 +1290,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
     const specificButtons = IconBar.getAttributesButtons(
       () => this.validateRows(),
       () => this.setCaveStationAttributes(),
-      () => close()
+      () => close(false) // do not save on exit
     );
     specificButtons.forEach((button) => this.iconBar.addButton(button));
   }
@@ -1303,12 +1371,20 @@ class StationAttributeEditor extends BaseAttributeEditor {
     ];
   }
 
+  showAttribute(r) {
+    const station = this.cave.stations.get(r.station);
+    this.scene.attributes.showStationAttribute(r.id, station, r.attribute);
+  }
+
+  hideAttribute(r) {
+    this.scene.attributes.disposeStationAttribute(r.id, r.attribute);
+  }
+
   showAllAttributes() {
     const toShow = this.table.getData().filter((r) => r.visible === false && r.status === 'ok');
     if (toShow.length > 0) {
       toShow.forEach((r) => {
-        const station = this.cave.stations.get(r.station);
-        this.scene.attributes.showStationAttribute(r.id, station, r.attribute);
+        this.showAttribute(r);
       });
       this.table.updateData(
         toShow.map((t) => {
@@ -1323,7 +1399,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
     const toHide = this.table.getData().filter((r) => r.visible === true);
     if (toHide.length > 0) {
       toHide.forEach((r) => {
-        this.scene.attributes.disposeStationAttribute(r.id, r.attribute);
+        this.hideAttribute(r);
       });
       this.table.updateData(
         toHide.map((t) => {
@@ -1437,6 +1513,25 @@ class StationAttributeEditor extends BaseAttributeEditor {
     return rows;
   }
 
+  updateDerivedColumns(cell) {
+    //no derived columns
+  }
+
+  reRenderAttribute(cell) {
+    const data = cell.getData();
+
+    if (data.status !== 'ok' || !data.visible || data.attribute === undefined) {
+      return;
+    }
+
+    if (!['station', 'attribute', 'format'].includes(cell.getField())) {
+      return;
+    }
+
+    this.hideAttribute(data);
+    this.showAttribute(data);
+  }
+
   toggleVisibility(ev, cell) {
     const data = cell.getData();
     if (data.status !== 'ok' && !data.visible) {
@@ -1449,11 +1544,11 @@ class StationAttributeEditor extends BaseAttributeEditor {
     if (cell.getValue() === true) {
       const station = this.cave.stations.get(data.station);
       if (data.attribute && data.attribute.name) {
-        this.scene.attributes.showStationAttribute(data.id, station, data.attribute);
+        this.showAttribute(data);
       }
     } else {
       if (data.attribute && data.attribute.name) {
-        this.scene.attributes.disposeStationAttribute(data.id, data.attribute);
+        this.hideAttribute(data);
       }
     }
   }

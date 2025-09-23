@@ -63,22 +63,25 @@ export class AttributesScene {
       const maxZ = bb.min.z > bb.max.z ? bb.min.z : bb.max.z;
       center.z = maxZ;
       const localized = attribute.localize(i18n);
-      const formattedAttribute = U.interpolate(format, localized);
-      let textSprite = this.scene.addSpriteLabel(
-        formattedAttribute,
-        center,
-        this.options.scene.sections.labels.size,
-        this.options.scene.sections.labels.color,
-        this.options.scene.sections.labels.strokeColor
-      );
-      const sprite = textSprite.getSprite();
-      this.sectionAttributes3DGroup.add(sprite);
-      sprite.layers.set(1);
+      const { interpolated, success } = U.interpolate(format, localized);
+      let sprite;
+      if (success) {
+        let textSprite = this.scene.addSpriteLabel(
+          interpolated,
+          center,
+          this.options.scene.sections.labels.size,
+          this.options.scene.sections.labels.color,
+          this.options.scene.sections.labels.strokeColor
+        );
+        sprite = textSprite.getSprite();
+        this.sectionAttributes3DGroup.add(sprite);
+        sprite.layers.set(1);
+      }
 
       this.sectionAttributes.set(id, {
         tube     : tubeGroup,
         text     : sprite,
-        label    : formattedAttribute,
+        label    : interpolated,
         center   : center,
         caveName : caveName,
         segments : segments,
@@ -90,20 +93,24 @@ export class AttributesScene {
 
   toggleSectionsLabelVisibility(visible) {
     this.sectionAttributes.forEach((e) => {
-      e.text.visible = visible;
+      if (e.text) {
+        e.text.visible = visible;
+      }
     });
     this.scene.view.renderView();
   }
 
   updateSectionAttributesLabels() {
     this.sectionAttributes.forEach((e) => {
-      e.text = this.updateAttributeLabel(
-        e.label,
-        this.options.scene.sections.labels.size,
-        e.text,
-        e.center,
-        this.sectionAttributes3DGroup
-      );
+      if (e.text) {
+        e.text = this.updateAttributeLabel(
+          e.label,
+          this.options.scene.sections.labels.size,
+          e.text,
+          e.center,
+          this.sectionAttributes3DGroup
+        );
+      }
     });
     this.scene.view.renderView();
   }
@@ -176,9 +183,11 @@ export class AttributesScene {
         this.sectionAttributes3DGroup.remove(tubeGroup);
       }
 
-      const textMesh = e.text;
-      this.sectionAttributes3DGroup.remove(textMesh);
-      textMesh.geometry.dispose();
+      if (e.text) {
+        const textMesh = e.text;
+        this.sectionAttributes3DGroup.remove(textMesh);
+        textMesh.geometry.dispose();
+      }
       this.sectionAttributes.delete(id);
       this.scene.view.renderView();
     }

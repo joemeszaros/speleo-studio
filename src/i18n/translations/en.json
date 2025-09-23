@@ -541,7 +541,8 @@
           "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",
           "noNameSelected": "No attribute name is selected",
           "noAttributeWithName": "No attribute with name '{name}'",
-          "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
+          "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}",
+          "failedToInterpolate": "Interpolation failed"
         }
       },
       "sectionAttributes": {

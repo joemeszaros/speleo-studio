@@ -76,10 +76,11 @@ function interpolate(template, params) {
   const names = Object.keys(params);
   const vals = Object.values(params);
   try {
-    return new Function(...names, `return \`${template}\`;`)(...vals);
+    const interpolated = new Function(...names, `return \`${template}\`;`)(...vals);
+    return { interpolated, success: true };
   } catch (error) {
     console.error(`Interpolation failed for ${template} with params ${params}`, error);
-    return template;
+    return { interpolated: template, success: false };
   }
 }
 

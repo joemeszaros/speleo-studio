@@ -564,7 +564,8 @@
           "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot",
           "noNameSelected": "Nincs attribútum neve kiválasztva",
           "noAttributeWithName": "Nincs '{name}' nevű attribútum",
-          "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
+          "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}",
+          "failedToInterpolate": "Feloldás sikertelen"
         }
       },
       "sectionAttributes": {

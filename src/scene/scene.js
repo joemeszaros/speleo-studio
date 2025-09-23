@@ -167,12 +167,6 @@ class MyScene {
   }
 
   renderScene(camera, overViewCamera, spriteCamera, helper) {
-    this.attributes.sectionAttributes?.forEach((e) => {
-      const pos = e.center.clone();
-      pos.z = pos.z + 100;
-      e.text.lookAt(pos);
-    });
-
     if (this.options.scene.stationLabels.show) {
       this.#updateStationLabelsBillboarding();
     }

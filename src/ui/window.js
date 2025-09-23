@@ -266,7 +266,7 @@ class WindowManager {
     this.panelPositions.delete(panelId);
   }
 
-  close(id) {
+  close(id, saveOnExit = true) {
     const item = this.windows.get(id);
     const panel = item.window;
 
@@ -276,7 +276,7 @@ class WindowManager {
 
     panel.style.display = 'none';
     const content = panel.querySelector('.popup-content-div');
-    item.close(content);
+    item.close(content, saveOnExit);
     panel.removeEventListener('click', item.click);
     content.remove();
     this.windows.delete(panel.id);
@@ -580,7 +580,7 @@ class WindowManager {
       options.height = constrainedSize.height;
     }
 
-    buildFn(content, () => this.close(panel.id));
+    buildFn(content, (saveOnExit) => this.close(panel.id, saveOnExit));
     panel.style.display = 'block';
 
     // Try to restore previous position, otherwise center the panel
