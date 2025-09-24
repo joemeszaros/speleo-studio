@@ -327,7 +327,7 @@ class Editor extends BaseEditor {
         attrs = rowData.attributes;
       }
       if (attrs !== undefined && attrs && Array.isArray(attrs) && attrs.length > 0) {
-        const formatted = AttributesDefinitions.getAttributesAsString(attrs, i18n);
+        const formatted = AttributesDefinitions.getAttributesAsString(attrs, i18n, ',');
         return formatted.includes(headerValue);
       } else {
         return false;

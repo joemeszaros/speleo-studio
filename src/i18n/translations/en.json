@@ -151,7 +151,8 @@
         "startPoint": "Cave start point",
         "targetPoint": "Camera target point",
         "sectionsLabel": "Sections label",
-        "circleOpacity": "Circle opacity"
+        "circleOpacity": "Circle opacity",
+        "attributes": "Attributes"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"
@@ -537,6 +538,10 @@
           "from": "From",
           "to": "To"
         },
+        "menu": {
+          "showSelected": "Show selected",
+          "hideSelected": "Hide selected"
+        },
         "errors": {
           "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",
           "noNameSelected": "No attribute name is selected",
@@ -814,7 +819,8 @@
     "clear": "Clear",
     "invalid": "Invalid",
     "comments": "Comments",
-    "remove": "Remove"
+    "remove": "Remove",
+    "attributes": "Attributes"
   },
   "attributes": {
     "title": "Attribute Definitions Reference",
@@ -846,7 +852,7 @@
       "bedding": "bedding",
       "fault": "fault",
       "rope": "rope",
-      "co": "co",
+      "co2": "co2",
       "label": "label",
       "exploration": "exploration",
       "bat": "bat",

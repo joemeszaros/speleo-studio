@@ -20,6 +20,7 @@ import { showErrorPanel } from './ui/popups.js';
 import { get3DCoordsStr, node, radsToDegrees, toPolar } from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
 import { Raycasting } from './scene/raycasting.js';
+import { AttributesDefinitions } from './attributes.js';
 
 class SceneInteraction {
 
@@ -208,6 +209,33 @@ class SceneInteraction {
     return this.getPointedStationDetails(st);
   }
 
+  getAttributesForStation(cave, stationName) {
+    const attributes = [];
+    // Get station attributes
+    if (cave.attributes) {
+
+      cave.attributes.stationAttributes.forEach((sa) => {
+        if (sa?.name === stationName && sa.attribute) {
+          attributes.push({ emoji: '📍', attribute: sa.attribute });
+        }
+      });
+
+      cave.attributes.componentAttributes.forEach((ca) => {
+        if (ca?.component?.path?.some((p) => p.from === stationName || p.to === stationName) && ca.attribute) {
+          attributes.push({ emoji: '🔀', attribute: ca.attribute });
+        }
+      });
+
+      cave.attributes.sectionAttributes.forEach((sa) => {
+        if (sa?.section?.path?.includes(stationName) && sa.attribute) {
+          attributes.push({ emoji: '🧩', attribute: sa.attribute });
+        }
+      });
+    }
+
+    return attributes;
+  }
+
   getPointedStationDetails(stationMeta) {
     // Ensure stationDetails configuration exists
     if (!this.options.ui.stationDetails) {
@@ -300,6 +328,17 @@ class SceneInteraction {
       if (shots.length > 0) {
         details.push(`${i18n.t('common.shots')}: ${shots.join(', ')}`);
       }
+    }
+
+    if (config.attributes) {
+      const attributes = this.getAttributesForStation(stationMeta.cave, stationMeta.name);
+      if (attributes.length > 0) {
+        const s = attributes
+          .map((a) => `${a.emoji} ${AttributesDefinitions.getAttributesAsString([a.attribute], i18n)}`)
+          .join(', ');
+        details.push(`${i18n.t('common.attributes')}: ${s}`);
+      }
+
     }
 
     // Comments in compact format
@@ -572,7 +611,10 @@ class SceneInteraction {
       {},
       () => {
         lineRemoveFn();
-      }
+      },
+      () => {},
+      () => {},
+      false
     );
   }
 
@@ -629,7 +671,10 @@ class SceneInteraction {
       () => {
         this.#clearSelected();
         this.scene.view.renderView();
-      }
+      },
+      () => {},
+      () => {},
+      false
     );
   }
 
@@ -649,6 +694,7 @@ class SceneInteraction {
 
   showStationDetailsPanel(stationMeta, left, top) {
     this.infoPanel.style.width = '450px';
+    this.infoPanel.style.heigth = '';
     wm.makeFloatingPanel(
       this.infoPanel,
       (contentElmnt) => this.buildStationDetailsPanel(contentElmnt, stationMeta, left, top),
@@ -659,7 +705,10 @@ class SceneInteraction {
       () => {
         this.#clearSelected();
         this.scene.view.renderView();
-      }
+      },
+      () => {},
+      () => {},
+      false
     );
   }
 
@@ -672,6 +721,10 @@ class SceneInteraction {
         .map((sh) => ({ survey: st, shot: sh }))
     );
     const comments = stationMeta.cave.stationComments.filter((c) => c.name === stationMeta.name).map((c) => c.comment);
+    let commentsString = '';
+    if (comments.length > 0) {
+      commentsString = `${i18n.t('common.comments')}:<br>${comments.join('<br>')}<br>`;
+    }
     const shotDetails = shots
       .map((r) => {
         const comment = r.shot.comment
@@ -683,6 +736,15 @@ class SceneInteraction {
         ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} m, ${r.shot.azimuth.toFixed(2)}°, ${r.shot.clino.toFixed(2)}°) - ${r.survey.name} - ${comment}`;
       })
       .join('<br>');
+
+    const attributes = this.getAttributesForStation(stationMeta.cave, stationMeta.name);
+    let attributesString = '';
+    if (attributes.length > 0) {
+      attributesString = attributes
+        .map((a) => `${a.emoji} ${AttributesDefinitions.getAttributesAsString([a.attribute], i18n)}`)
+        .join('<br>');
+      attributesString = `<br>${i18n.t('common.attributes')}: <br>${attributesString}<br></br>`;
+    }
 
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
@@ -696,8 +758,9 @@ class SceneInteraction {
         ${i18n.t('ui.panels.stationDetails.localCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.local)}<br>
         ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${stationMeta.station.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(stationMeta.station.coordinates.eov, ['x', 'y', 'elevation'])}<br>
         ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${stationMeta.station.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(stationMeta.station.coordinates.wgs, ['lat', 'lon'], 6)}<br>
-        <br>${i18n.t('common.shots')}:<br>${shotDetails}<br>
-        <br>${i18n.t('common.comments')}:${comments.join('<br>')}<br>
+        <br>${i18n.t('common.shots')}:<br>${shotDetails}<br><br>
+        ${commentsString}
+        ${attributesString}
         `;
     contentElmnt.appendChild(content);
 

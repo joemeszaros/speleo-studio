@@ -130,6 +130,14 @@ export class Graph {
   };
 
   //https://www.freecodecamp.org/news/8-essential-graph-algorithms-in-javascript/
+  /** Depth First Search traverse of the graph
+   * DFS visits the nodes depth wise. Since we need to process the nodes in a Last In First Out manner, we’ll use a stack.
+   * Starting from a vertex, we’ll push the neighboring vertices to our stack. Whenever a vertex is popped, it is marked visited
+   * in our visited object. Its neighboring vertices are pushed to the stack. Since we are always popping a new adjacent vertex,
+   * our algorithm will always explore a new level.
+   *
+   * The time complexity is the same as BFS, O(V+E).
+   **/
   traverse = function (start, terminationNodes = []) {
     const queue = [{ node: start, distance: 0 }];
     const distances = new Map();
@@ -147,7 +155,14 @@ export class Graph {
           queue.push({ node: neighbor.node, distance: currentVertex.distance + neighbor.weight });
           path.push({ from: currentVertex.node, to: neighbor.node });
           distance += neighbor.weight;
-
+        } else if (
+          !path.some((p) => p.from === neighbor.node && p.to === currentVertex.node) &&
+          !terminationNodes.includes(neighbor.node)
+        ) {
+          // cycle in the graph
+          console.log('cycle in the graph', currentVertex.node, neighbor.node);
+          path.push({ from: currentVertex.node, to: neighbor.node });
+          distance += neighbor.weight;
         }
       });
     }
@@ -176,7 +191,8 @@ export class Graph {
   }
 
   /**
-   * This method captures the cyclic path between the start and end vertices by backtracking the spanning tree from the end vertex to the start. The parents map is used to get the reference of the patent vertices.
+   * This method captures the cyclic path between the start and end vertices by backtracking the spanning tree from the end vertex to the start.
+   *  The parents map is used to get the reference of the patent vertices.
    * @param {*} start
    * @param {*} end
    * @param {*} current

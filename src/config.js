@@ -203,11 +203,12 @@ export const DEFAULT_OPTIONS = {
       type         : false,
       position     : false, // x,y,z coordinates
       shots        : false, // list of shots in compact format
-      comments     : false // list of comments in compact format
+      comments     : false, // list of comments in compact format
+      attributes   : false // list of attributes in compact format
     }
   },
   import : {
-    cavesMaxDistance : 2000
+    cavesMaxDistance : 10000
   },
   print : {
     layout : 'landscape'

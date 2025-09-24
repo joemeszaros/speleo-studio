@@ -110,7 +110,7 @@ export class AttributesDefinitions {
     return { errors: errors, attributes: attrs };
   }
 
-  static getAttributesAsString(attrs, i18n) {
+  static getAttributesAsString(attrs, i18n, delimiter = '◌̦') {
     return attrs
       .map((a) => {
         const nameOrTranslated = i18n === undefined ? a.name : i18n.t(`attributes.names.${a.name}`);
@@ -120,7 +120,7 @@ export class AttributesDefinitions {
             i18n === undefined || a[n] === undefined || (a.params[n].values?.length ?? 0) === 0
               ? a[n]
               : i18n.t(`attributes.values.${a[n]}`)
-          ).join('◌̦');
+          ).join(delimiter);
         return `${nameOrTranslated}(${paramValues})`;
       })
       .join('|');

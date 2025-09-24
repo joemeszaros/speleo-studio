@@ -258,6 +258,9 @@ class SectionAttribute extends FragmentAttribute {
       if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
         pure.attribute = MigrationSupportV1.migrate(pure.attribute);
       }
+      if (pure.attribute.name === 'co') {
+        pure.attribute.name = 'co2';
+      }
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
     }
 
@@ -390,6 +393,10 @@ class StationAttribute {
       if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
         pure.attribute = MigrationSupportV1.migrate(pure.attribute);
       }
+      if (pure.attribute.name === 'co') {
+        pure.attribute.name = 'co2';
+      }
+
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
     }
     return Object.assign(new StationAttribute(), pure);

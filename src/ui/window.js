@@ -160,14 +160,16 @@ class WindowManager {
         panel.style.width = constrainedSize.width + 'px';
         panel.style.height = constrainedSize.height + 'px';
 
-        // Update saved position with new size
-        this.savePanelPosition(
-          panel.id,
-          currentRect.left,
-          currentRect.top,
-          constrainedSize.width,
-          constrainedSize.height
-        );
+        if (windowData.savePosition) {
+          // Update saved position with new size
+          this.savePanelPosition(
+            panel.id,
+            currentRect.left,
+            currentRect.top,
+            constrainedSize.width,
+            constrainedSize.height
+          );
+        }
       }
 
       // Recalculate optimal position
@@ -270,9 +272,11 @@ class WindowManager {
     const item = this.windows.get(id);
     const panel = item.window;
 
-    // Save panel position before closing
-    const rect = panel.getBoundingClientRect();
-    this.savePanelPosition(id, rect.left, rect.top, rect.width, rect.height);
+    if (item.savePosition) {
+      // Save panel position before closing
+      const rect = panel.getBoundingClientRect();
+      this.savePanelPosition(id, rect.left, rect.top, rect.width, rect.height);
+    }
 
     panel.style.display = 'none';
     const content = panel.querySelector('.popup-content-div');
@@ -332,7 +336,8 @@ class WindowManager {
     options = {},
     closeFn = () => {},
     doDragFn = () => {},
-    stopDragFn = () => {}
+    stopDragFn = () => {},
+    savePosition = false
   ) {
 
     // close previously opened window
@@ -347,11 +352,12 @@ class WindowManager {
     const clickHandler = () => this.click(panel.id);
 
     this.windows.set(panel.id, {
-      window     : panel,
-      close      : closeFn,
-      click      : clickHandler,
-      langChange : langChangeHandler,
-      timestamp  : Date.now()
+      window       : panel,
+      close        : closeFn,
+      click        : clickHandler,
+      langChange   : langChangeHandler,
+      timestamp    : Date.now(),
+      savePosition : savePosition
 
     });
     this.moveToTop(panel.id);
@@ -424,8 +430,10 @@ class WindowManager {
       s.elmnt.style.top = newTop + 'px';
       s.elmnt.style.left = newLeft + 'px';
 
-      // Save position in real-time during drag
-      this.savePanelPosition(s.elmnt.id, newLeft, newTop, s.elmnt.offsetWidth, s.elmnt.offsetHeight);
+      if (savePosition) {
+        // Save position in real-time during drag
+        this.savePanelPosition(s.elmnt.id, newLeft, newTop, s.elmnt.offsetWidth, s.elmnt.offsetHeight);
+      }
     };
 
     function initDrag(e) {
@@ -463,7 +471,9 @@ class WindowManager {
       doDragFn(s.pWidth, s.pHeight);
 
       // Save position and size during resize
-      this.savePanelPosition(s.elmnt.id, s.elmnt.offsetLeft, s.elmnt.offsetTop, s.pWidth, s.pHeight);
+      if (savePosition) {
+        this.savePanelPosition(s.elmnt.id, s.elmnt.offsetLeft, s.elmnt.offsetTop, s.pWidth, s.pHeight);
+      }
 
     };
 
@@ -611,8 +621,10 @@ class WindowManager {
     panel.style.left = optimalPos.x + 'px';
     panel.style.top = optimalPos.y + 'px';
 
-    // Save the initial position
-    this.savePanelPosition(panel.id, optimalPos.x, optimalPos.y, panel.offsetWidth, panel.offsetHeight);
+    if (savePosition) {
+      // Save the initial position
+      this.savePanelPosition(panel.id, optimalPos.x, optimalPos.y, panel.offsetWidth, panel.offsetHeight);
+    }
 
   }
 }

@@ -85,6 +85,11 @@
       "validators": {
         "min": 1
       }
+    },
+    "metal": {
+      "type": "string",
+      "required": false,
+      "values": ["steel", "aluminium, galvanized", "stainless", "other"]
     }
   },
   "definitions": [
@@ -162,7 +167,7 @@
     {
       "id": 5,
       "category": 5,
-      "name": "co",
+      "name": "co2",
       "params": {
         "value": {
           "type": "int",
@@ -206,10 +211,9 @@
       "name": "bat",
       "params": {
         "population": {
-          "type": "int",
-          "validators": {
-            "min": 1
-          }
+          "type": "string",
+          "required": false,
+          "values": ["few", "several", "many", "colony"]
         }
       }
     },
@@ -226,6 +230,9 @@
         },
         "state": {
           "ref": "state"
+        },
+        "material": {
+          "ref": "metal"
         }
       }
     },
@@ -311,10 +318,7 @@
         "strength": {
           "type": "int",
           "required": false,
-          "validators": {
-            "min": 1,
-            "max": 5
-          }
+          "values": [1, 2, 3, 4, 5]
         }
       }
     },
@@ -324,7 +328,8 @@
       "name": "sediment",
       "params": {
         "type": {
-          "values": ["colloid", "clay", "sand", "gravel", "breakdown", "cobble", "boulder", "other"],
+          "type": "string",
+          "values": ["colloid", "clay", "sand", "gravel", "cobble", "boulder", "other"],
           "required": true
         }
       }
@@ -470,6 +475,7 @@
       "name": "danger",
       "params": {
         "type": {
+          "type": "string",
           "values": ["falling rock", "flooding", "breakdown", "other"],
           "required": true
         }
@@ -481,6 +487,7 @@
       "name": "underwater",
       "params": {
         "type": {
+          "type": "string",
           "values": ["permanent", "temporary"],
           "required": true
         }

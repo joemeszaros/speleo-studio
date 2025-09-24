@@ -110,6 +110,46 @@ class BaseAttributeEditor extends Editor {
 
   }
 
+  getContextMenu() {
+
+    return [
+      {
+        label  : `<span class="show-row"></span><span>${i18n.t('ui.editors.attributes.menu.showSelected')}<span/> `,
+        action : () => {
+          if (this.table.getRanges().length > 0) {
+            const toShow = this.table.getRanges()[0]
+              .getRows()
+              .map((r) => r.getData())
+              .filter((r) => r.visible === false && r.status === 'ok');
+            if (toShow.length > 0) {
+              toShow.forEach((r) => {
+                this.showAttribute(r);
+              });
+              this.table.updateData(toShow.map((r) => ({ id: r.id, visible: true })));
+            }
+          }
+        }
+      },
+      {
+        label  : `<span class="hide-row"></span><span>${i18n.t('ui.editors.attributes.menu.hideSelected')}<span/> `,
+        action : () => {
+          if (this.table.getRanges().length > 0) {
+            const toHide = this.table.getRanges()[0]
+              .getRows()
+              .map((r) => r.getData())
+              .filter((r) => r.visible === true && r.status === 'ok');
+            if (toHide.length > 0) {
+              toHide.forEach((r) => {
+                this.hideAttribute(r);
+              });
+              this.table.updateData(toHide.map((r) => ({ id: r.id, visible: false })));
+            }
+          }
+        }
+      }
+    ];
+  }
+
   setupTable(contentElmnt) {
 
     const tableDiv = document.createElement('div');
@@ -149,8 +189,11 @@ class BaseAttributeEditor extends Editor {
       clipboardCopyRowRange : 'range',
       clipboardPasteParser  : 'range',
       clipboardPasteAction  : 'range',
-      rowContextMenu        : this.baseTableFunctions.getContextMenu(),
-      rowHeader             : {
+      rowContextMenu        : () => {
+        const basicMenu = this.baseTableFunctions.getContextMenu();
+        return [...basicMenu, ...this.getContextMenu()];
+      },
+      rowHeader : {
         formatter : 'rownum',
         hozAlign  : 'center',
         resizable : false,
@@ -305,22 +348,28 @@ class BaseAttributeEditor extends Editor {
         if (hasValues) {
           newValue = paramDef.values.find((n) => i18n.t(`attributes.values.${n}`) === newValue);
         }
-        newValue = newValue?.replace(/\t/g, ''); //replace tab characters not to cause issues in the export
         const { errors, reasons } = a.validateFieldValue(paramName, newValue, true, false, i18n);
         if (errors.length > 0) {
           param.classList.remove('requiredInput');
           param.classList.add('invalidInput');
           if (reasons.has('typeMismatch')) {
-            a[paramName] = newValue;
+            a[paramName] = newValue?.replace(/\t/g, ''); // we cannot set the type specific value here
           } else {
-            a.setParamFromString(paramName, newValue);
+            if (newValue !== undefined) {
+              a.setParamFromString(paramName, newValue); // tab characters are replaced
+            } else {
+              a[paramName] = undefined;
+            }
           }
         } else {
           param.classList.remove('invalidInput');
           param.classList.add(requiredField ? 'requiredInput' : 'optionalInput');
           if (newValue !== undefined) {
-            a.setParamFromString(paramName, newValue);
+            a.setParamFromString(paramName, newValue); // tab characters are replaced
+          } else {
+            a[paramName] = undefined;
           }
+
         }
       };
       if (paramIndex !== 0) {
@@ -372,6 +421,7 @@ class BaseAttributeEditor extends Editor {
     } else {
       // If no attribute exists, show add attribute functionality
       const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
+      aNamesWithIds.sort((a, b) => a.name.localeCompare(b.name));
       const options = aNamesWithIds
         .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
         .join('');
@@ -603,7 +653,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   showAllAttributes() {
-    const toShow = this.table.getData().filter((r) => r.visible === false && r.status === 'ok');
+    const toShow = this.table.getData('active').filter((r) => r.visible === false && r.status === 'ok');
     if (toShow.length > 0) {
       toShow.forEach((r) => {
         this.showAttribute(r);
@@ -617,7 +667,7 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
   }
 
   hideAllAttributes() {
-    const toHide = this.table.getData().filter((r) => r.visible === true);
+    const toHide = this.table.getData('active').filter((r) => r.visible === true);
     if (toHide.length > 0) {
       toHide.forEach((r) => {
         this.hideAttribute(r);
@@ -1367,7 +1417,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
   }
 
   showAllAttributes() {
-    const toShow = this.table.getData().filter((r) => r.visible === false && r.status === 'ok');
+    const toShow = this.table.getData('active').filter((r) => r.visible === false && r.status === 'ok');
     if (toShow.length > 0) {
       toShow.forEach((r) => {
         this.showAttribute(r);
@@ -1382,7 +1432,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
   }
 
   hideAllAttributes() {
-    const toHide = this.table.getData().filter((r) => r.visible === true);
+    const toHide = this.table.getData('active').filter((r) => r.visible === true);
     if (toHide.length > 0) {
       toHide.forEach((r) => {
         this.hideAttribute(r);

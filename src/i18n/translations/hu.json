@@ -151,7 +151,8 @@
         "startPoint": "Barlang kezdőpont",
         "targetPoint": "Kamera célpont",
         "sectionsLabel": "Szakasz címkék",
-        "circleOpacity": "Kör átlátszóság"
+        "circleOpacity": "Kör átlátszóság",
+        "attributes": "Attribútumok"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"
@@ -546,6 +547,10 @@
           "invalid": "Sor érvénytelen: {errors}",
           "incomplete": "Sor hiányzó mezői: {fields}"
         },
+        "menu": {
+          "showSelected": "Kiválasztottak megjelenítése",
+          "hideSelected": "Kiválasztottak elrejtése"
+        },
         "columns": {
           "name": "Név",
           "color": "Szín",
@@ -838,7 +843,8 @@
     "clear": "Törlés",
     "invalid": "Érvénytelen",
     "comments": "Megjegyzések",
-    "remove": "Eltávolítás"
+    "remove": "Eltávolítás",
+    "attributes": "Attribútumok"
   },
   "attributes": {
     "title": "Attribútum referencia",
@@ -870,7 +876,7 @@
       "bedding": "rétegdőlés",
       "fault": "vető",
       "rope": "kötél",
-      "co": "co",
+      "co2": "co2",
       "label": "címke",
       "exploration": "felfedezés",
       "bat": "denevér",
@@ -1023,7 +1029,12 @@
       "iron age": "vaskor",
       "roman": "római",
       "medieval": "középkor",
-      "modern": "modern"
+      "modern": "modern",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
     }
   }
 }

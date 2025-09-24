@@ -206,7 +206,7 @@ export class SurveyEditor extends Editor {
         }
         if (this.cave.attributes.componentAttributes) {
           this.cave.attributes.componentAttributes.forEach((ca) => {
-            if (ca?.component?.path?.includes(stationName) && ca.attribute) {
+            if (ca?.component?.path?.some((p) => p.from === stationName || p.to === stationName) && ca.attribute) {
               attributes.push(ca.attribute);
             }
           });

@@ -597,6 +597,13 @@ export class SettingsPanel {
             (value) => {
               this.options.ui.stationDetails.comments = value;
             }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.attributes'),
+            this.options.ui.stationDetails.attributes,
+            (value) => {
+              this.options.ui.stationDetails.attributes = value;
+            }
           )
         ])
       ],

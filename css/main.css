@@ -966,6 +966,7 @@ body {
   display: inline-block;
   background: no-repeat center/70% url(../icons/trash_white.svg);
 }
+
 .tabulator .delete-row:hover {
   background: no-repeat center/70% url(../icons/trash_red.svg);
 }
@@ -1178,6 +1179,20 @@ body {
   margin-right: 3px;
   position: relative;
   background: no-repeat center/80% url(../icons/locate.svg);
+}
+
+.tabulator-menu .show-row {
+  padding: 5px 10px;
+  margin-right: 3px;
+  position: relative;
+  background: no-repeat center/80% url(../icons/visible.svg);
+}
+
+.tabulator-menu .hide-row {
+  padding: 5px 10px;
+  margin-right: 3px;
+  position: relative;
+  background: no-repeat center/80% url(../icons/invisible.svg);
 }
 
 .cave-stats {
