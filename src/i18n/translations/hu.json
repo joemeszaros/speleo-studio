@@ -23,7 +23,9 @@
         },
         "help": {
           "name": "Súgó",
-          "about": "A Speleo Studio-ról"
+          "about": "A Speleo Studio-ról",
+          "manual": "Felhasználói kézikönyv",
+          "attributeReference": "Attribútum referencia oldal"
         }
       },
       "tooltips": {
@@ -185,8 +187,9 @@
     },
     "welcome": {
       "title": "Üdvözöljük a Speleo Studio-ban",
-      "subtitle": "Az átfogó barlang vizualizációs és felmérés kezelő platform.<br />Fedezzen fel, elemezzen és vizualizáljon barlangrendszereket professzionális eszközökkel.",
-      "button": "Kezdjük el"
+      "subtitle": "Egy átfogó barlang vizualizációs és felmérés kezelő platform.",
+      "button": "Kezdjük el",
+      "info": "A Súgó menüben megtalálható a Speleo Studio felhasználói kézikönyve."
     },
 
     "explorer": {
@@ -1030,6 +1033,10 @@
       "roman": "római",
       "medieval": "középkor",
       "modern": "modern",
+      "few": "néhány",
+      "many": "sok",
+      "colony": "kolónia",
+      "several": "számos",
       "1": "1",
       "2": "2",
       "3": "3",

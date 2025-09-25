@@ -29,7 +29,7 @@ import { ExplorerTree } from './ui/explorer-tree.js';
 import { SettingsPanel } from './ui/settings-panel.js';
 
 import { AttributesDefinitions } from './attributes.js';
-import { showErrorPanel } from './ui/popups.js';
+import { showErrorPanel, showInfoPanel } from './ui/popups.js';
 import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
@@ -39,6 +39,7 @@ import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { SurfaceHelper } from './surface.js';
 import { PrintUtils } from './utils/print.js';
+import { node } from './utils/utils.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
 class Main {
@@ -47,8 +48,9 @@ class Main {
     const loader = new FontLoader();
 
     i18n.init().then(() => {
-      // Setup welcome panel translations
-      this.setupWelcomePanel();
+      if (localStorage.getItem('first-visit') === null) {
+        this.showWelcomePanel();
+      }
 
       const db = new Database();
       this.db = db;
@@ -387,21 +389,27 @@ class Main {
     }
   }
 
-  setupWelcomePanel() {
-    // Update welcome panel translations
-    const welcomeTitle = document.querySelector('.welcome-title');
-    const welcomeSubtitle = document.querySelector('.welcome-subtitle');
-    const welcomeButton = document.querySelector('.welcome-button');
-
-    if (welcomeTitle) {
-      welcomeTitle.textContent = i18n.t('ui.welcome.title');
-    }
-    if (welcomeSubtitle) {
-      welcomeSubtitle.innerHTML = i18n.t('ui.welcome.subtitle');
-    }
-    if (welcomeButton) {
-      welcomeButton.textContent = i18n.t('ui.welcome.button');
-    }
+  showWelcomePanel() {
+    const welcomePanel = node`
+      <div id="welcome-panel">
+      <div class="welcome-container">
+        <img src="images/logo.png" alt="Speleo Studio Logo" class="welcome-logo" />
+        <h1 class="welcome-title">${i18n.t('ui.welcome.title')}</h1>
+        <p class="welcome-subtitle">
+          ${i18n.t('ui.welcome.subtitle')}
+        </p>
+        <button class="welcome-button">
+          ${i18n.t('ui.welcome.button')}
+        </button>
+      </div>
+    </div>`;
+    const welcomeButton = welcomePanel.querySelector('.welcome-button');
+    welcomeButton.addEventListener('click', () => {
+      welcomePanel.style.display = 'none';
+      localStorage.setItem('first-visit', 'false');
+      showInfoPanel(i18n.t('ui.welcome.info'));
+    });
+    document.body.appendChild(welcomePanel);
   }
 }
 

@@ -186,6 +186,14 @@ class NavigationBar {
         name     : i18n.t('ui.navbar.menu.help.name'),
         elements : [
           {
+            name  : i18n.t('ui.navbar.menu.help.manual'),
+            click : () => window.open('manual/hu/index.html', '_blank')
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.help.attributeReference'),
+            click : () => window.open('attributes.html', '_blank')
+          },
+          {
             name  : i18n.t('ui.navbar.menu.help.about'),
             click : () => this.#showAboutDialog()
           }

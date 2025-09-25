@@ -23,7 +23,9 @@
         },
         "help": {
           "name": "Help",
-          "about": "About Speleo Studio"
+          "about": "About Speleo Studio",
+          "manual": "User Manual",
+          "attributeReference": "Attribute reference page"
         }
       },
       "tooltips": {
@@ -186,7 +188,8 @@
     "welcome": {
       "title": "Welcome to Speleo Studio",
       "subtitle": "Your comprehensive cave visualization and survey management platform.<br />Explore, analyze, and visualize caves with a professional tool.",
-      "button": "Let's Get Started"
+      "button": "Let's Get Started",
+      "info": "The help menu contains the Speleo Studio user manual."
     },
 
     "explorer": {
@@ -1004,7 +1007,11 @@
       "iron age": "iron age",
       "roman": "roman",
       "medieval": "medieval",
-      "modern": "modern"
+      "modern": "modern",
+      "few": "few",
+      "many": "many",
+      "colony": "colony",
+      "several": "several"
     }
   }
 }
