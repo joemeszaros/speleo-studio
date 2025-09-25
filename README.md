@@ -158,12 +158,6 @@ Speleo Studio aims to:
 - 📧 **Email**: joe.meszaros _at_ gmail.com
 - 🕳️ **Background**: Cave explorer who learned web development to create better tools for the speleology community
 
-## 📞 Support & Contact
-
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/joemeszaros/speleo-studio/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/joemeszaros/speleo-studio/discussions)
-- 📧 **Email**: joe.meszaros@gmail.com
-
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
