@@ -72,7 +72,7 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
     return Math.sqrt(dx * dx + dy * dy + de * de);
   }
 
-  validate() {
+  validate(i18n) {
 
     const errors = [];
 
@@ -80,23 +80,31 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
       return typeof f === 'number' && f !== Infinity && !isNaN(f);
     };
 
+    const t = (key, params) => {
+      if (i18n) {
+        return i18n.t(key, params);
+      } else {
+        return key;
+      }
+    };
+
     ['x', 'y', 'elevation'].forEach((coord) => {
       if (!isValidFloat(this[coord])) {
-        errors.push(`Coordinate ${coord}: '${this[coord]}'is not a valid float number`);
+        errors.push(t('validation.geo.invalidCoordinate', { coord: coord, thisCoord: this[coord] }));
       }
     });
 
     if (this.x > 400_000 || this.x < 0) {
-      errors.push(`X coordinate '${this.x}' is out of bounds (0-400000)`);
+      errors.push(t('validation.geo.outOfBounds', { XYZ: 'X', coord: this.x, bounds: '0-400000' }));
     }
 
     if (this.y < 400_000) {
-      errors.push(`Y coordinate '${this.y}' is out of bounds (400000-)`);
+      errors.push(t('validation.geo.outOfBounds', { XYZ: 'Y', coord: this.y, bounds: '400000-' }));
     }
 
     if (this.elevation < -3000 || this.elevation > 5000) {
       //GO GO cave explorers for deep and high caves!
-      errors.push(`Z coordinate '${this.elevation}' is out of bounds`);
+      errors.push(t('validation.geo.outOfBounds', { XYZ: 'Z', coord: this.elevation, bounds: '-3000 - +5000' }));
     }
     return errors;
   }
