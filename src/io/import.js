@@ -233,7 +233,7 @@ class PolygonImporter extends Importer {
             lineIterator,
             'Declination',
             (x) => U.parseMyFloat(x),
-            (x) => x >= 0 && x < 20
+            (x) => x >= -25 && x < 30
           );
           U.iterateUntil(lineIterator, (v) => !v.startsWith('Instruments'));
           const instruments = [];
@@ -258,7 +258,7 @@ class PolygonImporter extends Importer {
             let [y, x, z] = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
             if (y !== 0 && x !== 0 && z !== 0) {
               let eovCoordinate = new EOVCoordinateWithElevation(y, x, z);
-              const eovErrors = eovCoordinate.validate();
+              const eovErrors = eovCoordinate.validate(i18n);
               if (eovErrors.length > 0) {
                 throw new Error(
                   i18n.t('errors.import.invalidEOVCoordinates', { name: surveyNameStr, error: eovErrors.join(',') })
