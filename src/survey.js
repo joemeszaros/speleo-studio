@@ -116,7 +116,7 @@ class SurveyHelper {
 
         const polarVector = U.fromPolar(
           sh.length,
-          U.degreesToRads(sh.azimuth + declination + convergence),
+          U.degreesToRads(sh.azimuth + declination - convergence),
           U.degreesToRads(sh.clino)
         );
 

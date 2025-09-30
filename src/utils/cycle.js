@@ -63,7 +63,7 @@ export class CycleUtil {
   static _createShotVector(shot, declination, convergence) {
     return new Polar(
       shot.length,
-      degreesToRads(shot.azimuth + declination + convergence),
+      degreesToRads(shot.azimuth + declination - convergence),
       degreesToRads(shot.clino)
     ).toVector();
   }
@@ -200,7 +200,7 @@ export class CycleUtil {
 
       const newShot = {
         length  : newShotPolar.distance,
-        azimuth : radsToDegrees(newShotPolar.azimuth) - declination - convergence,
+        azimuth : radsToDegrees(newShotPolar.azimuth) + declination - convergence,
         clino   : radsToDegrees(newShotPolar.clino)
       };
 
