@@ -32,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Real-time navigation with zoom, pan, and rotation controls
   - Multiple view modes: Plan, Profile, and 3D perspectives
   - Customizable appearance with various color schemes and gradients
-  - Surface mesh visualization (PLY format support)
 
 - **Survey Data Management**
 
@@ -54,7 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   - No installation required - runs entirely in browser
   - Cross-platform compatibility (Windows, macOS, Linux)
-  - Responsive design for desktop and tablet devices
   - Local data storage for privacy and offline capability
 
 - **User Interface**
@@ -92,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **v1.0.0** (2024-12-19): Initial stable release with core functionality
+- **v1.0.0** (2025-09-25): Initial stable release with core functionality
 - **v0.x.x** (Development): Pre-release development versions
 
 ## Release Notes
