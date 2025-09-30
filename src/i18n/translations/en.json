@@ -714,7 +714,9 @@
       "ratioMustBePositive": "Ratio must be a positive number",
       "rotationNotValid": "Rotation '{rotation}' is not a valid number",
       "enterRatioValue": "Enter the ratio value",
-      "enterRotationValue": "Enter rotation value in degrees"
+      "enterRotationValue": "Enter rotation value in degrees",
+      "enterDipValue": "Enter dip value in degrees",
+      "dipNotValid": "Dip '{dip}' is not a valid number"
     }
   },
   "popups": {
@@ -912,7 +914,8 @@
       "formation": "formation",
       "context": "context",
       "finder": "finder",
-      "state": "state"
+      "state": "state",
+      "material": "material"
     },
     "paramsDescription": {
       "dip": "The dip value",
@@ -1055,7 +1058,11 @@
       "cryogenic carbonate": "cryogenic carbonate",
       "cave popcorn": "cave popcorn",
       "cave pearl": "cave pearl",
-      "snottite": "snottite"
+      "snottite": "snottite",
+      "steel": "steel",
+      "aluminium": "aluminium",
+      "galvanized": "galvanized",
+      "stainless": "stainless"
     }
   }
 }

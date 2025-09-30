@@ -263,18 +263,18 @@ class MyScene {
     return textMesh;
   }
 
-  addSpriteLabel(label, position, size, color, strokeColor) {
+  getSpriteLabel(label, position, size, color, strokeColor) {
     const font = {
-      size  : size * 30, // magic number to match mesh based label size (with the scale factor of 0.2)
+      size  : size * 20, // magic number to match mesh based label size (with the scale factor of 0.2)
       color : color,
-      name  : 'Arial'
+      name  : 'Helvetica Neue'
     };
 
     if (strokeColor) {
       font.strokeColor = strokeColor;
     }
 
-    return new TextSprite(label, position, font, 0.03, `station-label-${label}`);
+    return new TextSprite(label, position, font, 0.05, `station-label-${label}`);
   }
 
   toggleCameraTargetVisibility(visible) {

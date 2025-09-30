@@ -123,7 +123,10 @@ export class IconBar {
             var ranges = getTable().getRanges();
             ranges.forEach((r) => {
               const rows = r.getRows();
-              rows.forEach((r) => r.delete());
+              rows.forEach((r) => {
+                options?.deleteRow(r);
+                r.delete();
+              });
               r.remove();
             });
           }

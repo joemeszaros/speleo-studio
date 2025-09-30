@@ -56,6 +56,9 @@ class View {
     this.compass = this.#createCompass(100);
     this.compass.visible = false;
     scene.sprites3DGroup.add(this.compass);
+    this.compass.onclick = () => {
+      this.setCompassRotation();
+    };
 
     this.rotationText = this.#createRotationText();
     this.rotationText.name = `rotation text ${this.name}`;
@@ -111,12 +114,12 @@ class View {
       text,
       position,
       {
-        size        : 45,
+        size        : 19,
         family      : 'Helvetica Neue',
         strokeColor : this.scene.options.scene.sprites3D.textStroke,
         color       : this.scene.options.scene.sprites3D.textColor
       },
-      0.4,
+      1.0,
       `ratio text ${this.name}`
     );
   }
@@ -173,12 +176,12 @@ class View {
       text,
       position,
       {
-        size        : 45,
+        size        : 19,
         family      : 'Helvetica Neue',
         strokeColor : this.scene.options.scene.sprites3D.textStroke,
         color       : this.scene.options.scene.sprites3D.textColor
       },
-      0.4,
+      1.0,
       `rotation text ${this.name}`
     );
   }
@@ -588,12 +591,18 @@ class SpatialView extends View {
     this.dipIndicator = this.#createDipIndicator(80);
     this.dipIndicator.visible = false;
     scene.sprites3DGroup.add(this.dipIndicator);
+    this.dipIndicator.onclick = () => {
+      this.setDip();
+    };
 
     // Add dip text display
     this.dipText = this.#createDipText();
     this.dipText.sprite.visible = false;
     const dipTextSprite = this.dipText.getSprite();
     scene.sprites3DGroup.add(dipTextSprite);
+    dipTextSprite.onclick = () => {
+      this.setDip();
+    };
 
     this.animatedPreviously = false;
 
@@ -715,6 +724,23 @@ class SpatialView extends View {
     }
   }
 
+  setDip() {
+    const currentDip = radsToDegrees(this.control.clino);
+    const dipRaw = prompt(i18n.t('errors.views.enterDipValue'), currentDip);
+    if (dipRaw === null) return;
+
+    //FIXME: shall we apply a little delta to the dip value it it's MATH.PI / 2 or -MATH.PI / 2
+    const dipValue = parseFloat(dipRaw);
+    if (isNaN(dipValue)) {
+      showWarningPanel(i18n.t('errors.views.dipNotValid', { dip: dipRaw }));
+      return;
+    }
+
+    this.control.setCameraOrientation(this.control.distance, this.control.azimuth, degreesToRads(dipValue));
+    this.updateFrustumFrame();
+    this.renderView();
+  }
+
   #updateRotationText() {
     // For spatial view, calculate azimuth from camera position and target
     let compassRotation = 2 * Math.PI - this.compass.material.rotation;
@@ -788,12 +814,12 @@ class SpatialView extends View {
       text,
       position,
       {
-        size        : 45,
+        size        : 19,
         family      : 'Helvetica Neue',
         strokeColor : this.scene.options.scene.sprites3D?.textStroke ?? '#000000',
         color       : this.scene.options.scene.sprites3D?.textColor ?? '#ffffff'
       },
-      0.4,
+      1.0,
       'dip text'
     );
   }
@@ -1357,12 +1383,12 @@ class ProfileView extends View {
       text,
       position,
       {
-        size        : 35,
+        size        : 19,
         family      : 'Helvetica Neue',
         color       : this.scene.options.scene.sprites3D.textColor,
         strokeColor : this.scene.options.scene.sprites3D.textStroke
       },
-      0.5,
+      1.0,
       `vertical ${type} z text`
     );
   }

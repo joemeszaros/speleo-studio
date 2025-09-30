@@ -160,7 +160,6 @@ export class Graph {
           !terminationNodes.includes(neighbor.node)
         ) {
           // cycle in the graph
-          console.log('cycle in the graph', currentVertex.node, neighbor.node);
           path.push({ from: currentVertex.node, to: neighbor.node });
           distance += neighbor.weight;
         }

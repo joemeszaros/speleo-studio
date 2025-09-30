@@ -34,7 +34,6 @@ class TextSprite {
   }
 
   #createSprite(label, position, scale, name) {
-    const devicePixelRatio = 1; //window.devicePixelRatio || 1;
     const fontStyle = `${this.font.size}px ${this.font.family}`;
     this.ctx.font = fontStyle;
 
@@ -42,14 +41,10 @@ class TextSprite {
     const textWidth = Math.ceil(textMetrics.width);
     const textHeight = this.font.size;
 
-    this.canvas.width = textWidth * devicePixelRatio;
-    this.canvas.height = textHeight * devicePixelRatio;
-    this.canvas.style.width = textWidth + 'px';
-    this.canvas.style.height = textHeight + 'px';
+    this.canvas.width = textWidth * 1.2;
+    this.canvas.height = textHeight * 1.2;
 
-    this.ctx.scale(devicePixelRatio, devicePixelRatio);
-
-    this.#drawText(label, fontStyle);
+    this.#drawText(label, fontStyle, textWidth, textHeight);
 
     const spriteMap = new THREE.CanvasTexture(this.canvas);
     spriteMap.colorSpace = THREE.SRGBColorSpace;
@@ -57,10 +52,8 @@ class TextSprite {
     spriteMap.magFilter = THREE.LinearFilter;
     spriteMap.generateMipmaps = false;
     spriteMap.needsUpdate = true;
-
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteMap, toneMapped: false }));
-    // Use actual text dimensions for scaling, not canvas dimensions
-    sprite.scale.set(scale * textWidth, scale * textHeight, 1);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteMap }));
+    sprite.scale.set(textWidth * scale, textHeight * scale, 1);
     sprite.position.copy(position);
     sprite.name = name;
     return sprite;
@@ -85,21 +78,19 @@ class TextSprite {
     const textHeight = this.font.size;
 
     // Check if we need to resize canvas
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    const currentCanvasWidth = this.canvas.width / devicePixelRatio;
-    const currentCanvasHeight = this.canvas.height / devicePixelRatio;
+    const currentCanvasWidth = this.canvas.width;
+    const currentCanvasHeight = this.canvas.height;
+    const newCanvasWidth = textWidth * 1.2;
+    const newCanvasHeight = textHeight * 1.2;
 
-    if (textWidth > currentCanvasWidth || textHeight > currentCanvasHeight) {
+    if (newCanvasWidth > currentCanvasWidth || newCanvasHeight > currentCanvasHeight) {
       // Resize canvas with device pixel ratio
-      this.canvas.width = textWidth * devicePixelRatio;
-      this.canvas.height = textHeight * devicePixelRatio;
+      this.canvas.width = newCanvasWidth;
+      this.canvas.height = newCanvasHeight;
 
       // Set display size (CSS size)
-      this.canvas.style.width = textWidth + 'px';
-      this.canvas.style.height = textHeight + 'px';
-
-      // Scale the context to match device pixel ratio
-      this.ctx.scale(devicePixelRatio, devicePixelRatio);
+      this.canvas.style.width = newCanvasWidth + 'px';
+      this.canvas.style.height = newCanvasHeight + 'px';
 
       // Recreate texture with new canvas
       this.sprite.material.map.dispose();
@@ -110,26 +101,27 @@ class TextSprite {
       this.sprite.material.map.generateMipmaps = false;
 
       // Update sprite scale with actual text dimensions
-      this.sprite.scale.set(this.scale * textWidth, this.scale * textHeight, 1);
+      this.sprite.scale.set(textWidth * this.scale, textHeight * this.scale, 1);
     }
 
-    this.#drawText(label, fontStyle);
+    this.#drawText(label, fontStyle, textWidth, textHeight);
     this.sprite.material.map.needsUpdate = true;
     this.label = label;
   }
 
-  #drawText(label, fontStyle) {
+  #drawText(label, fontStyle, textWidth, textHeight) {
     this.ctx.font = fontStyle; //this line is required here
     this.ctx.textAlign = 'left';
     this.ctx.textBaseline = 'top';
     this.ctx.fillStyle = this.font.color;
-
+    const x = textWidth * 0.1;
+    const y = textHeight * 0.15; // due to accents, we need to add some extra space
     if (this.font.strokeColor) {
       this.ctx.strokeStyle = this.font.strokeColor;
       this.ctx.lineWidth = this.font.size / 6;
-      this.ctx.strokeText(label, 0, 0);
+      this.ctx.strokeText(label, x, y);
     }
-    this.ctx.fillText(label, 0, 0);
+    this.ctx.fillText(label, x, y);
   }
 
   setColor(color) {

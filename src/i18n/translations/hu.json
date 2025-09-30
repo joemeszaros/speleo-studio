@@ -738,7 +738,9 @@
       "ratioMustBePositive": "Az aránynak pozitív számnak kell lennie",
       "rotationNotValid": "A(z) '{rotation}' forgatás nem érvényes szám",
       "enterRatioValue": "Adja meg az arány értékét",
-      "enterRotationValue": "Adja meg a forgatás értékét fokokban"
+      "enterRotationValue": "Adja meg a forgatás értékét fokban",
+      "enterDipValue": "Adja meg a dőlés értékét fokban",
+      "dipNotValid": "A(z) '{dip}' dőlés nem érvényes szám"
     }
   },
   "popups": {
@@ -937,7 +939,8 @@
       "formation": "formáció",
       "context": "kontextus",
       "finder": "megtaláló",
-      "state": "állapot"
+      "state": "állapot",
+      "material": "anyag"
     },
     "paramsDescription": {
       "dip": "A dőlés értéke",
@@ -1085,7 +1088,11 @@
       "cryogenic carbonate": "kriogén karbonát",
       "cave popcorn": "borsókő",
       "cave pearl": "barlangi gyöngy",
-      "snottite": "taknyit"
+      "snottite": "taknyit",
+      "steel": "acél",
+      "aluminium": "alumínium",
+      "galvanized": "horganyzott",
+      "stainless": "rozsdamentes"
     }
   }
 }

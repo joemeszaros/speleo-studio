@@ -94,7 +94,13 @@ class BaseAttributeEditor extends Editor {
 
     // Add common buttons (undo, redo, add row, delete row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
-      getEmptyRow : () => this.getEmptyRow()
+      getEmptyRow : () => this.getEmptyRow(),
+      deleteRow   : (r) => {
+        const data = r.getData();
+        if (data.visible) {
+          this.hideAttribute(data);
+        }
+      }
     });
     commonButtons.forEach((button) => this.iconBar.addButton(button));
 

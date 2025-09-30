@@ -67,7 +67,7 @@ export class AttributesScene {
       const { interpolated, success } = U.interpolate(format, localized);
       let sprite;
       if (success) {
-        let textSprite = this.scene.addSpriteLabel(
+        let textSprite = this.scene.getSpriteLabel(
           interpolated,
           center,
           this.options.scene.sections.labels.size,
@@ -122,7 +122,7 @@ export class AttributesScene {
     sprite.material.dispose();
     sprite.geometry.dispose();
     group.remove(sprite);
-    let newTextSprite = this.scene.addSpriteLabel(
+    let newTextSprite = this.scene.getSpriteLabel(
       label,
       position,
       newSize,
@@ -439,9 +439,9 @@ export class AttributesScene {
   addTectonicLabels(attribute) {
     const dip = attribute.dip;
     const azimuth = attribute.azimuth;
-    const value = `${Math.floor(dip)}° / ${Math.floor(azimuth)}°`;
+    const value = `${String(Math.floor(azimuth)).padStart(3, '0')}° / ${String(Math.floor(dip)).padStart(2, '0')}°`;
     // Create dip label that always faces the camera
-    const textSprite = this.scene.addSpriteLabel(
+    const textSprite = this.scene.getSpriteLabel(
       value,
       new THREE.Vector3(0, 0, 0), // Will be positioned in world coordinates
       this.options.scene.sections.labels.size * 0.7,
