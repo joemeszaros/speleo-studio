@@ -261,6 +261,10 @@ class SectionAttribute extends FragmentAttribute {
       if (pure.attribute.name === 'co') {
         pure.attribute.name = 'co2';
       }
+      if (pure.attribute.name === 'speleothem') {
+        pure.attribute.name = 'other_speleothem';
+      }
+
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
     }
 
@@ -321,6 +325,11 @@ class ComponentAttribute extends FragmentAttribute {
       if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
         pure.attribute = MigrationSupportV1.migrate(pure.attribute);
       }
+
+      if (pure.attribute.name === 'speleothem') {
+        pure.attribute.name = 'other_speleothem';
+      }
+
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
     }
     pure.component = CaveComponent.fromPure(pure.component);
@@ -390,11 +399,17 @@ class StationAttribute {
 
   static fromPure(pure, attributeDefs, schemaVersionLoaded) {
     if (pure.attribute !== undefined) {
+
       if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
         pure.attribute = MigrationSupportV1.migrate(pure.attribute);
       }
+
       if (pure.attribute.name === 'co') {
         pure.attribute.name = 'co2';
+      }
+
+      if (pure.attribute.name === 'speleothem') {
+        pure.attribute.name = 'other_speleothem';
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);

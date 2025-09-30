@@ -646,7 +646,7 @@
       "cavesReallyFar": "A(z) {name} nevű barlang túl messze van a korábban importált barlangoktól: {caves}",
       "unknownDistance": "Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál",
       "surveyNameAlreadyExists": "A(z) {name} nevű felmérés többször szerepel",
-      "invalidEOVCoordinates": "Ilyen EOV koordináták nincs megfelelő barlangban: {error}",
+      "invalidEOVCoordinates": "Érvénytelen EOV koordináták: {error}",
       "invalidPolygonFixPoint": "Helytelen felmérés {name}, a(z) {fixPointName} fix pont nem egyezik az első mérés 'ponttól' nevével ({shots})",
       "invalidSurveyReachedEndOfFile": "Helytelen felmérés, vége elé ért a fájl",
       "invalidSurveyExpectedValue": "Helytelen felmérés, a {start} értéket vártam a {lineNr} sorban",
@@ -764,6 +764,10 @@
     }
   },
   "validation": {
+    "geo": {
+      "invalidCoordinate": "A {coord}: '{thisCcoord}' koordináta érvénytelen tört szám",
+      "outOfBounds": "{XYZ} koordináta {coord} kívül esik a következő határokon: {bounds}"
+    },
     "shot": {
       "invalidId": "Id ({id}, típus={type}) érvénytelen egész szám",
       "invalidShotType": "Mérés típusa ({type}) érvénytelen",
@@ -871,11 +875,11 @@
       "fauna": "Fauna",
       "climatology": "Klimatológia",
       "metadata": "Metaadatok",
-      "archeology": "Archeológia"
+      "archeology": "Archeológia",
+      "speleothem": "Szpeleotéma"
     },
     "name": "név",
     "names": {
-      "speleothem": "szpeleotéma",
       "bedding": "rétegdőlés",
       "fault": "vető",
       "rope": "kötél",
@@ -896,7 +900,12 @@
       "rock": "kőzet",
       "danger": "veszély",
       "underwater": "víz-alatti",
-      "artefact": "lelet"
+      "artefact": "lelet",
+      "dripstone": "cseppkő",
+      "helictite": "heliktit",
+      "flowstone": "cseppkőlefolyás",
+      "phreatic": "freatikus-kiválás",
+      "other_speleothem": "szpeleotéma-egyéb"
     },
     "namesDescription": {
       "bedding": "Lehetővé teszi a rétegdőlés megadását"
@@ -1041,7 +1050,42 @@
       "2": "2",
       "3": "3",
       "4": "4",
-      "5": "5"
+      "5": "5",
+      "stalactite": "függőcseppkő",
+      "stalagmite": "állócseppkő",
+      "stalagnate": "cseppkőoszlop",
+      "conulite": "csepegési kút",
+      "cave ring": "barlangi gyűrű",
+      "soda straw": "szalmacseppkő",
+      "ribbon": "szalag",
+      "saw": "fűrész",
+      "rod": "rúd",
+      "butterfly": "pillangó",
+      "hand": "kéz",
+      "curly-fries": "göndör",
+      "clumps of worms": "férgek csomói",
+      "chandelier": "csillár",
+      "drapery": "cseppkőfüggöny",
+      "rimstone dam": "mésztufagát",
+      "cave cup": "barlangi csésze",
+      "cave hood": "barlangi csuklya",
+      "cave cloud": "barlangi felhő",
+      "cave folia": "apadási színlő",
+      "cave coating": "karfiol",
+      "calcite raft": "kalcit lemez",
+      "pool finger": "medence ujj",
+      "crystal spar": "kristály szár",
+      "cave shield": "barlangi pajzs",
+      "cave cap": "barlangi sapka",
+      "cave crust": "barlangi kéreg",
+      "boxwork": "boxwork",
+      "frostwork": "fagyvirág",
+      "moonmilk": "hegyitej",
+      "anthodite": "antodit",
+      "cryogenic carbonate": "kriogén karbonát",
+      "cave popcorn": "borsókő",
+      "cave pearl": "barlangi gyöngy",
+      "snottite": "taknyit"
     }
   }
 }

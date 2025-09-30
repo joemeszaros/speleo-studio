@@ -740,6 +740,10 @@
     }
   },
   "validation": {
+    "geo": {
+      "invalidCoordinate": "Coordinate {coord}: '{thisCcoord}' is not a valid float number",
+      "outOfBounds": "{XYZ} coordinate {coord} is out of bounds: {bounds}"
+    },
     "shot": {
       "invalidId": "Id ({id}, type={type}) is not valid integer number`",
       "invalidShotType": "Shot type ({type}) is not valid",
@@ -847,11 +851,11 @@
       "fauna": "Fauna",
       "climatology": "Climatology",
       "metadata": "Metadata",
-      "archeology": "Archeology"
+      "archeology": "Archeology",
+      "speleothem": "Speleothem"
     },
     "name": "name",
     "names": {
-      "speleothem": "speleothem",
       "bedding": "bedding",
       "fault": "fault",
       "rope": "rope",
@@ -872,7 +876,12 @@
       "rock": "rock",
       "danger": "danger",
       "underwater": "underwater",
-      "artefact": "artefact"
+      "artefact": "artefact",
+      "dripstone": "dripstone",
+      "helictite": "helictite",
+      "flowstone": "flowstone",
+      "phreatic": "phreatic",
+      "other_speleothem": "speleothem-other"
     },
     "namesDescription": {
       "bedding": "Allows the bedding to be set"
@@ -1011,7 +1020,42 @@
       "few": "few",
       "many": "many",
       "colony": "colony",
-      "several": "several"
+      "several": "several",
+      "stalactite": "stalactite",
+      "stalagmite": "stalagmite",
+      "stalagnate": "stalagnate",
+      "conulite": "conulite",
+      "cave ring": "cave ring",
+      "soda straw": "soda straw",
+      "ribbon": "ribbon",
+      "saw": "saw",
+      "rod": "rod",
+      "butterfly": "butterfly",
+      "hand": "hand",
+      "curly-fries": "curly-fries",
+      "clumps of worms": "clumps of worms",
+      "chandelier": "chandelier",
+      "drapery": "drapery",
+      "rimstone dam": "rimstone dam",
+      "cave cup": "cave cup",
+      "cave hood": "cave hood",
+      "cave cloud": "cave cloud",
+      "cave folia": "cave folia",
+      "cave coating": "cave coating",
+      "calcite raft": "calcite raft",
+      "pool finger": "pool finger",
+      "crystal spar": "crystal spar",
+      "cave shield": "cave shield",
+      "cave cap": "cave cap",
+      "cave crust": "cave crust",
+      "boxwork": "boxwork",
+      "frostwork": "frostwork",
+      "moonmilk": "moonmilk",
+      "anthodite": "anthodite",
+      "cryogenic carbonate": "cryogenic carbonate",
+      "cave popcorn": "cave popcorn",
+      "cave pearl": "cave pearl",
+      "snottite": "snottite"
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "categories": [
     {
       "id": 1,
@@ -28,6 +28,10 @@
     {
       "id": 7,
       "name": "archeology"
+    },
+    {
+      "id": 8,
+      "name": "speleothem"
     }
   ],
   "references": {
@@ -89,25 +93,10 @@
     "metal": {
       "type": "string",
       "required": false,
-      "values": ["steel", "aluminium, galvanized", "stainless", "other"]
+      "values": ["steel", "aluminium", "galvanized", "stainless", "other"]
     }
   },
   "definitions": [
-    {
-      "id": 1,
-      "category": 3,
-      "name": "speleothem",
-      "params": {
-        "type": {
-          "required": true,
-          "type": "string",
-          "values": ["dripstone", "mammilary"]
-        },
-        "description": {
-          "type": "string"
-        }
-      }
-    },
     {
       "id": 2,
       "category": 1,
@@ -525,6 +514,95 @@
           "type": "string",
           "required": false,
           "values": ["paleolithic", "mesolithic", "neolithic", "bronze age", "iron age", "roman", "medieval", "modern"]
+        }
+      }
+    },
+    {
+      "id": 21,
+      "category": 8,
+      "name": "dripstone",
+      "params": {
+        "type": {
+          "type": "string",
+          "values": ["stalactite", "stalagmite", "stalagnate", "conulite", "cave ring"],
+          "subtype": {
+            "type": "string",
+            "values": ["soda straw"],
+            "required": false
+          },
+          "required": true
+        },
+        "description": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": 22,
+      "category": 8,
+      "name": "helictite",
+      "params": {
+        "type": {
+          "type": "string",
+          "values": ["ribbon", "saw", "rod", "butterfly", "hand", "curly-fries", "clumps of worms", "chandelier"],
+          "required": true
+        },
+        "description": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": 23,
+      "category": 8,
+      "name": "flowstone",
+      "params": {
+        "type": {
+          "type": "string",
+          "values": ["drapery", "rimstone dam", "cave cup", "cave hood"],
+          "required": true
+        },
+        "description": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": 24,
+      "category": 8,
+      "name": "phreatic",
+      "params": {
+        "type": {
+          "type": "string",
+          "values": ["cave cloud", "cave folia", "cave coating", "calcite raft", "pool finger", "crystal spar"],
+          "required": true
+        }
+      }
+    },
+    {
+      "id": 25,
+      "category": 8,
+      "name": "other_speleothem",
+      "params": {
+        "type": {
+          "type": "string",
+          "values": [
+            "cave shield",
+            "cave cap",
+            "cave crust",
+            "boxwork",
+            "frostwork",
+            "moonmilk",
+            "anthodite",
+            "cryogenic carbonate",
+            "cave popcorn",
+            "cave pearl",
+            "snottite"
+          ],
+          "required": true
         }
       }
     }
