@@ -315,6 +315,7 @@ class BaseAttributeEditor extends Editor {
       let value = a[paramName] === undefined ? '' : a[paramName];
       const paramDef = a.params[paramName];
       const hasValues = (paramDef.values ?? []).length > 0;
+      const hasRange = (paramDef.range ?? []).length > 0;
 
       const { errors } = a.validateFieldValue(paramName, value, true, true); // validate as string, skip empty check, no localization
       let underScoreClass;
@@ -329,7 +330,11 @@ class BaseAttributeEditor extends Editor {
 
       const classes = [underScoreClass];
       if (['int', 'float'].includes(paramDef.type)) {
-        classes.push('shortInput');
+        if (paramDef.range?.length > 0) {
+          classes.push('mediumInput');
+        } else {
+          classes.push('shortInput');
+        }
       } else if (paramDef.type === 'string') {
         if (paramDef.values?.length > 0) {
           //classes.push('shortInput');
@@ -344,6 +349,8 @@ class BaseAttributeEditor extends Editor {
         if (value !== '') {
           value = i18n.t(`attributes.values.${value}`);
         }
+      } else if (hasRange) {
+        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.range.map((i) => '<option value="' + i + '">').join('')}</datalist>`;
       }
       const inputType = datalist === undefined ? 'text' : 'search';
       const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;

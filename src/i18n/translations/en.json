@@ -790,7 +790,8 @@
       "notInteger": "Value '{value}' is not a valid integer",
       "notFloat": "Value '{value}' is not a valid float",
       "nanOrInfinity": "Value is NaN or Infinity",
-      "notOneOf": "Value '{value}' is not one of {values}"
+      "notOneOf": "Value '{value}' is not one of {values}",
+      "notInRange": "Value '{value}' is not in range {range}"
     }
   },
   "params": {
@@ -846,6 +847,7 @@
     "yes": "Yes",
     "validators": "Validators",
     "valuesLabel": "Values",
+    "rangeLabel": "Range",
     "categories": {
       "geology": "Geology",
       "installation": "Installation",

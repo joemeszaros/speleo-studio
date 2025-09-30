@@ -295,6 +295,14 @@ class Attribute {
         }
       }
 
+      if (paramDef.type === 'int' && !reasons.has('typeMismatch') && (paramDef.range?.length ?? 0) > 0) {
+        const intValue = typeof value === 'number' ? value : parseInt(value, 10);
+        if (!paramDef.range.includes(intValue)) {
+          errors.push(t('validation.attribute.notInRange', { value, range: paramDef.range.join(',') }));
+          reasons.add('rangeMismatch');
+        }
+      }
+
       if (paramDef.type === 'string') {
         if ((paramDef.values?.length ?? 0) > 0 && !paramDef.values.includes(value)) {
           errors.push(t('validation.attribute.notOneOf', { value, values: paramDef.values.join(', ') }));

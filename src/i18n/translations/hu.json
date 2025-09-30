@@ -814,7 +814,8 @@
       "notInteger": "Az érték ({value}) nem érvényes egész szám",
       "notFloat": "Az érték ({value}) nem érvényes tört szám",
       "nanOrInfinity": "Az érték NaN vagy végtelen",
-      "notOneOf": "Az érték ({value}) nem egyike a következőknek: {values}"
+      "notOneOf": "Az érték ({value}) nem egyike a következőknek: {values}",
+      "notInRange": "Az érték '{value}' nincs a tartományban: {range}"
     }
   },
   "params": {
@@ -870,6 +871,7 @@
     "yes": "Igen",
     "validators": "Validátorok",
     "valuesLabel": "Értékek",
+    "rangeLabel": "Tartomány",
     "categories": {
       "geology": "Geológia",
       "installation": "Kiépítés",
@@ -1049,11 +1051,6 @@
       "many": "sok",
       "colony": "kolónia",
       "several": "számos",
-      "1": "1",
-      "2": "2",
-      "3": "3",
-      "4": "4",
-      "5": "5",
       "stalactite": "függőcseppkő",
       "stalagmite": "állócseppkő",
       "stalagnate": "cseppkőoszlop",

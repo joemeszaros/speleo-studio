@@ -38,10 +38,7 @@
     "state": {
       "type": "int",
       "required": false,
-      "validators": {
-        "min": 1,
-        "max": 5
-      }
+      "range": [1, 2, 3, 4, 5]
     },
     "year": {
       "type": "int",
@@ -307,7 +304,7 @@
         "strength": {
           "type": "int",
           "required": false,
-          "values": [1, 2, 3, 4, 5]
+          "range": [1, 2, 3, 4, 5]
         }
       }
     },
@@ -343,10 +340,7 @@
         "stability": {
           "type": "int",
           "required": false,
-          "validators": {
-            "min": 1,
-            "max": 5
-          }
+          "range": [1, 2, 3, 4, 5]
         }
       }
     },

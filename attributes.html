@@ -637,6 +637,11 @@ limitations under the License.
           valuesHtml = `<span class="values-list"><strong>${i18n.t('attributes.valuesLabel')}:</strong> ${valuesList}</span>`;
         }
 
+        if (paramDef.range) {
+          const rangeList = paramDef.range.join(', ');
+          valuesHtml = `<span class="values-list"><strong>${i18n.t('attributes.rangeLabel')}:</strong> ${rangeList}</span>`;
+        }
+
         const paramDescriptionKey = `attributes.paramsDescription.${paramName}`;
         const paramDescription = i18n.t(paramDescriptionKey, {}, undefined, false);
         const hasParamDescription = paramDescription && paramDescription !== paramDescriptionKey;
