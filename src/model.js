@@ -16,7 +16,7 @@
 
 import { CaveSection, CaveComponent } from './model/cave.js';
 import { fromPolar, toPolar } from './utils/utils.js';
-import { MigrationSupportV1 } from './attributes.js';
+import { MigrationSupportV4 } from './attributes.js';
 
 class Vector {
 
@@ -255,14 +255,8 @@ class SectionAttribute extends FragmentAttribute {
 
   static fromPure(pure, attributeDefs, schemaVersionLoaded) {
     if (pure.attribute !== undefined) {
-      if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
-        pure.attribute = MigrationSupportV1.migrate(pure.attribute);
-      }
-      if (pure.attribute.name === 'co') {
-        pure.attribute.name = 'co2';
-      }
-      if (pure.attribute.name === 'speleothem') {
-        pure.attribute.name = 'other_speleothem';
+      if (attributeDefs.schemaVersion === 4 && schemaVersionLoaded <= 3) {
+        pure.attribute = MigrationSupportV4.migrate(pure.attribute);
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
@@ -322,12 +316,8 @@ class ComponentAttribute extends FragmentAttribute {
 
   static fromPure(pure, attributeDefs, schemaVersionLoaded) {
     if (pure.attribute !== undefined) {
-      if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
-        pure.attribute = MigrationSupportV1.migrate(pure.attribute);
-      }
-
-      if (pure.attribute.name === 'speleothem') {
-        pure.attribute.name = 'other_speleothem';
+      if (attributeDefs.schemaVersion === 4 && schemaVersionLoaded <= 3) {
+        pure.attribute = MigrationSupportV4.migrate(pure.attribute);
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
@@ -400,16 +390,8 @@ class StationAttribute {
   static fromPure(pure, attributeDefs, schemaVersionLoaded) {
     if (pure.attribute !== undefined) {
 
-      if (attributeDefs.schemaVersion === 2 && schemaVersionLoaded === 1) {
-        pure.attribute = MigrationSupportV1.migrate(pure.attribute);
-      }
-
-      if (pure.attribute.name === 'co') {
-        pure.attribute.name = 'co2';
-      }
-
-      if (pure.attribute.name === 'speleothem') {
-        pure.attribute.name = 'other_speleothem';
+      if (attributeDefs.schemaVersion === 4 && schemaVersionLoaded <= 3) {
+        pure.attribute = MigrationSupportV4.migrate(pure.attribute);
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);

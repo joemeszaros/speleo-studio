@@ -909,7 +909,11 @@
       "helictite": "heliktit",
       "flowstone": "cseppkőlefolyás",
       "phreatic": "freatikus-kiválás",
-      "other_speleothem": "szpeleotéma-egyéb"
+      "other_speleothem": "szpeleotéma-egyéb",
+      "staples": "lépőfok",
+      "foot_peg": "lépővas",
+      "sealing": "lezárás",
+      "squeeze": "szűkület"
     },
     "namesDescription": {
       "bedding": "Lehetővé teszi a rétegdőlés megadását"
@@ -942,7 +946,9 @@
       "context": "kontextus",
       "finder": "megtaláló",
       "state": "állapot",
-      "material": "anyag"
+      "material": "anyag",
+      "group": "csoport",
+      "quantity": "db"
     },
     "paramsDescription": {
       "dip": "A dőlés értéke",
@@ -1047,10 +1053,10 @@
       "roman": "római",
       "medieval": "középkor",
       "modern": "modern",
-      "few": "néhány",
-      "many": "sok",
-      "colony": "kolónia",
-      "several": "számos",
+      "1-2": "1-2",
+      "3-10": "3-10",
+      "10-100": "10-100",
+      "100+": "100+",
       "stalactite": "függőcseppkő",
       "stalagmite": "állócseppkő",
       "stalagnate": "cseppkőoszlop",

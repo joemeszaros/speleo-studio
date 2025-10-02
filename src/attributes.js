@@ -128,13 +128,31 @@ export class AttributesDefinitions {
 
 }
 
-export class MigrationSupportV1 {
+export class MigrationSupportV4 {
 
   static migrate(attribute) {
-    if (attribute.name === 'bedding' || attribute.name === 'fault') {
-      attribute.size = attribute.width;
-      delete attribute.width;
-      delete attribute.height;
+    if (attribute.name === 'co') {
+      attribute.name = 'co2';
+    }
+    if (attribute.name === 'speleothem') {
+      attribute.name = 'other_speleothem';
+    }
+
+    if (attribute.name === 'bat' && ['few', 'several', 'many', 'colony'].includes(attribute.population)) {
+      switch (attribute.population) {
+        case 'few':
+          attribute.population = '1-2';
+          break;
+        case 'several':
+          attribute.population = '3-10';
+          break;
+        case 'many':
+          attribute.population = '10-100';
+          break;
+        case 'colony':
+          attribute.population = '100+';
+          break;
+      }
     }
     return attribute;
   }

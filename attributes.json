@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "categories": [
     {
       "id": 1,
@@ -81,7 +81,7 @@
       }
     },
     "length": {
-      "type": "int",
+      "type": "float",
       "required": true,
       "validators": {
         "min": 1
@@ -188,6 +188,10 @@
         },
         "day": {
           "ref": "day"
+        },
+        "group": {
+          "type": "string",
+          "required": false
         }
       }
     },
@@ -196,10 +200,20 @@
       "category": 4,
       "name": "bat",
       "params": {
+        "quantity": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1
+          }
+        },
         "population": {
           "type": "string",
           "required": false,
-          "values": ["few", "several", "many", "colony"]
+          "values": ["1-2", "3-10", "10-100", "100+"]
+        },
+        "year": {
+          "ref": "year"
         }
       }
     },
@@ -597,6 +611,83 @@
             "snottite"
           ],
           "required": true
+        }
+      }
+    },
+    {
+      "id": 26,
+      "category": 2,
+      "name": "staples",
+      "params": {
+        "quantity": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1
+          }
+        },
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
+        },
+        "material": {
+          "ref": "metal"
+        }
+      }
+    },
+    {
+      "id": 27,
+      "category": 2,
+      "name": "foot_peg",
+      "params": {
+        "quantity": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1
+          }
+        },
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
+        },
+        "material": {
+          "ref": "metal"
+        }
+      }
+    },
+    {
+      "id": 28,
+      "category": 2,
+      "name": "sealing",
+      "params": {
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "state"
+        },
+        "material": {
+          "ref": "metal"
+        }
+      }
+    },
+    {
+      "id": 29,
+      "category": 6,
+      "name": "squeeze",
+      "params": {
+        "length": {
+          "ref": "length"
+        },
+        "size": {
+          "type": "int",
+          "required": false,
+          "range": [1, 2, 3]
         }
       }
     }

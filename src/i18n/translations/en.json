@@ -885,7 +885,11 @@
       "helictite": "helictite",
       "flowstone": "flowstone",
       "phreatic": "phreatic",
-      "other_speleothem": "speleothem-other"
+      "other_speleothem": "speleothem-other",
+      "staples": "staples",
+      "foot_peg": "foot peg",
+      "sealing": "sealing",
+      "squeeze": "squeeze"
     },
     "namesDescription": {
       "bedding": "Allows the bedding to be set"
@@ -917,7 +921,9 @@
       "context": "context",
       "finder": "finder",
       "state": "state",
-      "material": "material"
+      "material": "material",
+      "group": "group",
+      "quantity": "quantity"
     },
     "paramsDescription": {
       "dip": "The dip value",
@@ -1022,10 +1028,10 @@
       "roman": "roman",
       "medieval": "medieval",
       "modern": "modern",
-      "few": "few",
-      "many": "many",
-      "colony": "colony",
-      "several": "several",
+      "1-2": "1-2",
+      "3-10": "3-10",
+      "10-100": "10-100",
+      "100+": "100+",
       "stalactite": "stalactite",
       "stalagmite": "stalagmite",
       "stalagnate": "stalagnate",
