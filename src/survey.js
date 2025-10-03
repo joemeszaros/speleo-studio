@@ -20,7 +20,7 @@ import { Vector, Color } from './model.js';
 import { ShotType } from './model/survey.js';
 import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
-import { EOVToWGS84Transformer } from './utils/geo.js';
+import { WGS84Converter } from './utils/geo.js';
 import { i18n } from './i18n/i18n.js';
 
 class SurveyHelper {
@@ -34,7 +34,7 @@ class SurveyHelper {
    * @returns The survey with updated properties
    */
   static recalculateSurvey(index, es, surveys, caveStations, aliases, geoData) {
-    let startName, startPosition, startEov;
+    let startName, startPosition, startCoordinate;
 
     if (es.validShots.length === 0) return;
 
@@ -42,37 +42,59 @@ class SurveyHelper {
     startName = es.start !== undefined && es.start !== '' ? es.start : es.shots[0].from;
 
     if (index === 0) {
-      startEov = geoData?.coordinates?.find((c) => c.name === startName)?.coordinate;
+      startCoordinate = geoData?.coordinates?.find((c) => c.name === startName)?.coordinate;
 
-      if (startEov !== undefined) {
-        startPosition = startEov.toVector();
+      if (startCoordinate !== undefined) {
+        startPosition = startCoordinate.toVector();
       } else {
         startPosition = new Vector(0, 0, 0);
       }
     }
 
-    SurveyHelper.calculateSurveyStations(es, surveys, caveStations, aliases, startName, startPosition, startEov);
+    SurveyHelper.calculateSurveyStations(
+      es,
+      surveys,
+      caveStations,
+      aliases,
+      startName,
+      startPosition,
+      startCoordinate,
+      geoData?.coordinateSystem
+    );
     return es;
   }
 
-  static calculateSurveyStations(survey, surveys, stations, aliases, startName, startPosition, startEov) {
+  static calculateSurveyStations(
+    survey,
+    surveys,
+    stations,
+    aliases,
+    startName,
+    startPosition,
+    startCoordinate,
+    coordinateSystem
+  ) {
 
     if (survey.validShots.length === 0) return;
 
     const startStationName = startName !== undefined ? startName : survey.shots[0].from;
-    const eovToWgs84Transformer = new EOVToWGS84Transformer();
 
     // this is the first survey
     if (startPosition !== undefined) {
       let wgsCoord;
-      if (startEov !== undefined) {
-        const [lat, lon, h] = eovToWgs84Transformer.eovTOwgs84(startEov.y, startEov.x);
-        wgsCoord = new WGS84Coordinate(lat, lon);
+      if (startCoordinate !== undefined && coordinateSystem !== undefined) {
+        const { latitude, longitude } = WGS84Converter.toLatLon(startCoordinate, coordinateSystem);
+        wgsCoord = new WGS84Coordinate(latitude, longitude);
       }
       // this is only set for the first survey
       stations.set(
         startStationName,
-        new ST(ShotType.CENTER, startPosition, new StationCoordinates(new Vector(0, 0, 0), startEov, wgsCoord), survey)
+        new ST(
+          ShotType.CENTER,
+          startPosition,
+          new StationCoordinates(new Vector(0, 0, 0), startCoordinate, wgsCoord),
+          survey
+        )
       );
     }
 
@@ -122,17 +144,17 @@ class SurveyHelper {
 
         const newStation = (position, prevSt, diff) => {
 
-          let eovCoord, wgsCoord;
-          if (prevSt.coordinates.eov !== undefined) {
-            eovCoord = prevSt.coordinates.eov.addVector(diff);
-            const [lat, lon, h] = eovToWgs84Transformer.eovTOwgs84(eovCoord.y, eovCoord.x);
-            wgsCoord = new WGS84Coordinate(lat, lon);
+          let projectedCoord, wgsCoord;
+          if (prevSt.coordinates.projected !== undefined) {
+            projectedCoord = prevSt.coordinates.projected.addVector(diff);
+            const { latitude, longitude } = WGS84Converter.toLatLon(projectedCoord, coordinateSystem);
+            wgsCoord = new WGS84Coordinate(latitude, longitude);
           }
 
           return new ST(
             sh.type,
             position,
-            new StationCoordinates(prevSt.coordinates.local.add(diff), eovCoord, wgsCoord),
+            new StationCoordinates(prevSt.coordinates.local.add(diff), projectedCoord, wgsCoord),
             survey
           );
         };

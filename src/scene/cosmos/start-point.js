@@ -80,6 +80,16 @@ export class StartPointScene {
     }
   }
 
+  renameCave(oldName, newName) {
+    if (this.startPointObjects.has(oldName)) {
+      const startPointObj = this.startPointObjects.get(oldName);
+      this.startPointObjects.delete(oldName);
+      this.startPointObjects.set(newName, startPointObj);
+      startPointObj.mesh.name = `startPoint_${newName}`;
+    }
+
+  }
+
   updateStartingPointColor(color) {
     this.startPointObjects.forEach((obj) => {
       obj.material.color.setHex(color);

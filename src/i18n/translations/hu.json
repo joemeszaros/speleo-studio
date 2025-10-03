@@ -77,7 +77,9 @@
       "noProjectLoaded": "Nincs betöltött projekt",
       "raycastingEnabled": "Pont kiválasztás engedélyezve",
       "raycastingDisabled": "Pont kiválasztás letiltva",
-      "surfacePoint": "Felszíni pont ({x}, {y}, {z})"
+      "surfacePoint": "Felszíni pont ({x}, {y}, {z})",
+      "coordinateSystem": "Koordináták",
+      "noCoordinateSystemLoaded": "Nincs koordináta-rendszer"
     },
     "settingsPanel": {
       "buttons": {
@@ -138,7 +140,9 @@
         "zCoordinate": "Z koordináta",
         "eovY": "EOV Y koordináta",
         "eovX": "EOV X koordináta",
-        "eovElevation": "EOV magasság",
+        "elevation": "Magasság",
+        "utmEasting": "UTM keleti",
+        "utmNorthing": "UTM északi",
         "comments": "Megjegyzések",
         "type": "Típus",
         "position": "Pozíció (X,Y,Z)",
@@ -320,6 +324,7 @@
         "title": "Pont részletei",
         "localCoordinates": "Helyi koordináták",
         "eovCoordinates": "EOV koordináták",
+        "utmCoordinates": "UTM koordináták",
         "wgs84Coordinates": "WGS84 koordináták",
         "notAvailable": "Nem elérhető"
       },
@@ -348,6 +353,29 @@
         "baseNamePlaceholder": "Előtag (kiterjesztés nélkül)",
         "unsupportedExportFormat": "Nem támogatott exportálási formátum: {format}",
         "image": "Kép"
+      },
+      "coordinateSystem": {
+        "message": "Válassza ki az adatok koordináta-rendszerét",
+        "selection": "Koordináta-rendszer kiválasztása",
+        "startPointCoordinates": "Kezdőpont koordinátái",
+        "cancelled": "Koordináta-rendszer kiválasztása megszakítva",
+        "invalidHemisphere": "Érvénytelen féltek",
+        "none": {
+          "title": "Nincs definiálva",
+          "description": "Projektált koordináta-rendszer mellőzése"
+        },
+        "eov": {
+          "title": "EOV (Egységes országos vetület)",
+          "description": "Magyarországon használt koordináta-rendszer"
+        },
+        "utm": {
+          "title": "UTM (Universal Transverse Mercator)",
+          "description": "Globális koordináta-rendszer",
+          "zone": "Zóna",
+          "hemisphere": "Féltek",
+          "northern": "Északi",
+          "southern": "Déli"
+        }
       }
     },
     "editors": {
@@ -376,12 +404,19 @@
           "catasterCode": "Kataszter szám",
           "date": "Dátum",
           "creator": "Készítő",
-          "eovCoordinates": "EOV koordináták",
+          "coordinateSystem": "Koordináta rendszer",
+          "none": "Nincs",
+          "utmZone": "UTM zóna",
+          "hemisphere": "Féltek",
+          "northern": "Északi",
+          "southern": "Déli",
+          "utmEasting": "Keleti koordináta",
+          "utmNorthing": "Északi koordináta",
           "surveyAliases": "Felmérés aliasok",
           "stationName": "Pont neve",
           "eovy": "Y koordináta",
           "eovx": "X koordináta",
-          "eovelevation": "Magasság"
+          "elevation": "Magasság"
         },
         "stats": {
           "splays": "Tüskék",
@@ -409,11 +444,13 @@
           "invalidCoordinates": "Érvénytelen koordináták",
           "emptyStationName": "A(z) {name} pont nincs megadva",
           "aliasFromToSame": "Az alias kezdő és végpontja nem lehet ugyanaz: {from} -> {to}",
-          "invalidAliases": "Érvénytelen aliasok"
+          "invalidAliases": "Érvénytelen aliasok",
+          "missingCoordinates": "Nincsenek koordináták a kiválasztott koordináta-rendszerhez",
+          "coordinateSystemMismatch": "A(z) {caves} barlang(ok) koordináta-rendszere nem egyezik a kiválasztott koordináta-rendszerrel"
         },
         "buttons": {
           "addAlias": "Alias hozzáadása",
-          "addCoordinate": "Pont hozzáadása"
+          "addCoordinate": "Koordináta hozzáadása"
         }
       },
       "surveySheet": {
@@ -520,7 +557,10 @@
           "clino": "Dőlés",
           "length": "Hossz",
           "attributes": "Attribútumok",
-          "comment": "Megjegyzés"
+          "comment": "Megjegyzés",
+          "elevation": "Magasság",
+          "easting": "Keleti",
+          "northing": "Északi"
         },
         "buttons": {
           "update": "Felmérés frissítése"
@@ -634,6 +674,8 @@
   },
   "errors": {
     "import": {
+      "cavesDifferentCoordinateSystems": "Az importált barlangok különböző koordináta rendszerekben vannak: {coordinateSystems}",
+      "caveDifferentCoordinateSystem": "A barlang koordináta rendszere '{coordinateSystem}' különbözik a korábban importált barlangok koordináta rendszereitől '{existingCoordinateSystem}'",
       "noShotsToAdd": "Nincsenek mérések  a(z) {survey} felmérésben",
       "allShotsSkipped": "Az {survey} felmérésből minden mérés kihagyva",
       "surveyNameUndefined": "A felmérés neve nincs megadva, kérem adja meg a nevet a fájlban",
@@ -646,7 +688,7 @@
       "cavesReallyFar": "A(z) {name} nevű barlang túl messze van a korábban importált barlangoktól: {caves}",
       "unknownDistance": "Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál",
       "surveyNameAlreadyExists": "A(z) {name} nevű felmérés többször szerepel",
-      "invalidEOVCoordinates": "Érvénytelen EOV koordináták: {error}",
+      "invalidCoordinates": "Érvénytelen koordináták: {error}",
       "invalidPolygonFixPoint": "Helytelen felmérés {name}, a(z) {fixPointName} fix pont nem egyezik az első mérés 'ponttól' nevével ({shots})",
       "invalidSurveyReachedEndOfFile": "Helytelen felmérés, vége elé ért a fájl",
       "invalidSurveyExpectedValue": "Helytelen felmérés, a {start} értéket vártam a {lineNr} sorban",
@@ -727,7 +769,15 @@
     },
     "utils": {
       "geo": {
-        "responseStatusError": "Válasz státusz: {status}"
+        "responseStatusError": "Válasz státusz: {status}",
+        "utmZoneOrNorthernNeeded": "Zóna szám vagy észak-déli indikátor kell",
+        "utmZoneOrNorthernBothSet": "Zóna szám vagy észak-déli indikátor kell, de nem mindkettő",
+        "eastingOutOfRange": "Easting kívül esik a következő határokon: 100 000 m - 999 999 m",
+        "northingOutOfRange": "Northing kívül esik a következő határokon: 0 m - 10 000 000 m",
+        "zoneNumberOutOfRange": "Zóna szám kívül esik a következő határokon: 1 - 60",
+        "zoneLetterOutOfRange": "Zóna betű kívül esik a következő határokon: C - X",
+        "latitudeOutOfRange": "Szélesség kívül esik a következő határokon: 80 deg S - 84 deg N",
+        "longitudeOutOfRange": "Hosszúság kívül esik a következő határokon: 180 deg W - 180 deg E"
       }
     },
     "export": {
@@ -768,7 +818,9 @@
   "validation": {
     "geo": {
       "invalidCoordinate": "A {coord}: '{thisCcoord}' koordináta érvénytelen tört szám",
-      "outOfBounds": "{XYZ} koordináta {coord} kívül esik a következő határokon: {bounds}"
+      "outOfBounds": "{XYZ} koordináta {coord} kívül esik a következő határokon: {bounds}",
+      "easting": "Keleti",
+      "northing": "Északi"
     },
     "shot": {
       "invalidId": "Id ({id}, típus={type}) érvénytelen egész szám",
@@ -830,6 +882,7 @@
     "error": "Hiba",
     "success": "Sikeres",
     "cancel": "Mégse",
+    "ok": "OK",
     "save": "Mentés",
     "export": "Exportálás",
     "delete": "Törlés",

@@ -284,7 +284,7 @@ class MyScene {
   renameCave(oldName, newName) {
     this.speleo.renameCave(oldName, newName);
     this.attributes.renameCaveTo(newName);
-    this.points.renameCave(oldName, newName);
+    this.startPoint.renameCave(oldName, newName);
     this.materials.renameCave(oldName, newName);
   }
 

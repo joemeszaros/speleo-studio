@@ -60,7 +60,7 @@ export class BaseViewControl {
     this.domElement.addEventListener('pointermove', this.onPointerMove.bind(this));
     this.domElement.addEventListener('pointerup', this.onPointerUp.bind(this));
     this.domElement.addEventListener('pointercancel', this.onPointerUp.bind(this));
-    this.domElement.addEventListener('wheel', this.onWheel.bind(this));
+    this.domElement.addEventListener('wheel', this.onWheel.bind(this), { passive: true });
 
     // Prevent context menu on right click
     this.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -116,8 +116,6 @@ export class BaseViewControl {
 
   onWheel(event) {
     if (!this.enabled) return;
-
-    event.preventDefault();
 
     // Zoom in/out
     const zoomSpeed = 0.1;

@@ -556,7 +556,7 @@ export class SettingsPanel {
             }
           )
         ]),
-        // Column 3: EOV coordinates
+        // Column 3: EOV and UTMcoordinates
         this.createCompactCheckboxGroup([
           this.createCheckbox(i18n.t('ui.settingsPanel.labels.eovY'), this.options.ui.stationDetails.eovY, (value) => {
             this.options.ui.stationDetails.eovY = value;
@@ -565,10 +565,25 @@ export class SettingsPanel {
             this.options.ui.stationDetails.eovX = value;
           }),
           this.createCheckbox(
-            i18n.t('ui.settingsPanel.labels.eovElevation'),
-            this.options.ui.stationDetails.eovElevation,
+            i18n.t('ui.settingsPanel.labels.utmEasting'),
+            this.options.ui.stationDetails.utmEasting,
             (value) => {
-              this.options.ui.stationDetails.eovElevation = value;
+              this.options.ui.stationDetails.utmEasting = value;
+            }
+          ),
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.utmNorthing'),
+            this.options.ui.stationDetails.utmNorthing,
+            (value) => {
+              this.options.ui.stationDetails.utmNorthing = value;
+            }
+          ),
+
+          this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.elevation'),
+            this.options.ui.stationDetails.elevation,
+            (value) => {
+              this.options.ui.stationDetails.elevation = value;
             }
           )
         ]),

@@ -21,6 +21,7 @@ import { get3DCoordsStr, node, radsToDegrees, toPolar } from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
 import { Raycasting } from './scene/raycasting.js';
 import { AttributesDefinitions } from './attributes.js';
+import { CoordinateSystemType } from './model/geo.js';
 
 class SceneInteraction {
 
@@ -237,24 +238,6 @@ class SceneInteraction {
   }
 
   getPointedStationDetails(stationMeta) {
-    // Ensure stationDetails configuration exists
-    if (!this.options.ui.stationDetails) {
-      this.options.ui.stationDetails = {
-        caveName     : true,
-        surveyName   : true,
-        stationName  : true,
-        xCoordinate  : false,
-        yCoordinate  : false,
-        zCoordinate  : false,
-        eovY         : false,
-        eovX         : false,
-        eovElevation : false,
-        type         : false,
-        position     : false,
-        shots        : false
-      };
-    }
-
     const st = stationMeta.station;
     const config = this.options.ui.stationDetails;
     const details = [];
@@ -296,19 +279,36 @@ class SceneInteraction {
     }
 
     // EOV coordinates
-    if (st.coordinates && st.coordinates.eov) {
+    if (st.coordinates && st.coordinates.projected && st.coordinates.projected.type === CoordinateSystemType.EOV) {
       const eovCoords = [];
       if (config.eovY) {
-        eovCoords.push(`EOV Y: ${st.coordinates.eov.y.toFixed(2)}`);
+        eovCoords.push(`EOV Y: ${st.coordinates.projected.y.toFixed(2)}`);
       }
       if (config.eovX) {
-        eovCoords.push(`EOV X: ${st.coordinates.eov.x.toFixed(2)}`);
+        eovCoords.push(`EOV X: ${st.coordinates.projected.x.toFixed(2)}`);
       }
-      if (config.eovElevation) {
-        eovCoords.push(`EOV Elev: ${st.coordinates.eov.elevation.toFixed(2)}`);
+      if (config.elevation) {
+        eovCoords.push(`Elev: ${st.coordinates.projected.elevation.toFixed(2)}`);
       }
       if (eovCoords.length > 0) {
         details.push('(' + eovCoords.join(', ') + ')');
+      }
+    }
+
+    //UTM coordinates
+    if (st.coordinates && st.coordinates.projected && st.coordinates.projected.type === CoordinateSystemType.UTM) {
+      const utmCoords = [];
+      if (config.utmEasting) {
+        utmCoords.push(`UTM E: ${st.coordinates.projected.easting.toFixed(2)}`);
+      }
+      if (config.utmNorthing) {
+        utmCoords.push(`UTM N: ${st.coordinates.projected.northing.toFixed(2)}`);
+      }
+      if (config.elevation) {
+        utmCoords.push(`Elev: ${st.coordinates.projected.elevation.toFixed(2)}`);
+      }
+      if (utmCoords.length > 0) {
+        details.push('(' + utmCoords.join(', ') + ')');
       }
     }
 
@@ -746,6 +746,19 @@ class SceneInteraction {
       attributesString = `<br>${i18n.t('common.attributes')}: <br>${attributesString}<br></br>`;
     }
 
+    let projectedCoordinates = '';
+    if (stationMeta.station.coordinates.projected) {
+      if (stationMeta.station.coordinates.projected.type === CoordinateSystemType.EOV) {
+        projectedCoordinates = `
+          ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.projected, ['x', 'y', 'elevation'])}<br>
+        `;
+      } else if (stationMeta.station.coordinates.projected.type === CoordinateSystemType.UTM) {
+        projectedCoordinates = `
+          ${i18n.t('ui.panels.stationDetails.utmCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.projected, ['easting', 'northing', 'elevation'])}<br>
+        `;
+      }
+    }
+
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
         ${i18n.t('common.name')}: ${stationMeta.name}<br><br>
@@ -756,8 +769,7 @@ class SceneInteraction {
         ${i18n.t('common.survey')}: ${stationMeta.station.survey.name}<br>
         ${i18n.t('common.cave')}: ${stationMeta.cave.name}<br>
         ${i18n.t('ui.panels.stationDetails.localCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.local)}<br>
-        ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${stationMeta.station.coordinates.eov === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(stationMeta.station.coordinates.eov, ['x', 'y', 'elevation'])}<br>
-        ${i18n.t('ui.panels.stationDetails.wgs84Coordinates')}: ${stationMeta.station.coordinates.wgs === undefined ? i18n.t('ui.panels.stationDetails.notAvailable') : get3DCoordsStr(stationMeta.station.coordinates.wgs, ['lat', 'lon'], 6)}<br>
+        ${projectedCoordinates}
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br><br>
         ${commentsString}
         ${attributesString}

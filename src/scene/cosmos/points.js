@@ -112,14 +112,4 @@ export class PointScene {
     sphere.layers.set(1);
     return sphere;
   }
-
-  renameCave(oldName, newName) {
-    if (this.startPointObjects.has(oldName)) {
-      const startPointObj = this.startPointObjects.get(oldName);
-      this.startPointObjects.delete(oldName);
-      this.startPointObjects.set(newName, startPointObj);
-      startPointObj.mesh.name = `startPoint_${newName}`;
-    }
-
-  }
 }

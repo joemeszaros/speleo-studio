@@ -76,7 +76,17 @@
 
       <div class="step row">
         <div class="column-2">
-          <h3>3. lépés: Importálás feldolgozása</h3>
+          <h3>3. lépés (opcionális): Koordináta rendszer kiválasztása</h3>
+          <p>A projekt által használt koordináta rendszer kiválasztása.</p>
+        </div>
+        <div class="image-placeholder column-2 black" style="flex: 70%">
+          <img width="500" src="images/4-koordinata-valasztas.png" />
+        </div>
+      </div>
+
+      <div class="step row">
+        <div class="column-2">
+          <h3>4. lépés: Importálás feldolgozása</h3>
           <p
             >Az alkalmazás automatikusan feldolgozza a fájlt és betölti a barlangot. Ha nem volt semmi probléma az
             importálás során, a barlang megjelenik a felfedező panelben és a 3D nézetablakban. Gratulálunk! 🎉🎊✨</p
@@ -85,6 +95,22 @@
         <div class="image-placeholder column-2 black small-padding" style="flex: 70%">
           <img src="images/4-barlang.png" />
         </div>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ Fontos megjegyzések</h3>
+        <ul>
+          <li
+            ><strong>Egyező koordináta rendszer:</strong> A projektben elsőként megnyitott barlang koordináta rendszere
+            lesz a projekt koordináta rendszere (ezt láthatjuk a láblécben is). Minden további barlang csak ezzel a
+            koordináta rendszerrel importálható. A barlangok importálhatóak koordináta rendszer megadása nélkül is.</li
+          >
+          <li
+            ><strong>Távolság:</strong> A Speleo Studio nem engei a túl távoli barlangok importálását, mert az teljesen
+            használhatatlanná tenni a 3D jelenetet. Jelenleg 10 km a legnagyobb megengedett távolság két barlang
+            között.</li
+          >
+        </ul>
       </div>
 
       <h2>JSON formátum importálása</h2>
@@ -100,7 +126,7 @@
         <ul>
           <li>Teljes adatmegőrzés</li>
           <li>Attribútumok és metaadatok</li>
-          <li>EOV koordináták</li>
+          <li>Vetületi koordináták (UTM, EOV)</li>
           <li>Elterjedt adatformátum, amelyet más szoftverek is feldolgozhatnak</li>
         </ul>
       </div>
@@ -138,7 +164,8 @@
         <h3>Polygon fájl importálása</h3>
         <p>1. Kattintson a "Fájl" → "Barlang(ok) megnyitása" menüre</p>
         <p>2. Válassza ki a .cave fájlt</p>
-        <p>3. Az alkalmazás megnyitja a Polygon fájlt</p>
+        <p>3. Koordináta rendszer kiválasztása</p>
+        <p>4. Az alkalmazás megnyitja a Polygon fájlt</p>
       </div>
 
       <div class="warning">
@@ -148,14 +175,6 @@
           <li>A Polygon formátum csak a legalapvetőbb felmérési és barlang adatokat tartalmazza</li>
           <li>A Polygon formátum karakterkészlete eléggé limitált (ISO8859-2)</li>
         </ul>
-      </div>
-
-      <div class="info">
-        <p
-          >A Speleo Studio az első felmérés fix pontját EOV koordinátaként próbálja értelmezni, ha a koordináták nem
-          0-val egyenlőek. Ha a koordináták nem helyes EOV koordináták, akkor az importálás sikertelen lesz. Hamarosan
-          több koordináta rendszert támogat a Speleo Studio.</p
-        >
       </div>
 
       <h2>TopoDroid (.csv) formátum importálása</h2>
@@ -317,7 +336,7 @@
       <div class="warning">
         <h3>Koordináta problémák</h3>
         <p><strong>Probléma:</strong> A barlang rossz helyen jelenik meg a térben.</p>
-        <p><strong>Megoldás:</strong> Ellenőrizze az EOV koordinátákat és a koordináta rendszer beállításait.</p>
+        <p><strong>Megoldás:</strong> Ellenőrizze akoordinátákat és a koordináta rendszer beállításait.</p>
       </div>
 
       <div class="warning">
@@ -332,21 +351,6 @@
         <p
           ><strong>Megoldás:</strong> Csökkentse a barlangok távolságát, vagy importálja a barlangokat külön
           projektekben.</p
-        >
-      </div>
-
-      <div class="warning">
-        <h3
-          >A következő hibát kapom: A(z) <i>XX</i> nevű barlang túl messze van a korábban importált barlangoktól:
-          Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál
-        </h3>
-        <p
-          ><strong>Probléma:</strong> Vagy a már importált barlangokhoz van EOV koordináta és az imporálni kívánt
-          barlanghoz nincs, vagy fordítva..</p
-        >
-        <p
-          ><strong>Megoldás:</strong> EOV koordináta felvétele annál a barlangnál, amelynek nem volt EOV
-          koordinátája.</p
         >
       </div>
 

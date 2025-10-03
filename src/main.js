@@ -56,6 +56,7 @@ class Main {
       this.db = db;
       // Load saved configuration or use defaults
       const loadedOptions = ConfigManager.loadOrDefaults();
+      ConfigManager.fillWithNewDefaults(loadedOptions);
       const observer = new ObjectObserver();
       const options = observer.watchObject(loadedOptions);
 

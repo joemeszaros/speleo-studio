@@ -124,7 +124,9 @@ export class IconBar {
             ranges.forEach((r) => {
               const rows = r.getRows();
               rows.forEach((r) => {
-                options?.deleteRow(r);
+                if (options?.deleteRow !== undefined) {
+                  options?.deleteRow(r);
+                }
                 r.delete();
               });
               r.remove();

@@ -403,7 +403,13 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.newSurvey'),
         onclick : () => {
           editorSetup(
-            new SurveySheetEditor(this.db, caveNode.data, undefined, document.getElementById('fixed-size-editor'))
+            new SurveySheetEditor(
+              this.db,
+              caveNode.data,
+              undefined,
+              document.getElementById('fixed-size-editor'),
+              this.declinationCache
+            )
           );
         }
       },

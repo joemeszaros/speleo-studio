@@ -42,12 +42,13 @@ class ProjectManager {
     this.attributeDefs = attributeDefs;
     this.firstEdit = true;
 
-    document.addEventListener('surveyChanged', (e) => this.onSurveyChanged(e));
-    document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
+    document.addEventListener('caveChanged', (e) => this.onCaveChanged(e));
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
+    document.addEventListener('surveyChanged', (e) => this.onSurveyChanged(e));
+    document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
     document.addEventListener('surveyAdded', (e) => this.onSurveyAdded(e));
     document.addEventListener('surveyReordered', (e) => this.onSurveyReordered(e));
     document.addEventListener('surveyDataEdited', (e) => this.onSurveyDataEdited(e));
@@ -69,6 +70,18 @@ class ProjectManager {
     const cave = e.detail.cave;
     this.addCave(cave);
     await this.saveCave(cave);
+  }
+
+  async onCaveChanged(e) {
+    const cave = e.detail.cave;
+    const reasons = e.detail.reasons;
+
+    // we do not need to reload the cave if only the metadata has changed
+    if (reasons.length > 1 || (reasons.length === 1 && reasons[0] !== 'metadata')) {
+      await this.reloadCave(cave);
+    }
+    await this.saveCave(cave);
+
   }
 
   async onSurveyReordered(e) {
@@ -243,6 +256,7 @@ class ProjectManager {
     if (currentProject) {
       await this.projectSystem.removeCaveFromProject(currentProject.id, id);
     }
+    this.#emitCoordinateSystemChange(null);
   }
 
   async reloadCave(cave) {
@@ -311,7 +325,7 @@ class ProjectManager {
   reloadOnScene(cave) {
     const caveStations = cave.stations;
 
-    if (caveStations.size < 3) {
+    if (caveStations.size < 2) {
       return;
     }
 
@@ -364,6 +378,16 @@ class ProjectManager {
     });
     document.dispatchEvent(event);
   }
+
+  #emitCoordinateSystemChange(coordinateSystem) {
+    const event = new CustomEvent('coordinateSystemChanged', {
+      detail : {
+        coordinateSystem
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
   addNewCave() {
     this.editor = new CaveEditor(
       this.db,
@@ -378,15 +402,35 @@ class ProjectManager {
   }
 
   validateBeforeAdd(cave) {
-    let cavesReallyFar = [];
 
-    if (cave.getFirstStation()) {
-      cavesReallyFar = this.getFarCaves(
-        this.db.getCavesMap(),
-        cave.getFirstStation().coordinates.eov,
-        cave.getFirstStation()?.position
+    const caves = this.db.getCavesMap();
+
+    const coordinateSystems = [...new Set(caves.values().map((c) => c.geoData?.coordinateSystem))];
+    // theoretically it is not possible, all already imported caves have the same coordinate system
+    if (coordinateSystems.size > 1) {
+      showErrorPanel(
+        i18n.t('errors.import.cavesDifferentCoordinateSystems', {
+          coordinateSystems : coordinateSystems.map((x) => x.type).join(', ')
+        })
       );
+      return;
     }
+
+    const existingCoordinateSystem = coordinateSystems.length > 0 ? coordinateSystems[0] : undefined;
+    const newCoordinateSystem = cave.geoData?.coordinateSystem;
+    const isEqual =
+      (existingCoordinateSystem === undefined && newCoordinateSystem === undefined) ||
+      (existingCoordinateSystem !== undefined && existingCoordinateSystem.isEqual(newCoordinateSystem));
+
+    if (!isEqual && coordinateSystems.size > 0) {
+      return i18n.t('errors.import.caveDifferentCoordinateSystem', {
+        coordinateSystem         : newCoordinateSystem?.toString() ?? i18n.t('ui.panels.coordinateSystem.none.title'),
+        existingCoordinateSystem :
+          existingCoordinateSystem?.toString() ?? i18n.t('ui.panels.coordinateSystem.none.title')
+      });
+    }
+
+    const cavesReallyFar = this.getFarCaves(caves, cave);
 
     if (this.db.hasCave(cave.name)) {
       return i18n.t('errors.import.caveAlreadyImported', { name: cave.name });
@@ -456,6 +500,11 @@ class ProjectManager {
     const allShots = cave.surveys.flatMap((s) => s.shots);
 
     if (cave.surveys.length > 0 && allShots.length > 0) {
+
+      // this is the first cave in the project
+      if (this.db.getAllCaveNames().length === 1) {
+        this.#emitCoordinateSystemChange(cave?.geoData?.coordinateSystem);
+      }
 
       cave.surveys.forEach((s) => {
         const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
@@ -539,32 +588,46 @@ class ProjectManager {
    * @param {Vector} position - The position to measure the distance from.
    * @returns {Array<string>} An array of strings, each representing a cave name and its distance from the position, formatted as "caveName - distance m".
    */
-  getFarCaves(caves, eovCoordinate, position) {
-    return Array.from(caves.values()).reduce((acc, c) => {
-      const firstStation = c.getFirstStation();
-      const firstStationEov = firstStation?.coordinates.eov;
-      const maxDistance = this.options.import.cavesMaxDistance;
+  getFarCaves(caves, cave) {
 
-      if (eovCoordinate === undefined && firstStationEov !== undefined) {
-        acc.push(`${c.name} - ${i18n.t('errors.import.unknownDistance')}`);
-      } else if (
-        firstStationEov === undefined &&
-        eovCoordinate === undefined &&
-        position !== undefined &&
-        firstStation !== undefined &&
-        firstStation.position.distanceTo(position) > maxDistance
-      ) {
-        acc.push(`${c.name} - ${U.formatDistance(firstStation.position.distanceTo(position), 0)}`);
-      } else if (eovCoordinate !== undefined && firstStationEov === undefined) {
-        acc.push(`${c.name} - ${i18n.t('errors.import.unknownDistance')}`);
-      } else if (eovCoordinate !== undefined && firstStationEov !== undefined) {
-        // eov for both caves
-        const distanceBetweenCaves = firstStationEov.distanceTo(eovCoordinate);
-        if (distanceBetweenCaves > this.options.import.cavesMaxDistance) {
-          acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
-        }
+    const firstStationName = cave.getFirstStationName();
+    if (firstStationName === undefined) {
+      return [];
+    }
+    // this works without any shots
+    const firstStationCoordinate = cave.geoData?.coordinates?.find((c) => c.name === firstStationName)?.coordinate;
+    // this works only with shots
+    const firstStation = cave.getFirstStation();
+
+    // if there is no coordinate or any shots within the survey
+    if (firstStationCoordinate === undefined && firstStation === undefined) {
+      return [];
+    }
+
+    const maxDistance = this.options.import.cavesMaxDistance;
+
+    return Array.from(caves.values()).reduce((acc, c) => {
+      const cFirstStationName = c.getFirstStationName();
+      const cFirstStationCoordinate = c.geoData?.coordinates?.find((c) => c.name === cFirstStationName)?.coordinate;
+      const cFirstStation = c.getFirstStation();
+
+      let distanceBetweenCaves = undefined;
+      // since the coordinate systems are the same, we should assume cFirstStationCoordinate is not undefined
+      if (firstStationCoordinate !== undefined) {
+        distanceBetweenCaves = firstStationCoordinate.distanceTo(cFirstStationCoordinate);
       }
 
+      if (
+        distanceBetweenCaves === undefined &&
+        firstStation?.position !== undefined &&
+        cFirstStation?.position !== undefined
+      ) {
+        distanceBetweenCaves = firstStation?.position?.distanceTo(cFirstStation?.position);
+      }
+
+      if (distanceBetweenCaves !== undefined && distanceBetweenCaves > maxDistance) {
+        acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
+      }
       return acc;
     }, []);
   }

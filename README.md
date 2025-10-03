@@ -1,4 +1,4 @@
-# 🕳️ Speleo Studio
+# 🦇 Speleo Studio
 
 <div align="center">
 

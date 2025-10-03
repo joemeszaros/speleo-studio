@@ -15,6 +15,7 @@
  */
 
 import { degreesToRads, radsToDegrees } from './utils.js';
+import { CoordinateSystemType } from '../model/geo.js';
 import { i18n } from '../i18n/i18n.js';
 
 class MeridianConvergence {
@@ -31,7 +32,7 @@ class MeridianConvergence {
    * @param {*} x EOV x coordinate
    * @returns
    */
-  static getConvergence(y, x) {
+  static getEOVConvergence(y, x) {
     let convergence =
       (Math.atan(
         (Math.cosh((x - 200000) / MeridianConvergence.EARTH_RADIUS) *
@@ -45,6 +46,35 @@ class MeridianConvergence {
     return convergence;
   }
 
+  static centralMeridianDeg(zone) {
+    return 6 * zone - 183; // degrees
+  }
+
+  /**
+   * Get the meridian convergence at a given UTM coordinate.
+   *
+   * There is an other formualate expressed on the wiki page: https://en.wikipedia.org/wiki/Transverse_Mercator_projection#Convergence
+   * convergence = (Math.atan(Math.tanh(E / (a * k0)) * Math.tan(N / (a * k0))) * 180) / Math.PI;
+   *
+   * but I decided to use this formula because it is equivalent to the values I have found on:
+   *  - https://geodesyapps.ga.gov.au/grid-to-geographic
+   *  - https://twcc.fr/
+   *
+   * For a random Hungarian position (47.646821, 19.02363) or (351570.942, 5278939.251, 34T) the value is -1.4608.
+   * The other implementation gives -1.45208.
+   */
+  static getUTMConvergence(easting, northing, zone, northern = true) {
+
+    const { latitude, longitude } = UTMConverter.toLatLon(easting, northing, zone, undefined, northern);
+    const phi = degreesToRads(latitude);
+    const lon0 = degreesToRads(this.centralMeridianDeg(zone));
+    const lam = degreesToRads(longitude);
+    const dlam = lam - lon0;
+
+    // Spherical formula (commonly used; good to <~ a few arc-seconds for most cases)
+    const gammaRad = Math.atan(Math.tan(dlam) * Math.sin(phi));
+    return radsToDegrees(gammaRad); // degrees, positive east of true north
+  }
 }
 
 class Declination {
@@ -127,9 +157,7 @@ class EOVToWGS84Transformer {
   static FROMwgs84TOhd72_p2 = [6378137, 6356752.3142, 6378160, 6356774.516];
   static FROMhd72TOwgs84_p3 = [52.684, -71.194, -13.975, 0.312, 0.1063, 0.3729, 0.0000010191];
 
-  constructor() {}
-
-  eovTOwgs84(a, b) {
+  static eovTOwgs84(a, b) {
     let hd72_a = this.eovTOhd72(a, b);
     let wgsCoord = this.bursa_wolf(
       hd72_a,
@@ -139,7 +167,7 @@ class EOVToWGS84Transformer {
     return wgsCoord;
   }
 
-  eovTOhd72(b, a) {
+  static eovTOhd72(b, a) {
     let x = (180 * 3600) / Math.PI;
     let c = 1.0007197049;
     let d = 19.048571778;
@@ -177,7 +205,7 @@ class EOVToWGS84Transformer {
     return [ad, ae, 0];
   }
 
-  bursa_wolf(p1, p2, p3) {
+  static bursa_wolf(p1, p2, p3) {
     let fi_deg = p1[0];
     let la_deg = p1[1];
     let h = p1[2];
@@ -225,12 +253,22 @@ class EOVToWGS84Transformer {
     return [fi2, la2, h2];
   }
 
-  negal(arr) {
-    let ret_a = [];
-    for (let item of arr) {
-      ret_a.push(item * -1);
+}
+
+class WGS84Converter {
+  static toLatLon(coordinate, coordinateSystem) {
+    if (coordinateSystem.type === CoordinateSystemType.EOV) {
+      const [lat, lon] = EOVToWGS84Transformer.eovTOwgs84(coordinate.y, coordinate.x);
+      return { latitude: lat, longitude: lon };
+    } else if (coordinateSystem.type === CoordinateSystemType.UTM) {
+      return UTMConverter.toLatLon(
+        coordinate.easting,
+        coordinate.northing,
+        coordinateSystem.zoneNum,
+        undefined,
+        coordinateSystem.northern
+      );
     }
-    return ret_a;
   }
 }
 
@@ -308,4 +346,210 @@ class StrikeDipCalculator {
   }
 }
 
-export { Declination, EOVToWGS84Transformer, MeridianConvergence, StrikeDipCalculator };
+/**
+ * UTMConverter is a class that converts between latitude/longitude and UTM coordinates.
+ * It is based on the following sources:
+ *  - https://www.ccgalberta.com/ccgresources/report11/2009-410_converting_latlon_to_utm.pdf
+ *  - https://github.com/Turbo87/utm
+ *  - https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system
+ */
+class UTMConverter {
+
+  static K0 = 0.9996;
+
+  static E = 0.00669438;
+  static E2 = Math.pow(this.E, 2);
+  static E3 = Math.pow(this.E, 3);
+  static E_P2 = this.E / (1 - this.E);
+
+  static SQRT_E = Math.sqrt(1 - this.E);
+  static _E = (1 - this.SQRT_E) / (1 + this.SQRT_E);
+  static _E2 = Math.pow(this._E, 2);
+  static _E3 = Math.pow(this._E, 3);
+  static _E4 = Math.pow(this._E, 4);
+  static _E5 = Math.pow(this._E, 5);
+
+  static M1 = 1 - this.E / 4 - (3 * this.E2) / 64 - (5 * this.E3) / 256;
+  static M2 = (3 * this.E) / 8 + (3 * this.E2) / 32 + (45 * this.E3) / 1024;
+  static M3 = (15 * this.E2) / 256 + (45 * this.E3) / 1024;
+  static M4 = (35 * this.E3) / 3072;
+
+  static P2 = (3 / 2) * this._E - (27 / 32) * this._E3 + (269 / 512) * this._E5;
+  static P3 = (21 / 16) * this._E2 - (55 / 32) * this._E4;
+  static P4 = (151 / 96) * this._E3 - (417 / 128) * this._E5;
+  static P5 = (1097 / 512) * this._E4;
+
+  static R = 6378137;
+
+  static _5e5 = 500000;
+  static _1e5 = 1e5;
+  static _1e6 = 1e6;
+  static _1e7 = 1e7;
+
+  static ZONE_LETTERS = 'CDEFGHJKLMNPQRSTUVWXX';
+
+  static #toZoneLetter(latitude) {
+    const { ZONE_LETTERS } = this;
+    if (-80 <= latitude && latitude <= 84) {
+      return ZONE_LETTERS.charAt(Math.floor((latitude + 80) / 8));
+    } else {
+      return null;
+    }
+  }
+
+  static #toZoneNumber(latitude, longitude) {
+    if (56 <= latitude && latitude < 64 && 3 <= longitude && longitude < 12) return 32;
+
+    if (72 <= latitude && latitude <= 84 && longitude >= 0) {
+      if (longitude < 9) return 31;
+      if (longitude < 21) return 33;
+      if (longitude < 33) return 35;
+      if (longitude < 42) return 37;
+    }
+
+    return Math.floor((longitude + 180) / 6) + 1;
+  }
+
+  static #toCentralLongitude(zoneNum) {
+    return (zoneNum - 1) * 6 - 180 + 3;
+  }
+
+  static toLatLon(easting, northing, zoneNum, zoneLetter, northern) {
+
+    const { ZONE_LETTERS, K0, R, M1, P2, P3, P4, P5, E, _E, E_P2, _5e5, _1e5, _1e6, _1e7 } = this;
+
+    if (!zoneLetter && northern === undefined) {
+      throw new Error(i18n.t('errors.utils.geo.utmZoneOrNorthernNeeded'));
+    } else if (zoneLetter && northern !== undefined) {
+      throw new Error(i18n.t('errors.utils.geo.utmZoneOrNorthernBothSet'));
+    }
+
+    if (easting < _1e5 || _1e6 <= easting) {
+      throw new RangeError(i18n.t('errors.utils.geo.eastingOutOfRange'));
+    }
+    if (northing < 0 || northing > _1e7) {
+      throw new RangeError(i18n.t('errors.utils.geo.northingOutOfRange'));
+    }
+
+    if (zoneNum < 1 || zoneNum > 60) {
+      throw new RangeError(i18n.t('errors.utils.geo.zoneNumberOutOfRange'));
+    }
+    if (zoneLetter) {
+      zoneLetter = zoneLetter.toUpperCase();
+      if (zoneLetter.length !== 1 || ZONE_LETTERS.indexOf(zoneLetter) === -1) {
+        throw new RangeError(i18n.t('errors.utils.geo.zoneLetterOutOfRange'));
+      }
+      northern = zoneLetter >= 'N';
+    }
+
+    var x = easting - _5e5;
+    var y = northing;
+
+    if (!northern) y -= _1e7;
+
+    var m = y / K0;
+    var mu = m / (R * M1);
+
+    var pRad = mu + P2 * Math.sin(2 * mu) + P3 * Math.sin(4 * mu) + P4 * Math.sin(6 * mu) + P5 * Math.sin(8 * mu);
+
+    var pSin = Math.sin(pRad);
+    var pSin2 = Math.pow(pSin, 2);
+
+    var pCos = Math.cos(pRad);
+
+    var pTan = Math.tan(pRad);
+    var pTan2 = Math.pow(pTan, 2);
+    var pTan4 = Math.pow(pTan, 4);
+
+    var epSin = 1 - E * pSin2;
+    var epSinSqrt = Math.sqrt(epSin);
+
+    var n = R / epSinSqrt;
+    var r = (1 - E) / epSin;
+
+    var c = _E * pCos * pCos;
+    var c2 = c * c;
+
+    var d = x / (n * K0);
+    var d2 = Math.pow(d, 2);
+    var d3 = Math.pow(d, 3);
+    var d4 = Math.pow(d, 4);
+    var d5 = Math.pow(d, 5);
+    var d6 = Math.pow(d, 6);
+
+    var latitude =
+      pRad -
+      (pTan / r) * (d2 / 2 - (d4 / 24) * (5 + 3 * pTan2 + 10 * c - 4 * c2 - 9 * E_P2)) +
+      (d6 / 720) * (61 + 90 * pTan2 + 298 * c + 45 * pTan4 - 252 * E_P2 - 3 * c2);
+    var longitude =
+      (d - (d3 / 6) * (1 + 2 * pTan2 + c) + (d5 / 120) * (5 - 2 * c + 28 * pTan2 - 3 * c2 + 8 * E_P2 + 24 * pTan4)) /
+      pCos;
+
+    return {
+      latitude  : radsToDegrees(latitude),
+      longitude : radsToDegrees(longitude) + this.#toCentralLongitude(zoneNum)
+    };
+  }
+
+  static fromLatLon(latitude, longitude) {
+    if (latitude > 84 || latitude < -80) {
+      throw new RangeError(i18n.t('errors.utils.geo.latitudeOutOfRange'));
+    }
+    if (longitude > 180 || longitude < -180) {
+      throw new RangeError(i18n.t('errors.utils.geo.longitudeOutOfRange'));
+    }
+
+    const { R, E, E_P2, M1, M2, M3, M4, K0, _1e7, _5e5 } = UTMConverter;
+
+    var latRad = degreesToRads(latitude);
+    var latSin = Math.sin(latRad);
+    var latCos = Math.cos(latRad);
+
+    var latTan = Math.tan(latRad);
+    var latTan2 = Math.pow(latTan, 2);
+    var latTan4 = Math.pow(latTan, 4);
+
+    var zoneNum = this.#toZoneNumber(latitude, longitude);
+
+    var zoneLetter = this.#toZoneLetter(latitude);
+
+    var lonRad = degreesToRads(longitude);
+    var centralLon = this.#toCentralLongitude(zoneNum);
+    var centralLonRad = degreesToRads(centralLon);
+
+    var n = R / Math.sqrt(1 - E * latSin * latSin);
+    var c = E_P2 * latCos * latCos;
+
+    var a = latCos * (lonRad - centralLonRad);
+    var a2 = Math.pow(a, 2);
+    var a3 = Math.pow(a, 3);
+    var a4 = Math.pow(a, 4);
+    var a5 = Math.pow(a, 5);
+    var a6 = Math.pow(a, 6);
+
+    var m = R * (M1 * latRad - M2 * Math.sin(2 * latRad) + M3 * Math.sin(4 * latRad) - M4 * Math.sin(6 * latRad));
+    var easting =
+      K0 * n * (a + (a3 / 6) * (1 - latTan2 + c) + (a5 / 120) * (5 - 18 * latTan2 + latTan4 + 72 * c - 58 * E_P2)) +
+      _5e5;
+    var northing =
+      K0 *
+      (m +
+        n *
+          latTan *
+          (a2 / 2 +
+            (a4 / 24) * (5 - latTan2 + 9 * c + 4 * c * c) +
+            (a6 / 720) * (61 - 58 * latTan2 + latTan4 + 600 * c - 330 * E_P2)));
+
+    if (latitude < 0) northing += _1e7;
+
+    return {
+      easting    : easting,
+      northing   : northing,
+      zoneNum    : zoneNum,
+      zoneLetter : zoneLetter
+    };
+  }
+
+}
+
+export { Declination, EOVToWGS84Transformer, MeridianConvergence, StrikeDipCalculator, UTMConverter, WGS84Converter };

@@ -224,9 +224,9 @@ class CyclePanel {
     const path = [...data.path, data.path[0]];
     const stations = this.cave.stations;
     if (CycleUtil.propagateError(path, stations, loopError.error, loopError.totalLength)) {
-      // we don't know which surveys are affected, so we just use the first one, if someone implements an optimization in survey calculation
+      //TODO: we don't know which surveys are affected, so we just recalculate the cave
       // and only recalculates surveys after the affected survey
-      this.#emitSurveyChanged(this.cave.surveys[0]);
+      this.#emitCaveChanged();
     }
   }
 
@@ -234,16 +234,15 @@ class CyclePanel {
     const path = [...data.path, data.path[0]];
     const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.stations);
     if (deviationShots.length > 0 && CycleUtil.adjustShots(deviationShots)) {
-      this.#emitSurveyChanged(this.cave.surveys[0]);
+      this.#emitCaveChanged();
     }
   }
 
-  #emitSurveyChanged(survey) {
-    const event = new CustomEvent('surveyChanged', {
+  #emitCaveChanged() {
+    const event = new CustomEvent('caveChanged', {
       detail : {
         reasons : ['cycles'],
-        cave    : this.cave,
-        survey  : survey
+        cave    : this.cave
       }
     });
     document.dispatchEvent(event);

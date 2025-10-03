@@ -77,7 +77,9 @@
       "noProjectLoaded": "No project loaded",
       "raycastingEnabled": "Point selection enabled",
       "raycastingDisabled": "Point selection disabled",
-      "surfacePoint": "Surface point ({x}, {y}, {z})"
+      "surfacePoint": "Surface point ({x}, {y}, {z})",
+      "coordinateSystem": "Coordinate System",
+      "noCoordinateSystemLoaded": "No coordinate system"
     },
     "settingsPanel": {
       "buttons": {
@@ -138,7 +140,9 @@
         "zCoordinate": "Z coordinate",
         "eovY": "EOV Y coordinate",
         "eovX": "EOV X coordinate",
-        "eovElevation": "EOV elevation",
+        "elevation": "Elevation",
+        "utmEasting": "UTM easting",
+        "utmNorthing": "UTM northing",
         "comments": "Comments",
         "type": "Type",
         "position": "Position (X,Y,Z)",
@@ -309,6 +313,7 @@
         "title": "Station details",
         "localCoordinates": "Local coordinates",
         "eovCoordinates": "EOV coordinates",
+        "utmCoordinates": "UTM coordinates",
         "wgs84Coordinates": "WGS84 coordinates",
         "notAvailable": "Not available"
       },
@@ -345,6 +350,29 @@
         "reset": "Reset to 0°",
         "planView": "Plan View",
         "profileView": "Profile View"
+      },
+      "coordinateSystem": {
+        "message": "Select the coordinate system for the imported data",
+        "selection": "Coordinate System Selection",
+        "startPointCoordinates": "Start point coordinates",
+        "cancelled": "Coordinate System Selection cancelled",
+        "invalidHemisphere": "Invalid hemisphere",
+        "none": {
+          "title": "Not specified",
+          "description": "No projected coordinate system"
+        },
+        "eov": {
+          "title": "EOV (Egységes országos vetület)",
+          "description": "Coordinate system in Hungary"
+        },
+        "utm": {
+          "title": "UTM (Universal Transverse Mercator)",
+          "description": "Global coordinate system",
+          "zone": "Zone",
+          "hemisphere": "Hemisphere",
+          "northern": "Northern",
+          "southern": "Southern"
+        }
       }
     },
     "editors": {
@@ -373,12 +401,19 @@
           "catasterCode": "Cataster code",
           "creator": "Creator",
           "date": "Date",
-          "eovCoordinates": "EOV coordinates",
+          "coordinateSystem": "Coordinate system",
+          "none": "None",
+          "utmZone": "UTM Zone",
+          "hemisphere": "Hemisphere",
+          "northern": "Northern",
+          "southern": "Southern",
+          "utmEasting": "Easting",
+          "utmNorthing": "Northing",
           "surveyAliases": "Survey aliases",
           "stationName": "Station name",
           "eovy": "Y coordinate",
           "eovx": "X coordinate",
-          "eovelevation": "Elevation"
+          "elevation": "Elevation"
         },
         "stats": {
           "splays": "Splays",
@@ -406,7 +441,9 @@
           "invalidCoordinates": "Invalid coordinates",
           "emptyStationName": "Station {name} is empty",
           "aliasFromToSame": "Alias from and to cannot be the same: {from} -> {to}",
-          "invalidAliases": "Invalid aliases"
+          "invalidAliases": "Invalid aliases",
+          "missingCoordinates": "Missing coordinates for the selected coordinate system",
+          "coordinateSystemMismatch": "Coordinate system of caves {caves} does not match the selected coordinate system"
         },
         "buttons": {
           "addAlias": "Add alias",
@@ -503,7 +540,10 @@
           "clino": "Clino",
           "length": "Length",
           "attributes": "Attributes",
-          "comment": "Comment"
+          "comment": "Comment",
+          "elevation": "Elevation",
+          "easting": "Easting",
+          "northing": "Northing"
         },
         "buttons": {
           "update": "Update survey"
@@ -611,6 +651,8 @@
   },
   "errors": {
     "import": {
+      "cavesDifferentCoordinateSystems": "Caves have different coordinate systems: {coordinateSystems}",
+      "caveDifferentCoordinateSystem": "Cave coordinate system '{coordinateSystem}' is different from existing '{existingCoordinateSystem}' coordinate system",
       "noShotsToAdd": "No shots to add from survey {survey}",
       "allShotsSkipped": "All shots from survey {survey} were skipped",
       "surveyNameUndefined": "Survey name is undefined, please set a name in the file",
@@ -623,7 +665,7 @@
       "cavesReallyFar": "Cave {name} is too far from previously imported caves: {caves}",
       "unknownDistance": "Unknown distance, no EOV coordinates for one of the caves",
       "surveyNameAlreadyExists": "Survey name {name} exists multiple times",
-      "invalidEOVCoordinates": "Invalid EOV coordinates for start position: {error}",
+      "invalidCoordinates": "Invalid coordinates for start position: {error}",
       "invalidPolygonFixPoint": "Invalid Polygon survey {name}, fix point {fixPointName} != first shot's from value ({shots})",
       "invalidSurveyReachedEndOfFile": "Invalid survey, reached end of file",
       "invalidSurveyExpectedValue": "Invalid survey, expected {start} at line {lineNr}",
@@ -703,7 +745,15 @@
     },
     "utils": {
       "geo": {
-        "responseStatusError": "Response status: {status}"
+        "responseStatusError": "Response status: {status}",
+        "utmZoneOrNorthernNeeded": "Either zone number or northern needs to be set",
+        "utmZoneOrNorthernBothSet": "Either zone number or northern needs to be set, but not both",
+        "eastingOutOfRange": "Easting out of range (must be between 100 000 m and 999 999 m)",
+        "northingOutOfRange": "Northing out of range (must be between 0 m and 10 000 000 m)",
+        "zoneNumberOutOfRange": "Zone number out of range (must be between 1 and 60)",
+        "zoneLetterOutOfRange": "Zone letter out of range (must be between C and X)",
+        "latitudeOutOfRange": "Latitude out of range (must be between 80 deg S and 84 deg N)",
+        "longitudeOutOfRange": "Longitude out of range (must be between 180 deg W and 180 deg E)"
       }
     },
     "export": {
@@ -744,7 +794,9 @@
   "validation": {
     "geo": {
       "invalidCoordinate": "Coordinate {coord}: '{thisCcoord}' is not a valid float number",
-      "outOfBounds": "{XYZ} coordinate {coord} is out of bounds: {bounds}"
+      "outOfBounds": "{XYZ} coordinate {coord} is out of bounds: {bounds}",
+      "easting": "Easting",
+      "northing": "Northing"
     },
     "shot": {
       "invalidId": "Id ({id}, type={type}) is not valid integer number`",
@@ -802,6 +854,7 @@
     }
   },
   "common": {
+    "ok": "Ok",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",

@@ -20,6 +20,7 @@ import { Shot, ShotType } from '../../model/survey.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
+import { CoordinateSystemType } from '../../model/geo.js';
 
 export class SurveyEditor extends Editor {
 
@@ -30,7 +31,6 @@ export class SurveyEditor extends Editor {
     this.survey = survey;
     this.table = undefined;
     this.surveyModified = false;
-    this.eovVisible = false;
     this.unsavedChanges = unsavedChanges;
     // without any user integration the survey update button won't work
     if (this.unsavedChanges !== undefined) {
@@ -244,12 +244,20 @@ export class SurveyEditor extends Editor {
         x          : toStation?.position?.x,
         y          : toStation?.position?.y,
         z          : toStation?.position?.z,
-        eovy       : toStation?.coordinates?.eov?.y,
-        eovx       : toStation?.coordinates?.eov?.x,
-        eove       : toStation?.coordinates?.eov?.elevation,
         wgslat     : toStation?.coordinates?.wgs?.lat,
         wgslon     : toStation?.coordinates?.wgs?.lon
       };
+
+      const projected = toStation?.coordinates?.projected;
+      if (this.cave.geoData?.coordinateSystem?.type === CoordinateSystemType.EOV) {
+        rowToBe.eovy = projected?.y;
+        rowToBe.eovx = projected?.x;
+        rowToBe.elevation = projected?.elevation;
+      } else if (this.cave.geoData?.coordinateSystem?.type === CoordinateSystemType.UTM) {
+        rowToBe.easting = projected?.easting;
+        rowToBe.northing = projected?.northing;
+        rowToBe.elevation = projected?.elevation;
+      }
 
       return rowToBe;
     });
@@ -275,7 +283,7 @@ export class SurveyEditor extends Editor {
     const data = this.table.getData();
     const id = data.length === 0 ? 0 : Math.max(...data.map((r) => r.id));
 
-    return {
+    const row = {
       id         : id + 1,
       from       : undefined,
       to         : undefined,
@@ -289,12 +297,21 @@ export class SurveyEditor extends Editor {
       x          : undefined,
       y          : undefined,
       z          : undefined,
-      eovy       : undefined,
-      eovx       : undefined,
-      eove       : undefined,
       wgslat     : undefined,
       wgslon     : undefined
     };
+
+    if (this.cave.geoData?.coordinateSystem?.type === CoordinateSystemType.EOV) {
+      row.eovy = undefined;
+      row.eovx = undefined;
+      row.elevation = undefined;
+    } else if (this.cave.geoData?.coordinateSystem?.type === CoordinateSystemType.UTM) {
+      row.easting = undefined;
+      row.northing = undefined;
+      row.elevation = undefined;
+    }
+
+    return row;
 
   }
 
@@ -540,16 +557,30 @@ export class SurveyEditor extends Editor {
         validator : ['required', 'min:-90', 'max:90', customValidator]
       }
     ];
-    const coordinateColumns = [
+    const xyz = [
       { field: 'x', title: 'X' },
       { field: 'y', title: 'Y' },
-      { field: 'z', title: 'Z' },
-      { field: 'eovy', title: 'EOV Y' },
-      { field: 'eovx', title: 'EOV X' },
-      { field: 'eove', title: 'EOV Z' },
+      { field: 'z', title: 'Z' }
+    ];
+
+    const projected = [];
+
+    if (this.cave.geoData?.coordinateSystem?.type === CoordinateSystemType.EOV) {
+      projected.push({ field: 'eovy', title: 'EOV Y' });
+      projected.push({ field: 'eovx', title: 'EOV X' });
+      projected.push({ field: 'elevation', title: i18n.t('ui.editors.survey.columns.elevation') });
+    } else if (this.cave.geoData?.coordinateSystem?.type === CoordinateSystemType.UTM) {
+      projected.push({ field: 'easting', title: i18n.t('ui.editors.survey.columns.easting'), decimals: 3 });
+      projected.push({ field: 'northing', title: i18n.t('ui.editors.survey.columns.northing'), decimals: 3 });
+      projected.push({ field: 'elevation', title: i18n.t('ui.editors.survey.columns.elevation') });
+    }
+
+    const wgs = [
       { field: 'wgslat', title: 'Lat', decimals: 6 },
       { field: 'wgslon', title: 'Lon', decimals: 6 }
     ];
+
+    const coordinateColumns = [...xyz, ...projected, ...wgs];
 
     coordinateColumns.forEach((c) => {
       columns.push({

@@ -198,20 +198,6 @@ class SurveyStation {
   isAuxiliary() {
     return this.type === ShotType.AUXILIARY;
   }
-
-  toExport() {
-    return {
-      type     : this.type,
-      position : this.position.toExport(),
-      eov      : this.coordinates.toExport()
-    };
-  }
-
-  static fromPure(pure) {
-    pure.position = Vector.fromPure(pure.position);
-    pure.coordinates = StationCoordinates.fromPure(pure.coordinates);
-    return Object.assign(new SurveyStation(), pure);
-  }
 }
 
 class SurveyTeamMember {

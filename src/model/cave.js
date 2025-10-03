@@ -312,6 +312,13 @@ class Cave {
     return this.surveys.find((s) => s.name === name) !== undefined;
   }
 
+  getFirstStationName() {
+    if (this.surveys.length === 0) {
+      return undefined;
+    }
+    return this.surveys[0].start;
+  }
+
   getFirstStation() {
     if (this.surveys.length === 0) {
       return undefined;

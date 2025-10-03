@@ -22,7 +22,14 @@ import { Vector, Surface } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument } from '../model/survey.js';
 import { MeridianConvergence } from '../utils/geo.js';
-import { EOVCoordinateWithElevation, StationWithCoordinate, GeoData, CoordinateSytem } from '../model/geo.js';
+import {
+  EOVCoordinateWithElevation,
+  UTMCoordinateWithElevation,
+  StationWithCoordinate,
+  GeoData,
+  CoordinateSystemType
+} from '../model/geo.js';
+import { CoordinateSystemDialog } from '../ui/coordinate-system-dialog.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
 import { i18n } from '../i18n/i18n.js';
@@ -116,6 +123,7 @@ class PolygonImporter extends Importer {
 
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
+    this.coordinateSystemDialog = new CoordinateSystemDialog();
   }
 
   #getShotsFromPolygon = function (iterator) {
@@ -172,7 +180,7 @@ class PolygonImporter extends Importer {
     return result;
   }
 
-  getCave(wholeFileInText) {
+  async getCave(wholeFileInText) {
     if (wholeFileInText.startsWith('POLYGON Cave Surveying Software')) {
       const lines = wholeFileInText.split(/\r\n|\n/);
       const lineIterator = lines.entries();
@@ -202,6 +210,7 @@ class PolygonImporter extends Importer {
       const stations = new Map();
       var surveyName;
       var surveyIndex = 0;
+      let coordinateSystem;
 
       do {
         surveyName = U.iterateUntil(lineIterator, (v) => !v.startsWith('Survey name'));
@@ -256,19 +265,31 @@ class PolygonImporter extends Importer {
           if (surveyIndex == 0) {
             let parts = posLine.value[1].split(/\t|\s/);
             let [y, x, z] = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
-            if (y !== 0 && x !== 0 && z !== 0) {
-              let eovCoordinate = new EOVCoordinateWithElevation(y, x, z);
-              const eovErrors = eovCoordinate.validate(i18n);
-              if (eovErrors.length > 0) {
+            // Show coordinate system selection dialog
+            coordinateSystem = await this.coordinateSystemDialog.show([y, x, z]);
+
+            if (coordinateSystem !== undefined) {
+              let coordinate;
+              if (coordinateSystem.type === CoordinateSystemType.EOV) {
+                coordinate = new EOVCoordinateWithElevation(y, x, z);
+              } else if (coordinateSystem.type === CoordinateSystemType.UTM) {
+                coordinate = new UTMCoordinateWithElevation(x, y, z);
+              }
+              const coordinateErrors = coordinate.validate(i18n);
+              if (coordinateErrors.length > 0) {
                 throw new Error(
-                  i18n.t('errors.import.invalidEOVCoordinates', { name: surveyNameStr, error: eovErrors.join(',') })
+                  i18n.t('errors.import.invalidCoordinates', {
+                    name  : surveyNameStr,
+                    error : coordinateErrors.join(',')
+                  })
                 );
               }
-              startCoordinate = new StationWithCoordinate(fixPointName, eovCoordinate);
-              geoData = new GeoData(CoordinateSytem.EOV, [startCoordinate]);
-              startPosition = eovCoordinate.toVector();
+
+              startCoordinate = new StationWithCoordinate(fixPointName, coordinate);
+              geoData = new GeoData(coordinateSystem, [startCoordinate]);
+              startPosition = coordinate.toVector();
             } else {
-              startPosition = new Vector(y, x, z);
+              startPosition = new Vector(x, y, z);
             }
 
             if (fixPointName != shots[0].from) {
@@ -282,10 +303,19 @@ class PolygonImporter extends Importer {
             }
             //calculate convergence based on the first survey
             if (startCoordinate !== undefined) {
-              convergence = MeridianConvergence.getConvergence(
-                startCoordinate.coordinate.y,
-                startCoordinate.coordinate.x
-              );
+              if (startCoordinate.coordinate.type === CoordinateSystemType.EOV) {
+                convergence = MeridianConvergence.getEOVConvergence(
+                  startCoordinate.coordinate.y,
+                  startCoordinate.coordinate.x
+                );
+              } else if (startCoordinate.coordinate.type === CoordinateSystemType.UTM) {
+                convergence = MeridianConvergence.getUTMConvergence(
+                  startCoordinate.coordinate.easting,
+                  startCoordinate.coordinate.northing,
+                  geoData.coordinateSystem.zoneNum,
+                  geoData.coordinateSystem.northern
+                );
+              }
             }
           }
 
@@ -305,7 +335,8 @@ class PolygonImporter extends Importer {
             [],
             fixPointName,
             startPosition,
-            startCoordinate?.coordinate
+            startCoordinate?.coordinate,
+            coordinateSystem
           );
           surveys.push(survey);
           surveyIndex++;
@@ -321,7 +352,7 @@ class PolygonImporter extends Importer {
   }
 
   async importText(wholeFileInText, onCaveLoad) {
-    const cave = this.getCave(wholeFileInText);
+    const cave = await this.getCave(wholeFileInText);
     await onCaveLoad(cave);
   }
 }

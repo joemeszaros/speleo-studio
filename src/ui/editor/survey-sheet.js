@@ -17,6 +17,8 @@
 import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor } from './base.js';
 import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
+import { CoordinateSystemType } from '../../model/geo.js';
+import { WGS84Converter } from '../../utils/geo.js';
 import { showErrorPanel } from '../popups.js';
 import { i18n } from '../../i18n/i18n.js';
 import * as U from '../../utils/utils.js';
@@ -31,6 +33,7 @@ export class SurveySheetEditor extends BaseEditor {
     this.cave = cave;
     this.survey = survey;
     this.declinationCache = declinationCache;
+    this.declinationOfficial = survey?.metadata?.declinationReal;
     document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
@@ -84,11 +87,12 @@ export class SurveySheetEditor extends BaseEditor {
 
     this.surveyHasChanged = false;
     this.nameHasChanged = false;
+    this.declinationOrStartChanged = false;
 
     // Helper function to create form field
     const createField = (f, container) => {
       let value = this.formData[f.id];
-      const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${value ?? ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
+      const input = U.node`<input type="${f.type}" ${f.type === 'date' ? 'min="1900-01-01" max="' + U.formatDateISO(new Date()) + '"' : ''} id="${f.id}" name="${f.id}" value="${value ?? ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
       input.oninput = (e) => {
         if (this.formData[f.id] !== e.target.value) {
           this.surveyHasChanged = true;
@@ -100,7 +104,15 @@ export class SurveySheetEditor extends BaseEditor {
               );
             }
           }
+          if (f.id === 'declination' || f.id === 'start') {
+            this.declinationOrStartChanged = true;
+          }
+
           this.formData[f.id] = e.target.value;
+
+          if (f.id === 'date') {
+            this.updateDeclinationText(true);
+          }
         }
       };
       const label = U.node`<label class="sheet-editor-label" for="${f.id}">${f.label}: </label>`;
@@ -186,34 +198,14 @@ export class SurveySheetEditor extends BaseEditor {
     form.appendChild(saveBtn);
     form.appendChild(cancelBtn);
 
+    const convergence = this.survey?.metadata?.convergence ?? this.getConvergence(this.cave.geoData);
     form.appendChild(
-      U.node`<p>${i18n.t('ui.editors.surveySheet.fields.convergence')}: ${this.survey?.metadata?.convergence?.toFixed(3) || i18n.t('ui.editors.surveySheet.errors.notAvailable')}</p>`
+      U.node`<p>${i18n.t('ui.editors.surveySheet.fields.convergence')}: ${convergence?.toFixed(3) || i18n.t('ui.editors.surveySheet.errors.notAvailable')}</p>`
     );
-    const declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
-    form.appendChild(declinationText);
-    if (this.cave.stations.size > 0) {
-      const startOrRandomStation = this.cave.stations
-        ? (this.cave.stations.get(this.survey?.start) ?? this.cave.stations.entries().next().value[1])
-        : undefined;
-      const declinationPrefix = i18n.t('ui.editors.surveySheet.messages.declinationPrefix');
-      if (this.survey?.metadata?.declinationReal === undefined) {
-        if (startOrRandomStation?.coordinates?.wgs !== undefined && this.survey?.metadata?.date !== undefined) {
-          Declination.getDeclination(
-            this.declinationCache,
-            startOrRandomStation.coordinates.wgs.lat,
-            startOrRandomStation.coordinates.wgs.lon,
-            this.survey.metadata.date
-          ).then((declination) => {
-            this.survey.metadata.declinationReal = declination;
-            declinationText.textContent = `${declinationPrefix} ${declination.toFixed(3)}`;
-          });
-        } else {
-          declinationText.textContent = `${declinationPrefix} ${i18n.t('ui.editors.surveySheet.errors.noWgs84Coordinates')}`;
-        }
-      } else {
-        declinationText.textContent = `${declinationPrefix} ${this.survey.metadata.declinationReal.toFixed(3)}`;
-      }
-    }
+    this.declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
+    form.appendChild(this.declinationText);
+
+    this.updateDeclinationText();
 
     form.onsubmit = (e) => {
       e.preventDefault();
@@ -228,6 +220,9 @@ export class SurveySheetEditor extends BaseEditor {
         team,
         instruments
       );
+
+      // custom property to store the official declination
+      metadata.declinationReal = this.declinationOfficial;
 
       if (this.survey !== undefined && this.nameHasChanged && this.formData.name !== this.survey.name) {
         if (this.cave.hasSurvey(this.formData.name)) {
@@ -268,10 +263,12 @@ export class SurveySheetEditor extends BaseEditor {
         if (this.cave.surveys.size > 0) {
           // get convergence from first existing survey
           metadata.convergence = this.cave.surveys.entries().next().value[1].metadata.convergence;
-        } else if (this.cave.geoData !== undefined && this.cave.geoData.coordinates.length > 0) {
-          //get convergence based on the first fix point of the cave
-          const fixPoint = this.cave.geoData.coordinates[0]; // this must be an eov coordinate
-          metadata.convergence = MeridianConvergence.getConvergence(fixPoint.coordinate.y, fixPoint.coordinate.x);
+        } else if (
+          this.cave.geoData !== undefined &&
+          this.cave.geoData.coordinates.length > 0 &&
+          this.cave.geoData.coordinateSystem !== undefined
+        ) {
+          metadata.convergence = this.getConvergence(this.cave.geoData);
         }
         this.survey = new Survey(this.formData.name, true, metadata, this.formData.start);
         this.#emitSurveyAdded();
@@ -280,11 +277,45 @@ export class SurveySheetEditor extends BaseEditor {
         this.survey.metadata = metadata;
         this.survey.start = this.formData.start;
         this.#emitSurveyChanged();
+
       }
       this.closeEditor();
     };
     contentElmnt.appendChild(form);
 
+  }
+
+  updateDeclinationText(force = false) {
+
+    const declinationPrefix = i18n.t('ui.editors.surveySheet.messages.declinationPrefix');
+    if (this.declinationOfficial === undefined || force) {
+
+      let wgsCoord;
+      if (this.cave?.geoData?.coordinateSystem !== undefined && (this.cave?.geoData?.coordinates?.length ?? 0) > 0) {
+        wgsCoord = WGS84Converter.toLatLon(
+          this.cave.geoData.coordinates[0].coordinate,
+          this.cave.geoData.coordinateSystem
+        );
+      }
+
+      if (wgsCoord !== undefined && this.formData?.date !== undefined && this.formData?.date !== '') {
+        const date = new Date(this.formData.date);
+        let currentYear = new Date().getFullYear();
+        if (date.getFullYear() > currentYear || date.getFullYear() < 1900) {
+          return;
+        }
+        Declination.getDeclination(this.declinationCache, wgsCoord.latitude, wgsCoord.longitude, date).then(
+          (declination) => {
+            this.declinationOfficial = declination;
+            this.declinationText.textContent = `${declinationPrefix} ${declination.toFixed(3)}`;
+          }
+        );
+      } else {
+        this.declinationText.textContent = `${declinationPrefix} ${i18n.t('ui.editors.surveySheet.errors.noWgs84Coordinates')}`;
+      }
+    } else {
+      this.declinationText.textContent = `${declinationPrefix} ${this.declinationOfficial.toFixed(3)}`;
+    }
   }
 
   renderMembers() {
@@ -357,10 +388,36 @@ export class SurveySheetEditor extends BaseEditor {
     });
   }
 
+  getConvergence(geoData) {
+    if (geoData === undefined || (geoData?.coordinates?.length ?? 0) === 0 || geoData?.coordinateSystem === undefined) {
+      return undefined;
+    }
+
+    const firstCoord = geoData.coordinates[0];
+    switch (geoData.coordinateSystem.type) {
+      case CoordinateSystemType.EOV:
+        return MeridianConvergence.getEOVConvergence(firstCoord.coordinate.y, firstCoord.coordinate.x);
+
+      case CoordinateSystemType.UTM:
+        return MeridianConvergence.getUTMConvergence(
+          firstCoord.coordinate.easting,
+          firstCoord.coordinate.northing,
+          geoData.coordinateSystem.zoneNum,
+          geoData.coordinateSystem.northern
+        );
+      default:
+        return undefined;
+    }
+  }
+
   #emitSurveyChanged() {
+    const reasons = ['metadata'];
+    if (this.declinationOrStartChanged) {
+      reasons.push('declinationOrStart');
+    }
     const event = new CustomEvent('surveyChanged', {
       detail : {
-        reasons : ['sheet'],
+        reasons : reasons,
         cave    : this.cave,
         survey  : this.survey
       }

@@ -54,6 +54,7 @@
           <li><strong>Exportálás:</strong> Különböző formátumokba exportálás (PNG, DXF, JSON)</li>
           <li><strong>Projekt kezelés:</strong> Több barlang és felmérés szervezése projektekben</li>
           <li><strong>3D modellek támogatása:</strong> Kezdeti támogatás 3D modellek betöltésére (pl. felszín)</li>
+          <li><strong>Koordináta rendszerek támogatása:</strong> EOV, UTM és WGS84 koordináta rendszerek támogatása</li>
           <li
             ><strong>Validálás:</strong> Adatok széleskörű ellenőrzése a felmérési adatok helyességének
             ellenőrzéséhez</li
@@ -160,7 +161,10 @@
       >
 
       <h3>3. Lábléc (alsó) - lila keret</h3>
-      <p>Itt látható a jelenlegi projekt információja és a felhasználó számára érdekes üzenetek.</p>
+      <p
+        >Itt látható a jelenlegi projekt információi (név és koordináta rendszer) és a felhasználó számára érdekes
+        üzenetek.</p
+      >
 
       <h3>4. Oldalsáv (jobb vagy bal oldal) - zöld keret</h3>
 
@@ -425,11 +429,44 @@
         A Speleo Studio hamarosan támogatni fogja az adatok automatikus mentését Google Drive-on keresztül.
       </div>
 
+      <h2>Koordináta rendszerek</h2>
+      <div class="row">
+        <div class="column-2">
+          <p>
+            A koordináta-referenciarendszerek segítségével a Földön minden hely, pont három számmal, azaz koordinátákkal
+            határozható meg. Általánosságban a koordináta rendszerek két csoportra oszthatók:
+            <strong>vetületi</strong> (más néven derékszögű) és <strong>földrajzi</strong> koordináta rendszerekre.
+          </p>
+          <p>
+            A <strong>földrajzi koordináta rendszerek </strong>használata nagyon gyakori. A Föld felszínén lévő helyeket
+            a földrajzi szélesség és hosszúság fokokban megadott értékeivel, valamint olykor egy magassági értékkel
+            írjuk le. A legelterjedtebb a WGS 84, amivel a populáris alkalmazásokban (Google Maps, OpenStreetMap, ...)
+            is találkozhatunk.
+          </p>
+          <p>
+            A <strong>vetületi koordináta rendszerek </strong>a föld gömbölyű (szferoid) felszínét vetítik egy két
+            dimenziós síkra. A vetítés egyik legyakoribb módja, amikor egy hengerre vetítjük a föld felszínét, ez
+            látható az ábrán is. A legelterjedtebb vetületi rendszer az UTM koordináta rendszer, amivel a világ minden
+            pontjának koordinátáját meg lehet adni. Sok orszgág használ csak az adott ország területét lefedő vetülteti
+            rendszert, például Magyarországon az EOV (Egységes országos vetület) koordináta rendszer használatos.
+          </p>
+          <p>
+            <strong>A Speleo Studio támogatja támogatja a földrajzi és vetületi koordináta rendszereket</strong>,
+            amelyek között a konvertálást automatikusan végzi. Az adatokat lehet importálni vetületi rendszer megadása
+            nélkül is, ilyenkor a hosszúság és szélesség adatok nem érhetőek el.
+          </p>
+        </div>
+
+        <div class="image-placeholder white column-2" style="flex: 30%">
+          <img src="images/1-map-projection.png" alt="Koordináta rendszerek" />
+        </div>
+      </div>
+
       <h2>Következő lépések</h2>
       <p
         >Most, hogy megismerte az alkalmazás alapjait, folytathatja a
         <a href="02-projekt-kezeles.html">projekt kezelés</a> tanulásával, vagy ha már van barlang adata, ugorjon az
-        <a href="03-adatok-importalasa.html">adatok importálása</a> fejezethez.</p
+        <a href="04-adatok-importalasa.html">adatok importálása</a> fejezethez.</p
       >
 
       <div class="nav">

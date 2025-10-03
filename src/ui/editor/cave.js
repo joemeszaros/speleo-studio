@@ -19,7 +19,15 @@ import { CaveMetadata, Cave } from '../../model/cave.js';
 import { wm } from '../window.js';
 import { showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
-import { GeoData, EOVCoordinateWithElevation, CoordinateSytem, StationWithCoordinate } from '../../model/geo.js';
+import {
+  GeoData,
+  EOVCoordinateWithElevation,
+  UTMCoordinateWithElevation,
+  EOVCoordinateSystem,
+  UTMCoordinateSystem,
+  StationWithCoordinate,
+  CoordinateSystemType
+} from '../../model/geo.js';
 import { SurveyAlias, ShotType } from '../../model/survey.js';
 import { i18n } from '../../i18n/i18n.js';
 
@@ -30,6 +38,17 @@ class CaveEditor extends Editor {
     this.options = options;
     this.graph = undefined; // sort of a lazy val
     document.addEventListener('languageChanged', () => this.setupPanel());
+  }
+
+  #emitCaveChanged(reasons) {
+
+    const event = new CustomEvent('caveChanged', {
+      detail : {
+        cave    : this.cave,
+        reasons : reasons
+      }
+    });
+    document.dispatchEvent(event);
   }
 
   #emitCaveAdded() {
@@ -46,6 +65,15 @@ class CaveEditor extends Editor {
       detail : {
         oldName : oldName,
         cave    : cave
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCoordinateSystemChanged(coordinateSystem) {
+    const event = new CustomEvent('coordinateSystemChanged', {
+      detail : {
+        coordinateSystem : coordinateSystem
       }
     });
     document.dispatchEvent(event);
@@ -85,14 +113,25 @@ class CaveEditor extends Editor {
         creator      : this.cave?.metadata?.creator ?? ''
 
       },
-      coordinates :
+      coordinateSystem : this.cave?.geoData?.coordinateSystem,
+      coordinates      :
         this.cave?.geoData?.coordinates.map((c) => {
-          return {
-            name      : c.name,
-            y         : c.coordinate.y,
-            x         : c.coordinate.x,
-            elevation : c.coordinate.elevation
-          };
+          if (this.cave?.geoData?.coordinateSystem?.type === CoordinateSystemType.UTM) {
+            return {
+              name      : c.name,
+              easting   : c.coordinate.easting,
+              northing  : c.coordinate.northing,
+              elevation : c.coordinate.elevation
+            };
+          } else if (this.cave?.geoData?.coordinateSystem?.type === CoordinateSystemType.EOV) {
+            return {
+              name      : c.name,
+              y         : c.coordinate.y,
+              x         : c.coordinate.x,
+              elevation : c.coordinate.elevation
+            };
+          }
+
         }) ?? [],
       aliases:
         this.cave?.aliases?.map((a) => {
@@ -218,11 +257,87 @@ class CaveEditor extends Editor {
       column2
     );
 
-    const coordsDiv = U.node`<div class="coords-section"><b>${i18n.t('ui.editors.caveSheet.fields.eovCoordinates')}:</b><br/><br/></div>`;
+    const coordsDiv = U.node`<div class="coords-section"></div>`;
+
+    // Coordinate system selection
+    const coordSystemDiv = U.node`<div class="coord-system-selection" style="margin-bottom: 16px;">
+      <label for="coord-system">${i18n.t('ui.editors.caveSheet.fields.coordinateSystem')}:</label>
+      <select id="coord-system" style="margin-left: 8px;">
+         <option valye="none" ${this.caveData.coordinateSystem === undefined ? 'selected' : ''}>${i18n.t('ui.editors.caveSheet.fields.none')}</option>
+         <option value="eov" ${this.caveData.coordinateSystem?.type === CoordinateSystemType.EOV ? 'selected' : ''}>EOV</option>
+         <option value="utm" ${this.caveData.coordinateSystem?.type === CoordinateSystemType.UTM ? 'selected' : ''}>UTM</option>
+      </select>
+    </div>`;
+
+    // UTM zone selection (initially hidden)
+    const utmZoneDiv = U.node`<div id="utm-zone-selection" style="margin-bottom: 16px; display: ${this.caveData.coordinateSystem?.type === CoordinateSystemType.UTM ? 'block' : 'none'};">
+      <label for="utm-zone">${i18n.t('ui.editors.caveSheet.fields.utmZone')}:</label>
+      <input type="number" id="utm-zone" min="1" max="60" value="${this.caveData?.coordinateSystem?.zoneNum || 34}" style="margin-left: 8px; width: 60px;">
+      <label for="utm-hemisphere" style="margin-left: 16px;">${i18n.t('ui.editors.caveSheet.fields.hemisphere')}:</label>
+      <select id="utm-hemisphere" style="margin-left: 8px;">
+        <option value="N" ${(this.caveData.coordinateSystem?.northern ?? true) ? 'selected' : ''}>${i18n.t('ui.editors.caveSheet.fields.northern')}</option>
+        <option value="S" ${!(this.caveData.coordinateSystem?.northern ?? true) ? 'selected' : ''}>${i18n.t('ui.editors.caveSheet.fields.southern')}</option>
+      </select>
+    </div>`;
+
     this.coordsList = U.node`<div class="coords-list"></div>`;
+
+    coordsDiv.appendChild(coordSystemDiv);
+    coordsDiv.appendChild(utmZoneDiv);
     coordsDiv.appendChild(this.coordsList);
     form.appendChild(coordsDiv);
-    this.renderCoords();
+
+    // Handle coordinate system change
+    coordSystemDiv.querySelector('#coord-system').onchange = (e) => {
+      const isUTM = e.target.value === CoordinateSystemType.UTM;
+      utmZoneDiv.style.display = isUTM ? 'block' : 'none';
+
+      switch (e.target.value) {
+        case CoordinateSystemType.UTM:
+          this.caveData.coordinateSystem = new UTMCoordinateSystem(
+            parseInt(utmZoneDiv.querySelector('#utm-zone').value),
+            utmZoneDiv.querySelector('#utm-hemisphere').value === 'N'
+          );
+          this.renderCoords();
+          break;
+        case CoordinateSystemType.EOV:
+          this.caveData.coordinateSystem = new EOVCoordinateSystem();
+          this.renderCoords();
+          break;
+        default:
+          this.caveData.coordinates = [];
+          this.coordsList.innerHTML = '';
+          this.caveData.coordinateSystem = undefined;
+          break;
+      }
+
+      this.caveHasChanged = true;
+    };
+
+    // Handle UTM zone/hemisphere change
+    utmZoneDiv.querySelector('#utm-zone').onchange = (e) => {
+      if (this.caveData.coordinateSystem.type === CoordinateSystemType.UTM) {
+        this.caveData.coordinateSystem = new UTMCoordinateSystem(
+          parseInt(e.target.value),
+          utmZoneDiv.querySelector('#utm-hemisphere').value === 'N'
+        );
+        this.caveHasChanged = true;
+      }
+    };
+
+    utmZoneDiv.querySelector('#utm-hemisphere').onchange = (e) => {
+      if (this.caveData.coordinateSystem.type === CoordinateSystemType.UTM) {
+        this.caveData.coordinateSystem = new UTMCoordinateSystem(
+          parseInt(utmZoneDiv.querySelector('#utm-zone').value),
+          e.target.value === 'N'
+        );
+        this.caveHasChanged = true;
+      }
+    };
+
+    if (this.caveData.coordinateSystem !== undefined) {
+      this.renderCoords();
+    }
 
     const getStationOptions = () => {
       if (this.cave === undefined) {
@@ -274,17 +389,29 @@ class CaveEditor extends Editor {
           this.caveData.metadata.creator
         );
         let geoData;
-        if (this.caveData.coordinates.length > 0) {
-          geoData = new GeoData(
-            CoordinateSytem.EOV,
-            this.caveData.coordinates.map(
-              (c) =>
-                new StationWithCoordinate(
-                  c.name,
-                  new EOVCoordinateWithElevation(U.parseMyFloat(c.y), U.parseMyFloat(c.x), U.parseMyFloat(c.elevation))
-                )
-            )
-          );
+        if (this.caveData.coordinates.length > 0 && this.caveData.coordinateSystem !== undefined) {
+          const coordinates = this.caveData.coordinates.map((c) => {
+            let coordinate;
+            switch (this.caveData.coordinateSystem.type) {
+              case CoordinateSystemType.UTM:
+                coordinate = new UTMCoordinateWithElevation(
+                  U.parseMyFloat(c.easting),
+                  U.parseMyFloat(c.northing),
+                  U.parseMyFloat(c.elevation)
+                );
+                break;
+              case CoordinateSystemType.EOV:
+                coordinate = new EOVCoordinateWithElevation(
+                  U.parseMyFloat(c.y),
+                  U.parseMyFloat(c.x),
+                  U.parseMyFloat(c.elevation)
+                );
+                break;
+            }
+            return new StationWithCoordinate(c.name, coordinate);
+          });
+
+          geoData = new GeoData(this.caveData.coordinateSystem, coordinates);
         } else {
           geoData = undefined;
         }
@@ -292,7 +419,7 @@ class CaveEditor extends Editor {
         // validate coordinates
         let errors = [];
         geoData?.coordinates?.forEach((coord) => {
-          const coordErrors = coord.coordinate.validate();
+          const coordErrors = coord.coordinate.validate(i18n);
           if (coordErrors.length > 0) {
             errors.push(...coordErrors);
           }
@@ -302,6 +429,22 @@ class CaveEditor extends Editor {
         });
         if (errors.length > 0) {
           showErrorPanel(i18n.t('ui.editors.caveSheet.errors.invalidCoordinates') + '<br>' + errors.join('<br><br>'));
+          return;
+        }
+
+        const cNames = [];
+        this.db.getAllCaves().forEach((c) => {
+          const isEqual =
+            (c.geoData?.coordinateSystem === undefined && this.caveData?.coordinateSystem === undefined) ||
+            (c.geoData?.coordinateSystem !== undefined &&
+              c.geoData.coordinateSystem.isEqual(this.caveData?.coordinateSystem));
+          if (!isEqual) {
+            cNames.push(c.name);
+          }
+        });
+
+        if (cNames.length > 0) {
+          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.coordinateSystemMismatch', { caves: cNames.join(', ') }));
           return;
         }
 
@@ -319,6 +462,11 @@ class CaveEditor extends Editor {
         if (errors.length > 0) {
           errors = [...new Set(errors)];
           showErrorPanel(i18n.t('ui.editors.caveSheet.errors.invalidAliases') + '<br>' + errors.join('<br>'));
+          return;
+        }
+
+        if (this.caveData?.coordinateSystem !== undefined && (this.caveData?.coordinates?.length ?? 0) === 0) {
+          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.missingCoordinates'));
           return;
         }
 
@@ -346,9 +494,12 @@ class CaveEditor extends Editor {
             (oldGeoData === undefined && geoData === undefined) ||
             (geoData !== undefined && geoData.isEqual(oldGeoData));
 
+          if (!geoDataIsEqual) {
+            this.#emitCoordinateSystemChanged(geoData?.coordinateSystem);
+          }
           // deleting an eov coordinate will change the survey data
           // an alias can change survey data
-          if (this.metadataHasChanged || ((aliasesHasChanged || !geoDataIsEqual) && this.cave.surveys.length > 0)) {
+          if (this.metadataHasChanged || aliasesHasChanged || !geoDataIsEqual) {
             const reasons = [];
             if (this.metadataHasChanged) {
               reasons.push('metadata');
@@ -359,15 +510,8 @@ class CaveEditor extends Editor {
             if (!geoDataIsEqual) {
               reasons.push('geodata');
             }
-            document.dispatchEvent(
-              new CustomEvent('surveyChanged', {
-                detail : {
-                  reasons : reasons,
-                  cave    : this.cave,
-                  survey  : this.cave.surveys[0]
-                }
-              })
-            );
+            this.#emitCaveChanged(reasons);
+
           }
 
         }
@@ -415,45 +559,87 @@ class CaveEditor extends Editor {
   }
 
   renderCoords() {
+    const fields = [
+      {
+        key         : 'name',
+        placeholder : i18n.t('ui.editors.caveSheet.fields.stationName'),
+        type        : 'text',
+        width       : '120px',
+        required    : true
+      }
+    ];
+
+    switch (this.caveData.coordinateSystem?.type) {
+      case CoordinateSystemType.UTM:
+        fields.push(
+          {
+            key         : 'easting',
+            placeholder : i18n.t('ui.editors.caveSheet.fields.utmEasting'),
+            type        : 'number',
+            step        : '0.01',
+            width       : '120px',
+            required    : true
+          },
+          {
+            key         : 'northing',
+            placeholder : i18n.t('ui.editors.caveSheet.fields.utmNorthing'),
+            type        : 'number',
+            step        : '0.01',
+            width       : '120px',
+            required    : true
+          }
+        );
+        break;
+      case CoordinateSystemType.EOV:
+        fields.push(
+          {
+            key         : 'y',
+            placeholder : i18n.t('ui.editors.caveSheet.fields.eovy'),
+            type        : 'number',
+            step        : '0.01',
+            width       : '100px',
+            required    : true
+          },
+          {
+            key         : 'x',
+            placeholder : i18n.t('ui.editors.caveSheet.fields.eovx'),
+            type        : 'number',
+            step        : '0.01',
+            width       : '100px',
+            required    : true
+          }
+        );
+        break;
+    }
+
+    fields.push({
+      key         : 'elevation',
+      placeholder : i18n.t('ui.editors.caveSheet.fields.elevation'),
+      type        : 'number',
+      step        : '0.01',
+      width       : '100px',
+      required    : true
+    });
+
     this.renderListEditor({
       container : this.coordsList,
       items     : this.caveData.coordinates,
-      fields    : [
-        {
-          key         : 'name',
-          placeholder : i18n.t('ui.editors.caveSheet.fields.stationName'),
-          type        : 'text',
-          width       : '120px',
-          required    : true
-        },
-        {
-          key         : 'y',
-          placeholder : i18n.t('ui.editors.caveSheet.fields.eovy'),
-          type        : 'number',
-          step        : '0.01',
-          width       : '100px',
-          required    : true
-        },
-        {
-          key         : 'x',
-          placeholder : i18n.t('ui.editors.caveSheet.fields.eovx'),
-          type        : 'number',
-          step        : '0.01',
-          width       : '100px',
-          required    : true
-        },
-        {
-          key         : 'elevation',
-          placeholder : i18n.t('ui.editors.caveSheet.fields.eovelevation'),
-          type        : 'number',
-          step        : '0.01',
-          width       : '100px',
-          required    : true
+      fields    : fields,
+      nodes     : [],
+      onAdd     : () => {
+        const newCoord = { name: '', elevation: '' };
+        switch (this.caveData.coordinateSystem?.type) {
+          case CoordinateSystemType.UTM:
+            newCoord.easting = '';
+            newCoord.northing = '';
+            break;
+          case CoordinateSystemType.EOV:
+            newCoord.y = '';
+            newCoord.x = '';
+            break;
         }
-      ],
-      nodes : [],
-      onAdd : () => {
-        this.caveData.coordinates.push({ name: '', y: '', x: '', elevation: '' });
+
+        this.caveData.coordinates.push(newCoord);
         this.renderCoords();
         this.caveHasChanged = true;
       },

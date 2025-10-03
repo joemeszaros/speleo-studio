@@ -191,20 +191,22 @@ export const DEFAULT_OPTIONS = {
       collapsed : false
     },
     stationDetails : {
-      caveName     : true,
-      surveyName   : true,
-      stationName  : true,
-      xCoordinate  : false,
-      yCoordinate  : false,
-      zCoordinate  : false,
-      eovY         : false,
-      eovX         : false,
-      eovElevation : false,
-      type         : false,
-      position     : false, // x,y,z coordinates
-      shots        : false, // list of shots in compact format
-      comments     : false, // list of comments in compact format
-      attributes   : false // list of attributes in compact format
+      caveName    : true,
+      surveyName  : true,
+      stationName : true,
+      xCoordinate : false,
+      yCoordinate : false,
+      zCoordinate : false,
+      eovY        : false,
+      eovX        : false,
+      elevation   : false,
+      utmEasting  : false,
+      utmNorthing : false,
+      type        : false,
+      position    : false, // x,y,z coordinates
+      shots       : false, // list of shots in compact format
+      comments    : false, // list of comments in compact format
+      attributes  : false // list of attributes in compact format
     }
   },
   import : {
@@ -334,6 +336,19 @@ export class ConfigManager {
     } catch (error) {
       console.warn('Failed to get current revision:', error);
       return 0;
+    }
+  }
+
+  static fillWithNewDefaults(config) {
+    const std = config.ui.stationDetails;
+    if (std.elevation === undefined) {
+      std.elevation = false;
+    }
+    if (std.utmEasting === undefined) {
+      std.utmEasting = false;
+    }
+    if (std.utmNorthing === undefined) {
+      std.utmNorthing = false;
     }
   }
 
