@@ -570,7 +570,9 @@
           "locateFrom": "Ponttól megkeresése",
           "locateTo": "Pontig megkeresése",
           "detailsFrom": "Ponttól részletei",
-          "detailsTo": "Pontig részletei"
+          "detailsTo": "Pontig részletei",
+          "prefixStations": "Pontok prefixelése (előtaggal)",
+          "prefixStationsPrompt": "Adja meg a prefixet (előtagot)"
         },
         "errors": {
           "invalidShotIdsMismatch": "A felmérés '{surveyIds}' és a sorok '{rowIds}' érvénytelen mérés azonosítói nem egyeznek"

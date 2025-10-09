@@ -397,6 +397,20 @@ export class SurveyEditor extends Editor {
           };
           this.interactive.showStationDetailsPanel(station, e.clientX, e.clientY);
         }
+      },
+      {
+        label  : `<span class="prefix-station"></span><span>${i18n.t('ui.editors.survey.menu.prefixStations')}<span/>`,
+        action : () => {
+          const prefix = prompt(i18n.t('ui.editors.survey.menu.prefixStationsPrompt'));
+          if (prefix) {
+            const prefxied = this.table.getData().map((row) => {
+              row.from = prefix + row.from;
+              row.to = prefix + row.to;
+              return row;
+            });
+            this.table.replaceData(prefxied);
+          }
+        }
       }
     ];
   }

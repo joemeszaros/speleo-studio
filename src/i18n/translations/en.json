@@ -553,7 +553,9 @@
           "locateFrom": "Locate from",
           "locateTo": "Locate to",
           "detailsFrom": "Details about from",
-          "detailsTo": "Details about to"
+          "detailsTo": "Details about to",
+          "prefixStations": "Prefix stations",
+          "prefixStationsPrompt": "Enter the prefix (prefix)"
         },
         "errors": {
           "invalidShotIdsMismatch": "Invalid shot ids do not match for survey '{surveyIds}' and rows '{rowIds}'"

@@ -1217,6 +1217,13 @@ body {
   background: no-repeat center/80% url(../icons/locate.svg);
 }
 
+.tabulator-menu .prefix-station {
+  padding: 5px 10px;
+  margin-right: 3px;
+  position: relative;
+  background: no-repeat center/80% url(../icons/edit_white.svg);
+}
+
 .tabulator-menu .show-row {
   padding: 5px 10px;
   margin-right: 3px;
