@@ -307,6 +307,111 @@ class Editor extends BaseEditor {
         };
       }
     },
+    addPhotoPreviewTooltip(element, photoUrl) {
+      let tooltip = null;
+      let imageLoaded = false;
+
+      const showTooltip = async () => {
+        if (tooltip) return; // Already showing
+
+        // Create tooltip element
+        tooltip = document.createElement('div');
+        tooltip.className = 'photo-preview-tooltip';
+        tooltip.innerHTML = `
+          <div class="photo-preview-content">
+            <div class="photo-preview-loading">${i18n.t('common.loading')}</div>
+          </div>`;
+
+        document.body.appendChild(tooltip);
+
+        // Position tooltip
+        const rect = element.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+        let top = rect.top - tooltipRect.height - 10;
+
+        // Adjust if tooltip goes off screen
+        if (left < 10) left = 10;
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+          left = window.innerWidth - tooltipRect.width - 10;
+        }
+        if (top < 10) {
+          top = rect.bottom + 10;
+        }
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+        const loading = tooltip.querySelector('.photo-preview-loading');
+
+        try {
+          let cachedImage;
+          // Try to use image cache if available
+          if (this.scene && this.scene.imageCache) {
+            cachedImage = await this.scene.imageCache.loadImage(photoUrl);
+          }
+
+          if (cachedImage) {
+            cachedImage.className = 'photo-preview-image';
+            tooltip.appendChild(cachedImage);
+            imageLoaded = true;
+            loading.style.display = 'none';
+          } else {
+            const img = U.node`<img src=${photoUrl} class="photo-preview-image" style="display:none" class="photo-preview-image"/>`;
+            img.onload = () => {
+              loading.style.display = 'none';
+              img.style.display = 'block';
+              imageLoaded = true;
+            };
+
+            img.onerror = () => {
+              loading.textContent = i18n.t('ui.editors.attributes.errors.failedToLoadImage');
+              loading.style.color = '#ff4444';
+            };
+
+            tooltip.appendChild(img);
+          }
+
+        } catch (error) {
+          console.warn('Failed to load photo preview:', error);
+          loading.textContent = i18n.t('ui.editors.attributes.errors.failedToLoadImage');
+          loading.style.color = '#ff4444';
+        }
+      };
+
+      const hideTooltip = () => {
+        if (tooltip) {
+          tooltip.remove();
+          tooltip = null;
+          imageLoaded = false;
+        }
+      };
+
+      // Add event listeners
+      element.addEventListener('mouseenter', showTooltip);
+      element.addEventListener('mouseleave', hideTooltip);
+      element.addEventListener('mousemove', () => {
+        if (tooltip && imageLoaded) {
+          const rect = element.getBoundingClientRect();
+          const tooltipRect = tooltip.getBoundingClientRect();
+
+          let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+          let top = rect.top - tooltipRect.height - 10;
+
+          // Adjust if tooltip goes off screen
+          if (left < 10) left = 10;
+          if (left + tooltipRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - tooltipRect.width - 10;
+          }
+          if (top < 10) {
+            top = rect.bottom + 10;
+          }
+
+          tooltip.style.left = `${left}px`;
+          tooltip.style.top = `${top}px`;
+        }
+      });
+    },
     atrributesFormatter : (cell, extractor, i18n) => {
       const attrs = extractor(cell.getData());
       if (attrs === undefined) {
@@ -314,7 +419,20 @@ class Editor extends BaseEditor {
       }
 
       if (Array.isArray(attrs) && attrs.length > 0) {
-        return AttributesDefinitions.getAttributesAsString(attrs, i18n);
+        const formattedString = AttributesDefinitions.getAttributesAsString(attrs, i18n);
+
+        // Check if any attribute is a photo attribute
+        const hasPhotoAttribute = attrs.some((attr) => attr.name === 'photo' && attr.url);
+
+        if (hasPhotoAttribute) {
+          // Create a wrapper div with hover functionality for photo preview
+          const cellId = `photo-cell-${cell.getData().id}`;
+          const div = U.node`<div id="${cellId}" class="photo-attribute-cell" data-photo-url="${attrs.find((attr) => attr.name === 'photo')?.url || ''}">${formattedString}</div>`;
+          this.baseTableFunctions.addPhotoPreviewTooltip(div, attrs.find((attr) => attr.name === 'photo')?.url);
+          return div;
+        }
+
+        return formattedString;
       } else {
         return undefined;
       }

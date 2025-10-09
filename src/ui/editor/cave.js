@@ -438,7 +438,7 @@ class CaveEditor extends Editor {
             (c.geoData?.coordinateSystem === undefined && this.caveData?.coordinateSystem === undefined) ||
             (c.geoData?.coordinateSystem !== undefined &&
               c.geoData.coordinateSystem.isEqual(this.caveData?.coordinateSystem));
-          if (!isEqual) {
+          if (!isEqual && this.cave !== c) {
             cNames.push(c.name);
           }
         });

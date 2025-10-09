@@ -613,7 +613,8 @@
           "noNameSelected": "Nincs attribútum neve kiválasztva",
           "noAttributeWithName": "Nincs '{name}' nevű attribútum",
           "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}",
-          "failedToInterpolate": "Feloldás sikertelen"
+          "failedToInterpolate": "Feloldás sikertelen",
+          "failedToLoadImage": "A kép betöltése sikertelen"
         }
       },
       "sectionAttributes": {
@@ -698,7 +699,7 @@
       "noShotDataSection": "Nem található mérési adat szakasz a TopoDroid CSV-ben",
       "noFromToInHeader": "Nem található 'from' és 'to' oszlop a fejlécben: {header}",
       "noHeaderLine": "Nem található fejléc sor a TopoDroid CSV-ben",
-      "importCaveFailed": "A {name} fájl importálása sikertelen",
+      "importFileFailed": "A {name} fájl importálása sikertelen",
       "importFailed": "Importálás sikertelen",
       "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
       "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott"
@@ -707,7 +708,8 @@
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",
       "failedToInitIndexedDb": "Nem lehet inicializálni a adatbázist",
       "failedToLoadAttributes": "Nem lehet betölteni a attribútumokat: {error}",
-      "failedAttributesHttpCode": "Nem várt HTTP kód a(z) {url} betöltésekor: {httpCode}"
+      "failedAttributesHttpCode": "Nem várt HTTP kód a(z) {url} betöltésekor: {httpCode}",
+      "invalidAttributesDefinitions": "Érvénytelen attribútum definíciók"
     },
     "config": {
       "invalidConfigurationFileFormat": "Érvénytelen konfigurációs fájl formátum",
@@ -861,10 +863,12 @@
     "attribute": {
       "valueMin": "Az érték nem lehet kisebb, mint {min}",
       "valueMax": "Az érték nem lehet nagyobb, mint {max}",
+      "notUrl": "Az érték ({value}) nem érvényes URL",
       "required": "A kötelező mező üres",
       "typeMismatch": "Az érték ({value}) típusa ({type}) és nem ({expectedType})",
       "notInteger": "Az érték ({value}) nem érvényes egész szám",
       "notFloat": "Az érték ({value}) nem érvényes tört szám",
+      "notBoolean": "Az érték ({value}) nem érvényes logikai érték",
       "nanOrInfinity": "Az érték NaN vagy végtelen",
       "notOneOf": "Az érték ({value}) nem egyike a következőknek: {values}",
       "notInRange": "Az érték '{value}' nincs a tartományban: {range}"
@@ -966,7 +970,14 @@
       "staples": "lépőfok",
       "foot_peg": "lépővas",
       "sealing": "lezárás",
-      "squeeze": "szűkület"
+      "squeeze": "szűkület",
+      "bat_indication": "denevér-kijelölés",
+      "calcite_raft": "kalcit lemez",
+      "exploration_site": "kutatási pont",
+      "photo": "fotó",
+      "shoring": "ácsolat",
+      "bivouac": "bivak",
+      "difficult_climb": "mászás"
     },
     "namesDescription": {
       "bedding": "Lehetővé teszi a rétegdőlés megadását"
@@ -1001,7 +1012,16 @@
       "state": "állapot",
       "material": "anyag",
       "group": "csoport",
-      "quantity": "db"
+      "quantity": "db",
+      "painted": "festett",
+      "thickness": "vastagság",
+      "potential": "potenciál",
+      "accessibility": "elérhetőség",
+      "difficulty": "nehézség",
+      "url": "url",
+      "author": "szerző",
+      "manpower": "létszám",
+      "capacity": "kapacitás"
     },
     "paramsDescription": {
       "dip": "A dőlés értéke",
@@ -1016,6 +1036,10 @@
       "clearButton": "Keresés törlése",
       "resultsFor": "Keresési eredmények:",
       "resultsSummary": "kategória, attribútum, paraméter"
+    },
+    "valuesBoolean": {
+      "true": "igen",
+      "false": "nem"
     },
     "values": {
       "dripstone": "cseppkő",
@@ -1148,7 +1172,12 @@
       "steel": "acél",
       "aluminium": "alumínium",
       "galvanized": "horganyzott",
-      "stainless": "rozsdamentes"
+      "stainless": "rozsdamentes",
+      "bad air": "rossz levegő",
+      "small": "kicsi",
+      "medium": "közepes",
+      "large": "nagy",
+      "wood": "fa"
     }
   }
 }

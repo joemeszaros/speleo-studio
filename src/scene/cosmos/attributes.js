@@ -21,10 +21,11 @@ import { i18n } from '../../i18n/i18n.js';
 import * as U from '../../utils/utils.js';
 import { SegmentScene } from './segments.js';
 import { SectionHelper } from '../../section.js';
+import { ImageCache } from '../../utils/image-cache.js';
 
 export class AttributesScene {
 
-  constructor(options, materials, scene) {
+  constructor(options, materials, scene, imageCache) {
     this.options = options;
     this.scene = scene;
     this.mats = materials.materials;
@@ -34,6 +35,8 @@ export class AttributesScene {
     this.sectionAttributes3DGroup.name = 'section attributes';
     this.stationAttributes3DGroup = new THREE.Group();
     this.stationAttributes3DGroup.name = 'station attributes';
+    this.imageCache = imageCache;
+    this.textureLoader = new THREE.TextureLoader();
     scene.addObjectToScene(this.sectionAttributes3DGroup);
     scene.addObjectToScene(this.stationAttributes3DGroup);
   }
@@ -203,7 +206,7 @@ export class AttributesScene {
     const graph = SectionHelper.getGraph(cave);
 
     const matchingIds = [...this.sectionAttributes]
-      .filter(([_, entry]) => entry.caveName === cave.name)
+      .filter(([, entry]) => entry.caveName === cave.name)
       .map(([id]) => id);
 
     matchingIds.forEach((id) => {
@@ -239,7 +242,7 @@ export class AttributesScene {
     const caveName = cave.name;
     const stations = cave.stations;
     [...this.stationAttributes]
-      .filter(([_, entry]) => entry.caveName === caveName)
+      .filter(([, entry]) => entry.caveName === caveName)
       .forEach(([id, entry]) => {
         const oldStation = entry.station;
         const newStation = stations.get(oldStation.name);
@@ -257,6 +260,8 @@ export class AttributesScene {
     if (!this.stationAttributes.has(id)) {
       if (['bedding', 'fault'].includes(attribute.name)) {
         this.showPlaneFor(id, station, attribute, caveName);
+      } else if (attribute.name === 'photo' && attribute.url) {
+        this.showPhotoAttribute(id, station, attribute, caveName);
       } else {
         this.showIconFor(id, station, attribute, caveName);
       }
@@ -472,15 +477,15 @@ export class AttributesScene {
 
       // Create a sprite with the SVG icon
       const iconPath = `icons/${attribute.name}.svg`;
-      const textureLoader = new THREE.TextureLoader();
 
-      textureLoader.load(
+      this.textureLoader.load(
         iconPath,
         (texture) => {
           texture.colorSpace = THREE.SRGBColorSpace;
+          texture.format = THREE.RGBAFormat;
           const spriteMaterial = new THREE.SpriteMaterial({
             map         : texture,
-            transparent : false,
+            transparent : true,
             opacity     : 1.0
           });
 
@@ -513,6 +518,59 @@ export class AttributesScene {
     }
   }
 
+  async showPhotoAttribute(id, station, attribute, caveName) {
+
+    try {
+      // Check if browser supports Cache API and imageCache is available
+      let texture;
+
+      if (!ImageCache.isSupported() || !this.imageCache) {
+        console.log('🖼 Using direct texture loading (no cache available)');
+        texture = await this.textureLoader.loadAsync(attribute.url);
+      } else {
+        const img = await this.imageCache.loadImage(attribute.url);
+        texture = new THREE.Texture();
+        texture.image = img;
+        texture.needsUpdate = true;
+      }
+      texture.colorSpace = THREE.SRGBColorSpace;
+      // Create sprite material with the loaded texture
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map         : texture,
+        transparent : false,
+        opacity     : 1.0
+      });
+
+      const position = station.position;
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.name = `photo-${id}`;
+      sprite.position.set(position.x, position.y, position.z);
+
+      const photoScale = this.options.scene.stationAttributes.iconScale;
+      const aspectRatio = texture.image.width / texture.image.height;
+      if (aspectRatio > 1) {
+        sprite.scale.set(photoScale, photoScale / aspectRatio, 1);
+      } else {
+        sprite.scale.set(photoScale * aspectRatio, photoScale, 1);
+      }
+      sprite.layers.set(1);
+      this.stationAttributes3DGroup.add(sprite);
+
+      this.stationAttributes.set(id, {
+        sprite    : sprite,
+        caveName  : caveName,
+        station   : station,
+        attribute : attribute,
+        hasImage  : true,
+        texture   : texture
+      });
+
+      this.scene.view.renderView();
+    } catch (error) {
+      console.error(`Failed to load photo from ${attribute.url}:`, error);
+    }
+  }
+
   diposeStationAttributes(caveName) {
     const matchingIds = [];
     for (const [id, entry] of this.stationAttributes) {
@@ -528,10 +586,25 @@ export class AttributesScene {
       const entry = this.stationAttributes.get(id);
       const attributeName = entry.attribute.name;
       if (['bedding', 'fault'].includes(attributeName)) {
-        this.scene.attributes.disposePlaneFor(id);
+        this.disposePlaneFor(id);
+      } else if (entry.hasImage) {
+        this.disposeImageFor(id);
       } else {
-        this.scene.attributes.disposeIconFor(id);
+        this.disposeIconFor(id);
       }
+    }
+  }
+
+  disposeImageFor(id) {
+    if (this.stationAttributes.has(id)) {
+      const entry = this.stationAttributes.get(id);
+      this.stationAttributes3DGroup.remove(entry.sprite);
+      // nothing to do, texture image is cached
+      //entry.sprite.material.map.dispose();
+      entry.sprite.material.dispose();
+      entry.sprite.geometry?.dispose();
+      this.stationAttributes.delete(id);
+      this.scene.view.renderView();
     }
   }
 
@@ -592,7 +665,16 @@ export class AttributesScene {
     // Update the scale of all existing station attribute icons
     this.stationAttributes.forEach((entry) => {
       if (entry?.hasIcon && entry.sprite && entry.sprite.type === 'Sprite') {
-        entry.sprite.scale.set(newScale, newScale, newScale);
+        entry.sprite.scale.set(newScale, newScale, 1);
+      } else if (entry?.hasImage && entry.sprite && entry.sprite.type === 'Sprite') {
+        // Photos use a larger scale multiplier
+        const aspectRatio = entry.texture.image.width / entry.texture.image.height;
+        if (aspectRatio > 1) {
+          entry.sprite.scale.set(newScale, newScale / aspectRatio, 1);
+        } else {
+          entry.sprite.scale.set(newScale * aspectRatio, newScale, 1);
+        }
+
       }
     });
     this.scene.view.renderView();

@@ -24,6 +24,7 @@ import { SegmentScene } from './cosmos/segments.js';
 import { AttributesScene } from './cosmos/attributes.js';
 import { SpatialView, PlanView, ProfileView } from './views.js';
 import { TextSprite } from './textsprite.js';
+import { ImageCache } from '../utils/image-cache.js';
 
 class SceneOverview {
   constructor(container) {
@@ -72,6 +73,7 @@ class MyScene {
     this.sceneRenderer.setSize(container.offsetWidth, container.offsetHeight);
     this.sceneRenderer.autoClear = false; // To allow render overlay on top of normal scene
     this.sceneRenderer.setAnimationLoop(() => this.animate());
+
     this.clock = new THREE.Clock(); // only used for animations
     this.domElement = this.sceneRenderer.domElement; // auto generate canvas
     container.appendChild(this.domElement);
@@ -93,7 +95,8 @@ class MyScene {
     this.models = new ModelScene(this);
     this.segments = new SegmentScene(options, this);
     this.points = new PointScene(options, materials, this);
-    this.attributes = new AttributesScene(options, materials, this);
+    this.imageCache = new ImageCache();
+    this.attributes = new AttributesScene(options, materials, this, this.imageCache);
 
     this.views = new Map([
       ['plan', new PlanView(this, this.domElement)],
@@ -222,6 +225,9 @@ class MyScene {
       this.framesSinceLastBillboardUpdate = 0;
       return;
     }
+
+    // Update photo billboards to always face the camera
+    this.attributes.updatePhotoBillboards(this.view.camera.position);
 
     //FIXME: rotate if needed
     // const entries = []; //this.#getCaveObjectsFlattened();

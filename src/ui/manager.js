@@ -422,7 +422,7 @@ class ProjectManager {
       (existingCoordinateSystem === undefined && newCoordinateSystem === undefined) ||
       (existingCoordinateSystem !== undefined && existingCoordinateSystem.isEqual(newCoordinateSystem));
 
-    if (!isEqual && coordinateSystems.size > 0) {
+    if (!isEqual && coordinateSystems.length > 0) {
       return i18n.t('errors.import.caveDifferentCoordinateSystem', {
         coordinateSystem         : newCoordinateSystem?.toString() ?? i18n.t('ui.panels.coordinateSystem.none.title'),
         existingCoordinateSystem :

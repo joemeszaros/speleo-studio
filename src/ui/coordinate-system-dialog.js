@@ -32,16 +32,15 @@ export class CoordinateSystemDialog {
    * @param {Object} options.coordinates - Sample coordinates to help user choose
    * @returns {Promise<CoordinateSystem>} Promise that resolves with selected coordinate system
    */
-  show(startPointCoordinates) {
+  show(caveName, startPointCoordinates) {
     return new Promise((resolve, reject) => {
       this.resolve = resolve;
       this.reject = reject;
-      this.startPointCoordinates = startPointCoordinates;
-      this.createDialog();
+      this.createDialog(caveName, startPointCoordinates);
     });
   }
 
-  createDialog() {
+  createDialog(caveName, startPointCoordinates) {
     // Create dialog container
     this.dialog = document.createElement('div');
     this.dialog.className = 'coordinate-system-dialog';
@@ -50,7 +49,7 @@ export class CoordinateSystemDialog {
         
           <p class="about-description">${i18n.t('ui.panels.coordinateSystem.message')}</p>
 
-          <p>${i18n.t('ui.panels.coordinateSystem.startPointCoordinates')}: ${this.startPointCoordinates.join(', ')}</p>
+          <p>${i18n.t('ui.panels.coordinateSystem.startPointCoordinates')}: ${caveName} - (${startPointCoordinates.join(', ')})</p>
           <div class="settings-group">
             <div class="settings-group-title">
               <span>${i18n.t('ui.panels.coordinateSystem.selection')}</span>

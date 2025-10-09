@@ -113,17 +113,60 @@ export class AttributesDefinitions {
   static getAttributesAsString(attrs, i18n, delimiter = '◌̦') {
     return attrs
       .map((a) => {
+        const getValue = (n) => {
+          if (i18n === undefined || a[n] === undefined) {
+            return a[n];
+          } else if (a.params[n].type === 'boolean') {
+            return i18n.t(`attributes.valuesBoolean.${a[n]}`);
+          } else if ((a.params[n].values?.length ?? 0) > 0) {
+            return i18n.t(`attributes.values.${a[n]}`);
+          } else {
+            return a[n];
+          }
+        };
         const nameOrTranslated = i18n === undefined ? a.name : i18n.t(`attributes.names.${a.name}`);
         const paramNames = Object.keys(a.params);
         const paramValues = paramNames
-          .map((n) =>
-            i18n === undefined || a[n] === undefined || (a.params[n].values?.length ?? 0) === 0
-              ? a[n]
-              : i18n.t(`attributes.values.${a[n]}`)
-          ).join(delimiter);
+          .map((n) => getValue(n))
+          .join(delimiter);
         return `${nameOrTranslated}(${paramValues})`;
       })
       .join('|');
+  }
+
+  static validateDefinitions(definitions) {
+    const ids = [...definitions.definitions.map((d) => d.id)];
+    const uniqueIds = [...new Set(ids)];
+    if (uniqueIds.length !== ids.length) {
+      console.error('Duplicate IDs in definitions');
+      return false;
+    }
+    const categories = [...definitions.categories.map((d) => d.id)];
+    const uniqueCategories = [...new Set(categories)];
+    if (uniqueCategories.length !== categories.length) {
+      console.error('Duplicate categories in definitions');
+      return false;
+    }
+    const names = [...definitions.definitions.map((d) => d.name)];
+    const uniqueNames = [...new Set(names)];
+    if (uniqueNames.length !== names.length) {
+      console.error('Duplicate names in definitions');
+      return false;
+    }
+
+    for (const d of definitions.definitions) {
+      if (!d.category || !uniqueCategories.includes(d.category)) {
+        console.error('Category is undefined or invalid for attribute', d.name);
+        return false;
+      }
+
+      if (!d.params || Object.keys(d.params).length === 0) {
+        console.error('Params are undefined or empty for attribute', d.name);
+        return false;
+      }
+    }
+
+    return true;
   }
 
 }
@@ -181,6 +224,9 @@ class Attribute {
       case 'int':
         this[paramName] = parseInt(str, 10);
         break;
+      case 'boolean':
+        this[paramName] = str === 'true';
+        break;
       default:
         throw new Error(i18n.t('errors.attributes.unsupportedDataType', { dataType: paramDef.type }));
     }
@@ -200,12 +246,21 @@ class Attribute {
         case 'string':
           this[pName] = value;
           break;
+        case 'boolean':
+          this[pName] = value === 'true';
+          break;
         default:
           throw new Error(i18n.t('errors.attributes.unsupportedDataType', { dataType }));
       }
 
     });
     return this;
+  }
+
+  urlPattern = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
+
+  isUrl(value) {
+    return this.urlPattern.test(value);
   }
 
   validateFieldValue(paramName, value, validateAsString = false, skipEmptyCheck = false, i18n) {
@@ -223,6 +278,10 @@ class Attribute {
 
         if ('max' in paramDef.validators && v > paramDef.validators['max']) {
           e.push(t('validation.attribute.valueMax', { max: paramDef.validators['max'] }));
+        }
+
+        if ('url' in paramDef.validators && !this.isUrl(v)) {
+          e.push(t('validation.attribute.notUrl', { value }));
         }
       }
       return e;
@@ -243,6 +302,7 @@ class Attribute {
           case 'string-string':
           case 'int-number':
           case 'float-number':
+          case 'boolean-boolean':
             typeMatch = true;
             break;
           default:
@@ -299,6 +359,15 @@ class Attribute {
             case 'string':
               validForType = true;
               parsedValue = value;
+              break;
+            case 'boolean':
+              if (value !== 'true' && value !== 'false') {
+                errors.push(t('validation.attribute.notBoolean', { value }));
+                reasons.add('typeMismatch');
+              } else {
+                validForType = true;
+                parsedValue = value === 'true';
+              }
               break;
           }
 
@@ -414,6 +483,9 @@ class Attribute {
       if (this.params[n].values && this.params[n].values.length > 0 && this.params[n].values.includes(this[n])) {
         const localizedParamValue = i18n.t(`attributes.values.${this[n]}`);
         localized[n] = localizedParamValue.startsWith('attributes.values') ? this[n] : localizedParamValue;
+      } else if (this.params[n].type === 'boolean') {
+        const localizedParamValue = i18n.t(`attributes.valuesBoolean.${this[n]}`);
+        localized[n] = localizedParamValue;
       } else {
         localized[n] = this[n];
       }

@@ -74,7 +74,7 @@ class BaseAttributeEditor extends Editor {
       (content, saveOnExit) => {
         this.closeEditor(saveOnExit);
       },
-      (_newWidth, newHeight) => {
+      () => {
         const h = this.panel.offsetHeight - 100;
         this.table.setHeight(h);
       },
@@ -258,6 +258,7 @@ class BaseAttributeEditor extends Editor {
     // custom editing on keydown didn't work for format column
     // so we do not allow custom editing of the format column but we need the left right arrow key fix
     this.setupCustomEditMode([]);
+
   }
 
   getAttributeEditorDiv(a, attributes, index, i18n) {
@@ -271,7 +272,6 @@ class BaseAttributeEditor extends Editor {
       const indexToDelete = attributes.indexOf(a);
       if (indexToDelete !== -1) {
         attributes.splice(indexToDelete, 1);
-        // Replace the attribute editor with the add new attribute interface
         const panel = attributeNode.parentNode;
         const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
         const options = aNamesWithIds
@@ -351,8 +351,19 @@ class BaseAttributeEditor extends Editor {
         }
       } else if (hasRange) {
         datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.range.map((i) => '<option value="' + i + '">').join('')}</datalist>`;
+      } else if (paramDef.type === 'boolean') {
+        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${['true', 'false'].map((n) => '<option value="' + i18n.t(`attributes.valuesBoolean.${n}`) + '">').join('')}</datalist>`;
+        if (value !== '') {
+          value = i18n.t(`attributes.valuesBoolean.${value}`);
+        }
       }
-      const inputType = datalist === undefined ? 'text' : 'search';
+      let inputType;
+
+      if (datalist === undefined) {
+        inputType = 'text';
+      } else {
+        inputType = 'search';
+      }
       const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
       const param = U.node`<input placeholder="${i18n.t(`attributes.params.${paramName}`)}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
       param.onchange = (e) => {
@@ -360,6 +371,8 @@ class BaseAttributeEditor extends Editor {
         let newValue = e.target.value === '' ? undefined : e.target.value;
         if (hasValues) {
           newValue = paramDef.values.find((n) => i18n.t(`attributes.values.${n}`) === newValue);
+        } else if (paramDef.type === 'boolean') {
+          newValue = newValue === i18n.t('attributes.valuesBoolean.true') ? 'true' : 'false'; // we call the validateFieldValue with the string value
         }
         const { errors, reasons } = a.validateFieldValue(paramName, newValue, true, false, i18n);
         if (errors.length > 0) {
@@ -392,6 +405,7 @@ class BaseAttributeEditor extends Editor {
       if (datalist !== undefined) {
         attributeNode.appendChild(datalist);
       }
+
       paramIndex += 1;
     });
     attributeNode.appendChild(document.createTextNode(')'));
@@ -486,8 +500,8 @@ class BaseAttributeEditor extends Editor {
 
   nonSplayStationNames() {
     return [...this.cave.stations.entries()]
-      .filter(([_, s]) => s.type != ShotType.SPLAY)
-      .map(([name, _]) => name);
+      .filter(([, s]) => s.type != ShotType.SPLAY)
+      .map(([name]) => name);
   }
 
   tableFunctions = {
@@ -604,7 +618,11 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
             this.tableFunctions.checkAttributesLength,
             i18n
           ),
-        cellEdited: this.updateInterpolated
+        cellEdited: this.updateInterpolated,
+        cellEditing: () => {
+          const tooltips = document.querySelectorAll('.photo-preview-tooltip');
+          tooltips.forEach((tooltip) => tooltip.remove());
+        }
 
       },
       {
@@ -1404,6 +1422,10 @@ class StationAttributeEditor extends BaseAttributeEditor {
         formatterClipboard : (cell) =>
           this.baseTableFunctions.clipboardFormatter(cell, (cv) => (cv.attribute === undefined ? [] : [cv.attribute])),
 
+        cellEditing : () => {
+          const tooltips = document.querySelectorAll('.photo-preview-tooltip');
+          tooltips.forEach((tooltip) => tooltip.remove());
+        },
         editor : (cell, onRendered, success) =>
           this.attributesEditor(
             cell,
@@ -1416,6 +1438,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
             this.tableFunctions.checkAttributesLength,
             i18n
           )
+
       }
     ];
   }
@@ -1562,7 +1585,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
     return rows;
   }
 
-  updateDerivedColumns(cell) {
+  updateDerivedColumns() {
     //no derived columns
   }
 
@@ -1591,7 +1614,6 @@ class StationAttributeEditor extends BaseAttributeEditor {
     cell.setValue(!cell.getValue());
 
     if (cell.getValue() === true) {
-      const station = this.cave.stations.get(data.station);
       if (data.attribute && data.attribute.name) {
         this.showAttribute(data);
       }

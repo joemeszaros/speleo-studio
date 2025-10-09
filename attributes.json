@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "categories": [
     {
       "id": 1,
@@ -35,10 +35,15 @@
     }
   ],
   "references": {
-    "state": {
+    "1_5": {
       "type": "int",
       "required": false,
       "range": [1, 2, 3, 4, 5]
+    },
+    "1_10": {
+      "type": "int",
+      "required": false,
+      "range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     },
     "year": {
       "type": "int",
@@ -146,7 +151,7 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         }
       }
     },
@@ -229,10 +234,14 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         },
         "material": {
           "ref": "metal"
+        },
+        "painted": {
+          "type": "boolean",
+          "required": false
         }
       }
     },
@@ -248,7 +257,7 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         }
       }
     },
@@ -264,7 +273,7 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         }
       }
     },
@@ -287,7 +296,7 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         }
       }
     },
@@ -325,18 +334,6 @@
     {
       "id": 15,
       "category": 3,
-      "name": "sediment",
-      "params": {
-        "type": {
-          "type": "string",
-          "values": ["colloid", "clay", "sand", "gravel", "cobble", "boulder", "other"],
-          "required": true
-        }
-      }
-    },
-    {
-      "id": 15,
-      "category": 3,
       "name": "breakdown",
       "params": {
         "position": {
@@ -361,21 +358,10 @@
     {
       "id": 16,
       "category": 6,
-      "name": "curiosity",
-      "params": {
-        "description": {
-          "type": "string",
-          "required": true
-        }
-      }
-    },
-    {
-      "id": 16,
-      "category": 6,
       "name": "condition",
       "params": {
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         }
       }
     },
@@ -473,7 +459,7 @@
       "params": {
         "type": {
           "type": "string",
-          "values": ["falling rock", "flooding", "breakdown", "other"],
+          "values": ["falling rock", "flooding", "breakdown", "bad air", "other"],
           "required": true
         }
       }
@@ -516,7 +502,7 @@
           "required": false
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         },
         "period": {
           "type": "string",
@@ -630,7 +616,7 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         },
         "material": {
           "ref": "metal"
@@ -653,7 +639,7 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         },
         "material": {
           "ref": "metal"
@@ -669,10 +655,14 @@
           "ref": "year"
         },
         "state": {
-          "ref": "state"
+          "ref": "1_5"
         },
         "material": {
           "ref": "metal"
+        },
+        "painted": {
+          "type": "boolean",
+          "required": false
         }
       }
     },
@@ -688,6 +678,144 @@
           "type": "int",
           "required": false,
           "range": [1, 2, 3]
+        }
+      }
+    },
+    {
+      "id": 30,
+      "category": 6,
+      "name": "bat_indication",
+      "params": {
+        "area": {
+          "type": "string",
+          "required": false,
+          "values": ["small", "medium", "large"]
+        }
+      }
+    },
+    {
+      "id": 31,
+      "category": 6,
+      "name": "curiosity",
+      "params": {
+        "description": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    {
+      "id": 32,
+      "category": 3,
+      "name": "sediment",
+      "params": {
+        "type": {
+          "type": "string",
+          "values": ["colloid", "clay", "sand", "gravel", "cobble", "boulder", "other"],
+          "required": true
+        }
+      }
+    },
+    {
+      "id": 33,
+      "category": 6,
+      "name": "exploration_site",
+      "params": {
+        "potential": {
+          "ref": "1_10"
+        },
+        "accessibility": {
+          "ref": "1_10"
+        },
+        "difficulty": {
+          "ref": "1_10"
+        },
+        "manpower": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1
+          }
+        }
+      }
+    },
+    {
+      "id": 34,
+      "category": 6,
+      "name": "photo",
+      "params": {
+        "url": {
+          "type": "string",
+          "required": true,
+          "validators": {
+            "url": true
+          }
+        },
+        "author": {
+          "type": "string",
+          "required": false
+        },
+        "description": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    {
+      "id": 35,
+      "category": 6,
+      "name": "shoring",
+      "params": {
+        "material": {
+          "type": "string",
+          "values": ["wood", "steel", "other"],
+          "required": false
+        },
+        "year": {
+          "ref": "year"
+        },
+        "state": {
+          "ref": "1_5"
+        }
+      }
+    },
+    {
+      "id": 36,
+      "category": 6,
+      "name": "bivouac",
+      "params": {
+        "capacity": {
+          "type": "int",
+          "required": false,
+          "validators": {
+            "min": 1
+          }
+        }
+      }
+    },
+    {
+      "id": 37,
+      "category": 6,
+      "name": "difficult_climb",
+      "params": {
+        "difficulty": {
+          "type": "int",
+          "required": false,
+          "range": [1, 2, 3]
+        }
+      }
+    },
+    {
+      "id": 38,
+      "category": 8,
+      "name": "calcite_raft",
+      "params": {
+        "thickness": {
+          "type": "float",
+          "required": false,
+          "validators": {
+            "min": 0
+          }
         }
       }
     }

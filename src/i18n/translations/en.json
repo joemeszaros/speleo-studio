@@ -590,7 +590,8 @@
           "noNameSelected": "No attribute name is selected",
           "noAttributeWithName": "No attribute with name '{name}'",
           "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}",
-          "failedToInterpolate": "Interpolation failed"
+          "failedToInterpolate": "Interpolation failed",
+          "failedToLoadImage": "Failed to load image"
         }
       },
       "sectionAttributes": {
@@ -675,7 +676,7 @@
       "noShotDataSection": "No shot data section found in TopoDroid CSV",
       "noFromToInHeader": "No 'from' and 'to' columns found in header: {header}",
       "noHeaderLine": "No header line found in TopoDroid CSV",
-      "importCaveFailed": "Import of {name} failed",
+      "importFileFailed": "Import of {name} failed",
       "importFailed": "Import failed",
       "unsupportedFileType": "Unsupported file type: {extension}",
       "longFormatNotSupported": "Only the simplified format is supported"
@@ -683,7 +684,9 @@
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",
       "failedToInitIndexedDb": "Failed to initialize database",
-      "failedToLoadAttributes": "Failed to load attributes from {url}"
+      "failedToLoadAttributes": "Failed to load attributes: {error}",
+      "failedAttributesHttpCode": "Unexpected HTTP code when loading attributes from {url}: {httpCode}",
+      "invalidAttributesDefinitions": "Invalid attribute definitions"
     },
     "config": {
       "invalidConfigurationFileFormat": "Invalid configuration file format",
@@ -837,10 +840,12 @@
     "attribute": {
       "valueMin": "Value should not be less than {min}",
       "valueMax": "Value should not be greater than {max}",
+      "notUrl": "Value '{value}' is not a valid URL",
       "required": "Required value is empty",
       "typeMismatch": "Value '{value}' is a {type} and not {expectedType}",
       "notInteger": "Value '{value}' is not a valid integer",
       "notFloat": "Value '{value}' is not a valid float",
+      "notBoolean": "Value '{value}' is not a valid boolean",
       "nanOrInfinity": "Value is NaN or Infinity",
       "notOneOf": "Value '{value}' is not one of {values}",
       "notInRange": "Value '{value}' is not in range {range}"
@@ -942,7 +947,14 @@
       "staples": "staples",
       "foot_peg": "foot peg",
       "sealing": "sealing",
-      "squeeze": "squeeze"
+      "squeeze": "squeeze",
+      "bat_indication": "bat indication",
+      "calcite_raft": "calcite raft",
+      "exploration_site": "exploration site",
+      "photo": "photo",
+      "shoring": "shoring",
+      "bivouac": "bivouac",
+      "difficult_climb": "climb"
     },
     "namesDescription": {
       "bedding": "Allows the bedding to be set"
@@ -976,7 +988,16 @@
       "state": "state",
       "material": "material",
       "group": "group",
-      "quantity": "quantity"
+      "quantity": "quantity",
+      "painted": "painted",
+      "thickness": "thickness",
+      "potential": "potential",
+      "accessibility": "accessibility",
+      "difficulty": "difficulty",
+      "url": "url",
+      "author": "author",
+      "manpower": "nr. people",
+      "capacity": "capacity"
     },
     "paramsDescription": {
       "dip": "The dip value",
@@ -991,6 +1012,10 @@
       "clearButton": "Clear search",
       "resultsFor": "Search results for",
       "resultsSummary": "categories, attributes, parameters"
+    },
+    "valuesBoolean": {
+      "true": "true",
+      "false": "false"
     },
     "values": {
       "dripstone": "dripstone",
@@ -1123,7 +1148,12 @@
       "steel": "steel",
       "aluminium": "aluminium",
       "galvanized": "galvanized",
-      "stainless": "stainless"
+      "stainless": "stainless",
+      "bad air": "bad air",
+      "small": "small",
+      "medium": "medium",
+      "large": "large",
+      "wood": "wood"
     }
   }
 }

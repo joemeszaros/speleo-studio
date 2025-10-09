@@ -52,7 +52,7 @@ class Importer {
 
     const reader = new FileReader();
     const nameToUse = name ?? file.name;
-    const errorMessage = i18n.t('errors.import.importCaveFailed', {
+    const errorMessage = i18n.t('errors.import.importFileFailed', {
       name : nameToUse.substring(nameToUse.lastIndexOf('/') + 1)
     });
 
@@ -93,17 +93,19 @@ class Importer {
               throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
             }
 
-            handler.importFile(file, file.name, async (importedData, arg1) => {
-              try {
-                await onLoad(importedData, arg1);
-              } catch (onLoadError) {
-                console.error('Error in onLoad callback:', onLoadError);
-                const msgPrefix = i18n.t('errors.import.importCaveFailed', { name: file.name });
-                showErrorPanel(`${msgPrefix}: ${onLoadError.message}`);
-              }
+            // Serialize cave file imports to prevent coordinate system dialog conflicts
+            await new Promise((resolve, reject) => {
+              handler.importFile(file, file.name, async (importedData, arg1) => {
+                try {
+                  await onLoad(importedData, arg1);
+                  resolve(); // Resolve the promise when import is complete
+                } catch (onLoadError) {
+                  reject(onLoadError);
+                }
+              });
             });
           } catch (error) {
-            const msgPrefix = i18n.t('errors.import.importCaveFailed', { name: file.name });
+            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
             showErrorPanel(`${msgPrefix}: ${error.message}`);
             console.error(msgPrefix, error);
           }
@@ -266,7 +268,7 @@ class PolygonImporter extends Importer {
             let parts = posLine.value[1].split(/\t|\s/);
             let [y, x, z] = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
             // Show coordinate system selection dialog
-            coordinateSystem = await this.coordinateSystemDialog.show([y, x, z]);
+            coordinateSystem = await this.coordinateSystemDialog.show(projectName, [y, x, z]);
 
             if (coordinateSystem !== undefined) {
               let coordinate;

@@ -63,8 +63,15 @@ class Main {
       this.#loadAttributes()
         .then((attributeDefintions) => {
 
+          if (!AttributesDefinitions.validateDefinitions(attributeDefintions)) {
+            showErrorPanel(i18n.t('errors.init.invalidAttributesDefinitions'));
+            return;
+          }
+
           const attributeDefs = new AttributesDefinitions(attributeDefintions);
-          console.log(`Attributes definitions loaded: ${attributeDefintions.version}`);
+          console.log(
+            `Attribute definitions version ${attributeDefintions.version} loaded: ${attributeDefintions.definitions.length} attributes, ${attributeDefintions.categories.length} categories`
+          );
 
           // Initialize IndexedDB database and project systems
           this.databaseManager = new DatabaseManager();
@@ -248,7 +255,7 @@ class Main {
         ['cave', this.importers.polygon],
         ['json', this.importers.json]
       ]),
-      onLoad : async (data) => await this.#tryAddCave(data)
+      onLoad : async (cave) => await this.#tryAddCave(cave)
     });
   }
 
@@ -309,7 +316,7 @@ class Main {
     if (!cavesNamesInProject.includes(cave.name)) {
       const errorMessage = this.projectManager.validateBeforeAdd(cave);
       if (errorMessage) {
-        showErrorPanel(errorMessage);
+        showErrorPanel(`${i18n.t('errors.import.importFileFailed', { name: cave.name })}: ${errorMessage}`);
         return;
       }
       await this.projectSystem.addCaveToProject(currentProject, cave);
@@ -380,7 +387,7 @@ class Main {
             });
           })
           .catch((error) => {
-            const msgPrefix = i18n.t('errors.import.importCaveFailed', { name: caveNameUrl });
+            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: caveNameUrl });
             showErrorPanel(`${msgPrefix}: ${error.message}`);
             console.error(msgPrefix, error);
           });
