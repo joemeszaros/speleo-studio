@@ -216,19 +216,23 @@ class SceneInteraction {
     if (cave.attributes) {
 
       cave.attributes.stationAttributes.forEach((sa) => {
-        if (sa?.name === stationName && sa.attribute) {
+        if (sa?.name === stationName && sa.attribute && sa.visible) {
           attributes.push({ emoji: '📍', attribute: sa.attribute });
         }
       });
 
       cave.attributes.componentAttributes.forEach((ca) => {
-        if (ca?.component?.path?.some((p) => p.from === stationName || p.to === stationName) && ca.attribute) {
+        if (
+          ca?.component?.path?.some((p) => p.from === stationName || p.to === stationName) &&
+          ca.attribute &&
+          ca.visible
+        ) {
           attributes.push({ emoji: '🔀', attribute: ca.attribute });
         }
       });
 
       cave.attributes.sectionAttributes.forEach((sa) => {
-        if (sa?.section?.path?.includes(stationName) && sa.attribute) {
+        if (sa?.section?.path?.includes(stationName) && sa.attribute && sa.visible) {
           attributes.push({ emoji: '🧩', attribute: sa.attribute });
         }
       });
