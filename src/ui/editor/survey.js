@@ -404,8 +404,12 @@ export class SurveyEditor extends Editor {
           const prefix = prompt(i18n.t('ui.editors.survey.menu.prefixStationsPrompt'));
           if (prefix) {
             const prefxied = this.table.getData().map((row) => {
-              row.from = prefix + row.from;
-              row.to = prefix + row.to;
+              if (row.from) {
+                row.from = prefix + row.from;
+              }
+              if (row.to) {
+                row.to = prefix + row.to;
+              }
               return row;
             });
             this.table.replaceData(prefxied);
