@@ -403,6 +403,7 @@ export class SurveyEditor extends Editor {
         action : () => {
           const prefix = prompt(i18n.t('ui.editors.survey.menu.prefixStationsPrompt'));
           if (prefix) {
+            this.surveyModified = true;
             const prefxied = this.table.getData().map((row) => {
               if (row.from) {
                 row.from = prefix + row.from;

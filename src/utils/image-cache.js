@@ -151,6 +151,22 @@ export class ImageCache {
     });
   }
 
+  validateResponse(response, url) {
+    if (!response.ok) {
+      console.error(`🖼 HTTP error code ${response.status} for ${url}`);
+      return false;
+    }
+
+    const contentType = response.headers.get('Content-Type');
+    if (contentType && !contentType.startsWith('image/')) {
+      console.error(`🖼 Content-Type ${contentType} is not an image for ${url}`);
+      return false;
+    }
+
+    return true;
+
+  }
+
   async #loadImageInternal(url) {
     if (!this.isInitialized) {
       return undefined;
@@ -175,23 +191,19 @@ export class ImageCache {
             'Accept-Encoding' : 'gzip'
           })
         });
-
-        if (!response.ok) {
-          console.error(`🖼 HTTP error code ${response.status} for ${url}`);
-          return undefined;
-        }
-
-        const contentType = response.headers.get('Content-Type');
-        if (contentType && !contentType.startsWith('image/')) {
-          console.error(`🖼 Content-Type ${contentType} is not an image for ${url}`);
+        if (!this.validateResponse(response, url)) {
           return undefined;
         }
 
       } catch (fetchError) {
         console.error(`🖼 Fetch error for ${url}, trying a CORS proxy service`, fetchError);
-        const proxiedUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+        const proxiedUrl = `https://cors-anywhere.com/${url}`;
         try {
           response = await fetch(proxiedUrl);
+          if (!this.validateResponse(response, url)) {
+            console.log(await response.text());
+            return undefined;
+          }
         } catch (fetchError) {
           console.error(`🖼 Fetch error for ${proxiedUrl}`, fetchError);
           return undefined;

@@ -529,10 +529,17 @@ export class AttributesScene {
         texture = await this.textureLoader.loadAsync(attribute.url);
       } else {
         const img = await this.imageCache.loadImage(attribute.url);
+
         texture = new THREE.Texture();
         texture.image = img;
         texture.needsUpdate = true;
       }
+
+      if (!texture || !texture.image) {
+        console.error(`Failed to load photo from ${attribute.url}`);
+        return;
+      }
+
       texture.colorSpace = THREE.SRGBColorSpace;
       // Create sprite material with the loaded texture
       const spriteMaterial = new THREE.SpriteMaterial({
