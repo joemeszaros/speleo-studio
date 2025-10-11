@@ -20,10 +20,11 @@ import { GridHelper } from '../utils/grid.js';
 
 class Grid {
 
-  constructor(options, scene) {
+  constructor(options, scene, material) {
     this.options = options;
     this.scene = scene;
-    this.grid = new GridHelper(100, 100, this.options.scene.grid.step, 0.4);
+    this.material = material;
+    this.grid = new GridHelper(100, 100, this.options.scene.grid.step, this.material);
     this.grid.name = 'grid helper';
     this.grid.visible = this.options.scene.grid.mode !== 'hidden';
     this.grid.layers.set(1);
@@ -41,7 +42,7 @@ class Grid {
     this.grid.geometry.dispose();
     this.grid.material.dispose();
     this.scene.removeObjectFromScene(this.grid);
-    this.grid = new GridHelper(width, height, this.options.scene.grid.step, 0.4);
+    this.grid = new GridHelper(width, height, this.options.scene.grid.step, this.material);
     this.grid.layers.set(1);
     this.center = boundingBox.getCenter(new THREE.Vector3());
     this.minZ = Math.min(boundingBox.min.z, boundingBox.max.z);
@@ -84,9 +85,9 @@ class Grid {
 
   }
 
-  refreshGrid() {
+  refreshGrid(boundingBox) {
     if (this.center) {
-      this.adjustSize(this.boundingBox);
+      this.adjustSize(boundingBox);
       this.adjustPosition(this.options.scene.grid.mode);
     }
     this.scene.view.renderView();

@@ -132,6 +132,8 @@
         "remove": "Eltávolítás",
         "printLayout": "Elrendezés",
         "gridStep": "Rács lépés",
+        "gridColor": "Rács szín",
+        "gridOpacity": "Rács átlátszóság",
         "caveName": "Barlang név",
         "surveyName": "Felmérés név",
         "stationName": "Pont név",

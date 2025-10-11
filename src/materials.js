@@ -55,6 +55,12 @@ class Materials {
           alphaToCoverage : false
         })
       },
+      grid : new THREE.LineBasicMaterial({
+        color        : new THREE.Color(this.config.grid?.color ?? '#ffffff'),
+        vertexColors : false,
+        transparent  : true,
+        opacity      : this.config.gid?.opacity ?? 0.4
+      }),
       text   : new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),
       sphere : {
         centerLine          : new THREE.MeshBasicMaterial({ color: this.config.centerLines.spheres.color }),

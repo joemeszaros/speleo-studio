@@ -104,9 +104,7 @@ class MyScene {
       ['spatial', new SpatialView(this, this.domElement)]
     ]);
 
-    this.grid = new Grid(this.options, this);
-
-    this.boundingBox = undefined;
+    this.grid = new Grid(this.options, this, this.mats.grid);
 
     this.view = this.views.get('spatial');
     this.view.activate(this.computeBoundingBox());

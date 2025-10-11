@@ -32,7 +32,9 @@ export class PrintUtils {
 
     this.scene.view.renderView();
     const backgroundColor = this.options.scene.background.color;
+    const gridColor = this.options.scene.grid.color;
     this.options.scene.background.color = '#ffffff';
+    this.options.scene.grid.color = '#000000';
 
     const sourceCanvas = document.getElementById('viewport').querySelector('canvas');
     const canvas = document.createElement('canvas');
@@ -90,6 +92,7 @@ export class PrintUtils {
 
     const img = canvas.toDataURL('image/png');
     this.options.scene.background.color = backgroundColor;
+    this.options.scene.grid.color = gridColor;
     const imgElement = document.getElementById('export-canvas');
     imgElement.src = img;
     imgElement.width = canvas.width;

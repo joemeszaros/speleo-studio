@@ -132,6 +132,8 @@
         "remove": "Remove",
         "printLayout": "Print Layout",
         "gridStep": "Grid Step",
+        "gridColor": "Grid color",
+        "gridOpacity": "Grid opacity",
         "caveName": "Cave name",
         "surveyName": "Survey name",
         "stationName": "Station name",

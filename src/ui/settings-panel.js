@@ -407,6 +407,19 @@ export class SettingsPanel {
             this.options.scene.grid.step = value;
           }
         ),
+        this.createColorInput(i18n.t('ui.settingsPanel.labels.gridColor'), this.options.scene.grid.color, (value) => {
+          this.options.scene.grid.color = value;
+        }),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.gridOpacity'),
+          this.options.scene.grid.opacity,
+          0.1,
+          1,
+          0.1,
+          (value) => {
+            this.options.scene.grid.opacity = value;
+          }
+        ),
         this.createColorInput(
           i18n.t('ui.settingsPanel.labels.sectionColor'),
           this.options.scene.sections.color,

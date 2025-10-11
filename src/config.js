@@ -67,8 +67,10 @@ export const DEFAULT_OPTIONS = {
       show : false
     },
     grid : {
-      mode : 'top',
-      step : 10
+      mode    : 'top',
+      step    : 10,
+      color   : '#ffffff',
+      opacity : 0.4
     },
     camera : {
       target : {
@@ -349,6 +351,14 @@ export class ConfigManager {
     }
     if (std.utmNorthing === undefined) {
       std.utmNorthing = false;
+    }
+
+    if (config.scene.grid.color === undefined) {
+      config.scene.grid.color = '#ffffff';
+    }
+
+    if (config.scene.grid.opacity === undefined) {
+      config.scene.grid.opacity = 0.4;
     }
   }
 
@@ -930,10 +940,18 @@ export class ConfigChanges {
     this.scene.view.renderView();
   }
 
-  handleGridChanges(path) {
+  handleGridChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.grid.step':
-        this.scene.grid.refreshGrid();
+        this.scene.grid.refreshGrid(this.scene.computeBoundingBox());
+        break;
+      case 'scene.grid.color':
+        this.mats.grid.color = new THREE.Color(newValue);
+        this.scene.view.renderView();
+        break;
+      case 'scene.grid.opacity':
+        this.mats.grid.opacity = newValue;
+        this.scene.view.renderView();
         break;
     }
   }

@@ -18,7 +18,7 @@ import * as THREE from 'three';
 
 class GridHelper extends THREE.LineSegments {
 
-  constructor(width = 100, height = 10, step = 10, opacity = 1.0) {
+  constructor(width = 100, height = 10, step = 10, material) {
 
     const halfWidth = width / 2;
     const halfHeight = height / 2;
@@ -43,14 +43,7 @@ class GridHelper extends THREE.LineSegments {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-    const matetrial = new THREE.LineBasicMaterial({
-      color        : 0xffffff,
-      vertexColors : false,
-      transparent  : true,
-      opacity      : opacity
-    });
-
-    super(geometry, matetrial);
+    super(geometry, material);
 
     this.type = 'GridHelper';
 
