@@ -65,6 +65,7 @@ export class AttributesDefinitions {
   }
 
   createFromPure(attribute) {
+    console.log('createFromPure', attribute);
     const def = this.#getDefiniton((d) => d.name === attribute.name);
     const newAttribute = new Attribute(def);
     const paramNames = Object.keys(def.params);
@@ -171,7 +172,7 @@ export class AttributesDefinitions {
 
 }
 
-export class MigrationSupportV4 {
+export class MigrationSupportV5 {
 
   static migrate(attribute) {
     if (attribute.name === 'co') {

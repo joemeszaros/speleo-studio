@@ -16,7 +16,7 @@
 
 import { CaveSection, CaveComponent } from './model/cave.js';
 import { fromPolar, toPolar } from './utils/utils.js';
-import { MigrationSupportV4 } from './attributes.js';
+import { MigrationSupportV5 } from './attributes.js';
 
 class Vector {
 
@@ -255,8 +255,8 @@ class SectionAttribute extends FragmentAttribute {
 
   static fromPure(pure, attributeDefs, schemaVersionLoaded) {
     if (pure.attribute !== undefined) {
-      if (attributeDefs.schemaVersion === 4 && schemaVersionLoaded <= 3) {
-        pure.attribute = MigrationSupportV4.migrate(pure.attribute);
+      if (attributeDefs.schemaVersion === 5 && schemaVersionLoaded <= 3) {
+        pure.attribute = MigrationSupportV5.migrate(pure.attribute);
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
@@ -316,8 +316,8 @@ class ComponentAttribute extends FragmentAttribute {
 
   static fromPure(pure, attributeDefs, schemaVersionLoaded) {
     if (pure.attribute !== undefined) {
-      if (attributeDefs.schemaVersion === 4 && schemaVersionLoaded <= 3) {
-        pure.attribute = MigrationSupportV4.migrate(pure.attribute);
+      if (attributeDefs.schemaVersion === 5 && schemaVersionLoaded <= 3) {
+        pure.attribute = MigrationSupportV5.migrate(pure.attribute);
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
@@ -390,8 +390,8 @@ class StationAttribute {
   static fromPure(pure, attributeDefs, schemaVersionLoaded) {
     if (pure.attribute !== undefined) {
 
-      if (attributeDefs.schemaVersion === 4 && schemaVersionLoaded <= 3) {
-        pure.attribute = MigrationSupportV4.migrate(pure.attribute);
+      if (attributeDefs.schemaVersion === 5 && schemaVersionLoaded <= 3) {
+        pure.attribute = MigrationSupportV5.migrate(pure.attribute);
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
