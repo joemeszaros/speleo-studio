@@ -52,6 +52,7 @@ export class PointScene {
         type : 'surface'
       }
     );
+    this.surfaceSphere.visible = false;
 
     const map = new THREE.TextureLoader().load('icons/focus.svg');
     map.colorSpace = THREE.SRGBColorSpace;
@@ -61,6 +62,7 @@ export class PointScene {
     focusSprite.name = 'focus sprite';
     this.focusSprite = focusSprite;
     focusSprite.layers.set(1);
+    focusSprite.visible = false;
     this.spheres3DGroup.add(focusSprite); // not the best place for this
 
     const geometry = new THREE.TorusGeometry(1.3, 0.2, 16, 100);

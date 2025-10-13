@@ -81,13 +81,13 @@ export class SpeleoScene {
     return iMeshSpheres;
   }
 
-  addStationSpheres(material, sphereOtions, stations, visibility, caveName, surveyName, group) {
+  addStationSpheres(material, sphereOptions, stations, visibility, caveName, surveyName, group) {
     if (stations.length === 0) {
       return undefined;
     }
-    const geometry = new THREE.SphereGeometry(sphereOtions.radius, 5, 5);
+    const geometry = new THREE.SphereGeometry(sphereOptions.radius, 5, 5);
     const instancedMesh = this.addSpheresInsanced(geometry, material, stations, caveName, surveyName);
-    instancedMesh.visible = visibility && sphereOtions.show;
+    instancedMesh.visible = visibility && sphereOptions.show;
     group.add(instancedMesh);
     return instancedMesh;
   }
