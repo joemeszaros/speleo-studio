@@ -224,9 +224,6 @@ class MyScene {
       return;
     }
 
-    // Update photo billboards to always face the camera
-    this.attributes.updatePhotoBillboards(this.view.camera.position);
-
     //FIXME: rotate if needed
     // const entries = []; //this.#getCaveObjectsFlattened();
     // entries.forEach((e) => {
