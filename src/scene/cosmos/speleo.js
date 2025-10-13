@@ -311,8 +311,11 @@ export class SpeleoScene {
     entry.splays.hidden = !value;
     entry.auxiliaries.visible = value && s.auxiliaries.segments.show;
     entry.auxiliaries.hidden = !value;
-    entry.centerLinesSpheres.visible = value && s.centerLines.spheres.show;
-    entry.centerLinesSpheres.hidden = !value;
+
+    if (entry.centerLinesSpheres) {
+      entry.centerLinesSpheres.visible = value && s.centerLines.spheres.show;
+      entry.centerLinesSpheres.hidden = !value;
+    }
 
     if (entry.auxiliariesSpheres) {
       entry.auxiliariesSpheres.visible = value && s.auxiliaries.spheres.show;
@@ -321,6 +324,11 @@ export class SpeleoScene {
     if (entry.splaysSpheres) {
       entry.splaysSpheres.visible = value && s.splays.spheres.show;
       entry.splaysSpheres.hidden = !value;
+    }
+
+    if (entry.stationLabels) {
+      entry.stationLabels.visible = value && s.stationLabels.show;
+      entry.stationLabels.hidden = !value;
     }
     this.scene.view.renderView();
   }
@@ -406,22 +414,12 @@ export class SpeleoScene {
     for (const [stationName, station] of cave.stations) {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
       const stationLabel = stationNameMode === 'name' ? stationName : station.position.z.toFixed(2);
-      if (station.type === ShotType.CENTER) {
-
-        // Add station label
-        if (this.options.scene.stationLabels.show) {
-          // adding sprites for a cave with 3k stations is roughly 25 MB, let's try to save memory by not adding them if they are not visible
-          this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
-        }
-
-      } else if (station.type === ShotType.SPLAY) {
-
-        // no station label for splays
-      } else if (station.type === ShotType.AUXILIARY) {
-
-        if (this.options.scene.stationLabels.show) {
-          this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
-        }
+      if (
+        (station.type === ShotType.CENTER || station.type === ShotType.AUXILIARY) &&
+        this.options.scene.stationLabels.show
+      ) {
+        // adding sprites for a cave with 3k stations is roughly 25 MB, let's try to save memory by not adding them if they are not visible
+        this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
       }
     }
     stationLabelsGroup.visible = visibility && this.options.scene.stationLabels.show;

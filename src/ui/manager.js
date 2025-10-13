@@ -559,7 +559,7 @@ class ProjectManager {
       const [w, h, d] = boundingBox.getSize(new THREE.Vector3());
 
       // if the center lines or splays are not visible
-      if (w > 0 && h > 0 && d > 0) {
+      if (!(w === 0 && h === 0 && d === 0)) {
         this.scene.grid.adjust(boundingBox);
 
         this.scene.views.forEach((view) => {
