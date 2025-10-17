@@ -193,9 +193,9 @@ export class ProjectPanel {
              </div>
              <div class="project-item-actions">
                ${!isCurrent ? `<button id="open-project-btn" class="project-action-btn">${i18n.t('common.open')}</button>` : ''}
-               <button id="delete-project-btn" class="project-action-btn delete">${i18n.t('common.delete')}</button>
                <button id="rename-project-btn" class="project-action-btn rename">${i18n.t('common.rename')}</button>
                <button id="export-project-btn" class="project-action-btn export">${i18n.t('common.export')}</button>
+               <button id="delete-project-btn" class="project-action-btn delete">${i18n.t('common.delete')}</button>
              </div>
            </div>
          `;

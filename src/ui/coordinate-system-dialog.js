@@ -15,7 +15,7 @@
  */
 
 import { i18n } from '../i18n/i18n.js';
-import { EOVCoordinateSystem, UTMCoordinateSystem } from '../model/geo.js';
+import { CoordinateSystemType, EOVCoordinateSystem, UTMCoordinateSystem } from '../model/geo.js';
 
 export class CoordinateSystemDialog {
   constructor() {
@@ -49,7 +49,12 @@ export class CoordinateSystemDialog {
         
           <p class="about-description">${i18n.t('ui.panels.coordinateSystem.message')}</p>
 
-          <p>${i18n.t('ui.panels.coordinateSystem.startPointCoordinates')}: ${caveName} - (${startPointCoordinates.join(', ')})</p>
+          <p>${i18n.t('ui.panels.coordinateSystem.startPointCoordinates')}: ${caveName}</p>
+         
+          <div class="settings-item"><label for="start-point-x" id="start-point-x-label">Y:</label>  <input type="number" id="start-point-x" value="${startPointCoordinates[0]}" class="settings-input" required></div>
+          <div class="settings-item"><label for="start-point-y" id="start-point-y-label">X:</label> <input type="number" id="start-point-y" value="${startPointCoordinates[1]}" class="settings-input" required></div>
+          <div class="settings-item"><label for="start-point-z" id="start-point-z-label">${i18n.t('ui.panels.coordinateSystem.elevation')}:</label> <input type="number" id="start-point-z" value="${startPointCoordinates[2]}" class="settings-input" required></div>
+
           <div class="settings-group">
             <div class="settings-group-title">
               <span>${i18n.t('ui.panels.coordinateSystem.selection')}</span>
@@ -124,6 +129,7 @@ export class CoordinateSystemDialog {
     // Cancel button
     this.dialog.querySelector('#coordinate-system-cancel').addEventListener('click', () => {
       this.cancel();
+      this.hide();
     });
 
     // OK button
@@ -155,10 +161,29 @@ export class CoordinateSystemDialog {
 
   handleCoordinateSystemChange(value) {
     const utmOptions = this.dialog.querySelector('#utm-options');
-    if (value === 'utm') {
+
+    if (value === CoordinateSystemType.UTM) {
       utmOptions.style.display = 'block';
     } else {
       utmOptions.style.display = 'none';
+    }
+
+    if (value === CoordinateSystemType.UTM) {
+      this.dialog.querySelector('#start-point-x-label').innerText =
+        i18n.t('ui.panels.coordinateSystem.utm.easting') + ': ';
+      this.dialog.querySelector('#start-point-y-label').innerText =
+        i18n.t('ui.panels.coordinateSystem.utm.northing') + ': ';
+      this.dialog.querySelector('#start-point-z-label').innerText =
+        i18n.t('ui.panels.coordinateSystem.elevation') + ': ';
+    } else if (value === CoordinateSystemType.EOV) {
+      this.dialog.querySelector('#start-point-x-label').innerText = 'Y: ';
+      this.dialog.querySelector('#start-point-y-label').innerText = 'X: ';
+      this.dialog.querySelector('#start-point-z-label').innerText =
+        i18n.t('ui.panels.coordinateSystem.elevation') + ': ';
+    } else {
+      this.dialog.querySelector('#start-point-x-label').innerText = 'X: ';
+      this.dialog.querySelector('#start-point-y-label').innerText = 'Y: ';
+      this.dialog.querySelector('#start-point-z-label').innerText = 'Z: ';
     }
   }
 
@@ -185,10 +210,16 @@ export class CoordinateSystemDialog {
       coordinateSystem = undefined;
     }
     console.log(`🧭 Selected coordinate system: ${coordinateSystem?.toString() ?? 'none'}`);
+    const coordinates = [
+      parseFloat(this.dialog.querySelector('#start-point-x').value),
+      parseFloat(this.dialog.querySelector('#start-point-y').value),
+      parseFloat(this.dialog.querySelector('#start-point-z').value)
+    ];
 
     this.hide();
+
     if (this.resolve) {
-      this.resolve(coordinateSystem);
+      this.resolve({ coordinateSystem, coordinates });
     }
   }
 

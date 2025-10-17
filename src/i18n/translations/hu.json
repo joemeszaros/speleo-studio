@@ -362,6 +362,7 @@
         "startPointCoordinates": "Kezdőpont koordinátái",
         "cancelled": "Koordináta-rendszer kiválasztása megszakítva",
         "invalidHemisphere": "Érvénytelen féltek",
+        "elevation": "Magasság",
         "none": {
           "title": "Nincs definiálva",
           "description": "Projektált koordináta-rendszer mellőzése"
@@ -376,7 +377,9 @@
           "zone": "Zóna",
           "hemisphere": "Féltek",
           "northern": "Északi",
-          "southern": "Déli"
+          "southern": "Déli",
+          "easting": "Keleti",
+          "northing": "Északi"
         }
       }
     },

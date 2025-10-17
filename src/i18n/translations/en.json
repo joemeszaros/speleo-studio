@@ -359,6 +359,7 @@
         "startPointCoordinates": "Start point coordinates",
         "cancelled": "Coordinate System Selection cancelled",
         "invalidHemisphere": "Invalid hemisphere",
+        "elevation": "Elevation",
         "none": {
           "title": "Not specified",
           "description": "No projected coordinate system"
@@ -373,7 +374,9 @@
           "zone": "Zone",
           "hemisphere": "Hemisphere",
           "northern": "Northern",
-          "southern": "Southern"
+          "southern": "Southern",
+          "easting": "Easting",
+          "northing": "Northing"
         }
       }
     },

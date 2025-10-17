@@ -45,7 +45,7 @@ class Importer {
     this.manager = manager;
   }
 
-  importFile(file, name, onLoadFn, endcoding = 'utf8') {
+  async importFile(file, name, onLoadFn, endcoding = 'utf8') {
     if (!file) {
       return;
     }
@@ -56,21 +56,24 @@ class Importer {
       name : nameToUse.substring(nameToUse.lastIndexOf('/') + 1)
     });
 
-    reader.onload = async (event) => {
-      try {
-        await this.importText(event.target.result, onLoadFn, name);
-      } catch (e) {
-        console.error(errorMessage, e);
-        showErrorPanel(`${errorMessage}: ${e.message}`, 0);
-      }
-    };
+    await new Promise((resolve, reject) => {
+      reader.onload = async (event) => {
+        try {
+          await this.importText(event.target.result, onLoadFn, name);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      };
 
-    reader.onerror = (error) => {
-      console.error(errorMessage, error);
-      showErrorPanel(`${errorMessage}: ${error}`, 0);
-    };
+      reader.onerror = (error) => {
+        console.error(errorMessage, error);
+        showErrorPanel(`${errorMessage}: ${error}`, 0);
+        reject(error);
+      };
 
-    reader.readAsText(file, endcoding);
+      reader.readAsText(file, endcoding);
+    });
   }
 
   static setupFileInputListener(config) {
@@ -92,17 +95,9 @@ class Importer {
             if (handler === undefined) {
               throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
             }
-
             // Serialize cave file imports to prevent coordinate system dialog conflicts
-            await new Promise((resolve, reject) => {
-              handler.importFile(file, file.name, async (importedData, arg1) => {
-                try {
-                  await onLoad(importedData, arg1);
-                  resolve(); // Resolve the promise when import is complete
-                } catch (onLoadError) {
-                  reject(onLoadError);
-                }
-              });
+            await handler.importFile(file, file.name, async (importedData, arg1) => {
+              await onLoad(importedData, arg1);
             });
           } catch (error) {
             const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
@@ -113,7 +108,6 @@ class Importer {
       } catch (error) {
         console.error(i18n.t('errors.import.importFailed'), error);
       } finally {
-        console.log('🚧 Clearing input value');
         // Always clear the input value, regardless of success or failure
         input.value = '';
       }
@@ -266,16 +260,21 @@ class PolygonImporter extends Importer {
           let startCoordinate, startPosition;
           if (surveyIndex == 0) {
             let parts = posLine.value[1].split(/\t|\s/);
-            let [y, x, z] = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
+            let [f1, f2, f3] = parts.toSpliced(3).map((x) => U.parseMyFloat(x));
             // Show coordinate system selection dialog
-            coordinateSystem = await this.coordinateSystemDialog.show(projectName, [y, x, z]);
+            // Y X elevation for EOV
+            // easting northing elevation for UTM
+            const result = await this.coordinateSystemDialog.show(projectName, [f1, f2, f3]);
+            coordinateSystem = result.coordinateSystem;
+
+            const [coord1, coord2, coord3] = result.coordinates;
 
             if (coordinateSystem !== undefined) {
               let coordinate;
               if (coordinateSystem.type === CoordinateSystemType.EOV) {
-                coordinate = new EOVCoordinateWithElevation(y, x, z);
+                coordinate = new EOVCoordinateWithElevation(coord1, coord2, coord3);
               } else if (coordinateSystem.type === CoordinateSystemType.UTM) {
-                coordinate = new UTMCoordinateWithElevation(x, y, z);
+                coordinate = new UTMCoordinateWithElevation(coord1, coord2, coord3);
               }
               const coordinateErrors = coordinate.validate(i18n);
               if (coordinateErrors.length > 0) {
@@ -291,7 +290,7 @@ class PolygonImporter extends Importer {
               geoData = new GeoData(coordinateSystem, [startCoordinate]);
               startPosition = coordinate.toVector();
             } else {
-              startPosition = new Vector(x, y, z);
+              startPosition = new Vector(coord1, coord2, coord3);
             }
 
             if (fixPointName != shots[0].from) {
@@ -349,8 +348,8 @@ class PolygonImporter extends Importer {
     }
   }
 
-  importFile(file, name, onCaveLoad, endcoding = 'iso_8859-2') {
-    super.importFile(file, name, onCaveLoad, endcoding);
+  async importFile(file, name, onCaveLoad, endcoding = 'iso_8859-2') {
+    await super.importFile(file, name, onCaveLoad, endcoding);
   }
 
   async importText(wholeFileInText, onCaveLoad) {
