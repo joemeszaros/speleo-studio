@@ -381,6 +381,29 @@
           "easting": "Keleti",
           "northing": "Északi"
         }
+      },
+      "wgs84": {
+        "title": "WGS84 Koordináták",
+        "latitude": "Szélesség",
+        "longitude": "Hosszúság",
+        "decimalDegrees": "Decimális fokok (DD)",
+        "degrees": "Fokok",
+        "minutes": "Percek",
+        "seconds": "Másodpercek",
+        "hemisphere": "Félgömb",
+        "north": "Észak",
+        "south": "Dél",
+        "east": "Kelet",
+        "west": "Nyugat",
+        "invalidCoordinates": "Kérjük, adjon meg érvényes koordinátákat",
+        "latitudeOutOfRange": "A szélesség -90 és 90 fok között kell legyen",
+        "longitudeOutOfRange": "A hosszúság -180 és 180 fok között kell legyen",
+        "cancelled": "WGS84 koordináta bevitel megszakítva",
+        "format": "Koordináta formátum",
+        "ddDescription": "pl. 47.123456, 19.123456",
+        "degreesMinutesSeconds": "Fokok/Percek/Másodpercek (DMS)",
+        "dmsDescription": "pl. 47°7'24.44\"N, 19°7'24.44\"E",
+        "invalidDMSFormat": "Érvénytelen DMS formátum. Használja a következő formátumot: 47°7'24.44\"N"
       }
     },
     "editors": {
@@ -451,11 +474,14 @@
           "aliasFromToSame": "Az alias kezdő és végpontja nem lehet ugyanaz: {from} -> {to}",
           "invalidAliases": "Érvénytelen aliasok",
           "missingCoordinates": "Nincsenek koordináták a kiválasztott koordináta-rendszerhez",
-          "coordinateSystemMismatch": "A(z) {caves} barlang(ok) koordináta-rendszere nem egyezik a kiválasztott koordináta-rendszerrel"
+          "coordinateSystemMismatch": "A(z) {caves} barlang(ok) koordináta-rendszere nem egyezik a kiválasztott koordináta-rendszerrel",
+          "convertGPS": "Nem lehet GPS koordinátákat konvertálni, mert már vannak koordináták más koordináta-rendszerben ({coordinateSystems})",
+          "convertGPSDifferentZone": "A(z) UTM zóna {zoneNum} ({northern}) más, mint a(z) konverzió eredményeként kapott {newZoneNum} ({newNorthern}) zóna"
         },
         "buttons": {
           "addAlias": "Alias hozzáadása",
-          "addCoordinate": "Koordináta hozzáadása"
+          "addCoordinate": "Koordináta hozzáadása",
+          "convertGPS": "GPS konvertálás"
         }
       },
       "surveySheet": {
@@ -810,7 +836,9 @@
   },
   "messages": {
     "import": {
-      "surveyAddedSuccessfully": "A(z) {survey} felmérés sikeresen hozzáadva a(z) {toSurvey} felméréshez: {nrShots} mérés, {skipped} kihagyva"
+      "surveyAddedSuccessfully": "A(z) {survey} felmérés sikeresen hozzáadva a(z) {toSurvey} felméréshez: {nrShots} mérés, {skipped} kihagyva",
+      "geoDataModified": "A(z) barlang fix koordinátái sikeresen módosítva a(z) {surveyName} felmérés fix pont információja alapján, ne feledje frissíteni a fix pont magasságát",
+      "geoDataSkipped": "A felmérés {surveyName} fix pont információja figyelmen kívül lett hagyva, mert a barlang már rendelkezik koordináta rendszerrel"
     },
     "config": {
       "configurationLoadedSuccessfully": "Konfiguráció sikeresen betöltve a(z) {fileName} fájlból"

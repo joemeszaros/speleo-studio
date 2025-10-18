@@ -19,6 +19,7 @@ import { CaveMetadata, Cave } from '../../model/cave.js';
 import { wm } from '../window.js';
 import { showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
+import { UTMConverter } from '../../utils/geo.js';
 import {
   GeoData,
   EOVCoordinateWithElevation,
@@ -30,6 +31,7 @@ import {
 } from '../../model/geo.js';
 import { SurveyAlias, ShotType } from '../../model/survey.js';
 import { i18n } from '../../i18n/i18n.js';
+import { WGS84Dialog } from '../wgs84-dialog.js';
 
 class CaveEditor extends Editor {
   constructor(db, options, cave, scene, panel) {
@@ -267,6 +269,7 @@ class CaveEditor extends Editor {
          <option value="eov" ${this.caveData.coordinateSystem?.type === CoordinateSystemType.EOV ? 'selected' : ''}>EOV</option>
          <option value="utm" ${this.caveData.coordinateSystem?.type === CoordinateSystemType.UTM ? 'selected' : ''}>UTM</option>
       </select>
+      <button style="margin-left: 15px" type="button" id="convert-gps-button">${i18n.t('ui.editors.caveSheet.buttons.convertGPS')}</button>
     </div>`;
 
     // UTM zone selection (initially hidden)
@@ -292,6 +295,8 @@ class CaveEditor extends Editor {
       const isUTM = e.target.value === CoordinateSystemType.UTM;
       utmZoneDiv.style.display = isUTM ? 'block' : 'none';
 
+      this.caveData.coordinates = [];
+
       switch (e.target.value) {
         case CoordinateSystemType.UTM:
           this.caveData.coordinateSystem = new UTMCoordinateSystem(
@@ -305,7 +310,6 @@ class CaveEditor extends Editor {
           this.renderCoords();
           break;
         default:
-          this.caveData.coordinates = [];
           this.coordsList.innerHTML = '';
           this.caveData.coordinateSystem = undefined;
           break;
@@ -314,6 +318,61 @@ class CaveEditor extends Editor {
       this.caveHasChanged = true;
     };
 
+    coordSystemDiv.querySelector('#convert-gps-button').onclick = async () => {
+
+      if (this.caveData.coordinateSystem?.type !== CoordinateSystemType.UTM && this.caveData.coordinates.length > 0) {
+        showErrorPanel(
+          i18n.t('ui.editors.caveSheet.errors.convertGPS', { coordinateSystems: this.caveData.coordinateSystem?.type })
+        );
+        return;
+      }
+
+      try {
+        const coordinates = await new WGS84Dialog().show();
+        const { easting, northing, zoneNum, zoneLetter } = UTMConverter.fromLatLon(
+          coordinates.latitude,
+          coordinates.longitude
+        );
+
+        const northern = zoneLetter >= 'N';
+        if (
+          this.caveData.coordinateSystem !== undefined &&
+          this.caveData.coordinateSystem.type === CoordinateSystemType.UTM &&
+          (this.caveData.coordinateSystem.zoneNum !== zoneNum || this.caveData.coordinateSystem.northern !== northern)
+        ) {
+          showErrorPanel(
+            i18n.t('ui.editors.caveSheet.errors.convertGPSDifferentZone', {
+              zoneNum     : this.caveData.coordinateSystem.zoneNum,
+              northern    : this.caveData.coordinateSystem.northern ? 'N' : 'S',
+              newZoneNum  : zoneNum,
+              newNorthern : northern ? 'N' : 'S'
+            })
+          );
+          return;
+        }
+
+        const newCords = {
+          name     : '',
+          easting  : U.roundToTwoDecimalPlaces(easting),
+          northing : U.roundToTwoDecimalPlaces(northing)
+        };
+        if ((this.caveData.coordinates ?? []).length > 0) {
+          this.caveData.coordinates.push(newCords);
+        } else {
+          this.caveData.coordinates = [newCords];
+        }
+
+        coordSystemDiv.querySelector('#coord-system').value = CoordinateSystemType.UTM;
+        utmZoneDiv.style.display = 'block';
+        utmZoneDiv.querySelector('#utm-zone').value = zoneNum;
+        utmZoneDiv.querySelector('#utm-hemisphere').value = zoneLetter >= 'N' ? 'N' : 'S';
+
+        this.caveData.coordinateSystem = new UTMCoordinateSystem(zoneNum, zoneLetter >= 'N');
+        this.renderCoords();
+      } catch (error) {
+        console.error('WGS84 coordinate input cancelled or failed', error);
+      }
+    };
     // Handle UTM zone/hemisphere change
     utmZoneDiv.querySelector('#utm-zone').onchange = (e) => {
       if (this.caveData.coordinateSystem.type === CoordinateSystemType.UTM) {

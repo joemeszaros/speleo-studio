@@ -15,6 +15,7 @@
  */
 
 import { Vector } from '../model.js';
+import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 
 class EOVCoordinate {
   constructor(y, x) {
@@ -62,6 +63,11 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
 
   toVector() {
     return new Vector(this.y, this.x, this.elevation);
+  }
+
+  // for EOV coordinates there is no need to normalize
+  toNormalizedVector() {
+    return this.toVector();
   }
 
   add(y, x, elevation) {
@@ -155,6 +161,10 @@ class UTMCoordinateWithElevation extends UTMCoordinate {
 
   toVector() {
     return new Vector(this.easting, this.northing, this.elevation);
+  }
+
+  toNormalizedVector() {
+    return globalNormalizer.getNormalizedVector(this);
   }
 
   distanceTo(v) {

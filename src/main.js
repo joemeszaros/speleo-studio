@@ -29,7 +29,7 @@ import { ExplorerTree } from './ui/explorer-tree.js';
 import { SettingsPanel } from './ui/settings-panel.js';
 
 import { AttributesDefinitions } from './attributes.js';
-import { showErrorPanel, showInfoPanel } from './ui/popups.js';
+import { showErrorPanel, showInfoPanel, showSuccessPanel } from './ui/popups.js';
 import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
@@ -263,7 +263,10 @@ class Main {
     Importer.setupFileInputListener({
       inputId  : 'surveyInput',
       handlers : new Map([['csv', this.importers.topodroid]]),
-      onLoad   : async (survey) => await this.#tryAddSurvey(survey)
+      onLoad   : async (result) => {
+        this.tryModifyGeoData(result.survey.name, result.geoData);
+        await this.#tryAddSurvey(result.survey);
+      }
     });
     Importer.setupFileInputListener({
       inputId  : 'surveyInputPartial',
@@ -307,6 +310,18 @@ class Main {
     const cave = this.db.getCave(caveName);
     this.projectManager.addSurvey(caveName, survey);
     await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+  }
+
+  tryModifyGeoData(surveyName, geoData) {
+    const caveName = document.getElementById('surveyInput').caveName; // custom property
+    const cave = this.db.getCave(caveName);
+    if (cave.geoData === undefined || cave.geoData.coordinateSystem.type === undefined) {
+      cave.geoData = geoData;
+      showSuccessPanel(i18n.t('messages.import.geoDataModified', { surveyName: surveyName }));
+    } else {
+      showInfoPanel(i18n.t('messages.import.geoDataSkipped', { surveyName: surveyName }));
+    }
+
   }
 
   async #tryAddCave(cave) {

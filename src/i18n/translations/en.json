@@ -378,6 +378,29 @@
           "easting": "Easting",
           "northing": "Northing"
         }
+      },
+      "wgs84": {
+        "title": "WGS84 Coordinates",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "decimalDegrees": "Decimal Degrees (DD)",
+        "degrees": "Degrees",
+        "minutes": "Minutes",
+        "seconds": "Seconds",
+        "hemisphere": "Hemisphere",
+        "north": "North",
+        "south": "South",
+        "east": "East",
+        "west": "West",
+        "invalidCoordinates": "Please enter valid coordinates",
+        "latitudeOutOfRange": "Latitude must be between -90 and 90 degrees",
+        "longitudeOutOfRange": "Longitude must be between -180 and 180 degrees",
+        "cancelled": "WGS84 coordinate input cancelled",
+        "format": "Coordinate Format",
+        "ddDescription": "e.g., 47.123456, 19.123456",
+        "degreesMinutesSeconds": "Degrees/Minutes/Seconds (DMS)",
+        "dmsDescription": "e.g., 47°7'24.44\"N, 19°7'24.44\"E",
+        "invalidDMSFormat": "Invalid DMS format. Use format like: 47°7'24.44\"N"
       }
     },
     "editors": {
@@ -448,11 +471,14 @@
           "aliasFromToSame": "Alias from and to cannot be the same: {from} -> {to}",
           "invalidAliases": "Invalid aliases",
           "missingCoordinates": "Missing coordinates for the selected coordinate system",
-          "coordinateSystemMismatch": "Coordinate system of caves {caves} does not match the selected coordinate system"
+          "coordinateSystemMismatch": "Coordinate system of caves {caves} does not match the selected coordinate system",
+          "convertGPS": "You cannot convert GPS coordinates due to existing coordnates on other coordinate systems {coordinateSystems}",
+          "convertGPSDifferentZone": "Existing UTM zone {zoneNum} ({northern}) is different from the result of the conversion to new zone {newZoneNum} ({newNorthern})"
         },
         "buttons": {
           "addAlias": "Add alias",
-          "addCoordinate": "Add coordinate"
+          "addCoordinate": "Add coordinate",
+          "convertGPS": "Convert GPS"
         }
       },
       "surveySheet": {
@@ -787,7 +813,9 @@
   },
   "messages": {
     "import": {
-      "surveyAddedSuccessfully": "Survey {survey} added successfully to {toSurvey}: {nrShots} shots, {skipped} skipped"
+      "surveyAddedSuccessfully": "Survey {survey} added successfully to {toSurvey}: {nrShots} shots, {skipped} skipped",
+      "geoDataModified": "Fix point information from the survey {surveyName} has been added to cave, don't forget to update the elevation of the fix point",
+      "geoDataSkipped": "Fix point information from the survey {surveyName} has been skipped because the cave already has a coordinate system"
     },
     "config": {
       "configurationLoadedSuccessfully": "Configuration loaded successfully from {fileName}"

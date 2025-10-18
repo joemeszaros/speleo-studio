@@ -18,10 +18,11 @@ import * as U from './utils/utils.js';
 import { SurveyStation as ST, ShotWithSurvey } from './model/survey.js';
 import { Vector, Color } from './model.js';
 import { ShotType } from './model/survey.js';
-import { StationCoordinates, WGS84Coordinate } from './model/geo.js';
+import { CoordinateSystemType, StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
 import { WGS84Converter } from './utils/geo.js';
 import { i18n } from './i18n/i18n.js';
+import { globalNormalizer } from './utils/global-coordinate-normalizer.js';
 
 class SurveyHelper {
 
@@ -45,7 +46,13 @@ class SurveyHelper {
       startCoordinate = geoData?.coordinates?.find((c) => c.name === startName)?.coordinate;
 
       if (startCoordinate !== undefined) {
-        startPosition = startCoordinate.toVector();
+        // Initialize global origin from the first cave with coordinates (only if not already initialized)
+        if (!globalNormalizer.isInitialized() && startCoordinate.type === CoordinateSystemType.UTM) {
+          globalNormalizer.initializeGlobalOrigin(startCoordinate);
+        }
+
+        // Use normalized coordinates to avoid floating-point precision issues with large UTM values
+        startPosition = startCoordinate.toNormalizedVector();
       } else {
         startPosition = new Vector(0, 0, 0);
       }

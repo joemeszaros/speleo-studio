@@ -21,13 +21,15 @@ import { Shot, ShotType } from '../model/survey.js';
 import { Vector, Surface } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument } from '../model/survey.js';
-import { MeridianConvergence } from '../utils/geo.js';
+import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
+import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 import {
   EOVCoordinateWithElevation,
   UTMCoordinateWithElevation,
   StationWithCoordinate,
   GeoData,
-  CoordinateSystemType
+  CoordinateSystemType,
+  UTMCoordinateSystem
 } from '../model/geo.js';
 import { CoordinateSystemDialog } from '../ui/coordinate-system-dialog.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
@@ -288,7 +290,12 @@ class PolygonImporter extends Importer {
 
               startCoordinate = new StationWithCoordinate(fixPointName, coordinate);
               geoData = new GeoData(coordinateSystem, [startCoordinate]);
-              startPosition = coordinate.toVector();
+              // Initialize global origin from the first cave with coordinates (only if not already initialized)
+              if (!globalNormalizer.isInitialized() && coordinate.type === CoordinateSystemType.UTM) {
+                globalNormalizer.initializeGlobalOrigin(coordinate);
+              }
+              // Use normalized coordinates to avoid floating-point precision issues with large UTM values
+              startPosition = coordinate.toNormalizedVector();
             } else {
               startPosition = new Vector(coord1, coord2, coord3);
             }
@@ -371,18 +378,57 @@ class TopodroidImporter extends Importer {
 
   #parseMetadata(lines) {
     const metadata = {
-      name        : null,
-      date        : null,
-      team        : null,
-      comment     : null,
-      declination : null,
-      units       : null
+      name            : null,
+      date            : null,
+      team            : null,
+      comment         : null,
+      declination     : null,
+      units           : null,
+      latitude        : null,
+      longitude       : null,
+      fixPointStation : null
     };
 
+    let fixPointHeader = null;
+
     for (const line of lines) {
-      if (!line.startsWith('#')) continue;
+      if (!line.startsWith('#') && fixPointHeader === null) continue;
 
       const trimmedLine = line.substring(1).trim();
+
+      // we loose precision information and h_geo here
+      //# station, lon, lat, h_geo, accuracy, V_accuracy, comment, CRS
+      //0, 19.004823, 47.652094, 161, 78.5, 55.1,"ass",
+
+      if (fixPointHeader !== null) {
+        const headerParts = fixPointHeader.split(',').map((p) => p.trim());
+        const parts = trimmedLine.split(',').map((p) => p.trim());
+        if (parts.length === headerParts.length) {
+          metadata.fixPointStation = parts[headerParts.indexOf('station')];
+          const lat = parts[headerParts.indexOf('lat')];
+          const lon = parts[headerParts.indexOf('lon')];
+
+          if (U.isFloatStr(lon) && U.isFloatStr(lat)) {
+            const latFloat = U.parseMyFloat(lat);
+            const lonFloat = U.parseMyFloat(lon);
+            metadata.latitude = latFloat;
+            metadata.longitude = lonFloat;
+          } else {
+            console.warn(`Skipping invalid fix point line without latitude and longitude: ${trimmedLine}`);
+            continue;
+          }
+
+        }
+
+        fixPointHeader = null;
+        continue;
+      }
+
+      if (trimmedLine.includes('lat') && trimmedLine.includes('lon') && trimmedLine.includes('station')) {
+        fixPointHeader = trimmedLine;
+        continue;
+      }
+
       Object.keys(metadata).forEach((key) => {
         if (trimmedLine.includes(`${key}:`)) {
           const value = trimmedLine.split(`${key}:`)[1].trim();
@@ -547,8 +593,23 @@ class TopodroidImporter extends Importer {
     const surveyMetadata = this.#createSurveyMetadata(metadata);
     const startStation = shots[0].from;
     const surveyName = metadata.name || 'TopoDroid Survey';
+    let fixPointGeoData = null;
+    if (metadata.fixPointStation !== null && metadata.latitude !== null && metadata.longitude !== null) {
+      const utmCoordinates = UTMConverter.fromLatLon(metadata.latitude, metadata.longitude);
+      const fixPointCoordinate = new UTMCoordinateWithElevation(
+        U.roundToTwoDecimalPlaces(utmCoordinates.easting),
+        U.roundToTwoDecimalPlaces(utmCoordinates.northing),
+        0
+      );
+      const fixPointCoordinateSystem = new UTMCoordinateSystem(
+        utmCoordinates.zoneNum,
+        utmCoordinates.zoneLetter >= 'N'
+      );
 
-    return new Survey(surveyName, true, surveyMetadata, startStation, shots);
+      const fixPointStation = new StationWithCoordinate(metadata.fixPointStation, fixPointCoordinate);
+      fixPointGeoData = new GeoData(fixPointCoordinateSystem, [fixPointStation]);
+    }
+    return { survey: new Survey(surveyName, true, surveyMetadata, startStation, shots), geoData: fixPointGeoData };
   }
 
   importFile(file, name, onSurveyLoad) {
@@ -556,8 +617,8 @@ class TopodroidImporter extends Importer {
   }
 
   async importText(csvTextData, onSurveyLoad) {
-    const survey = this.getSurvey(csvTextData);
-    await onSurveyLoad(survey);
+    const result = this.getSurvey(csvTextData);
+    await onSurveyLoad(result);
   }
 }
 

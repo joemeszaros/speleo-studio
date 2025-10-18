@@ -754,7 +754,7 @@ class SceneInteraction {
     if (stationMeta.station.coordinates.projected) {
       if (stationMeta.station.coordinates.projected.type === CoordinateSystemType.EOV) {
         projectedCoordinates = `
-          ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.projected, ['x', 'y', 'elevation'])}<br>
+          ${i18n.t('ui.panels.stationDetails.eovCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.projected, ['y', 'x', 'elevation'])}<br>
         `;
       } else if (stationMeta.station.coordinates.projected.type === CoordinateSystemType.UTM) {
         projectedCoordinates = `

@@ -198,6 +198,11 @@ class ProjectManager {
     this.db.clear();
 
     const caves = await this.projectSystem.getCavesForProject(project.id);
+
+    if (caves.length === 0) {
+      this.#emitCoordinateSystemChange(null);
+    }
+
     caves.forEach((cave) => {
       this.recalculateCave(cave);
       this.calculateFragmentAttributes(cave);
@@ -256,7 +261,10 @@ class ProjectManager {
     if (currentProject) {
       await this.projectSystem.removeCaveFromProject(currentProject.id, id);
     }
-    this.#emitCoordinateSystemChange(null);
+
+    if (this.db.getAllCaveNames().length === 0) {
+      this.#emitCoordinateSystemChange(null);
+    }
   }
 
   async reloadCave(cave) {

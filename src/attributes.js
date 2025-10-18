@@ -65,7 +65,6 @@ export class AttributesDefinitions {
   }
 
   createFromPure(attribute) {
-    console.log('createFromPure', attribute);
     const def = this.#getDefiniton((d) => d.name === attribute.name);
     const newAttribute = new Attribute(def);
     const paramNames = Object.keys(def.params);

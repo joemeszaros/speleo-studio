@@ -191,6 +191,10 @@ function formatDateISO(date) {
   return formattedDate;
 }
 
+function roundToTwoDecimalPlaces(num) {
+  return Math.round(num * 100) / 100;
+}
+
 function falsy(value) {
   return value === undefined || value === null || value === '' || value === ``;
 }
@@ -310,5 +314,6 @@ export {
   falsy,
   toAscii,
   textToIso88592Bytes,
-  arraysEqual
+  arraysEqual,
+  roundToTwoDecimalPlaces
 };

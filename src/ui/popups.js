@@ -49,8 +49,7 @@ function showCautionPanel(message, seconds, errorOrWarning) {
 
       return;
     } else {
-      // Different type - hide current panel and show new one
-      hidePanel(cautionPanel);
+      hidePanel(cautionPanel, 0);
     }
   }
 
@@ -140,12 +139,11 @@ function updatePanelDisplay(cautionPanel, messages, errorOrWarning) {
   cautionPanel.innerHTML = html;
 }
 
-function hidePanel(cautionPanel) {
+function hidePanel(cautionPanel, timeout = 300) {
   // Add exit animation class
   cautionPanel.classList.add('hiding');
 
-  // Wait for animation to complete before hiding
-  setTimeout(() => {
+  const hide = () => {
     cautionPanel.style.display = 'none';
     cautionPanel.classList.remove('hiding');
     activePanelState.isVisible = false;
@@ -155,7 +153,14 @@ function hidePanel(cautionPanel) {
       clearTimeout(activePanelState.timeoutId);
       activePanelState.timeoutId = null;
     }
-  }, 300); // Match the animation duration
+  };
+
+  // Wait for animation to complete before hiding
+  if (timeout > 0) {
+    setTimeout(hide, timeout);
+  } else {
+    hide();
+  }
 }
 
 // Global function to close caution panel (accessible from onclick)
