@@ -147,7 +147,7 @@ export class SpeleoScene {
     }
 
     const font = {
-      size  : labelConfig.size,
+      size  : (labelConfig.size + 5) * 3,
       color : labelConfig.color,
       name  : 'Arial'
 

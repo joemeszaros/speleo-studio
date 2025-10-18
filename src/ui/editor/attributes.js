@@ -515,6 +515,18 @@ class BaseAttributeEditor extends Editor {
       } else {
         return true;
       }
+    },
+    attributeLengthCalcFormatter : (cell) => {
+      return i18n.t('common.length') + ': ' + cell.getValue();
+    },
+    attributeLengthCalc : (_values, data) => {
+      var sumLength = 0;
+      data.forEach((value) => {
+        if (value?.attribute?.length) {
+          sumLength += value.attribute.length;
+        }
+      });
+      return sumLength.toFixed(2);
     }
   };
 
@@ -622,7 +634,9 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         cellEditing: () => {
           const tooltips = document.querySelectorAll('.photo-preview-tooltip');
           tooltips.forEach((tooltip) => tooltip.remove());
-        }
+        },
+        bottomCalcFormatter : this.tableFunctions.attributeLengthCalcFormatter,
+        bottomCalc          : this.tableFunctions.attributeLengthCalc
 
       },
       {
@@ -1426,7 +1440,9 @@ class StationAttributeEditor extends BaseAttributeEditor {
           const tooltips = document.querySelectorAll('.photo-preview-tooltip');
           tooltips.forEach((tooltip) => tooltip.remove());
         },
-        editor : (cell, onRendered, success) =>
+        bottomCalcFormatter : this.tableFunctions.attributeLengthCalcFormatter,
+        bottomCalc          : this.tableFunctions.attributeLengthCalc,
+        editor              : (cell, onRendered, success) =>
           this.attributesEditor(
             cell,
             onRendered,
@@ -1480,20 +1496,6 @@ class StationAttributeEditor extends BaseAttributeEditor {
       );
     }
   }
-
-  tableFunctions = {
-
-    checkAttributesLength : (attributes) => {
-      if (attributes.length > 1) {
-        this.showAlert(
-          i18n.t('ui.editors.attributes.errors.onlyOneAttributeAllowed', { nrAttributes: attributes.length - 1 })
-        );
-        return false;
-      } else {
-        return true;
-      }
-    }
-  };
 
   setCaveStationAttributes() {
     const newAttributes = this.getNewStationAttributes();

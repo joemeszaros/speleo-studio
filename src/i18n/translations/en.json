@@ -923,7 +923,8 @@
     "invalid": "Invalid",
     "comments": "Comments",
     "remove": "Remove",
-    "attributes": "Attributes"
+    "attributes": "Attributes",
+    "length": "Length"
   },
   "attributes": {
     "title": "Attribute Definitions Reference",

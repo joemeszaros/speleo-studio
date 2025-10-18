@@ -335,6 +335,7 @@ class Main {
         return;
       }
       await this.projectSystem.addCaveToProject(currentProject, cave);
+      this.projectManager.calculateFragmentAttributes(cave);
       this.projectManager.addCave(cave);
     } else {
       throw Error(i18n.t('errors.import.caveAlreadyImported', { name: cave.name }));

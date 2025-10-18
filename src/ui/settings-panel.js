@@ -312,7 +312,7 @@ export class SettingsPanel {
             this.createRangeInput(
               i18n.t('ui.settingsPanel.labels.size'),
               this.options.scene.stationLabels.size,
-              15,
+              1,
               60,
               1,
               (value) => {
