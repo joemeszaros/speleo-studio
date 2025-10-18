@@ -116,7 +116,7 @@ class BaseAttributeEditor extends Editor {
 
   }
 
-  getContextMenu() {
+  getContextMenu(propagableColumns = []) {
 
     return [
       {
@@ -149,6 +149,49 @@ class BaseAttributeEditor extends Editor {
                 this.hideAttribute(r);
               });
               this.table.updateData(toHide.map((r) => ({ id: r.id, visible: false })));
+            }
+          }
+        }
+      },
+      {
+        label  : `<span class="propagate-row"></span><span>${i18n.t('ui.editors.attributes.menu.propagateCellValue')}<span/> `,
+        action : () => {
+
+          const activeRowsData = this.table.getData('active');
+          if (activeRowsData.length === 0) {
+            return;
+          }
+
+          if (this.table.getRanges().length > 0) {
+            const selectedData = this.table.getRanges()[0].getData();
+            if (selectedData.length === 1 && Object.keys(selectedData[0]).length === 1) {
+              const selectedCellValue = selectedData[0];
+              // only 1 key
+              Object.keys(selectedCellValue).forEach((key) => {
+                if (!propagableColumns.includes(key)) {
+                  return;
+                }
+                this.table.updateData(
+                  activeRowsData.map((r) => {
+                    const newRow = { id: r.id };
+                    newRow[key] = selectedCellValue[key];
+                    if ((key === 'attribute' || key === 'format') && r.attribute !== undefined && r.format) {
+                      const localized = (newRow.attribute ?? r.attribute).localize(i18n);
+                      const { interpolated, success } = U.interpolate(newRow.format ?? r.format, localized);
+                      if (success) {
+                        newRow.interpolated = interpolated;
+                      }
+                    }
+                    return newRow;
+                  })
+                );
+                this.table.getData('active')
+                  .filter((r) => r.visible)
+                  .forEach((r) => {
+                    this.hideAttribute(r);
+                    this.showAttribute(r);
+                  });
+              });
             }
           }
         }
@@ -197,7 +240,7 @@ class BaseAttributeEditor extends Editor {
       clipboardPasteAction  : 'range',
       rowContextMenu        : () => {
         const basicMenu = this.baseTableFunctions.getContextMenu();
-        return [...basicMenu, ...this.getContextMenu()];
+        return [...basicMenu, ...this.getContextMenu(this.getPropagableColumns())];
       },
       rowHeader : {
         formatter : 'rownum',
@@ -882,6 +925,10 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
     return rows;
   }
 
+  getPropagableColumns() {
+    return ['color', 'format', 'attribute', 'start', 'termination'];
+  }
+
   getColumns() {
 
     const editor = (cell, onRendered, success) => {
@@ -1218,6 +1265,10 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     return rows;
   }
 
+  getPropagableColumns() {
+    return ['color', 'format', 'attribute', 'from', 'to'];
+  }
+
   getColumns() {
 
     const specificColumns = [
@@ -1374,6 +1425,10 @@ class StationAttributeEditor extends BaseAttributeEditor {
       () => close(false) // do not save on exit
     );
     specificButtons.forEach((button) => this.iconBar.addButton(button));
+  }
+
+  getPropagableColumns() {
+    return ['station', 'attribute'];
   }
 
   getColumns() {

@@ -625,7 +625,8 @@
         },
         "menu": {
           "showSelected": "Kiválasztottak megjelenítése",
-          "hideSelected": "Kiválasztottak elrejtése"
+          "hideSelected": "Kiválasztottak elrejtése",
+          "propagateCellValue": "Cella érték propagálása"
         },
         "columns": {
           "name": "Név",

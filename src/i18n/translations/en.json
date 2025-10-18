@@ -616,7 +616,8 @@
         },
         "menu": {
           "showSelected": "Show selected",
-          "hideSelected": "Hide selected"
+          "hideSelected": "Hide selected",
+          "propagateCellValue": "Propagate cell value"
         },
         "errors": {
           "onlyOneAttributeAllowed": "Only a single attribute is allowed here!<br>Delete {nrAttributes} attribute(s)",

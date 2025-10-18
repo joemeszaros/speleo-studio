@@ -369,6 +369,7 @@ class CaveEditor extends Editor {
 
         this.caveData.coordinateSystem = new UTMCoordinateSystem(zoneNum, zoneLetter >= 'N');
         this.renderCoords();
+        this.caveHasChanged = true;
       } catch (error) {
         console.error('WGS84 coordinate input cancelled or failed', error);
       }
