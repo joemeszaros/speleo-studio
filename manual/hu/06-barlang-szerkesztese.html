@@ -115,24 +115,47 @@
         </ul>
       </div>
 
-      <div class="editor-box">
-        <h4>Koordináták</h4>
-        <p
-          >A bevezető fejezetben már taglaltuk a koordináta rendszereket, amelyek elmagyarázzák a koordináta rendszerek
-          rejtelmeit. A barlang kezdőpontjának vetületi koordinátái lehet itt megadni UTM vagy EOV formátumban.</p
-        >
-        <ul>
-          <li><strong>Pont neve:</strong> A pont neve, amelyhez az EOV koordináták tartoznak</li>
-          <li
-            ><strong>Vetületi koordináták (UTM, EOV):</strong> EOV (y,x) vagy UTM (keleti, északi) koordináták
-            megadása</li
-          >
-          <li><strong>Magasság:</strong> Tengerszint feletti magasság</li>
-        </ul>
+      <div class="row editor-box">
+        <div class="column-2">
+          <h4>Koordináták</h4>
+          <p
+            >A bevezető fejezetben már taglaltuk a koordináta rendszereket alapjait. Ha barlangjainkat szeretnénk
+            valamilyen vetületi koordináta rendszerben megjeleneníteni más barlangokkal és esetleg felszíni modelekkel
+            együtt, akkor a barlang kezdőpontjának meg kell adnunk a vetületi koordinátáit, amelyet UTM vagy EOV
+            formátumban adhatunk meg. Sok esetben a felszíni modellek valamilyen vetületi koordináta rendszerben vannak
+            (pl. EOV), de több barlang megnyitása esetén is szükség van vetületi koordináták megadására, ellenkező
+            esetben minden barlang kezdőpontja ugyanazon a helyen lenne.
+          </p>
+
+          <ul>
+            <li><strong>Pont neve:</strong> A pont neve, amelyhez a vetületi koordináták tartoznak</li>
+            <li
+              ><strong>Vetületi koordináták (UTM, EOV):</strong> EOV (y,x) vagy UTM (keleti, északi) koordináták
+              megadása</li
+            >
+            <li><strong>Magasság:</strong> Tengerszint feletti magasság</li>
+          </ul>
+          <p
+            >Lehetőség van <strong>GPS (WGS84) koordináták manuális megadására is</strong>, amelyeket a Speleo Studio
+            automatikusan UTM koordinátákra konvertál. A GPS konvertálás gombra kattintva megadhatjuk a GPS
+            koordinátákat (hosszúság és szélesség) kétféle formátumban: fokok és percek (DMS) illetve decimális fokok
+            (DD). A megadott koordinátákat a Speleo Studio UTM koordinátákra konvertálja a megfelelő UTM zóna
+            kiválasztásával és felveszi a koordinátákat a barlang adatlapján. Ne felejtsük el megadni a kezdőpont nevét,
+            illetve magasságát!
+          </p>
+        </div>
+        <div class="image-placeholder black small-padding" style="flex: 20%">
+          <img src="images/4b-gps-konvertalas.png"
+        /></div>
       </div>
 
       <div class="editor-box">
         <h4>Pont megfeleltetések (aliaszok)</h4>
+        <p
+          >A pont megfeleltetésekről részletesen a
+          <a href="03-adatmodell.html#pont-megfeleltetesek-aliaszok">Pont megfeleltetések (aliaszok)</a> fejezetben
+          olvashatsz.</p
+        >
         <ul>
           <li><strong>Pont neve:</strong> A pont eredeti neve</li>
           <li><strong>Pont megfeleltetése:</strong> Az aliasz neve, azaz milyen más néven érhető még el ez a pont</li>
@@ -265,6 +288,7 @@
             ><img src="../../icons/add_white.svg" class="icon" /><strong> Sor hozzáadása a végéhez:</strong> Új sor
             beszúrása a táblázat végéhez</li
           >
+          <li><strong> Új sorok számra:</strong> A szerkeszthető mezőben az új sorok számát adhatjuk meg.</li>
           <li
             ><img src="../../icons/trash_white.svg" class="icon" /><strong> Sor(ok) törlése:</strong> Aktuális /
             Kiválasztott sor vagy sorok törlése</li

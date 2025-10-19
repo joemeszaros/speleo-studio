@@ -93,9 +93,9 @@
           <h4>Fix koordináták</h4>
           <p
             >A fix koordináták lehetővé teszik, hogy a barlangokat egy olyan koordináta rendszerben jelenítsük meg,
-            amelyet más alkalmazások is használnak. Jelenleg csak az EOV koordináta rendszert támogatja a Speleo Studio
-            (csak a kezdőpont koordinátája adható meg). Tervbe van véve más rendszerek támogatása is pl. a WGS84
-            koordináta rendszer.
+            amelyet más alkalmazások is használnak. Jelenleg az EOV és UTM vetületi koordináta rendszereket támogatja a
+            Speleo Studio (csak a kezdőpont koordinátája adható meg), de fel lehet venni fix pontokat WGS84 (GPS)
+            koordináták konvertálásával is.
           </p>
         </div>
       </div>
@@ -296,7 +296,9 @@
                   minden járatra vonatkoztatja az adott tulajsonságot egészen addig, amíg egy megadott végponthoz nem
                   ér. Gondoljunk a barlangra egy gráfként, a komponens attribútum a gráf egy adott komponensére
                   vonatkozik, amelynek bejárása a kezdőponttól történik és a végpontokig tart. Végpontok megadása nélkül
-                  a komponens attribútum a teljes barlangra vonatkozik.
+                  a komponens attribútum a teljes barlangra vonatkozik. Az ábrán a zöld színnel jelölt komponens
+                  kezdőpontja a rózsaszín pont, ahonnan kiindulva elkezdjük bejárni a barlangot. A sárga végpontok
+                  nélkül a komponens attribútum a teljes barlangra vonatkozna, de a sárga végpontoknál a bejárás megáll.
                 </li>
               </ul>
             </div>
@@ -307,17 +309,19 @@
           <p>Az attribútumokat beosztottuk főbb csoportokba (kategóriákba):</p>
           <ul>
             <li>Geológia</li>
-            <li>Felszerelés</li>
-            <li>Képződmény</li>
+            <li>Kiépítés</li>
+            <li>Kitöltés</li>
             <li>Fauna</li>
             <li>Klimatológia</li>
             <li>Metaadatok</li>
+            <li>Archeológia</li>
+            <li>Szpeleotéma</li>
           </ul>
           <p
-            >Minden attribútumnak vannak kötelező és nem kötelező paraméterei, ezek az attribútumtól függenek. Egy
-            <i>kötél</i> attribútum esetén kötelező paraméter a hossz, nem kötelező mezők az állapot és a beépítés éve.
-            A paraméterek helyességét a Speleo Studio automatikusan ellenőrzi, például a kötél hossz értéke nem lehet
-            negatív.
+            >Minden attribútumnak van egy neve és vannak paraméterei, amelyek az attribútumtól függenek. A paraméterek
+            lehetnek kötelezőek, vagy opcionálisak. Egy <i>kötél</i> attribútum esetén kötelező paraméter a hossz, nem
+            kötelező mező az állapot és a beépítés éve. A paraméterek helyességét a Speleo Studio automatikusan
+            ellenőrzi, például a kötél hossz értéke nem lehet negatív.
           </p>
           <p
             >Az <strong>attribútumok teljes listáját</strong> az

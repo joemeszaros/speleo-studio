@@ -182,15 +182,28 @@
       <div class="format-box">
         <h4>TopoDroid formátum</h4>
         <p
-          >A TopoDroid egy elterjedt Android alkalmazás, amellyel felméréseket végezhetünk a barlangokban. A CSV export
-          tartalmazza a felmérési adatokat egyszerű szöveges formátumban, amelyet exportálnunk kell a TopoDroid
-          alkalmazásból.</p
+          >A TopoDroid egy elterjedt Android alkalmazás, amellyel felméréseket végezhetünk a barlangokban. A TopoDroid
+          felméréseket kezel és nem komplett barlangokat, így egy teljes barlangot nem, de egyes felméréseket
+          importálhatunk a Speleo Studio-ba, amihez a CSV formátumot javasoljuk. A CSV export tartalmazza a felmérési
+          adatokat egyszerű szöveges formátumban, amelyet exportálnunk kell a TopoDroid alkalmazásból, hogy aztán a
+          fájlt a Speleo Studio-ba importálhassuk.</p
         >
 
         <h5>Előnyök:</h5>
         <ul>
           <li>Sokak által használt alkalmazás, támogatása alapvető fontosságú</li>
           <li>Egyszerű formátum</li>
+        </ul>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ TopoDroid verzió és felmérés megjegyzések</h3>
+        <ul>
+          <li
+            >A TopoDroid régebbi verziója nem exportálja ki a méréseknél megadott megjegyzéseket és a felmérés fix
+            koordinátáit, ezért javasoljuk a legújabb verziót használni.</li
+          >
+          <li>A megjegzzések exportálása a v6.3.52 (2025-09-10) verziótól kezdődően lehetséges</li>
         </ul>
       </div>
 
@@ -230,6 +243,17 @@
         <img src="images/4-topodroid-4.png" />
       </div>
 
+      <div class="info">
+        <p
+          >Ha a TopoDroid fájl tartalmaz fix (GPS) koordinátákat, akkor a Speleo Studio az első fix koordinátát UTM
+          koordinátákra konvertálja és felveszi a barlang adatlapján, ha a barlangnak még nincs UTM-től eltérő korábban
+          kiválasztott koordináta rendszere (pl. EOV). Ekkor a következő üzenetet kapjuk:</p
+        >
+      </div>
+      <div class="image-placeholder black">
+        <img src="images/4b-topodroid-koordinata-hiba.png" />
+      </div>
+
       <div class="step">
         <h3>TopoDroid felmérés hozzáadása egy felméréshez</h3>
         <p
@@ -264,6 +288,9 @@
 0@felmeres,1@felmeres,7.51,310.6,-6.8,1,,"A bejárat után jobbra a falon"
 0@felmeres,-,6.26,314.06,-54.38,,,""
 0@felmeres,-,14.56,313.81,-45.78,,,""
+
+# station, lon, lat, h_geo, accuracy, V_accuracy, comment, CRS
+0, 19.123456, 47.654321, 161, 78.5, 55.1,"comment",
       </div>
 
       <div class="info">
