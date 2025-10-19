@@ -445,11 +445,16 @@ export class SurveyEditor extends Editor {
     // Create iconbar with common buttons
     this.iconBar = new IconBar(contentElmnt);
 
-    // Add common buttons (undo, redo, add row, delete row)
+    const rcIC = this.iconBar.getRowCountInputContainer();
+    // Add common buttons (undo, redo, add row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
-      getEmptyRow : () => this.getEmptyRow()
+      getEmptyRow            : () => this.getEmptyRow(),
+      rowCountInputContainer : rcIC
     });
     commonButtons.forEach((button) => this.iconBar.addButton(button));
+
+    this.iconBar.addRowCountInput(rcIC);
+    this.iconBar.addButton(IconBar.getDeleteButton(() => this.table));
 
     // Add survey-specific buttons
     const surveyButtons = IconBar.getSurveyButtons(

@@ -61,11 +61,16 @@ class StationCommentsEditor extends BaseEditor {
   setupButtons(contentElmnt, close) {
     this.iconBar = new IconBar(contentElmnt);
 
+    const rcIC = this.iconBar.getRowCountInputContainer();
     // Add common buttons (undo, redo, add row, delete row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
-      getEmptyRow : () => this.getEmptyRow()
+      getEmptyRow            : () => this.getEmptyRow(),
+      rowCountInputContainer : rcIC
     });
     commonButtons.forEach((button) => this.iconBar.addButton(button));
+    this.iconBar.addRowCountInput(rcIC);
+    this.iconBar.addButton(IconBar.getDeleteButton(() => this.table));
+
     const commentsButtons = IconBar.getStationCommentsButtons(
       () => this.validateComments(),
       () => this.updateComments(),

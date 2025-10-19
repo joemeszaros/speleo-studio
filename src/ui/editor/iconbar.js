@@ -48,6 +48,26 @@ export class IconBar {
     return this.addButton({ separator: true });
   }
 
+  getRowCountInputContainer() {
+    const inputContainer = U.node`<div class="row-count-container">`;
+    const rowCountInput = U.node`<input id="row-count-input" type="number" min="1" max="100" value="1">`;
+    inputContainer.appendChild(rowCountInput);
+    return inputContainer;
+  }
+
+  addRowCountInput(inputContainer) {
+    this.element.appendChild(inputContainer);
+  }
+
+  static #getRowCount(rowCountInputContainer) {
+    if (rowCountInputContainer) {
+      const rowCountInput = rowCountInputContainer.querySelector('input');
+      const value = parseInt(rowCountInput.value);
+      return isNaN(value) || value < 1 ? 1 : Math.min(value, 100);
+    }
+    return 1;
+  }
+
   // Common button configurations
   // at the time of this function call this.table is undefined therefore we need to pass a function that returns the table
   static getCommonButtons(getTable, options = {}) {
@@ -61,6 +81,10 @@ export class IconBar {
         }
       }
       return undefined;
+    };
+
+    const getRowCount = () => {
+      return this.#getRowCount(options.rowCountInputContainer);
     };
 
     return [
@@ -83,7 +107,10 @@ export class IconBar {
         click   : () => {
           const index = getIndex();
           if (index !== undefined && options.getEmptyRow) {
-            getTable().addRow(options.getEmptyRow(), true, index);
+            const rowCount = getRowCount();
+            for (let i = 0; i < rowCount; i++) {
+              getTable().addRow(options.getEmptyRow(), true, index);
+            }
           }
         }
       },
@@ -94,7 +121,10 @@ export class IconBar {
         click   : () => {
           const index = getIndex();
           if (index !== undefined && options.getEmptyRow) {
-            getTable().addRow(options.getEmptyRow(), false, index);
+            const rowCount = getRowCount();
+            for (let i = 0; i < rowCount; i++) {
+              getTable().addRow(options.getEmptyRow(), false, index);
+            }
           }
         }
       },
@@ -104,37 +134,46 @@ export class IconBar {
         tooltip : i18n.t('ui.editors.common.addRowToEnd'),
         click   : () => {
           if (options.getEmptyRow) {
-            getTable()
-              .addRow(options.getEmptyRow())
-              .then((row) => {
-                row.scrollTo('nearest', false).catch((err) => {
-                  console.warn('Failed to scroll to new row:', err);
-                });
+            const rowCount = getRowCount();
+            let lastRow = null;
+            Promise.all(
+              U.range(1, rowCount).map(() => {
+                return getTable().addRow(options.getEmptyRow());
+              })
+            ).then((rows) => {
+              lastRow = rows[rows.length - 1];
+              lastRow.scrollTo('bottom', false).catch((err) => {
+                console.warn('Failed to scroll to new row:', err);
               });
-          }
-        }
-      },
-      {
-        id      : 'delete-row',
-        tooltip : i18n.t('ui.editors.common.deleteActiveRows'),
-        icon    : 'icons/trash_white.svg',
-        click   : () => {
-          if (getTable()) {
-            var ranges = getTable().getRanges();
-            ranges.forEach((r) => {
-              const rows = r.getRows();
-              rows.forEach((r) => {
-                if (options?.deleteRow !== undefined) {
-                  options?.deleteRow(r);
-                }
-                r.delete();
-              });
-              r.remove();
             });
           }
         }
       }
+
     ];
+  }
+
+  static getDeleteButton(getTable, options = {}) {
+    return {
+      id      : 'delete-row',
+      tooltip : i18n.t('ui.editors.common.deleteActiveRows'),
+      icon    : 'icons/trash_white.svg',
+      click   : () => {
+        if (getTable()) {
+          var ranges = getTable().getRanges();
+          ranges.forEach((r) => {
+            const rows = r.getRows();
+            rows.forEach((r) => {
+              if (options?.deleteRow !== undefined) {
+                options?.deleteRow(r);
+              }
+              r.delete();
+            });
+            r.remove();
+          });
+        }
+      }
+    };
   }
 
   // Survey-specific buttons

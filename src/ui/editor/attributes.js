@@ -92,17 +92,26 @@ class BaseAttributeEditor extends Editor {
     // Create iconbar with common buttons
     this.iconBar = new IconBar(contentElmnt);
 
+    const rcIC = this.iconBar.getRowCountInputContainer();
     // Add common buttons (undo, redo, add row, delete row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
-      getEmptyRow : () => this.getEmptyRow(),
-      deleteRow   : (r) => {
-        const data = r.getData();
-        if (data.visible) {
-          this.hideAttribute(data);
-        }
-      }
+      getEmptyRow            : () => this.getEmptyRow(),
+      rowCountInputContainer : rcIC
+
     });
     commonButtons.forEach((button) => this.iconBar.addButton(button));
+
+    this.iconBar.addRowCountInput(rcIC);
+    this.iconBar.addButton(
+      IconBar.getDeleteButton(() => this.table, {
+        deleteRow : (r) => {
+          const data = r.getData();
+          if (data.visible) {
+            this.hideAttribute(data);
+          }
+        }
+      })
+    );
 
     const visibleButtons = IconBar.getVisibleButtons(
       () => this.showAllAttributes(),

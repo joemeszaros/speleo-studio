@@ -291,6 +291,10 @@ function textToIso88592Bytes(text) {
   return iso88592Bytes;
 }
 
+function range(start, stop, step = 1) {
+  return Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step);
+}
+
 export {
   fromPolar,
   toPolar,
@@ -315,5 +319,6 @@ export {
   toAscii,
   textToIso88592Bytes,
   arraysEqual,
-  roundToTwoDecimalPlaces
+  roundToTwoDecimalPlaces,
+  range
 };

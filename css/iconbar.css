@@ -65,6 +65,31 @@ a:hover img {
   padding: 8px 1px;
 }
 
+/* Row count input styling */
+.row-count-container {
+  float: left;
+  margin: 8px 5px 0 5px;
+  display: flex;
+  align-items: center;
+}
+
+.row-count-container input {
+  width: 40px;
+  height: 20px;
+  font-size: 12px;
+  text-align: center;
+  border: 1px solid #999;
+  border-radius: 3px;
+  background-color: #444;
+  color: white;
+}
+
+.row-count-container input:focus {
+  outline: none;
+  border-color: #04aa6d;
+  box-shadow: 0 0 3px rgba(4, 170, 109, 0.3);
+}
+
 .mytooltip {
   position: relative;
   display: inline-block;
