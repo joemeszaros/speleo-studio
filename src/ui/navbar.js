@@ -38,6 +38,7 @@ class NavigationBar {
     interactive,
     projectManager,
     projectSystem,
+    googleDriveSettings,
     projectPanel,
     exportPanel
   ) {
@@ -48,6 +49,7 @@ class NavigationBar {
     this.interactive = interactive;
     this.projectManager = projectManager;
     this.projectSystem = projectSystem;
+    this.googleDriveSettings = googleDriveSettings;
     this.projectPanel = projectPanel;
     this.exportPanel = exportPanel;
     this.listeners = [];
@@ -179,6 +181,11 @@ class NavigationBar {
             name  : i18n.t('ui.navbar.menu.tools.shortestPath'),
             icon  : 'icons/shortest_path.svg',
             click : () => new ShortestPathTool(this.db, this.options, this.scene).show()
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.tools.drive'),
+            icon  : 'icons/drive.svg',
+            click : () => this.googleDriveSettings.show()
           }
         ]
       },

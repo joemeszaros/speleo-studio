@@ -19,7 +19,8 @@
         "tools": {
           "name": "Tools",
           "dipStrike": "Dip & Strike Calculator",
-          "shortestPath": "Shortest path"
+          "shortestPath": "Shortest path",
+          "drive": "Google Drive sync"
         },
         "help": {
           "name": "Help",
@@ -276,6 +277,36 @@
           "caveIdAlreadyExists": "A cave with the id \"{id}\" already exists",
           "nonMatchingCaveIds": "Cave IDs in project do not match cave IDs from the caves"
         }
+      },
+      "googleDriveSettings": {
+        "title": "Google Drive Sync",
+        "configuration": "Configuration",
+        "clientId": "Client ID:",
+        "clientIdPlaceholder": "Enter Google OAuth Client ID",
+        "clientSecret": "Client Secret:",
+        "clientSecretPlaceholder": "Enter Google OAuth Client Secret",
+        "instanceName": "Instance Name:",
+        "instanceNamePlaceholder": "An easy to remember name for your Speleo Studio instance",
+        "folderName": "Folder Name:",
+        "folderNamePlaceholder": "Speleo Studio",
+        "cavesFolder": "Caves Folder:",
+        "cavesFolderPlaceholder": "Caves",
+        "projectsFolder": "Projects Folder:",
+        "projectsFolderPlaceholder": "Projects",
+        "authentication": "Authentication",
+        "notConfigured": "Not configured",
+        "configurationComplete": "Configuration complete, authorization required",
+        "connected": "✓ Connected to Google Drive",
+        "authorize": "Authorize",
+        "disconnect": "Disconnect",
+        "syncOperations": "Sync Operations",
+        "syncAll": "Sync All",
+        "restoreAll": "Restore All",
+        "readyToSync": "Ready to sync",
+        "syncing": "Syncing...",
+        "lastSync": "Last sync: {date}",
+        "options": "Options",
+        "enableAutoSync": "Enable automatic sync"
       },
       "dipStrikeCalculator": {
         "title": "Dip & Strike Calculator",
@@ -727,6 +758,13 @@
       "failedToLoadConfiguration": "Failed to load configuration from {fileName}: {error}",
       "failedToReadFile": "Failed to read file {fileName}"
     },
+    "googleDrive": {
+      "notConfigured": "Google Drive is not configured",
+      "authorizationFailed": "Google Drive authorization failed: {error}",
+      "syncFailed": "Google Drive sync failed: {error}",
+      "restoreFailed": "Google Drive restore failed: {error}",
+      "failedToSaveConfig": "Failed to save Google Drive configuration"
+    },
     "scene": {
       "surveyObjectsAlreadyAdded": "Survey {caveName} / {surveyName} objects have already been added to the scene!",
       "unknownSurfaceColorConfiguration": "Unknown configuration for surface colors: {value}",
@@ -757,6 +795,7 @@
         "failedToSaveCave": "Failed to save cave",
         "failedToLoadCave": "Failed to load cave",
         "failedToLoadCaveNames": "Failed to load cave names for project",
+        "failedToLoadCaveIds": "Failed to load cave ids for project",
         "failedToLoadCaves": "Failed to load caves for project",
         "failedToCheckCaveExistence": "Failed to check cave existence",
         "failedToDeleteCave": "Failed to delete cave",
@@ -820,6 +859,16 @@
     },
     "config": {
       "configurationLoadedSuccessfully": "Configuration loaded successfully from {fileName}"
+    },
+    "googleDrive": {
+      "authorizationSuccessful": "Google Drive authorization successful",
+      "disconnected": "Disconnected from Google Drive",
+      "syncCompleted": "Sync completed successfully",
+      "projectsSynced": "Projects synced successfully",
+      "cavesSynced": "Caves synced successfully",
+      "restoreCompleted": "Restore completed successfully",
+      "projectsRestored": "Projects restored successfully",
+      "cavesRestored": "Caves restored successfully"
     }
   },
   "menu": {

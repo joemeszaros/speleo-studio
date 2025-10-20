@@ -19,7 +19,8 @@
         "tools": {
           "name": "Eszközök",
           "dipStrike": "Dőlés és irány számító",
-          "shortestPath": "Legrövidebb út"
+          "shortestPath": "Legrövidebb út",
+          "drive": "Google Drive szinkronizálás"
         },
         "help": {
           "name": "Súgó",
@@ -276,6 +277,36 @@
           "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik",
           "nonMatchingCaveIds": "A projektben felsorolt barlang azonosítók nem egyeznek a barlangok azonosítóival"
         }
+      },
+      "googleDriveSettings": {
+        "title": "Google Drive szinkronizálás",
+        "configuration": "Beállítások",
+        "clientId": "Ügyfél azonosító:",
+        "clientIdPlaceholder": "Adja meg a Google OAuth ügyfél azonosítót",
+        "clientSecret": "Ügyfél titok:",
+        "clientSecretPlaceholder": "Adja meg a Google OAuth ügyfél titkot",
+        "instanceName": "Példány neve:",
+        "instanceNamePlaceholder": "Egy könnyen megjegyezhető név a Speleo Studio példányához",
+        "folderName": "Mappa neve:",
+        "folderNamePlaceholder": "Speleo Studio",
+        "cavesFolder": "Barlangok mappája:",
+        "cavesFolderPlaceholder": "Barlangok",
+        "projectsFolder": "Projektek mappája:",
+        "projectsFolderPlaceholder": "Projektek",
+        "authentication": "Hitelesítés",
+        "notConfigured": "Nincs konfigurálva",
+        "configurationComplete": "Konfiguráció kész, hitelesítés szükséges",
+        "connected": "✓ Kapcsolódva a Google Drive-hoz",
+        "authorize": "Hitelesítés",
+        "disconnect": "Kapcsolat bontása",
+        "syncOperations": "Szinkronizálási műveletek",
+        "syncAll": "Adatok feltöltése",
+        "restoreAll": "Adatok letöltése",
+        "readyToSync": "Készen áll a szinkronizálásra",
+        "syncing": "Szinkronizálás...",
+        "lastSync": "Utolsó szinkronizálás: {date}",
+        "options": "Beállítások",
+        "enableAutoSync": "Automatikus szinkronizálás engedélyezése"
       },
       "shortestPath": {
         "title": "Legrövidebb út",
@@ -750,6 +781,13 @@
       "failedToLoadConfiguration": "Nem lehet betölteni a konfigurációt a(z) {fileName} fájlból: {error}",
       "failedToReadFile": "Nem lehet olvasni a(z) {fileName} fájlt"
     },
+    "googleDrive": {
+      "notConfigured": "A Google Drive nincs konfigurálva",
+      "authorizationFailed": "A Google Drive engedélyezése sikertelen: {error}",
+      "syncFailed": "A Google Drive szinkronizálása sikertelen: {error}",
+      "restoreFailed": "A Google Drive visszaállítása sikertelen: {error}",
+      "failedToSaveConfig": "Nem lehet menteni a Google Drive konfigurációt"
+    },
     "scene": {
       "surveyObjectsAlreadyAdded": "A(z) {caveName} / {surveyName} felmérés objektumai már hozzá lettek adva a jelenethez!",
       "unknownSurfaceColorConfiguration": "Ismeretlen konfiguráció a felszín színekhez: {value}",
@@ -775,6 +813,7 @@
         "failedToSaveCave": "Nem lehet menteni a barlangot",
         "failedToLoadCave": "Nem lehet betölteni a barlangot",
         "failedToLoadCaveNames": "Nem lehet betölteni a barlang neveket a projekthez",
+        "failedToLoadCaveIds": "Nem lehet betölteni a barlang azonosítókat a projekthez",
         "failedToLoadCaves": "Nem lehet betölteni a barlangokat a projekthez",
         "failedToCheckCaveExistence": "Nem lehet ellenőrizni a barlang létezését",
         "failedToDeleteCave": "Nem lehet törölni a barlangot",
@@ -843,6 +882,16 @@
     },
     "config": {
       "configurationLoadedSuccessfully": "Konfiguráció sikeresen betöltve a(z) {fileName} fájlból"
+    },
+    "googleDrive": {
+      "authorizationSuccessful": "A Google Drive engedélyezése sikeres",
+      "disconnected": "Lecsatlakozva a Google Drive-ról",
+      "syncCompleted": "Szinkronizálás sikeresen befejezve",
+      "projectsSynced": "Projektek sikeresen szinkronizálva",
+      "cavesSynced": "Barlangok sikeresen szinkronizálva",
+      "restoreCompleted": "Visszaállítás sikeresen befejezve",
+      "projectsRestored": "Projektek sikeresen visszaállítva",
+      "cavesRestored": "Barlangok sikeresen visszaállítva"
     }
   },
   "menu": {

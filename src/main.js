@@ -35,6 +35,8 @@ import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
 import { DatabaseManager } from './storage/database-manager.js';
 import { DeclinationCache } from './storage/declination-cache.js';
+import { GoogleDriveSync } from './storage/google-drive-sync.js';
+import { GoogleDriveSettings } from './ui/google-drive-settings.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { SurfaceHelper } from './surface.js';
@@ -173,6 +175,16 @@ class Main {
     // Initialize settings panel in sidebar
     this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
 
+    this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem);
+    if (
+      this.googleDriveSync.config.isConfigured() &&
+      this.googleDriveSync.config.hasTokens() &&
+      !this.googleDriveSync.config.hasValidTokens()
+    ) {
+      await this.googleDriveSync.refreshToken();
+    }
+    this.googleDriveSettings = new GoogleDriveSettings(this.googleDriveSync);
+
     this.projectManager = new ProjectManager(
       db,
       options,
@@ -181,6 +193,7 @@ class Main {
       this.explorerTree,
       this.projectSystem,
       this.editorStateSystem,
+      this.googleDriveSync,
       attributeDefs
     );
 
@@ -204,6 +217,7 @@ class Main {
       interaction,
       this.projectManager,
       this.projectSystem,
+      this.googleDriveSettings,
       this.projectPanel,
       document.getElementById('export-panel')
     );

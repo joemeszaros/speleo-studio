@@ -280,6 +280,7 @@ class Cave {
     visible = true
   ) {
     this.id = this.#generateId();
+    this.revision = 1;
     this.name = name;
     this.metadata = metadata;
     this.geoData = geoData;
@@ -420,6 +421,7 @@ class Cave {
   toExport() {
     return {
       id              : this.id,
+      revision        : this.revision,
       name            : this.name,
       metadata        : this?.metadata?.toExport(),
       geoData         : this?.geoData?.toExport(),
@@ -433,6 +435,10 @@ class Cave {
   static fromPure(pure, attributeDefs) {
     if (pure.metadata !== undefined) {
       pure.metadata = CaveMetadata.fromPure(pure.metadata);
+    }
+
+    if (pure.revision === undefined) {
+      pure.revision = 1;
     }
     pure.geoData = pure.geoData === undefined ? undefined : GeoData.fromPure(pure.geoData);
     pure.surveys = pure.surveys.map((s) => Survey.fromPure(s));

@@ -91,6 +91,128 @@ function randomAlphaNumbericString(maxLength) {
     .substr(0, maxLength);
 }
 
+/**
+ * Detects the main browser family from the user agent string
+ * @param {string} userAgent - The user agent string (defaults to navigator.userAgent)
+ * @returns {string} The browser name (chrome, firefox, safari, edge, opera, etc.)
+ */
+function detectBrowser(userAgent = navigator.userAgent) {
+  const ua = userAgent.toLowerCase();
+
+  // Chrome (must be checked before Safari since Chrome includes Safari in its UA)
+  if (ua.includes('chrome') && !ua.includes('edg') && !ua.includes('opr')) {
+    return 'Chrome';
+  }
+
+  // Edge (must be checked before Chrome)
+  if (ua.includes('edg')) {
+    return 'Edge';
+  }
+
+  // Opera (must be checked before Chrome)
+  if (ua.includes('opr') || ua.includes('opera')) {
+    return 'Opera';
+  }
+
+  // Firefox
+  if (ua.includes('firefox')) {
+    return 'Firefox';
+  }
+
+  // Safari (must be checked after Chrome)
+  if (ua.includes('safari') && !ua.includes('chrome')) {
+    return 'Safari';
+  }
+
+  // Internet Explorer
+  if (ua.includes('msie') || ua.includes('trident')) {
+    return 'IE';
+  }
+
+  // Samsung Internet
+  if (ua.includes('samsungbrowser')) {
+    return 'Samsung';
+  }
+
+  // UC Browser
+  if (ua.includes('ucbrowser')) {
+    return 'UC';
+  }
+
+  // Unknown browser
+  return 'Unknown';
+}
+
+/**
+ * Detects the platform type from the user agent string and screen size
+ * @param {string} userAgent - The user agent string (defaults to navigator.userAgent)
+ * @returns {string} The platform type (desktop, mobile, tablet)
+ */
+function detectPlatform(userAgent = navigator.userAgent) {
+  const ua = userAgent.toLowerCase();
+
+  // Check for mobile indicators first
+  const mobileIndicators = [
+    'mobile',
+    'android',
+    'iphone',
+    'ipod',
+    'blackberry',
+    'windows phone',
+    'opera mini',
+    'iemobile',
+    'mobile safari'
+  ];
+
+  const isMobileUA = mobileIndicators.some((indicator) => ua.includes(indicator));
+
+  // Check for tablet indicators
+  const tabletIndicators = ['ipad', 'tablet', 'kindle', 'silk', 'playbook', 'bb10', 'rim tablet'];
+
+  const isTabletUA = tabletIndicators.some((indicator) => ua.includes(indicator));
+
+  // Additional tablet detection for Android tablets
+  if (ua.includes('android') && !ua.includes('mobile')) {
+    // This is likely an Android tablet
+    return 'tablet';
+  }
+
+  // Check screen size for additional context (if available)
+  if (typeof window !== 'undefined' && window.screen) {
+    const screenWidth = window.screen.width;
+    const screenHeight = window.screen.height;
+    const maxDimension = Math.max(screenWidth, screenHeight);
+    const minDimension = Math.min(screenWidth, screenHeight);
+
+    // Tablet screen size detection (typically 7-12 inches)
+    if (maxDimension >= 768 && maxDimension <= 1366 && minDimension >= 600) {
+      // If UA suggests tablet or ambiguous mobile, prefer tablet
+      if (isTabletUA || (!isMobileUA && maxDimension >= 1024)) {
+        return 'tablet';
+      }
+    }
+
+    // Mobile screen size detection (typically < 7 inches)
+    if (maxDimension < 768 || (maxDimension < 1024 && minDimension < 600)) {
+      if (isMobileUA || !isTabletUA) {
+        return 'mobile';
+      }
+    }
+  }
+
+  // User agent based detection
+  if (isTabletUA) {
+    return 'tablet';
+  }
+
+  if (isMobileUA) {
+    return 'mobile';
+  }
+
+  // Default to desktop for desktop browsers
+  return 'desktop';
+}
+
 function parseMyFloat(strOrNum) {
   if (typeof strOrNum === 'number') {
     return parseFloat(strOrNum);
@@ -302,6 +424,8 @@ export {
   degreesToRads,
   radsToDegrees,
   randomAlphaNumbericString,
+  detectBrowser,
+  detectPlatform,
   parseMyFloat,
   isFloatStr,
   interpolate,

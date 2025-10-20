@@ -326,6 +326,7 @@ class BaseAttributeEditor extends Editor {
         attributes.splice(indexToDelete, 1);
         const panel = attributeNode.parentNode;
         const aNamesWithIds = this.attributeDefs.getLocalizedAttributeNamesWitdId(i18n);
+        aNamesWithIds.sort((a, b) => a.name.localeCompare(b.name));
         const options = aNamesWithIds
           .map((n) => `<option id="${n.id}" originalName="${n.originalName}" value="${n.name}">`)
           .join('');
@@ -397,7 +398,10 @@ class BaseAttributeEditor extends Editor {
 
       let datalist;
       if (hasValues) {
-        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${paramDef.values.map((n) => '<option value="' + i18n.t(`attributes.values.${n}`) + '">').join('')}</datalist>`;
+        const sortedValues = [...paramDef.values].sort((a, b) =>
+          i18n.t(`attributes.values.${a}`).localeCompare(i18n.t(`attributes.values.${b}`))
+        );
+        datalist = U.node`<datalist id="paramValues-${paramName}-${index}">${sortedValues.map((n) => '<option value="' + i18n.t(`attributes.values.${n}`) + '">').join('')}</datalist>`;
         if (value !== '') {
           value = i18n.t(`attributes.values.${value}`);
         }

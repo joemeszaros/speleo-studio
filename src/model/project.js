@@ -38,9 +38,31 @@ export class FatProject {
   }
 }
 
+export class LightProject {
+
+  constructor(project, caveIds) {
+    this.project = project;
+    this.caveIds = caveIds;
+  }
+
+  toExport() {
+    return {
+      project : this.project.toExport(),
+      caveIds : this.caveIds
+    };
+  }
+
+  static fromPure(pure) {
+    const project = Project.fromPure(pure.project);
+    return new LightProject(project, pure.caveIds);
+
+  }
+}
+
 export class Project {
-  constructor(name, id = null, createdAt = null, updatedAt = null) {
+  constructor(name, id = null, revision = 1, createdAt = null, updatedAt = null) {
     this.id = id || this.#generateId();
+    this.revision = revision;
     this.name = name;
     this.createdAt = createdAt || new Date().toISOString();
     this.updatedAt = updatedAt || new Date().toISOString();
@@ -54,6 +76,7 @@ export class Project {
   toExport() {
     return {
       id          : this.id,
+      revision    : this.revision,
       name        : this.name,
       createdAt   : this.createdAt,
       updatedAt   : this.updatedAt,
@@ -62,6 +85,9 @@ export class Project {
   }
 
   static fromPure(pure) {
+    if (pure.revision === undefined) {
+      pure.revision = 1;
+    }
     return Object.assign(new Project(), pure);
   }
 }

@@ -76,6 +76,21 @@ export class CaveSystem {
     };
   }
 
+  async getCaveIdsByProjectId(projectId) {
+    return new Promise((resolve, reject) => {
+      const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAll(projectId);
+
+      request.onsuccess = () => {
+        const caveIds = request.result.map((data) => data.id);
+        resolve(caveIds);
+      };
+
+      request.onerror = () => {
+        reject(new Error(i18n.t('errors.storage.caveSystem.failedToLoadCaveNames')));
+      };
+    });
+  }
+
   async getCaveNamesByProjectId(projectId) {
     return new Promise((resolve, reject) => {
       const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAll(projectId);

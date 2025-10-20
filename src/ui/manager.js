@@ -23,6 +23,7 @@ import { SectionHelper } from '../section.js';
 import { showErrorPanel } from './popups.js';
 import { i18n } from '../i18n/i18n.js';
 import * as THREE from 'three';
+
 class ProjectManager {
 
   /**
@@ -31,7 +32,17 @@ class ProjectManager {
    * @param {MyScene} scene - The 3D scene
    * @param {ProjectExplorer} explorer - The project explorer that displays caves and surveys in a tree view
    */
-  constructor(db, options, scene, interaction, explorer, projectSystem, editorStateSystem, attributeDefs) {
+  constructor(
+    db,
+    options,
+    scene,
+    interaction,
+    explorer,
+    projectSystem,
+    editorStateSystem,
+    googleDriveSync,
+    attributeDefs
+  ) {
     this.db = db;
     this.options = options;
     this.scene = scene;
@@ -39,6 +50,7 @@ class ProjectManager {
     this.explorer = explorer;
     this.projectSystem = projectSystem;
     this.editorStateSystem = editorStateSystem;
+    this.googleDriveSync = googleDriveSync;
     this.attributeDefs = attributeDefs;
     this.firstEdit = true;
 
@@ -63,6 +75,10 @@ class ProjectManager {
   }
 
   async saveCave(cave) {
+    cave.revision++;
+    if (this.googleDriveSync.config.get('autoSync')) {
+      await this.googleDriveSync.trySyncCave(cave, this.projectSystem.getCurrentProject(), false);
+    }
     await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
