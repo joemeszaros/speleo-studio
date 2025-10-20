@@ -652,7 +652,8 @@ body {
   display: inline-block;
 }
 
-.coordinate-system-dialog {
+/* Generic dialog styles */
+.dialog-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -665,7 +666,7 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
-.coordinate-system-container {
+.dialog-container {
   color: #ffffff;
   position: absolute;
   top: 50%;
@@ -681,7 +682,7 @@ body {
   animation: slideInUp 0.4s ease-out 0.1s both;
 }
 
-.coordinate-system-content {
+.dialog-content {
   padding: 30px 40px 40px 40px;
   color: #ffffff;
   line-height: 1.6;

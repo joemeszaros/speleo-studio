@@ -415,8 +415,20 @@
           "southern": "Southern",
           "easting": "Easting",
           "northing": "Northing"
+        }
+      },
+      "encodingSelection": {
+        "title": "File Encoding",
+        "message": "Select the encoding of the file",
+        "cancelled": "File encoding selection cancelled",
+        "utf8": {
+          "title": "UTF-8",
+          "description": "Unicode encoding (recommended for TopoDroid export)"
         },
-        "flipCoordinates": "Flip X/Y"
+        "iso8859": {
+          "title": "ISO-8859-2",
+          "description": "Central European encoding"
+        }
       },
       "wgs84": {
         "title": "WGS84 Coordinates",

@@ -46,9 +46,9 @@ export class CoordinateSystemDialog {
   createDialog(caveName, startPointCoordinates) {
     // Create dialog container
     this.dialog = document.createElement('div');
-    this.dialog.className = 'coordinate-system-dialog';
+    this.dialog.className = 'dialog-overlay';
     this.dialog.innerHTML = `
-      <div class="coordinate-system-container coordinate-system-content">
+      <div class="dialog-container dialog-content">
         
           <p class="about-description">${i18n.t('ui.panels.coordinateSystem.message')}</p>
 
@@ -140,7 +140,7 @@ export class CoordinateSystemDialog {
     // Show dialog
     document.body.appendChild(this.dialog);
     this.dialog.style.display = 'block';
-    this.dialog.querySelector('.coordinate-system-container').focus();
+    this.dialog.querySelector('.dialog-container').focus();
   }
 
   setupEventListeners() {

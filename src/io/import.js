@@ -32,6 +32,7 @@ import {
   UTMCoordinateSystem
 } from '../model/geo.js';
 import { CoordinateSystemDialog } from '../ui/coordinate-system-dialog.js';
+import { EncodingSelectionDialog } from '../ui/encoding-selection-dialog.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import * as THREE from 'three';
 import { i18n } from '../i18n/i18n.js';
@@ -122,6 +123,7 @@ class PolygonImporter extends Importer {
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
     this.coordinateSystemDialog = new CoordinateSystemDialog();
+    this.encodingSelectionDialog = new EncodingSelectionDialog();
   }
 
   #getShotsFromPolygon = function (iterator) {
@@ -355,8 +357,9 @@ class PolygonImporter extends Importer {
     }
   }
 
-  async importFile(file, name, onCaveLoad, endcoding = 'iso_8859-2') {
-    await super.importFile(file, name, onCaveLoad, endcoding);
+  async importFile(file, name, onCaveLoad) {
+    const encoding = await this.encodingSelectionDialog.show(file.name);
+    await super.importFile(file, name, onCaveLoad, encoding);
   }
 
   async importText(wholeFileInText, onCaveLoad) {
@@ -612,8 +615,8 @@ class TopodroidImporter extends Importer {
     return { survey: new Survey(surveyName, true, surveyMetadata, startStation, shots), geoData: fixPointGeoData };
   }
 
-  importFile(file, name, onSurveyLoad) {
-    super.importFile(file, name, onSurveyLoad);
+  async importFile(file, name, onSurveyLoad) {
+    await super.importFile(file, name, onSurveyLoad);
   }
 
   async importText(csvTextData, onSurveyLoad) {
@@ -630,8 +633,8 @@ class JsonImporter extends Importer {
     this.attributeDefs = attributeDefs;
   }
 
-  importFile(file, name, onCaveLoad, endcoding = 'utf8') {
-    super.importFile(file, name, onCaveLoad, endcoding);
+  async importFile(file, name, onCaveLoad, endcoding = 'utf8') {
+    await super.importFile(file, name, onCaveLoad, endcoding);
   }
 
   async importText(wholeFileInText, onCaveLoad) {
@@ -658,8 +661,8 @@ class PlySurfaceImporter extends Importer {
     super(db, options, scene, manager);
   }
 
-  importFile(file, name, onModelLoad) {
-    super.importFile(file, name, onModelLoad);
+  async importFile(file, name, onModelLoad) {
+    await super.importFile(file, name, onModelLoad);
   }
 
   async importText(text, onModelLoad, name) {
