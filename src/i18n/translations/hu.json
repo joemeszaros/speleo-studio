@@ -418,7 +418,8 @@
           "southern": "Déli",
           "easting": "Keleti",
           "northing": "Északi"
-        }
+        },
+        "flipCoordinates": "X/Y felcserélése"
       },
       "wgs84": {
         "title": "WGS84 Koordináták",

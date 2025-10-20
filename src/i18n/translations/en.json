@@ -415,7 +415,8 @@
           "southern": "Southern",
           "easting": "Easting",
           "northing": "Northing"
-        }
+        },
+        "flipCoordinates": "Flip X/Y"
       },
       "wgs84": {
         "title": "WGS84 Coordinates",

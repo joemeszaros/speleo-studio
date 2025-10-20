@@ -54,8 +54,15 @@ export class CoordinateSystemDialog {
 
           <p>${i18n.t('ui.panels.coordinateSystem.startPointCoordinates')}: ${caveName}</p>
          
-          <div class="settings-item"><label for="start-point-x" id="start-point-x-label">Y:</label>  <input type="number" id="start-point-x" value="${startPointCoordinates[0]}" class="settings-input" required></div>
-          <div class="settings-item"><label for="start-point-y" id="start-point-y-label">X:</label> <input type="number" id="start-point-y" value="${startPointCoordinates[1]}" class="settings-input" required></div>
+          <div class="settings-item" style="display: flex; gap: 8px;">
+            <div style="flex: 0.9;">
+              <div class="settings-item"><label for="start-point-x" id="start-point-x-label">Y:</label>  <input type="number" id="start-point-x" value="${startPointCoordinates[0]}" class="settings-input" required></div>
+              <div class="settings-item"><label for="start-point-y" id="start-point-y-label">X:</label> <input type="number" id="start-point-y" value="${startPointCoordinates[1]}" class="settings-input" required></div>
+            </div>
+            <div style="flex: 0.1; display: flex; align-items: center; justify-content: center;">
+              <button type="button" class="settings-button" id="flip-coordinates" style="height: 100%; min-height: 60px;">↕</button>
+            </div>
+          </div>
           <div class="settings-item"><label for="start-point-z" id="start-point-z-label">${i18n.t('ui.panels.coordinateSystem.elevation')}:</label> <input type="number" id="start-point-z" value="${startPointCoordinates[2]}" class="settings-input" required></div>
 
           <div class="settings-group">
@@ -156,6 +163,11 @@ export class CoordinateSystemDialog {
       });
     });
 
+    // Flip coordinates button
+    this.dialog.querySelector('#flip-coordinates').addEventListener('click', () => {
+      this.flipCoordinates();
+    });
+
     // Close on overlay click
     this.dialog.addEventListener('click', (e) => {
       if (e.target === this.dialog) {
@@ -204,6 +216,18 @@ export class CoordinateSystemDialog {
       this.dialog.querySelector('#start-point-y-label').innerText = 'Y: ';
       this.dialog.querySelector('#start-point-z-label').innerText = 'Z: ';
     }
+  }
+
+  flipCoordinates() {
+    const xInput = this.dialog.querySelector('#start-point-x');
+    const yInput = this.dialog.querySelector('#start-point-y');
+
+    // Swap the values
+    const xValue = xInput.value;
+    const yValue = yInput.value;
+
+    xInput.value = yValue;
+    yInput.value = xValue;
   }
 
   handleOk() {
