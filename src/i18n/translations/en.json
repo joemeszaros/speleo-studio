@@ -399,6 +399,13 @@
           "title": "EOV (Egységes országos vetület)",
           "description": "Coordinate system in Hungary"
         },
+        "wgs84": {
+          "title": "WGS84 (GPS)",
+          "description": "Global coordinate system",
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "convertedToUtm": "WGS84 coordinates converted to UTM coordinates"
+        },
         "utm": {
           "title": "UTM (Universal Transverse Mercator)",
           "description": "Global coordinate system",
@@ -829,7 +836,8 @@
         "zoneNumberOutOfRange": "Zone number out of range (must be between 1 and 60)",
         "zoneLetterOutOfRange": "Zone letter out of range (must be between C and X)",
         "latitudeOutOfRange": "Latitude out of range (must be between 80 deg S and 84 deg N)",
-        "longitudeOutOfRange": "Longitude out of range (must be between 180 deg W and 180 deg E)"
+        "longitudeOutOfRange": "Longitude out of range (must be between 180 deg W and 180 deg E)",
+        "latOrLonNaN": "Latitude or longitude is not a valid number (NaN)"
       }
     },
     "export": {

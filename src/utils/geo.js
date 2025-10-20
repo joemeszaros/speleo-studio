@@ -492,6 +492,11 @@ class UTMConverter {
   }
 
   static fromLatLon(latitude, longitude) {
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      throw new Error(i18n.t('errors.utils.geo.latOrLonNaN'));
+    }
+
     if (latitude > 84 || latitude < -80) {
       throw new RangeError(i18n.t('errors.utils.geo.latitudeOutOfRange'));
     }

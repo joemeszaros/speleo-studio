@@ -16,6 +16,9 @@
 
 import { i18n } from '../i18n/i18n.js';
 import { CoordinateSystemType, EOVCoordinateSystem, UTMCoordinateSystem } from '../model/geo.js';
+import { UTMConverter } from '../utils/geo.js';
+import { parseMyFloat } from '../utils/utils.js';
+import { showInfoPanel } from './popups.js';
 
 export class CoordinateSystemDialog {
   constructor() {
@@ -95,6 +98,15 @@ export class CoordinateSystemDialog {
                     </select>
                   </div>
                 </div>
+              </div>
+              <div class="settings-item">
+                <label>
+                  <input type="radio" name="coordinateSystem" value="wgs84" class="settings-input">
+                  <span class="settings-checkbox-label">
+                    <strong>${i18n.t('ui.panels.coordinateSystem.wgs84.title')}</strong><br>
+                    <small>${i18n.t('ui.panels.coordinateSystem.wgs84.description')}</small>
+                  </span>
+                </label>
               </div>
               <div class="settings-item">
                 <label>
@@ -180,6 +192,13 @@ export class CoordinateSystemDialog {
       this.dialog.querySelector('#start-point-y-label').innerText = 'X: ';
       this.dialog.querySelector('#start-point-z-label').innerText =
         i18n.t('ui.panels.coordinateSystem.elevation') + ': ';
+    } else if (value === 'wgs84') {
+      this.dialog.querySelector('#start-point-x-label').innerText =
+        i18n.t('ui.panels.coordinateSystem.wgs84.latitude') + ': ';
+      this.dialog.querySelector('#start-point-y-label').innerText =
+        i18n.t('ui.panels.coordinateSystem.wgs84.longitude') + ': ';
+      this.dialog.querySelector('#start-point-z-label').innerText =
+        i18n.t('ui.panels.coordinateSystem.elevation') + ': ';
     } else {
       this.dialog.querySelector('#start-point-x-label').innerText = 'X: ';
       this.dialog.querySelector('#start-point-y-label').innerText = 'Y: ';
@@ -191,6 +210,7 @@ export class CoordinateSystemDialog {
     const selectedSystem = this.dialog.querySelector('input[name="coordinateSystem"]:checked').value;
 
     let coordinateSystem;
+    let coordinates;
     if (selectedSystem === 'eov') {
       coordinateSystem = new EOVCoordinateSystem();
     } else if (selectedSystem === 'utm') {
@@ -206,15 +226,32 @@ export class CoordinateSystemDialog {
         default:
           throw new Error(i18n.t('ui.panels.coordinateSystem.invalidHemisphere'));
       }
+    } else if (selectedSystem === 'wgs84') {
+      const lat = parseMyFloat(this.dialog.querySelector('#start-point-x').value);
+      const lon = parseMyFloat(this.dialog.querySelector('#start-point-y').value);
+      const { easting, northing, zoneNum, zoneLetter } = UTMConverter.fromLatLon(lat, lon);
+      const northern = zoneLetter >= 'N';
+
+      if (northern) {
+        coordinateSystem = new UTMCoordinateSystem(zoneNum, true);
+      } else {
+        coordinateSystem = new UTMCoordinateSystem(zoneNum, false);
+      }
+      const elevation = parseMyFloat(this.dialog.querySelector('#start-point-z').value);
+      coordinates = [easting, northing, elevation];
+      showInfoPanel(i18n.t('ui.panels.coordinateSystem.wgs84.convertedToUtm'));
     } else if (selectedSystem === 'none') {
       coordinateSystem = undefined;
     }
     console.log(`🧭 Selected coordinate system: ${coordinateSystem?.toString() ?? 'none'}`);
-    const coordinates = [
-      parseFloat(this.dialog.querySelector('#start-point-x').value),
-      parseFloat(this.dialog.querySelector('#start-point-y').value),
-      parseFloat(this.dialog.querySelector('#start-point-z').value)
-    ];
+    if (!coordinates) {
+      // for wgs84 coordinates are already converted to utm coordinates
+      coordinates = [
+        parseMyFloat(this.dialog.querySelector('#start-point-x').value),
+        parseMyFloat(this.dialog.querySelector('#start-point-y').value),
+        parseMyFloat(this.dialog.querySelector('#start-point-z').value)
+      ];
+    }
 
     this.hide();
 

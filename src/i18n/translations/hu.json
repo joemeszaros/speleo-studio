@@ -402,6 +402,13 @@
           "title": "EOV (Egységes országos vetület)",
           "description": "Magyarországon használt koordináta-rendszer"
         },
+        "wgs84": {
+          "title": "WGS84 (GPS)",
+          "description": "Globális koordináta-rendszer",
+          "latitude": "Szélesség",
+          "longitude": "Hosszúság",
+          "convertedToUtm": "A WGS84 koordináták sikeresen konvertálva UTM koordinátákra"
+        },
         "utm": {
           "title": "UTM (Universal Transverse Mercator)",
           "description": "Globális koordináta-rendszer",
@@ -852,7 +859,8 @@
         "zoneNumberOutOfRange": "Zóna szám kívül esik a következő határokon: 1 - 60",
         "zoneLetterOutOfRange": "Zóna betű kívül esik a következő határokon: C - X",
         "latitudeOutOfRange": "Szélesség kívül esik a következő határokon: 80 deg S - 84 deg N",
-        "longitudeOutOfRange": "Hosszúság kívül esik a következő határokon: 180 deg W - 180 deg E"
+        "longitudeOutOfRange": "Hosszúság kívül esik a következő határokon: 180 deg W - 180 deg E",
+        "latOrLonNaN": "A szélesség vagy hosszúság nem egy érvényes szám (NaN)"
       }
     },
     "export": {
