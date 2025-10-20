@@ -166,6 +166,30 @@ export class GoogleDriveAPI {
   }
 
   /**
+   * Get user information including email address
+   * @returns {Promise<Object>} User information object with email and other details
+   */
+  async getUserInfo() {
+    const response = await this.makeAuthenticatedRequest('/about?fields=user');
+
+    if (!response.ok) {
+      throw new Error(`Failed to get user info: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.user;
+  }
+
+  /**
+   * Get user email address
+   * @returns {Promise<string>} User's email address
+   */
+  async getUserEmail() {
+    const userInfo = await this.getUserInfo();
+    return userInfo.emailAddress;
+  }
+
+  /**
    * Find or create folder by name
    * @param {string} folderName - Folder name
    * @param {string} parentId - Parent folder ID (optional)

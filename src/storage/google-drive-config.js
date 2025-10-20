@@ -66,7 +66,8 @@ export class GoogleDriveConfig {
       lastSync           : null,
       accessToken        : null,
       refreshToken       : null,
-      tokenExpiry        : null
+      tokenExpiry        : null,
+      email              : null
     };
   }
 

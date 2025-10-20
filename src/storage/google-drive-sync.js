@@ -70,6 +70,9 @@ export class GoogleDriveSync {
       // Test the connection by getting folder IDs
       await this.api.getMainFolderId();
 
+      const email = await this.api.getUserEmail();
+      console.log('User email:', email);
+      this.config.set('email', email);
       console.log('Google Drive authorization completed successfully');
     } catch (error) {
       console.error('Google Drive authorization failed:', error);
@@ -140,7 +143,8 @@ export class GoogleDriveSync {
 
     await this.syncProject(project, projectsFolderId, this.getProjectDescription(project), {
       app      : this.config.getApp(),
-      revision : project.revision.toString()
+      revision : project.revision.toString(),
+      email    : this.config.get('email')
     });
   }
   /**
@@ -220,7 +224,7 @@ export class GoogleDriveSync {
   }
 
   getCaveDescription(cave, project) {
-    return `Project: ${project.name}, Cave: ${cave.name} Revision: ${cave.revision}`;
+    return `Project: ${project.name}, Cave: ${cave.name} Revision: ${cave.revision} App: ${this.config.getApp()} Email: ${this.config.get('email')}`;
   }
 
   async getRevision(caveOrProject, folderId) {
@@ -264,7 +268,8 @@ export class GoogleDriveSync {
 
     await this.syncCave(cave, project, cavesFolderId, this.getCaveDescription(cave, project), {
       app      : this.config.getApp(),
-      revision : cave.revision.toString()
+      revision : cave.revision.toString(),
+      email    : this.config.get('email')
     });
   }
 
@@ -509,7 +514,6 @@ export class GoogleDriveSync {
    */
   disconnect() {
     this.config.clearTokens();
-    this.config.set('enabled', false);
     console.log('Disconnected from Google Drive');
   }
 }
