@@ -143,6 +143,14 @@ function detectBrowser(userAgent = navigator.userAgent) {
   return 'Unknown';
 }
 
+async function sequential(promiseFunctions) {
+  const accPromise = promiseFunctions.reduce((acc, promiseFunction) => {
+    return acc.then((arr) => promiseFunction().then((response) => [...arr, response]));
+  }, Promise.resolve([]));
+  const result = await accPromise;
+  return result;
+}
+
 /**
  * Detects the platform type from the user agent string and screen size
  * @param {string} userAgent - The user agent string (defaults to navigator.userAgent)
@@ -417,6 +425,21 @@ function range(start, stop, step = 1) {
   return Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step);
 }
 
+async function waitForEvent(eventName, matcher, timeoutMillis = 2000) {
+  await new Promise((resolve, reject) => {
+    const handler = (event) => {
+      if (event.detail && matcher(event.detail)) {
+        window.removeEventListener(eventName, handler);
+        resolve();
+      }
+    };
+    setTimeout(() => {
+      window.removeEventListener(eventName, handler);
+      reject(new Error('Cave deletion timed out'));
+    }, timeoutMillis);
+    window.addEventListener(eventName, handler);
+  });
+}
 export {
   fromPolar,
   toPolar,
@@ -444,5 +467,6 @@ export {
   textToIso88592Bytes,
   arraysEqual,
   roundToTwoDecimalPlaces,
-  range
+  range,
+  sequential
 };

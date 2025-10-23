@@ -26,10 +26,19 @@ class Footer {
     // Create project info container
     this.projectInfoContainer = node`<div class="meta-info"></div>`;
     this.coordinateInfoContainer = node`<div class="meta-info">${i18n.t('ui.footer.noCoordinateSystemLoaded')}</div>`;
+
+    // Create Google Drive sync indicator
+    this.googleDriveSyncIndicator = node`<div class="google-drive-sync-indicator" style="display: none;">
+      <img src="icons/drive.svg" class="google-drive-icon" alt="Google Drive Sync" title="Google Drive sync in progress">
+    </div>`;
+    this.driveSeparator = node`<div class="footer-separator">|</div>`;
+
     // Add elements to footer
     element.appendChild(this.projectInfoContainer);
     element.appendChild(node`<div class="footer-separator">|</div>`);
     element.appendChild(this.coordinateInfoContainer);
+    element.appendChild(this.driveSeparator);
+    element.appendChild(this.googleDriveSyncIndicator);
     element.appendChild(this.messagesContainer);
 
     this.message = undefined;
@@ -41,6 +50,10 @@ class Footer {
     document.addEventListener('currentProjectDeleted', () => this.updateProjectInfo(null));
     document.addEventListener('languageChanged', () => this.updateProjectInfo(this.project));
     document.addEventListener('coordinateSystemChanged', (e) => this.updateCoordinateInfo(e.detail.coordinateSystem));
+
+    // Listen for Google Drive sync status changes
+    document.addEventListener('googleDriveSyncStarted', () => this.showGoogleDriveSyncIndicator());
+    document.addEventListener('googleDriveSyncCompleted', () => this.hideGoogleDriveSyncIndicator());
 
   }
 
@@ -67,6 +80,18 @@ class Footer {
 
   clearMessage() {
     this.messagesContainer.innerHTML = '';
+  }
+
+  showGoogleDriveSyncIndicator() {
+    this.googleDriveSyncIndicator.style.display = 'inline-block';
+    this.googleDriveSyncIndicator.classList.add('blinking');
+    this.driveSeparator.style.display = 'inline-block';
+  }
+
+  hideGoogleDriveSyncIndicator() {
+    this.googleDriveSyncIndicator.style.display = 'none';
+    this.googleDriveSyncIndicator.classList.remove('blinking');
+    this.driveSeparator.style.display = 'none';
   }
 }
 

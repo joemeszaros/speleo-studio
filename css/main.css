@@ -970,6 +970,33 @@ body {
   margin-right: 10px;
 }
 
+.google-drive-sync-indicator {
+  display: inline-block;
+  margin-left: -5px;
+}
+
+.google-drive-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-bottom: 4px;
+}
+
+.google-drive-sync-indicator.blinking .google-drive-icon {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0.3;
+  }
+}
+
 .columns {
   display: flex;
   gap: 20px; /* Optional: space between columns */

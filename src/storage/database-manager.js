@@ -20,11 +20,12 @@ import { i18n } from '../i18n/i18n.js';
  * Database manager version history:
  * 1. Initial version
  * 2. Added declinationCache store
+ * 3. Added revisions store
  */
 export class DatabaseManager {
   constructor() {
     this.dbName = 'SpeleoStudioDB';
-    this.dbVersion = 2;
+    this.dbVersion = 3;
     this.indexedDb = null;
     this.stores = {
       projects : {
@@ -49,6 +50,10 @@ export class DatabaseManager {
           { name: 'coordinates', keyPath: ['lat', 'lon'], options: { unique: false } },
           { name: 'cachedAt', keyPath: 'cachedAt', options: { unique: false } }
         ]
+      },
+      revisions : {
+        keyPath : 'id',
+        indexes : []
       }
     };
   }

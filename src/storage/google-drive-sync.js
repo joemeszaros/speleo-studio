@@ -16,17 +16,20 @@
 
 import { GoogleDriveConfig } from './google-drive-config.js';
 import { GoogleDriveAPI } from './google-drive-api.js';
-import { LightProject } from '../model/project.js';
+import { DriveProject } from '../model/project.js';
+import { Cave, DriveCaveMetadata } from '../model/cave.js';
+import { RevisionInfo } from '../model/misc.js';
 
 /**
  * Google Drive synchronization manager
  * Handles syncing of caves and projects between IndexedDB and Google Drive
  */
 export class GoogleDriveSync {
-  constructor(databaseManager, projectSystem, caveSystem) {
+  constructor(databaseManager, projectSystem, caveSystem, attributeDefs) {
     this.dbManager = databaseManager;
     this.projectSystem = projectSystem;
     this.caveSystem = caveSystem;
+    this.attributeDefs = attributeDefs;
     this.config = new GoogleDriveConfig();
     this.api = new GoogleDriveAPI(this.config);
     this.isSyncing = false;
@@ -45,7 +48,6 @@ export class GoogleDriveSync {
       console.log('Refresh access tokens');
       const tokenResponse = await this.api.refreshAccessToken();
       this.config.setTokens(tokenResponse.access_token, this.config.get('refreshToken'), tokenResponse.expires_in);
-
     }
   }
 
@@ -80,107 +82,7 @@ export class GoogleDriveSync {
     }
   }
 
-  /**
-   * Sync all projects to Google Drive
-   * @returns {Promise<void>}
-   */
-  async syncProjects() {
-    if (!this.isReady()) {
-      throw new Error('Google Drive not configured or authenticated');
-    }
-
-    if (this.isSyncing) {
-      throw new Error('Sync already in progress');
-    }
-
-    this.isSyncing = true;
-    try {
-      this.syncProjectsInternal();
-    } finally {
-      this.isSyncing = false;
-    }
-  }
-
-  async syncProjectsInternal() {
-
-    console.log('Starting project sync to Google Drive...');
-
-    const projects = await this.projectSystem.getAllProjects();
-    const projectsFolderId = await this.api.getProjectsFolderId();
-
-    for (const project of projects) {
-      await this.trySyncProject(project, projectsFolderId);
-    }
-
-    this.config.set('lastSync', new Date().toISOString());
-    console.log('Project sync completed successfully');
-  }
-
-  async trySyncProject(project, projectsFolderId) {
-    if (!this.isReady()) {
-      return;
-    }
-
-    const revPlusApp = await this.getRevision(project, projectsFolderId);
-    console.log(`revision and app for ${project.name} is`, revPlusApp);
-    //TODO: handle missing files
-    // if (revPlusApp === null) {
-    //   console.log(`File ${cave.name} doens't exist, return`);
-    //   return;
-    // }
-    if (revPlusApp !== null) {
-      if (project.revision === revPlusApp.revision && revPlusApp.app === this.config.getApp()) {
-        console.log(`File ${project.name} has the same revision and app, return`);
-        return;
-      }
-
-      if (project.revision < revPlusApp.revision) {
-        //manage conflicts
-        console.log(`File ${project.name} has a higher revision, return`);
-        return;
-      }
-    }
-
-    await this.syncProject(project, projectsFolderId, this.getProjectDescription(project), {
-      app      : this.config.getApp(),
-      revision : project.revision.toString(),
-      email    : this.config.get('email')
-    });
-  }
-  /**
-   * Sync a single project to Google Drive
-   * @param {Project} project - Project to sync
-   * @param {string} projectsFolderId - Projects folder ID
-   * @returns {Promise<void>}
-   */
-  async syncProject(project, projectsFolderId, description, properties) {
-    const fileName = this.getFileName(project);
-    const caveIds = await this.caveSystem.getCaveIdsByProjectId(project.id);
-    const lightProject = new LightProject(project, caveIds);
-    const content = JSON.stringify(lightProject.toExport(), null, 2);
-
-    try {
-      // Upload or update file (preserves revision history)
-      await this.api.uploadOrUpdateFile(
-        fileName,
-        content,
-        'application/json',
-        projectsFolderId,
-        description,
-        properties
-      );
-      console.log(`Synced project: ${project.name}`);
-    } catch (error) {
-      console.error(`Failed to sync project ${project.name}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Sync all caves to Google Drive
-   * @returns {Promise<void>}
-   */
-  async syncCaves() {
+  async operation(op) {
     if (!this.isReady()) {
       throw new Error('Google Drive not configured or authenticated');
     }
@@ -191,28 +93,15 @@ export class GoogleDriveSync {
 
     this.isSyncing = true;
 
+    const syncStartedEvent = new CustomEvent('googleDriveSyncStarted');
+    document.dispatchEvent(syncStartedEvent);
     try {
-      this.syncCavesInternal();
+      return await op();
     } finally {
       this.isSyncing = false;
+      const syncCompletedEvent = new CustomEvent('googleDriveSyncCompleted');
+      document.dispatchEvent(syncCompletedEvent);
     }
-  }
-
-  async syncCavesInternal() {
-    console.log('Starting cave sync to Google Drive...');
-
-    const projects = await this.projectSystem.getAllProjects();
-
-    for (const project of projects) {
-      const caves = await this.caveSystem.getCavesByProjectId(project.id);
-
-      for (const cave of caves) {
-        await this.trySyncCave(cave, project);
-      }
-    }
-
-    this.config.set('lastSync', new Date().toISOString());
-    console.log('Cave sync completed successfully');
   }
 
   getFileName(caveOrProject) {
@@ -227,291 +116,220 @@ export class GoogleDriveSync {
     return `Project: ${project.name}, Cave: ${cave.name} Revision: ${cave.revision} App: ${this.config.getApp()} Email: ${this.config.get('email')}`;
   }
 
-  async getRevision(caveOrProject, folderId) {
+  async getRevisionInfo(caveOrProject, folderId) {
     const fileName = this.getFileName(caveOrProject);
     const file = await this.api.findFileByName(fileName, folderId);
     if (file === null) {
       return null;
     }
     const revision = parseInt(file?.properties?.revision ?? '-1');
-    const app = file?.properties?.app ?? '';
-    return { revision, app };
+    const app = file?.properties?.app ?? 'unknown';
+    const reason = file?.properties?.reason ?? 'unknown';
+    return new RevisionInfo(caveOrProject.id, revision, app, reason);
   }
 
-  async trySyncCave(cave, project, allowCreate = true) {
-    if (!this.isReady()) {
+  /**
+   * Sync all projects to Google Drive
+   * @returns {Promise<void>}
+   */
+  async uploadProjects() {
+    await this.operation(this.uploadProjectsInternal);
+  }
+
+  async uploadProjectsInternal() {
+
+    const projects = await this.projectSystem.getAllProjects();
+
+    for (const project of projects) {
+      await this.tryUploadProject(project);
+    }
+
+    this.config.set('lastSync', new Date().toISOString());
+  }
+
+  async uploadProject(project, revisionInfo = null, cavesMetadata = null) {
+    return await this.operation(() => this.tryUploadProject(project, revisionInfo, cavesMetadata));
+  }
+
+  async tryUploadProject(project, revisionInfo = null, cavesMetadata = null) {
+    const projectsFolderId = await this.api.getProjectsFolderId();
+    const revInfo = revisionInfo ?? (await this.getRevisionInfo(project, projectsFolderId));
+
+    const fileName = this.getFileName(project);
+    const cavesWithIdRev =
+      cavesMetadata ?? (await this.caveSystem.getCaveFieldsByProjectId(project.id, ['id', 'revision', 'name']));
+    const driveProject = new DriveProject(
+      project,
+      cavesWithIdRev.map((cave) => new DriveCaveMetadata(cave.id, cave.name, cave.revision ?? 1)),
+      this.config.getApp()
+    );
+    const content = JSON.stringify(driveProject.toExport(), null, 2);
+    const description = this.getProjectDescription(project);
+    const properties = {
+      app      : this.config.getApp(),
+      revision : project.revision.toString(),
+      email    : this.config.get('email'),
+      reason   : revInfo === undefined ? 'create' : (revInfo?.reason ?? 'unknown')
+    };
+
+    const mimeType = 'application/json';
+    if (revInfo !== null) {
+      const fileId = await this.api.getFileId(fileName, projectsFolderId);
+      await this.api.updateFile(fileId, content, mimeType, description, properties);
+    } else {
+      await this.api.uploadFile(fileName, content, mimeType, projectsFolderId, description, properties);
+    }
+    return { properties, project: driveProject };
+
+  }
+
+  /**
+   * Sync all caves to Google Drive
+   * @returns {Promise<void>}
+   */
+  async uploadCaves() {
+    await this.operation(this.uploadCavesInternal);
+  }
+
+  async coordinateUploadCave(cave, project, revisionInfo) {
+    const cavesFolderId = await this.api.getCavesFolderId();
+    const driveRevision = this.getRevisionInfo(cave, cavesFolderId);
+    if (driveRevision === null) {
       return;
     }
 
+    if (revisionInfo.revision < driveRevision.revision) {
+      console.log(
+        `Cave ${cave.name} has a lower revision (${revisionInfo.revision} < ${driveRevision.revision}), return`
+      );
+      return;
+    }
+
+    if (revisionInfo.revision === driveRevision.revision) {
+      if (revisionInfo.app === driveRevision.app) {
+        console.log(`Cave ${cave.name} has the same revision and app, return`);
+        return;
+      } else {
+        console.log(`Cave ${cave.name} has the same revision but different app, return`);
+        return;
+      }
+
+    }
+
+    await this.uploadCave(cave, project, false, revisionInfo);
+    return;
+  }
+
+  async uploadCave(cave, project, create = true, revisionInfo = null) {
+    await this.operation(() => this.tryUploadCave(cave, project, create, revisionInfo));
+  }
+
+  async tryUploadCave(cave, project, create = true, revisionInfo = null) {
     const cavesFolderId = await this.api.getCavesFolderId();
 
-    const revPlusApp = await this.getRevision(cave, cavesFolderId);
-    console.log(`revision and app for ${cave.name} is`, revPlusApp);
+    const revInfo = revisionInfo ?? (await this.getRevisionInfo(cave, cavesFolderId));
 
-    if (revPlusApp === null && !allowCreate) {
-      console.log(`File ${cave.name} doens't exist, return`);
+    if (revInfo === null && !create) {
       return;
     }
 
-    if (revPlusApp !== null) {
-      if (cave.revision === revPlusApp.revision && revPlusApp.app === this.config.getApp()) {
-        console.log(`File ${cave.name} has the same revision and app, return`);
-        return;
-      }
-
-      if (cave.revision < revPlusApp.revision) {
-        //manage conflicts
-        console.log(`File ${cave.name} has a higher revision, return`);
-        return;
-      }
-    }
-
-    await this.syncCave(cave, project, cavesFolderId, this.getCaveDescription(cave, project), {
-      app      : this.config.getApp(),
-      revision : cave.revision.toString(),
-      email    : this.config.get('email')
-    });
-  }
-
-  /**
-   * Sync a single cave to Google Drive
-   * @param {Cave} cave - Cave to sync
-   * @param {Project} project - Project the cave belongs to
-   * @param {string} cavesFolderId - Caves folder name
-   * @returns {Promise<void>}
-   */
-  async syncCave(cave, project, cavesFolderId, description, properties) {
     const fileName = this.getFileName(cave);
     const content = JSON.stringify(cave.toExport(), null, 2);
-
-    try {
-      // Upload or update file (preserves revision history)
-      await this.api.uploadOrUpdateFile(fileName, content, 'application/json', cavesFolderId, description, properties);
-      console.log(`Synced cave: ${cave.name} from project ${project.name}`);
-    } catch (error) {
-      console.error(`Failed to sync cave ${cave.name}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Sync all data to Google Drive
-   * @returns {Promise<void>}
-   */
-  async syncAll() {
-    if (!this.isReady()) {
-      throw new Error('Google Drive not configured or authenticated');
+    const description = this.getCaveDescription(cave, project);
+    const properties = {
+      app      : this.config.getApp(),
+      revision : cave.revision.toString(),
+      email    : this.config.get('email'),
+      reason   : revInfo === undefined ? 'create' : (revInfo?.reason ?? 'unknown')
+    };
+    const mimeType = 'application/json';
+    if (revInfo !== null) {
+      const fileId = await this.api.getFileId(fileName, cavesFolderId);
+      await this.api.updateFile(fileId, content, mimeType, description, properties);
+    } else {
+      await this.api.uploadFile(fileName, content, mimeType, cavesFolderId, description, properties);
     }
 
-    if (this.isSyncing) {
-      throw new Error('Sync already in progress');
-    }
-
-    this.isSyncing = true;
-
-    try {
-      console.log('Starting full sync to Google Drive...');
-
-      // Sync projects first
-      await this.syncProjectsInternal();
-
-      // Then sync caves
-      await this.syncCavesInternal();
-
-      this.config.set('lastSync', new Date().toISOString());
-      console.log('Full sync completed successfully');
-    } finally {
-      this.isSyncing = false;
-    }
   }
 
   /**
    * Restore projects from Google Drive
    * @returns {Promise<void>}
    */
-  async restoreProjects() {
-    if (!this.isReady()) {
-      throw new Error('Google Drive not configured or authenticated');
-    }
-
-    if (this.isSyncing) {
-      throw new Error('Sync already in progress');
-    }
-
-    this.isSyncing = true;
-
-    try {
-      console.log('Starting project restore from Google Drive...');
-
-      const projectsFolderId = await this.api.getProjectsFolderId();
-      const files = await this.api.listFiles(projectsFolderId);
-
-      for (const file of files) {
-        if (file.name.endsWith('.json')) {
-          await this.restoreProject(file.id, file.name);
-        }
-      }
-
-      console.log('Project restore completed successfully');
-    } finally {
-      this.isSyncing = false;
-    }
+  async listProjects() {
+    return await this.operation(() => this.listProjectsInternal());
   }
 
-  /**
-   * Restore a single project from Google Drive
-   * @param {string} fileId - File ID
-   * @param {string} fileName - File name
-   * @returns {Promise<void>}
-   */
-  async restoreProject(fileId, fileName) {
-    try {
-      const content = await this.api.downloadFile(fileId);
-      const lightProject = LightProject.fromPure(JSON.parse(content));
-      const projectData = lightProject.project;
-
-      // Check if project already exists
-      const existingProject = await this.projectSystem.loadProjectById(projectData.id).catch(() => null);
-
-      if (existingProject) {
-        // Update existing project
-        existingProject.name = projectData.name;
-        existingProject.description = projectData.description;
-        existingProject.updatedAt = new Date().toISOString();
-        await this.projectSystem.saveProject(existingProject);
-        console.log(`Restored project: ${projectData.name}`);
-      } else {
-        // Create new project
-        const project = this.projectSystem.constructor.fromPure(projectData);
-        await this.projectSystem.saveProject(project);
-        console.log(`Restored project: ${projectData.name}`);
-      }
-    } catch (error) {
-      console.error(`Failed to restore project ${fileName}:`, error);
-      throw error;
-    }
+  async listProjectsInternal() {
+    const projectsFolderId = await this.api.getProjectsFolderId();
+    return await this.api
+      .listFiles(projectsFolderId)
+      .then((files) => files.filter((file) => file.name.endsWith('.json')));
   }
 
-  /**
-   * Restore caves from Google Drive
-   * @returns {Promise<void>}
-   */
-  async restoreCaves() {
-    if (!this.isReady()) {
-      throw new Error('Google Drive not configured or authenticated');
-    }
-
-    if (this.isSyncing) {
-      throw new Error('Sync already in progress');
-    }
-
-    this.isSyncing = true;
-
-    try {
-      console.log('Starting cave restore from Google Drive...');
-
-      const cavesFolderId = await this.api.getCavesFolderId();
-      const files = await this.api.listFiles(cavesFolderId);
-
-      for (const file of files) {
-        if (file.name.endsWith('.json')) {
-          await this.restoreCave(file.id, file.name);
-        }
-      }
-
-      console.log('Cave restore completed successfully');
-    } finally {
-      this.isSyncing = false;
-    }
+  async fetchCave(cave) {
+    return await this.operation(() => this.fetchCaveInternal(cave));
   }
 
-  /**
-   * Restore a single cave from Google Drive
-   * @param {string} fileId - File ID
-   * @param {string} fileName - File name
-   * @returns {Promise<void>}
-   */
-  async restoreCave(fileId, fileName) {
-    try {
-      const content = await this.api.downloadFile(fileId);
-      const caveData = JSON.parse(content);
-
-      // Extract project name from filename (format: projectName_caveName.json)
-      const projectName = fileName.split('_')[0];
-      const project = await this.projectSystem.loadProjectByName(projectName);
-
-      if (!project) {
-        console.warn(`Project ${projectName} not found for cave ${caveData.name}`);
-        return;
-      }
-
-      // Check if cave already exists
-      const existingCave = await this.caveSystem.loadCave(caveData.id).catch(() => null);
-
-      if (existingCave) {
-        // Update existing cave
-        const updatedCave = this.caveSystem.constructor.fromPure(caveData);
-        await this.caveSystem.saveCave(updatedCave, project.id);
-        console.log(`Restored cave: ${caveData.name}`);
-      } else {
-        // Create new cave
-        const cave = this.caveSystem.constructor.fromPure(caveData);
-        await this.caveSystem.saveCave(cave, project.id);
-        console.log(`Restored cave: ${caveData.name}`);
-      }
-    } catch (error) {
-      console.error(`Failed to restore cave ${fileName}:`, error);
-      throw error;
+  async fetchCaveInternal(cave) {
+    const fileName = this.getFileName(cave);
+    const cavesFolderId = await this.api.getCavesFolderId();
+    const file = await this.api.findFileByName(fileName, cavesFolderId);
+    if (file === null) {
+      return null;
     }
+    const content = await this.api.downloadFile(file.id);
+    return { properties: file.properties, cave: Cave.fromPure(content, this.attributeDefs) };
   }
 
-  /**
-   * Restore all data from Google Drive
-   * @returns {Promise<void>}
-   */
-  async restoreAll() {
-    if (!this.isReady()) {
-      throw new Error('Google Drive not configured or authenticated');
+  async fetchProject(project) {
+    const fileName = this.getFileName(project);
+    const projectsFolderId = await this.api.getProjectsFolderId();
+    const file = await this.api.findFileByName(fileName, projectsFolderId);
+    if (file === null) {
+      return null;
     }
+    return await this.fetchProjectByFileUInternal(file);
 
-    if (this.isSyncing) {
-      throw new Error('Sync already in progress');
-    }
-
-    this.isSyncing = true;
-
-    try {
-      console.log('Starting full restore from Google Drive...');
-
-      // Restore projects first
-      await this.restoreProjects();
-
-      // Then restore caves
-      await this.restoreCaves();
-
-      console.log('Full restore completed successfully');
-    } finally {
-      this.isSyncing = false;
-    }
   }
 
-  /**
-   * Get sync status
-   * @returns {Object} Sync status information
-   */
-  getSyncStatus() {
-    return {
-      isConfigured   : this.config.isConfigured(),
-      hasValidTokens : this.config.hasValidTokens(),
-      isSyncing      : this.isSyncing,
-      lastSync       : this.config.get('lastSync'),
-      autoSync       : this.config.get('autoSync')
-    };
+  async fetchProjectByFile(file) {
+    return await this.operation(() => this.fetchProjectByFileUInternal(file));
   }
 
-  /**
-   * Disconnect from Google Drive
-   */
+  async fetchProjectByFileUInternal(file) {
+    const content = await this.api.downloadFile(file.id);
+    return { properties: file.properties, project: DriveProject.fromPure(content) };
+  }
+
+  async deleteProject(project) {
+    await this.operation(() => this.deleteProjectInternal(project));
+  }
+
+  async deleteProjectInternal(project) {
+    const projectsFolderId = await this.api.getProjectsFolderId();
+    const fileName = this.getFileName(project);
+    const file = await this.api.findFileByName(fileName, projectsFolderId);
+    if (file === null) {
+      return null;
+    }
+    await this.api.deleteFile(file.id);
+  }
+
+  async deleteCave(cave) {
+    await this.operation(() => this.deleteCaveInternal(cave));
+  }
+
+  async deleteCaveInternal(cave) {
+    const fileName = this.getFileName(cave);
+    const cavesFolderId = await this.api.getCavesFolderId();
+    const file = await this.api.findFileByName(fileName, cavesFolderId);
+    if (file === null) {
+      return null;
+    }
+    await this.api.deleteFile(file.id);
+  }
+
   disconnect() {
     this.config.clearTokens();
     console.log('Disconnected from Google Drive');

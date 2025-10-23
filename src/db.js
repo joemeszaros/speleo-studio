@@ -97,6 +97,10 @@ class Database {
     return this.caves.get(caveName);
   }
 
+  getCaveById(caveId) {
+    return this.caves.values().find((c) => c.id === caveId);
+  }
+
   hasCave(caveName) {
     return this.caves.has(caveName);
   }

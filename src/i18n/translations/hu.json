@@ -254,28 +254,35 @@
         "enterProjectName": "Projekt neve:",
         "enterProjectDescription": "Projekt leírása (opcionális):",
         "projectCreated": "Projekt \"{name}\" létrehozva",
-        "projectCreationFailed": "Hiba történt a projekt létrehozása során: {error}",
-        "projectOpenFailed": "Hiba történt a projekt megnyitása során: {error}",
-        "projectSaveFailed": "Hiba történt a projekt mentése során: {error}",
         "projectSaved": "Projekt mentve",
         "projectExported": "Projekt \"{name}\" exportálva",
-        "projectExportFailed": "Hiba történt a projekt exportálása során: {error}",
+        "projectDownloaded": "Projekt \"{name}\" sikeresen letöltve",
         "projectRenamed": "Projekt sikeresen átnevezve: \"{name}\" ",
-        "projectRenameFailed": "Hiba történt a projekt átnevezése során: {error}",
         "projectDeleted": "Projekt törölve",
-        "projectDeletionFailed": "Hiba történt a projekt törlése során: {error}",
         "noProjectToExport": "Nincs projekt a kiválasztott projekt exportálásához",
         "noProjectToRename": "Nincs projekt a kiválasztott projekt átnevezéséhez",
         "enterNewProjectName": "Új projekt neve: {name}",
         "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
+        "deleteProjectFromDriveConfirmation": "Törölni akarod ezt a projektet a Google Drive-ról? Ez a művelet nem vonható vissza.",
         "caves": "barlang",
         "errors": {
+          "projectDeletionFailed": "Hiba történt a projekt törlése során: {error}",
+          "projectRenameFailed": "Hiba történt a projekt átnevezése során: {error}",
+          "projectExportFailed": "Hiba történt a projekt exportálása során: {error}",
+          "projectUploadFailed": "Hiba történt a projekt feltöltése során: {error}",
+          "syncInProgress": "Egy másik Google Drive művelet már folyamatban van. Kérjük, várja meg a befejezését.",
+          "projectSaveFailed": "Hiba történt a projekt mentése során: {error}",
+          "projectCreationFailed": "Hiba történt a projekt létrehozása során: {error}",
+          "projectOpenFailed": "Hiba történt a projekt megnyitása során: {error}",
+          "projectDownloadFailed": "Hiba történt a projekt letöltése során: {error}",
+          "projectSyncFailed": "Hiba történt a projekt szinkronizálása során: {error}",
           "projectNameAlreadyExists": "A \"{name}\" nevű projekt már létezik",
           "projectIdAlreadyExists": "A \"{id}\" azonosítójú projekt már létezik",
           "projectImportFailed": "Hiba történt a projekt importálása során: {error}",
           "fileReadFailed": "Hiba történt a fájl olvasása során: {error}",
-          "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik",
-          "nonMatchingCaveIds": "A projektben felsorolt barlang azonosítók nem egyeznek a barlangok azonosítóival"
+          "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik, változtassa meg az azonosítót a fájlban",
+          "nonMatchingCaveIds": "A projektben felsorolt barlang azonosítók nem egyeznek a barlangok azonosítóival",
+          "projectRevisionMismatch": "Projekt változatok nem egyeznek: {projectName} (változat {revision}) nem egyezik a Google Drive változattal {driveRevision}"
         }
       },
       "googleDriveSettings": {
@@ -299,13 +306,6 @@
         "connected": "✓ Kapcsolódva a Google Drive-hoz",
         "authorize": "Hitelesítés",
         "disconnect": "Kapcsolat bontása",
-        "syncOperations": "Szinkronizálási műveletek",
-        "syncAll": "Adatok feltöltése",
-        "restoreAll": "Adatok letöltése",
-        "readyToSync": "Készen áll a szinkronizálásra",
-        "syncing": "Szinkronizálás...",
-        "lastSync": "Utolsó szinkronizálás: {date}",
-        "options": "Beállítások",
         "enableAutoSync": "Automatikus szinkronizálás engedélyezése"
       },
       "shortestPath": {
@@ -767,6 +767,7 @@
       "surveyNameUndefined": "A felmérés neve nincs megadva, kérem adja meg a nevet a fájlban",
       "surveyAlreadyExists": "A(z) {name} nevű felmérés már létezik a(z) {cave} barlangban",
       "caveAlreadyImported": "A(z) {name} nevű barlang már importálva lett korábban",
+      "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik, változtassa meg az azonosítót a fájlban",
       "projectUrlParameterMissing": "Valószínű, hogy a projekt URL paraméter hiányzik",
       "failedToDownloadFile": "Nem lehet letölteni a(z) {name} fájlt: {error}",
       "failedToLoadCaveFromUrl": "Nem lehet betölteni a(z) {name} barlangot a URL-ből: {error}",
@@ -829,7 +830,12 @@
       "surfaceAlreadyAdded": "A(z) {name} felszín már hozzá lett adva!"
     },
     "storage": {
+      "revisionStore": {
+        "revisionIdRequired": "A revizió azonosítója szükséges a törléshez"
+      },
       "caveSystem": {
+        "caveIdRequired": "A barlang azonosítója szükséges a törléshez",
+        "projectIdRequired": "A projekt azonosítója szükséges a törléshez",
         "failedToSaveCave": "Nem lehet menteni a barlangot",
         "failedToLoadCave": "Nem lehet betölteni a barlangot",
         "failedToLoadCaveNames": "Nem lehet betölteni a barlang neveket a projekthez",
@@ -840,6 +846,7 @@
         "failedToGetCavesForDeletion": "Nem lehet lekérni a barlangokat törléshez"
       },
       "projectSystem": {
+        "projectIdRequired": "A projekt azonosítója szükséges a törléshez",
         "failedToSaveProject": "Nem lehet menteni a projektet",
         "failedToCheckProjectExistence": "Nem lehet ellenőrizni a projekt létezését",
         "failedToLoadProjects": "Nem lehet betölteni a projekteket",
@@ -988,6 +995,11 @@
     }
   },
   "common": {
+    "refresh": "Frissítés",
+    "download": "Letöltés",
+    "sync": "Szinkronizálás",
+    "syncing": "Szinkronizálás...",
+    "upload": "Feltöltés",
     "loading": "Betöltés...",
     "error": "Hiba",
     "success": "Sikeres",

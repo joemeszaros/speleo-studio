@@ -211,6 +211,10 @@ export class ProjectSystem {
   }
 
   async deleteProject(projectId) {
+    if (projectId === null || projectId === undefined) {
+      throw new Error(i18n.t('errors.storage.projectSystem.projectIdRequired'));
+    }
+
     // First delete all caves associated with this project
     await this.caveSystem.deleteCavesByProjectId(projectId);
 

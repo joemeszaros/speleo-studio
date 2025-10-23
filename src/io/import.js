@@ -639,6 +639,8 @@ class JsonImporter extends Importer {
 
   async importText(wholeFileInText, onCaveLoad) {
     const cave = this.importJson(wholeFileInText, onCaveLoad);
+    // replace cave id to avoid conflicts with existing caves
+    cave.id = Cave.generateId();
     await onCaveLoad(cave);
   }
 

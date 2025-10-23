@@ -23,6 +23,7 @@ import { SectionHelper } from '../section.js';
 import { showErrorPanel } from './popups.js';
 import { i18n } from '../i18n/i18n.js';
 import * as THREE from 'three';
+import { RevisionInfo } from '../model/misc.js';
 
 class ProjectManager {
 
@@ -41,6 +42,7 @@ class ProjectManager {
     projectSystem,
     editorStateSystem,
     googleDriveSync,
+    revisionStore,
     attributeDefs
   ) {
     this.db = db;
@@ -51,6 +53,7 @@ class ProjectManager {
     this.projectSystem = projectSystem;
     this.editorStateSystem = editorStateSystem;
     this.googleDriveSync = googleDriveSync;
+    this.revisionStore = revisionStore;
     this.attributeDefs = attributeDefs;
     this.firstEdit = true;
 
@@ -58,6 +61,7 @@ class ProjectManager {
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('caveChanged', (e) => this.onCaveChanged(e));
+    document.addEventListener('caveSynced', (e) => this.onCaveSynced(e));
     document.addEventListener('surveyRenamed', (e) => this.onSurveyRenamed(e));
     document.addEventListener('surveyChanged', (e) => this.onSurveyChanged(e));
     document.addEventListener('surveyDeleted', (e) => this.onSurveyDeleted(e));
@@ -71,15 +75,25 @@ class ProjectManager {
     document.addEventListener('componentAttributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('stationAttributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('surveyCommentsChanged', (e) => this.onSurveyCommentsChanged(e));
-
   }
 
-  async saveCave(cave) {
+  async saveCave(cave, reason = 'unknown') {
     cave.revision++;
+    const revInfo = new RevisionInfo(cave.id, cave.revision, this.googleDriveSync.config.getApp(), reason);
+    await this.revisionStore.saveRevision(revInfo);
+
     if (this.googleDriveSync.config.get('autoSync')) {
-      await this.googleDriveSync.trySyncCave(cave, this.projectSystem.getCurrentProject(), false);
+      await this.googleDriveSync.coordinateUploadCave(cave, this.projectSystem.getCurrentProject(), revInfo);
     }
     await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+  }
+
+  async onCaveSynced(e) {
+    const cave = e.detail.cave;
+    const project = e.detail.project;
+    if (project.id === this.projectSystem.getCurrentProject().id) {
+      await this.currentProjectChanged(project, true);
+    }
   }
 
   async onCaveAdded(e) {
@@ -206,6 +220,10 @@ class ProjectManager {
 
   async onCurrentProjectChanged(e) {
     const project = e.detail.project;
+    await this.currentProjectChanged(project);
+  }
+
+  async currentProjectChanged(project, skipLocalChanges = false) {
 
     this.db.getAllCaves().forEach((cave) => {
       this.disposeCave(cave.name, cave.id);
@@ -228,7 +246,7 @@ class ProjectManager {
     this.projectSystem.setCurrentProject(project);
 
     const editorState = await this.editorStateSystem.loadState(project.id);
-    if (editorState !== undefined) {
+    if (editorState !== undefined && !skipLocalChanges) {
       const cave = this.db.getCave(editorState.metadata.caveName);
       const survey = cave.surveys.find((s) => s.name === editorState.metadata.surveyName);
       this.editor = new SurveyEditor(
@@ -281,6 +299,7 @@ class ProjectManager {
     if (this.db.getAllCaveNames().length === 0) {
       this.#emitCoordinateSystemChange(null);
     }
+    this.#emitCaveDestructed(id);
   }
 
   async reloadCave(cave) {
@@ -407,6 +426,15 @@ class ProjectManager {
     const event = new CustomEvent('coordinateSystemChanged', {
       detail : {
         coordinateSystem
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCaveDestructed(id) {
+    const event = new CustomEvent('caveDestructed', {
+      detail : {
+        id : id
       }
     });
     document.dispatchEvent(event);

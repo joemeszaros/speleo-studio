@@ -106,6 +106,12 @@
   margin-bottom: 8px;
 }
 
+.drive-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
 .current-project-name {
   color: #fff;
   font-size: 14px;
@@ -261,6 +267,19 @@
 
 .project-action-btn.delete:hover {
   background: #8a1a12;
+}
+
+.project-action-btn.disabled,
+.project-action-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.project-action-btn.disabled:hover,
+.project-action-btn:disabled:hover {
+  background: #333;
 }
 
 .project-search-container {

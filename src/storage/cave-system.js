@@ -76,13 +76,17 @@ export class CaveSystem {
     };
   }
 
-  async getCaveIdsByProjectId(projectId) {
+  async getCaveFieldsByProjectId(projectId, fields) {
     return new Promise((resolve, reject) => {
       const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAll(projectId);
 
       request.onsuccess = () => {
-        const caveIds = request.result.map((data) => data.id);
-        resolve(caveIds);
+        const caveFields = request.result.map((data) => {
+          const r = {};
+          fields.forEach((field) => (r[field] = data[field]));
+          return r;
+        });
+        resolve(caveFields);
       };
 
       request.onerror = () => {
@@ -142,6 +146,10 @@ export class CaveSystem {
   }
 
   async deleteCave(caveId) {
+    if (caveId === null || caveId === undefined) {
+      throw new Error(i18n.t('errors.storage.caveSystem.caveIdRequired'));
+    }
+
     return new Promise((resolve, reject) => {
       const request = this.dbManager.getReadWriteStore(this.storeName).delete(caveId);
 
@@ -156,6 +164,9 @@ export class CaveSystem {
   }
 
   async deleteCavesByProjectId(projectId) {
+    if (projectId === null || projectId === undefined) {
+      throw new Error(i18n.t('errors.storage.caveSystem.projectIdRequired'));
+    }
     return new Promise((resolve, reject) => {
       const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAllKeys(projectId);
 

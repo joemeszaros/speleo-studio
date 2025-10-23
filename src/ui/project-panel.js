@@ -17,15 +17,31 @@
 import { showErrorPanel, showSuccessPanel } from './popups.js';
 import * as U from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
-import { FatProject } from '../model/project.js';
+import { DriveProject, FatProject, Project } from '../model/project.js';
+import { Cave } from '../model/cave.js';
+import { RevisionInfo } from '../model/misc.js';
 
 export class ProjectPanel {
-  constructor(panel, projectSystem, attributeDefs, projectInput = 'projectInput') {
+  constructor(
+    panel,
+    projectSystem,
+    caveSystem,
+    googleDriveSync,
+    revisionStore,
+    attributeDefs,
+    projectInput = 'projectInput'
+  ) {
     this.panel = panel;
     this.projectSystem = projectSystem;
+    this.caveSystem = caveSystem;
+    this.googleDriveSync = googleDriveSync;
+    this.revisionStore = revisionStore;
     this.attributeDefs = attributeDefs;
     this.isVisible = false;
     this.fileInputElement = document.getElementById(projectInput);
+    this.driveProjects = new Map();
+    this.driveProperties = new Map();
+    this.clickHandlerActive = false;
 
     this.fileInputElement.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -35,7 +51,7 @@ export class ProjectPanel {
       reader.onload = async (event) => {
         try {
           const text = event.target.result;
-          await this.importProject(text, this.attributeDefs);
+          await this.importFatProject(text, this.attributeDefs);
         } catch (error) {
           console.error(i18n.t('ui.panels.projectManager.errors.projectImportFailed'), error);
           showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
@@ -51,12 +67,45 @@ export class ProjectPanel {
     });
   }
 
+  async createClickHandler(event, uploadFunction) {
+
+    if (this.clickHandlerActive) {
+      event.preventDefault();
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.syncInProgress'));
+      return;
+    }
+
+    // Check if Google Drive sync is in progress
+    if (this.googleDriveSync.isSyncing) {
+      event.preventDefault();
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.syncInProgress'));
+      return;
+    }
+
+    this.clickHandlerActive = true;
+    // Disable the button and show syncing state
+    const button = event.target;
+    button.disabled = true;
+    button.classList.add('disabled');
+
+    try {
+      await uploadFunction();
+    } finally {
+      // Re-enable the button
+      button.disabled = false;
+      button.classList.remove('disabled');
+      this.clickHandlerActive = false;
+    }
+  }
+
   setupPanel() {
     this.panel.innerHTML = `
       <div class="project-panel-header">
         <h3>${i18n.t('ui.panels.projectManager.title')}</h3>
         <button id="new-project-btn" class="project-btn">${i18n.t('ui.panels.projectManager.new')}</button>
         <button id="import-project-btn" class="project-btn">${i18n.t('ui.panels.projectManager.import')}</button>
+        <button id="refresh-panel-btn" class="project-btn">${i18n.t('common.refresh')}</button>
+
         <button class="project-panel-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
       </div>
       
@@ -87,10 +136,12 @@ export class ProjectPanel {
     const newProjectBtn = this.panel.querySelector('#new-project-btn');
     const importProjectBtn = this.panel.querySelector('#import-project-btn');
     const projectSearch = this.panel.querySelector('#project-search');
+    const refreshPanelBtn = this.panel.querySelector('#refresh-panel-btn');
 
     newProjectBtn.addEventListener('click', () => this.showNewProjectDialog());
     importProjectBtn.addEventListener('click', () => this.fileInputElement.click());
     projectSearch.addEventListener('input', () => this.filterProjects());
+    refreshPanelBtn.addEventListener('click', () => this.updateDisplay());
   }
 
   show() {
@@ -160,6 +211,20 @@ export class ProjectPanel {
     }
   }
 
+  getProjectItemNode(project, caveNames, lastModified, isCurrent, isLocal) {
+    const buttons = [
+      { label: i18n.t('common.rename'), click: () => this.renameProject(project.id) },
+      { label: i18n.t('common.export'), click: () => this.exportProject(project.id) },
+      {
+        id    : 'delete-project-btn',
+        label : i18n.t('common.delete'),
+        click : async (event) => await this.createClickHandler(event, async () => await this.deleteProject(project))
+      }
+    ];
+
+    return this.projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal);
+  }
+
   async updateRecentProjectsList() {
     const recentProjectsList = this.panel.querySelector('#recent-projects-list');
 
@@ -168,43 +233,19 @@ export class ProjectPanel {
 
       if (projects.length === 0) {
         recentProjectsList.innerHTML = `<p>${i18n.t('ui.panels.projectManager.noProjectsFound')}</p>`;
-        return;
       }
 
+      const cavesForLocalProjects = new Map();
+      this.driveProjects.clear();
+      this.driveProperties.clear();
       const projectListItems = await Promise.all(
         projects.map(async (project) => {
-          const caveNames = await this.projectSystem.getCaveNamesForProject(project.id);
-          const caveCount = caveNames.length;
+          const caves = await this.projectSystem.getCavesForProject(project.id);
+          cavesForLocalProjects.set(project.id, caves);
+          const caveNames = caves.map((c) => c.name);
           const lastModified = new Date(project.updatedAt).toLocaleDateString();
           const isCurrent = this.projectSystem.getCurrentProject()?.id === project.id;
-
-          const panel = U.node`
-           <div class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">
-             <div class="project-item-header">
-               <div class="project-item-info">
-                 <span class="project-name">${project.name}</span>
-                 ${project.description ? `<span class="project-description">• ${project.description}</span>` : ''}
-                 ${caveNames ? `<span class="project-caves">• ${caveNames}</span>` : ''}
-               </div>
-               <div class="project-item-meta">
-                 <span class="project-meta-text">${caveCount} ${i18n.t('ui.panels.projectManager.caves')} • ${lastModified}</span>
-                 ${isCurrent ? `<span class="current-badge">${i18n.t('common.current')}</span>` : ''}
-               </div>
-             </div>
-             <div class="project-item-actions">
-               ${!isCurrent ? `<button id="open-project-btn" class="project-action-btn">${i18n.t('common.open')}</button>` : ''}
-               <button id="rename-project-btn" class="project-action-btn rename">${i18n.t('common.rename')}</button>
-               <button id="export-project-btn" class="project-action-btn export">${i18n.t('common.export')}</button>
-               <button id="delete-project-btn" class="project-action-btn delete">${i18n.t('common.delete')}</button>
-             </div>
-           </div>
-         `;
-
-          panel.querySelector('#open-project-btn')?.addEventListener('click', () => this.openProject(project.id));
-          panel.querySelector('#delete-project-btn').addEventListener('click', () => this.deleteProject(project.id));
-          panel.querySelector('#rename-project-btn').addEventListener('click', () => this.renameProject(project.id));
-          panel.querySelector('#export-project-btn').addEventListener('click', () => this.exportProject(project.id));
-          return panel;
+          return this.getProjectItemNode(project, caveNames, lastModified, isCurrent, true);
         })
       );
 
@@ -213,11 +254,251 @@ export class ProjectPanel {
         recentProjectsList.appendChild(item);
       });
 
+      let driveProjectFiles = [];
+      if (this.googleDriveSync.isReady()) {
+        driveProjectFiles = await this.googleDriveSync.listProjects();
+
+        if (driveProjectFiles.length > 0) {
+
+          // sequential needs a promise function and not a promise which is immediately executed
+          const promises = driveProjectFiles.map((file) => async () => {
+            const response = await this.googleDriveSync.fetchProjectByFile(file);
+            if (response) {
+              const projectId = response.project.project.id;
+              this.driveProjects.set(projectId, response.project);
+              this.driveProperties.set(projectId, response.properties);
+              const projectItemNode = recentProjectsList.querySelector(`#project-item-${projectId}`);
+
+              if (projectItemNode !== null) {
+                await this.decorateProjectItemWithDrive(
+                  response.properties,
+                  response.project,
+                  projects,
+                  cavesForLocalProjects.get(projectId),
+                  projectItemNode
+                );
+              } else {
+                const newNode = this.getProjectItemForDriveProject(response.project, response.properties);
+                recentProjectsList.appendChild(newNode);
+              }
+            }
+          });
+
+          await U.sequential(promises);
+        }
+
+        // local projects without google drive pair
+        const localProjects = projects.filter((p) => !this.driveProjects.has(p.id));
+        localProjects.forEach((project) => {
+          const button = U.node`<button class="project-action-btn">${i18n.t('common.upload')}</button>`;
+          const buttonContainer = recentProjectsList.querySelector(`#project-item-actions-${project.id}`);
+          buttonContainer.appendChild(button);
+          // Use wrapper function for click handler
+          button.addEventListener(
+            'click',
+            async (event) => await this.createClickHandler(event, async () => await this.uploadProject(project))
+          );
+        });
+      }
+
     } catch (error) {
       const errorMessage = i18n.t('ui.panels.projectManager.errorLoadingProjects');
       recentProjectsList.innerHTML = `<p>${errorMessage}</p>`;
       console.error(errorMessage, error);
     }
+  }
+
+  async decorateProjectItemWithDrive(driveProperties, driveProject, projects, caves, projectItemNode) {
+
+    if (driveProperties.revision !== driveProject.project.revision.toString()) {
+      // this should never happen
+      throw new Error(
+        i18n.t('ui.panels.projectManager.errors.projectRevisionMismatch', {
+          projectName   : driveProject.project.name,
+          revision      : driveProperties.revision,
+          driveRevision : driveProject.project.revision.toString()
+        })
+      );
+    }
+
+    const localProject = projects.find((p) => p.id === driveProject.project.id);
+
+    // we need an updated cave list and a sync button
+
+    const caveList = await this.getCaveList(caves, driveProject, driveProperties);
+    let projectDiff = '';
+    const diff = localProject.revision - driveProject.project.revision;
+    if (diff > 0) {
+      projectDiff = `(+${diff})`;
+    } else if (diff < 0) {
+      projectDiff = `(-${diff})`;
+    }
+
+    const projectNameElmnt = projectItemNode.querySelector(`#project-name-${localProject.id}`);
+    projectNameElmnt.textContent = `${localProject.name} ${projectDiff}`;
+    const projectCavesElmnt = projectItemNode.querySelector(`#project-caves-${localProject.id}`);
+    projectCavesElmnt.textContent =
+      ' • ' +
+      caveList
+        .map((c) => c.name)
+        .join(', ');
+    const projectInfoElmnt = projectItemNode.querySelector(`#project-item-info-${localProject.id}`);
+    projectInfoElmnt.insertBefore(U.node`<img src="icons/drive.svg" class="drive-icon"/>`, projectInfoElmnt.firstChild);
+
+    const syncEnabled =
+      projectDiff !== '' ||
+      caveList.some((c) => c.state !== 'existing' || (c.diff ?? 0) !== 0 || (c.hasConflict && c.diff === 0));
+    if (syncEnabled) {
+      const cloudButton = U.node`<button id="sync-project-btn" class="project-action-btn sync">${i18n.t('common.sync')}</button>`;
+      cloudButton.addEventListener(
+        'click',
+        async (event) =>
+          await this.createClickHandler(
+            event,
+            async () =>
+              await this.syncProject(localProject, caveList, async (dProp, dProj) => {
+                const nCaves = await this.projectSystem.getCavesForProject(localProject.id);
+                const newNode = this.getProjectItemNode(
+                  localProject,
+                  nCaves.map((c) => c.name),
+                  new Date(localProject.updatedAt).toLocaleDateString(),
+                  true,
+                  true
+                );
+                const decoratedNode = await this.decorateProjectItemWithDrive(dProp, dProj, projects, nCaves, newNode);
+                const projectItemNode = this.panel.querySelector(`#project-item-${localProject.id}`);
+                projectItemNode.replaceWith(decoratedNode);
+              })
+          )
+
+      );
+      const buttonContainer = projectItemNode.querySelector(`#project-item-actions-${localProject.id}`);
+      buttonContainer.appendChild(cloudButton);
+
+    }
+
+    return projectItemNode;
+  }
+
+  // this is a drive project, without local copy, we need an item with a download button
+  getProjectItemForDriveProject(driveProject, driveProperties) {
+    const buttons = [
+      {
+        label : i18n.t('common.download'),
+        click : async (event) =>
+          await this.createClickHandler(event, async () => await this.downloadProject(driveProject, driveProperties))
+      }
+    ];
+    return this.projectItemNode(
+      driveProject.project,
+      driveProject.caves.map((c) => c.name).map((n) => `🟢 ${n}`),
+      buttons,
+      new Date(driveProject.project.updatedAt).toLocaleDateString(),
+      false,
+      false
+    );
+  }
+
+  async getProjectSyncInfo(driveProject, driveProperties, localProject) {
+    const driveRevisionInfo = new RevisionInfo(
+      driveProject.project.id,
+      parseInt(driveProperties.revision),
+      driveProperties.app,
+      driveProperties.reason
+    );
+
+    const localRevisionInfo = await this.revisionStore.loadRevision(localProject.id);
+
+    let hasConflict = false;
+    const diff = localRevisionInfo.revision - driveRevisionInfo.revision;
+    const info = { diff };
+
+    // if (diff > 0) {
+    //   //
+    // } else if (diff < 0) {
+
+    //   //
+    // } else {
+    //   hasConflict = localRevisionInfo.app !== driveProperties.app;
+    // }
+
+  }
+
+  async getCaveList(caves, driveProject, driveProperties) {
+
+    const caveList = await Promise.all(
+      caves.map(async (cave) => {
+        const caveId = cave.id;
+        if (driveProject.caves.find((c) => c.id === caveId)) {
+          const localRevision = await this.revisionStore.loadRevision(caveId);
+          const hasConflict = localRevision.app !== driveProperties.app;
+          const driveCaveRevision = driveProject.caves.find((c) => c.id === caveId).revision;
+          const diff = cave.revision - driveCaveRevision;
+          let prefix = hasConflict ? '⚠️' : '';
+          let diffStr = '';
+          if (diff > 0) {
+            diffStr = `(+${diff})`;
+          } else if (diff < 0) {
+            diffStr = `(-${diff})`;
+          } else {
+            prefix = !hasConflict ? '✅️' : '';
+          }
+          return {
+            id          : caveId,
+            name        : `${prefix} ${cave.name} ${diffStr}`,
+            state       : 'existing',
+            diff        : diff,
+            hasConflict : hasConflict,
+            driveApp    : driveProperties.app
+          };
+        } else if (driveProject.deletedCaveIds.includes(caveId)) {
+          return { id: caveId, name: '🔴 ' + cave.name, state: 'deleted' };
+        } else {
+          return { id: caveId, name: '🟢 ' + cave.name, state: 'new' };
+        }
+      })
+    );
+    const remoteCaves = driveProject.caves.filter((c) => caves.find((c2) => c2.id === c.id) === undefined);
+    remoteCaves.forEach((cave) => {
+      caveList.push({ id: cave.id, name: '🔵 ' + cave.name, state: 'remote' });
+    });
+    return caveList;
+
+  }
+
+  projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal = true) {
+    const panel = U.node`
+    <div id="project-item-${project.id}" class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">
+      <div class="project-item-header">
+        <div class="project-item-info" id="project-item-info-${project.id}">
+          ${!isLocal ? `<img src="icons/drive.svg" class="drive-icon"/>` : ''}
+          <span id="project-name-${project.id}" class="project-name">${project.name}</span>
+          ${project.description ? `<span class="project-description">• ${project.description}</span>` : ''}
+          <span class="project-caves" id="project-caves-${project.id}">${caveNames ? `• ${caveNames.join(', ')}` : ''}</span>
+        </div>
+        <div class="project-item-meta">
+          <span class="project-meta-text">${caveNames.length} ${i18n.t('ui.panels.projectManager.caves')} • ${lastModified}</span>
+          ${isCurrent ? `<span class="current-badge">${i18n.t('common.current')}</span>` : ''}
+        </div>
+      </div>
+      <div class="project-item-actions" id="project-item-actions-${project.id}">
+      </div>
+    </div>
+  `;
+    const buttonContainer = panel.querySelector(`#project-item-actions-${project.id}`);
+
+    if (!isCurrent && isLocal) {
+      const openButton = U.node`<button class="project-action-btn">${i18n.t('common.open')}</button>`;
+      buttonContainer.appendChild(openButton);
+      openButton.addEventListener('click', () => this.openProject(project.id));
+    }
+
+    buttons.forEach((button) => {
+      const b = U.node`<button ${button.id ? `id="${button.id}"` : ''} class="project-action-btn">${button.label}</button>`;
+      b.addEventListener('click', button.click);
+      buttonContainer.appendChild(b);
+    });
+    return panel;
   }
 
   async showNewProjectDialog() {
@@ -246,7 +527,7 @@ export class ProjectPanel {
       this.hide();
       showSuccessPanel(i18n.t('ui.panels.projectManager.projectCreated', { name: trimmedName }));
     } catch (error) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.projectCreationFailed', { error: error.message }));
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectCreationFailed', { error: error.message }));
     }
   }
 
@@ -281,7 +562,7 @@ export class ProjectPanel {
       // Close the panel after successful project opening
       this.hide();
     } catch (error) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.projectOpenFailed', { error: error.message }));
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectOpenFailed', { error: error.message }));
     }
   }
 
@@ -291,40 +572,203 @@ export class ProjectPanel {
       this.updateDisplay();
       showSuccessPanel(i18n.t('ui.panels.projectManager.projectSaved'));
     } catch (error) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.projectSaveFailed', { error: error.message }));
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectSaveFailed', { error: error.message }));
     }
   }
 
-  async importProject(projectText, attributeDefs) {
-    const pure = JSON.parse(projectText);
-    const project = FatProject.fromPure(pure, attributeDefs);
-    const nameExists = await this.projectSystem.checkProjectExistsByName(project.project.name);
+  async importFatProject(fatProjectText, attributeDefs) {
+    const pure = JSON.parse(fatProjectText);
+    const fatProject = FatProject.fromPure(pure, attributeDefs);
+    //generate new ids to avoid conflicts with existing projects and caves
+    fatProject.project.id = Project.generateId();
+    fatProject.caves.forEach((cave) => {
+      cave.id = Cave.generateId();
+    });
+    const success = await this.importProject(fatProject.project, fatProject.caves, attributeDefs);
+    if (success) {
+      this.updateDisplay();
+    }
+  }
+
+  async importProject(project, caves) {
+
+    const nameExists = await this.projectSystem.checkProjectExistsByName(project.name);
 
     if (nameExists) {
-      showErrorPanel(
-        i18n.t('ui.panels.projectManager.errors.projectNameAlreadyExists', { name: project.project.name })
-      );
-      return;
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectNameAlreadyExists', { name: project.name }));
+      return false;
     }
-    const projectExists = await this.projectSystem.checkProjectExistsById(project.project.id);
+    const projectExists = await this.projectSystem.checkProjectExistsById(project.id);
     if (projectExists) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectIdAlreadyExists', { id: project.project.id }));
-      return;
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectIdAlreadyExists', { id: project.id }));
+      return false;
     }
 
-    for (const cave of project.caves) {
-      const caveExists = await this.projectSystem.caveSystem.checkCaveExistsById(cave.id);
+    for (const cave of caves) {
+      //due to indexed db and google drive cave id must be globally unique
+      const caveExists = await this.caveSystem.checkCaveExistsById(cave.id);
       if (caveExists) {
         showErrorPanel(i18n.t('ui.panels.projectManager.errors.caveIdAlreadyExists', { id: cave.id }));
-        return;
+        return false;
       }
     }
 
-    await this.projectSystem.saveProject(project.project);
-    project.caves.forEach(async (cave) => {
-      await this.projectSystem.caveSystem.saveCave(cave, project.project.id);
-    });
-    this.updateDisplay();
+    await this.projectSystem.saveProject(project);
+    await Promise.all(
+      caves.map((cave) => {
+        this.caveSystem.saveCave(cave, project.id);
+      })
+    );
+    return true;
+  }
+
+  async syncProject(localProject, caveList, onSuccess) {
+    try {
+      const conflictMessages = caveList
+        .filter((c) => c.hasConflict)
+        .map((c) => {
+          if (c.diff === 0) {
+            `Cave ${c.name} with same revision has been modified by another app: "${c.driveApp}". Sync will drop local changes since last revision.`;
+          } else if (c.diff > 0) {
+            `Cave ${c.name} has local changes. Sync will drop remote changes made by "${c.driveApp}".`;
+          } else {
+            `Cave ${c.name} has remote changes made by "${c.driveApp}". Sync will drop local changes since last revision.`;
+          }
+        });
+
+      if (conflictMessages.length > 0) {
+        if (!confirm(conflictMessages.join('\n\n'))) {
+          return false;
+        }
+      }
+
+      await Promise.all(
+        caveList.map(async (c) => {
+          const cave = await this.caveSystem.loadCave(c.id);
+          const localRevisionInfo = await this.revisionStore.loadRevision(c.id);
+
+          if (c.state === 'existing') {
+            if (c.diff > 0) {
+              await this.googleDriveSync.uploadCave(cave, localProject, false, localRevisionInfo);
+            } else if (c.diff < 0) {
+              const caveWithProperties = await this.googleDriveSync.fetchCave({ id: c.id }, localProject);
+              this.caveSystem.saveCave(caveWithProperties.cave, localProject.id);
+              this.#emitCaveSynced(caveWithProperties.cave, localProject);
+            } else {
+              if (c.hasConflict) {
+                await this.googleDriveSync.uploadCave(cave, localProject, false, localRevisionInfo);
+              } // otherwise nothing to do
+            }
+          } else if (c.state === 'new') {
+            await this.googleDriveSync.uploadCave(cave, localProject, true);
+          } else if (c.state === 'deleted') {
+            this.#emitCaveDeleted(cave);
+            // Wait until 'caveDestructed' event is emitted for this cave
+            // we need the indexed db operation to complete before we can continue
+            await U.waitForEvent('caveDestructed', (detail) => detail.id === cave.id);
+          }
+        })
+      );
+
+      const response = await this.googleDriveSync.uploadProject(localProject);
+
+      onSuccess(response.properties, response.project);
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectSyncFailed', { error: error.message }));
+    }
+  }
+
+  async downloadProject(driveProject, driveProperties) {
+    try {
+      const cavesWithProperties = await Promise.all(
+        driveProject.caves.map((cave) => this.googleDriveSync.fetchCave(cave))
+      );
+      const caves = cavesWithProperties.map((c) => c.cave);
+      const success = await this.importProject(driveProject.project, caves);
+      await Promise.all(
+        cavesWithProperties.map(async (cwp) => {
+          const caveRevisionInfo = new RevisionInfo(
+            cwp.cave.id,
+            cwp.cave.revision,
+            this.googleDriveSync.config.getApp(),
+            'create'
+          );
+          await this.revisionStore.saveRevision(caveRevisionInfo);
+        })
+      );
+
+      if (success) {
+
+        const projectItem = this.panel.querySelector(`#project-item-${driveProject.project.id}`);
+        const isCurrent = this.projectSystem.getCurrentProject()?.id === driveProject.project.id;
+        const itemNode = this.getProjectItemNode(
+          driveProject.project,
+          driveProject.caves.map((c) => c.name),
+          new Date(driveProject.project.updatedAt).toLocaleDateString(),
+          isCurrent,
+          true
+        );
+
+        const projects = await this.projectSystem.getAllProjects();
+
+        const decoratedNode = await this.decorateProjectItemWithDrive(
+          driveProperties,
+          driveProject,
+          projects,
+          caves,
+          itemNode
+        );
+        projectItem.replaceWith(decoratedNode);
+        showSuccessPanel(i18n.t('ui.panels.projectManager.projectDownloaded', { name: driveProject.project.name }));
+      }
+    } catch (error) {
+      console.error(error);
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectDownloadFailed', { error: error.message }));
+    }
+  }
+
+  async uploadProject(localProject) {
+    try {
+      const app = this.googleDriveSync.config.getApp();
+      const caves = await this.projectSystem.getCavesForProject(localProject.id);
+      const revisionInfo = new RevisionInfo(localProject.id, localProject.revision, app, 'create');
+      // do not pass revision info, because this is a new file
+      await this.googleDriveSync.uploadProject(localProject);
+      await this.revisionStore.saveRevision(revisionInfo);
+      await Promise.all(
+        caves.map((cave) =>
+          // do not pass revision info, because this is a new file
+          this.#uploadCaveAndSaveRevision(cave, localProject, true, 'create')
+        )
+      );
+      const projectItemNode = this.panel.querySelector(`#project-item-${localProject.id}`);
+      const isCurrent = this.projectSystem.getCurrentProject()?.id === localProject.id;
+      const newNode = this.getProjectItemNode(
+        localProject,
+        caves.map((c) => c.name),
+        new Date(localProject.updatedAt).toLocaleDateString(),
+        isCurrent,
+        true
+      );
+      const driveProject = new DriveProject(localProject, caves, app, []);
+      const driveProperties = { app: app, revision: localProject.revision.toString() };
+      const projects = await this.projectSystem.getAllProjects();
+      const decoratedNode = await this.decorateProjectItemWithDrive(
+        driveProperties,
+        driveProject,
+        projects,
+        caves,
+        newNode
+      );
+      projectItemNode.replaceWith(decoratedNode);
+
+    } catch (error) {
+      console.error(error);
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectUploadFailed', { error: error.message }));
+    }
   }
 
   async exportProject(projectId) {
@@ -347,7 +791,8 @@ export class ProjectPanel {
 
       showSuccessPanel(i18n.t('ui.panels.projectManager.projectExported', { name: project.name }));
     } catch (error) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.projectExportFailed', { error: error.message }));
+      console.error(error);
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
     }
   }
 
@@ -391,28 +836,93 @@ export class ProjectPanel {
 
       showSuccessPanel(i18n.t('ui.panels.projectManager.projectRenamed', { name: trimmedName }));
     } catch (error) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.projectRenameFailed', { error: error.message }));
+      console.error(error);
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectRenameFailed', { error: error.message }));
     }
   }
 
-  async deleteProject(projectId) {
+  async deleteProject(project) {
     const confirmed = confirm(i18n.t('ui.panels.projectManager.deleteProjectConfirmation'));
     if (!confirmed) return;
 
+    let driveDeleted = false;
     try {
-      await this.projectSystem.deleteProject(projectId);
 
-      // If we're deleting the current project, clear it
-      if (this.projectSystem.getCurrentProject()?.id === projectId) {
-        this.projectSystem.clearCurrentProject();
-        this.#emitCurrentProjectDeleted(projectId);
+      const driveProject = this.driveProjects.get(project.id);
+      const driveProperties = this.driveProperties.get(project.id);
+      if (driveProject && this.googleDriveSync.isReady()) {
+        const deleteFromDrive = confirm(i18n.t('ui.panels.projectManager.deleteProjectFromDriveConfirmation'));
+        if (deleteFromDrive) {
+          await this.googleDriveSync.deleteProject(project);
+          const cavesIds = await this.caveSystem.getCaveFieldsByProjectId(project.id, ['id']);
+          await Promise.all(cavesIds.map((cave) => this.googleDriveSync.deleteCave(cave)));
+          this.driveProjects.delete(project.id);
+          this.driveProperties.delete(project.id);
+          this.revisionStore.deleteRevision(project.id);
+          await Promise.all(cavesIds.map((cave) => this.revisionStore.deleteRevision(cave.id)));
+          driveDeleted = true;
+        }
       }
 
-      this.updateDisplay();
+      await this.projectSystem.deleteProject(project.id);
+
+      // If we're deleting the current project, clear it
+      if (this.projectSystem.getCurrentProject()?.id === project.id) {
+        this.projectSystem.clearCurrentProject();
+        this.#emitCurrentProjectDeleted(project.id);
+      }
+
+      const projectItem = this.panel.querySelector(`#project-item-${project.id}`);
+
+      if (driveProject && !driveDeleted) {
+        const buttons = [
+          {
+            label : i18n.t('common.download'),
+            click : async (event) =>
+              await this.createClickHandler(
+                event,
+                async () => await this.downloadProject(driveProject, driveProperties)
+              )
+          }
+        ];
+        const panel = this.projectItemNode(
+          driveProject.project,
+          driveProject.caves.map((c) => c.name).map((n) => `🟢 ${n}`),
+          buttons,
+          new Date(driveProject.project.updatedAt).toLocaleDateString(),
+          false,
+          false
+        );
+        projectItem.replaceWith(panel);
+      } else {
+        projectItem.remove();
+      }
+
       showSuccessPanel(i18n.t('ui.panels.projectManager.projectDeleted'));
     } catch (error) {
-      showErrorPanel(i18n.t('ui.panels.projectManager.projectDeletionFailed', { error: error.message }));
+      console.error(error);
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectDeletionFailed', { error: error.message }));
     }
+  }
+
+  async #uploadCaveAndSaveRevision(cave, project, create = false, reason = 'unknown') {
+    const revisionInfo = new RevisionInfo(cave.id, cave.revision, this.googleDriveSync.config.getApp(), reason);
+    if (create) {
+      await this.googleDriveSync.uploadCave(cave, project, true);
+    } else {
+      await this.googleDriveSync.uploadCave(cave, project, false, revisionInfo);
+    }
+    await this.revisionStore.saveRevision(revisionInfo);
+  }
+
+  #emitCaveSynced(cave, project) {
+    const event = new CustomEvent('caveSynced', {
+      detail : {
+        cave    : cave,
+        project : project
+      }
+    });
+    document.dispatchEvent(event);
   }
 
   #emitCurrentProjectChanged(project) {
@@ -428,6 +938,16 @@ export class ProjectPanel {
     const event = new CustomEvent('currentProjectDeleted', {
       detail : {
         projectId : projectId
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCaveDeleted(cave) {
+    const event = new CustomEvent('caveDeleted', {
+      detail : {
+        name : cave.name,
+        id   : cave.id
       }
     });
     document.dispatchEvent(event);

@@ -43,6 +43,7 @@ import { SurfaceHelper } from './surface.js';
 import { PrintUtils } from './utils/print.js';
 import { node } from './utils/utils.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { RevisionStore } from './storage/revision.js';
 
 class Main {
 
@@ -81,6 +82,7 @@ class Main {
           this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
           this.editorStateSystem = new EditorStateSystem(this.databaseManager);
           this.declinationCache = new DeclinationCache(this.databaseManager);
+          this.revisionStore = new RevisionStore(this.databaseManager);
 
           loader.load(
             'fonts/helvetiker_regular.typeface.json',
@@ -175,7 +177,7 @@ class Main {
     // Initialize settings panel in sidebar
     this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
 
-    this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem);
+    this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem, attributeDefs);
     if (
       this.googleDriveSync.config.isConfigured() &&
       this.googleDriveSync.config.hasTokens() &&
@@ -194,11 +196,19 @@ class Main {
       this.projectSystem,
       this.editorStateSystem,
       this.googleDriveSync,
+      this.revisionStore,
       attributeDefs
     );
 
     // Initialize project panel
-    this.projectPanel = new ProjectPanel(document.getElementById('project-panel'), this.projectSystem, attributeDefs);
+    this.projectPanel = new ProjectPanel(
+      document.getElementById('project-panel'),
+      this.projectSystem,
+      this.caveSystem,
+      this.googleDriveSync,
+      this.revisionStore,
+      attributeDefs
+    );
     this.projectPanel.setupPanel();
     this.projectPanel.show();
 
@@ -341,19 +351,24 @@ class Main {
   async #tryAddCave(cave) {
     const currentProject = this.projectSystem.getCurrentProject();
     const cavesNamesInProject = await this.projectSystem.getCaveNamesForProject(currentProject.id);
-
-    if (!cavesNamesInProject.includes(cave.name)) {
-      const errorMessage = this.projectManager.validateBeforeAdd(cave);
-      if (errorMessage) {
-        showErrorPanel(`${i18n.t('errors.import.importFileFailed', { name: cave.name })}: ${errorMessage}`);
-        return;
-      }
-      await this.projectSystem.addCaveToProject(currentProject, cave);
-      this.projectManager.calculateFragmentAttributes(cave);
-      this.projectManager.addCave(cave);
-    } else {
+    if (cavesNamesInProject.includes(cave.name)) {
       throw Error(i18n.t('errors.import.caveAlreadyImported', { name: cave.name }));
     }
+    //due to indexed db and google drive cave id must be globally unique
+    const caveIdExists = await this.caveSystem.checkCaveExistsById(cave.id);
+    if (caveIdExists) {
+      throw Error(i18n.t('errors.import.caveIdAlreadyExists', { id: cave.id }));
+    }
+
+    const errorMessage = this.projectManager.validateBeforeAdd(cave);
+    if (errorMessage) {
+      showErrorPanel(`${i18n.t('errors.import.importFileFailed', { name: cave.name })}: ${errorMessage}`);
+      return;
+    }
+    await this.projectSystem.addCaveToProject(currentProject, cave);
+    this.projectManager.calculateFragmentAttributes(cave);
+    this.projectManager.addCave(cave);
+
   }
 
   async #loadProjectFromUrl(urlParams) {

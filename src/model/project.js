@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Cave } from './cave.js';
+import { Cave, DriveCaveMetadata } from './cave.js';
 
 export class FatProject {
 
@@ -38,30 +38,35 @@ export class FatProject {
   }
 }
 
-export class LightProject {
+export class DriveProject {
 
-  constructor(project, caveIds) {
+  constructor(project, caves, app, deletedCaveIds = []) {
     this.project = project;
-    this.caveIds = caveIds;
+    this.caves = caves;
+    this.app = app;
+    this.deletedCaveIds = deletedCaveIds;
   }
 
   toExport() {
     return {
-      project : this.project.toExport(),
-      caveIds : this.caveIds
+      project        : this.project.toExport(),
+      caves          : this.caves.map((cave) => cave.toExport()),
+      app            : this.app,
+      deletedCaveIds : this.deletedCaveIds
     };
   }
 
   static fromPure(pure) {
     const project = Project.fromPure(pure.project);
-    return new LightProject(project, pure.caveIds);
+    const caves = pure.caves.map((cave) => DriveCaveMetadata.fromPure(cave));
+    return new DriveProject(project, caves, pure.deletedCaveIds);
 
   }
 }
 
 export class Project {
   constructor(name, id = null, revision = 1, createdAt = null, updatedAt = null) {
-    this.id = id || this.#generateId();
+    this.id = id || Project.generateId();
     this.revision = revision;
     this.name = name;
     this.createdAt = createdAt || new Date().toISOString();
@@ -69,7 +74,7 @@ export class Project {
     this.description = '';
   }
 
-  #generateId() {
+  static generateId() {
     return 'project_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
   }
 

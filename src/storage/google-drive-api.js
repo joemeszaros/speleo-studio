@@ -371,7 +371,7 @@ export class GoogleDriveAPI {
       throw new Error(`Failed to download file: ${response.statusText}`);
     }
 
-    return await response.text();
+    return await response.json();
   }
 
   /**
@@ -382,7 +382,7 @@ export class GoogleDriveAPI {
   async listFiles(folderId) {
     const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
     const response = await this.makeAuthenticatedRequest(
-      `/files?q=${query}&fields=files(id,name,createdTime,modifiedTime)`
+      `/files?q=${query}&fields=files(id,name,createdTime,modifiedTime,properties)`
     );
 
     if (!response.ok) {
@@ -408,6 +408,16 @@ export class GoogleDriveAPI {
     }
   }
 
+  async getFileId(fileName, folderId) {
+    const key = `${fileName}-${folderId}`;
+    if (this.fileIdCache.has(key)) {
+      console.log(`file id cache hit for ${fileName}`);
+      return this.fileIdCache.get(key);
+    }
+    const file = await this.findFileByName(fileName, folderId);
+    return file?.id ?? null;
+  }
+
   /**
    * Check if file exists by name in folder
    * @param {string} fileName - File name
@@ -416,9 +426,10 @@ export class GoogleDriveAPI {
    */
   async findFileByName(fileName, folderId) {
 
-    if (this.fileIdCache.has(fileName)) {
+    const key = `${fileName}-${folderId}`;
+    if (this.fileIdCache.has(key)) {
       console.log(`file id cache hit for ${fileName}`);
-      return await this.getFileById(this.fileIdCache.get(fileName));
+      return await this.getFileById(this.fileIdCache.get(key));
     }
 
     const query = encodeURIComponent(`name='${fileName}' and '${folderId}' in parents and trashed=false`);
@@ -431,7 +442,7 @@ export class GoogleDriveAPI {
     const data = await response.json();
     if (data.files && data.files.length > 0) {
       const file = data.files[0];
-      this.fileIdCache.set(fileName, file.id);
+      this.fileIdCache.set(key, file.id);
       return file;
     } else {
       return null;

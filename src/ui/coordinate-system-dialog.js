@@ -127,8 +127,8 @@ export class CoordinateSystemDialog {
             </div>
           </div>
           <div class="config-buttons-container">
-            <button type="button" class="settings-button" id="coordinate-system-cancel">${i18n.t('common.cancel')}</button>
             <button type="button" class="settings-button" id="coordinate-system-ok">${i18n.t('common.ok')}</button>
+            <button type="button" class="settings-button" id="coordinate-system-cancel">${i18n.t('common.cancel')}</button>
           </div>
         </div>
       </div>

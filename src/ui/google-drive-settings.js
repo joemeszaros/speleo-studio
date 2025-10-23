@@ -150,16 +150,7 @@ export class GoogleDriveSettings {
           </div>
         </div>
 
-        <div class="google-drive-settings-section">
-          <h4>${i18n.t('ui.panels.googleDriveSettings.syncOperations')}</h4>
-          <div class="google-drive-sync-buttons">
-            <button id="sync-all-button" class="google-drive-sync-button" disabled>${i18n.t('ui.panels.googleDriveSettings.syncAll')}</button>
-            <button id="restore-all-button" class="google-drive-sync-button" disabled>${i18n.t('ui.panels.googleDriveSettings.restoreAll')}</button>
-          </div>
-          <div id="sync-status" class="google-drive-sync-status">
-            <p>${i18n.t('ui.panels.googleDriveSettings.readyToSync')}</p>
-          </div>
-        </div>
+        
       </div>
     `;
 
@@ -199,15 +190,6 @@ export class GoogleDriveSettings {
 
     panel.querySelector('#disconnect-button').addEventListener('click', () => {
       this.disconnect();
-    });
-
-    // Sync buttons
-    panel.querySelector('#sync-all-button').addEventListener('click', () => {
-      this.syncAll();
-    });
-
-    panel.querySelector('#restore-all-button').addEventListener('click', () => {
-      this.restoreAll();
     });
 
   }
@@ -269,24 +251,20 @@ export class GoogleDriveSettings {
     const authStatus = panel.querySelector('#auth-status');
     const authorizeButton = panel.querySelector('#authorize-button');
     const disconnectButton = panel.querySelector('#disconnect-button');
-    const syncAllButton = panel.querySelector('#sync-all-button');
 
     if (this.config.isConfigured() && this.config.hasValidTokens()) {
       authStatus.innerHTML = `<p class="success">${i18n.t('ui.panels.googleDriveSettings.connected')}</p>`;
       authorizeButton.disabled = true;
       disconnectButton.disabled = false;
-      syncAllButton.disabled = false;
 
     } else if (this.config.isConfigured()) {
       authStatus.innerHTML = `<p class="warning">⚠ ${i18n.t('ui.panels.googleDriveSettings.configurationComplete')}</p>`;
       authorizeButton.disabled = false;
       disconnectButton.disabled = true;
-      syncAllButton.disabled = true;
     } else {
       authStatus.innerHTML = `<p class="error">✗ ${i18n.t('ui.panels.googleDriveSettings.notConfigured')}</p>`;
       authorizeButton.disabled = true;
       disconnectButton.disabled = true;
-      syncAllButton.disabled = true;
     }
 
     // Update sync buttons
@@ -295,21 +273,7 @@ export class GoogleDriveSettings {
     syncButtons.forEach((button) => {
       button.disabled = !isReady || this.sync.isSyncing;
     });
-
-    // Update sync status
-    const syncStatus = panel.querySelector('#sync-status');
-    const status = this.sync.getSyncStatus();
-
-    if (this.sync.isSyncing) {
-      syncStatus.innerHTML = `<p class="loading">${i18n.t('ui.panels.googleDriveSettings.syncing')}</p>`;
-    } else if (status.lastSync) {
-      const lastSync = new Date(status.lastSync);
-      syncStatus.innerHTML = `<p>${i18n.t('ui.panels.googleDriveSettings.lastSync', { date: lastSync.toLocaleString() })}</p>`;
-    } else {
-      syncStatus.innerHTML = `<p>${i18n.t('ui.panels.googleDriveSettings.readyToSync')}</p>`;
-    }
   }
-
   /**
    * Start OAuth authorization flow
    */
@@ -335,34 +299,6 @@ export class GoogleDriveSettings {
     this.sync.disconnect();
     this.updateUI();
     showSuccessPanel(i18n.t('messages.googleDrive.disconnected'));
-  }
-
-  /**
-   * Sync all data
-   */
-  async syncAll() {
-    try {
-      await this.sync.syncAll();
-      this.updateUI();
-      showSuccessPanel(i18n.t('messages.googleDrive.syncCompleted'));
-    } catch (error) {
-      console.error('Sync error:', error);
-      showErrorPanel(i18n.t('errors.googleDrive.syncFailed', { error: error.message }));
-    }
-  }
-
-  /**
-   * Restore all data
-   */
-  async restoreAll() {
-    try {
-      await this.sync.restoreAll();
-      this.updateUI();
-      showSuccessPanel(i18n.t('messages.googleDrive.restoreCompleted'));
-    } catch (error) {
-      console.error('Restore error:', error);
-      showErrorPanel(i18n.t('errors.googleDrive.restoreFailed', { error: error.message }));
-    }
   }
 
 }

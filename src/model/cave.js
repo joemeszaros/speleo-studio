@@ -256,6 +256,29 @@ class CaveMetadata {
   }
 }
 
+export class DriveCaveMetadata {
+  constructor(id, name, revision, app) {
+    this.id = id;
+    this.name = name;
+    this.revision = revision;
+    this.app = app;
+  }
+
+  toExport() {
+    return {
+      id       : this.id,
+      name     : this.name,
+      revision : this.revision,
+      app      : this.app
+    };
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new DriveCaveMetadata(), pure);
+  }
+
+}
+
 class Cave {
   /**
    *
@@ -279,7 +302,7 @@ class Cave {
     stationComments = [],
     visible = true
   ) {
-    this.id = this.#generateId();
+    this.id = Cave.generateId();
     this.revision = 1;
     this.name = name;
     this.metadata = metadata;
@@ -292,7 +315,7 @@ class Cave {
     this.visible = visible;
   }
 
-  #generateId() {
+  static generateId() {
     return 'cave_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
   }
 
