@@ -438,11 +438,11 @@ export class ProjectPanel {
       .filter((c) => c.hasConflict)
       .map((c) => {
         if (c.diff === 0) {
-          return `Cave ${c.name} with same revision has been modified by another app: "${c.drive.app}". Sync will drop local changes since last revision.`;
+          return i18n.t('ui.panels.projectManager.errors.conflictSameRevision', { name: c.name, app: c.drive.app });
         } else if (c.diff > 0) {
-          return `Cave ${c.name} has local changes. Sync will drop remote changes made by "${c.drive.app}".`;
+          return i18n.t('ui.panels.projectManager.errors.conflictLocalChanges', { name: c.name, app: c.drive.app });
         } else {
-          return `Cave ${c.name} has remote changes made by "${c.drive.app}". Sync will drop local changes since last revision.`;
+          return i18n.t('ui.panels.projectManager.errors.conflictRemoteChanges', { name: c.name, app: c.drive.app });
         }
       });
 
@@ -452,10 +452,25 @@ export class ProjectPanel {
           `${projectSyncInfo.name} has conflict with remote project. Sync will drop remote changes made by "${projectSyncInfo.driveApp}" since last revision.`
         );
       } else if (projectSyncInfo.diff > 0) {
-        conflictMessages.push(`${projectSyncInfo.name} has local changes. Sync will drop remote changes.`);
+        conflictMessages.push(
+          i18n.t('ui.panels.projectManager.errors.conflictProjectLocalChanges', {
+            name : projectSyncInfo.name,
+            app  : projectSyncInfo.driveApp
+          })
+        );
+      } else if (projectSyncInfo.diff < 0) {
+        conflictMessages.push(
+          i18n.t('ui.panels.projectManager.errors.conflictProjectRemoteChanges', {
+            name : projectSyncInfo.name,
+            app  : projectSyncInfo.driveApp
+          })
+        );
       } else {
         conflictMessages.push(
-          `${projectSyncInfo.name} has conflict with remote project. Sync will drop local changes since last revision.`
+          i18n.t('ui.panels.projectManager.errors.conflictProjectSameRevision', {
+            name : projectSyncInfo.name,
+            app  : projectSyncInfo.driveApp
+          })
         );
       }
     }
