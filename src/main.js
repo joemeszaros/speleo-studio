@@ -376,6 +376,7 @@ class Main {
     await this.projectSystem.addCaveToProject(currentProject, cave);
     this.projectManager.calculateFragmentAttributes(cave);
     this.projectManager.addCave(cave);
+    await this.projectManager.uploadCaveToDrive(cave);
 
   }
 

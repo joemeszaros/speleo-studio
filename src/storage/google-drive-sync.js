@@ -17,7 +17,7 @@
 import { GoogleDriveConfig } from './google-drive-config.js';
 import { GoogleDriveAPI } from './google-drive-api.js';
 import { DriveProject } from '../model/project.js';
-import { Cave } from '../model/cave.js';
+import { Cave, DriveCaveMetadata } from '../model/cave.js';
 import { RevisionInfo } from '../model/misc.js';
 
 /**
@@ -147,6 +147,19 @@ export class GoogleDriveSync {
     }
   }
 
+  async uploadCaveToProject(cave, localProject, revisionInfo) {
+    const cavesFolderId = await this.api.getCavesFolderId();
+    const driveRevision = await this.getRevisionInfoInternal(cave, cavesFolderId);
+    if (driveRevision !== null) {
+      throw new Error('Cave already uploaded to Google Drive');
+    }
+    const response = await this.fetchProject(localProject);
+    const driveProject = response.project;
+    driveProject.caves.push(new DriveCaveMetadata(cave.id, cave.name, cave.revision, revisionInfo.app));
+    await this.uploadProject(driveProject);
+    await this.uploadCave(cave, localProject, true);
+  }
+
   async coordinateUploadCave(cave, localProject, revisionInfo) {
     const cavesFolderId = await this.api.getCavesFolderId();
     const driveRevision = await this.getRevisionInfoInternal(cave, cavesFolderId);
@@ -154,18 +167,12 @@ export class GoogleDriveSync {
       return;
     }
 
-    if (revisionInfo.revision < driveRevision.revision) {
-      console.log(
-        `Cave ${cave.name} has a lower revision (${revisionInfo.revision} < ${driveRevision.revision}), return`
-      );
-      return;
-    }
-
     const hasConflict =
       revisionInfo.originApp !== driveRevision.app && revisionInfo.originRevision !== driveRevision.revision;
 
-    if (hasConflict) {
-      console.log(`Cave ${cave.name} has conflict, return`);
+    const ignoreConflict = this.googleDriveSync.config.get('ignoreConflict');
+
+    if (hasConflict && !ignoreConflict) {
       return;
     }
 

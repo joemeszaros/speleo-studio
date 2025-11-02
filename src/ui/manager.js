@@ -124,7 +124,11 @@ class ProjectManager {
   async onCaveAdded(e) {
     const cave = e.detail.cave;
     this.addCave(cave);
-    await this.saveCave(cave);
+    // we are not using this.saveCave() here because it changes the revision and uploads the cave to Google Drive
+    const currentProject = this.projectSystem.getCurrentProject();
+    await this.projectSystem.saveCaveInProject(currentProject.id, cave);
+    await this.uploadCaveToDrive(cave);
+
   }
 
   async onCaveChanged(e) {
@@ -331,6 +335,11 @@ class ProjectManager {
     switch (source) {
       case 'explorer-tree': {
         const revInfo = await this.revisionStore.loadRevision(caveId);
+
+        if (revInfo === null) {
+          return;
+        }
+
         const autoSync = this.googleDriveSync.config.get('autoSync');
 
         if (autoSync && revInfo !== null) {
@@ -686,6 +695,27 @@ class ProjectManager {
       this.explorer.addSurvey(cave, s);
     });
 
+  }
+
+  async uploadCaveToDrive(cave) {
+    const currentProject = this.projectSystem.getCurrentProject();
+    const autoSync = this.googleDriveSync.config.get('autoSync');
+
+    if (autoSync) {
+      try {
+        const localApp = this.googleDriveSync.config.getApp();
+        const revInfo = new RevisionInfo(cave.id, cave.revision, localApp, true, localApp, cave.revision);
+        const projectRevInfo = await this.revisionStore.loadRevision(currentProject.id);
+        // this is a project that has never been saved to Google Drive
+        if (projectRevInfo === null) {
+          return;
+        }
+        await this.googleDriveSync.uploadCaveToProject(cave, currentProject, revInfo);
+        await this.revisionStore.saveRevision(revInfo);
+      } catch (error) {
+        console.log('Failed to sync to Google Drive', error);
+      }
+    }
   }
 
   /**
