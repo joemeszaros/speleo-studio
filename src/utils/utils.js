@@ -429,17 +429,18 @@ async function waitForEvent(eventName, matcher, timeoutMillis = 2000) {
   await new Promise((resolve, reject) => {
     const handler = (event) => {
       if (event.detail && matcher(event.detail)) {
-        window.removeEventListener(eventName, handler);
+        document.removeEventListener(eventName, handler);
         resolve();
       }
     };
     setTimeout(() => {
-      window.removeEventListener(eventName, handler);
-      reject(new Error('Cave deletion timed out'));
+      document.removeEventListener(eventName, handler);
+      reject(new Error(`Event ${eventName} timed out`));
     }, timeoutMillis);
-    window.addEventListener(eventName, handler);
+    document.addEventListener(eventName, handler);
   });
 }
+
 export {
   fromPolar,
   toPolar,
@@ -468,5 +469,6 @@ export {
   arraysEqual,
   roundToTwoDecimalPlaces,
   range,
-  sequential
+  sequential,
+  waitForEvent
 };

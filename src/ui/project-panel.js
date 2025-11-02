@@ -18,11 +18,12 @@ import { showErrorPanel, showSuccessPanel } from './popups.js';
 import * as U from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
 import { DriveProject, FatProject, Project } from '../model/project.js';
-import { Cave } from '../model/cave.js';
+import { Cave, DriveCaveMetadata } from '../model/cave.js';
 import { RevisionInfo } from '../model/misc.js';
 
 export class ProjectPanel {
   constructor(
+    db,
     panel,
     projectSystem,
     caveSystem,
@@ -31,6 +32,7 @@ export class ProjectPanel {
     attributeDefs,
     projectInput = 'projectInput'
   ) {
+    this.db = db;
     this.panel = panel;
     this.projectSystem = projectSystem;
     this.caveSystem = caveSystem;
@@ -40,7 +42,6 @@ export class ProjectPanel {
     this.isVisible = false;
     this.fileInputElement = document.getElementById(projectInput);
     this.driveProjects = new Map();
-    this.driveProperties = new Map();
     this.clickHandlerActive = false;
 
     this.fileInputElement.addEventListener('change', (e) => {
@@ -237,10 +238,9 @@ export class ProjectPanel {
 
       const cavesForLocalProjects = new Map();
       this.driveProjects.clear();
-      this.driveProperties.clear();
       const projectListItems = await Promise.all(
         projects.map(async (project) => {
-          const caves = await this.projectSystem.getCavesForProject(project.id);
+          const caves = await this.caveSystem.getCaveFieldsByProjectId(project.id, ['name', 'id', 'revision']);
           cavesForLocalProjects.set(project.id, caves);
           const caveNames = caves.map((c) => c.name);
           const lastModified = new Date(project.updatedAt).toLocaleDateString();
@@ -255,8 +255,16 @@ export class ProjectPanel {
       });
 
       let driveProjectFiles = [];
-      if (this.googleDriveSync.isReady()) {
-        driveProjectFiles = await this.googleDriveSync.listProjects();
+      if (this.googleDriveSync.config.isConfigured()) {
+        try {
+          if (this.googleDriveSync.config.hasTokens() && !this.googleDriveSync.config.hasValidTokens()) {
+            console.log('Refresh access tokens');
+            await this.googleDriveSync.refreshToken();
+          }
+          driveProjectFiles = await this.googleDriveSync.listProjects();
+        } catch (error) {
+          console.error('Failed to list Google Drive projects', error);
+        }
 
         if (driveProjectFiles.length > 0) {
 
@@ -266,19 +274,19 @@ export class ProjectPanel {
             if (response) {
               const projectId = response.project.project.id;
               this.driveProjects.set(projectId, response.project);
-              this.driveProperties.set(projectId, response.properties);
               const projectItemNode = recentProjectsList.querySelector(`#project-item-${projectId}`);
 
               if (projectItemNode !== null) {
+
                 await this.decorateProjectItemWithDrive(
-                  response.properties,
                   response.project,
                   projects,
                   cavesForLocalProjects.get(projectId),
                   projectItemNode
                 );
+
               } else {
-                const newNode = this.getProjectItemForDriveProject(response.project, response.properties);
+                const newNode = this.getProjectItemForDriveProject(response.project);
                 recentProjectsList.appendChild(newNode);
               }
             }
@@ -308,90 +316,92 @@ export class ProjectPanel {
     }
   }
 
-  async decorateProjectItemWithDrive(driveProperties, driveProject, projects, caves, projectItemNode) {
-
-    if (driveProperties.revision !== driveProject.project.revision.toString()) {
-      // this should never happen
-      throw new Error(
-        i18n.t('ui.panels.projectManager.errors.projectRevisionMismatch', {
-          projectName   : driveProject.project.name,
-          revision      : driveProperties.revision,
-          driveRevision : driveProject.project.revision.toString()
-        })
-      );
-    }
+  async decorateProjectItemWithDrive(driveProject, projects, caves, projectItemNode) {
 
     const localProject = projects.find((p) => p.id === driveProject.project.id);
+    try {
+      // we need an updated cave list and a sync button
+      const caveList = await this.getCaveList(caves, driveProject);
+      const projectSyncInfo = await this.getProjectSyncInfo(driveProject, localProject);
 
-    // we need an updated cave list and a sync button
-
-    const caveList = await this.getCaveList(caves, driveProject, driveProperties);
-    let projectDiff = '';
-    const diff = localProject.revision - driveProject.project.revision;
-    if (diff > 0) {
-      projectDiff = `(+${diff})`;
-    } else if (diff < 0) {
-      projectDiff = `(-${diff})`;
-    }
-
-    const projectNameElmnt = projectItemNode.querySelector(`#project-name-${localProject.id}`);
-    projectNameElmnt.textContent = `${localProject.name} ${projectDiff}`;
-    const projectCavesElmnt = projectItemNode.querySelector(`#project-caves-${localProject.id}`);
-    projectCavesElmnt.textContent =
-      ' • ' +
-      caveList
-        .map((c) => c.name)
-        .join(', ');
-    const projectInfoElmnt = projectItemNode.querySelector(`#project-item-info-${localProject.id}`);
-    projectInfoElmnt.insertBefore(U.node`<img src="icons/drive.svg" class="drive-icon"/>`, projectInfoElmnt.firstChild);
-
-    const syncEnabled =
-      projectDiff !== '' ||
-      caveList.some((c) => c.state !== 'existing' || (c.diff ?? 0) !== 0 || (c.hasConflict && c.diff === 0));
-    if (syncEnabled) {
-      const cloudButton = U.node`<button id="sync-project-btn" class="project-action-btn sync">${i18n.t('common.sync')}</button>`;
-      cloudButton.addEventListener(
-        'click',
-        async (event) =>
-          await this.createClickHandler(
-            event,
-            async () =>
-              await this.syncProject(localProject, caveList, async (dProp, dProj) => {
-                const nCaves = await this.projectSystem.getCavesForProject(localProject.id);
-                const newNode = this.getProjectItemNode(
-                  localProject,
-                  nCaves.map((c) => c.name),
-                  new Date(localProject.updatedAt).toLocaleDateString(),
-                  true,
-                  true
-                );
-                const decoratedNode = await this.decorateProjectItemWithDrive(dProp, dProj, projects, nCaves, newNode);
-                const projectItemNode = this.panel.querySelector(`#project-item-${localProject.id}`);
-                projectItemNode.replaceWith(decoratedNode);
-              })
-          )
-
+      const projectNameElmnt = projectItemNode.querySelector(`#project-name-${localProject.id}`);
+      projectNameElmnt.textContent = projectSyncInfo.name;
+      const projectCavesElmnt = projectItemNode.querySelector(`#project-caves-${localProject.id}`);
+      projectCavesElmnt.innerHTML =
+        ' • ' +
+        caveList
+          .map((c) => c.decoratedName)
+          .join(', ');
+      projectCavesElmnt.title = this.getTooltipText(caveList);
+      const projectInfoElmnt = projectItemNode.querySelector(`#project-item-info-${localProject.id}`);
+      projectInfoElmnt.insertBefore(
+        U.node`<img src="icons/drive.svg" class="drive-icon"/>`,
+        projectInfoElmnt.firstChild
       );
-      const buttonContainer = projectItemNode.querySelector(`#project-item-actions-${localProject.id}`);
-      buttonContainer.appendChild(cloudButton);
 
+      const syncEnabled =
+        (projectSyncInfo.diff ?? 0) !== 0 ||
+        (projectSyncInfo.hasConflict && projectSyncInfo.diff === 0) ||
+        caveList.some(
+          (c) =>
+            ['new', 'remote', 'remoteDeleted', 'localDeleted'].includes(c.state) ||
+            (c.diff ?? 0) !== 0 ||
+            (c.hasConflict && c.diff === 0)
+        );
+      if (syncEnabled) {
+        const cloudButton = U.node`<button id="sync-project-btn" class="project-action-btn sync">${i18n.t('common.sync')}</button>`;
+        cloudButton.addEventListener(
+          'click',
+          async (event) =>
+            await this.createClickHandler(
+              event,
+              async () =>
+                await this.syncProject(localProject, driveProject, caveList, projectSyncInfo, async (dProj) => {
+                  const nCaves = await this.caveSystem.getCaveFieldsByProjectId(localProject.id, [
+                    'name',
+                    'id',
+                    'revision'
+                  ]);
+                  const newNode = this.getProjectItemNode(
+                    localProject,
+                    nCaves.map((c) => c.name),
+                    new Date(localProject.updatedAt).toLocaleDateString(),
+                    this.projectSystem.getCurrentProject()?.id === localProject.id,
+                    true
+                  );
+                  const decoratedNode = await this.decorateProjectItemWithDrive(dProj, projects, nCaves, newNode);
+                  const projectItemNode = this.panel.querySelector(`#project-item-${localProject.id}`);
+                  projectItemNode.replaceWith(decoratedNode);
+                })
+            )
+
+        );
+        const buttonContainer = projectItemNode.querySelector(`#project-item-actions-${localProject.id}`);
+        buttonContainer.appendChild(cloudButton);
+
+      }
+    } catch (error) {
+      console.error(error);
+      const projectCavesElmnt = projectItemNode.querySelector(`#project-caves-${localProject.id}`);
+      projectCavesElmnt.innerHTML += ` ⚠️ ${i18n.t('ui.panels.projectManager.errors.failedToDecorateProjectItemShort')}`;
+
+      projectCavesElmnt.title = i18n.t('ui.panels.projectManager.errors.failedToDecorateProjectItem');
     }
-
     return projectItemNode;
   }
 
   // this is a drive project, without local copy, we need an item with a download button
-  getProjectItemForDriveProject(driveProject, driveProperties) {
+  getProjectItemForDriveProject(driveProject) {
     const buttons = [
       {
         label : i18n.t('common.download'),
         click : async (event) =>
-          await this.createClickHandler(event, async () => await this.downloadProject(driveProject, driveProperties))
+          await this.createClickHandler(event, async () => await this.downloadProject(driveProject))
       }
     ];
     return this.projectItemNode(
       driveProject.project,
-      driveProject.caves.map((c) => c.name).map((n) => `🟢 ${n}`),
+      driveProject.caves.map((c) => c.name).map((n) => `🔵 ${n}`),
       buttons,
       new Date(driveProject.project.updatedAt).toLocaleDateString(),
       false,
@@ -399,69 +409,193 @@ export class ProjectPanel {
     );
   }
 
-  async getProjectSyncInfo(driveProject, driveProperties, localProject) {
-    const driveRevisionInfo = new RevisionInfo(
-      driveProject.project.id,
-      parseInt(driveProperties.revision),
-      driveProperties.app,
-      driveProperties.reason
-    );
+  async getProjectSyncInfo(driveProject, localProject) {
 
+    const driveRevision = driveProject.project.revision;
     const localRevisionInfo = await this.revisionStore.loadRevision(localProject.id);
 
-    let hasConflict = false;
-    const diff = localRevisionInfo.revision - driveRevisionInfo.revision;
-    const info = { diff };
-
-    // if (diff > 0) {
-    //   //
-    // } else if (diff < 0) {
-
-    //   //
-    // } else {
-    //   hasConflict = localRevisionInfo.app !== driveProperties.app;
-    // }
+    let hasConflict =
+      localRevisionInfo.originApp !== driveProject.app && localRevisionInfo.originRevision !== driveRevision;
+    const diff = localRevisionInfo.revision - driveRevision;
+    let prefix = hasConflict ? '⚠️' : '';
+    let diffStr = '';
+    let projectName = localProject.name;
+    if (diff > 0) {
+      projectName = localProject.name;
+      diffStr = `(+${diff})`;
+    } else if (diff < 0) {
+      projectName = driveProject.project.name;
+      diffStr = `(-${diff})`;
+    } else {
+      projectName = localProject.name;
+    }
+    return { diff, hasConflict, name: `${prefix} ${projectName} ${diffStr}` };
 
   }
 
-  async getCaveList(caves, driveProject, driveProperties) {
+  getConflictMessages(caveList, projectSyncInfo) {
+    const conflictMessages = caveList
+      .filter((c) => c.hasConflict)
+      .map((c) => {
+        if (c.diff === 0) {
+          return `Cave ${c.name} with same revision has been modified by another app: "${c.drive.app}". Sync will drop local changes since last revision.`;
+        } else if (c.diff > 0) {
+          return `Cave ${c.name} has local changes. Sync will drop remote changes made by "${c.drive.app}".`;
+        } else {
+          return `Cave ${c.name} has remote changes made by "${c.drive.app}". Sync will drop local changes since last revision.`;
+        }
+      });
+
+    if (projectSyncInfo.hasConflict) {
+      if (projectSyncInfo.diff === 0) {
+        conflictMessages.push(
+          `${projectSyncInfo.name} has conflict with remote project. Sync will drop remote changes made by "${projectSyncInfo.driveApp}" since last revision.`
+        );
+      } else if (projectSyncInfo.diff > 0) {
+        conflictMessages.push(`${projectSyncInfo.name} has local changes. Sync will drop remote changes.`);
+      } else {
+        conflictMessages.push(
+          `${projectSyncInfo.name} has conflict with remote project. Sync will drop local changes since last revision.`
+        );
+      }
+    }
+    return conflictMessages;
+  }
+
+  getTooltipText(caveList) {
+    const getAppName = (app) => {
+      const _pos = app.lastIndexOf('_');
+      const p = app.substring(0, _pos);
+      return p;
+    };
+    return (
+      caveList
+        //.filter((c) => !(c.state === 'existing' && c.diff === 0 && !c.hasConflict))
+        .map((c) => {
+          switch (c.state) {
+            case 'existing': {
+              let prefix;
+              if (c.hasConflict) {
+                prefix = `⚠️ ${c.name}: conflict with drive`;
+              } else {
+                prefix = `${c.name}: `;
+              }
+              return `${prefix}
+
+Local : ${c.local.revision} (${getAppName(c.local.app)})
+Origin : ${c.local.originRevision} (${getAppName(c.local.originApp)})
+Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
+            }
+            case 'remoteDeleted':
+              return `${c.name}: deleted by an other app`;
+            case 'localDeleted':
+              return `${c.name}: deleted by local app. ${c.isOwner ? 'You are the owner' : 'You are not the owner, the drive file can be deleted by: ' + c.ownerEmail}. Sync will download the cave.`;
+            case 'new':
+              return `${c.name}: created by local app, not in Google Drive`;
+            case 'remote':
+              return `${c.name}: created by remote app '${getAppName(c.drive.app)}'`;
+          }
+        })
+        .join('\n\n')
+    );
+  }
+
+  async getCaveList(caves, driveProject) {
 
     const caveList = await Promise.all(
       caves.map(async (cave) => {
         const caveId = cave.id;
-        if (driveProject.caves.find((c) => c.id === caveId)) {
+        const driveCave = driveProject.caves.find((c) => c.id === caveId);
+        if (driveCave) {
           const localRevision = await this.revisionStore.loadRevision(caveId);
-          const hasConflict = localRevision.app !== driveProperties.app;
-          const driveCaveRevision = driveProject.caves.find((c) => c.id === caveId).revision;
-          const diff = cave.revision - driveCaveRevision;
+          const hasLocalChanges = !localRevision.synced;
+          //cave.reivision might not exist
+          const diff = localRevision.revision - driveCave.revision;
+          let hasConflict;
+
+          if (diff > 0) {
+            hasConflict = !(
+              localRevision.originRevision === driveCave.revision && localRevision.originApp === driveCave.app
+            );
+          } else if (diff < 0) {
+            hasConflict = hasLocalChanges;
+          } else {
+            hasConflict = hasLocalChanges;
+          }
+
           let prefix = hasConflict ? '⚠️' : '';
           let diffStr = '';
+
           if (diff > 0) {
-            diffStr = `(+${diff})`;
+            diffStr = `(<span style="color: green"><strong>Δ ${diff}</strong></span>)`;
           } else if (diff < 0) {
-            diffStr = `(-${diff})`;
+            diffStr = `(<span style="color: red"><strong>∇ ${Math.abs(diff)}</strong></span>)`;
           } else {
-            prefix = !hasConflict ? '✅️' : '';
+            prefix = !hasConflict ? '✅️' : prefix;
           }
           return {
-            id          : caveId,
-            name        : `${prefix} ${cave.name} ${diffStr}`,
-            state       : 'existing',
-            diff        : diff,
-            hasConflict : hasConflict,
-            driveApp    : driveProperties.app
+            id            : caveId,
+            name          : cave.name,
+            decoratedName : `${prefix} ${cave.name} ${diffStr}`,
+            state         : 'existing',
+            diff          : diff,
+            hasConflict   : hasConflict,
+            local         : {
+              revision       : localRevision.revision,
+              app            : localRevision.app,
+              originApp      : localRevision.originApp,
+              originRevision : localRevision.originRevision
+            },
+            drive : {
+              revision : driveCave.revision,
+              app      : driveCave.app
+            }
+
           };
         } else if (driveProject.deletedCaveIds.includes(caveId)) {
-          return { id: caveId, name: '🔴 ' + cave.name, state: 'deleted' };
+          return { id: caveId, name: cave.name, decoratedName: '🔴 ' + cave.name, state: 'remoteDeleted' };
         } else {
-          return { id: caveId, name: '🟢 ' + cave.name, state: 'new' };
+          return { id: caveId, name: cave.name, decoratedName: '🟢 ' + cave.name, state: 'new' };
         }
       })
     );
-    const remoteCaves = driveProject.caves.filter((c) => caves.find((c2) => c2.id === c.id) === undefined);
-    remoteCaves.forEach((cave) => {
-      caveList.push({ id: cave.id, name: '🔵 ' + cave.name, state: 'remote' });
-    });
+
+    const remoteOrDeletedCaves = driveProject.caves.filter((c) => caves.find((c2) => c2.id === c.id) === undefined);
+    const toAdd = await Promise.all(
+      remoteOrDeletedCaves.map(async (cave) => {
+        const revInfo = await this.revisionStore.loadRevision(cave.id);
+        if (revInfo?.deleted === true) {
+          const ownerEmail = await this.googleDriveSync.getCaveOwner(cave);
+          // the file cannot be found, someone deleted it
+          if (ownerEmail === null) {
+            return null;
+          }
+          const userEmail = await this.googleDriveSync.config.get('email');
+          const isOwner = ownerEmail === userEmail;
+          const prefix = isOwner ? '⭕' : '🚫';
+          return {
+            id            : cave.id,
+            name          : cave.name,
+            decoratedName : `${prefix} ${cave.name}`,
+            state         : 'localDeleted',
+            isOwner       : isOwner,
+            ownerEmail    : ownerEmail
+          };
+        } else {
+          return {
+            id            : cave.id,
+            name          : cave.name,
+            decoratedName : '🔵 ' + cave.name,
+            state         : 'remote',
+            drive         : {
+              revision : cave.revision,
+              app      : cave.app
+            }
+          };
+        }
+      })
+    );
+    caveList.push(...toAdd.filter((c) => c !== null));
     return caveList;
 
   }
@@ -614,94 +748,174 @@ export class ProjectPanel {
     }
 
     await this.projectSystem.saveProject(project);
-    await Promise.all(
-      caves.map((cave) => {
-        this.caveSystem.saveCave(cave, project.id);
-      })
-    );
+    await Promise.all(caves.map((cave) => this.caveSystem.saveCave(cave, project.id)));
     return true;
   }
 
-  async syncProject(localProject, caveList, onSuccess) {
+  async syncProject(localProject, driveProject, caveList, projectSyncInfo, onSuccess) {
     try {
-      const conflictMessages = caveList
-        .filter((c) => c.hasConflict)
-        .map((c) => {
-          if (c.diff === 0) {
-            `Cave ${c.name} with same revision has been modified by another app: "${c.driveApp}". Sync will drop local changes since last revision.`;
-          } else if (c.diff > 0) {
-            `Cave ${c.name} has local changes. Sync will drop remote changes made by "${c.driveApp}".`;
-          } else {
-            `Cave ${c.name} has remote changes made by "${c.driveApp}". Sync will drop local changes since last revision.`;
-          }
-        });
 
+      const conflictMessages = this.getConflictMessages(caveList, projectSyncInfo);
       if (conflictMessages.length > 0) {
         if (!confirm(conflictMessages.join('\n\n'))) {
           return false;
         }
       }
 
+      const cavesArr = await Promise.all(
+        caveList
+          .filter((c) => c.state !== 'localDeleted' && c.state !== 'remote')
+          .map((c) => this.caveSystem.loadCave(c.id))
+      );
+      const caves = new Map(cavesArr.map((c) => [c.id, c]));
+      const localRevisions = new Map();
+      const localApp = this.googleDriveSync.config.getApp();
+
+      var caveHasUploaded = false;
+
       await Promise.all(
         caveList.map(async (c) => {
-          const cave = await this.caveSystem.loadCave(c.id);
-          const localRevisionInfo = await this.revisionStore.loadRevision(c.id);
-
+          const cave = caves.get(c.id);
+          const caveId = c.id;
+          const driveCave = driveProject.caves.find((dc) => dc.id === caveId);
           if (c.state === 'existing') {
+            const localRevisionInfo = await this.revisionStore.loadRevision(c.id);
+            localRevisions.set(c.id, localRevisionInfo);
             if (c.diff > 0) {
-              await this.googleDriveSync.uploadCave(cave, localProject, false, localRevisionInfo);
+              // local revision is higher, it means a local change
+              await this.googleDriveSync.uploadCave(cave, localProject);
+              caveHasUploaded = true;
+              //we need to flip the synced flag to true
+              localRevisionInfo.synced = true;
+              localRevisionInfo.originApp = localApp;
+              localRevisionInfo.originRevision = cave.revision;
+              await this.revisionStore.saveRevision(localRevisionInfo);
             } else if (c.diff < 0) {
-              const caveWithProperties = await this.googleDriveSync.fetchCave({ id: c.id }, localProject);
-              this.caveSystem.saveCave(caveWithProperties.cave, localProject.id);
-              this.#emitCaveSynced(caveWithProperties.cave, localProject);
+              const cave = await this.downloadCave(driveCave, c.id, localProject.id);
+              caves.set(cave.id, cave);
+              //this.#emitCaveSynced(caveWithProperties.cave, localProject);
             } else {
               if (c.hasConflict) {
-                await this.googleDriveSync.uploadCave(cave, localProject, false, localRevisionInfo);
+                await this.googleDriveSync.uploadCave(cave, localProject);
+                caveHasUploaded = true;
+                localRevisionInfo.synced = true;
+                localRevisionInfo.originApp = localApp;
+                localRevisionInfo.originRevision = cave.revision;
+                await this.revisionStore.saveRevision(localRevisionInfo);
               } // otherwise nothing to do
             }
           } else if (c.state === 'new') {
             await this.googleDriveSync.uploadCave(cave, localProject, true);
-          } else if (c.state === 'deleted') {
-            this.#emitCaveDeleted(cave);
+            caveHasUploaded = true;
+            const localRevisionInfo = new RevisionInfo(cave.id, cave.revision, localApp, true, localApp, cave.revision);
+            await this.revisionStore.saveRevision(localRevisionInfo);
+          } else if (c.state === 'remote') {
+            const cave = await this.downloadCave(driveCave, c.id, localProject.id);
+            caves.set(cave.id, cave);
+            //this.#emitCaveSynced(caveWithProperties.cave, localProject);
+          } else if (c.state === 'remoteDeleted') {
+            this.db.deleteCave(cave.name);
             // Wait until 'caveDestructed' event is emitted for this cave
             // we need the indexed db operation to complete before we can continue
+            setTimeout(() => this.#emitCaveDeleted(cave, driveProject.project.id), 200);
             await U.waitForEvent('caveDestructed', (detail) => detail.id === cave.id);
+
+          } else if (c.state === 'localDeleted' && c.isOwner) {
+            await this.googleDriveSync.deleteCave({ id: caveId });
+            await this.revisionStore.deleteRevision(caveId);
+            const response = await this.googleDriveSync.fetchProject(localProject);
+            const driveProject = response.project;
+            driveProject.deletedCaveIds.push(caveId);
+            driveProject.caves = driveProject.caves.filter((c) => c.id !== caveId);
+            await this.googleDriveSync.uploadProject(driveProject);
+          } else if (c.state === 'localDeleted' && !c.isOwner) {
+            // we download the cave
+            const cave = await this.downloadCave(driveCave, c.id, localProject.id);
+            caves.set(cave.id, cave);
+
           }
         })
       );
 
-      const response = await this.googleDriveSync.uploadProject(localProject);
+      let updatedProject;
 
-      onSuccess(response.properties, response.project);
+      const cavesMetadata = [...caves.values()].map((cave) => {
+        const rev = localRevisions.get(cave.id);
+        return new DriveCaveMetadata(cave.id, cave.name, cave.revision ?? 1, rev?.app ?? localApp);
+      });
 
-      return true;
+      if (caveHasUploaded || projectSyncInfo.diff > 0 || (projectSyncInfo.diff === 0 && projectSyncInfo.hasConflict)) {
+        //TODO: upload revinfo here
+        updatedProject = new DriveProject(localProject, cavesMetadata, this.googleDriveSync.config.getApp());
+        await this.googleDriveSync.uploadProject(updatedProject);
+      } else if (projectSyncInfo.diff < 0) {
+        // we need to fetch the project
+        const response = await this.googleDriveSync.fetchProject(localProject);
+        const project = response.project;
+        this.projectSystem.saveProject(project);
+        const rev = project.revision;
+        const app = project.app;
+        //this.#emitProjectSynced(projectWithProperties.project, localProject);
+        await this.revisionStore.saveRevision(new RevisionInfo(localProject.id, rev, app, true, app, rev));
+
+        //due to local changes in caves we need to update the project
+        if (caveHasUploaded) {
+          updatedProject = new DriveProject(project, cavesMetadata, app);
+          await this.googleDriveSync.uploadProject(updatedProject);
+        } else {
+          updatedProject = project;
+        }
+
+      } else {
+        // we do not need to upload the project, but we need fresh drive project and properties
+        const { _, project } = await this.googleDriveSync.fetchProject(localProject);
+        updatedProject = project;
+      }
+
+      onSuccess(updatedProject);
     } catch (error) {
       console.error(error);
       showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectSyncFailed', { error: error.message }));
     }
   }
+  async downloadCave(driveCave, caveId, projectId) {
+    const response = await this.googleDriveSync.fetchCave({ id: caveId });
+    if (driveCave.app !== response.properties.app) {
+      throw new Error(i18n.t('ui.panels.projectManager.errors.caveAppMismatch', { id: caveId }));
+    }
+    const cave = response.cave;
+    await this.caveSystem.saveCave(cave, projectId);
+    const newRevInfo = new RevisionInfo(cave.id, cave.revision, driveCave.app, true, driveCave.app, driveCave.revision);
+    await this.revisionStore.saveRevision(newRevInfo);
+    return cave;
+  }
 
-  async downloadProject(driveProject, driveProperties) {
+  async downloadProject(driveProject) {
     try {
       const cavesWithProperties = await Promise.all(
         driveProject.caves.map((cave) => this.googleDriveSync.fetchCave(cave))
       );
+      const project = driveProject.project;
       const caves = cavesWithProperties.map((c) => c.cave);
-      const success = await this.importProject(driveProject.project, caves);
-      await Promise.all(
-        cavesWithProperties.map(async (cwp) => {
-          const caveRevisionInfo = new RevisionInfo(
-            cwp.cave.id,
-            cwp.cave.revision,
-            this.googleDriveSync.config.getApp(),
-            'create'
-          );
-          await this.revisionStore.saveRevision(caveRevisionInfo);
-        })
-      );
+      const success = await this.importProject(project, caves);
 
       if (success) {
-
+        await Promise.all(
+          cavesWithProperties.map(async (cwp) => {
+            const caveRevisionInfo = new RevisionInfo(
+              cwp.cave.id,
+              cwp.cave.revision,
+              cwp.properties.app,
+              true,
+              cwp.properties.app,
+              cwp.cave.revision
+            );
+            await this.revisionStore.saveRevision(caveRevisionInfo);
+          })
+        );
+        await this.revisionStore.saveRevision(
+          new RevisionInfo(project.id, project.revision, driveProject.app, true, driveProject.app, project.revision)
+        );
         const projectItem = this.panel.querySelector(`#project-item-${driveProject.project.id}`);
         const isCurrent = this.projectSystem.getCurrentProject()?.id === driveProject.project.id;
         const itemNode = this.getProjectItemNode(
@@ -714,13 +928,7 @@ export class ProjectPanel {
 
         const projects = await this.projectSystem.getAllProjects();
 
-        const decoratedNode = await this.decorateProjectItemWithDrive(
-          driveProperties,
-          driveProject,
-          projects,
-          caves,
-          itemNode
-        );
+        const decoratedNode = await this.decorateProjectItemWithDrive(driveProject, projects, caves, itemNode);
         projectItem.replaceWith(decoratedNode);
         showSuccessPanel(i18n.t('ui.panels.projectManager.projectDownloaded', { name: driveProject.project.name }));
       }
@@ -730,19 +938,29 @@ export class ProjectPanel {
     }
   }
 
+  // this is always a new project upload and not an update
   async uploadProject(localProject) {
     try {
       const app = this.googleDriveSync.config.getApp();
-      const caves = await this.projectSystem.getCavesForProject(localProject.id);
-      const revisionInfo = new RevisionInfo(localProject.id, localProject.revision, app, 'create');
-      // do not pass revision info, because this is a new file
-      await this.googleDriveSync.uploadProject(localProject);
+      const caves = await this.caveSystem.getCavesByProjectId(localProject.id);
+      const revisionInfo = new RevisionInfo(
+        localProject.id,
+        localProject.revision,
+        app,
+        true,
+        app,
+        localProject.revision
+      );
+      const cavesMetadata = caves.map((cave) => new DriveCaveMetadata(cave.id, cave.name, cave.revision ?? 1, app));
+      await this.googleDriveSync.uploadProject(new DriveProject(localProject, cavesMetadata, app), true);
       await this.revisionStore.saveRevision(revisionInfo);
-      await Promise.all(
-        caves.map((cave) =>
-          // do not pass revision info, because this is a new file
-          this.#uploadCaveAndSaveRevision(cave, localProject, true, 'create')
-        )
+      // we need to upload caves sequentially to avoid parallel executions and multiple 'Caves' folders in google drive
+      await U.sequential(
+        caves.map((cave) => async () => {
+          const revisionInfo = new RevisionInfo(cave.id, cave.revision, app, true, app, cave.revision);
+          await this.googleDriveSync.uploadCave(cave, localProject, true);
+          await this.revisionStore.saveRevision(revisionInfo);
+        })
       );
       const projectItemNode = this.panel.querySelector(`#project-item-${localProject.id}`);
       const isCurrent = this.projectSystem.getCurrentProject()?.id === localProject.id;
@@ -753,16 +971,9 @@ export class ProjectPanel {
         isCurrent,
         true
       );
-      const driveProject = new DriveProject(localProject, caves, app, []);
-      const driveProperties = { app: app, revision: localProject.revision.toString() };
+      const driveProject = new DriveProject(localProject, cavesMetadata, app, []);
       const projects = await this.projectSystem.getAllProjects();
-      const decoratedNode = await this.decorateProjectItemWithDrive(
-        driveProperties,
-        driveProject,
-        projects,
-        caves,
-        newNode
-      );
+      const decoratedNode = await this.decorateProjectItemWithDrive(driveProject, projects, caves, newNode);
       projectItemNode.replaceWith(decoratedNode);
 
     } catch (error) {
@@ -775,7 +986,7 @@ export class ProjectPanel {
     const project = await this.projectSystem.loadProjectById(projectId);
     try {
 
-      const caves = await this.projectSystem.getCavesForProject(projectId);
+      const caves = await this.caveSystem.getCavesByProjectId(projectId);
       const projectWithCaves = new FatProject(project, caves);
       const projectData = projectWithCaves.toExport();
       const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
@@ -849,7 +1060,6 @@ export class ProjectPanel {
     try {
 
       const driveProject = this.driveProjects.get(project.id);
-      const driveProperties = this.driveProperties.get(project.id);
       if (driveProject && this.googleDriveSync.isReady()) {
         const deleteFromDrive = confirm(i18n.t('ui.panels.projectManager.deleteProjectFromDriveConfirmation'));
         if (deleteFromDrive) {
@@ -857,7 +1067,6 @@ export class ProjectPanel {
           const cavesIds = await this.caveSystem.getCaveFieldsByProjectId(project.id, ['id']);
           await Promise.all(cavesIds.map((cave) => this.googleDriveSync.deleteCave(cave)));
           this.driveProjects.delete(project.id);
-          this.driveProperties.delete(project.id);
           this.revisionStore.deleteRevision(project.id);
           await Promise.all(cavesIds.map((cave) => this.revisionStore.deleteRevision(cave.id)));
           driveDeleted = true;
@@ -879,10 +1088,7 @@ export class ProjectPanel {
           {
             label : i18n.t('common.download'),
             click : async (event) =>
-              await this.createClickHandler(
-                event,
-                async () => await this.downloadProject(driveProject, driveProperties)
-              )
+              await this.createClickHandler(event, async () => await this.downloadProject(driveProject))
           }
         ];
         const panel = this.projectItemNode(
@@ -903,16 +1109,6 @@ export class ProjectPanel {
       console.error(error);
       showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectDeletionFailed', { error: error.message }));
     }
-  }
-
-  async #uploadCaveAndSaveRevision(cave, project, create = false, reason = 'unknown') {
-    const revisionInfo = new RevisionInfo(cave.id, cave.revision, this.googleDriveSync.config.getApp(), reason);
-    if (create) {
-      await this.googleDriveSync.uploadCave(cave, project, true);
-    } else {
-      await this.googleDriveSync.uploadCave(cave, project, false, revisionInfo);
-    }
-    await this.revisionStore.saveRevision(revisionInfo);
   }
 
   #emitCaveSynced(cave, project) {
@@ -943,11 +1139,13 @@ export class ProjectPanel {
     document.dispatchEvent(event);
   }
 
-  #emitCaveDeleted(cave) {
+  #emitCaveDeleted(cave, projectId) {
     const event = new CustomEvent('caveDeleted', {
       detail : {
-        name : cave.name,
-        id   : cave.id
+        name      : cave.name,
+        id        : cave.id,
+        source    : 'project-panel',
+        projectId : projectId
       }
     });
     document.dispatchEvent(event);

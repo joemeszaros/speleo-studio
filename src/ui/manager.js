@@ -40,6 +40,7 @@ class ProjectManager {
     interaction,
     explorer,
     projectSystem,
+    caveSystem,
     editorStateSystem,
     googleDriveSync,
     revisionStore,
@@ -51,6 +52,7 @@ class ProjectManager {
     this.interaction = interaction;
     this.explorer = explorer;
     this.projectSystem = projectSystem;
+    this.caveSystem = caveSystem;
     this.editorStateSystem = editorStateSystem;
     this.googleDriveSync = googleDriveSync;
     this.revisionStore = revisionStore;
@@ -77,15 +79,38 @@ class ProjectManager {
     document.addEventListener('surveyCommentsChanged', (e) => this.onSurveyCommentsChanged(e));
   }
 
-  async saveCave(cave, reason = 'unknown') {
+  async saveCave(cave) {
     cave.revision++;
-    const revInfo = new RevisionInfo(cave.id, cave.revision, this.googleDriveSync.config.getApp(), reason);
+    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
+
+    const existingRevInfo = await this.revisionStore.loadRevision(cave.id);
+    if (existingRevInfo === null) {
+      // this is a cave that has never been saved to Google Drive
+      return;
+    }
+    const originApp = existingRevInfo.originApp;
+    const originRevision = existingRevInfo.originRevision;
+
+    const autoSync = this.googleDriveSync.config.get('autoSync');
+    const revInfo = new RevisionInfo(
+      cave.id,
+      cave.revision,
+      this.googleDriveSync.config.getApp(),
+      autoSync,
+      originApp,
+      originRevision
+    );
+
+    if (autoSync) {
+      try {
+        await this.googleDriveSync.coordinateUploadCave(cave, this.projectSystem.getCurrentProject(), revInfo);
+      } catch (error) {
+        console.log('Failed to sync to Google Drive', error);
+        revInfo.synced = false;
+      }
+    }
     await this.revisionStore.saveRevision(revInfo);
 
-    if (this.googleDriveSync.config.get('autoSync')) {
-      await this.googleDriveSync.coordinateUploadCave(cave, this.projectSystem.getCurrentProject(), revInfo);
-    }
-    await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
   async onCaveSynced(e) {
@@ -215,7 +240,9 @@ class ProjectManager {
   async onCaveDeleted(e) {
     const caveName = e.detail.name;
     const id = e.detail.id;
-    await this.deleteCave(caveName, id);
+    const source = e.detail.source;
+    const projectId = e.detail.projectId ?? this.projectSystem.getCurrentProject().id;
+    await this.deleteCave(caveName, id, source, projectId);
   }
 
   async onCurrentProjectChanged(e) {
@@ -231,7 +258,7 @@ class ProjectManager {
 
     this.db.clear();
 
-    const caves = await this.projectSystem.getCavesForProject(project.id);
+    const caves = await this.caveSystem.getCavesByProjectId(project.id);
 
     if (caves.length === 0) {
       this.#emitCoordinateSystemChange(null);
@@ -288,18 +315,46 @@ class ProjectManager {
     this.explorer.closeEditorsForCave(caveName);
   }
 
-  async deleteCave(caveName, id) {
-    this.disposeCave(caveName);
+  async deleteCave(caveName, caveId, source, projectId) {
 
     const currentProject = this.projectSystem.getCurrentProject();
-    if (currentProject) {
-      await this.projectSystem.removeCaveFromProject(currentProject.id, id);
+
+    if (currentProject && currentProject.id === projectId) {
+      this.disposeCave(caveName);
+      if (this.db.getAllCaveNames().length === 0) {
+        this.#emitCoordinateSystemChange(null);
+      }
     }
 
-    if (this.db.getAllCaveNames().length === 0) {
-      this.#emitCoordinateSystemChange(null);
+    await this.projectSystem.removeCaveFromProject(projectId, caveId);
+
+    switch (source) {
+      case 'explorer-tree': {
+        const revInfo = await this.revisionStore.loadRevision(caveId);
+        const autoSync = this.googleDriveSync.config.get('autoSync');
+
+        if (autoSync && revInfo !== null) {
+          await this.googleDriveSync.deleteCave({ id: caveId, name: caveName });
+          // you can only delete a cave from an active project
+          const projectId = this.projectSystem.getCurrentProject().id;
+          const response = await this.googleDriveSync.fetchProject({ id: projectId });
+          response.project.caves = response.project.caves.filter((c) => c.id !== caveId);
+          response.project.deletedCaveIds.push(caveId);
+          await this.googleDriveSync.uploadProject(response.project);
+          await this.revisionStore.deleteRevision(caveId);
+        } else {
+          revInfo.deleted = true;
+          await this.revisionStore.saveRevision(revInfo);
+        }
+
+        break;
+      }
+      case 'project-panel':
+        this.#emitCaveDestructed(caveId);
+        break;
+      default:
+        throw new Error(`Unknown source: ${source}`);
     }
-    this.#emitCaveDestructed(id);
   }
 
   async reloadCave(cave) {

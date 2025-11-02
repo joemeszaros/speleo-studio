@@ -197,10 +197,6 @@ export class ProjectSystem {
     await this.saveProject(project);
   }
 
-  async getCavesForProject(projectId) {
-    return await this.caveSystem.getCavesByProjectId(projectId);
-  }
-
   async getCaveNamesForProject(projectId) {
     return await this.caveSystem.getCaveNamesByProjectId(projectId);
   }

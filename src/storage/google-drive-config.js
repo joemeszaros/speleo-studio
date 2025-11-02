@@ -54,15 +54,15 @@ export class GoogleDriveConfig {
   getDefaultConfig() {
     return {
       version            : GoogleDriveConfig.VERSION,
-      enabled            : false,
       clientId           : '',
       clientSecret       : '',
-      appName            : `Speleo Studio - ${detectBrowser()} (${detectPlatform()})`,
+      appName            : `${detectBrowser()} (${detectPlatform()})`,
       appId              : randomAlphaNumbericString(8),
       folderName         : 'Speleo Studio',
       cavesFolderName    : 'Caves',
       projectsFolderName : 'Projects',
       autoSync           : false,
+      ignoreConflict     : false,
       lastSync           : null,
       accessToken        : null,
       refreshToken       : null,
@@ -114,16 +114,12 @@ export class GoogleDriveConfig {
     this.saveConfig();
   }
 
-  /**
-   * Check if Google Drive sync is enabled and configured
-   * @returns {boolean} True if enabled and configured
-   */
   isConfigured() {
-    return this.config.enabled && this.config.clientId && this.config.clientSecret && this.config.folderName;
+    return this.config.clientId && this.config.clientSecret && this.config.folderName;
   }
 
   hasTokens() {
-    return this.config.accessToken && this.config.refreshToken;
+    return this.config.accessToken !== null && this.config.refreshToken !== null;
   }
 
   /**

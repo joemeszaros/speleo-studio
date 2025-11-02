@@ -127,14 +127,14 @@ export class GoogleDriveSettings {
             <label for="projects-folder">${i18n.t('ui.panels.googleDriveSettings.projectsFolder')}</label>
             <input type="text" id="projects-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder')}" value="${i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder')}">
           </div>
-        </div>
-
-        <div class="google-drive-settings-section">
-          <h4>${i18n.t('ui.panels.googleDriveSettings.options')}</h4>
           <div class="google-drive-form-group">
             <label>
               <input type="checkbox" id="auto-sync">
               ${i18n.t('ui.panels.googleDriveSettings.enableAutoSync')}
+            </label>
+           <label>
+              <input type="checkbox" id="ignore-conflict">
+              ${i18n.t('ui.panels.googleDriveSettings.ignoreConflict')}
             </label>
           </div>
         </div>
@@ -142,7 +142,7 @@ export class GoogleDriveSettings {
         <div class="google-drive-settings-section">
           <h4>${i18n.t('ui.panels.googleDriveSettings.authentication')}</h4>
           <div id="auth-status" class="google-drive-auth-status">
-            <p>${i18n.t('ui.panels.googleDriveSettings.notConfigured')}</p>
+            
           </div>
           <div class="google-drive-auth-buttons">
             <button id="authorize-button" class="google-drive-auth-button" disabled>${i18n.t('ui.panels.googleDriveSettings.authorize')}</button>
@@ -183,6 +183,10 @@ export class GoogleDriveSettings {
       this.config.set('autoSync', e.target.checked);
     });
 
+    panel.querySelector('#ignore-conflict').addEventListener('change', (e) => {
+      this.config.set('ignoreConflict', e.target.checked);
+    });
+
     // Auth buttons
     panel.querySelector('#authorize-button').addEventListener('click', () => {
       this.startAuthorization();
@@ -205,7 +209,6 @@ export class GoogleDriveSettings {
     const instanceName = panel.querySelector('#instance-name').value;
 
     this.config.updateConfig({
-      enabled      : !!(clientId && clientSecret), // Enable if both credentials are provided
       clientId     : clientId,
       clientSecret : clientSecret,
       appName      : instanceName,
@@ -238,7 +241,7 @@ export class GoogleDriveSettings {
     panel.querySelector('#client-id').value = this.config.get('clientId') || '';
     panel.querySelector('#client-secret').value = this.config.get('clientSecret') || '';
     panel.querySelector('#instance-name').value =
-      this.config.get('appName') || `Speleo Studio - ${detectBrowser()} (${detectPlatform()})`;
+      this.config.get('appName') || `${detectBrowser()} (${detectPlatform()})`;
     panel.querySelector('#folder-name').value =
       this.config.get('folderName') || i18n.t('ui.panels.googleDriveSettings.folderNamePlaceholder');
     panel.querySelector('#caves-folder').value =
@@ -246,6 +249,7 @@ export class GoogleDriveSettings {
     panel.querySelector('#projects-folder').value =
       this.config.get('projectsFolderName') || i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder');
     panel.querySelector('#auto-sync').checked = this.config.get('autoSync') || false;
+    panel.querySelector('#ignore-conflict').checked = this.config.get('ignoreConflict') || false;
 
     // Update auth status
     const authStatus = panel.querySelector('#auth-status');

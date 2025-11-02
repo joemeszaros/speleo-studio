@@ -266,6 +266,7 @@
         "deleteProjectFromDriveConfirmation": "Törölni akarod ezt a projektet a Google Drive-ról? Ez a művelet nem vonható vissza.",
         "caves": "barlang",
         "errors": {
+          "caveAppMismatch": "Barlang app nem egyezik: {id}",
           "projectDeletionFailed": "Hiba történt a projekt törlése során: {error}",
           "projectRenameFailed": "Hiba történt a projekt átnevezése során: {error}",
           "projectExportFailed": "Hiba történt a projekt exportálása során: {error}",
@@ -282,7 +283,15 @@
           "fileReadFailed": "Hiba történt a fájl olvasása során: {error}",
           "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik, változtassa meg az azonosítót a fájlban",
           "nonMatchingCaveIds": "A projektben felsorolt barlang azonosítók nem egyeznek a barlangok azonosítóival",
-          "projectRevisionMismatch": "Projekt változatok nem egyeznek: {projectName} (változat {revision}) nem egyezik a Google Drive változattal {driveRevision}"
+          "projectRevisionMismatch": "Projekt változatok nem egyeznek: {projectName} (változat {revision}) nem egyezik a Google Drive változattal {driveRevision}",
+          "failedToDecorateProjectItemShort": "Hiba a Drive információinak lekérésekor",
+          "failedToDecorateProjectItem": "Hiba történt a Google Drive projekt információinak lekérésekor",
+          "conflictSameRevision": "A {name} barlang ugyanazon verzióval egy másik app által szerkesztve: \"{app}\". A szinkronizálás törli a másik app változtatásait.",
+          "conflictLocalChanges": "A {name} barlang helyi változtatásokat tartalmaz. A szinkronizálás a távoli változatokat törli a \"{app}\" által.",
+          "conflictRemoteChanges": "A {name} barlang a \"{app}\" által módosítva. A szinkronizálás a helyi változatokat törli a legutóbbi sikeres szinkronizálás óta.",
+          "conflictProjectSameRevision": "A {name} projekt ugyanazon verzióval egy másik app által szerkesztve: \"{app}\". A szinkronizálás törli a másik app változtatásait.",
+          "conflictProjectLocalChanges": "A {name} projekt helyi változtatásokat tartalmaz. A szinkronizálás a távoli változatokat törli a \"{app}\" által.",
+          "conflictProjectRemoteChanges": "A {name} projekt a \"{app}\" által módosítva. A szinkronizálás a helyi változatokat törli a legutóbbi sikeres szinkronizálás óta."
         }
       },
       "googleDriveSettings": {
@@ -306,7 +315,8 @@
         "connected": "✓ Kapcsolódva a Google Drive-hoz",
         "authorize": "Hitelesítés",
         "disconnect": "Kapcsolat bontása",
-        "enableAutoSync": "Automatikus szinkronizálás engedélyezése"
+        "enableAutoSync": "Automatikus szinkronizálás",
+        "ignoreConflict": "Ütközések figyelmen kívül hagyása"
       },
       "shortestPath": {
         "title": "Legrövidebb út",
@@ -831,13 +841,15 @@
     },
     "storage": {
       "revisionStore": {
-        "revisionIdRequired": "A revizió azonosítója szükséges a törléshez"
+        "revisionIdRequired": "A revizió azonosítója szükséges a törléshez",
+        "revisionInfoMissingRequiredFields": "A revizió információ hiányos vagy érvénytelen: {fields} (id: {id})"
       },
       "caveSystem": {
+        "caveNotFound": "A(z) '{caveId}' azonosítójú barlang nem található a helyi adatbázisban",
         "caveIdRequired": "A barlang azonosítója szükséges a törléshez",
         "projectIdRequired": "A projekt azonosítója szükséges a törléshez",
-        "failedToSaveCave": "Nem lehet menteni a barlangot",
-        "failedToLoadCave": "Nem lehet betölteni a barlangot",
+        "failedToSaveCave": "Nem lehet menteni a barlangot a helyi adatbázisba",
+        "failedToLoadCave": "Nem lehet betölteni a barlangot a helyi adatbázisból",
         "failedToLoadCaveNames": "Nem lehet betölteni a barlang neveket a projekthez",
         "failedToLoadCaveIds": "Nem lehet betölteni a barlang azonosítókat a projekthez",
         "failedToLoadCaves": "Nem lehet betölteni a barlangokat a projekthez",

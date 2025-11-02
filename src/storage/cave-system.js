@@ -17,13 +17,6 @@
 import { Cave } from '../model/cave.js';
 import { i18n } from '../i18n/i18n.js';
 
-export class CaveNotFoundError extends Error {
-  constructor(caveName) {
-    super(`Cave '${caveName}' not found`);
-    this.name = 'CaveNotFoundError';
-  }
-}
-
 export class CaveSystem {
   constructor(databaseManager, attributeDefs) {
     this.storeName = 'caves';
@@ -67,7 +60,7 @@ export class CaveSystem {
         cave.updatedAt = request.result.updatedAt;
         resolve(cave);
       } else {
-        reject(new CaveNotFoundError(caveId));
+        reject(new Error(i18n.t('errors.storage.caveSystem.caveNotFound', { caveId })));
       }
     };
 

@@ -538,8 +538,9 @@ export class ExplorerTree {
             this.db.deleteCave(caveNode.data.name);
             const event = new CustomEvent('caveDeleted', {
               detail : {
-                name : caveNode.data.name,
-                id   : caveNode.data.id
+                name   : caveNode.data.name,
+                id     : caveNode.data.id,
+                source : 'explorer-tree'
               }
             });
             document.dispatchEvent(event);

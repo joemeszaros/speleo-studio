@@ -26,6 +26,7 @@ export class GoogleDriveAPI {
     this.baseURL = 'https://www.googleapis.com/drive/v3';
     this.authURL = 'https://oauth2.googleapis.com/token';
     this.fileIdCache = new Map();
+    this.folderIdCache = new Map();
   }
 
   /**
@@ -37,7 +38,7 @@ export class GoogleDriveAPI {
       client_id     : this.config.get('clientId'),
       redirect_uri  : window.location.origin + '/oauth-callback.html',
       response_type : 'code',
-      scope         : 'https://www.googleapis.com/auth/drive.file',
+      scope         : 'https://www.googleapis.com/auth/drive',
       access_type   : 'offline',
       prompt        : 'consent'
     });
@@ -130,9 +131,8 @@ export class GoogleDriveAPI {
    * @param {Object} options - Fetch options
    * @returns {Promise<Response>} API response
    */
-  async makeAuthenticatedRequest(endpoint, options = {}) {
+  async makeAuthenticatedRequest(endpoint, options = {}, timeout = 10000) {
     const accessToken = await this.getValidAccessToken();
-
     const defaultHeaders = {
       Authorization  : `Bearer ${accessToken}`,
       'Content-Type' : 'application/json',
@@ -141,6 +141,7 @@ export class GoogleDriveAPI {
 
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       ...options,
+      signal  : AbortSignal.timeout(timeout),
       headers : defaultHeaders
     });
 
@@ -197,11 +198,17 @@ export class GoogleDriveAPI {
    */
   async findOrCreateFolder(folderName, parentId = null) {
     // First, try to find existing folder
+    const key = `${folderName}-${parentId ?? ''}`;
+    if (this.folderIdCache.has(key)) {
+      return this.folderIdCache.get(key);
+    }
     const query = `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
     const parentQuery = parentId ? ` and '${parentId}' in parents` : '';
     const fullQuery = encodeURIComponent(query + parentQuery);
 
-    const response = await this.makeAuthenticatedRequest(`/files?q=${fullQuery}&fields=files(id,name)`);
+    const response = await this.makeAuthenticatedRequest(
+      `/files?q=${fullQuery}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true`
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to search for folder: ${response.statusText}`);
@@ -210,7 +217,9 @@ export class GoogleDriveAPI {
     const data = await response.json();
 
     if (data.files && data.files.length > 0) {
-      return data.files[0].id;
+      const folderId = data.files[0].id;
+      this.folderIdCache.set(key, folderId);
+      return folderId;
     }
 
     // Create folder if not found
@@ -233,7 +242,9 @@ export class GoogleDriveAPI {
     }
 
     const createdFolder = await createResponse.json();
-    return createdFolder.id;
+    const folderId = createdFolder.id;
+    this.folderIdCache.set(key, folderId);
+    return folderId;
   }
 
   /**
@@ -329,7 +340,6 @@ export class GoogleDriveAPI {
    * @returns {Promise<string>} File ID
    */
   async uploadFile(fileName, content, mimeType, folderId, description, properties) {
-    console.log('upload file with desc: ', description);
     const metadata = {
       name        : fileName,
       parents     : [folderId],
@@ -382,7 +392,7 @@ export class GoogleDriveAPI {
   async listFiles(folderId) {
     const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
     const response = await this.makeAuthenticatedRequest(
-      `/files?q=${query}&fields=files(id,name,createdTime,modifiedTime,properties)`
+      `/files?q=${query}&fields=files(id,name,createdTime,modifiedTime,properties)&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=allDrives`
     );
 
     if (!response.ok) {
@@ -411,7 +421,6 @@ export class GoogleDriveAPI {
   async getFileId(fileName, folderId) {
     const key = `${fileName}-${folderId}`;
     if (this.fileIdCache.has(key)) {
-      console.log(`file id cache hit for ${fileName}`);
       return this.fileIdCache.get(key);
     }
     const file = await this.findFileByName(fileName, folderId);
@@ -424,16 +433,17 @@ export class GoogleDriveAPI {
    * @param {string} folderId - Folder ID
    * @returns {Promise<string|null>} File ID if exists, null otherwise
    */
-  async findFileByName(fileName, folderId) {
+  async findFileByName(fileName, folderId, extraFields = []) {
 
     const key = `${fileName}-${folderId}`;
     if (this.fileIdCache.has(key)) {
-      console.log(`file id cache hit for ${fileName}`);
       return await this.getFileById(this.fileIdCache.get(key));
     }
 
     const query = encodeURIComponent(`name='${fileName}' and '${folderId}' in parents and trashed=false`);
-    const response = await this.makeAuthenticatedRequest(`/files?q=${query}&fields=files(id,name,properties)`);
+    const response = await this.makeAuthenticatedRequest(
+      `/files?q=${query}&fields=files(id,name,properties${extraFields.length > 0 ? `,${extraFields.join(',')}` : ''})`
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to search for file: ${response.statusText}`);
@@ -451,6 +461,10 @@ export class GoogleDriveAPI {
 
   async getFileById(fileId) {
     const response = await this.makeAuthenticatedRequest(`/files/${fileId}?fields=id,name,properties`);
+
+    if (response.status === 404) {
+      return null;
+    }
 
     if (!response.ok) {
       throw new Error(`Failed to get file: ${response.statusText}`);

@@ -31,7 +31,7 @@ class Footer {
     this.googleDriveSyncIndicator = node`<div class="google-drive-sync-indicator" style="display: none;">
       <img src="icons/drive.svg" class="google-drive-icon" alt="Google Drive Sync" title="Google Drive sync in progress">
     </div>`;
-    this.driveSeparator = node`<div class="footer-separator">|</div>`;
+    this.driveSeparator = node`<div style="display:none" class="footer-separator">|</div>`;
 
     // Add elements to footer
     element.appendChild(this.projectInfoContainer);

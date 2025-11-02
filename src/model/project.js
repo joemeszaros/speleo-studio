@@ -57,9 +57,9 @@ export class DriveProject {
   }
 
   static fromPure(pure) {
-    const project = Project.fromPure(pure.project);
-    const caves = pure.caves.map((cave) => DriveCaveMetadata.fromPure(cave));
-    return new DriveProject(project, caves, pure.deletedCaveIds);
+    pure.project = Project.fromPure(pure.project);
+    pure.caves = pure.caves.map((cave) => DriveCaveMetadata.fromPure(cave));
+    return Object.assign(new DriveProject(), pure);
 
   }
 }

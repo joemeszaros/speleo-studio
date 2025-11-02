@@ -122,7 +122,6 @@ class Main {
       showErrorPanel(i18n.t('errors.init.failedToInitIndexedDb'));
     }
     const materials = new Materials(options);
-
     const sceneOverview = new SceneOverview(document.querySelector('#scene-overview'));
     const scene = new MyScene(options, db, materials, font, document.querySelector('#viewport'), sceneOverview);
 
@@ -183,7 +182,11 @@ class Main {
       this.googleDriveSync.config.hasTokens() &&
       !this.googleDriveSync.config.hasValidTokens()
     ) {
-      await this.googleDriveSync.refreshToken();
+      try {
+        await this.googleDriveSync.refreshToken();
+      } catch (error) {
+        console.error('Failed to refresh Google Drive token:', error);
+      }
     }
     this.googleDriveSettings = new GoogleDriveSettings(this.googleDriveSync);
 
@@ -194,6 +197,7 @@ class Main {
       interaction,
       this.explorerTree,
       this.projectSystem,
+      this.caveSystem,
       this.editorStateSystem,
       this.googleDriveSync,
       this.revisionStore,
@@ -202,6 +206,7 @@ class Main {
 
     // Initialize project panel
     this.projectPanel = new ProjectPanel(
+      db,
       document.getElementById('project-panel'),
       this.projectSystem,
       this.caveSystem,
@@ -337,6 +342,9 @@ class Main {
   }
 
   tryModifyGeoData(surveyName, geoData) {
+    if (!geoData) {
+      return;
+    }
     const caveName = document.getElementById('surveyInput').caveName; // custom property
     const cave = this.db.getCave(caveName);
     if (cave.geoData === undefined || cave.geoData.coordinateSystem.type === undefined) {

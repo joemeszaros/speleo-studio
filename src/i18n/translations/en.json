@@ -266,6 +266,7 @@
         "deleteProjectFromDriveConfirmation": "Do you want to delete this project from Google Drive? This action cannot be undone.",
         "caves": "caves",
         "errors": {
+          "caveAppMismatch": "Cave app mismatch: {id}",
           "projectOpenFailed": "Failed to open project: {error}",
           "projectSaveFailed": "Failed to save project: {error}",
           "projectCreationFailed": "Failed to create project: {error}",
@@ -282,7 +283,15 @@
           "fileReadFailed": "Failed to read file: {error}",
           "caveIdAlreadyExists": "A cave with the id \"{id}\" already exists, please  change the id of the cave to be imported",
           "nonMatchingCaveIds": "Cave IDs in project do not match cave IDs from the caves",
-          "projectRevisionMismatch": "Project revision mismatch: {projectName} (revision {revision}) does not match Drive revision {driveRevision}"
+          "projectRevisionMismatch": "Project revision mismatch: {projectName} (revision {revision}) does not match Drive revision {driveRevision}",
+          "failedToDecorateProjectItemShort": "Failed to get Google Drive information",
+          "failedToDecorateProjectItem": "Failed to get Google Drive project information",
+          "conflictSameRevision": "Cave {name} with same revision has been modified by another app: \"{app}\". Sync will drop changes by the other app.",
+          "conflictLocalChanges": "Cave {name} has local changes. Sync will drop remote changes made by \"{app}\".",
+          "conflictRemoteChanges": "Cave {name} has remote changes made by \"{app}\". Sync will drop local changes since last successful sync.",
+          "conflictProjectSameRevision": "Project \"{name}\" with same revision has been modified by another app: \"{app}\". Sync will drop local changes since last successful sync.",
+          "conflictProjectLocalChanges": "Project \"{name}\" has local changes. Sync will drop remote changes made by \"{app}\".",
+          "conflictProjectRemoteChanges": "Project \"{name}\" has remote changes made by \"{app}\". Sync will drop local changes since last successful sync."
         }
       },
       "googleDriveSettings": {
@@ -306,7 +315,8 @@
         "connected": "✓ Connected to Google Drive",
         "authorize": "Authorize",
         "disconnect": "Disconnect",
-        "enableAutoSync": "Enable automatic sync"
+        "enableAutoSync": "Enable automatic sync",
+        "ignoreConflict": "Ignore conflicts on automatic sync"
       },
       "dipStrikeCalculator": {
         "title": "Dip & Strike Calculator",
@@ -813,13 +823,15 @@
     },
     "storage": {
       "revisionStore": {
-        "revisionIdRequired": "Revision id is required for deletion"
+        "revisionIdRequired": "Revision id is required for deletion",
+        "revisionInfoMissingRequiredFields": "RevisionInfo is missing required fields: {fields} (id: {id})"
       },
       "caveSystem": {
+        "caveNotFound": "Cave '{caveId}' not found in local database",
         "caveIdRequired": "Cave id is required for deletion",
         "projectIdRequired": "Project id is required for deletion",
-        "failedToSaveCave": "Failed to save cave",
-        "failedToLoadCave": "Failed to load cave",
+        "failedToSaveCave": "Failed to save cave to local database",
+        "failedToLoadCave": "Failed to load cave from local database",
         "failedToLoadCaveNames": "Failed to load cave names for project",
         "failedToLoadCaveIds": "Failed to load cave ids for project",
         "failedToLoadCaves": "Failed to load caves for project",

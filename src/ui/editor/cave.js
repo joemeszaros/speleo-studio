@@ -85,7 +85,13 @@ class CaveEditor extends Editor {
     wm.makeFloatingPanel(
       this.panel,
       (contentElmnt) => this.build(contentElmnt),
-      () => i18n.t('ui.editors.caveSheet.title', { name: this.cave?.name ?? i18n.t('ui.editors.caveSheet.titleNew') }),
+      () =>
+        i18n.t('ui.editors.caveSheet.title', {
+          name :
+            this.cave?.name === undefined
+              ? i18n.t('ui.editors.caveSheet.titleNew')
+              : `${this.cave.name} (${this.cave.revision})`
+        }),
       false,
       false,
       {},

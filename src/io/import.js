@@ -397,7 +397,7 @@ class TopodroidImporter extends Importer {
     for (const line of lines) {
       if (!line.startsWith('#') && fixPointHeader === null) continue;
 
-      const trimmedLine = line.substring(1).trim();
+      const trimmedLine = fixPointHeader === null ? line.substring(1).trim() : line.trim();
 
       // we loose precision information and h_geo here
       //# station, lon, lat, h_geo, accuracy, V_accuracy, comment, CRS
@@ -409,7 +409,8 @@ class TopodroidImporter extends Importer {
         if (parts.length === headerParts.length) {
           metadata.fixPointStation = parts[headerParts.indexOf('station')];
           const lat = parts[headerParts.indexOf('lat')];
-          const lon = parts[headerParts.indexOf('lon')];
+          const lonIndex = headerParts.indexOf('lon');
+          const lon = parts[lonIndex !== -1 ? lonIndex : headerParts.indexOf('lng')];
 
           if (U.isFloatStr(lon) && U.isFloatStr(lat)) {
             const latFloat = U.parseMyFloat(lat);
@@ -427,7 +428,11 @@ class TopodroidImporter extends Importer {
         continue;
       }
 
-      if (trimmedLine.includes('lat') && trimmedLine.includes('lon') && trimmedLine.includes('station')) {
+      if (
+        trimmedLine.includes('lat') &&
+        (trimmedLine.includes('lon') || trimmedLine.includes('lng')) &&
+        trimmedLine.includes('station')
+      ) {
         fixPointHeader = trimmedLine;
         continue;
       }

@@ -59,7 +59,7 @@ class StationComment {
 }
 
 class Shot {
-  static export_fields = ['id', 'type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
+  static export_fields = ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
 
   constructor(id, type, from, to, length, azimuth, clino, comment) {
     this.id = id;
@@ -383,7 +383,7 @@ class Survey {
   }
 
   static fromPure(pure) {
-    pure.shots = pure.shots.map((s) => Object.assign(new Shot(), s));
+    pure.shots = pure.shots.map((s, index) => Object.assign(new Shot(index + 1), s));
     pure.metadata = pure.metadata !== undefined ? SurveyMetadata.fromPure(pure.metadata) : undefined;
     const survey = Object.assign(new Survey(), pure);
     survey.validShots = survey.getValidShots();

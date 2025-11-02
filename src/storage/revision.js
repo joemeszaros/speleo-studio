@@ -47,6 +47,16 @@ export class RevisionStore {
 
   async saveRevision(revInfo) {
 
+    const missingFields = Object.keys(revInfo).filter((key) => revInfo[key] === null || revInfo[key] === undefined);
+    if (missingFields.length > 0) {
+      throw new Error(
+        i18n.t('errors.storage.revisionStore.revisionInfoMissingRequiredFields', {
+          id     : revInfo.id,
+          fields : missingFields.join(', ')
+        })
+      );
+    }
+
     return new Promise((resolve, reject) => {
       const request = this.dbManager.getReadWriteStore(this.storeName).put(revInfo.toExport());
 
