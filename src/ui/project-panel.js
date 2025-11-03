@@ -808,6 +808,10 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
             } else if (c.diff < 0) {
               const cave = await this.downloadCave(driveCave, c.id, localProject.id);
               caves.set(cave.id, cave);
+              if (cave.name !== c.name) {
+                // someone renamed the cave
+                this.#emitCaveRenamed(cave, c.name);
+              }
               //this.#emitCaveSynced(caveWithProperties.cave, localProject);
             } else {
               if (c.hasConflict) {
@@ -831,8 +835,8 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
           } else if (c.state === 'remoteDeleted') {
             this.db.deleteCave(cave.name);
             // Wait until 'caveDestructed' event is emitted for this cave
-            // we need the indexed db operation to complete before we can continue
             setTimeout(() => this.#emitCaveDeleted(cave, driveProject.project.id), 200);
+            // we need the indexed db operation to complete before we can continue
             await U.waitForEvent('caveDestructed', (detail) => detail.id === cave.id);
 
           } else if (c.state === 'localDeleted' && c.isOwner) {
@@ -844,7 +848,8 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
             driveProject.caves = driveProject.caves.filter((c) => c.id !== caveId);
             await this.googleDriveSync.uploadProject(driveProject);
           } else if (c.state === 'localDeleted' && !c.isOwner) {
-            // we download the cave
+            // we download the cave since we are not the owners and this would block further
+            // google drive operations
             const cave = await this.downloadCave(driveCave, c.id, localProject.id);
             caves.set(cave.id, cave);
 
@@ -1149,6 +1154,17 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
     const event = new CustomEvent('currentProjectDeleted', {
       detail : {
         projectId : projectId
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCaveRenamed(cave, oldName) {
+    const event = new CustomEvent('caveRenamed', {
+      detail : {
+        oldName : oldName,
+        cave    : cave,
+        source  : 'project-panel'
       }
     });
     document.dispatchEvent(event);

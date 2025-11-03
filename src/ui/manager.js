@@ -225,10 +225,13 @@ class ProjectManager {
   async onCaveRenamed(e) {
     const oldName = e.detail.oldName;
     const cave = e.detail.cave;
+    const source = e.detail.source;
     this.scene.renameCave(oldName, cave.name);
     this.explorer.renameCave(oldName, cave.name);
     //indexed db caves object store is indexed by id
-    await this.saveCave(cave);
+    if (source !== 'project-panel') {
+      await this.saveCave(cave);
+    }
   }
 
   async onSurveyRenamed(e) {

@@ -148,6 +148,10 @@ export class GoogleDriveSync {
   }
 
   async uploadCaveToProject(cave, localProject, revisionInfo) {
+    return await this.operation(() => this.uploadCaveToProjectInternal(cave, localProject, revisionInfo));
+  }
+
+  async uploadCaveToProjectInternal(cave, localProject, revisionInfo) {
     const cavesFolderId = await this.api.getCavesFolderId();
     const driveRevision = await this.getRevisionInfoInternal(cave, cavesFolderId);
     if (driveRevision !== null) {
@@ -161,6 +165,10 @@ export class GoogleDriveSync {
   }
 
   async coordinateUploadCave(cave, localProject, revisionInfo) {
+    return await this.operation(() => this.coordinateUploadCaveInternal(cave, localProject, revisionInfo));
+  }
+
+  async coordinateUploadCaveInternal(cave, localProject, revisionInfo) {
     const cavesFolderId = await this.api.getCavesFolderId();
     const driveRevision = await this.getRevisionInfoInternal(cave, cavesFolderId);
     if (driveRevision === null) {
@@ -170,7 +178,7 @@ export class GoogleDriveSync {
     const hasConflict =
       revisionInfo.originApp !== driveRevision.app && revisionInfo.originRevision !== driveRevision.revision;
 
-    const ignoreConflict = this.googleDriveSync.config.get('ignoreConflict');
+    const ignoreConflict = this.config.get('ignoreConflict');
 
     if (hasConflict && !ignoreConflict) {
       return;
@@ -183,6 +191,7 @@ export class GoogleDriveSync {
       const updatedCave = project.caves.find((c) => c.id === cave.id);
       updatedCave.revision = revisionInfo.revision;
       updatedCave.app = revisionInfo.app;
+      updatedCave.name = cave.name;
       const driveProject = new DriveProject(project.project, project.caves, project.app);
       await this.uploadProject(driveProject);
       await this.uploadCave(cave, localProject);

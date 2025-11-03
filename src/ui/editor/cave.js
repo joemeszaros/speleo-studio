@@ -66,7 +66,8 @@ class CaveEditor extends Editor {
     const event = new CustomEvent('caveRenamed', {
       detail : {
         oldName : oldName,
-        cave    : cave
+        cave    : cave,
+        source  : 'cave-editor'
       }
     });
     document.dispatchEvent(event);
