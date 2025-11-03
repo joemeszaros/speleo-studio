@@ -52,6 +52,20 @@ export class Raycasting {
     }
   }
 
+  getFirstIntersectedPhoto(mouseCoordinates) {
+    this.setPointer(this.getMousePosition(mouseCoordinates));
+    const sprites = [...this.scene.attributes.getPhotoSprites()];
+    const camera = this.scene.view.camera;
+    this.raycaster.setFromCamera(this.pointer, camera);
+    this.raycaster.layers.set(1);
+    const intersectedSprites = this.raycaster.intersectObjects(sprites);
+    if (intersectedSprites.length) {
+      return intersectedSprites[0].object;
+    } else {
+      return undefined;
+    }
+  }
+
   getIntersectedStationMeta(mouseCoordinates, radius) {
     this.setPointer(this.getMousePosition(mouseCoordinates));
     const caves = this.scene.db.getAllCaves();

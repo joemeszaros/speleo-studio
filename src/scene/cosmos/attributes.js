@@ -320,6 +320,13 @@ export class AttributesScene {
     this.scene.view.renderView();
   }
 
+  getPhotoSprites() {
+    return this.stationAttributes
+      .values()
+      .filter((v) => v.attribute.name === 'photo')
+      .map((v) => v.sprite);
+  }
+
   showPlaneFor(id, station, attribute, caveName) {
     if (!this.stationAttributes.has(id)) {
       const position = station.position;

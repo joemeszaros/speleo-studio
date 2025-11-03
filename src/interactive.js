@@ -416,6 +416,21 @@ class SceneInteraction {
 
     const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
     const intersectedStation = this.raycasting.getIntersectedStationMeta(this.mouseCoordinates, worldUnitsFor5Pixels);
+    const intersectedPhoto = this.raycasting.getFirstIntersectedPhoto(this.mouseCoordinates);
+
+    if (intersectedPhoto !== undefined) {
+      if (this.intersectedPhoto === undefined) {
+        this.intersectedPhoto = intersectedPhoto;
+        this.originalScale = this.intersectedPhoto.scale.clone();
+        this.intersectedPhoto.scale.set(this.originalScale.x * 5, this.originalScale.y * 5, this.originalScale.z);
+        this.scene.view.renderView();
+      }
+    } else if (this.intersectedPhoto !== undefined) {
+      this.intersectedPhoto.scale.set(this.originalScale.x, this.originalScale.y, this.originalScale.z);
+      this.intersectedPhoto = undefined;
+      this.originalScale = undefined;
+      this.scene.view.renderView();
+    }
 
     if (intersectedStation !== undefined) {
       this.scene.domElement.style.cursor = 'pointer';
