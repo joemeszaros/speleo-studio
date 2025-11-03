@@ -1286,6 +1286,16 @@ body {
   display: inline-block;
 }
 
+.cave-revision-info {
+  font-size: 11px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.cave-revision-info span {
+  margin-left: 10px;
+}
+
 .editor {
   font-size: 12px;
 }

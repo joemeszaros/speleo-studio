@@ -265,6 +265,7 @@
         "deleteProjectConfirmation": "Are you sure you want to delete this project? This action cannot be undone.",
         "deleteProjectFromDriveConfirmation": "Do you want to delete this project from Google Drive? This action cannot be undone.",
         "caves": "caves",
+        "projectId": "Project ID",
         "errors": {
           "caveAppMismatch": "Cave app mismatch: {id}",
           "projectOpenFailed": "Failed to open project: {error}",
@@ -522,6 +523,11 @@
           "minZ": "Deepest point",
           "maxZ": "Highest point",
           "verticalWithSplays": "Vertical extent (splays)"
+        },
+        "revision": {
+          "revision": "Revision",
+          "projectId": "Project ID",
+          "caveId": "Cave ID"
         },
         "messages": {
           "caveNameAlreadyExists": "Cave with name {name} already exists, cannot rename!"

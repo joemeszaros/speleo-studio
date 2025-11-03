@@ -82,8 +82,12 @@ export class GoogleDriveSync {
   }
 
   async operation(op) {
-    if (!this.isReady()) {
+    if (!this.config.isConfigured() || !this.config.hasTokens()) {
       throw new Error('Google Drive not configured or authenticated');
+    }
+
+    if (!this.config.hasValidTokens()) {
+      this.refreshToken();
     }
 
     const syncStartedEvent = new CustomEvent('googleDriveSyncStarted');

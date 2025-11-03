@@ -47,7 +47,8 @@ class CaveEditor extends Editor {
     const event = new CustomEvent('caveChanged', {
       detail : {
         cave    : this.cave,
-        reasons : reasons
+        reasons : reasons,
+        source  : 'cave-editor'
       }
     });
     document.dispatchEvent(event);
@@ -56,7 +57,8 @@ class CaveEditor extends Editor {
   #emitCaveAdded() {
     const event = new CustomEvent('caveAdded', {
       detail : {
-        cave : this.cave
+        cave   : this.cave,
+        source : 'cave-editor'
       }
     });
     document.dispatchEvent(event);
@@ -88,10 +90,7 @@ class CaveEditor extends Editor {
       (contentElmnt) => this.build(contentElmnt),
       () =>
         i18n.t('ui.editors.caveSheet.title', {
-          name :
-            this.cave?.name === undefined
-              ? i18n.t('ui.editors.caveSheet.titleNew')
-              : `${this.cave.name} (${this.cave.revision})`
+          name : this.cave?.name === undefined ? i18n.t('ui.editors.caveSheet.titleNew') : this.cave.name
         }),
       false,
       false,
@@ -104,7 +103,7 @@ class CaveEditor extends Editor {
   build(contentElmnt) {
     this.#setupEditor(contentElmnt);
     this.#setupStats(contentElmnt);
-
+    this.#renderRevision(contentElmnt);
   }
 
   #setupEditor(contentElmnt) {
@@ -835,6 +834,18 @@ class CaveEditor extends Editor {
     });
     contentElmnt.appendChild(statFields);
     contentElmnt.appendChild(U.node`<hr/>`);
+  }
+
+  #renderRevision(contentElmnt) {
+    const revisionDiv = U.node`<div class="cave-revision-info"></div>`;
+    revisionDiv.appendChild(
+      U.node`<span>${i18n.t('ui.editors.caveSheet.revision.revision')}: ${this.cave?.revision}</span>`
+    );
+    revisionDiv.appendChild(
+      U.node`<span>${i18n.t('ui.editors.caveSheet.revision.projectId')}: ${this.cave?.projectId}</span>`
+    );
+    revisionDiv.appendChild(U.node`<span>${i18n.t('ui.editors.caveSheet.revision.caveId')}: ${this.cave?.id}</span>`);
+    contentElmnt.appendChild(revisionDiv);
   }
 }
 

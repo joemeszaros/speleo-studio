@@ -325,7 +325,8 @@ export class ProjectPanel {
       const projectSyncInfo = await this.getProjectSyncInfo(driveProject, localProject);
 
       const projectNameElmnt = projectItemNode.querySelector(`#project-name-${localProject.id}`);
-      projectNameElmnt.textContent = projectSyncInfo.name;
+      projectNameElmnt.innerHTML = projectSyncInfo.decoratedName;
+      projectNameElmnt.title = i18n.t('ui.panels.projectManager.projectId') + ': ' + driveProject?.project?.id;
       const projectCavesElmnt = projectItemNode.querySelector(`#project-caves-${localProject.id}`);
       projectCavesElmnt.innerHTML =
         ' • ' +
@@ -363,13 +364,14 @@ export class ProjectPanel {
                     'revision'
                   ]);
                   const newNode = this.getProjectItemNode(
-                    localProject,
+                    dProj.project,
                     nCaves.map((c) => c.name),
                     new Date(localProject.updatedAt).toLocaleDateString(),
                     this.projectSystem.getCurrentProject()?.id === localProject.id,
                     true
                   );
-                  const decoratedNode = await this.decorateProjectItemWithDrive(dProj, projects, nCaves, newNode);
+                  const nProjects = await this.projectSystem.getAllProjects();
+                  const decoratedNode = await this.decorateProjectItemWithDrive(dProj, nProjects, nCaves, newNode);
                   const projectItemNode = this.panel.querySelector(`#project-item-${localProject.id}`);
                   projectItemNode.replaceWith(decoratedNode);
                 })
@@ -414,22 +416,37 @@ export class ProjectPanel {
     const driveRevision = driveProject.project.revision;
     const localRevisionInfo = await this.revisionStore.loadRevision(localProject.id);
 
-    let hasConflict =
-      localRevisionInfo.originApp !== driveProject.app && localRevisionInfo.originRevision !== driveRevision;
+    const hasLocalChanges = !localRevisionInfo.synced;
+
+    let hasConflict;
     const diff = localRevisionInfo.revision - driveRevision;
+
+    if (diff > 0) {
+      hasConflict = !(
+        localRevisionInfo.originRevision === driveRevision && localRevisionInfo.originApp === driveRevision
+      );
+    } else if (diff < 0) {
+      hasConflict = hasLocalChanges;
+    } else {
+      hasConflict = hasLocalChanges;
+    }
+
     let prefix = hasConflict ? '⚠️' : '';
     let diffStr = '';
     let projectName = localProject.name;
+
     if (diff > 0) {
-      projectName = localProject.name;
-      diffStr = `(+${diff})`;
+      diffStr = `(<span style="color: green"><strong>Δ ${diff}</strong></span>)`;
     } else if (diff < 0) {
-      projectName = driveProject.project.name;
-      diffStr = `(-${diff})`;
-    } else {
-      projectName = localProject.name;
+      diffStr = `(<span style="color: red"><strong>∇ ${Math.abs(diff)}</strong></span>)`;
     }
-    return { diff, hasConflict, name: `${prefix} ${projectName} ${diffStr}` };
+    return {
+      diff,
+      hasConflict,
+      name          : projectName,
+      decoratedName : `${prefix} ${projectName} ${diffStr}`,
+      drive         : { app: driveProject.app }
+    };
 
   }
 
@@ -438,38 +455,43 @@ export class ProjectPanel {
       .filter((c) => c.hasConflict)
       .map((c) => {
         if (c.diff === 0) {
-          return i18n.t('ui.panels.projectManager.errors.conflictSameRevision', { name: c.name, app: c.drive.app });
+          return i18n.t('ui.panels.projectManager.errors.conflictSameRevision', {
+            name : c.name,
+            app  : this.#getAppName(c.drive.app)
+          });
         } else if (c.diff > 0) {
-          return i18n.t('ui.panels.projectManager.errors.conflictLocalChanges', { name: c.name, app: c.drive.app });
+          return i18n.t('ui.panels.projectManager.errors.conflictLocalChanges', {
+            name : c.name,
+            app  : this.#getAppName(c.drive.app)
+          });
         } else {
-          return i18n.t('ui.panels.projectManager.errors.conflictRemoteChanges', { name: c.name, app: c.drive.app });
+          return i18n.t('ui.panels.projectManager.errors.conflictRemoteChanges', {
+            name : c.name,
+            app  : this.#getAppName(c.drive.app)
+          });
         }
       });
 
     if (projectSyncInfo.hasConflict) {
-      if (projectSyncInfo.diff === 0) {
-        conflictMessages.push(
-          `${projectSyncInfo.name} has conflict with remote project. Sync will drop remote changes made by "${projectSyncInfo.driveApp}" since last revision.`
-        );
-      } else if (projectSyncInfo.diff > 0) {
+      if (projectSyncInfo.diff > 0) {
         conflictMessages.push(
           i18n.t('ui.panels.projectManager.errors.conflictProjectLocalChanges', {
             name : projectSyncInfo.name,
-            app  : projectSyncInfo.driveApp
+            app  : this.#getAppName(projectSyncInfo.drive.app)
           })
         );
       } else if (projectSyncInfo.diff < 0) {
         conflictMessages.push(
           i18n.t('ui.panels.projectManager.errors.conflictProjectRemoteChanges', {
             name : projectSyncInfo.name,
-            app  : projectSyncInfo.driveApp
+            app  : this.#getAppName(projectSyncInfo.drive.app)
           })
         );
       } else {
         conflictMessages.push(
           i18n.t('ui.panels.projectManager.errors.conflictProjectSameRevision', {
             name : projectSyncInfo.name,
-            app  : projectSyncInfo.driveApp
+            app  : this.#getAppName(projectSyncInfo.drive.app)
           })
         );
       }
@@ -477,12 +499,14 @@ export class ProjectPanel {
     return conflictMessages;
   }
 
+  #getAppName(app) {
+    const _pos = app.lastIndexOf('_');
+    const p = app.substring(0, _pos);
+    return p;
+  }
+
   getTooltipText(caveList) {
-    const getAppName = (app) => {
-      const _pos = app.lastIndexOf('_');
-      const p = app.substring(0, _pos);
-      return p;
-    };
+
     return (
       caveList
         //.filter((c) => !(c.state === 'existing' && c.diff === 0 && !c.hasConflict))
@@ -497,9 +521,9 @@ export class ProjectPanel {
               }
               return `${prefix}
 
-Local : ${c.local.revision} (${getAppName(c.local.app)})
-Origin : ${c.local.originRevision} (${getAppName(c.local.originApp)})
-Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
+Local : ${c.local.revision} (${this.#getAppName(c.local.app)})
+Origin : ${c.local.originRevision} (${this.#getAppName(c.local.originApp)})
+Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
             }
             case 'remoteDeleted':
               return `${c.name}: deleted by an other app`;
@@ -806,13 +830,8 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
               localRevisionInfo.originRevision = cave.revision;
               await this.revisionStore.saveRevision(localRevisionInfo);
             } else if (c.diff < 0) {
-              const cave = await this.downloadCave(driveCave, c.id, localProject.id);
+              const cave = await this.downloadCave(driveCave, c, localProject.id, true);
               caves.set(cave.id, cave);
-              if (cave.name !== c.name) {
-                // someone renamed the cave
-                this.#emitCaveRenamed(cave, c.name);
-              }
-              //this.#emitCaveSynced(caveWithProperties.cave, localProject);
             } else {
               if (c.hasConflict) {
                 await this.googleDriveSync.uploadCave(cave, localProject);
@@ -829,9 +848,8 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
             const localRevisionInfo = new RevisionInfo(cave.id, cave.revision, localApp, true, localApp, cave.revision);
             await this.revisionStore.saveRevision(localRevisionInfo);
           } else if (c.state === 'remote') {
-            const cave = await this.downloadCave(driveCave, c.id, localProject.id);
+            const cave = await this.downloadCave(driveCave, c, localProject.id, false);
             caves.set(cave.id, cave);
-            //this.#emitCaveSynced(caveWithProperties.cave, localProject);
           } else if (c.state === 'remoteDeleted') {
             this.db.deleteCave(cave.name);
             // Wait until 'caveDestructed' event is emitted for this cave
@@ -844,13 +862,14 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
             await this.revisionStore.deleteRevision(caveId);
             const response = await this.googleDriveSync.fetchProject(localProject);
             const driveProject = response.project;
+            driveProject.project.updatedAt = new Date().toISOString();
             driveProject.deletedCaveIds.push(caveId);
             driveProject.caves = driveProject.caves.filter((c) => c.id !== caveId);
             await this.googleDriveSync.uploadProject(driveProject);
           } else if (c.state === 'localDeleted' && !c.isOwner) {
             // we download the cave since we are not the owners and this would block further
             // google drive operations
-            const cave = await this.downloadCave(driveCave, c.id, localProject.id);
+            const cave = await this.downloadCave(driveCave, c, localProject.id, false);
             caves.set(cave.id, cave);
 
           }
@@ -864,26 +883,34 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
         return new DriveCaveMetadata(cave.id, cave.name, cave.revision ?? 1, rev?.app ?? localApp);
       });
 
+      const localRevisionInfo = await this.revisionStore.loadRevision(localProject?.id ?? driveProject.project.id);
+
       if (caveHasUploaded || projectSyncInfo.diff > 0 || (projectSyncInfo.diff === 0 && projectSyncInfo.hasConflict)) {
-        //TODO: upload revinfo here
+        localProject.updatedAt = new Date().toISOString();
         updatedProject = new DriveProject(localProject, cavesMetadata, this.googleDriveSync.config.getApp());
         await this.googleDriveSync.uploadProject(updatedProject);
+        localRevisionInfo.synced = true;
+        localRevisionInfo.originApp = localApp;
+        localRevisionInfo.originRevision = localProject.revision;
+        await this.revisionStore.saveRevision(localRevisionInfo);
+
       } else if (projectSyncInfo.diff < 0) {
         // we need to fetch the project
         const response = await this.googleDriveSync.fetchProject(localProject);
-        const project = response.project;
-        this.projectSystem.saveProject(project);
+        const driveProject = response.project;
+        const project = driveProject.project;
+        await this.projectSystem.saveProject(project);
         const rev = project.revision;
-        const app = project.app;
-        //this.#emitProjectSynced(projectWithProperties.project, localProject);
+        const app = driveProject.app;
         await this.revisionStore.saveRevision(new RevisionInfo(localProject.id, rev, app, true, app, rev));
 
         //due to local changes in caves we need to update the project
         if (caveHasUploaded) {
+          project.updatedAt = new Date().toISOString();
           updatedProject = new DriveProject(project, cavesMetadata, app);
           await this.googleDriveSync.uploadProject(updatedProject);
         } else {
-          updatedProject = project;
+          updatedProject = driveProject;
         }
 
       } else {
@@ -898,7 +925,8 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
       showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectSyncFailed', { error: error.message }));
     }
   }
-  async downloadCave(driveCave, caveId, projectId) {
+  async downloadCave(driveCave, caveEntry, projectId, hasLocalCopy) {
+    const caveId = caveEntry.id;
     const response = await this.googleDriveSync.fetchCave({ id: caveId });
     if (driveCave.app !== response.properties.app) {
       throw new Error(i18n.t('ui.panels.projectManager.errors.caveAppMismatch', { id: caveId }));
@@ -907,6 +935,27 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
     await this.caveSystem.saveCave(cave, projectId);
     const newRevInfo = new RevisionInfo(cave.id, cave.revision, driveCave.app, true, driveCave.app, driveCave.revision);
     await this.revisionStore.saveRevision(newRevInfo);
+    const currentProject = this.projectSystem.getCurrentProject();
+    if (currentProject && currentProject.id === projectId) {
+      if (hasLocalCopy) {
+        const oldName = caveEntry.name;
+        if (cave.name !== oldName) {
+          // someone renamed the cave
+          setTimeout(() => {
+            this.db.renameCave(oldName, cave.name);
+            this.#emitCaveRenamed(cave, oldName, projectId);
+          }, 200);
+          // Wait until 'caveRenamedCompleted' event is emitted for this cave
+          await U.waitForEvent('caveRenamedCompleted', (detail) => detail.cave.id === cave.id);
+
+        }
+        this.#emitCaveChanged(cave);
+      } else {
+        this.#emitCaveAdded(cave, projectId);
+      }
+
+    }
+
     return cave;
   }
 
@@ -1035,7 +1084,10 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
       return;
     }
 
-    const newName = prompt(i18n.t('ui.panels.projectManager.enterNewProjectName', { name: project.name }));
+    const newName = prompt(
+      i18n.t('ui.panels.projectManager.enterNewProjectName', { name: project.name }),
+      project.name
+    );
     if (!newName || newName.trim() === '') {
       return;
     }
@@ -1058,9 +1110,34 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
       }
       // Update project name
       project.name = trimmedName;
+      project.revision++;
       project.updatedAt = new Date().toISOString();
       // Save the updated project
       await this.projectSystem.saveProject(project);
+
+      const revInfo = await this.revisionStore.loadRevision(project.id);
+      const localApp = this.googleDriveSync.config.getApp();
+
+      if (revInfo !== null) {
+        const autoSync = this.googleDriveSync.config.get('autoSync');
+        const newRevInfo = new RevisionInfo(project.id, project.revision, localApp, true, localApp, project.revision);
+        if (autoSync) {
+          newRevInfo.synced = true;
+          console.log('autosyncing project');
+          const response = await this.googleDriveSync.fetchProject(project);
+          const driveProject = response.project;
+          driveProject.project.updatedAt = new Date().toISOString();
+          driveProject.project.revision = project.revision;
+          driveProject.project.name = project.name;
+          driveProject.app = localApp;
+          await this.googleDriveSync.uploadProject(driveProject);
+
+        } else {
+          newRevInfo.synced = false;
+        }
+
+        await this.revisionStore.saveRevision(newRevInfo);
+      }
 
       // Update display
       this.updateDisplay();
@@ -1159,12 +1236,35 @@ Drive : ${c.drive.revision} (${getAppName(c.drive.app)})`;
     document.dispatchEvent(event);
   }
 
-  #emitCaveRenamed(cave, oldName) {
+  #emitCaveRenamed(cave, oldName, projectId) {
     const event = new CustomEvent('caveRenamed', {
       detail : {
-        oldName : oldName,
+        oldName   : oldName,
+        cave      : cave,
+        projectId : projectId,
+        source    : 'project-panel'
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCaveChanged(cave) {
+    const event = new CustomEvent('caveChanged', {
+      detail : {
         cave    : cave,
-        source  : 'project-panel'
+        source  : 'project-panel',
+        reasons : ['drive']
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCaveAdded(cave, projectId) {
+    const event = new CustomEvent('caveAdded', {
+      detail : {
+        cave      : cave,
+        projectId : projectId,
+        source    : 'project-panel'
       }
     });
     document.dispatchEvent(event);

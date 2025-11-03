@@ -128,18 +128,21 @@ class ProjectManager {
     const currentProject = this.projectSystem.getCurrentProject();
     await this.projectSystem.saveCaveInProject(currentProject.id, cave);
     await this.uploadCaveToDrive(cave);
-
   }
 
   async onCaveChanged(e) {
     const cave = e.detail.cave;
     const reasons = e.detail.reasons;
+    const source = e.detail.source;
 
     // we do not need to reload the cave if only the metadata has changed
     if (reasons.length > 1 || (reasons.length === 1 && reasons[0] !== 'metadata')) {
       await this.reloadCave(cave);
     }
-    await this.saveCave(cave);
+
+    if (source !== 'project-panel') {
+      await this.saveCave(cave);
+    }
 
   }
 
@@ -226,12 +229,18 @@ class ProjectManager {
     const oldName = e.detail.oldName;
     const cave = e.detail.cave;
     const source = e.detail.source;
-    this.scene.renameCave(oldName, cave.name);
+    const projectId = e.detail.projectId;
+    const currentProject = this.projectSystem.getCurrentProject();
+
+    if (!projectId || (currentProject && currentProject.id === projectId)) {
+      this.scene.renameCave(oldName, cave.name);
+    }
     this.explorer.renameCave(oldName, cave.name);
     //indexed db caves object store is indexed by id
     if (source !== 'project-panel') {
       await this.saveCave(cave);
     }
+    this.#emitCaveRenamedCompleted(cave, oldName);
   }
 
   async onSurveyRenamed(e) {
@@ -502,6 +511,16 @@ class ProjectManager {
     const event = new CustomEvent('caveDestructed', {
       detail : {
         id : id
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  #emitCaveRenamedCompleted(cave, oldName) {
+    const event = new CustomEvent('caveRenamedCompleted', {
+      detail : {
+        cave    : cave,
+        oldName : oldName
       }
     });
     document.dispatchEvent(event);

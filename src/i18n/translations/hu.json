@@ -265,6 +265,7 @@
         "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
         "deleteProjectFromDriveConfirmation": "Törölni akarod ezt a projektet a Google Drive-ról? Ez a művelet nem vonható vissza.",
         "caves": "barlang",
+        "projectId": "Projekt azonosító",
         "errors": {
           "caveAppMismatch": "Barlang app nem egyezik: {id}",
           "projectDeletionFailed": "Hiba történt a projekt törlése során: {error}",
@@ -525,6 +526,11 @@
           "minZ": "Legmélyebb pont",
           "maxZ": "Legmagasabb pont",
           "verticalWithSplays": "Vertikális kiterjedés (tüskékkel)"
+        },
+        "revision": {
+          "revision": "Verzió",
+          "projectId": "Projekt azonosító",
+          "caveId": "Barlang azonosító"
         },
         "messages": {
           "caveNameAlreadyExists": "A(z) {name} nevű barlang már létezik, nem lehet átnevezni!"
