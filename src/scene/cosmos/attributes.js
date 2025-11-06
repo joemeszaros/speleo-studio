@@ -37,6 +37,7 @@ export class AttributesScene {
     this.stationAttributes3DGroup.name = 'station attributes';
     this.imageCache = imageCache;
     this.textureLoader = new THREE.TextureLoader();
+    this.attributeFrames = new Map(); // Store frames for grouped attributes
     scene.addObjectToScene(this.sectionAttributes3DGroup);
     scene.addObjectToScene(this.stationAttributes3DGroup);
   }
@@ -478,6 +479,277 @@ export class AttributesScene {
     this.scene.view.renderView();
   }
 
+  /**
+   * Layouts station attributes to prevent overlapping when multiple attributes
+   * are at the same station. Attributes at the same position are arranged in a row.
+   * Single attributes stay at their original position.
+   */
+  layoutStationAttributes() {
+    // Group attributes by station position (only icons and photos, not planes)
+    const positionGroups = new Map();
+    const EPSILON = 0.001; // Small threshold for position comparison
+
+    this.stationAttributes.forEach((entry, id) => {
+      // Skip tectonic planes (bedding, fault) - they have their own positioning
+      if (entry.hasPlane) {
+        return;
+      }
+
+      if (!entry.sprite || !entry.station) {
+        return;
+      }
+
+      const pos = entry.station.position;
+      // Create a key for position grouping (round to avoid floating point issues)
+      const key = `${Math.round(pos.x / EPSILON) * EPSILON},${Math.round(pos.y / EPSILON) * EPSILON},${Math.round(pos.z / EPSILON) * EPSILON}`;
+
+      if (!positionGroups.has(key)) {
+        positionGroups.set(key, []);
+      }
+      positionGroups.get(key).push({ id, entry, position: pos });
+    });
+
+    // Track which position keys still have frames
+    const activeFrameKeys = new Set();
+
+    // Layout each group
+    positionGroups.forEach((group, key) => {
+      if (group.length === 1) {
+        // Single attribute - use original position, remove frame if exists
+        const { entry } = group[0];
+        const pos = entry.station.position;
+        entry.sprite.position.set(pos.x, pos.y, pos.z);
+        this.removeAttributeFrame(key);
+      } else {
+        // Multiple attributes - layout in a row and create/update frame
+        this.layoutAttributesInRow(group);
+        this.createOrUpdateAttributeFrame(key, group);
+        activeFrameKeys.add(key);
+      }
+    });
+
+    // Remove frames for positions that no longer have multiple attributes
+    this.attributeFrames.forEach((frame, key) => {
+      if (!activeFrameKeys.has(key)) {
+        this.removeAttributeFrame(key);
+      }
+    });
+  }
+
+  /**
+   * Layouts multiple attributes in a row, perpendicular to the camera view direction
+   */
+  layoutAttributesInRow(group) {
+    if (group.length === 0) {
+      return;
+    }
+
+    // Get camera direction to determine row orientation
+    const camera = this.scene.view.control.camera;
+    camera.updateMatrixWorld();
+
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    cameraDirection.negate();
+
+    // Get camera right vector for horizontal layout
+    const cameraRight = new THREE.Vector3();
+    cameraRight.setFromMatrixColumn(camera.matrixWorld, 0);
+    cameraRight.normalize();
+
+    // Get camera up vector as alternative if right doesn't work well
+    const cameraUp = new THREE.Vector3();
+    cameraUp.setFromMatrixColumn(camera.matrixWorld, 1);
+    cameraUp.normalize();
+
+    // Use right vector for horizontal layout, fallback to up if right is too aligned with direction
+    let layoutDirection = cameraRight;
+    if (Math.abs(cameraRight.dot(cameraDirection)) > 0.9) {
+      layoutDirection = cameraUp;
+    }
+
+    // Calculate spacing based on icon scale
+    const baseScale = this.options.scene.stationAttributes.iconScale;
+    const spacing = baseScale * 1.2; // Space between icons (120% of icon scale)
+
+    // Calculate total width and start offset
+    const totalWidth = (group.length - 1) * spacing;
+    const startOffset = -totalWidth / 2;
+
+    // Get base position (all attributes share the same station position)
+    const basePosition = group[0].position;
+
+    // Position each attribute
+    group.forEach((item, index) => {
+      const offset = layoutDirection.clone().multiplyScalar(startOffset + index * spacing);
+      const newPosition = basePosition.clone().add(offset);
+      item.entry.sprite.position.copy(newPosition);
+    });
+  }
+
+  /**
+   * Creates or updates a frame around grouped attributes
+   * The frame is positioned in a plane perpendicular to the camera direction
+   */
+  createOrUpdateAttributeFrame(key, group) {
+    if (group.length < 2) {
+      return;
+    }
+
+    // Get camera direction to position frame correctly
+    const camera = this.scene.view.control.camera;
+    camera.updateMatrixWorld();
+
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    cameraDirection.negate();
+
+    // Get camera right and up vectors for frame plane
+    const cameraRight = new THREE.Vector3();
+    cameraRight.setFromMatrixColumn(camera.matrixWorld, 0);
+    cameraRight.normalize();
+
+    const cameraUp = new THREE.Vector3();
+    cameraUp.setFromMatrixColumn(camera.matrixWorld, 1);
+    cameraUp.normalize();
+
+    // Calculate bounding box of all sprites in the group
+    const positions = group.map((item) => item.entry.sprite.position);
+    const scales = group.map((item) => {
+      const sprite = item.entry.sprite;
+      // Get sprite scale (use max of x and y for square sprites, or actual dimensions)
+      if (item.entry.hasImage && item.entry.texture) {
+        const aspectRatio = item.entry.texture.image.width / item.entry.texture.image.height;
+        const baseScale = this.options.scene.stationAttributes.iconScale;
+        if (aspectRatio > 1) {
+          return { width: baseScale, height: baseScale / aspectRatio };
+        } else {
+          return { width: baseScale * aspectRatio, height: baseScale };
+        }
+      } else {
+        const scale = sprite.scale.x; // Icons are square
+        return { width: scale, height: scale };
+      }
+    });
+
+    // Project sprite positions onto the camera plane (right-up plane)
+    // Calculate center point first
+    const centerWorld = new THREE.Vector3();
+    positions.forEach((pos) => centerWorld.add(pos));
+    centerWorld.divideScalar(positions.length);
+
+    // Project each sprite position relative to center onto camera plane
+    let minRight = Infinity,
+      maxRight = -Infinity;
+    let minUp = Infinity,
+      maxUp = -Infinity;
+
+    positions.forEach((pos, index) => {
+      const relativePos = pos.clone().sub(centerWorld);
+      const rightComponent = relativePos.dot(cameraRight);
+      const upComponent = relativePos.dot(cameraUp);
+
+      const halfWidth = scales[index].width / 2;
+      const halfHeight = scales[index].height / 2;
+
+      minRight = Math.min(minRight, rightComponent - halfWidth);
+      maxRight = Math.max(maxRight, rightComponent + halfWidth);
+      minUp = Math.min(minUp, upComponent - halfHeight);
+      maxUp = Math.max(maxUp, upComponent + halfHeight);
+    });
+
+    // Add padding around the frame
+    const padding = this.options.scene.stationAttributes.iconScale * 0.3;
+    minRight -= padding;
+    maxRight += padding;
+    minUp -= padding;
+    maxUp += padding;
+
+    // Calculate frame corners in world space (in camera-facing plane)
+    const bottomLeft = centerWorld.clone()
+      .add(cameraRight.clone().multiplyScalar(minRight))
+      .add(cameraUp.clone().multiplyScalar(minUp));
+
+    const bottomRight = centerWorld.clone()
+      .add(cameraRight.clone().multiplyScalar(maxRight))
+      .add(cameraUp.clone().multiplyScalar(minUp));
+
+    const topRight = centerWorld.clone()
+      .add(cameraRight.clone().multiplyScalar(maxRight))
+      .add(cameraUp.clone().multiplyScalar(maxUp));
+
+    const topLeft = centerWorld.clone()
+      .add(cameraRight.clone().multiplyScalar(minRight))
+      .add(cameraUp.clone().multiplyScalar(maxUp));
+
+    // Create frame geometry (rectangle in camera-facing plane)
+    const frameGeometry = new LineSegmentsGeometry();
+    const points = [
+      // Bottom edge
+      bottomLeft.x,
+      bottomLeft.y,
+      bottomLeft.z,
+      bottomRight.x,
+      bottomRight.y,
+      bottomRight.z,
+      // Right edge
+      bottomRight.x,
+      bottomRight.y,
+      bottomRight.z,
+      topRight.x,
+      topRight.y,
+      topRight.z,
+      // Top edge
+      topRight.x,
+      topRight.y,
+      topRight.z,
+      topLeft.x,
+      topLeft.y,
+      topLeft.z,
+      // Left edge
+      topLeft.x,
+      topLeft.y,
+      topLeft.z,
+      bottomLeft.x,
+      bottomLeft.y,
+      bottomLeft.z
+    ];
+    frameGeometry.setPositions(points);
+
+    // Check if frame already exists
+    if (this.attributeFrames.has(key)) {
+      // Update existing frame
+      const existingFrame = this.attributeFrames.get(key);
+      existingFrame.geometry.dispose();
+      existingFrame.geometry = frameGeometry;
+    } else {
+      // Create new frame
+      const frameMaterial = this.mats.tectonicLine.clone();
+      frameMaterial.color.set('#ffffff'); // White frame
+      frameMaterial.opacity = 0.6;
+      frameMaterial.transparent = true;
+
+      const frame = new LineSegments2(frameGeometry, frameMaterial);
+      frame.name = `attribute-frame-${key}`;
+      frame.layers.set(1);
+      this.stationAttributes3DGroup.add(frame);
+      this.attributeFrames.set(key, frame);
+    }
+  }
+
+  /**
+   * Removes a frame for a given position key
+   */
+  removeAttributeFrame(key) {
+    if (this.attributeFrames.has(key)) {
+      const frame = this.attributeFrames.get(key);
+      frame.geometry.dispose();
+      frame.material.dispose();
+      this.stationAttributes3DGroup.remove(frame);
+      this.attributeFrames.delete(key);
+    }
+  }
+
   showIconFor(id, station, attribute, caveName) {
     if (!this.stationAttributes.has(id)) {
       const position = station.position;
@@ -515,6 +787,7 @@ export class AttributesScene {
             hasIcon   : true
           });
 
+          this.layoutStationAttributes();
           this.scene.view.renderView();
         },
         undefined,
@@ -579,6 +852,7 @@ export class AttributesScene {
         texture   : texture
       });
 
+      this.layoutStationAttributes();
       this.scene.view.renderView();
     } catch (error) {
       console.error(`Failed to load photo from ${attribute.url}:`, error);
@@ -618,6 +892,7 @@ export class AttributesScene {
       entry.sprite.material.dispose();
       entry.sprite.geometry?.dispose();
       this.stationAttributes.delete(id);
+      this.layoutStationAttributes();
       this.scene.view.renderView();
     }
   }
@@ -636,6 +911,7 @@ export class AttributesScene {
 
       this.stationAttributes3DGroup.remove(sprite);
       this.stationAttributes.delete(id);
+      this.layoutStationAttributes();
       this.scene.view.renderView();
     }
   }
@@ -691,6 +967,8 @@ export class AttributesScene {
 
       }
     });
+    // Re-layout attributes since spacing depends on icon scale
+    this.layoutStationAttributes();
     this.scene.view.renderView();
   }
 

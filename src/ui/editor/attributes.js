@@ -315,9 +315,6 @@ class BaseAttributeEditor extends Editor {
 
   getAttributeEditorDiv(a, attributes, index, i18n) {
     const attributeNode = U.node`<div class="attribute-editor" id="attribute-editor-${index}"></div>`;
-    //const warning = U.node`<div class="warning" id="attribute-editor-${index}-warning">hel</div>`;
-    //attributeNode.appendChild(warning);
-    //warning.style.display = 'none'; TODO: somehow show the warning div
     const name = U.node`<span>${i18n.t(`attributes.names.${a.name}`)}(</span>`;
     const del = U.node`<span class="delete-row">`;
     del.onclick = () => {

@@ -165,6 +165,7 @@ class MyScene {
 
   onRotate() {
     this.attributes.repositionPlaneLabels();
+    this.attributes.layoutStationAttributes();
   }
 
   renderScene(camera, overViewCamera, spriteCamera, helper) {
