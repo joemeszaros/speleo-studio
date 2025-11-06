@@ -532,7 +532,7 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
             case 'new':
               return `${c.name}: created by local app, not in Google Drive`;
             case 'remote':
-              return `${c.name}: created by remote app '${getAppName(c.drive.app)}'`;
+              return `${c.name}: created by remote app '${this.#getAppName(c.drive.app)}'`;
           }
         })
         .join('\n\n')

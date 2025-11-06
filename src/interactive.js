@@ -338,7 +338,7 @@ class SceneInteraction {
       const attributes = this.getAttributesForStation(stationMeta.cave, stationMeta.name);
       if (attributes.length > 0) {
         const s = attributes
-          .map((a) => `${a.emoji} ${AttributesDefinitions.getAttributesAsString([a.attribute], i18n)}`)
+          .map((a) => `${a.emoji} ${AttributesDefinitions.getAttributesAsString([a.attribute], i18n, ',', 50)}`)
           .join(', ');
         details.push(`${i18n.t('common.attributes')}: ${s}`);
       }

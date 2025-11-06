@@ -939,23 +939,33 @@ body {
   color: azure;
   text-align: left;
   padding-left: 10px;
-  padding-top: 5px;
+  padding-right: 10px;
   z-index: 100;
   font-family: inherit;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
 }
 
 .footer .content {
-  left: 50%;
-  transform: translate(-50%);
-  position: absolute;
-  display: inline-block;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  overflow: hidden;
 }
 
 .footer .meta-info {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-weight: 500;
   border-width: 0px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  height: 100%;
 }
 
 .footer .meta-info .meta-value {
@@ -968,11 +978,13 @@ body {
   display: inline-block;
   margin-left: 10px;
   margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .google-drive-sync-indicator {
   display: inline-block;
   margin-left: -5px;
+  flex-shrink: 0;
 }
 
 .google-drive-icon {

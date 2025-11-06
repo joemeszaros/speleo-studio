@@ -110,7 +110,7 @@ export class AttributesDefinitions {
     return { errors: errors, attributes: attrs };
   }
 
-  static getAttributesAsString(attrs, i18n, delimiter = '◌̦') {
+  static getAttributesAsString(attrs, i18n, delimiter = '◌̦', maxParamLength = -1) {
     return attrs
       .map((a) => {
         const getValue = (n) => {
@@ -128,6 +128,11 @@ export class AttributesDefinitions {
         const paramNames = Object.keys(a.params);
         const paramValues = paramNames
           .map((n) => getValue(n))
+          .map((v) =>
+            v !== undefined && v !== null && maxParamLength > 0 && v.length > maxParamLength
+              ? v.substring(0, maxParamLength) + '...'
+              : v
+          )
           .join(delimiter);
         return `${nameOrTranslated}(${paramValues})`;
       })
