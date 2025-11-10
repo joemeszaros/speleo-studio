@@ -82,7 +82,9 @@
       "raycastingDisabled": "Point selection disabled",
       "surfacePoint": "Surface point ({x}, {y}, {z})",
       "coordinateSystem": "Coordinate System",
-      "noCoordinateSystemLoaded": "No coordinate system"
+      "noCoordinateSystemLoaded": "No coordinate system",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service"
     },
     "settingsPanel": {
       "buttons": {

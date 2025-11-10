@@ -33,6 +33,9 @@ class Footer {
     </div>`;
     this.driveSeparator = node`<div style="display:none" class="footer-separator">|</div>`;
 
+    // Get existing legal links container from HTML (if present)
+    this.legalLinksContainer = element.querySelector('.footer-legal-links');
+
     // Add elements to footer
     element.appendChild(this.projectInfoContainer);
     element.appendChild(node`<div class="footer-separator">|</div>`);
@@ -44,11 +47,15 @@ class Footer {
     this.message = undefined;
     this.project = undefined;
     this.updateProjectInfo(this.project);
+    this.updateLegalLinksTitles();
 
     // Listen for project changes
     document.addEventListener('currentProjectChanged', (e) => this.updateProjectInfo(e.detail.project));
     document.addEventListener('currentProjectDeleted', () => this.updateProjectInfo(null));
-    document.addEventListener('languageChanged', () => this.updateProjectInfo(this.project));
+    document.addEventListener('languageChanged', () => {
+      this.updateProjectInfo(this.project);
+      this.updateLegalLinksTitles();
+    });
     document.addEventListener('coordinateSystemChanged', (e) => this.updateCoordinateInfo(e.detail.coordinateSystem));
 
     // Listen for Google Drive sync status changes
@@ -154,6 +161,28 @@ class Footer {
     this.googleDriveSyncIndicator.style.display = 'none';
     this.googleDriveSyncIndicator.classList.remove('blinking');
     this.driveSeparator.style.display = 'none';
+  }
+
+  updateLegalLinksTitles() {
+    // Update tooltips for legal links when language changes
+    if (this.legalLinksContainer) {
+      const privacyLink = this.legalLinksContainer.querySelector('a[href="pages/privacy-policy.html"]');
+      const termsLink = this.legalLinksContainer.querySelector('a[href="pages/terms-of-service.html"]');
+      if (privacyLink) {
+        privacyLink.title = i18n.t('ui.footer.privacyPolicy');
+        const privacyImg = privacyLink.querySelector('img');
+        if (privacyImg) {
+          privacyImg.alt = i18n.t('ui.footer.privacyPolicy');
+        }
+      }
+      if (termsLink) {
+        termsLink.title = i18n.t('ui.footer.termsOfService');
+        const termsImg = termsLink.querySelector('img');
+        if (termsImg) {
+          termsImg.alt = i18n.t('ui.footer.termsOfService');
+        }
+      }
+    }
   }
 }
 

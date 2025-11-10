@@ -82,7 +82,9 @@
       "raycastingDisabled": "Pont kiválasztás letiltva",
       "surfacePoint": "Felszíni pont ({x}, {y}, {z})",
       "coordinateSystem": "Koordináták",
-      "noCoordinateSystemLoaded": "Nincs koordináta-rendszer"
+      "noCoordinateSystemLoaded": "Nincs koordináta-rendszer",
+      "privacyPolicy": "Adatvédelmi irányelvek",
+      "termsOfService": "Felhasználási feltételek"
     },
     "settingsPanel": {
       "buttons": {
