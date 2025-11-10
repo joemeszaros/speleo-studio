@@ -26,7 +26,9 @@
           "name": "Help",
           "about": "About Speleo Studio",
           "manual": "User Manual",
-          "attributeReference": "Attribute reference page"
+          "attributeReference": "Attribute reference page",
+          "privacyPolicy": "Privacy Policy",
+          "termsOfService": "Terms of Service"
         }
       },
       "tooltips": {

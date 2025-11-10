@@ -201,6 +201,14 @@ class NavigationBar {
             click : () => window.open('attributes.html', '_blank')
           },
           {
+            name  : i18n.t('ui.navbar.menu.help.privacyPolicy'),
+            click : () => window.open('pages/privacy-policy.html', '_blank')
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.help.termsOfService'),
+            click : () => window.open('pages/terms-of-service.html', '_blank')
+          },
+          {
             name  : i18n.t('ui.navbar.menu.help.about'),
             click : () => this.#showAboutDialog()
           }
