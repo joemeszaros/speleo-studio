@@ -49,8 +49,6 @@ class Main {
 
   constructor() {
     const loader = new FontLoader();
-    console.log(window.location.origin);
-    console.log(window.location);
     i18n.init().then(() => {
       if (localStorage.getItem('first-visit') === null) {
         this.showWelcomePanel();

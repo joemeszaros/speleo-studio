@@ -29,6 +29,10 @@ export class GoogleDriveAPI {
     this.folderIdCache = new Map();
   }
 
+  getOauthCallbackURL() {
+    return window.location.origin + window.location.pathname + 'oauth-callback.html';
+  }
+
   /**
    * Get authorization URL for OAuth2 flow
    * @returns {string} Authorization URL
@@ -36,7 +40,7 @@ export class GoogleDriveAPI {
   getAuthorizationURL() {
     const params = new URLSearchParams({
       client_id     : this.config.get('clientId'),
-      redirect_uri  : window.location.href + 'oauth-callback.html',
+      redirect_uri  : this.getOauthCallbackURL(),
       response_type : 'code',
       scope         : 'https://www.googleapis.com/auth/drive',
       access_type   : 'offline',
@@ -62,7 +66,7 @@ export class GoogleDriveAPI {
         client_secret : this.config.get('clientSecret'),
         code          : code,
         grant_type    : 'authorization_code',
-        redirect_uri  : window.location.href + 'oauth-callback.html'
+        redirect_uri  : this.getOauthCallbackURL()
       })
     });
 
