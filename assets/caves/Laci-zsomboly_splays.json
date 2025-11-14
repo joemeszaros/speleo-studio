@@ -1,5 +1,5 @@
 {
-  "revision": 42,
+  "revision": 43,
   "name": "Laci-zsomboly-official",
   "metadata": {
     "country": "Hungary",
@@ -9001,114 +9001,6 @@
           "length": 2.67,
           "azimuth": 149.4,
           "clino": -71.4,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "-1",
-          "to": "76",
-          "length": 1.15,
-          "azimuth": 252.5,
-          "clino": 55,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "76",
-          "to": "77",
-          "length": 11.85,
-          "azimuth": 87.4,
-          "clino": -13.7,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "77",
-          "to": "78",
-          "length": 5.33,
-          "azimuth": 356.9,
-          "clino": -22.8,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "78",
-          "to": "79",
-          "length": 22.6,
-          "azimuth": 322.5,
-          "clino": -5.4,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "79",
-          "to": "80",
-          "length": 11.45,
-          "azimuth": 253.9,
-          "clino": 13.3,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "80",
-          "to": "81",
-          "length": 12.63,
-          "azimuth": 56.4,
-          "clino": -14,
-          "comment": "6os fa"
-        },
-        {
-          "type": "center",
-          "from": "81",
-          "to": "82",
-          "length": 10.94,
-          "azimuth": 117.4,
-          "clino": -7.6,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "82",
-          "to": "83",
-          "length": 10.06,
-          "azimuth": 114.4,
-          "clino": -2.9,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "83",
-          "to": "84",
-          "length": 7.51,
-          "azimuth": 76,
-          "clino": -9.6,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "84",
-          "to": "85",
-          "length": 5.55,
-          "azimuth": 51.4,
-          "clino": -8.8,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "85",
-          "to": "86",
-          "length": 8.36,
-          "azimuth": 21.1,
-          "clino": -6.7,
-          "comment": ""
-        },
-        {
-          "type": "center",
-          "from": "86",
-          "to": "87",
-          "length": 7.72,
-          "azimuth": 358.2,
-          "clino": -2.2,
           "comment": ""
         }
       ]
