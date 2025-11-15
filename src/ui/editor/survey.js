@@ -559,26 +559,29 @@ export class SurveyEditor extends Editor {
         headerFilter : 'input'
       },
       {
-        title      : i18n.t('ui.editors.survey.columns.length'),
-        field      : 'length',
-        editor     : true,
-        accessor   : this.baseTableFunctions.floatAccessor,
-        validator  : ['required', 'min:0', customValidator],
-        bottomCalc : sumCenterLines
+        title        : i18n.t('ui.editors.survey.columns.length'),
+        field        : 'length',
+        editor       : true,
+        headerFilter : 'input',
+        accessor     : this.baseTableFunctions.floatAccessor,
+        validator    : ['required', 'min:0', customValidator],
+        bottomCalc   : sumCenterLines
       },
       {
-        title     : i18n.t('ui.editors.survey.columns.azimuth'),
-        field     : 'azimuth',
-        editor    : true,
-        accessor  : this.baseTableFunctions.floatAccessor,
-        validator : ['required', 'min:-360', 'max:360', customValidator]
+        title        : i18n.t('ui.editors.survey.columns.azimuth'),
+        field        : 'azimuth',
+        editor       : true,
+        headerFilter : 'input',
+        accessor     : this.baseTableFunctions.floatAccessor,
+        validator    : ['required', 'min:-360', 'max:360', customValidator]
       },
       {
-        title     : i18n.t('ui.editors.survey.columns.clino'),
-        field     : 'clino',
-        editor    : true,
-        accessor  : this.baseTableFunctions.floatAccessor,
-        validator : ['required', 'min:-90', 'max:90', customValidator]
+        title        : i18n.t('ui.editors.survey.columns.clino'),
+        field        : 'clino',
+        editor       : true,
+        headerFilter : 'input',
+        accessor     : this.baseTableFunctions.floatAccessor,
+        validator    : ['required', 'min:-90', 'max:90', customValidator]
       }
     ];
     const xyz = [
