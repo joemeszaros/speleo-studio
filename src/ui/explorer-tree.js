@@ -309,6 +309,9 @@ export class ExplorerTree {
         surveyNode.visible = node.visible;
         this.scene.speleo.setSurveyVisibility(node.data.name, surveyNode.data.name, node.visible);
       });
+      // Update start point visibility to match cave visibility
+      this.scene.startPoint.updateStartingPointVisibility(node.data.name, node.visible);
+
     }
     this.render();
   }
