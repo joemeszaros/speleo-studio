@@ -213,7 +213,7 @@ class View {
     this.zoomCameraTo(this.control.zoom * fac);
   }
 
-  #roundToDedicatedRatio(ratio) {
+  roundToDedicatedRatio(ratio) {
     // Find the closest dedicated ratio
     let closest = View.DEDICATED_RATIOS[0];
     let minDiff = Math.abs(ratio - closest);
@@ -239,7 +239,7 @@ class View {
     const screenInCentimeters = window.screen.width / cmInPixels;
     const rawRatio = (worldWidthInMeters * 100) / screenInCentimeters;
 
-    const roundedRatio = this.#roundToDedicatedRatio(rawRatio);
+    const roundedRatio = this.roundToDedicatedRatio(rawRatio);
     // Round to dedicated ratio
     this.ratio = rawRatio;
 

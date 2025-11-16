@@ -389,7 +389,18 @@
         "baseName": "Base name",
         "baseNamePlaceholder": "Base name (without extension)",
         "unsupportedExportFormat": "Unsupported export format: {format}",
-        "image": "Image"
+        "image": "Image",
+        "infoPanel": {
+          "caveName": "Cave Name",
+          "ratio": "Ratio",
+          "exportDate": "Export Date",
+          "speleoStudio": "Speleo Studio",
+          "projectName": "Project Name",
+          "viewName": "View",
+          "spatialView": "Spatial View",
+          "planView": "Plan View",
+          "profileView": "Profile View"
+        }
       },
       "rotation": {
         "title": "Rotation Tool",

@@ -400,7 +400,18 @@
         "baseName": "Előtag",
         "baseNamePlaceholder": "Előtag (kiterjesztés nélkül)",
         "unsupportedExportFormat": "Nem támogatott exportálási formátum: {format}",
-        "image": "Kép"
+        "image": "Kép",
+        "infoPanel": {
+          "caveName": "Barlang neve",
+          "ratio": "Méretarány",
+          "exportDate": "Exportálás dátuma",
+          "speleoStudio": "Speleo Studio",
+          "projectName": "Projekt neve",
+          "viewName": "Nézet",
+          "spatialView": "Térbeli nézet",
+          "planView": "Alaprajz nézet",
+          "profileView": "Hosszmetszet nézet"
+        }
       },
       "coordinateSystem": {
         "message": "Válassza ki az adatok koordináta-rendszerét",

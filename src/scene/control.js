@@ -146,6 +146,10 @@ export class BaseViewControl {
       ((100 / this.domElement.getBoundingClientRect().width) * this.camera.width) / this.zoom;
   }
 
+  getZoomLevel() {
+    return this.zoom;
+  }
+
   setZoomLevel(level) {
 
     if (this.zoom === level) return;

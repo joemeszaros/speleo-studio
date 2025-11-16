@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { toAscii, textToIso88592Bytes, toPolygonDate, node } from '../utils/utils.js';
+import { toAscii, textToIso88592Bytes, toPolygonDate, node, formatDistance } from '../utils/utils.js';
 import { showErrorPanel } from '../ui/popups.js';
 import { wm } from '../ui/window.js';
 import { i18n } from '../i18n/i18n.js';
@@ -147,7 +147,7 @@ class Exporter {
     });
   }
 
-  static exportSVG(caves, scene, fileName) {
+  static exportSVG(caves, scene, fileName, project = null) {
     const view = scene.view;
     const camera = view.camera;
     const width = scene.width;
@@ -195,6 +195,21 @@ class Exporter {
       return '#ffffff';
     };
 
+    // Check if a 3D point is within camera frustum
+    const isPointInFrustum = (point) => {
+      const vector = new THREE.Vector3(point.x, point.y, point.z);
+      vector.project(camera);
+      // Check if projected point is within normalized device coordinates (-1 to 1)
+      // Also check if it's in front of the camera (z should be between -1 and 1 after projection)
+      return vector.x >= -1 && vector.x <= 1 && vector.y >= -1 && vector.y <= 1 && vector.z >= -1 && vector.z <= 1;
+    };
+
+    // Check if a line segment is at least partially visible in the camera frustum
+    const isSegmentVisible = (startPos, endPos) => {
+      // Check if either endpoint is in frustum, or if the line intersects the frustum
+      return isPointInFrustum(startPos) || isPointInFrustum(endPos);
+    };
+
     // Export line segments from geometry
     const exportLineSegments = (lineSegments, layerId, layerName, strokeWidth) => {
       if (!lineSegments || !lineSegments.geometry) {
@@ -221,9 +236,17 @@ class Exporter {
         const endY = instanceEnd.getY(i);
         const endZ = instanceEnd.getZ(i);
 
+        const startPos = { x: startX, y: startY, z: startZ };
+        const endPos = { x: endX, y: endY, z: endZ };
+
+        // Check if segment is visible in camera frustum
+        if (!isSegmentVisible(startPos, endPos)) {
+          continue; // Skip this segment if not visible
+        }
+
         // Project to 2D
-        const start2D = projectToSVG({ x: startX, y: startY, z: startZ });
-        const end2D = projectToSVG({ x: endX, y: endY, z: endZ });
+        const start2D = projectToSVG(startPos);
+        const end2D = projectToSVG(endPos);
 
         // Get color for this instance
         const colorHex = getInstanceColor(lineSegments, i);
@@ -367,6 +390,10 @@ class Exporter {
           svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
           cave.stations.forEach((station) => {
             if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
+              // Check if station is visible in camera frustum
+              if (!isPointInFrustum(station.position)) {
+                return;
+              }
               const pos2D = projectToSVG(station.position);
               svgParts.push(
                 `<circle cx="${pos2D.x}" cy="${pos2D.y}" r="${stationRadius * 10}" fill="${stationColor}" stroke="none" />`
@@ -382,6 +409,10 @@ class Exporter {
           svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
           cave.stations.forEach((station, stationName) => {
             if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
+              // Check if station is visible in camera frustum
+              if (!isPointInFrustum(station.position)) {
+                return;
+              }
               const pos2D = projectToSVG(station.position);
               const fontSize = 12;
               const offsetX = stationRadius * 10 + 5;
@@ -401,18 +432,147 @@ class Exporter {
       if (firstStationName) {
         const firstStation = cave.stations.get(firstStationName);
         if (firstStation) {
-          const layerName = getLayerName(i18n.t('ui.settingsPanel.labels.startPoint'));
-          svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
-          const pos2D = projectToSVG(firstStation.position);
-          svgParts.push(
-            `<circle cx="${pos2D.x}" cy="${pos2D.y}" r="${startPointRadius * 10}" fill="${startPointColor}" stroke="none" />`
-          );
-          svgParts.push('</g>');
+          // Check if start point is visible in camera frustum
+          if (isPointInFrustum(firstStation.position)) {
+            const layerName = getLayerName(i18n.t('ui.settingsPanel.labels.startPoint'));
+            svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
+            const pos2D = projectToSVG(firstStation.position);
+            svgParts.push(
+              `<circle cx="${pos2D.x}" cy="${pos2D.y}" r="${startPointRadius * 10}" fill="${startPointColor}" stroke="none" />`
+            );
+            svgParts.push('</g>');
+          }
         }
       }
 
       svgParts.push('</g>'); // Close cave layer
     });
+
+    // Add ruler and ratio text at the bottom center
+    const addRulerAndRatio = () => {
+      const ratio = scene.view.ratio;
+      const roundedRatio = scene.view.roundToDedicatedRatio(ratio);
+      const targetRulerDistance = scene.view.getTargetRulerDistance(roundedRatio);
+      const worldWidthInMeters = scene.view.camera.width / scene.view.control.getZoomLevel();
+      const rulerWidthInPixels = (targetRulerDistance / worldWidthInMeters) * width;
+      const rulerWidth = Math.max(50, Math.min(400, rulerWidthInPixels));
+
+      // Position at bottom center
+      const rulerY = height - 40;
+      const rulerX = width / 2 - rulerWidth / 2;
+
+      // Create ruler group
+      const rulerGroupId = getLayerName(i18n.t('ui.settingsPanel.labels.ruler') || 'Ruler');
+      svgParts.push(`<g id="${rulerGroupId}" data-name="Ruler">`);
+
+      // Ruler line
+      svgParts.push(
+        `<line x1="${rulerX}" y1="${rulerY}" x2="${rulerX + rulerWidth}" y2="${rulerY}" stroke="#000000" stroke-width="2" />`
+      );
+
+      // Ruler tick marks (at start, middle, and end)
+      const tickHeight = 8;
+      svgParts.push(
+        `<line x1="${rulerX}" y1="${rulerY - tickHeight / 2}" x2="${rulerX}" y2="${rulerY + tickHeight / 2}" stroke="#000000" stroke-width="2" />`
+      );
+      svgParts.push(
+        `<line x1="${rulerX + rulerWidth / 2}" y1="${rulerY - tickHeight / 2}" x2="${rulerX + rulerWidth / 2}" y2="${rulerY + tickHeight / 2}" stroke="#000000" stroke-width="2" />`
+      );
+      svgParts.push(
+        `<line x1="${rulerX + rulerWidth}" y1="${rulerY - tickHeight / 2}" x2="${rulerX + rulerWidth}" y2="${rulerY + tickHeight / 2}" stroke="#000000" stroke-width="2" />`
+      );
+
+      // Ratio text
+      const ratioValue = `M 1:${Math.floor(ratio)}`;
+      const ratioText = `${formatDistance(targetRulerDistance)} - ${ratioValue}`;
+      const textY = rulerY - 15;
+      const textX = rulerX + rulerWidth / 2;
+      svgParts.push(
+        `<text x="${textX}" y="${textY}" font-family="Arial, sans-serif" font-size="12" fill="#000000" text-anchor="middle">${ratioText}</text>`
+      );
+
+      svgParts.push('</g>');
+    };
+
+    addRulerAndRatio();
+
+    // Add information panel at the bottom right corner
+    const addInfoPanel = () => {
+      // Get view name translation
+      const viewNameMap = {
+        spatialView : i18n.t('ui.panels.export.infoPanel.spatialView'),
+        planView    : i18n.t('ui.panels.export.infoPanel.planView'),
+        profileView : i18n.t('ui.panels.export.infoPanel.profileView')
+      };
+      const viewName = viewNameMap[view.name] || view.name;
+      const ratio = scene.view.ratio;
+      const ratioValue = `M 1:${Math.floor(ratio)}`;
+      // Get export date
+      const exportDate = new Date();
+      const dateText = exportDate.toLocaleDateString();
+      const timeText = exportDate.toLocaleTimeString();
+
+      // Get cave name (use first visible cave or concatenate all)
+      const visibleCaves = Array.from(caves.values()).filter((c) => c.visible);
+      const caveName = visibleCaves.length === 1 ? visibleCaves[0].name : visibleCaves.map((c) => c.name).join(', ');
+
+      // Get project name
+      const projectName = project?.name || i18n.t('ui.footer.noProjectLoaded');
+
+      // Panel dimensions and position
+      const panelWidth = 250;
+      // Calculate height: 6 items * (label + value + spacing) + top padding + bottom padding
+      // Each item: lineHeight (label) + lineHeight (value) + 3 (spacing) = 43px
+      // 6 items = 258px, plus top padding (30px) = 288px, round to 290px
+      const panelHeight = 290;
+      const panelX = width - panelWidth - 20;
+      const panelY = height - panelHeight - 20;
+      const padding = 10;
+      const lineHeight = 18;
+      const fontSize = 11;
+      const labelFontSize = 10;
+      const itemSpacing = 3;
+
+      // Create info panel group
+      const infoPanelGroupId = getLayerName('InfoPanel');
+      svgParts.push(`<g id="${infoPanelGroupId}" data-name="Info Panel">`);
+
+      // Panel background with frame
+      svgParts.push(
+        `<rect x="${panelX}" y="${panelY}" width="${panelWidth}" height="${panelHeight}" fill="#ffffff" stroke="#000000" stroke-width="1" />`
+      );
+
+      // Inner frame
+      svgParts.push(
+        `<rect x="${panelX + 2}" y="${panelY + 2}" width="${panelWidth - 4}" height="${panelHeight - 4}" fill="none" stroke="#000000" stroke-width="0.5" />`
+      );
+
+      let currentY = panelY + padding + lineHeight;
+
+      // Helper function to add a label-value pair
+      const addInfoField = (labelKey, value) => {
+        svgParts.push(
+          `<text x="${panelX + padding}" y="${currentY}" font-family="Arial, sans-serif" font-size="${labelFontSize}" fill="#666666" font-weight="bold">${i18n.t(labelKey)}:</text>`
+        );
+        currentY += lineHeight;
+        svgParts.push(
+          `<text x="${panelX + padding}" y="${currentY}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#000000">${value}</text>`
+        );
+        currentY += lineHeight + itemSpacing;
+      };
+
+      // Add all information fields
+      addInfoField('ui.panels.export.infoPanel.caveName', caveName);
+      addInfoField('ui.panels.export.infoPanel.ratio', ratioValue);
+      addInfoField('ui.panels.export.infoPanel.exportDate', `${dateText} ${timeText}`);
+      addInfoField('ui.panels.export.infoPanel.speleoStudio', i18n.t('ui.about.title'));
+      addInfoField('ui.panels.export.infoPanel.projectName', projectName);
+      addInfoField('ui.panels.export.infoPanel.viewName', viewName);
+
+      svgParts.push('</g>');
+    };
+
+    addInfoPanel();
 
     svgParts.push('</svg>');
 
@@ -505,7 +665,7 @@ class Exporter {
     URL.revokeObjectURL(url);
   }
 
-  static executeExport(caves, scene, panel) {
+  static executeExport(caves, scene, panel, project = null) {
 
     const formatSelect = panel.querySelector('#export-format');
     const filenameInput = panel.querySelector('#export-project-name');
@@ -528,7 +688,7 @@ class Exporter {
           Exporter.exportPolygonCaves(caves, filename);
           break;
         case 'svg':
-          Exporter.exportSVG(caves, scene, filename);
+          Exporter.exportSVG(caves, scene, filename, project);
           break;
         default:
           throw new Error(i18n.t('ui.panels.export.unsupportedExportFormat', { format }));
@@ -602,7 +762,7 @@ class ExportWindow {
 
   handleExportSubmit(e) {
     e.preventDefault();
-    Exporter.executeExport(this.caves, this.scene, this.panel);
+    Exporter.executeExport(this.caves, this.scene, this.panel, this.project);
     this.close();
   }
 
