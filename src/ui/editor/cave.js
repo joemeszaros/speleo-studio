@@ -92,7 +92,7 @@ class CaveEditor extends Editor {
         i18n.t('ui.editors.caveSheet.title', {
           name : this.cave?.name === undefined ? i18n.t('ui.editors.caveSheet.titleNew') : this.cave.name
         }),
-      false,
+      true,
       false,
       {},
       () => this.closeEditor()
@@ -416,7 +416,7 @@ class CaveEditor extends Editor {
     };
 
     this.aliasesDiv = U.node`<div class="aliases-section"><b>${i18n.t('ui.editors.caveSheet.fields.surveyAliases')}:</b><br/><br/></div>`;
-    this.aliasesList = U.node`<div class="aliases-list" style="display: inline-block;"></div>`;
+    this.aliasesList = U.node`<div class="aliases-list" style="display: block;"></div>`;
     const dataList = U.node`<datalist id="station-names">${getStationOptions()}</datalist>`;
     this.aliasesDiv.appendChild(this.aliasesList);
     this.aliasesDiv.appendChild(dataList);
@@ -589,39 +589,60 @@ class CaveEditor extends Editor {
   }
 
   renderAliases() {
-    this.renderListEditor({
-      container : this.aliasesList,
-      items     : this.caveData.aliases,
-      fields    : [],
-      nodes     : [
-        {
-          key  : 'from',
-          node : '<input required placeholder="From" type="search" list="station-names" id="station-alias-from" style="width: 100px;"/>'
-        },
-        {
-          key  : 'to',
-          node : '<input required placeholder="To" type="search" list="station-names" id="station-alias-to" style="width: 100px;"/>'
+    this.aliasesList.innerHTML = '';
+
+    // Create a grid container with 3 columns
+    const gridContainer = U.node`<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px;"></div>`;
+
+    this.caveData.aliases.forEach((item, idx) => {
+      const aliasItem = U.node`<div style="display: flex; gap: 8px; align-items: center;"></div>`;
+
+      const fromInput = U.node`<input required placeholder="From" type="search" list="station-names" value="${item.from || ''}" style="width: 40px; flex: 1;"/>`;
+      fromInput.onchange = (e) => {
+        if (this.caveData.aliases[idx].from !== e.target.value) {
+          this.caveHasChanged = true;
         }
-      ],
-      onAdd : () => {
-        this.caveData.aliases.push({ from: '', to: '' });
-        this.renderAliases();
-        this.caveHasChanged = true;
-      },
-      onRemove : (idx) => {
+        this.caveData.aliases[idx].from = e.target.value;
+      };
+
+      const toInput = U.node`<input required placeholder="To" type="search" list="station-names" value="${item.to || ''}" style="width: 40px; flex: 1;"/>`;
+      toInput.onchange = (e) => {
+        if (this.caveData.aliases[idx].to !== e.target.value) {
+          this.caveHasChanged = true;
+        }
+        this.caveData.aliases[idx].to = e.target.value;
+      };
+
+      const removeBtn = U.node`<button type="button" style="background: none; border: none; cursor: pointer; font-size: 18px; color: #666; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" title="${i18n.t('common.remove')}">×</button>`;
+      removeBtn.onclick = (e) => {
+        e.preventDefault();
         this.caveData.aliases.splice(idx, 1);
         this.renderAliases();
         this.caveHasChanged = true;
-      },
-      onChange : (idx, key, value) => {
+      };
+      removeBtn.onmouseenter = () => {
+        removeBtn.style.color = '#d32f2f';
+      };
+      removeBtn.onmouseleave = () => {
+        removeBtn.style.color = '#666';
+      };
 
-        if (this.caveData.aliases[idx][key] !== value) {
-          this.caveHasChanged = true;
-        }
-        this.caveData.aliases[idx][key] = value;
-      },
-      addButtonLabel : i18n.t('ui.editors.caveSheet.buttons.addAlias')
+      aliasItem.appendChild(fromInput);
+      aliasItem.appendChild(toInput);
+      aliasItem.appendChild(removeBtn);
+      gridContainer.appendChild(aliasItem);
     });
+
+    this.aliasesList.appendChild(gridContainer);
+
+    const addBtn = U.node`<button type="button">${i18n.t('ui.editors.caveSheet.buttons.addAlias')}</button>`;
+    addBtn.onclick = (e) => {
+      e.preventDefault();
+      this.caveData.aliases.push({ from: '', to: '' });
+      this.renderAliases();
+      this.caveHasChanged = true;
+    };
+    this.aliasesList.appendChild(addBtn);
   }
 
   renderCoords() {

@@ -53,8 +53,8 @@ export class StartPointScene {
     startPoint.position.copy(firstStation.position);
     startPoint.name = `startPoint_${cave.name}`;
 
-    // Set visibility based on configuration
-    startPoint.visible = this.options.scene.startPoints.show;
+    // Set visibility based on configuration and cave visibility
+    startPoint.visible = this.options.scene.startPoints.show && cave.visible !== false;
     startPoint.layers.set(1);
 
     // Add to the starting points group
@@ -103,6 +103,15 @@ export class StartPointScene {
       obj.mesh.geometry.dispose();
       obj.mesh.geometry = newGeometry;
     });
+  }
+
+  updateStartingPointVisibility(caveName, caveVisible) {
+    const startPointObj = this.startPointObjects.get(caveName);
+    if (startPointObj) {
+      // Update visibility based on both configuration and cave visibility
+      startPointObj.mesh.visible = this.options.scene.startPoints.show && caveVisible;
+      this.scene.view.renderView();
+    }
   }
 
 }
