@@ -148,10 +148,6 @@ class Exporter {
   }
 
   static exportSVG(caves, scene, fileName) {
-    console.log('=== SVG Export Debug ===');
-    console.log('Caves to export:', Array.from(caves.keys()));
-    console.log('Available caveObjects:', Array.from(scene.speleo.caveObjects.keys()));
-
     const view = scene.view;
     const camera = view.camera;
     const width = scene.width;
@@ -192,29 +188,7 @@ class Exporter {
         // Solid color mode: use material color
         if (lineSegments.material && lineSegments.material.color !== undefined) {
           const color = lineSegments.material.color;
-          let r, g, b;
-
-          // LineMaterial.color can be a number (hex), THREE.Color, or string
-          if (typeof color === 'number') {
-            // It's a hex number
-            r = (color >> 16) & 255;
-            g = (color >> 8) & 255;
-            b = color & 255;
-          } else if (color && typeof color.r === 'number') {
-            // It's a THREE.Color object (r, g, b in 0-1 range)
-            r = Math.max(0, Math.min(255, Math.round(color.r * 255)));
-            g = Math.max(0, Math.min(255, Math.round(color.g * 255)));
-            b = Math.max(0, Math.min(255, Math.round(color.b * 255)));
-          } else if (typeof color === 'string') {
-            // It's a hex string, use it directly
-            return new Color(color).hexString();
-          } else {
-            return '#ffffff';
-          }
-
-          // Use hex value constructor for Color class
-          const hexValue = (1 << 24) + (r << 16) + (g << 8) + b;
-          return new Color(hexValue).hexString();
+          return '#' + color.getHexString();
         }
       }
 
@@ -262,39 +236,21 @@ class Exporter {
       svgParts.push('</g>');
     };
 
+    const getLayerName = (name) => toAscii(name); //name.replace(/[^a-zA-Z0-9]/g, '_');
+
     // Get station sphere radius and color (for center line stations)
     const centerLineSpheresConfig = scene.options.scene.centerLines?.spheres;
     const stationRadius = centerLineSpheresConfig?.radius || 0.3;
-    const stationColorValue = centerLineSpheresConfig?.color || '#ffff00';
-    const stationColor =
-      typeof stationColorValue === 'string'
-        ? stationColorValue
-        : (() => {
-            const r = Math.max(0, Math.min(255, Math.round(stationColorValue.r * 255)));
-            const g = Math.max(0, Math.min(255, Math.round(stationColorValue.g * 255)));
-            const b = Math.max(0, Math.min(255, Math.round(stationColorValue.b * 255)));
-            const hexValue = (1 << 24) + (r << 16) + (g << 8) + b;
-            return new Color(hexValue).hexString();
-          })();
+    const stationColor = centerLineSpheresConfig?.color || '#ffff00';
 
     // Get station label config
     const stationLabelConfig = scene.options.scene.stationLabels;
     const showStationNames = stationLabelConfig?.show && stationLabelConfig.mode === 'name';
 
     // Get start point config
-    const startPointConfig = scene.options.scene.startPoints || scene.options.scene.startPoint;
+    const startPointConfig = scene.options.scene.startPoints;
     const startPointRadius = startPointConfig?.radius || 1;
-    const startPointColorValue = startPointConfig?.color || '#ffff00';
-    const startPointColor =
-      typeof startPointColorValue === 'string'
-        ? startPointColorValue
-        : (() => {
-            const r = Math.max(0, Math.min(255, Math.round(startPointColorValue.r * 255)));
-            const g = Math.max(0, Math.min(255, Math.round(startPointColorValue.g * 255)));
-            const b = Math.max(0, Math.min(255, Math.round(startPointColorValue.b * 255)));
-            const hexValue = (1 << 24) + (r << 16) + (g << 8) + b;
-            return new Color(hexValue).hexString();
-          })();
+    const startPointColor = startPointConfig?.color || '#ffff00';
 
     // Build SVG
     const svgParts = [];
@@ -308,7 +264,7 @@ class Exporter {
     caves.forEach((cave) => {
       if (!cave.visible) return;
 
-      const caveLayerId = `cave-${cave.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const caveLayerId = getLayerName(`${i18n.t('common.cave')}-${cave.name}`);
       svgParts.push(`<g id="${caveLayerId}" data-name="${cave.name}">`);
 
       // Process each visible survey in the cave
@@ -318,42 +274,46 @@ class Exporter {
         // Get the survey object from caveObjects
         const caveObject = scene.speleo.caveObjects.get(cave.name);
         if (!caveObject) {
-          console.error(
-            `Cave object not found: ${cave.name}. Available keys:`,
-            Array.from(scene.speleo.caveObjects.keys())
-          );
           return;
         }
 
         const surveyObject = caveObject.get(survey.name);
         if (!surveyObject) {
-          console.error(
-            `Survey object not found: ${cave.name}/${survey.name}. Available surveys:`,
-            Array.from(caveObject.keys())
-          );
           return;
         }
 
-        const surveyLayerId = `survey-${survey.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const surveyLayerId = getLayerName(`${i18n.t('common.survey')}-${survey.name}`);
         svgParts.push(`<g id="${surveyLayerId}" data-name="${survey.name}">`);
 
         // Center lines layer - iterate through geometry positions
-        if (surveyObject.centerLines && surveyObject.centerLines.visible) {
-          exportLineSegments(surveyObject.centerLines, `centerlines`, 'Center Lines', '1');
+        if (
+          surveyObject.centerLines &&
+          surveyObject.centerLines.geometry.instanceCount > 0 &&
+          surveyObject.centerLines.visible
+        ) {
+          const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.centerLines'));
+          exportLineSegments(surveyObject.centerLines, layerName, layerName, '1');
         }
 
         // Splays layer - iterate through geometry positions
-        if (surveyObject.splays && surveyObject.splays.visible) {
-          exportLineSegments(surveyObject.splays, `$splays`, 'Splays', '0.5');
+        if (surveyObject.splays && surveyObject.splays.geometry.instanceCount > 0 && surveyObject.splays.visible) {
+          const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.splays'));
+          exportLineSegments(surveyObject.splays, layerName, layerName, '0.5');
         }
 
         // Auxiliaries layer - iterate through geometry positions
-        if (surveyObject.auxiliaries && surveyObject.auxiliaries.visible) {
-          exportLineSegments(surveyObject.auxiliaries, `auxiliaries`, 'Auxiliaries', '0.5');
+        if (
+          surveyObject.auxiliaries &&
+          surveyObject.auxiliaries.geometry.instanceCount > 0 &&
+          surveyObject.auxiliaries.visible
+        ) {
+          const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.auxiliaryLines'));
+          exportLineSegments(surveyObject.auxiliaries, layerName, layerName, '0.5');
         }
 
         // Station spheres layer
-        svgParts.push(`<g id="${surveyLayerId}-stationspheres" data-name="Station Spheres">`);
+        const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.centerStations'));
+        svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
         cave.stations.forEach((station) => {
           if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
             const pos2D = projectToSVG(station.position);
@@ -366,7 +326,8 @@ class Exporter {
 
         // Station names layer
         if (showStationNames) {
-          svgParts.push(`<g id="${surveyLayerId}-stationnames" data-name="Station Names">`);
+          const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.stationLabels'));
+          svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
           cave.stations.forEach((station, stationName) => {
             if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
               const pos2D = projectToSVG(station.position);
@@ -388,7 +349,8 @@ class Exporter {
       if (firstStationName) {
         const firstStation = cave.stations.get(firstStationName);
         if (firstStation) {
-          svgParts.push(`<g id="${caveLayerId}-startpoint" data-name="Start Point">`);
+          const layerName = getLayerName(i18n.t('ui.settingsPanel.labels.startPoint'));
+          svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
           const pos2D = projectToSVG(firstStation.position);
           svgParts.push(
             `<circle cx="${pos2D.x}" cy="${pos2D.y}" r="${startPointRadius * 10}" fill="${startPointColor}" stroke="none" />`
