@@ -267,20 +267,70 @@ class Exporter {
       const caveLayerId = getLayerName(`${i18n.t('common.cave')}-${cave.name}`);
       svgParts.push(`<g id="${caveLayerId}" data-name="${cave.name}">`);
 
-      // Process each visible survey in the cave
+      // Get the cave object from caveObjects
+      const caveObject = scene.speleo.caveObjects.get(cave.name);
+      if (!caveObject) {
+        return;
+      }
+
+      // Calculate distance from camera for each survey and sort by distance (farthest first)
+      const surveysWithDistance = [];
       cave.surveys.forEach((survey) => {
         if (!survey.visible) return;
-
-        // Get the survey object from caveObjects
-        const caveObject = scene.speleo.caveObjects.get(cave.name);
-        if (!caveObject) {
-          return;
-        }
 
         const surveyObject = caveObject.get(survey.name);
         if (!surveyObject) {
           return;
         }
+
+        // Calculate distance from camera to survey
+        // Use the center of the survey's bounding box or first station position
+        let surveyPosition = new THREE.Vector3(0, 0, 0);
+        let hasPosition = false;
+
+        // Try to get position from centerLines geometry bounding box
+        if (surveyObject.centerLines && surveyObject.centerLines.geometry) {
+          const geometry = surveyObject.centerLines.geometry;
+          if (geometry.boundingBox) {
+            geometry.computeBoundingBox();
+            geometry.boundingBox.getCenter(surveyPosition);
+            hasPosition = true;
+          } else if (geometry.attributes.instanceStart && geometry.attributes.instanceStart.count > 0) {
+            // Use first instance start position as fallback
+            const instanceStart = geometry.attributes.instanceStart;
+            surveyPosition.set(instanceStart.getX(0), instanceStart.getY(0), instanceStart.getZ(0));
+            hasPosition = true;
+          }
+        }
+
+        // Fallback to first station position if geometry doesn't have position
+        if (!hasPosition) {
+          const firstStationName = survey.start || (survey.shots.length > 0 ? survey.shots[0].from : null);
+          if (firstStationName) {
+            const firstStation = cave.stations.get(firstStationName);
+            if (firstStation) {
+              surveyPosition.copy(firstStation.position);
+              hasPosition = true;
+            }
+          }
+        }
+
+        // Calculate distance from camera
+        const cameraPosition = camera.position.clone();
+        const distance = hasPosition ? cameraPosition.distanceTo(surveyPosition) : 0;
+
+        surveysWithDistance.push({
+          survey,
+          surveyObject,
+          distance
+        });
+      });
+
+      // Sort by distance (farthest first, closest last - so closest renders on top)
+      surveysWithDistance.sort((a, b) => b.distance - a.distance);
+
+      // Process each visible survey in the cave (sorted by distance)
+      surveysWithDistance.forEach(({ survey, surveyObject }) => {
 
         const surveyLayerId = getLayerName(`${i18n.t('common.survey')}-${survey.name}`);
         svgParts.push(`<g id="${surveyLayerId}" data-name="${survey.name}">`);
@@ -312,17 +362,19 @@ class Exporter {
         }
 
         // Station spheres layer
-        const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.centerStations'));
-        svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
-        cave.stations.forEach((station) => {
-          if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
-            const pos2D = projectToSVG(station.position);
-            svgParts.push(
-              `<circle cx="${pos2D.x}" cy="${pos2D.y}" r="${stationRadius * 10}" fill="${stationColor}" stroke="none" />`
-            );
-          }
-        });
-        svgParts.push('</g>');
+        if (scene.options.scene.centerLines?.spheres?.show) {
+          const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.centerStations'));
+          svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
+          cave.stations.forEach((station) => {
+            if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
+              const pos2D = projectToSVG(station.position);
+              svgParts.push(
+                `<circle cx="${pos2D.x}" cy="${pos2D.y}" r="${stationRadius * 10}" fill="${stationColor}" stroke="none" />`
+              );
+            }
+          });
+          svgParts.push('</g>');
+        }
 
         // Station names layer
         if (showStationNames) {
