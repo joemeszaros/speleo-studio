@@ -27,6 +27,7 @@ jobs:
             --include 'icons/***' \
             --include 'images/***' \
             --include 'pages/***' \
+            --include 'src/*.js' \
             --include 'src/**/*.js' \
             --include '*.html' \
             --include 'attributes.json' \
