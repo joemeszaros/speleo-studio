@@ -1,0 +1,39 @@
+# .github/workflows/deploy-manual.yml
+name: Deploy Manual to SFTP
+
+on:
+  push:
+    paths:
+      - "manual/**"   # runs only when something under manual/ changes
+  workflow_dispatch:  # allow manual runs from the Actions tab
+
+jobs:
+  deploy-manual:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Upload manual/ to SFTP
+        env:
+          HOST: ${{ vars.SFTP_SERVER }}
+          PORT: ${{ vars.SFTP_PORT || '22' }}
+          USER: ${{ secrets.SFTP_USERNAME }}
+          PASS: ${{ secrets.SFTP_PASSWORD }}
+          REMOTE_DIR: ${{ vars.SFTP_REMOTE_DIR }}
+        run: |
+          # This mirrors the entire local manual/ folder to REMOTE_DIR/manual/
+          lftp -u "$USER","$PASS" "sftp://$HOST:$PORT" -e "
+            set sftp:auto-confirm yes;
+            set net:max-retries 2;
+            set net:timeout 20;
+
+            mkdir -p \"$REMOTE_DIR\";
+            mkdir -p \"$REMOTE_DIR/manual\";
+
+            mirror -R --verbose --delete manual/ $REMOTE_DIR/manual/;
+            bye
+          "
