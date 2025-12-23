@@ -19,9 +19,16 @@ jobs:
           rm -rf deploy
           mkdir -p deploy
           rsync -av --prune-empty-dirs \
-            --include '*/' \
+            --include 'assets/*' \
+            --include 'css/*' \
+            --include 'dependencies/*' \
+            --include 'fonts/*' \
+            --include 'icons/*' \
+            --include 'images/*' \
+            --include 'pages/*' \
+            --include 'src/*.js' \
             --include '*.html' \
-            --include '*.css' \
+            --include 'attributes.json' \
             --exclude '*' \
             ./ deploy/
 
@@ -31,12 +38,12 @@ jobs:
           PORT: ${{ vars.SFTP_PORT || '22' }}
           USER: ${{ secrets.SFTP_USERNAME }}
           PASS: ${{ secrets.SFTP_PASSWORD }}
-          REMOTE_DIR: ${{ vars.SFTP_REMOTE_DIR || '/speleo-studio.hu/web' }}
+          REMOTE_DIR: ${{ vars.SFTP_REMOTE_DIR }}
         run: |
           lftp -u "$USER","$PASS" "sftp://$HOST:$PORT" -e "
             set sftp:auto-confirm yes;
             set net:max-retries 2;
             set net:timeout 20;
-            mirror -R --only-newer --verbose deploy/ \"$REMOTE_DIR\";
+            mirror -R --only-newer --verbose deploy/ $REMOTE_DIR;
             bye
           "
