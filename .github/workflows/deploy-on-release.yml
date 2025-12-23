@@ -19,7 +19,9 @@ jobs:
           rm -rf deploy
           mkdir -p deploy
           rsync -av --prune-empty-dirs \
+            --exclude 'manual/**' \
             --include '*/' \
+            --include 'i18n/***' \
             --include 'assets/***' \
             --include 'css/***' \
             --include 'dependencies/***' \
@@ -29,6 +31,7 @@ jobs:
             --include 'pages/***' \
             --include 'src/*.js' \
             --include 'src/**/*.js' \
+            --include 'src/**/*.json' \
             --include '*.html' \
             --include 'attributes.json' \
             --exclude '*' \
