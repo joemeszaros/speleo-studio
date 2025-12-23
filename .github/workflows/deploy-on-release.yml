@@ -19,14 +19,15 @@ jobs:
           rm -rf deploy
           mkdir -p deploy
           rsync -av --prune-empty-dirs \
-            --include 'assets/*' \
-            --include 'css/*' \
-            --include 'dependencies/*' \
-            --include 'fonts/*' \
-            --include 'icons/*' \
-            --include 'images/*' \
-            --include 'pages/*' \
-            --include 'src/*.js' \
+            --include '*/' \
+            --include 'assets/***' \
+            --include 'css/***' \
+            --include 'dependencies/***' \
+            --include 'fonts/***' \
+            --include 'icons/***' \
+            --include 'images/***' \
+            --include 'pages/***' \
+            --include 'src/**/*.js' \
             --include '*.html' \
             --include 'attributes.json' \
             --exclude '*' \
