@@ -1,0 +1,42 @@
+name: Deploy HTML/CSS via SFTP (password) on Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp rsync
+
+      - name: Stage only HTML/CSS
+        run: |
+          rm -rf deploy
+          mkdir -p deploy
+          rsync -av --prune-empty-dirs \
+            --include '*/' \
+            --include '*.html' \
+            --include '*.css' \
+            --exclude '*' \
+            ./ deploy/
+
+      - name: Upload via SFTP (password)
+        env:
+          HOST: ${{ vars.SFTP_SERVER }}
+          PORT: ${{ vars.SFTP_PORT || '22' }}
+          USER: ${{ secrets.SFTP_USERNAME }}
+          PASS: ${{ secrets.SFTP_PASSWORD }}
+          REMOTE_DIR: ${{ vars.SFTP_REMOTE_DIR || '/speleo-studio.hu/web' }}
+        run: |
+          lftp -u "$USER","$PASS" "sftp://$HOST:$PORT" -e "
+            set sftp:auto-confirm yes;
+            set net:max-retries 2;
+            set net:timeout 20;
+            mirror -R --only-newer --verbose deploy/ \"$REMOTE_DIR\";
+            bye
+          "
