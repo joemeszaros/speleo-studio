@@ -176,8 +176,9 @@ export const DEFAULT_OPTIONS = {
         columnWidths : {}
       },
       attributes : {
-        height : 300,
-        width  : 700
+        height       : 300,
+        width        : 700,
+        columnWidths : {}
       },
       cycles : {
         height : 300,
