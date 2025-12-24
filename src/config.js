@@ -170,9 +170,10 @@ export const DEFAULT_OPTIONS = {
   ui : {
     editor : {
       survey : {
-        height  : 300,
-        width   : 700,
-        columns : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment']
+        height       : 300,
+        width        : 700,
+        columns      : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment'],
+        columnWidths : {}
       },
       attributes : {
         height : 300,

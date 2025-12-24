@@ -714,6 +714,37 @@ export class SurveyEditor extends Editor {
       columns : columns
     });
 
+    // Listen for column resize events and save widths
+    this.table.on('columnResized', (column) => {
+      const field = column.getField();
+      if (field) {
+        const width = column.getWidth();
+        // Ensure columnWidths object exists
+        if (!this.options.ui.editor.survey.columnWidths) {
+          this.options.ui.editor.survey.columnWidths = {};
+        }
+        // Update the width and reassign to ensure proxy detects the change
+        const columnWidths = { ...this.options.ui.editor.survey.columnWidths };
+        columnWidths[field] = width;
+        this.options.ui.editor.survey.columnWidths = columnWidths;
+      }
+    });
+
+    // Restore column widths after table is fully built
+    this.table.on('tableBuilt', () => {
+      if (this.options.ui.editor.survey.columnWidths) {
+        const savedWidths = this.options.ui.editor.survey.columnWidths;
+        columns.forEach((column) => {
+          if (column.field && savedWidths[column.field] !== undefined) {
+            const columnComponent = this.table.getColumn(column.field);
+            if (columnComponent) {
+              columnComponent.setWidth(savedWidths[column.field]);
+            }
+          }
+        });
+      }
+    });
+
     this.table.on('dataChanged', () => {
       console.log(' data changed ');
       this.surveyModified = true;
