@@ -61,21 +61,23 @@ class Grid {
   }
 
   roll() {
-    const config = this.options.scene.grid.mode;
-
+    const oldMode = this.options.scene.grid.mode;
+    let newMode;
     const choices = ['top', 'bottom', 'hidden'];
-    const index = choices.indexOf(config);
+    const index = choices.indexOf(oldMode);
     if (index >= 0 && index < choices.length - 1) {
-      this.options.scene.grid.mode = choices[index + 1];
+      newMode = choices[index + 1];
     } else {
-      this.options.scene.grid.mode = choices[0];
+      newMode = choices[0];
     }
+    this.options.scene.grid.mode = newMode;
+    console.log('config is', newMode, this.options.scene.grid.mode);
 
-    switch (config) {
+    switch (newMode) {
       case 'top':
       case 'bottom':
         this.grid.visible = true;
-        this.adjustPosition(config);
+        this.adjustPosition(newMode);
         break;
       case 'hidden':
         this.grid.visible = false;
