@@ -325,13 +325,21 @@ export class SurveyEditor extends Editor {
 
     // Invert azimuth (add 180 degrees and normalize to 0-360)
     if (data.azimuth !== undefined && data.azimuth !== null) {
+      if (typeof data.azimuth === 'string') {
+        data.azimuth = U.parseMyFloat(data.azimuth);
+      }
       data.azimuth = (data.azimuth + 180) % 360;
       if (data.azimuth < 0) data.azimuth += 360;
+      data.azimuth = U.roundToThreeDecimalPlaces(data.azimuth);
     }
 
     // Invert clino (negate the value)
     if (data.clino !== undefined && data.clino !== null) {
+      if (typeof data.clino === 'string') {
+        data.clino = U.parseMyFloat(data.clino);
+      }
       data.clino = -data.clino;
+      data.clino = U.roundToThreeDecimalPlaces(data.clino);
     }
 
     // Update the row data

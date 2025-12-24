@@ -325,6 +325,10 @@ function roundToTwoDecimalPlaces(num) {
   return Math.round(num * 100) / 100;
 }
 
+function roundToThreeDecimalPlaces(num) {
+  return Math.round(num * 1000) / 1000;
+}
+
 function falsy(value) {
   return value === undefined || value === null || value === '' || value === ``;
 }
@@ -468,6 +472,7 @@ export {
   textToIso88592Bytes,
   arraysEqual,
   roundToTwoDecimalPlaces,
+  roundToThreeDecimalPlaces,
   range,
   sequential,
   waitForEvent
