@@ -683,7 +683,7 @@ export class SurveyEditor extends Editor {
       rowHeader      : {
         formatter : 'rownum',
         hozAlign  : 'center',
-        resizable : false,
+        resizable : true,
         frozen    : true,
         editor    : false
       },
