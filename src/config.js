@@ -783,11 +783,12 @@ export class ConfigChanges {
         this.scene.startPoint.toggleStartingPointsVisibility(newValue);
         break;
 
-      case 'scene.startPoint.color':
+      case 'scene.startPoints.color':
         this.mats.sphere.startPoint.color = new THREE.Color(newValue);
+        this.scene.startPoint.updateStartingPointColor(newValue);
         break;
 
-      case 'scene.startPoint.radius':
+      case 'scene.startPoints.radius':
         this.scene.startPoint.updateStartingPointRadius(newValue);
         break;
     }
@@ -1017,7 +1018,7 @@ export class ConfigChanges {
       this.handleSplayChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.auxiliaries')) {
       this.handleAuxiliaryChanges(path, oldValue, newValue);
-    } else if (path.startsWith('scene.startPoint')) {
+    } else if (path.startsWith('scene.startPoints')) {
       this.handleStartingPointChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.caveLines.color')) {
       this.handleCaveLineColorChanges(path, oldValue, newValue);

@@ -706,9 +706,14 @@ class ProjectManager {
 
         this.scene.view.activate(boundingBox);
 
+        // update starting points for all caves
+        this.db.getAllCaves().forEach((c) => {
+          this.scene.startPoint.addOrUpdateStartingPoint(c);
+        });
         // Add starting point for the cave
         // it is displayed based on world units in pixels that's why it is here
         this.scene.startPoint.addOrUpdateStartingPoint(cave);
+
       }
     }
 

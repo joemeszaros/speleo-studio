@@ -39,14 +39,16 @@ export class StartPointScene {
     if (this.startPointObjects.has(cave.name)) {
       this.removeStartingPoint(cave.name);
     }
-
     // Get the first station of the first survey
     const firstStation = cave.getFirstStation();
     if (!firstStation) return;
 
-    // Create a sphere geometry for the starting point
-    const radius = this.scene.view.control.getWorldUnitsForPixels(8);
-    const startPointGeo = new THREE.SphereGeometry(radius, 8, 8);
+    // Use configured radius instead of pixel-based calculation
+    const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
+    const radius = this.options.scene.startPoints.radius || 1;
+
+    // Create a new sphere geometry for the starting point
+    const startPointGeo = new THREE.SphereGeometry(radius * _8_px, 8, 8);
 
     // Create the starting point mesh
     const startPoint = new THREE.Mesh(startPointGeo, this.mats.sphere.startPoint);
@@ -92,16 +94,19 @@ export class StartPointScene {
 
   updateStartingPointColor(color) {
     this.startPointObjects.forEach((obj) => {
-      obj.material.color.setHex(color);
+      obj.material.color = new THREE.Color(color);
     });
   }
 
   updateStartingPointRadius(radius) {
     this.startPointObjects.forEach((obj) => {
       // Create new geometry with new radius
-      const newGeometry = new THREE.SphereGeometry(radius, 7, 7);
+      const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
+      const newGeometry = new THREE.SphereGeometry(radius * _8_px, 8, 8);
       obj.mesh.geometry.dispose();
       obj.mesh.geometry = newGeometry;
+      // Update stored geometry reference
+      obj.geometry = newGeometry;
     });
   }
 

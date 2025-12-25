@@ -437,6 +437,23 @@ export class SettingsPanel {
             this.options.scene.sections.width = value;
           }
         ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.startPointSize'),
+          this.options.scene.startPoints.radius,
+          0.1,
+          10,
+          0.1,
+          (value) => {
+            this.options.scene.startPoints.radius = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.startPointColor'),
+          this.options.scene.startPoints.color,
+          (value) => {
+            this.options.scene.startPoints.color = value;
+          }
+        ),
         // Column 1:
         this.createCompactCheckboxGroup([
           this.createCheckbox(
@@ -461,6 +478,7 @@ export class SettingsPanel {
             }
           )
         ])
+
       ],
       true
     );

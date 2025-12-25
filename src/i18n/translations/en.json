@@ -162,6 +162,8 @@
         "textColor": "Text color",
         "textStroke": "Text stroke",
         "startPoint": "Cave start point",
+        "startPointSize": "Start point size",
+        "startPointColor": "Start point color",
         "targetPoint": "Camera target point",
         "sectionsLabel": "Sections label",
         "circleOpacity": "Circle opacity",

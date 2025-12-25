@@ -162,6 +162,8 @@
         "textColor": "Szöveg színe",
         "textStroke": "Szöveg keret",
         "startPoint": "Barlang kezdőpont",
+        "startPointSize": "Kezdőpont mérete",
+        "startPointColor": "Kezdőpont színe",
         "targetPoint": "Kamera célpont",
         "sectionsLabel": "Szakasz címkék",
         "circleOpacity": "Kör átlátszóság",
