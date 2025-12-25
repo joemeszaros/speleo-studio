@@ -44,6 +44,7 @@ export class Raycasting {
     this.setPointer(this.getMousePosition(mouseCoordinates));
     const sprites = this.scene.sprites3DGroup.children.filter((s) => s.visible);
     this.raycaster.setFromCamera(this.pointer, this.scene.view.spriteCamera);
+    this.raycaster.layers.enableAll();
     const intersectedSprites = this.raycaster.intersectObjects(sprites);
     if (intersectedSprites.length) {
       return intersectedSprites[0].object;
@@ -147,6 +148,7 @@ export class Raycasting {
     const ndcY = -(localY * 2 - 1);
     // Set up raycaster with viewhelper's orthographic camera
     this.raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), viewHelper.orthoCamera);
+    this.raycaster.layers.enableAll();
     const intersectedSprites = this.raycaster.intersectObjects(viewHelper.interactiveObjects);
 
     return intersectedSprites.length > 0 ? intersectedSprites[0].object : undefined;
@@ -159,6 +161,7 @@ export class Raycasting {
 
     for (const [name, cloud] of this.scene.models.surfaceObjects) {
       const intersectedPoints = this.raycaster.intersectObject(cloud.cloud, false);
+      //this.raycaster.layers.enableAll(); may be needed here
       if (intersectedPoints.length) {
         return { position: intersectedPoints[0].point, type: 'surface', name: name };
       }
