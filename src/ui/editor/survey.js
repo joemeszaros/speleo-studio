@@ -693,7 +693,8 @@ export class SurveyEditor extends Editor {
         hozAlign  : 'center',
         resizable : true,
         frozen    : true,
-        editor    : false
+        editor    : false,
+        width     : 50
       },
       rowFormatter : function (row) {
         const rowData = row.getData();

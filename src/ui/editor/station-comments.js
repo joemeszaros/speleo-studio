@@ -256,6 +256,7 @@ class StationCommentsEditor extends BaseEditor {
     const tableContainer = U.node`<div id="station-comments-table"></div>`;
     contentElmnt.appendChild(tableContainer);
 
+    // eslint-disable-next-line no-undef
     this.table = new Tabulator(tableContainer, {
       data                      : this.getTableData(),
       history                   : true, //enable undo and redo
@@ -288,9 +289,10 @@ class StationCommentsEditor extends BaseEditor {
       rowHeader             : {
         formatter : 'rownum',
         hozAlign  : 'center',
-        resizable : false,
+        resizable : true,
         frozen    : true,
-        editor    : false
+        editor    : false,
+        width     : 50
       },
       columnDefaults : {
         headerSort     : false,
@@ -316,6 +318,38 @@ class StationCommentsEditor extends BaseEditor {
     });
 
     this.setupCustomEditMode(['comment']);
+
+    // Listen for column resize events and save widths
+    this.table.on('columnResized', (column) => {
+      const field = column.getField();
+      if (field) {
+        const width = column.getWidth();
+        // Ensure columnWidths object exists
+        if (!this.options.ui.editor.stationComments.columnWidths) {
+          this.options.ui.editor.stationComments.columnWidths = {};
+        }
+        // Update the width and reassign to ensure proxy detects the change
+        const columnWidths = { ...this.options.ui.editor.stationComments.columnWidths };
+        columnWidths[field] = width;
+        this.options.ui.editor.stationComments.columnWidths = columnWidths;
+      }
+    });
+
+    // Restore column widths after table is fully built
+    this.table.on('tableBuilt', () => {
+      if (this.options.ui.editor.stationComments.columnWidths) {
+        const savedWidths = this.options.ui.editor.stationComments.columnWidths;
+        const columns = this.getColumns();
+        columns.forEach((column) => {
+          if (column.field && savedWidths[column.field] !== undefined) {
+            const columnComponent = this.table.getColumn(column.field);
+            if (columnComponent) {
+              columnComponent.setWidth(savedWidths[column.field]);
+            }
+          }
+        });
+      }
+    });
 
   }
 

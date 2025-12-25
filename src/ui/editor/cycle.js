@@ -206,9 +206,10 @@ class CyclePanel {
       rowHeader      : {
         formatter : 'rownum',
         hozAlign  : 'center',
-        resizable : false,
+        resizable : true,
         frozen    : true,
-        editor    : false
+        editor    : false,
+        width     : 50
       },
       columnDefaults : {
         headerSort     : true,
@@ -216,6 +217,38 @@ class CyclePanel {
         resizable      : 'header'
       },
       columns : this.#getColumns()
+    });
+
+    // Listen for column resize events and save widths
+    this.table.on('columnResized', (column) => {
+      const field = column.getField();
+      if (field) {
+        const width = column.getWidth();
+        // Ensure columnWidths object exists
+        if (!this.options.ui.editor.cycles.columnWidths) {
+          this.options.ui.editor.cycles.columnWidths = {};
+        }
+        // Update the width and reassign to ensure proxy detects the change
+        const columnWidths = { ...this.options.ui.editor.cycles.columnWidths };
+        columnWidths[field] = width;
+        this.options.ui.editor.cycles.columnWidths = columnWidths;
+      }
+    });
+
+    // Restore column widths after table is fully built
+    this.table.on('tableBuilt', () => {
+      if (this.options.ui.editor.cycles.columnWidths) {
+        const savedWidths = this.options.ui.editor.cycles.columnWidths;
+        const columns = this.#getColumns();
+        columns.forEach((column) => {
+          if (column.field && savedWidths[column.field] !== undefined) {
+            const columnComponent = this.table.getColumn(column.field);
+            if (columnComponent) {
+              columnComponent.setWidth(savedWidths[column.field]);
+            }
+          }
+        });
+      }
     });
   }
 

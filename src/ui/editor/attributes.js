@@ -254,9 +254,10 @@ class BaseAttributeEditor extends Editor {
       rowHeader : {
         formatter : 'rownum',
         hozAlign  : 'center',
-        resizable : false,
+        resizable : true,
         frozen    : true,
-        editor    : false
+        editor    : false,
+        width     : 50
       },
       rowFormatter : function (row) {
         const rowData = row.getData();

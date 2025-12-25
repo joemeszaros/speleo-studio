@@ -181,12 +181,14 @@ export const DEFAULT_OPTIONS = {
         columnWidths : {}
       },
       cycles : {
-        height : 300,
-        width  : 700
+        height       : 300,
+        width        : 700,
+        columnWidths : {}
       },
       stationComments : {
-        height : 300,
-        width  : 500
+        height       : 300,
+        width        : 500,
+        columnWidths : {}
       }
     },
     sidebar : {
