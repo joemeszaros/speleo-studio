@@ -1079,6 +1079,7 @@
       "bat": "bat",
       "ladder": "ladder",
       "pavement": "pavement",
+      "footway": "footway",
       "adit": "adit",
       "wall": "wall",
       "breakthrough": "breakthrough",
@@ -1305,7 +1306,13 @@
       "small": "small",
       "medium": "medium",
       "large": "large",
-      "wood": "wood"
+      "wood": "wood",
+      "concrete": "concrete",
+      "asphalt": "asphalt",
+      "metal": "metal",
+      "narrow": "narrow",
+      "very narrow": "very narrow",
+      "extremely narrow": "extremely narrow"
     }
   }
 }

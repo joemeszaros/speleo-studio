@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "categories": [
     {
       "id": 1,
@@ -675,9 +675,9 @@
           "ref": "length"
         },
         "size": {
-          "type": "int",
+          "type": "string",
           "required": false,
-          "range": [1, 2, 3]
+          "values": ["narrow", "very narrow", "extremely narrow"]
         }
       }
     },
@@ -731,11 +731,8 @@
           "ref": "1_10"
         },
         "manpower": {
-          "type": "int",
-          "required": false,
-          "validators": {
-            "min": 1
-          }
+          "type": "string",
+          "required": false
         }
       }
     },
@@ -816,6 +813,27 @@
           "validators": {
             "min": 0
           }
+        }
+      }
+    },
+    {
+      "id": 39,
+      "category": 2,
+      "name": "footway",
+      "params": {
+        "length": {
+          "ref": "length"
+        },
+        "year": {
+          "ref": "year"
+        },
+        "material": {
+          "type": "string",
+          "values": ["concrete", "asphalt", "metal", "wood", "other"],
+          "required": false
+        },
+        "state": {
+          "ref": "1_5"
         }
       }
     }

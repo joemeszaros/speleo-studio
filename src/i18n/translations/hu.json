@@ -1102,6 +1102,7 @@
       "bat": "denevér",
       "ladder": "létra",
       "pavement": "burkolat",
+      "footway": "járda",
       "adit": "tárna",
       "wall": "kőfal",
       "breakthrough": "áttörés",
@@ -1329,7 +1330,13 @@
       "small": "kicsi",
       "medium": "közepes",
       "large": "nagy",
-      "wood": "fa"
+      "wood": "fa",
+      "concrete": "beton",
+      "asphalt": "aszfalt",
+      "metal": "fém",
+      "narrow": "szűk",
+      "very narrow": "nagyon szűk",
+      "extremely narrow": "extrém szűk"
     }
   }
 }

@@ -176,6 +176,39 @@ export class AttributesDefinitions {
 
 }
 
+export class MigrationSupportV6 {
+  static migrate(attribute) {
+    if (
+      attribute.name === 'exploration_site' &&
+      attribute.manpower !== undefined &&
+      attribute.manpower !== null &&
+      typeof attribute.manpower === 'number'
+    ) {
+      attribute.manpower = attribute.manpower.toString();
+    }
+
+    if (
+      attribute.name === 'squeeze' &&
+      attribute.size !== undefined &&
+      attribute.size !== null &&
+      typeof attribute.size === 'number'
+    ) {
+      switch (attribute.size) {
+        case 3:
+          attribute.size = 'narrow';
+          break;
+        case 2:
+          attribute.size = 'very narrow';
+          break;
+        case 1:
+          attribute.size = 'extremely narrow';
+          break;
+      }
+    }
+    return attribute;
+  }
+}
+
 export class MigrationSupportV5 {
 
   static migrate(attribute) {
