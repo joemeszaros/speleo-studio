@@ -263,6 +263,12 @@ export class AttributesScene {
         this.showPlaneFor(id, station, attribute, caveName);
       } else if (attribute.name === 'photo' && attribute.url) {
         this.showPhotoAttribute(id, station, attribute, caveName);
+      } else if (
+        attribute.name === 'calcite_raft' &&
+        attribute.thickness !== undefined &&
+        attribute.thickness !== null
+      ) {
+        this.showCalciteRaftFor(id, station, attribute, caveName);
       } else {
         this.showIconFor(id, station, attribute, caveName);
       }
@@ -470,6 +476,110 @@ export class AttributesScene {
     return textSprite;
   }
 
+  showCalciteRaftFor(id, station, attribute, caveName) {
+    if (!this.stationAttributes.has(id)) {
+      const position = station.position;
+      const thickness = attribute.thickness || 0.1; // Default thickness if not specified
+      const baseSize = this.options.scene.stationAttributes.iconScale;
+
+      // Create a canvas texture for the calcite raft rectangle
+      // Match SVG styling: orange fill (#f15a29) with white border
+      const canvas = document.createElement('canvas');
+      const textureSize = 256; // Use a fixed texture size for quality
+      canvas.width = textureSize;
+      canvas.height = textureSize;
+      const ctx = canvas.getContext('2d');
+
+      // Calculate aspect ratio (width/height) for the rectangle
+      const aspectRatio = baseSize / thickness;
+
+      // Draw rectangle with rounded corners (matching SVG rx="12")
+      const padding = 20; // Padding from edges
+      const rectWidth = textureSize - padding * 2;
+      const rectHeight = aspectRatio > 1 ? (textureSize - padding * 2) / aspectRatio : textureSize - padding * 2;
+      const rectX = padding;
+      const rectY = (textureSize - rectHeight) / 2; // Center vertically
+      const cornerRadius = 12;
+
+      // Helper function to draw rounded rectangle
+      const drawRoundedRect = (x, y, width, height, radius) => {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      };
+
+      // Fill with orange (#f15a29)
+      ctx.fillStyle = '#f15a29';
+      drawRoundedRect(rectX, rectY, rectWidth, rectHeight, cornerRadius);
+      ctx.fill();
+
+      // Stroke with white border
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      drawRoundedRect(rectX, rectY, rectWidth, rectHeight, cornerRadius);
+      ctx.stroke();
+
+      // Add horizontal lines to match SVG appearance (layered look)
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      const lineCount = 4;
+      const lineSpacing = rectHeight / (lineCount + 1);
+      for (let i = 1; i <= lineCount; i++) {
+        const lineY = rectY + lineSpacing * i;
+        ctx.beginPath();
+        ctx.moveTo(rectX + 10, lineY);
+        ctx.lineTo(rectX + rectWidth - 10, lineY);
+        ctx.stroke();
+      }
+
+      // Create texture from canvas
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.needsUpdate = true;
+
+      // Create sprite material
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map         : texture,
+        transparent : true,
+        opacity     : 1.0
+      });
+
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.name = `calcite-raft-sprite-${id}`;
+
+      // Position sprite so its top edge aligns with station position
+      // Sprites are centered, so offset by half the height (thickness)
+      sprite.position.set(position.x, position.y, position.z + thickness / 2);
+
+      // Scale sprite: width = baseSize, height = thickness
+      sprite.scale.set(baseSize, thickness, 1);
+      sprite.layers.set(1);
+
+      this.stationAttributes3DGroup.add(sprite);
+
+      const entry = {
+        sprite    : sprite,
+        texture   : texture,
+        center    : position,
+        attribute : attribute,
+        station   : station,
+        caveName  : caveName,
+        hasRaft   : true
+      };
+      this.stationAttributes.set(id, entry);
+
+      this.scene.view.renderView();
+    }
+  }
+
   updateTectonicCircleOpacity(opacity) {
     this.stationAttributes.forEach((e) => {
       if (e.circle) {
@@ -490,8 +600,8 @@ export class AttributesScene {
     const EPSILON = 0.001; // Small threshold for position comparison
 
     this.stationAttributes.forEach((entry, id) => {
-      // Skip tectonic planes (bedding, fault) - they have their own positioning
-      if (entry.hasPlane) {
+      // Skip tectonic planes (bedding, fault) and calcite raft - they have their own positioning
+      if (entry.hasPlane || entry.hasRaft) {
         return;
       }
 
@@ -875,6 +985,8 @@ export class AttributesScene {
       const attributeName = entry.attribute.name;
       if (['bedding', 'fault'].includes(attributeName)) {
         this.disposePlaneFor(id);
+      } else if (entry.hasRaft) {
+        this.disposeRaftFor(id);
       } else if (entry.hasImage) {
         this.disposeImageFor(id);
       } else {
@@ -951,6 +1063,25 @@ export class AttributesScene {
     }
   }
 
+  disposeRaftFor(id) {
+    if (this.stationAttributes.has(id)) {
+      const e = this.stationAttributes.get(id);
+      const sprite = e.sprite;
+
+      if (sprite) {
+        if (sprite.material && sprite.material.map) {
+          sprite.material.map.dispose();
+        }
+        sprite.material.dispose();
+        sprite.geometry?.dispose();
+        this.stationAttributes3DGroup.remove(sprite);
+      }
+
+      this.stationAttributes.delete(id);
+      this.scene.view.renderView();
+    }
+  }
+
   updateStationAttributeIconScales(newScale) {
     // Update the scale of all existing station attribute icons
     this.stationAttributes.forEach((entry) => {
@@ -964,7 +1095,10 @@ export class AttributesScene {
         } else {
           entry.sprite.scale.set(newScale * aspectRatio, newScale, 1);
         }
-
+      } else if (entry?.hasRaft && entry.sprite && entry.sprite.type === 'Sprite') {
+        // Calcite raft: width = newScale, height = thickness (preserve aspect ratio)
+        const thickness = entry.attribute.thickness || 0.1;
+        entry.sprite.scale.set(newScale, thickness, 1);
       }
     });
     // Re-layout attributes since spacing depends on icon scale
