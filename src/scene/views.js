@@ -187,7 +187,8 @@ class View {
   }
 
   #setRatio() {
-    const ratioRaw = prompt(i18n.t('errors.views.enterRatioValue'), this.ratio);
+    // Math.floor() is used also to show the ratio text
+    const ratioRaw = prompt(i18n.t('errors.views.enterRatioValue'), Math.floor(this.ratio));
     if (ratioRaw === null) return;
     if (!Number.isInteger(Number.parseInt(ratioRaw, 10))) {
       showWarningPanel(i18n.t('errors.views.ratioNotInteger', { ratio: ratioRaw }));
@@ -726,7 +727,7 @@ class SpatialView extends View {
 
   setDip() {
     const currentDip = radsToDegrees(this.control.clino);
-    const dipRaw = prompt(i18n.t('errors.views.enterDipValue'), currentDip);
+    const dipRaw = prompt(i18n.t('errors.views.enterDipValue'), Math.round(currentDip));
     if (dipRaw === null) return;
 
     //FIXME: shall we apply a little delta to the dip value it it's MATH.PI / 2 or -MATH.PI / 2
@@ -827,8 +828,6 @@ class SpatialView extends View {
   #updateDipIndicator() {
     const dipDegrees = radsToDegrees(this.control.clino);
     let rounded = Math.round(dipDegrees);
-    if (rounded === 89) rounded = 90;
-    if (rounded === -89) rounded = -90;
     this.dipText.update(`${rounded}°`);
     this.#updateGyroscopeVisual(this.control.clino, true);
   }

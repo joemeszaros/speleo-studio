@@ -493,8 +493,7 @@ export class SpatialViewControl extends BaseViewControl {
 
       // Update clino (vertical rotation) with constraints
       let newClino = this.startClino + deltaY * clinoSpeed;
-      newClino = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, newClino)); // Prevent gimbal lock
-      this.clino = newClino;
+      this.setSafeClino(newClino);
 
       // Update camera position
       this.updateCameraPosition();
@@ -543,10 +542,16 @@ export class SpatialViewControl extends BaseViewControl {
     }
   }
 
+  // Prevent gimbal lock by not letting the clino to exactly -90° or 90°
+  setSafeClino(clino) {
+    const newClino = Math.max(-Math.PI / 2 + 0.001, Math.min(Math.PI / 2 - 0.001, clino)); // Prevent gimbal lock
+    this.clino = newClino;
+  }
+
   // Method to set camera to specific azimuth and clino
   setCameraOrientation(distance, azimuth, clino) {
     this.distance = distance;
-    this.clino = clino;
+    this.setSafeClino(clino);
     this.azimuth = azimuth % (2 * Math.PI);
     if (this.azimuth < 0) this.azimuth += 2 * Math.PI;
 
