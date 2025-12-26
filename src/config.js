@@ -192,9 +192,10 @@ export const DEFAULT_OPTIONS = {
       }
     },
     sidebar : {
-      position  : 'right', // 'left' or 'right'
-      width     : 350,
-      collapsed : false
+      position          : 'right', // 'left' or 'right'
+      width             : 350,
+      collapsed         : false,
+      overviewCollapsed : false
     },
     stationDetails : {
       caveName    : true,

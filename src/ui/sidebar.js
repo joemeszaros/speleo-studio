@@ -158,6 +158,10 @@ export class Sidebar {
       if (toggle) {
         toggle.textContent = isCollapsed ? '▼' : '▶';
       }
+
+      // Save the state to config
+      this.config.ui.sidebar.overviewCollapsed = !isCollapsed;
+
     }
   }
 
@@ -390,6 +394,17 @@ export class Sidebar {
 
     // Update view helper position after initialization
     this.updateViewHelperPosition();
+
+    // Load overview collapsed state
+    if (sidebarConfig.overviewCollapsed) {
+      if (this.overviewContentWrapper) {
+        this.overviewContentWrapper.classList.add('collapsed');
+        const toggle = this.overviewHeader?.querySelector('.sidebar-overview-toggle');
+        if (toggle) {
+          toggle.textContent = '▶';
+        }
+      }
+    }
 
   }
 
