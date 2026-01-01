@@ -269,6 +269,8 @@ export class AttributesScene {
         attribute.thickness !== null
       ) {
         this.showCalciteRaftFor(id, station, attribute, caveName);
+      } else if (attribute.name === 'draft' && attribute.direction) {
+        this.showDraftFor(id, station, attribute, caveName);
       } else {
         this.showIconFor(id, station, attribute, caveName);
       }
@@ -580,6 +582,138 @@ export class AttributesScene {
     }
   }
 
+  showDraftFor(id, station, attribute, caveName) {
+    if (!this.stationAttributes.has(id)) {
+      const position = station.position;
+      const directionStationName = attribute.direction;
+      const strength = attribute.strength || 1; // Default strength if not specified (1-5)
+      const season = attribute.season;
+
+      // Get the cave to access stations
+      const cave = this.scene.db.getCave(caveName);
+      if (!cave || !cave.stations) {
+        console.warn(`Cave ${caveName} or stations not found for draft attribute ${id}`);
+        return;
+      }
+
+      // Get the direction station
+      const directionStation = cave.stations.get(directionStationName);
+      if (!directionStation) {
+        console.warn(`Direction station ${directionStationName} not found for draft attribute ${id}`);
+        return;
+      }
+
+      // Calculate direction vector from current station to direction station
+      const direction = new THREE.Vector3();
+      direction.subVectors(directionStation.position, position);
+      const distance = direction.length();
+
+      if (distance === 0) {
+        console.warn(`Direction station ${directionStationName} is at same position as current station`);
+        return;
+      }
+
+      direction.normalize();
+
+      // Create arrow group
+      const arrowGroup = new THREE.Group();
+      arrowGroup.name = `draft-arrow-${id}`;
+
+      // Arrow length based on iconScale
+      const baseSize = this.options.scene.stationAttributes.iconScale;
+      const arrowLength = baseSize * 1.3; // Make arrow slightly longer than icon size
+      const arrowHeadLength = arrowLength * 0.3; // Arrowhead is 30% of total length
+      const shaftLength = arrowLength - arrowHeadLength;
+
+      // Arrow thickness based on strength (1-5)
+      // Strength 1 = thin, Strength 5 = thick
+      const minRadius = baseSize * 0.05;
+      const maxRadius = baseSize * 0.15;
+      const radius = minRadius + ((strength - 1) / 4) * (maxRadius - minRadius);
+      const headRadius = radius * 2.5; // Arrowhead is wider than shaft
+
+      // Color based on season
+      let arrowColor;
+      if (season === 'winter') {
+        arrowColor = new THREE.Color('#0066ff'); // Bright blue
+      } else if (season === 'summer') {
+        // Summer: red
+        arrowColor = new THREE.Color('#ff0000'); // Red
+      } else {
+        // not specified
+        arrowColor = new THREE.Color('#FFA500'); // Orange
+      }
+
+      // Create arrow shaft (cylinder) - main arrow
+      // CylinderGeometry is oriented along Y-axis by default
+      const shaftGeometry = new THREE.CylinderGeometry(radius, radius, shaftLength, 8);
+      // Use brighter color for better visibility
+      const brightArrowColor = arrowColor.clone().multiplyScalar(1.5);
+      const shaftMaterial = new THREE.MeshBasicMaterial({
+        color       : brightArrowColor,
+        transparent : false,
+        opacity     : 1.0
+      });
+      const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+      shaft.name = `draft-shaft-${id}`;
+
+      // Position shaft so it starts at station position
+      // Cylinder is centered, so position it so bottom is at origin
+      shaft.position.set(0, shaftLength / 2, 0);
+      arrowGroup.add(shaft);
+
+      // Create arrowhead (cone) - main arrow
+      // ConeGeometry is oriented along Y-axis by default
+      const headGeometry = new THREE.ConeGeometry(headRadius, arrowHeadLength, 8);
+      const headMaterial = new THREE.MeshBasicMaterial({
+        color       : brightArrowColor,
+        transparent : false,
+        opacity     : 1.0
+      });
+      const head = new THREE.Mesh(headGeometry, headMaterial);
+      head.name = `draft-head-${id}`;
+
+      // Position arrowhead at the end of the shaft
+      // Cone tip points up (positive Y), base is at bottom
+      head.position.set(0, shaftLength + arrowHeadLength / 2, 0);
+      arrowGroup.add(head);
+
+      // Rotate arrow to point in the direction
+      // Arrow geometry is oriented along Y-axis by default
+      const up = new THREE.Vector3(0, 1, 0); // Default arrow direction (along Y)
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromUnitVectors(up, direction);
+      arrowGroup.setRotationFromQuaternion(quaternion);
+
+      // Offset arrow from station position to avoid collision with center line segments
+      // Offset along the direction vector by a small amount (e.g., 10% of arrow length)
+      const offsetDistance = arrowLength * 0.1;
+      const offsetPosition = position.clone().add(direction.clone().multiplyScalar(offsetDistance));
+      arrowGroup.position.copy(offsetPosition);
+
+      arrowGroup.children.forEach((child) => {
+        child.layers.set(1);
+      });
+
+      this.stationAttributes3DGroup.add(arrowGroup);
+
+      const entry = {
+        group     : arrowGroup,
+        shaft     : shaft,
+        head      : head,
+        center    : position,
+        attribute : attribute,
+        station   : station,
+        caveName  : caveName,
+        hasDraft  : true
+      };
+      this.stationAttributes.set(id, entry);
+
+      this.scene.view.renderView();
+
+    }
+  }
+
   updateTectonicCircleOpacity(opacity) {
     this.stationAttributes.forEach((e) => {
       if (e.circle) {
@@ -600,8 +734,8 @@ export class AttributesScene {
     const EPSILON = 0.001; // Small threshold for position comparison
 
     this.stationAttributes.forEach((entry, id) => {
-      // Skip tectonic planes (bedding, fault) and calcite raft - they have their own positioning
-      if (entry.hasPlane || entry.hasRaft) {
+      // Skip tectonic planes (bedding, fault), calcite raft, and draft arrows - they have their own positioning
+      if (entry.hasPlane || entry.hasRaft || entry.hasDraft) {
         return;
       }
 
@@ -987,6 +1121,8 @@ export class AttributesScene {
         this.disposePlaneFor(id);
       } else if (entry.hasRaft) {
         this.disposeRaftFor(id);
+      } else if (entry.hasDraft) {
+        this.disposeDraftFor(id);
       } else if (entry.hasImage) {
         this.disposeImageFor(id);
       } else {
@@ -1082,9 +1218,39 @@ export class AttributesScene {
     }
   }
 
+  disposeDraftFor(id, renderView = true) {
+    if (this.stationAttributes.has(id)) {
+      const e = this.stationAttributes.get(id);
+      const group = e.group;
+
+      // Dispose all geometries in the group
+      group.traverse((child) => {
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+
+      this.stationAttributes3DGroup.remove(group);
+      this.stationAttributes.delete(id);
+      if (renderView) {
+        this.scene.view.renderView();
+      }
+    }
+  }
+
   updateStationAttributeIconScales(newScale) {
+    // Collect draft arrows first to avoid modifying map during iteration
+    const draftArrows = [];
+
     // Update the scale of all existing station attribute icons
-    this.stationAttributes.forEach((entry) => {
+    this.stationAttributes.forEach((entry, id) => {
       if (entry?.hasIcon && entry.sprite && entry.sprite.type === 'Sprite') {
         entry.sprite.scale.set(newScale, newScale, 1);
       } else if (entry?.hasImage && entry.sprite && entry.sprite.type === 'Sprite') {
@@ -1099,8 +1265,25 @@ export class AttributesScene {
         // Calcite raft: width = newScale, height = thickness (preserve aspect ratio)
         const thickness = entry.attribute.thickness || 0.1;
         entry.sprite.scale.set(newScale, thickness, 1);
+      } else if (entry?.hasDraft && entry.group) {
+        // Draft arrows: store info to recreate with new scale
+        draftArrows.push({
+          id,
+          station   : entry.station,
+          attribute : entry.attribute,
+          caveName  : entry.caveName
+        });
       }
     });
+
+    // Recreate draft arrows with new scale (after iteration to avoid modifying map during iteration)
+    draftArrows.forEach(({ id, station, attribute, caveName }) => {
+      // Dispose the old arrow (without renderView call)
+      this.disposeDraftFor(id, false);
+      // Recreate with new scale (without renderView call)
+      this.showDraftFor(id, station, attribute, caveName, false);
+    });
+
     // Re-layout attributes since spacing depends on icon scale
     this.layoutStationAttributes();
     this.scene.view.renderView();

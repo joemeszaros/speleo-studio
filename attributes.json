@@ -322,7 +322,7 @@
         },
         "direction": {
           "type": "string",
-          "required": false
+          "required": true
         },
         "strength": {
           "type": "int",
