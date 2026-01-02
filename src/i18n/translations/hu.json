@@ -724,7 +724,13 @@
           "survey": "Felmérés",
           "interpolated": "Interpolált",
           "from": "Ponttól",
-          "to": "Pontig"
+          "to": "Pontig",
+          "positionx": "P X",
+          "positiony": "P Y",
+          "positionz": "P Z",
+          "offsetx": "E X",
+          "offsety": "E Y",
+          "offsetz": "E Z"
         },
         "errors": {
           "onlyOneAttributeAllowed": "Csak egy attribútumot lehet itt használni!<br>Töröld {nrAttributes} attribútumot",
@@ -972,6 +978,9 @@
       "easting": "Keleti",
       "northing": "Északi"
     },
+    "vector": {
+      "invalidDecimal": "({field}: {value}, típus={type}) érvénytelen decimális szám"
+    },
     "shot": {
       "invalidId": "Id ({id}, típus={type}) érvénytelen egész szám",
       "invalidShotType": "Mérés típusa ({type}) érvénytelen",
@@ -995,7 +1004,10 @@
       "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
     },
     "stationAttribute": {
-      "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}"
+      "invalidAttribute": "Érvénytelen attribútum '{attribute}' mező '{paramName}': {error}",
+      "invalidPosition": "Érvénytelen pozíció: {error}",
+      "invalidOffset": "Érvénytelen eltolás: {error}",
+      "offsetAndPosition": "Eltolás és pozíció egyszerre nem adható meg"
     },
     "caveSectionOrComponent": {
       "fromInvalid": "Ponttól ({from}, típus={type}) érvénytelen szöveg vagy üres",

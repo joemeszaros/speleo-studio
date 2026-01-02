@@ -22,6 +22,7 @@ import * as U from '../../utils/utils.js';
 import { SegmentScene } from './segments.js';
 import { SectionHelper } from '../../section.js';
 import { ImageCache } from '../../utils/image-cache.js';
+import { Vector } from '../../model.js';
 
 export class AttributesScene {
 
@@ -42,8 +43,30 @@ export class AttributesScene {
     scene.addObjectToScene(this.stationAttributes3DGroup);
   }
 
+  /**
+   * Calculate the final 3D position for an attribute visualization
+   * @param {Vector} basePosition - The base position (station position or bounding box center)
+   * @param {Vector} position - The attribute object (SectionAttribute, ComponentAttribute, or StationAttribute)
+   * @param {Offset} offset - The offset of the attribute
+   * @returns {Vector} The final position
+   */
+  calculateAttributePosition(basePosition, position, offset) {
+
+    // If exact position is specified, use it
+    if (position && typeof position === 'object') {
+      return position;
+    }
+
+    // Otherwise, apply offset if specified
+    if (offset && typeof offset === 'object') {
+      return basePosition.clone().add(new Vector(offset.x ?? 0, offset.y ?? 0, offset.z ?? 0));
+    }
+
+    return basePosition;
+  }
+
   // for section and component attributes
-  showFragmentAttribute(id, segments, attribute, format = '${name}', color, caveName) {
+  showFragmentAttribute(id, segments, attribute, format = '${name}', color, caveName, position, offset) {
     if (!this.sectionAttributes.has(id)) {
       // Create tube geometry for the attribute path
       const tubeGroup = SegmentScene.createTubeGeometryFromSegments(segments, this.options.scene.sections.width);
@@ -67,13 +90,16 @@ export class AttributesScene {
       const center = bb.getCenter(new THREE.Vector3());
       const maxZ = bb.min.z > bb.max.z ? bb.min.z : bb.max.z;
       center.z = maxZ;
+
+      const finalPosition = this.calculateAttributePosition(center, position, offset);
+
       const localized = attribute.localize(i18n);
       const { interpolated, success } = U.interpolate(format, localized);
       let sprite;
       if (success) {
         let textSprite = this.scene.getSpriteLabel(
           interpolated,
-          center,
+          finalPosition,
           this.options.scene.sections.labels.size,
           this.options.scene.sections.labels.color,
           this.options.scene.sections.labels.strokeColor
@@ -87,7 +113,8 @@ export class AttributesScene {
         tube     : tubeGroup,
         text     : sprite,
         label    : interpolated,
-        center   : center,
+        center   : finalPosition,
+        position : finalPosition,
         caveName : caveName,
         segments : segments,
         color    : color
@@ -112,7 +139,7 @@ export class AttributesScene {
           e.label,
           this.options.scene.sections.labels.size,
           e.text,
-          e.center,
+          e.position,
           this.sectionAttributes3DGroup
         );
       }
@@ -218,7 +245,16 @@ export class AttributesScene {
         const oldSegments = this.sectionAttributes.get(id).segments;
         if (!U.arraysEqual(segments, oldSegments)) {
           this.disposeSectionAttribute(id);
-          this.showFragmentAttribute(id, segments, sa.attribute, sa.format, sa.color, cave.name);
+          this.showFragmentAttribute(
+            id,
+            segments,
+            sa.attribute,
+            sa.format,
+            sa.color,
+            cave.name,
+            sa.position,
+            sa.offset
+          );
         }
       }
 
@@ -229,7 +265,16 @@ export class AttributesScene {
         const oldSegments = this.sectionAttributes.get(id).segments;
         if (!U.arraysEqual(segments, oldSegments)) {
           this.disposeSectionAttribute(id);
-          this.showFragmentAttribute(id, segments, ca.attribute, ca.format, ca.color, cave.name);
+          this.showFragmentAttribute(
+            id,
+            segments,
+            ca.attribute,
+            ca.format,
+            ca.color,
+            cave.name,
+            ca.position,
+            ca.offset
+          );
         }
       }
 
@@ -249,7 +294,7 @@ export class AttributesScene {
         const newStation = stations.get(oldStation.name);
         if (newStation !== undefined && !newStation.position.equals(oldStation.position)) {
           this.disposeStationAttribute(id);
-          this.showStationAttribute(id, newStation, entry.attribute, caveName);
+          this.showStationAttribute(id, newStation, entry.attribute, caveName, entry.position, entry.offset);
         } else {
           // station doesn't exist anymore
           this.disposeStationAttribute(id);
@@ -257,22 +302,22 @@ export class AttributesScene {
       });
   }
 
-  showStationAttribute(id, station, attribute, caveName) {
+  showStationAttribute(id, station, attribute, caveName, position, offset) {
     if (!this.stationAttributes.has(id)) {
       if (['bedding', 'fault'].includes(attribute.name)) {
-        this.showPlaneFor(id, station, attribute, caveName);
+        this.showPlaneFor(id, station, attribute, caveName, position, offset);
       } else if (attribute.name === 'photo' && attribute.url) {
-        this.showPhotoAttribute(id, station, attribute, caveName);
+        this.showPhotoAttribute(id, station, attribute, caveName, position, offset);
       } else if (
         attribute.name === 'calcite_raft' &&
         attribute.thickness !== undefined &&
         attribute.thickness !== null
       ) {
-        this.showCalciteRaftFor(id, station, attribute, caveName);
+        this.showCalciteRaftFor(id, station, attribute, caveName, position, offset);
       } else if (attribute.name === 'draft' && attribute.direction) {
-        this.showDraftFor(id, station, attribute, caveName);
+        this.showDraftFor(id, station, attribute, caveName, position, offset);
       } else {
-        this.showIconFor(id, station, attribute, caveName);
+        this.showIconFor(id, station, attribute, caveName, position, offset);
       }
     }
   }
@@ -320,7 +365,7 @@ export class AttributesScene {
           e.label,
           this.options.scene.sections.labels.size * 0.7,
           e.sprite,
-          e.center,
+          e.position,
           this.stationAttributes3DGroup
         );
       }
@@ -336,9 +381,9 @@ export class AttributesScene {
       .map((v) => v.sprite);
   }
 
-  showPlaneFor(id, station, attribute, caveName) {
+  showPlaneFor(id, station, attribute, caveName, position, offset) {
     if (!this.stationAttributes.has(id)) {
-      const position = station.position;
+      const finalPosition = this.calculateAttributePosition(station.position, position, offset);
 
       // Create a group to hold all tectonic feature elements
       const tectonicGroup = new THREE.Group();
@@ -383,7 +428,7 @@ export class AttributesScene {
         child.layers.set(1);
       });
 
-      const v = new THREE.Vector3(position.x, position.y, position.z);
+      const v = new THREE.Vector3(finalPosition.x, finalPosition.y, finalPosition.z);
       tectonicGroup.position.copy(v);
 
       this.stationAttributes3DGroup.add(tectonicGroup);
@@ -391,7 +436,8 @@ export class AttributesScene {
         group     : tectonicGroup,
         circle    : circle,
         stroke    : stroke,
-        center    : v,
+        position  : finalPosition, //position is finalPosition and not the position override of the attribute
+        offset    : offset,
         label     : textSprite.label,
         sprite    : textSprite.getSprite(),
         attribute : attribute,
@@ -478,9 +524,10 @@ export class AttributesScene {
     return textSprite;
   }
 
-  showCalciteRaftFor(id, station, attribute, caveName) {
+  showCalciteRaftFor(id, station, attribute, caveName, position, offset) {
     if (!this.stationAttributes.has(id)) {
-      const position = station.position;
+      const finalPosition = this.calculateAttributePosition(station.position, position, offset);
+
       const thickness = attribute.thickness || 0.1; // Default thickness if not specified
       const baseSize = this.options.scene.stationAttributes.iconScale;
 
@@ -557,9 +604,9 @@ export class AttributesScene {
       const sprite = new THREE.Sprite(spriteMaterial);
       sprite.name = `calcite-raft-sprite-${id}`;
 
-      // Position sprite so its top edge aligns with station position
+      // Position sprite so its top edge aligns with final position
       // Sprites are centered, so offset by half the height (thickness)
-      sprite.position.set(position.x, position.y, position.z + thickness / 2);
+      sprite.position.set(finalPosition.x, finalPosition.y, finalPosition.z + thickness / 2);
 
       // Scale sprite: width = baseSize, height = thickness
       sprite.scale.set(baseSize, thickness, 1);
@@ -570,7 +617,8 @@ export class AttributesScene {
       const entry = {
         sprite    : sprite,
         texture   : texture,
-        center    : position,
+        position  : finalPosition, //position is finalPosition and not the position override of the attribute
+        offset    : offset,
         attribute : attribute,
         station   : station,
         caveName  : caveName,
@@ -582,9 +630,10 @@ export class AttributesScene {
     }
   }
 
-  showDraftFor(id, station, attribute, caveName) {
+  showDraftFor(id, station, attribute, caveName, position, offset) {
     if (!this.stationAttributes.has(id)) {
-      const position = station.position;
+      const finalPosition = this.calculateAttributePosition(station.position, position, offset);
+
       const directionStationName = attribute.direction;
       const strength = attribute.strength || 1; // Default strength if not specified (1-5)
       const season = attribute.season;
@@ -603,9 +652,9 @@ export class AttributesScene {
         return;
       }
 
-      // Calculate direction vector from current station to direction station
+      // Calculate direction vector from final position to direction station
       const direction = new THREE.Vector3();
-      direction.subVectors(directionStation.position, position);
+      direction.subVectors(directionStation.position, station.position);
       const distance = direction.length();
 
       if (distance === 0) {
@@ -621,7 +670,7 @@ export class AttributesScene {
 
       // Arrow length based on iconScale
       const baseSize = this.options.scene.stationAttributes.iconScale;
-      const arrowLength = baseSize * 1.3; // Make arrow slightly longer than icon size
+      const arrowLength = baseSize * 1.1; // Make arrow slightly longer than icon size
       const arrowHeadLength = arrowLength * 0.3; // Arrowhead is 30% of total length
       const shaftLength = arrowLength - arrowHeadLength;
 
@@ -685,10 +734,10 @@ export class AttributesScene {
       quaternion.setFromUnitVectors(up, direction);
       arrowGroup.setRotationFromQuaternion(quaternion);
 
-      // Offset arrow from station position to avoid collision with center line segments
+      // Offset arrow from final position to avoid collision with center line segments
       // Offset along the direction vector by a small amount (e.g., 10% of arrow length)
       const offsetDistance = arrowLength * 0.1;
-      const offsetPosition = position.clone().add(direction.clone().multiplyScalar(offsetDistance));
+      const offsetPosition = finalPosition.clone().add(direction.clone().multiplyScalar(offsetDistance));
       arrowGroup.position.copy(offsetPosition);
 
       arrowGroup.children.forEach((child) => {
@@ -701,7 +750,8 @@ export class AttributesScene {
         group     : arrowGroup,
         shaft     : shaft,
         head      : head,
-        center    : position,
+        position  : finalPosition, //position is finalPosition and not the position override of the attribute
+        offset    : offset,
         attribute : attribute,
         station   : station,
         caveName  : caveName,
@@ -743,7 +793,8 @@ export class AttributesScene {
         return;
       }
 
-      const pos = entry.station.position;
+      // Use position if available (which includes offset/position), otherwise use station position
+      const pos = entry.position || entry.station.position;
       // Create a key for position grouping (round to avoid floating point issues)
       const key = `${Math.round(pos.x / EPSILON) * EPSILON},${Math.round(pos.y / EPSILON) * EPSILON},${Math.round(pos.z / EPSILON) * EPSILON}`;
 
@@ -759,9 +810,9 @@ export class AttributesScene {
     // Layout each group
     positionGroups.forEach((group, key) => {
       if (group.length === 1) {
-        // Single attribute - use original position, remove frame if exists
+        // Single attribute - use position with offset/position applied, remove frame if exists
         const { entry } = group[0];
-        const pos = entry.station.position;
+        const pos = entry.position || entry.station.position;
         entry.sprite.position.set(pos.x, pos.y, pos.z);
         this.removeAttributeFrame(key);
       } else {
@@ -820,13 +871,16 @@ export class AttributesScene {
     const totalWidth = (group.length - 1) * spacing;
     const startOffset = -totalWidth / 2;
 
-    // Get base position (all attributes share the same station position)
-    const basePosition = group[0].position;
-
     // Position each attribute
     group.forEach((item, index) => {
+      // For each item, calculate its base position with offset/position
+      const itemBasePos = item.entry.attribute
+        ? this.calculateAttributePosition(item.position, item.entry.position, item.entry.offset)
+        : item.position;
+
+      // Then apply layout offset
       const offset = layoutDirection.clone().multiplyScalar(startOffset + index * spacing);
-      const newPosition = basePosition.clone().add(offset);
+      const newPosition = itemBasePos.clone().add(offset);
       item.entry.sprite.position.copy(newPosition);
     });
   }
@@ -994,9 +1048,9 @@ export class AttributesScene {
     }
   }
 
-  showIconFor(id, station, attribute, caveName) {
+  showIconFor(id, station, attribute, caveName, position, offset) {
     if (!this.stationAttributes.has(id)) {
-      const position = station.position;
+      const finalPosition = this.calculateAttributePosition(station.position, position, offset);
 
       // Create a sprite with the SVG icon
       const iconPath = `icons/${attribute.name}.svg`;
@@ -1014,7 +1068,7 @@ export class AttributesScene {
 
           const sprite = new THREE.Sprite(spriteMaterial);
           sprite.name = `icon-${attribute.name}-${id}`;
-          sprite.position.set(position.x, position.y, position.z);
+          sprite.position.set(finalPosition.x, finalPosition.y, finalPosition.z);
           sprite.scale.set(
             this.options.scene.stationAttributes.iconScale,
             this.options.scene.stationAttributes.iconScale,
@@ -1028,6 +1082,8 @@ export class AttributesScene {
             caveName  : caveName,
             station   : station,
             attribute : attribute,
+            position  : finalPosition, //position is finalPosition and not the position override of the attribute
+            offset    : offset,
             hasIcon   : true
           });
 
@@ -1042,7 +1098,7 @@ export class AttributesScene {
     }
   }
 
-  async showPhotoAttribute(id, station, attribute, caveName) {
+  async showPhotoAttribute(id, station, attribute, caveName, position, offset) {
 
     try {
       // Check if browser supports Cache API and imageCache is available
@@ -1072,10 +1128,11 @@ export class AttributesScene {
         opacity     : 1.0
       });
 
-      const position = station.position;
+      const finalPosition = this.calculateAttributePosition(station.position, position, offset);
+
       const sprite = new THREE.Sprite(spriteMaterial);
       sprite.name = `photo-${id}`;
-      sprite.position.set(position.x, position.y, position.z);
+      sprite.position.set(finalPosition.x, finalPosition.y, finalPosition.z);
 
       const photoScale = this.options.scene.stationAttributes.iconScale;
       const aspectRatio = texture.image.width / texture.image.height;
@@ -1093,7 +1150,9 @@ export class AttributesScene {
         station   : station,
         attribute : attribute,
         hasImage  : true,
-        texture   : texture
+        texture   : texture,
+        position  : finalPosition, //position is finalPosition and not the position override of the attribute
+        offset    : offset
       });
 
       this.layoutStationAttributes();

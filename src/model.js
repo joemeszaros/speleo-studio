@@ -15,10 +15,12 @@
  */
 
 import { CaveSection, CaveComponent } from './model/cave.js';
-import { fromPolar, toPolar } from './utils/utils.js';
+import { fromPolar, toPolar, isFloatStr } from './utils/utils.js';
 import { MigrationSupportV5, MigrationSupportV6 } from './attributes.js';
 
 class Vector {
+
+  fields = ['x', 'y', 'z'];
 
   constructor(x, y, z) {
     this.x = x;
@@ -77,6 +79,84 @@ class Vector {
 
   toPolar() {
     return toPolar(this);
+  }
+
+  isComplete() {
+    return this.getEmptyFields().length === 0;
+  }
+
+  getEmptyFields() {
+    return this.fields
+      .filter((f) => this[f] === undefined || this[f] === null);
+  }
+
+  isValid() {
+    return this.validate().length === 0;
+  }
+
+  validate(i18n) {
+    const t = i18n === undefined ? (msg) => msg : (key, params) => i18n.t(key, params);
+
+    const errors = [];
+
+    this.fields.forEach((f) => {
+      if (!isFloatStr(this[f])) {
+        errors.push(t('validation.vector.invalidDecimal', { field: f, value: this[f], type: typeof this[f] }));
+      }
+    });
+
+    return errors;
+
+  }
+
+  isEqual(other) {
+    other !== undefined && this.x === other.x && this.y === other.y && this.z === other.z;
+  }
+
+  toExport() {
+    return {
+      x : this.x,
+      y : this.y,
+      z : this.z
+    };
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new Vector(), pure);
+  }
+}
+
+class Offset {
+
+  fields = ['x', 'y', 'z'];
+
+  constructor(x, y, z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  isValid() {
+    return this.validate().length === 0;
+  }
+
+  validate(i18n) {
+    const t = i18n === undefined ? (msg) => msg : (key, params) => i18n.t(key, params);
+
+    const errors = [];
+
+    this.fields.forEach((f) => {
+      if (this[f] !== undefined && !isFloatStr(this[f])) {
+        errors.push(t('validation.vector.invalidDecimal', { field: f, value: this[f], type: typeof this[f] }));
+      }
+    });
+
+    return errors;
+
+  }
+
+  isEqual(other) {
+    other !== undefined && this.x === other.x && this.y === other.y && this.z === other.z;
   }
 
   toExport() {
@@ -153,12 +233,14 @@ class Color {
 
 class FragmentAttribute {
 
-  constructor(id, attribute, format, color, visible) {
+  constructor(id, attribute, format, color, visible, position, offset) {
     this.id = id;
     this.attribute = attribute;
     this.format = format;
     this.color = color;
     this.visible = visible;
+    this.position = position;
+    this.offset = offset;
   }
 
   isComplete() {
@@ -166,8 +248,12 @@ class FragmentAttribute {
   }
 
   getEmptyFields() {
-    return this.fields
+    const eFields = this.fields
       .filter((f) => this[f] === undefined || this[f] === null);
+    if (this.position !== undefined) {
+      eFields.push(...this.position.getEmptyFields().map((v) => `position${v}`));
+    }
+    return eFields;
   }
 
   isValid() {
@@ -201,6 +287,25 @@ class FragmentAttribute {
         })
       );
     });
+
+    if (this.position !== undefined) {
+      const posErrors = this.position.validate(i18n);
+      if (posErrors.length > 0) {
+        errors.push(t('validation.stationAttribute.invalidPosition', { error: posErrors.join('\n') }));
+      }
+    }
+
+    if (this.offset !== undefined) {
+      const offsetErrors = this.offset.validate(i18n);
+      if (offsetErrors.length > 0) {
+        errors.push(t('validation.stationAttribute.invalidOffset', { error: offsetErrors.join('\n') }));
+      }
+    }
+
+    if (this.position !== undefined && this.offset !== undefined) {
+      errors.push(t('validation.stationAttribute.offsetAndPosition'));
+    }
+
     return errors;
 
   }
@@ -210,8 +315,8 @@ class SectionAttribute extends FragmentAttribute {
 
   fields = ['id', 'section', 'attribute', 'color', 'visible'];
 
-  constructor(id, section, attribute, format, color, visible = false) {
-    super(id, attribute, format, color, visible);
+  constructor(id, section, attribute, format, color, visible = false, position = undefined, offset = undefined) {
+    super(id, attribute, format, color, visible, position, offset);
     this.section = section;
   }
 
@@ -236,6 +341,10 @@ class SectionAttribute extends FragmentAttribute {
       this.visible === other.visible &&
       this.color === other.color &&
       this.format === other.format &&
+      ((this.position === undefined && other.position === undefined) ||
+        (this.position !== undefined && other.position !== undefined && this.position.isEqual(other.position))) &&
+      ((this.offset === undefined && other.offset === undefined) ||
+        (this.offset !== undefined && other.offset !== undefined && this.offset.isEqual(other.offset))) &&
       ((this.attribute === undefined && other.attribute === undefined) ||
         (this.attribute !== undefined && this.attribute.isEqual(other.attribute))) &&
       this.section.from === other.section.from &&
@@ -249,7 +358,9 @@ class SectionAttribute extends FragmentAttribute {
       attribute : this.attribute?.toExport(),
       format    : this.format,
       color     : this.color,
-      visible   : this.visible
+      visible   : this.visible,
+      position  : this.position?.toExport(),
+      offset    : this.offset?.toExport()
     };
   }
 
@@ -266,6 +377,13 @@ class SectionAttribute extends FragmentAttribute {
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
     }
 
+    if (pure.position) {
+      pure.position = Vector.fromPure(pure.position);
+    }
+    if (pure.offset) {
+      pure.offset = Offset.fromPure(pure.offset);
+    }
+
     pure.section = CaveSection.fromPure(pure.section);
     return Object.assign(new SectionAttribute(), pure);
   }
@@ -275,8 +393,8 @@ class ComponentAttribute extends FragmentAttribute {
 
   fields = ['id', 'component', 'attribute', 'color', 'visible'];
 
-  constructor(id, component, attribute, format, color, visible = false) {
-    super(id, attribute, format, color, visible);
+  constructor(id, component, attribute, format, color, visible = false, position = undefined, offset = undefined) {
+    super(id, attribute, format, color, visible, position, offset);
     this.component = component;
   }
 
@@ -301,6 +419,10 @@ class ComponentAttribute extends FragmentAttribute {
       this.visible === other.visible &&
       this.color === other.color &&
       this.format === other.format &&
+      ((this.position === undefined && other.position === undefined) ||
+        (this.position !== undefined && other.position !== undefined && this.position.isEqual(other.position))) &&
+      ((this.offset === undefined && other.offset === undefined) ||
+        (this.offset !== undefined && other.offset !== undefined && this.offset.isEqual(other.offset))) &&
       ((this.attribute === undefined && other.attribute === undefined) ||
         (this.attribute !== undefined && this.attribute.isEqual(other.attribute))) &&
       this.component.start === other.component.start &&
@@ -314,7 +436,9 @@ class ComponentAttribute extends FragmentAttribute {
       attribute : this.attribute?.toExport(),
       format    : this.format,
       color     : this.color,
-      visible   : this.visible
+      visible   : this.visible,
+      position  : this.position?.toExport(),
+      offset    : this.offset?.toExport()
     };
   }
 
@@ -330,6 +454,14 @@ class ComponentAttribute extends FragmentAttribute {
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
     }
+
+    if (pure.position) {
+      pure.position = Vector.fromPure(pure.position);
+    }
+    if (pure.offset) {
+      pure.offset = Offset.fromPure(pure.offset);
+    }
+
     pure.component = CaveComponent.fromPure(pure.component);
     return Object.assign(new ComponentAttribute(), pure);
   }
@@ -337,11 +469,13 @@ class ComponentAttribute extends FragmentAttribute {
 
 class StationAttribute {
 
-  constructor(id, name, attribute, visible = true) {
+  constructor(id, name, attribute, visible = true, position = undefined, offset = undefined) {
     this.id = id;
     this.name = name;
     this.attribute = attribute;
     this.visible = visible;
+    this.position = position;
+    this.offset = offset;
   }
 
   getEmptyFields() {
@@ -351,6 +485,9 @@ class StationAttribute {
     }
     if (!this.attribute) {
       fields.push('attribute');
+    }
+    if (this.position !== undefined) {
+      fields.push(...this.position.getEmptyFields().map((v) => `position${v}`));
     }
     return fields;
   }
@@ -374,6 +511,25 @@ class StationAttribute {
         })
       );
     });
+
+    if (this.position !== undefined) {
+      const posErrors = this.position.validate(i18n);
+      if (posErrors.length > 0) {
+        errors.push(t('validation.stationAttribute.invalidPosition', { error: posErrors.join('\n') }));
+      }
+    }
+
+    if (this.offset !== undefined) {
+      const offsetErrors = this.offset.validate(i18n);
+      if (offsetErrors.length > 0) {
+        errors.push(t('validation.stationAttribute.invalidOffset', { error: offsetErrors.join('\n') }));
+      }
+    }
+
+    if (this.position !== undefined && this.offset !== undefined) {
+      errors.push(t('validation.stationAttribute.offsetAndPosition'));
+    }
+
     return errors;
   }
 
@@ -382,6 +538,10 @@ class StationAttribute {
     return this.id === other.id &&
       this.name === other.name &&
       this.visible === other.visible &&
+      ((this.position === undefined && other.position === undefined) ||
+        (this.position !== undefined && other.position !== undefined && this.position.isEqual(other.position))) &&
+      ((this.offset === undefined && other.offset === undefined) ||
+        (this.offset !== undefined && other.offset !== undefined && this.offset.isEqual(other.offset))) &&
       ((this.attribute === undefined && other.attribute === undefined) ||
         (this.attribute !== undefined && other.attribute !== undefined && this.attribute.isEqual(other.attribute)));
   }
@@ -391,7 +551,9 @@ class StationAttribute {
       id        : this.id,
       name      : this.name,
       attribute : this.attribute?.toExport(),
-      visible   : this.visible
+      visible   : this.visible,
+      position  : this.position?.toExport(),
+      offset    : this.offset?.toExport()
     };
   }
 
@@ -407,6 +569,12 @@ class StationAttribute {
       }
 
       pure.attribute = attributeDefs.createFromPure(pure.attribute);
+    }
+    if (pure.position) {
+      pure.position = Vector.fromPure(pure.position);
+    }
+    if (pure.offset) {
+      pure.offset = Offset.fromPure(pure.offset);
     }
     return Object.assign(new StationAttribute(), pure);
   }
@@ -429,4 +597,4 @@ class Surface {
 
 }
 
-export { Vector, Polar, Color, StationAttribute, SectionAttribute, ComponentAttribute, Surface };
+export { Vector, Offset, Polar, Color, StationAttribute, SectionAttribute, ComponentAttribute, Surface };

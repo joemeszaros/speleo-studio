@@ -667,7 +667,16 @@ class ProjectManager {
           sa.attribute?.isValid() === true
         ) {
           const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
-          this.scene.attributes.showFragmentAttribute(sa.id, segments, sa.attribute, sa.format, sa.color, cave.name);
+          this.scene.attributes.showFragmentAttribute(
+            sa.id,
+            segments,
+            sa.attribute,
+            sa.format,
+            sa.color,
+            cave.name,
+            sa.position,
+            sa.offset
+          );
         } else if (sa.visible) {
           sa.visible = false;
         }
@@ -680,14 +689,30 @@ class ProjectManager {
           ca.attribute?.isValid() === true
         ) {
           const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
-          this.scene.attributes.showFragmentAttribute(ca.id, segments, ca.attribute, ca.format, ca.color, cave.name);
+          this.scene.attributes.showFragmentAttribute(
+            ca.id,
+            segments,
+            ca.attribute,
+            ca.format,
+            ca.color,
+            cave.name,
+            ca.position,
+            ca.offset
+          );
         } else if (ca.visible) {
           ca.visible = false;
         }
       });
       cave.attributes.stationAttributes.forEach((sa) => {
         if (sa.visible && cave.stations.has(sa.name) && sa.attribute?.isValid() === true) {
-          this.scene.attributes.showStationAttribute(sa.id, cave.stations.get(sa.name), sa.attribute, cave.name);
+          this.scene.attributes.showStationAttribute(
+            sa.id,
+            cave.stations.get(sa.name),
+            sa.attribute,
+            cave.name,
+            sa.position,
+            sa.offset
+          );
         } else if (sa.visible) {
           sa.visible = false;
         }

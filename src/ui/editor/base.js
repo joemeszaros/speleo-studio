@@ -252,6 +252,16 @@ class Editor extends BaseEditor {
         }
       ];
     },
+    floatMutator : (value) => {
+      if (value === '') {
+        //when the user clears a cell by editing an empty string remains in the column as data
+        return undefined;
+      } else if (U.isFloatStr(value)) {
+        return U.parseMyFloat(value);
+      } else {
+        return value;
+      }
+    },
     floatAccessor : (value) => {
       if (value === undefined) {
         return undefined;
@@ -299,7 +309,9 @@ class Editor extends BaseEditor {
               data.attribute,
               data.format,
               data.color,
-              this.cave.name
+              this.cave.name,
+              data.position,
+              data.offset
             );
           }
           const label = document.getElementById(e.target.id + '-label');

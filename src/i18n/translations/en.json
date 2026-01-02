@@ -696,7 +696,13 @@
           "survey": "Survey",
           "interpolated": "Interpolated",
           "from": "From",
-          "to": "To"
+          "to": "To",
+          "positionx": "P X",
+          "positiony": "P Y",
+          "positionz": "P Z",
+          "offsetx": "O X",
+          "offsety": "O Y",
+          "offsetz": "O Z"
         },
         "menu": {
           "showSelected": "Show selected",
@@ -949,6 +955,9 @@
       "easting": "Easting",
       "northing": "Northing"
     },
+    "vector": {
+      "invalidDecimal": "({field}: {value}, type={type}) is not a valid decimal number"
+    },
     "shot": {
       "invalidId": "Id ({id}, type={type}) is not valid integer number`",
       "invalidShotType": "Shot type ({type}) is not valid",
@@ -972,7 +981,10 @@
       "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
     },
     "stationAttribute": {
-      "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}"
+      "invalidAttribute": "Invalid attribute '{attribute}' field '{paramName}': {error}",
+      "invalidPosition": "Invalid position: {error}",
+      "invalidOffset": "Invalid offset: {error}",
+      "offsetAndPosition": "Offset and position cannot be set at the same time"
     },
     "caveSectionOrComponent": {
       "fromInvalid": "From ({from}, type={type}) is not a string or empty",

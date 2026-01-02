@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { SectionAttribute, ComponentAttribute, StationAttribute } from '../../model.js';
+import { SectionAttribute, ComponentAttribute, StationAttribute, Vector, Offset } from '../../model.js';
 import { ShotType } from '../../model/survey.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
@@ -589,6 +589,22 @@ class BaseAttributeEditor extends Editor {
       .map(([name]) => name);
   }
 
+  getPositionFromRow(r) {
+    let position;
+    if (r.positionx !== undefined || r.positiony !== undefined || r.positionz !== undefined) {
+      position = new Vector(r.positionx, r.positiony, r.positionz);
+    }
+    return position;
+  }
+
+  getOffsetFromRow(r) {
+    let offset;
+    if (r.offsetx !== undefined || r.offsety !== undefined || r.offsetz !== undefined) {
+      offset = new Offset(r.offsetx, r.offsety, r.offsetz);
+    }
+    return offset;
+  }
+
   tableFunctions = {
 
     checkAttributesLength : (attributes) => {
@@ -680,6 +696,54 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         mutatorClipboard : this.baseTableFunctions.floatAccessor,
         formatter        : this.baseTableFunctions.floatFormatter('0'),
         bottomCalc       : this.baseTableFunctions.sumDistance
+      },
+      {
+        title    : i18n.t('ui.editors.attributes.columns.positionx'),
+        field    : 'positionx',
+        editor   : true,
+        accessor : this.baseTableFunctions.floatAccessor,
+        mutator  : this.baseTableFunctions.floatMutator,
+        width    : 30
+      },
+      {
+        title    : i18n.t('ui.editors.attributes.columns.positiony'),
+        field    : 'positiony',
+        editor   : true,
+        accessor : this.baseTableFunctions.floatAccessor,
+        mutator  : this.baseTableFunctions.floatMutator,
+        width    : 30
+      },
+      {
+        title    : i18n.t('ui.editors.attributes.columns.positionz'),
+        field    : 'positionz',
+        editor   : true,
+        accessor : this.baseTableFunctions.floatAccessor,
+        mutator  : this.baseTableFunctions.floatMutator,
+        width    : 30
+      },
+      {
+        title    : i18n.t('ui.editors.attributes.columns.offsetx'),
+        field    : 'offsetx',
+        editor   : true,
+        accessor : this.baseTableFunctions.floatAccessor,
+        mutator  : this.baseTableFunctions.floatMutator,
+        width    : 20
+      },
+      {
+        title    : i18n.t('ui.editors.attributes.columns.offsety'),
+        field    : 'offsety',
+        editor   : true,
+        accessor : this.baseTableFunctions.floatAccessor,
+        mutator  : this.baseTableFunctions.floatMutator,
+        width    : 20
+      },
+      {
+        title    : i18n.t('ui.editors.attributes.columns.offsetz'),
+        field    : 'offsetz',
+        editor   : true,
+        accessor : this.baseTableFunctions.floatAccessor,
+        mutator  : this.baseTableFunctions.floatMutator,
+        width    : 20
       },
       {
         title            : i18n.t('ui.editors.attributes.columns.attribute'),
@@ -855,28 +919,37 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   getNewComponentAttributes() {
     return this.table
       .getData()
-      .map(
-        (r) =>
-          new ComponentAttribute(
-            r.id,
-            new CaveComponent(r.start, r.termination, r.path, r.distance),
-            r.attribute,
-            r.format,
-            r.color,
-            r.visible
-          )
-      );
+      .map((r) => {
+        const position = this.getPositionFromRow(r);
+        const offset = this.getOffsetFromRow(r);
+        return new ComponentAttribute(
+          r.id,
+          r.id,
+          new CaveComponent(r.start, r.termination, r.path, r.distance),
+          r.attribute,
+          r.format,
+          r.color,
+          r.visible,
+          position,
+          offset
+        );
+      });
   }
 
   getValidationUpdate(r) {
     let newRow;
+    const position = this.getPositionFromRow(r);
+    const offset = this.getOffsetFromRow(r);
+
     const sa = new ComponentAttribute(
       r.id,
       new CaveComponent(r.start, r.termination, r.path, r.distance),
       r.attribute,
       r.format,
       r.color,
-      r.visible
+      r.visible,
+      position,
+      offset
     );
     const emptyFields = sa.getEmptyFields();
     emptyFields.push(...sa.component.getEmptyFields().filter((f) => f !== 'path'));
@@ -927,7 +1000,13 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       attribute   : undefined,
       format      : '${name}',
       status      : 'incomplete',
-      message     : i18n.t('ui.editors.base.status.new')
+      message     : i18n.t('ui.editors.base.status.new'),
+      positionx   : undefined,
+      positiony   : undefined,
+      positionz   : undefined,
+      offsetx     : undefined,
+      offsety     : undefined,
+      offsetz     : undefined
     };
 
   }
@@ -946,7 +1025,13 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         attribute   : r.attribute,
         format      : r.format,
         status      : 'ok',
-        message     : i18n.t('ui.editors.base.status.ok')
+        message     : i18n.t('ui.editors.base.status.ok'),
+        positionx   : r.position?.x,
+        positiony   : r.position?.y,
+        positionz   : r.position?.z,
+        offsetx     : r.offset?.x,
+        offsety     : r.offset?.y,
+        offsetz     : r.offset?.z
       };
 
       if (r.attribute !== undefined && r.format) {
@@ -1052,6 +1137,8 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
   }
 
   showAttribute(r) {
+    const position = this.getPositionFromRow(r);
+    const offset = this.getOffsetFromRow(r);
     this.scene.attributes.showFragmentAttribute(
       r.id,
       SectionHelper.getComponentSegments(
@@ -1061,7 +1148,9 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       r.attribute,
       r.format,
       r.color,
-      this.cave.name
+      this.cave.name,
+      position,
+      offset
     );
 
   }
@@ -1081,7 +1170,20 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       return;
     }
 
-    if (!['start', 'termination', 'attribute', 'format'].includes(cell.getField())) {
+    if (
+      ![
+        'start',
+        'termination',
+        'attribute',
+        'format',
+        'positionx',
+        'positiony',
+        'positionz',
+        'offsetx',
+        'offsety',
+        'offsetz'
+      ].includes(cell.getField())
+    ) {
       return;
     }
     this.hideAttribute(data);
@@ -1196,30 +1298,43 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   }
 
   getNewSectionAttributes() {
-    return this.table
-      .getData()
-      .map(
-        (r) =>
-          new SectionAttribute(
-            r.id,
-            new CaveSection(r.from, r.to, r.path, r.distance),
-            r.attribute,
-            r.format,
-            r.color,
-            r.visible
-          )
-      );
+    return (
+      this.table
+        .getData()
+        .map(
+          (r) => {
+            const position = this.getPositionFromRow(r);
+            const offset = this.getOffsetFromRow(r);
+            return new SectionAttribute(
+              r.id,
+              new CaveSection(r.from, r.to, r.path, r.distance),
+              r.attribute,
+              r.format,
+              r.color,
+              r.visible,
+              position,
+              offset
+            );
+          }
+
+        )
+    );
   }
 
   getValidationUpdate(r) {
     let newRow;
+    const position = this.getPositionFromRow(r);
+    const offset = this.getOffsetFromRow(r);
+
     const sa = new SectionAttribute(
       r.id,
       new CaveSection(r.from, r.to, r.path, r.distance),
       r.attribute,
       r.format,
       r.color,
-      r.visible
+      r.visible,
+      position,
+      offset
     );
     const emptyFields = sa.getEmptyFields();
     emptyFields.push(...sa.section.getEmptyFields().filter((f) => f !== 'path'));
@@ -1266,7 +1381,13 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       attribute : undefined,
       format    : '${name}',
       status    : 'incomplete',
-      message   : i18n.t('ui.editors.base.status.new')
+      message   : i18n.t('ui.editors.base.status.new'),
+      positionx : undefined,
+      positiony : undefined,
+      positionz : undefined,
+      offsetx   : undefined,
+      offsety   : undefined,
+      offsetz   : undefined
     };
 
   }
@@ -1285,7 +1406,13 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         attribute : r.attribute,
         format    : r.format,
         status    : 'ok',
-        message   : i18n.t('ui.editors.base.status.ok')
+        message   : i18n.t('ui.editors.base.status.ok'),
+        positionx : r.position?.x,
+        positiony : r.position?.y,
+        positionz : r.position?.z,
+        offsetx   : r.offset?.x,
+        offsety   : r.offset?.y,
+        offsetz   : r.offset?.z
       };
 
       if (r.attribute !== undefined && r.format) {
@@ -1340,13 +1467,18 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
   }
 
   showAttribute(r) {
+    const position = this.getPositionFromRow(r);
+    const offset = this.getOffsetFromRow(r);
+
     this.scene.attributes.showFragmentAttribute(
       r.id,
       SectionHelper.getSectionSegments(new CaveSection(r.from, r.to, r.path, r.distance), this.cave.stations),
       r.attribute,
       r.format,
       r.color,
-      this.cave.name
+      this.cave.name,
+      position,
+      offset
     );
 
   }
@@ -1365,7 +1497,20 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
     if (data.status !== 'ok' || !data.visible || data.attribute === undefined) {
       return;
     }
-    if (!['from', 'to', 'attribute', 'format'].includes(cell.getField())) {
+    if (
+      ![
+        'from',
+        'to',
+        'attribute',
+        'format',
+        'positionx',
+        'positiony',
+        'positionz',
+        'offsetx',
+        'offsety',
+        'offsetz'
+      ].includes(cell.getField())
+    ) {
       return;
     }
 
@@ -1511,6 +1656,60 @@ class StationAttributeEditor extends BaseAttributeEditor {
         headerFilter : 'input'
       },
       {
+        title        : i18n.t('ui.editors.attributes.columns.positionx'),
+        field        : 'positionx',
+        editor       : true,
+        accessor     : this.baseTableFunctions.floatAccessor,
+        mutator      : this.baseTableFunctions.floatMutator,
+        headerFilter : 'input',
+        width        : 40
+      },
+      {
+        title        : i18n.t('ui.editors.attributes.columns.positiony'),
+        field        : 'positiony',
+        editor       : true,
+        accessor     : this.baseTableFunctions.floatAccessor,
+        mutator      : this.baseTableFunctions.floatMutator,
+        headerFilter : 'input',
+        width        : 40
+      },
+      {
+        title        : i18n.t('ui.editors.attributes.columns.positionz'),
+        field        : 'positionz',
+        editor       : true,
+        accessor     : this.baseTableFunctions.floatAccessor,
+        mutator      : this.baseTableFunctions.floatMutator,
+        headerFilter : 'input',
+        width        : 40
+      },
+      {
+        title        : i18n.t('ui.editors.attributes.columns.offsetx'),
+        field        : 'offsetx',
+        editor       : true,
+        accessor     : this.baseTableFunctions.floatAccessor,
+        mutator      : this.baseTableFunctions.floatMutator,
+        headerFilter : 'input',
+        width        : 25
+      },
+      {
+        title        : i18n.t('ui.editors.attributes.columns.offsety'),
+        field        : 'offsety',
+        editor       : true,
+        accessor     : this.baseTableFunctions.floatAccessor,
+        mutator      : this.baseTableFunctions.floatMutator,
+        headerFilter : 'input',
+        width        : 25
+      },
+      {
+        title        : i18n.t('ui.editors.attributes.columns.offsetz'),
+        field        : 'offsetz',
+        editor       : true,
+        accessor     : this.baseTableFunctions.floatAccessor,
+        mutator      : this.baseTableFunctions.floatMutator,
+        headerFilter : 'input',
+        width        : 25
+      },
+      {
         title            : i18n.t('ui.editors.attributes.columns.attribute'),
         field            : 'attribute',
         headerFilterFunc : this.baseTableFunctions.attributesHeaderFilter,
@@ -1558,7 +1757,9 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
   showAttribute(r) {
     const station = this.cave.stations.get(r.station);
-    this.scene.attributes.showStationAttribute(r.id, station, r.attribute, this.cave.name);
+    const position = this.getPositionFromRow(r);
+    const offset = this.getOffsetFromRow(r);
+    this.scene.attributes.showStationAttribute(r.id, station, r.attribute, this.cave.name, position, offset);
   }
 
   hideAttribute(r) {
@@ -1613,12 +1814,18 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
     return this.table
       .getData()
-      .map((r) => new StationAttribute(r.id, r.station, r.attribute, r.visible));
+      .map((r) => {
+        const position = this.getPositionFromRow(r);
+        const offset = this.getOffsetFromRow(r);
+        return new StationAttribute(r.id, r.station, r.attribute, r.visible, position, offset);
+      });
   }
 
   getValidationUpdate(r) {
     let newRow;
-    const sa = new StationAttribute(r.id, r.station, r.attribute, r.visible);
+    const position = this.getPositionFromRow(r);
+    const offset = this.getOffsetFromRow(r);
+    const sa = new StationAttribute(r.id, r.station, r.attribute, r.visible, position, offset);
     const emptyFields = sa.getEmptyFields();
     const oldStatus = r.status;
     let validationErrors = [];
@@ -1660,7 +1867,13 @@ class StationAttributeEditor extends BaseAttributeEditor {
       survey    : undefined,
       attribute : undefined,
       status    : 'incomplete',
-      message   : i18n.t('ui.editors.base.status.new')
+      message   : i18n.t('ui.editors.base.status.new'),
+      positionx : undefined,
+      positiony : undefined,
+      positionz : undefined,
+      offsetx   : undefined,
+      offsety   : undefined,
+      offsetz   : undefined
     };
   }
 
@@ -1674,7 +1887,14 @@ class StationAttributeEditor extends BaseAttributeEditor {
         survey    : station ? station.survey.name : undefined,
         attribute : r.attribute,
         status    : 'ok',
-        message   : i18n.t('ui.editors.base.status.ok')
+        message   : i18n.t('ui.editors.base.status.ok'),
+        positionx : r.position?.x,
+        positiony : r.position?.y,
+        positionz : r.position?.z,
+        offsetx   : r.offset?.x,
+        offsety   : r.offset?.y,
+        offsetz   : r.offset?.z
+
       };
     });
 
@@ -1695,7 +1915,19 @@ class StationAttributeEditor extends BaseAttributeEditor {
       return;
     }
 
-    if (!['station', 'attribute', 'format'].includes(cell.getField())) {
+    if (
+      ![
+        'station',
+        'attribute',
+        'format',
+        'positionx',
+        'positiony',
+        'positionz',
+        'offsetx',
+        'offsety',
+        'offsetz'
+      ].includes(cell.getField())
+    ) {
       return;
     }
 
