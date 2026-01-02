@@ -349,19 +349,10 @@ export class ExplorerTree {
       // Re-render to show/hide up arrow for selected survey
       this.render();
 
-      // Show context popup for surveys after render is complete
-      if (node.type === 'survey') {
-        this.showSurveyContextMenu(node);
-      } else if (node.type === 'cave') {
-        this.showCaveContextMenu(node);
-      } else {
-        this.hideContextMenu();
-      }
-
       // If filtering is active, reapply the filter to maintain the filtered view with selection
       if (this.filterText) {
         this.applyFilter();
-        // Defer the render slightly to ensure context menu is shown first
+        // Defer the render slightly to ensure context menu is shown after render completes
         setTimeout(() => {
           this.render();
           // After re-rendering, update the element reference and reapply the selected class
@@ -372,7 +363,24 @@ export class ExplorerTree {
               newElement.classList.add('selected');
             }
           }
+          // Show context menu after render completes when filtering is active
+          if (node.type === 'survey') {
+            this.showSurveyContextMenu(node);
+          } else if (node.type === 'cave') {
+            this.showCaveContextMenu(node);
+          } else {
+            this.hideContextMenu();
+          }
         }, 10);
+      } else {
+        // Show context popup immediately when filtering is not active
+        if (node.type === 'survey') {
+          this.showSurveyContextMenu(node);
+        } else if (node.type === 'cave') {
+          this.showCaveContextMenu(node);
+        } else {
+          this.hideContextMenu();
+        }
       }
     }
   }
