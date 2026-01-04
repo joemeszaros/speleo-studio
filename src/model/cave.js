@@ -313,6 +313,7 @@ class Cave {
     this.attributes = attributes;
     this.stationComments = stationComments;
     this.visible = visible;
+    this.version = 1;
   }
 
   static generateId() {
@@ -444,6 +445,7 @@ class Cave {
   toExport() {
     return {
       id              : this.id,
+      version         : this.version,
       revision        : this.revision,
       name            : this.name,
       metadata        : this?.metadata?.toExport(),
@@ -458,6 +460,10 @@ class Cave {
   static fromPure(pure, attributeDefs) {
     if (pure.metadata !== undefined) {
       pure.metadata = CaveMetadata.fromPure(pure.metadata);
+    }
+
+    if (pure.version === undefined) {
+      pure.version = 1;
     }
 
     if (pure.revision === undefined) {
