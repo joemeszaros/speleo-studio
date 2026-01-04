@@ -298,8 +298,16 @@ export class ExplorerTree {
     if (!node) return;
 
     node.visible = !node.visible;
+
     if (node.type === 'survey') {
       node.data.visible = node.visible;
+      if (!node.parent.visible && node.visible) {
+        node.parent.visible = true;
+        node.parent.data.visible = true;
+      } else if (node.parent.children.every((child) => !child.visible)) {
+        node.parent.visible = false;
+        node.parent.data.visible = false;
+      }
       this.scene.speleo.setSurveyVisibility(node.parent.data.name, node.data.name, node.visible);
     } else if (node.type === 'cave') {
       node.data.visible = node.visible;
@@ -307,6 +315,7 @@ export class ExplorerTree {
       // Update all survey nodes' visibility to match the cave
       node.children.forEach((surveyNode) => {
         surveyNode.visible = node.visible;
+        surveyNode.data.visible = node.visible;
         this.scene.speleo.setSurveyVisibility(node.data.name, surveyNode.data.name, node.visible);
       });
       // Update start point visibility to match cave visibility
