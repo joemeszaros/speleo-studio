@@ -413,7 +413,7 @@ export async function generatePDF(config) {
         if (!cave.stations) return;
         cave.stations.forEach((station, stationName) => {
           // Skip splay stations or stations without valid position
-          if (station.type === ShotType.SPLAY) return;
+          if (station.type === ShotType.SPLAY || station.survey.visible === false) return;
           if (!station.position || typeof station.position.x !== 'number') return;
 
           // Get station position in world coordinates (meters)
