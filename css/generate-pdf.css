@@ -1,0 +1,339 @@
+#print-panel {
+  position: absolute;
+  z-index: 100;
+  color: azure;
+  background: rgb(40, 40, 40);
+  display: none;
+}
+
+#print-panel .popup-content div {
+  padding: 10px;
+}
+
+#pdf-print-panel {
+  width: 900px;
+  position: absolute;
+  z-index: 100;
+  color: azure;
+  background: rgb(40, 40, 40);
+}
+
+.pdf-print-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pdf-print-layout-editor {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pdf-print-canvas-container {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid #666;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+#pdf-layout-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: move;
+}
+
+.pdf-print-controls {
+  width: 280px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.pdf-print-info {
+  background: #2a2a2a;
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.pdf-print-info .form-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pdf-print-info .form-group label {
+  flex-shrink: 0;
+  min-width: 80px;
+  font-size: 13px;
+  color: #fff;
+}
+
+.pdf-print-info .form-group select,
+.pdf-print-info .form-group input[type='number'] {
+  flex: 1;
+  padding: 6px 8px;
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.pdf-print-info .form-group select:focus,
+.pdf-print-info .form-group input[type='number']:focus {
+  outline: none;
+  border-color: #0066cc;
+}
+
+.pdf-print-margin-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.pdf-print-margin-row input[type='number'] {
+  width: 60px;
+  flex: 0 0 60px;
+}
+
+.pdf-print-unit {
+  font-size: 12px;
+  color: #999;
+}
+
+.pdf-print-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pdf-print-inline-row > label:first-child {
+  min-width: 80px;
+}
+
+.pdf-print-inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pdf-print-inline-checkbox input[type='checkbox'] {
+  margin: 0;
+}
+
+/* PDF Print Tabs */
+.pdf-print-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 10px 0 5px 0;
+  border-bottom: 1px solid #404040;
+}
+
+.pdf-print-tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: #2d2d2d;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #999;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pdf-print-tab:hover {
+  background: #3d3d3d;
+  color: #ccc;
+}
+
+.pdf-print-tab.active {
+  background: #1e1e1e;
+  color: #fff;
+  border-bottom-color: #04aa6d;
+}
+
+.pdf-print-tab-content {
+  display: none;
+  padding: 10px 0;
+}
+
+.pdf-print-tab-content.active {
+  display: block;
+}
+
+.pdf-print-instructions {
+  font-size: 11px;
+  color: #888;
+  margin: 10px 0 5px 0;
+}
+
+.pdf-print-info .checkbox-group {
+  margin-bottom: 10px;
+}
+
+.pdf-print-info .checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #ddd;
+}
+
+.pdf-print-info .checkbox-group input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.pdf-print-content-options > label {
+  margin-bottom: 8px;
+}
+
+.pdf-print-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.pdf-print-checkboxes label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.pdf-print-checkboxes label:hover {
+  color: #fff;
+}
+
+.pdf-print-checkboxes input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0066cc;
+}
+
+.pdf-print-info p {
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.pdf-print-sheet-info {
+  background: #333;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.pdf-print-sheet-info .section-label {
+  display: block;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #555;
+  padding-bottom: 4px;
+}
+
+.pdf-print-sheet-info .form-group {
+  margin-bottom: 8px;
+}
+
+.pdf-print-sheet-info .form-group label {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.pdf-print-sheet-info textarea {
+  width: 100%;
+  padding: 6px 8px;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 11px;
+  font-family: monospace;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.pdf-print-sheet-info textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+}
+
+.pdf-print-page-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pdf-print-page-actions .btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
+  background: #444;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.pdf-print-page-actions .btn-small:hover {
+  background: #555;
+}
+
+.pdf-print-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pdf-print-actions .btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.pdf-print-actions .btn-primary {
+  background: #0066cc;
+  color: white;
+}
+
+.pdf-print-actions .btn-primary:hover {
+  background: #0052a3;
+}
+
+.pdf-print-actions .btn-secondary {
+  background: #666;
+  color: white;
+}
+
+.pdf-print-actions .btn-secondary:hover {
+  background: #555;
+}

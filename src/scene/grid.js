@@ -71,7 +71,6 @@ class Grid {
       newMode = choices[0];
     }
     this.options.scene.grid.mode = newMode;
-    console.log('config is', newMode, this.options.scene.grid.mode);
 
     switch (newMode) {
       case 'top':

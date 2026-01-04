@@ -233,7 +233,9 @@ class Main {
       this.projectSystem,
       this.googleDriveSettings,
       this.projectPanel,
-      document.getElementById('export-panel')
+      document.getElementById('export-panel'),
+      document.getElementById('print-panel')
+
     );
 
     this.importers = {

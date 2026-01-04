@@ -16,7 +16,9 @@
 
 import * as THREE from 'three';
 import { ExportWindow } from '../io/export.js';
+import { PDFPrintDialog } from './generate-pdf.js';
 import { i18n } from '../i18n/i18n.js';
+import { showErrorPanel } from './popups.js';
 import { RotationTool } from './tool/rotation.js';
 import { ShortestPathTool } from './tool/shortestpath.js';
 import { DipStrikeCalculatorTool } from './tool/dipstrike.js';
@@ -40,7 +42,8 @@ class NavigationBar {
     projectSystem,
     googleDriveSettings,
     projectPanel,
-    exportPanel
+    exportPanel,
+    printPanel
   ) {
     this.db = db;
     this.options = options;
@@ -52,6 +55,7 @@ class NavigationBar {
     this.googleDriveSettings = googleDriveSettings;
     this.projectPanel = projectPanel;
     this.exportPanel = exportPanel;
+    this.printPanel = printPanel;
     this.listeners = [];
     this.#addNavbarClickListener();
     document.addEventListener('currentProjectChanged', () => this.setFileMenuDisabled(false));
@@ -135,6 +139,24 @@ class NavigationBar {
               window.print();
             },
             shortkeys : ['crtl⊕p']
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.file.printPDF'),
+            click : () => {
+
+              if (this.scene.view.name !== 'planView') {
+                showErrorPanel(i18n.t('ui.panels.pdfPrint.planViewRequired'));
+                return;
+              }
+
+              new PDFPrintDialog(
+                this.db.getAllCaves(),
+                this.scene,
+                this.projectSystem.getCurrentProject(),
+                this.printPanel,
+                this.options
+              ).show();
+            }
           }
         ]
       },
