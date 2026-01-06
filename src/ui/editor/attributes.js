@@ -924,7 +924,6 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         const offset = this.getOffsetFromRow(r);
         return new ComponentAttribute(
           r.id,
-          r.id,
           new CaveComponent(r.start, r.termination, r.path, r.distance),
           r.attribute,
           r.format,
