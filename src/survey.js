@@ -47,7 +47,10 @@ class SurveyHelper {
 
       if (startCoordinate !== undefined) {
         // Initialize global origin from the first cave with coordinates (only if not already initialized)
-        if (!globalNormalizer.isInitialized() && startCoordinate.type === CoordinateSystemType.UTM) {
+        if (
+          !globalNormalizer.isInitialized() &&
+          (startCoordinate.type === CoordinateSystemType.UTM || startCoordinate.type === CoordinateSystemType.EOV)
+        ) {
           globalNormalizer.initializeGlobalOrigin(startCoordinate);
         }
 
