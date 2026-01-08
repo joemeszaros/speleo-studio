@@ -184,7 +184,9 @@ export class ImageCache {
       // Image not cached, try to fetch and cache it
       let response;
       try {
-        response = await fetch(url, {
+        const corsProxyUrl = `https://speleo-studio.hu/cors-proxy.php?url=${url}`;
+
+        response = await fetch(corsProxyUrl, {
           headers : new Headers({
             Accept            : 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
             'User-Agent'      : 'Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:10.0) Gecko/20100101 Firefox/10.0',
@@ -196,20 +198,8 @@ export class ImageCache {
         }
 
       } catch (fetchError) {
-        console.error(`🖼 Fetch error for ${url}, trying a CORS proxy service`, fetchError);
-        const proxiedUrl = `https://cors-anywhere.com/${url}`;
-        try {
-          response = await fetch(proxiedUrl);
-          if (!this.validateResponse(response, url)) {
-            console.log(await response.text());
-            return undefined;
-          }
-        } catch (fetchError) {
-          console.error(`🖼 Fetch error for ${proxiedUrl}`, fetchError);
-          return undefined;
-
-        }
-
+        console.error(`🖼 Fetch error for ${url}`, fetchError);
+        return undefined;
       }
 
       // Clone the response for caching
