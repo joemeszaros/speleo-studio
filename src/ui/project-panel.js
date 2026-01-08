@@ -235,6 +235,8 @@ export class ProjectPanel {
       if (projects.length === 0) {
         recentProjectsList.innerHTML = `<p>${i18n.t('ui.panels.projectManager.noProjectsFound')}</p>`;
       }
+      // Sort by updatedAt (most recent first)
+      projects.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
       const cavesForLocalProjects = new Map();
       this.driveProjects.clear();
@@ -996,7 +998,6 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         );
 
         const projects = await this.projectSystem.getAllProjects();
-
         const decoratedNode = await this.decorateProjectItemWithDrive(driveProject, projects, caves, itemNode);
         projectItem.replaceWith(decoratedNode);
         showSuccessPanel(i18n.t('ui.panels.projectManager.projectDownloaded', { name: driveProject.project.name }));

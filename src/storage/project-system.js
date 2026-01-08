@@ -53,8 +53,8 @@ export class ProjectSystem {
 
   async saveProject(project) {
     return new Promise((resolve, reject) => {
-
       console.log(`💾 Saving project ${project.id}`);
+      project.updatedAt = new Date().toISOString();
       const request = this.dbManager.getReadWriteStore(this.storeName).put(project.toExport());
 
       request.onsuccess = () => {
@@ -141,8 +141,6 @@ export class ProjectSystem {
 
       request.onsuccess = () => {
         const projects = request.result.map((data) => Project.fromPure(data));
-        // Sort by updatedAt (most recent first)
-        projects.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         resolve(projects);
       };
 
@@ -176,8 +174,13 @@ export class ProjectSystem {
     }
   }
 
+  async getCaveNamesForProject(projectId) {
+    return await this.caveSystem.getCaveNamesByProjectId(projectId);
+  }
+
   // Cave management methods
-  async addCaveToProject(project, cave) {
+  async addCaveToProject(projectId, cave) {
+    const project = await this.loadProjectById(projectId);
     if (!project) {
       throw new Error(i18n.t('errors.storage.projectSystem.projectNotFound'));
     }
@@ -197,12 +200,13 @@ export class ProjectSystem {
     await this.saveProject(project);
   }
 
-  async getCaveNamesForProject(projectId) {
-    return await this.caveSystem.getCaveNamesByProjectId(projectId);
-  }
-
   async saveCaveInProject(projectId, cave) {
     console.log(`💾 Saving cave ${cave.name} in project ${projectId}`);
+    const project = await this.loadProjectById(projectId);
+    if (!project) {
+      throw new Error(i18n.t('errors.storage.projectSystem.projectNotFound'));
+    }
+    await this.saveProject(project);
     return await this.caveSystem.saveCave(cave, projectId);
   }
 
