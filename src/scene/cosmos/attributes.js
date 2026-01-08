@@ -41,6 +41,46 @@ export class AttributesScene {
     this.attributeFrames = new Map(); // Store frames for grouped attributes
     scene.addObjectToScene(this.sectionAttributes3DGroup);
     scene.addObjectToScene(this.stationAttributes3DGroup);
+
+    // Listen to camera changes to update draft sprite rotations
+    this.#setupCameraChangeListener();
+  }
+
+  #setupCameraChangeListener() {
+    // Attach listeners to all views' controls
+    // This ensures rotations update regardless of which view is active
+    const attachToAllViews = () => {
+      if (this.scene.views) {
+        this.scene.views.forEach((view) => {
+          if (view.control) {
+            // Use a named function so we can check if already attached
+            if (!view.control._draftRotationListenerAttached) {
+              const onCameraChange = () => {
+                // Only update if this is the current active view
+                if (this.scene.view === view) {
+                  this.updateDraftRotations();
+                }
+              };
+
+              view.control.addEventListener('orbitChange', onCameraChange);
+              view.control.addEventListener('orbitSet', onCameraChange);
+              view.control._draftRotationListenerAttached = true;
+            }
+          }
+        });
+      }
+    };
+
+    // Wait for views to be available
+    const checkAndAddListener = () => {
+      if (this.scene.views) {
+        attachToAllViews();
+      } else {
+        // Views not ready yet, try again later
+        setTimeout(checkAndAddListener, 100);
+      }
+    };
+    checkAndAddListener();
   }
 
   /**
@@ -632,8 +672,6 @@ export class AttributesScene {
 
   showDraftFor(id, station, attribute, caveName, position, offset) {
     if (!this.stationAttributes.has(id)) {
-      const finalPosition = this.calculateAttributePosition(station.position, position, offset);
-
       const directionStationName = attribute.direction;
       const strength = attribute.strength || 1; // Default strength if not specified (1-5)
       const season = attribute.season;
@@ -652,7 +690,7 @@ export class AttributesScene {
         return;
       }
 
-      // Calculate direction vector from final position to direction station
+      // Calculate direction vector from station to direction station
       const direction = new THREE.Vector3();
       direction.subVectors(directionStation.position, station.position);
       const distance = direction.length();
@@ -664,104 +702,95 @@ export class AttributesScene {
 
       direction.normalize();
 
-      // Create arrow group
-      const arrowGroup = new THREE.Group();
-      arrowGroup.name = `draft-arrow-${id}`;
-
-      // Arrow length based on iconScale
-      const baseSize = this.options.scene.stationAttributes.iconScale;
-      const arrowLength = baseSize * 1.1; // Make arrow slightly longer than icon size
-      const arrowHeadLength = arrowLength * 0.3; // Arrowhead is 30% of total length
-      const shaftLength = arrowLength - arrowHeadLength;
-
-      // Arrow thickness based on strength (1-5)
-      // Strength 1 = thin, Strength 5 = thick
-      const minRadius = baseSize * 0.05;
-      const maxRadius = baseSize * 0.15;
-      const radius = minRadius + ((strength - 1) / 4) * (maxRadius - minRadius);
-      const headRadius = radius * 2.5; // Arrowhead is wider than shaft
-
-      // Color based on season
-      let arrowColor;
-      if (season === 'winter') {
-        arrowColor = new THREE.Color('#0066ff'); // Bright blue
-      } else if (season === 'summer') {
-        // Summer: red
-        arrowColor = new THREE.Color('#ff0000'); // Red
-      } else {
-        // not specified
-        arrowColor = new THREE.Color('#FFA500'); // Orange
-      }
-
-      // Create arrow shaft (cylinder) - main arrow
-      // CylinderGeometry is oriented along Y-axis by default
-      const shaftGeometry = new THREE.CylinderGeometry(radius, radius, shaftLength, 8);
-      // Use brighter color for better visibility
-      const brightArrowColor = arrowColor.clone().multiplyScalar(1.5);
-      const shaftMaterial = new THREE.MeshBasicMaterial({
-        color       : brightArrowColor,
-        transparent : false,
-        opacity     : 1.0
+      // Use showIconFor with draft icon and direction info for rotation
+      //this.options.scene.stationAttributes.iconScale
+      this.showIconFor(id, station, attribute, caveName, position, offset, {
+        iconPath  : `icons/draft_${season}_${strength}.svg`,
+        rotation  : 0, // Initial rotation, will be updated by updateDraftRotations
+        iconScale : this.options.scene.stationAttributes.iconScale * 1.2, // arrow is wider than taller
+        extraData : {
+          hasDraft         : true,
+          direction        : direction,
+          directionStation : directionStation,
+          strength         : strength
+        }
       });
-      const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
-      shaft.name = `draft-shaft-${id}`;
-
-      // Position shaft so it starts at station position
-      // Cylinder is centered, so position it so bottom is at origin
-      shaft.position.set(0, shaftLength / 2, 0);
-      arrowGroup.add(shaft);
-
-      // Create arrowhead (cone) - main arrow
-      // ConeGeometry is oriented along Y-axis by default
-      const headGeometry = new THREE.ConeGeometry(headRadius, arrowHeadLength, 8);
-      const headMaterial = new THREE.MeshBasicMaterial({
-        color       : brightArrowColor,
-        transparent : false,
-        opacity     : 1.0
-      });
-      const head = new THREE.Mesh(headGeometry, headMaterial);
-      head.name = `draft-head-${id}`;
-
-      // Position arrowhead at the end of the shaft
-      // Cone tip points up (positive Y), base is at bottom
-      head.position.set(0, shaftLength + arrowHeadLength / 2, 0);
-      arrowGroup.add(head);
-
-      // Rotate arrow to point in the direction
-      // Arrow geometry is oriented along Y-axis by default
-      const up = new THREE.Vector3(0, 1, 0); // Default arrow direction (along Y)
-      const quaternion = new THREE.Quaternion();
-      quaternion.setFromUnitVectors(up, direction);
-      arrowGroup.setRotationFromQuaternion(quaternion);
-
-      // Offset arrow from final position to avoid collision with center line segments
-      // Offset along the direction vector by a small amount (e.g., 10% of arrow length)
-      const offsetDistance = arrowLength * 0.1;
-      const offsetPosition = finalPosition.clone().add(direction.clone().multiplyScalar(offsetDistance));
-      arrowGroup.position.copy(offsetPosition);
-
-      arrowGroup.children.forEach((child) => {
-        child.layers.set(1);
-      });
-
-      this.stationAttributes3DGroup.add(arrowGroup);
-
-      const entry = {
-        group     : arrowGroup,
-        shaft     : shaft,
-        head      : head,
-        position  : finalPosition, //position is finalPosition and not the position override of the attribute
-        offset    : offset,
-        attribute : attribute,
-        station   : station,
-        caveName  : caveName,
-        hasDraft  : true
-      };
-      this.stationAttributes.set(id, entry);
-
-      this.scene.view.renderView();
-
     }
+  }
+
+  /**
+   * Calculate the rotation angle for a draft sprite based on the 3D direction
+   * projected onto the camera's view plane
+   * @param {THREE.Vector3} direction - The normalized direction vector in world space
+   * @returns {number} Rotation angle in radians
+   */
+  #calculateDraftRotation(direction) {
+    const view = this.scene.view;
+    const viewName = view.name;
+    const camera = view.camera;
+
+    // Ensure camera matrices are up to date before extracting basis vectors
+    camera.updateMatrixWorld();
+
+    let screenX, screenY;
+
+    if (viewName === 'planView') {
+      // Plan view: top-down, looking down Z-axis
+      // Camera can be rotated around Z-axis (azimuth), so use camera's basis vectors
+      // to account for rotation
+      const cameraRight = new THREE.Vector3();
+      const cameraUp = new THREE.Vector3();
+      camera.matrixWorld.extractBasis(cameraRight, cameraUp, new THREE.Vector3());
+
+      // Project the 3D direction onto the camera's view plane (X-Y plane rotated by azimuth)
+      screenX = direction.dot(cameraRight);
+      screenY = direction.dot(cameraUp);
+    } else if (viewName === 'profileView') {
+      // Profile view: side view, camera rotates around Z-axis in X-Y plane
+      // Camera can be rotated, so use camera's basis vectors to account for rotation
+      const cameraRight = new THREE.Vector3();
+      const cameraUp = new THREE.Vector3();
+      camera.matrixWorld.extractBasis(cameraRight, cameraUp, new THREE.Vector3());
+
+      // Project the 3D direction onto the camera's view plane
+      screenX = direction.dot(cameraRight);
+      screenY = direction.dot(cameraUp);
+    } else {
+      // Spatial/3D view: use camera's view plane
+      const cameraRight = new THREE.Vector3();
+      const cameraUp = new THREE.Vector3();
+      camera.matrixWorld.extractBasis(cameraRight, cameraUp, new THREE.Vector3());
+
+      // Project the 3D direction onto the camera's view plane
+      screenX = direction.dot(cameraRight);
+      screenY = direction.dot(cameraUp);
+    }
+
+    // Calculate angle from atan2
+    // The arrow SVG points right (positive X), so angle 0 means pointing right
+    const angle = Math.atan2(screenY, screenX);
+
+    return angle;
+  }
+
+  /**
+   * Update rotation for a single draft entry
+   * @param {object} entry - The stationAttributes entry for a draft
+   */
+  #updateSingleDraftRotation(entry) {
+    if (entry.hasDraft && entry.sprite && entry.direction) {
+      const rotation = this.#calculateDraftRotation(entry.direction);
+      entry.sprite.material.rotation = rotation;
+    }
+  }
+
+  /**
+   * Update all draft sprite rotations based on current camera orientation
+   */
+  updateDraftRotations() {
+    this.stationAttributes.forEach((entry) => {
+      this.#updateSingleDraftRotation(entry);
+    });
   }
 
   updateTectonicCircleOpacity(opacity) {
@@ -784,8 +813,9 @@ export class AttributesScene {
     const EPSILON = 0.001; // Small threshold for position comparison
 
     this.stationAttributes.forEach((entry, id) => {
-      // Skip tectonic planes (bedding, fault), calcite raft, and draft arrows - they have their own positioning
-      if (entry.hasPlane || entry.hasRaft || entry.hasDraft) {
+      // Skip tectonic planes (bedding, fault) and calcite raft - they have their own positioning
+      // Draft sprites are included in layout since they're now regular sprites
+      if (entry.hasPlane || entry.hasRaft) {
         return;
       }
 
@@ -1048,49 +1078,112 @@ export class AttributesScene {
     }
   }
 
-  showIconFor(id, station, attribute, caveName, position, offset) {
+  /**
+   * Load an SVG at high resolution for sharp sprite rendering
+   * @param {string} url - Path to the SVG file
+   * @param {Function} onLoad - Callback with texture
+   * @param {Function} onError - Error callback
+   * @param {number} resolution - Target resolution (default 512)
+   */
+  #loadHighResSVGTexture(url, onLoad, onError, resolution = 512) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      // Create a canvas at higher resolution
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Calculate dimensions maintaining aspect ratio
+      const aspectRatio = img.width / img.height;
+      let width = resolution;
+      let height = resolution / aspectRatio;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Use high-quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // Draw the SVG image to canvas
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Create texture from canvas
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.format = THREE.RGBAFormat;
+      texture.generateMipmaps = false;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+
+      onLoad(texture, width, height);
+    };
+
+    img.onerror = onError;
+    img.src = url;
+  }
+
+  /**
+   * Show an icon sprite for a station attribute
+   * @param {string} id - Unique identifier for the attribute
+   * @param {object} station - Station object with position
+   * @param {object} attribute - Attribute object with name and other properties
+   * @param {string} caveName - Name of the cave
+   * @param {Vector} position - Position override (optional)
+   * @param {object} offset - Offset from station position (optional)
+   * @param {object} config - Optional configuration: { iconPath, rotation, extraData, highRes }
+   */
+  showIconFor(id, station, attribute, caveName, position, offset, config = {}) {
     if (!this.stationAttributes.has(id)) {
       const finalPosition = this.calculateAttributePosition(station.position, position, offset);
 
       // Create a sprite with the SVG icon
-      const iconPath = `icons/${attribute.name}.svg`;
-
-      this.textureLoader.load(
+      const iconPath = config.iconPath || `icons/${attribute.name}.svg`;
+      this.#loadHighResSVGTexture(
         iconPath,
-        (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.format = THREE.RGBAFormat;
+        (texture, width, height) => {
           const spriteMaterial = new THREE.SpriteMaterial({
             map         : texture,
             transparent : true,
-            opacity     : 1.0
+            opacity     : 1.0,
+            rotation    : config.rotation || 0
           });
 
           const sprite = new THREE.Sprite(spriteMaterial);
           sprite.name = `icon-${attribute.name}-${id}`;
           sprite.position.set(finalPosition.x, finalPosition.y, finalPosition.z);
-          sprite.scale.set(
-            this.options.scene.stationAttributes.iconScale,
-            this.options.scene.stationAttributes.iconScale,
-            this.options.scene.stationAttributes.iconScale
-          );
+
+          const iconScale = config.iconScale ?? this.options.scene.stationAttributes.iconScale;
+
+          // Calculate aspect ratio from rendered dimensions to maintain correct proportions
+          const aspectRatio = width / height;
+
+          sprite.scale.set(iconScale, iconScale / aspectRatio, 1);
+
           sprite.layers.set(1);
           this.stationAttributes3DGroup.add(sprite);
 
-          this.stationAttributes.set(id, {
+          const entry = {
             sprite    : sprite,
             caveName  : caveName,
             station   : station,
             attribute : attribute,
             position  : finalPosition, //position is finalPosition and not the position override of the attribute
             offset    : offset,
-            hasIcon   : true
-          });
+            hasIcon   : true,
+            ...config.extraData // Merge any extra data (e.g., direction info for drafts)
+          };
+          this.stationAttributes.set(id, entry);
+
+          // If this is a draft, update its rotation based on camera
+          if (entry.hasDraft) {
+            this.#updateSingleDraftRotation(entry);
+          }
 
           this.layoutStationAttributes();
           this.scene.view.renderView();
         },
-        undefined,
         (error) => {
           console.warn(`Failed to load icon for ${attribute.name}:`, error);
         }
@@ -1280,23 +1373,18 @@ export class AttributesScene {
   disposeDraftFor(id, renderView = true) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
-      const group = e.group;
 
-      // Dispose all geometries in the group
-      group.traverse((child) => {
-        if (child.geometry) {
-          child.geometry.dispose();
-        }
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach((mat) => mat.dispose());
-          } else {
-            child.material.dispose();
+      // Draft is now a sprite (same as regular icons)
+      if (e.sprite) {
+        this.stationAttributes3DGroup.remove(e.sprite);
+        if (e.sprite.material) {
+          if (e.sprite.material.map) {
+            e.sprite.material.map.dispose();
           }
+          e.sprite.material.dispose();
         }
-      });
+      }
 
-      this.stationAttributes3DGroup.remove(group);
       this.stationAttributes.delete(id);
       if (renderView) {
         this.scene.view.renderView();
@@ -1305,13 +1393,21 @@ export class AttributesScene {
   }
 
   updateStationAttributeIconScales(newScale) {
-    // Collect draft arrows first to avoid modifying map during iteration
-    const draftArrows = [];
-
     // Update the scale of all existing station attribute icons
-    this.stationAttributes.forEach((entry, id) => {
+    this.stationAttributes.forEach((entry) => {
       if (entry?.hasIcon && entry.sprite && entry.sprite.type === 'Sprite') {
-        entry.sprite.scale.set(newScale, newScale, 1);
+        // Regular icons and draft sprites - maintain aspect ratio
+        const texture = entry.sprite.material?.map;
+        let aspectRatio = 1;
+
+        if (texture?.image) {
+          aspectRatio = texture.image.width / texture.image.height;
+        } else if (texture?.source?.data) {
+          aspectRatio = texture.source.data.width / texture.source.data.height;
+        }
+
+        // Apply aspect ratio to maintain correct proportions
+        entry.sprite.scale.set(newScale * aspectRatio, newScale, 1);
       } else if (entry?.hasImage && entry.sprite && entry.sprite.type === 'Sprite') {
         // Photos use a larger scale multiplier
         const aspectRatio = entry.texture.image.width / entry.texture.image.height;
@@ -1324,23 +1420,7 @@ export class AttributesScene {
         // Calcite raft: width = newScale, height = thickness (preserve aspect ratio)
         const thickness = entry.attribute.thickness || 0.1;
         entry.sprite.scale.set(newScale, thickness, 1);
-      } else if (entry?.hasDraft && entry.group) {
-        // Draft arrows: store info to recreate with new scale
-        draftArrows.push({
-          id,
-          station   : entry.station,
-          attribute : entry.attribute,
-          caveName  : entry.caveName
-        });
       }
-    });
-
-    // Recreate draft arrows with new scale (after iteration to avoid modifying map during iteration)
-    draftArrows.forEach(({ id, station, attribute, caveName }) => {
-      // Dispose the old arrow (without renderView call)
-      this.disposeDraftFor(id, false);
-      // Recreate with new scale (without renderView call)
-      this.showDraftFor(id, station, attribute, caveName, false);
     });
 
     // Re-layout attributes since spacing depends on icon scale
