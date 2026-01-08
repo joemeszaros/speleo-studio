@@ -65,9 +65,8 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
     return new Vector(this.y, this.x, this.elevation);
   }
 
-  // for EOV coordinates there is no need to normalize
   toNormalizedVector() {
-    return this.toVector();
+    return globalNormalizer.getNormalizedVector(this);
   }
 
   add(y, x, elevation) {

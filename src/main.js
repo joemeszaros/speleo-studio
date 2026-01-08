@@ -374,7 +374,7 @@ class Main {
       showErrorPanel(`${i18n.t('errors.import.importFileFailed', { name: cave.name })}: ${errorMessage}`);
       return;
     }
-    await this.projectSystem.addCaveToProject(currentProject, cave);
+    await this.projectSystem.addCaveToProject(currentProject.id, cave);
     this.projectManager.calculateFragmentAttributes(cave);
     this.projectManager.addCave(cave);
     await this.projectManager.uploadCaveToDrive(cave);

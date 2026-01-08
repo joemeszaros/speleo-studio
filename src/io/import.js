@@ -293,7 +293,10 @@ class PolygonImporter extends Importer {
               startCoordinate = new StationWithCoordinate(fixPointName, coordinate);
               geoData = new GeoData(coordinateSystem, [startCoordinate]);
               // Initialize global origin from the first cave with coordinates (only if not already initialized)
-              if (!globalNormalizer.isInitialized() && coordinate.type === CoordinateSystemType.UTM) {
+              if (
+                !globalNormalizer.isInitialized() &&
+                (coordinate.type === CoordinateSystemType.UTM || coordinate.type === CoordinateSystemType.EOV)
+              ) {
                 globalNormalizer.initializeGlobalOrigin(coordinate);
               }
               // Use normalized coordinates to avoid floating-point precision issues with large UTM values

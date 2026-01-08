@@ -48,6 +48,13 @@ export class GlobalCoordinateNormalizer {
             elevation : coordinate.elevation
           };
           break;
+        case CoordinateSystemType.EOV:
+          this.globalOrigin = {
+            y         : coordinate.y,
+            x         : coordinate.x,
+            elevation : coordinate.elevation
+          };
+          break;
         default:
           throw new Error(`Unknown coordinate system type: ${coordinate.type}`);
       }
@@ -72,6 +79,12 @@ export class GlobalCoordinateNormalizer {
         return new Vector(
           coordinate.easting - this.globalOrigin.easting,
           coordinate.northing - this.globalOrigin.northing,
+          coordinate.elevation - this.globalOrigin.elevation
+        );
+      case CoordinateSystemType.EOV:
+        return new Vector(
+          coordinate.y - this.globalOrigin.y,
+          coordinate.x - this.globalOrigin.x,
           coordinate.elevation - this.globalOrigin.elevation
         );
       default:
