@@ -1185,7 +1185,8 @@
       "photo": "fotó",
       "shoring": "ácsolat",
       "bivouac": "bivak",
-      "difficult_climb": "mászás"
+      "difficult_climb": "mászás",
+      "enlargement": "bővítés"
     },
     "namesDescription": {
       "bedding": "Lehetővé teszi a rétegdőlés megadását"
@@ -1391,7 +1392,9 @@
       "metal": "fém",
       "narrow": "szűk",
       "very narrow": "nagyon szűk",
-      "extremely narrow": "extrém szűk"
+      "extremely narrow": "extrém szűk",
+      "demolition": "bontás",
+      "widening": "tágítás"
     }
   }
 }

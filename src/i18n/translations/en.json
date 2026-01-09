@@ -1162,7 +1162,8 @@
       "photo": "photo",
       "shoring": "shoring",
       "bivouac": "bivouac",
-      "difficult_climb": "climb"
+      "difficult_climb": "climb",
+      "enlargement": "enlargement"
     },
     "namesDescription": {
       "bedding": "Allows the bedding to be set"
@@ -1367,7 +1368,9 @@
       "metal": "metal",
       "narrow": "narrow",
       "very narrow": "very narrow",
-      "extremely narrow": "extremely narrow"
+      "extremely narrow": "extremely narrow",
+      "demolition": "demolition",
+      "widening": "widening"
     }
   }
 }

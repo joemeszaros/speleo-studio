@@ -836,6 +836,18 @@
           "ref": "1_5"
         }
       }
+    },
+    {
+      "id": 40,
+      "category": 6,
+      "name": "enlargement",
+      "params": {
+        "type": {
+          "type": "string",
+          "required": true,
+          "values": ["demolition", "widening", "other"]
+        }
+      }
     }
   ]
 }
