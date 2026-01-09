@@ -700,14 +700,23 @@ export class AttributesScene {
         return;
       }
 
-      direction.normalize();
+      const dimenstionsByStrength = {
+        1 : { width: 53, height: 17.7842 },
+        2 : { width: 55.6047, height: 19.2943 },
+        3 : { width: 50.0449, height: 19.2942 },
+        4 : { width: 45.67, height: 19.2942 },
+        5 : { width: 51.522, height: 23.5295 }
+      };
 
+      direction.normalize();
       // Use showIconFor with draft icon and direction info for rotation
       //this.options.scene.stationAttributes.iconScale
       this.showIconFor(id, station, attribute, caveName, position, offset, {
         iconPath  : `icons/draft_${season}_${strength}.svg`,
         rotation  : 0, // Initial rotation, will be updated by updateDraftRotations
-        iconScale : this.options.scene.stationAttributes.iconScale * 1.2, // arrow is wider than taller
+        iconScale : this.options.scene.stationAttributes.iconScale * 1.1 * (1 + (10 * strength) / 100),
+        width     : dimenstionsByStrength[strength].width,
+        height    : dimenstionsByStrength[strength].height,
         extraData : {
           hasDraft         : true,
           direction        : direction,
@@ -840,9 +849,17 @@ export class AttributesScene {
     // Layout each group
     positionGroups.forEach((group, key) => {
       if (group.length === 1) {
-        // Single attribute - use position with offset/position applied, remove frame if exists
+        // Single attribute - recalculate position from station + offset
+        // This ensures offsets are properly applied even when icon scale changes
         const { entry } = group[0];
-        const pos = entry.position || entry.station.position;
+        let pos;
+        if (entry.station && entry.offset) {
+          // Recalculate from station position + offset
+          pos = this.calculateAttributePosition(entry.station.position, null, entry.offset);
+        } else {
+          // Fallback to stored position or station position
+          pos = entry.position || entry.station.position;
+        }
         entry.sprite.position.set(pos.x, pos.y, pos.z);
         this.removeAttributeFrame(key);
       } else {
@@ -903,10 +920,16 @@ export class AttributesScene {
 
     // Position each attribute
     group.forEach((item, index) => {
-      // For each item, calculate its base position with offset/position
-      const itemBasePos = item.entry.attribute
-        ? this.calculateAttributePosition(item.position, item.entry.position, item.entry.offset)
-        : item.position;
+      // Recalculate base position from station position + offset
+      // This ensures offsets are properly applied even when icon scale changes
+      let itemBasePos;
+      if (item.entry.station && item.entry.offset) {
+        // Recalculate from station position + offset
+        itemBasePos = this.calculateAttributePosition(item.entry.station.position, null, item.entry.offset);
+      } else {
+        // Fallback to stored position
+        itemBasePos = item.position;
+      }
 
       // Then apply layout offset
       const offset = layoutDirection.clone().multiplyScalar(startOffset + index * spacing);
@@ -1085,7 +1108,7 @@ export class AttributesScene {
    * @param {Function} onError - Error callback
    * @param {number} resolution - Target resolution (default 512)
    */
-  #loadHighResSVGTexture(url, onLoad, onError, resolution = 512) {
+  #loadHighResSVGTexture(url, onLoad, onError, resolution = 512, width = undefined, height = undefined) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
@@ -1095,19 +1118,21 @@ export class AttributesScene {
       const ctx = canvas.getContext('2d');
 
       // Calculate dimensions maintaining aspect ratio
-      const aspectRatio = img.width / img.height;
-      let width = resolution;
-      let height = resolution / aspectRatio;
+      const w = width ?? img.width;
+      const h = height ?? img.height;
+      const aspectRatio = w / h;
+      let W = resolution;
+      let H = resolution / aspectRatio;
 
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = W;
+      canvas.height = H;
 
       // Use high-quality rendering
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
       // Draw the SVG image to canvas
-      ctx.drawImage(img, 0, 0, width, height);
+      ctx.drawImage(img, 0, 0, W, H);
 
       // Create texture from canvas
       const texture = new THREE.CanvasTexture(canvas);
@@ -1117,7 +1142,7 @@ export class AttributesScene {
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
 
-      onLoad(texture, width, height);
+      onLoad(texture, W, H);
     };
 
     img.onerror = onError;
@@ -1158,7 +1183,6 @@ export class AttributesScene {
 
           // Calculate aspect ratio from rendered dimensions to maintain correct proportions
           const aspectRatio = width / height;
-
           sprite.scale.set(iconScale, iconScale / aspectRatio, 1);
 
           sprite.layers.set(1);
@@ -1186,7 +1210,10 @@ export class AttributesScene {
         },
         (error) => {
           console.warn(`Failed to load icon for ${attribute.name}:`, error);
-        }
+        },
+        512,
+        config.width,
+        config.height
       );
     }
   }
@@ -1406,11 +1433,18 @@ export class AttributesScene {
           aspectRatio = texture.source.data.width / texture.source.data.height;
         }
 
+        let effectiveScale = newScale;
+
+        if (entry.hasDraft) {
+          effectiveScale = newScale * 1.1 * (1 + (10 * entry.strength) / 100);
+        }
+
         // Apply aspect ratio to maintain correct proportions
-        entry.sprite.scale.set(newScale * aspectRatio, newScale, 1);
+        entry.sprite.scale.set(effectiveScale, effectiveScale / aspectRatio, 1);
       } else if (entry?.hasImage && entry.sprite && entry.sprite.type === 'Sprite') {
         // Photos use a larger scale multiplier
         const aspectRatio = entry.texture.image.width / entry.texture.image.height;
+
         if (aspectRatio > 1) {
           entry.sprite.scale.set(newScale, newScale / aspectRatio, 1);
         } else {
