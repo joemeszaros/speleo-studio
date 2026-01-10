@@ -1466,4 +1466,96 @@ export class AttributesScene {
     this.sectionAttributes.forEach((sa) => (sa.caveName = newName)); //TODO: what to do with component attributes here?
   }
 
+  toggleAllAttributesVisibility(visible) {
+    // Update visibility in all caves' attribute data structures
+    const allCaves = this.scene.db.getAllCaves();
+    allCaves.forEach((cave) => {
+      let stationHasChanges = false;
+      let sectionHasChanges = false;
+      let componentHasChanges = false;
+
+      cave.attributes.stationAttributes.forEach((sa) => {
+        if (sa.attribute.visible !== visible) {
+          if (visible === true && cave.stations.has(sa.name)) {
+            const station = cave.stations.get(sa.name);
+            this.showStationAttribute(sa.id, station, sa.attribute, cave.name, sa.position, sa.offset);
+          } else {
+            this.disposeStationAttribute(sa.id);
+          }
+          sa.attribute.visible = visible;
+          stationHasChanges = true;
+        }
+      });
+
+      cave.attributes.sectionAttributes.forEach((sa) => {
+        if (sa.attribute.visible !== visible) {
+          if (visible === true) {
+            this.showFragmentAttribute(
+              sa.id,
+              SectionHelper.getSectionSegments(sa.section, cave.stations),
+              sa.attribute,
+              sa.format,
+              sa.color,
+              cave.name,
+              sa.position,
+              sa.offset
+            );
+          } else {
+            this.disposeStationAttribute(sa.id);
+          }
+          sa.attribute.visible = visible;
+          sectionHasChanges = true;
+        }
+      });
+
+      cave.attributes.componentAttributes.forEach((ca) => {
+        if (ca.attribute.visible !== visible) {
+          if (visible === true) {
+            this.showFragmentAttribute(
+              ca.id,
+              SectionHelper.getComponentSegments(ca.component, cave.stations),
+              ca.attribute,
+              ca.format,
+              ca.color,
+              cave.name,
+              ca.position,
+              ca.offset
+            );
+          } else {
+            this.disposeSectionAttribute(ca.id);
+          }
+          ca.attribute.visible = visible;
+          componentHasChanges = true;
+        }
+      });
+
+      // Emit change events to notify open attribute editors
+      if (stationHasChanges) {
+        document.dispatchEvent(
+          new CustomEvent('stationAttributesChanged', {
+            detail : { cave }
+          })
+        );
+      }
+
+      if (sectionHasChanges) {
+        document.dispatchEvent(
+          new CustomEvent('sectionAttributesChanged', {
+            detail : { cave }
+          })
+        );
+      }
+
+      if (componentHasChanges) {
+        document.dispatchEvent(
+          new CustomEvent('componentAttributesChanged', {
+            detail : { cave }
+          })
+        );
+      }
+
+      this.scene.view.renderView();
+    });
+  }
+
 }

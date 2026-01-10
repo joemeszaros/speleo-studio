@@ -168,7 +168,8 @@
         "targetPoint": "Camera target point",
         "sectionsLabel": "Sections label",
         "circleOpacity": "Circle opacity",
-        "attributes": "Attributes"
+        "attributes": "Attributes",
+        "showAllAttributes": "Show all attributes"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"

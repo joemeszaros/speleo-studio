@@ -168,7 +168,8 @@
         "targetPoint": "Kamera célpont",
         "sectionsLabel": "Szakasz címkék",
         "circleOpacity": "Kör átlátszóság",
-        "attributes": "Attribútumok"
+        "attributes": "Attribútumok",
+        "showAllAttributes": "Összes attribútum megjelenítése"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"

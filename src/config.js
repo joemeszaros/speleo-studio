@@ -112,6 +112,7 @@ export const DEFAULT_OPTIONS = {
       iconScale : 7.0
     },
     attributes : {
+      show     : true,
       tectonic : {
         circle : {
           color : {
@@ -902,6 +903,14 @@ export class ConfigChanges {
     }
   }
 
+  handleAttributeVisibilityChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.attributes.show':
+        this.scene.attributes.toggleAllAttributesVisibility(newValue);
+        break;
+    }
+  }
+
   /**
    * Handle station labels configuration changes
    */
@@ -1037,6 +1046,8 @@ export class ConfigChanges {
       this.handleStationLabelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.attributes.tectonic')) {
       this.handleTectonicAttributeChanges(path, oldValue, newValue);
+    } else if (path === 'scene.attributes.show') {
+      this.handleAttributeVisibilityChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.grid.')) {
       this.handleGridChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.sprites3D.')) {

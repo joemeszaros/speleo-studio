@@ -486,6 +486,13 @@ export class SettingsPanel {
     this.createSection(
       '🅰️ ' + i18n.t('ui.settingsPanel.sections.attributes'),
       [
+        this.createCheckbox(
+          i18n.t('ui.settingsPanel.labels.showAllAttributes'),
+          this.options.scene.attributes.show,
+          (value) => {
+            this.options.scene.attributes.show = value;
+          }
+        ),
         this.createColorInput(
           i18n.t('ui.settingsPanel.labels.labelColor'),
           this.options.scene.sections.labels.color,
