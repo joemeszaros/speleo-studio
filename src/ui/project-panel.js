@@ -43,6 +43,7 @@ export class ProjectPanel {
     this.fileInputElement = document.getElementById(projectInput);
     this.driveProjects = new Map();
     this.clickHandlerActive = false;
+    this.driveOperationsController = null;
 
     this.fileInputElement.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -116,7 +117,7 @@ export class ProjectPanel {
         <button id="export-project-btn" class="project-btn">${i18n.t('common.export')}</button>
         <button id="refresh-panel-btn" class="project-btn"><img src="icons/drive.svg" class="drive-icon"/>${i18n.t('common.refresh')}</button>
 
-        <button class="project-panel-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
+        <button class="project-panel-close" id="close-panel-btn">×</button>
       </div>
       
       <div class="project-panel-content">
@@ -148,23 +149,32 @@ export class ProjectPanel {
     const exportProjectBtn = this.panel.querySelector('#export-project-btn');
     const projectSearch = this.panel.querySelector('#project-search');
     const refreshPanelBtn = this.panel.querySelector('#refresh-panel-btn');
+    const closePanelBtn = this.panel.querySelector('#close-panel-btn');
 
     newProjectBtn.addEventListener('click', () => this.showNewProjectDialog());
     importProjectBtn.addEventListener('click', () => this.fileInputElement.click());
     exportProjectBtn.addEventListener('click', async () => await this.exportAllProjects());
     projectSearch.addEventListener('input', () => this.filterProjects());
     refreshPanelBtn.addEventListener('click', () => this.updateDisplay());
+    closePanelBtn.addEventListener('click', () => this.hide());
   }
 
   show() {
     this.isVisible = true;
     this.panel.style.display = 'block';
+    // Create a new AbortController for Google Drive operations
+    this.driveOperationsController = new AbortController();
     this.updateDisplay();
   }
 
   hide() {
     this.isVisible = false;
     this.panel.style.display = 'none';
+    // Cancel any pending Google Drive operations
+    if (this.driveOperationsController) {
+      this.driveOperationsController.abort();
+      this.driveOperationsController = null;
+    }
   }
 
   async updateDisplay() {
@@ -268,22 +278,31 @@ export class ProjectPanel {
       });
 
       let driveProjectFiles = [];
+      const signal = this.driveOperationsController?.signal;
+
       if (this.googleDriveSync.config.isConfigured()) {
         try {
           if (this.googleDriveSync.config.hasTokens() && !this.googleDriveSync.config.hasValidTokens()) {
             console.log('Refresh access tokens');
             await this.googleDriveSync.refreshToken();
           }
+
+          if (signal?.aborted) return;
+
           driveProjectFiles = await this.googleDriveSync.listProjects();
         } catch (error) {
           console.error('Failed to list Google Drive projects', error);
         }
 
-        if (driveProjectFiles.length > 0) {
+        if (driveProjectFiles.length > 0 && !signal?.aborted) {
 
           // sequential needs a promise function and not a promise which is immediately executed
           const promises = driveProjectFiles.map((file) => async () => {
+            if (signal?.aborted) return;
+
             const response = await this.googleDriveSync.fetchProjectByFile(file);
+            if (signal?.aborted) return;
+
             if (response) {
               const projectId = response.project.project.id;
               this.driveProjects.set(projectId, response.project);
@@ -307,6 +326,8 @@ export class ProjectPanel {
 
           await U.sequential(promises);
         }
+
+        if (signal?.aborted) return;
 
         // local projects without google drive pair
         const localProjects = projects.filter((p) => !this.driveProjects.has(p.id));
