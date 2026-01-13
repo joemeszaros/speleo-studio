@@ -250,8 +250,6 @@
     "panels": {
       "projectManager": {
         "title": "Project Manager",
-        "new": "New Project",
-        "import": "Import Project",
         "current": "Current Project",
         "noProject": "No project found",
         "noProjectsFound": "No projects found",
@@ -264,6 +262,7 @@
         "projectCreated": "Project \"{name}\" created successfully",
         "projectSaved": "Project saved successfully",
         "projectExported": "Project \"{name}\" exported successfully",
+        "allProjectsExported": "All projects exported successfully",
         "projectDownloaded": "Project \"{name}\" downloaded successfully",
         "projectRenamed": "Project renamed to \"{name}\" successfully",
         "projectDeleted": "Project deleted successfully",
@@ -275,6 +274,7 @@
         "caves": "caves",
         "projectId": "Project ID",
         "errors": {
+          "noProjectsToExport": "No projects to export",
           "caveAppMismatch": "Cave app mismatch: {id}",
           "projectOpenFailed": "Failed to open project: {error}",
           "projectSaveFailed": "Failed to save project: {error}",
@@ -1096,7 +1096,9 @@
     "comments": "Comments",
     "remove": "Remove",
     "attributes": "Attributes",
-    "length": "Length"
+    "length": "Length",
+    "new": "New",
+    "import": "Import"
   },
   "attributes": {
     "title": "Attribute Definitions Reference",

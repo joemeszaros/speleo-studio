@@ -38,6 +38,23 @@ export class FatProject {
   }
 }
 
+export class FatProjects {
+  constructor(fatProjects) {
+    this.projects = fatProjects;
+  }
+
+  toExport() {
+    return {
+      projects : this.projects.map((project) => project.toExport())
+    };
+  }
+
+  static fromPure(pure, attributeDefs) {
+    const projects = pure.projects.map((project) => FatProject.fromPure(project, attributeDefs));
+    return new FatProjects(projects);
+  }
+}
+
 export class DriveProject {
 
   constructor(project, caves, app, deletedCaveIds = []) {

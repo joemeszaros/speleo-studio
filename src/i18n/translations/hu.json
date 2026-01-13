@@ -250,8 +250,6 @@
     "panels": {
       "projectManager": {
         "title": "Projekt kezelő",
-        "new": "Új projekt",
-        "import": "Projekt importálása",
         "current": "Jelenlegi projekt",
         "noProject": "Nincs projekt betöltve",
         "noProjectsFound": "Nincs projekt",
@@ -264,6 +262,7 @@
         "projectCreated": "Projekt \"{name}\" létrehozva",
         "projectSaved": "Projekt mentve",
         "projectExported": "Projekt \"{name}\" exportálva",
+        "allProjectsExported": "Összes projekt exportálva",
         "projectDownloaded": "Projekt \"{name}\" sikeresen letöltve",
         "projectRenamed": "Projekt sikeresen átnevezve: \"{name}\" ",
         "projectDeleted": "Projekt törölve",
@@ -275,6 +274,7 @@
         "caves": "barlang",
         "projectId": "Projekt azonosító",
         "errors": {
+          "noProjectsToExport": "Nincsenek exportálható projektek",
           "caveAppMismatch": "Barlang app nem egyezik: {id}",
           "projectDeletionFailed": "Hiba történt a projekt törlése során: {error}",
           "projectRenameFailed": "Hiba történt a projekt átnevezése során: {error}",
@@ -1119,7 +1119,9 @@
     "comments": "Megjegyzések",
     "remove": "Eltávolítás",
     "attributes": "Attribútumok",
-    "length": "Hossz"
+    "length": "Hossz",
+    "new": "Új",
+    "import": "Importálás"
   },
   "attributes": {
     "title": "Attribútum referencia",

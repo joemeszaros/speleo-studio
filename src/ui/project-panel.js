@@ -17,7 +17,7 @@
 import { showErrorPanel, showSuccessPanel } from './popups.js';
 import * as U from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
-import { DriveProject, FatProject, Project } from '../model/project.js';
+import { DriveProject, FatProject, Project, FatProjects } from '../model/project.js';
 import { Cave, DriveCaveMetadata } from '../model/cave.js';
 import { RevisionInfo } from '../model/misc.js';
 
@@ -52,7 +52,15 @@ export class ProjectPanel {
       reader.onload = async (event) => {
         try {
           const text = event.target.result;
-          await this.importFatProject(text, this.attributeDefs);
+          const pure = JSON.parse(text);
+          if (pure.projects !== undefined) {
+            await this.importFatProjects(text, this.attributeDefs);
+          } else {
+            const fatProject = FatProject.fromPure(pure, attributeDefs);
+            await this.importFatProject(fatProject, this.attributeDefs);
+
+          }
+
         } catch (error) {
           console.error(i18n.t('ui.panels.projectManager.errors.projectImportFailed'), error);
           showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
@@ -103,9 +111,10 @@ export class ProjectPanel {
     this.panel.innerHTML = `
       <div class="project-panel-header">
         <h3>${i18n.t('ui.panels.projectManager.title')}</h3>
-        <button id="new-project-btn" class="project-btn">${i18n.t('ui.panels.projectManager.new')}</button>
-        <button id="import-project-btn" class="project-btn">${i18n.t('ui.panels.projectManager.import')}</button>
-        <button id="refresh-panel-btn" class="project-btn">${i18n.t('common.refresh')}</button>
+        <button id="new-project-btn" class="project-btn">${i18n.t('common.new')}</button>
+        <button id="import-project-btn" class="project-btn">${i18n.t('common.import')}</button>
+        <button id="export-project-btn" class="project-btn">${i18n.t('common.export')}</button>
+        <button id="refresh-panel-btn" class="project-btn"><img src="icons/drive.svg" class="drive-icon"/>${i18n.t('common.refresh')}</button>
 
         <button class="project-panel-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
       </div>
@@ -136,11 +145,13 @@ export class ProjectPanel {
   setupEventListeners() {
     const newProjectBtn = this.panel.querySelector('#new-project-btn');
     const importProjectBtn = this.panel.querySelector('#import-project-btn');
+    const exportProjectBtn = this.panel.querySelector('#export-project-btn');
     const projectSearch = this.panel.querySelector('#project-search');
     const refreshPanelBtn = this.panel.querySelector('#refresh-panel-btn');
 
     newProjectBtn.addEventListener('click', () => this.showNewProjectDialog());
     importProjectBtn.addEventListener('click', () => this.fileInputElement.click());
+    exportProjectBtn.addEventListener('click', async () => await this.exportAllProjects());
     projectSearch.addEventListener('input', () => this.filterProjects());
     refreshPanelBtn.addEventListener('click', () => this.updateDisplay());
   }
@@ -751,9 +762,19 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
     }
   }
 
-  async importFatProject(fatProjectText, attributeDefs) {
-    const pure = JSON.parse(fatProjectText);
-    const fatProject = FatProject.fromPure(pure, attributeDefs);
+  async importFatProjects(fatProjectsText, attributeDefs) {
+
+    const pure = JSON.parse(fatProjectsText);
+    const fatProjects = FatProjects.fromPure(pure, attributeDefs);
+    await U.sequential(
+      fatProjects.projects.map((fatProject) => async () => {
+        await this.importFatProject(fatProject, attributeDefs);
+      })
+    );
+
+  }
+
+  async importFatProject(fatProject, attributeDefs) {
     //generate new ids to avoid conflicts with existing projects and caves
     fatProject.project.id = Project.generateId();
     fatProject.caves.forEach((cave) => {
@@ -1049,6 +1070,38 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
     } catch (error) {
       console.error(error);
       showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectUploadFailed', { error: error.message }));
+    }
+  }
+
+  async exportAllProjects() {
+    try {
+      const projects = await this.projectSystem.getAllProjects();
+      if (projects.length === 0) {
+        showErrorPanel(i18n.t('ui.panels.projectManager.errors.noProjectsToExport'));
+        return;
+      }
+      const fatProjectList = await Promise.all(
+        projects.map((project) =>
+          this.caveSystem.getCavesByProjectId(project.id).then((caves) => new FatProject(project, caves))
+        )
+      );
+      const fatProjects = new FatProjects(fatProjectList);
+      const data = fatProjects.toExport();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `speleo-studio-projects.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showSuccessPanel(i18n.t('ui.panels.projectManager.allProjectsExported'));
+    } catch (error) {
+      console.error(error);
+      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
     }
   }
 
