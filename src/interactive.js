@@ -227,13 +227,13 @@ class SceneInteraction {
           ca.attribute &&
           ca.visible
         ) {
-          attributes.push({ emoji: '🔀', attribute: ca.attribute });
+          attributes.push({ emoji: '🧩', attribute: ca.attribute });
         }
       });
 
       cave.attributes.sectionAttributes.forEach((sa) => {
         if (sa?.section?.path?.includes(stationName) && sa.attribute && sa.visible) {
-          attributes.push({ emoji: '🧩', attribute: sa.attribute });
+          attributes.push({ emoji: '🔀', attribute: sa.attribute });
         }
       });
     }
