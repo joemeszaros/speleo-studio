@@ -1475,20 +1475,20 @@ export class AttributesScene {
       let componentHasChanges = false;
 
       cave.attributes.stationAttributes.forEach((sa) => {
-        if (sa.attribute.visible !== visible) {
+        if (sa.visible !== visible) {
           if (visible === true && cave.stations.has(sa.name)) {
             const station = cave.stations.get(sa.name);
             this.showStationAttribute(sa.id, station, sa.attribute, cave.name, sa.position, sa.offset);
           } else {
             this.disposeStationAttribute(sa.id);
           }
-          sa.attribute.visible = visible;
+          sa.visible = visible;
           stationHasChanges = true;
         }
       });
 
       cave.attributes.sectionAttributes.forEach((sa) => {
-        if (sa.attribute.visible !== visible) {
+        if (sa.visible !== visible) {
           if (visible === true) {
             this.showFragmentAttribute(
               sa.id,
@@ -1501,15 +1501,15 @@ export class AttributesScene {
               sa.offset
             );
           } else {
-            this.disposeStationAttribute(sa.id);
+            this.disposeSectionAttribute(sa.id);
           }
-          sa.attribute.visible = visible;
+          sa.visible = visible;
           sectionHasChanges = true;
         }
       });
 
       cave.attributes.componentAttributes.forEach((ca) => {
-        if (ca.attribute.visible !== visible) {
+        if (ca.visible !== visible) {
           if (visible === true) {
             this.showFragmentAttribute(
               ca.id,
@@ -1524,7 +1524,7 @@ export class AttributesScene {
           } else {
             this.disposeSectionAttribute(ca.id);
           }
-          ca.attribute.visible = visible;
+          ca.visible = visible;
           componentHasChanges = true;
         }
       });
