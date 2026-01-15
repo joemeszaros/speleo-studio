@@ -443,14 +443,9 @@ export class SettingsPanel {
             (value) => {
               this.options.scene.camera.target.show = value;
             }
-          ),
-          this.createCheckbox(
-            i18n.t('ui.settingsPanel.labels.sectionsLabel'),
-            this.options.scene.sections.labels.show,
-            (value) => {
-              this.options.scene.sections.labels.show = value;
-            }
+
           )
+
         ])
 
       ],
@@ -478,28 +473,37 @@ export class SettingsPanel {
             }
           }
         ]),
-        this.createColorInput(
-          i18n.t('ui.settingsPanel.labels.labelColor'),
-          this.options.scene.sections.labels.color,
+        this.createSubGroup(
+          i18n.t('ui.settingsPanel.labels.sectionsLabel'),
+          [
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.labelColor'),
+              this.options.scene.sections.labels.color,
+              (value) => {
+                this.options.scene.sections.labels.color = value;
+              }
+            ),
+            this.createColorInput(
+              i18n.t('ui.settingsPanel.labels.labelStrokeColor'),
+              this.options.scene.sections.labels.strokeColor,
+              (value) => {
+                this.options.scene.sections.labels.strokeColor = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.labelSize'),
+              this.options.scene.sections.labels.size,
+              1,
+              32,
+              1,
+              (value) => {
+                this.options.scene.sections.labels.size = value;
+              }
+            )
+          ],
+          this.options.scene.sections.labels,
           (value) => {
-            this.options.scene.sections.labels.color = value;
-          }
-        ),
-        this.createColorInput(
-          i18n.t('ui.settingsPanel.labels.labelStrokeColor'),
-          this.options.scene.sections.labels.strokeColor,
-          (value) => {
-            this.options.scene.sections.labels.strokeColor = value;
-          }
-        ),
-        this.createRangeInput(
-          i18n.t('ui.settingsPanel.labels.labelSize'),
-          this.options.scene.sections.labels.size,
-          1,
-          32,
-          1,
-          (value) => {
-            this.options.scene.sections.labels.size = value;
+            this.options.scene.sections.labels.show = value;
           }
         ),
         this.createRangeInput(

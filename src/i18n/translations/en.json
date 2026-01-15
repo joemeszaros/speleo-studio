@@ -167,7 +167,7 @@
         "startPointColor": "Start point color",
         "targetPoint": "Camera target point",
         "sectionsLabel": "Sections label",
-        "circleOpacity": "Circle opacity",
+        "circleOpacity": "Bedding - tectonic circle opacity",
         "attributes": "Attributes",
         "showAllAttributes": "Show all attributes"
       },

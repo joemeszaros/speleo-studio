@@ -167,7 +167,7 @@
         "startPointColor": "Kezdőpont színe",
         "targetPoint": "Kamera célpont",
         "sectionsLabel": "Szakasz címkék",
-        "circleOpacity": "Kör átlátszóság",
+        "circleOpacity": "Dőlés - Tektonikus kör átlátszóság",
         "attributes": "Attribútumok",
         "showAllAttributes": "Összes attribútum megjelenítése"
       },

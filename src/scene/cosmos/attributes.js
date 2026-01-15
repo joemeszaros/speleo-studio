@@ -148,6 +148,10 @@ export class AttributesScene {
         sprite = textSprite.getSprite();
         this.sectionAttributes3DGroup.add(sprite);
         sprite.layers.set(1);
+
+        if (!this.options.scene.sections.labels.show) {
+          sprite.visible = false;
+        }
       }
 
       this.sectionAttributes.set(id, {
