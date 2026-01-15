@@ -21,6 +21,7 @@ import { i18n } from '../i18n/i18n.js';
 import * as THREE from 'three';
 import { ShotType } from '../model/survey.js';
 import { Color } from '../model.js';
+import { WGS84Converter } from '../utils/geo.js';
 
 class Exporter {
 
@@ -665,6 +666,241 @@ class Exporter {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * Export caves to KML (Keyhole Markup Language) format for use with Google Earth and other GIS software.
+   * The KML file contains:
+   * - Placemarks for each survey station with WGS84 coordinates
+   * - LineStrings connecting stations according to survey shots
+   * - Organized in folders by cave and survey
+   *
+   * @param {Map} caves - Map of cave objects to export
+   * @param {string} fileName - Base filename for the export (without extension)
+   */
+  static exportKML(caves, fileName) {
+    const lines = [];
+
+    // XML declaration and KML root element
+    lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+    lines.push('<kml xmlns="http://www.opengis.net/kml/2.2">');
+    lines.push('<Document>');
+    lines.push(`  <name>${this.escapeXml(fileName)}</name>`);
+    lines.push('  <description>Cave survey data exported from Speleo Studio</description>');
+
+    // Define styles for stations and centerlines
+    lines.push('  <Style id="stationStyle">');
+    lines.push('    <IconStyle>');
+    lines.push('      <scale>0.6</scale>');
+    lines.push('      <Icon>');
+    lines.push('        <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>');
+    lines.push('      </Icon>');
+    lines.push('      <color>ff00ffff</color>');
+    lines.push('    </IconStyle>');
+    lines.push('    <LabelStyle>');
+    lines.push('      <scale>0.7</scale>');
+    lines.push('    </LabelStyle>');
+    lines.push('  </Style>');
+
+    lines.push('  <Style id="centerLineStyle">');
+    lines.push('    <LineStyle>');
+    lines.push('      <color>ff0000ff</color>');
+    lines.push('      <width>2</width>');
+    lines.push('    </LineStyle>');
+    lines.push('  </Style>');
+
+    lines.push('  <Style id="splayStyle">');
+    lines.push('    <LineStyle>');
+    lines.push('      <color>8000ff00</color>');
+    lines.push('      <width>1</width>');
+    lines.push('    </LineStyle>');
+    lines.push('  </Style>');
+
+    let hasGeoData = false;
+
+    caves.values().forEach((cave) => {
+      // Check if cave has geo data for coordinate conversion
+      if (!cave.geoData || !cave.geoData.coordinateSystem || cave.geoData.coordinates.length === 0) {
+        console.warn(`Cave "${cave.name}" has no geo data, skipping KML export for this cave`);
+        return;
+      }
+
+      hasGeoData = true;
+
+      // Build a map of station names to their WGS84 coordinates
+      const stationCoords = new Map();
+      const coordinateSystem = cave.geoData.coordinateSystem;
+
+      // Get reference coordinate from geoData
+      const refCoord = cave.geoData.coordinates[0];
+      if (!refCoord) {
+        console.warn(`Cave "${cave.name}" has no reference coordinate, skipping`);
+        return;
+      }
+
+      // Calculate WGS84 coordinates for all stations
+      cave.stations.forEach((station, stationName) => {
+        // Calculate the projected coordinate by adding station position to reference
+        const projectedCoord = refCoord.coordinate.addVector(station.position);
+
+        try {
+          const wgs84 = WGS84Converter.toLatLon(projectedCoord, coordinateSystem);
+          stationCoords.set(stationName, {
+            lat       : wgs84.latitude,
+            lon       : wgs84.longitude,
+            elevation : projectedCoord.elevation !== undefined ? projectedCoord.elevation : station.position.z
+          });
+        } catch (e) {
+          console.warn(`Failed to convert coordinates for station "${stationName}": ${e.message}`);
+        }
+      });
+
+      if (stationCoords.size === 0) {
+        console.warn(`Cave "${cave.name}" has no valid station coordinates, skipping`);
+        return;
+      }
+
+      // Create folder for cave
+      lines.push(`  <Folder>`);
+      lines.push(`    <name>${this.escapeXml(cave.name)}</name>`);
+
+      if (cave.metadata) {
+        const metaDesc = [];
+        if (cave.metadata.settlement) metaDesc.push(`Settlement: ${cave.metadata.settlement}`);
+        if (cave.metadata.catasterCode) metaDesc.push(`Cataster code: ${cave.metadata.catasterCode}`);
+        if (cave.metadata.country) metaDesc.push(`Country: ${cave.metadata.country}`);
+        if (cave.metadata.region) metaDesc.push(`Region: ${cave.metadata.region}`);
+        if (metaDesc.length > 0) {
+          lines.push(`    <description>${this.escapeXml(metaDesc.join('\n'))}</description>`);
+        }
+      }
+
+      // Create subfolder for surveys (centerlines)
+      lines.push('    <Folder>');
+      lines.push(`      <name>${i18n.t('common.surveys')}</name>`);
+
+      cave.surveys.forEach((survey) => {
+        lines.push('      <Folder>');
+        lines.push(`        <name>${this.escapeXml(survey.name)}</name>`);
+
+        // Group shots by type
+        const centerShots = survey.shots.filter((s) => s.isCenter());
+        const splayShots = survey.shots.filter((s) => s.isSplay());
+
+        // Export center line as connected LineString
+        if (centerShots.length > 0) {
+          lines.push('        <Placemark>');
+          lines.push(`          <name>${i18n.t('ui.settingsPanel.groups.centerLines')}</name>`);
+          lines.push('          <styleUrl>#centerLineStyle</styleUrl>');
+          lines.push('          <MultiGeometry>');
+
+          centerShots.forEach((shot) => {
+            const fromCoord = stationCoords.get(survey.getFromStationName(shot));
+            const toCoord = stationCoords.get(survey.getToStationName(shot));
+
+            if (fromCoord && toCoord) {
+              lines.push('            <LineString>');
+              lines.push('              <altitudeMode>absolute</altitudeMode>');
+              lines.push('              <coordinates>');
+              lines.push(`                ${fromCoord.lon},${fromCoord.lat},${fromCoord.elevation}`);
+              lines.push(`                ${toCoord.lon},${toCoord.lat},${toCoord.elevation}`);
+              lines.push('              </coordinates>');
+              lines.push('            </LineString>');
+            }
+          });
+
+          lines.push('          </MultiGeometry>');
+          lines.push('        </Placemark>');
+        }
+
+        // Export splays
+        if (splayShots.length > 0) {
+          lines.push('        <Placemark>');
+          lines.push(`          <name>${i18n.t('ui.settingsPanel.groups.splays')}</name>`);
+          lines.push('          <styleUrl>#splayStyle</styleUrl>');
+          lines.push('          <MultiGeometry>');
+
+          splayShots.forEach((shot) => {
+            const fromCoord = stationCoords.get(survey.getFromStationName(shot));
+            const toCoord = stationCoords.get(survey.getToStationName(shot));
+
+            if (fromCoord && toCoord) {
+              lines.push('            <LineString>');
+              lines.push('              <altitudeMode>absolute</altitudeMode>');
+              lines.push('              <coordinates>');
+              lines.push(`                ${fromCoord.lon},${fromCoord.lat},${fromCoord.elevation}`);
+              lines.push(`                ${toCoord.lon},${toCoord.lat},${toCoord.elevation}`);
+              lines.push('              </coordinates>');
+              lines.push('            </LineString>');
+            } else {
+              console.warn(`Failed to get coordinates for shot "${shot.id}": ${shot.from} or ${shot.to}`);
+            }
+          });
+
+          lines.push('          </MultiGeometry>');
+          lines.push('        </Placemark>');
+        }
+
+        lines.push('      </Folder>');
+      });
+
+      lines.push('    </Folder>');
+
+      // Create subfolder for stations (hidden by default)
+      lines.push('    <Folder>');
+      lines.push(`      <name>${i18n.t('common.stations')}</name>`);
+      lines.push('      <visibility>0</visibility>');
+
+      stationCoords.forEach((coord, stationName) => {
+        const station = cave.stations.get(stationName);
+        // Skip splay stations in the stations folder
+        if (station && station.type === ShotType.SPLAY) return;
+
+        lines.push('      <Placemark>');
+        lines.push(`        <name>${this.escapeXml(stationName)}</name>`);
+        lines.push('        <styleUrl>#stationStyle</styleUrl>');
+        lines.push('        <Point>');
+        lines.push('          <altitudeMode>absolute</altitudeMode>');
+        lines.push(`          <coordinates>${coord.lon},${coord.lat},${coord.elevation}</coordinates>`);
+        lines.push('        </Point>');
+        lines.push('      </Placemark>');
+      });
+
+      lines.push('    </Folder>');
+
+      lines.push('  </Folder>');
+    });
+
+    lines.push('</Document>');
+    lines.push('</kml>');
+
+    if (!hasGeoData) {
+      showErrorPanel(i18n.t('errors.export.noGeoDataForKml'));
+      return;
+    }
+
+    const blob = new Blob([lines.join('\n')], { type: 'application/vnd.google-earth.kml+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.kml`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Escape special XML characters to prevent malformed KML output
+   * @param {string} str - String to escape
+   * @returns {string} Escaped string safe for XML
+   */
+  static escapeXml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
   static executeExport(caves, scene, panel, project = null) {
 
     const formatSelect = panel.querySelector('#export-format');
@@ -689,6 +925,9 @@ class Exporter {
           break;
         case 'svg':
           Exporter.exportSVG(caves, scene, filename, project);
+          break;
+        case 'kml':
+          Exporter.exportKML(caves, filename);
           break;
         default:
           throw new Error(i18n.t('ui.panels.export.unsupportedExportFormat', { format }));
@@ -741,6 +980,7 @@ class ExportWindow {
               <option value="dxf">DXF</option>
               <option value="polygon">Polygon (.cave)</option>
               <option value="svg">SVG</option>
+              <option value="kml">KML</option>
             </select>
           </div>
           <div class="form-group">

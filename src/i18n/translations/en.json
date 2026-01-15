@@ -66,7 +66,7 @@
         "survey": "Survey data import from TopoDroid, Polygon, and JSON formats",
         "navigation": "Interactive 3D scene navigation",
         "editing": "Survey data editing and validation",
-        "export": "Multiple export formats (PNG, DXF, Polygon, JSON)",
+        "export": "Multiple export formats (PNG, DXF, Polygon, JSON, KML)",
         "management": "Project management and data persistence",
         "surface": "Surface mesh visualization (PLY format)"
       },
@@ -944,7 +944,8 @@
       }
     },
     "export": {
-      "exportFailed": "Export failed: {error}"
+      "exportFailed": "Export failed: {error}",
+      "noGeoDataForKml": "KML export requires geographic coordinates. Please set up the coordinate system for your cave(s) first."
     },
     "views": {
       "ratioNotInteger": "Ratio '{ratio}' is not an integer",
@@ -1086,6 +1087,8 @@
     "from": "From",
     "to": "To",
     "station": "Station",
+    "stations": "Stations",
+    "surveys": "Surveys",
     "shots": "Shots",
     "current": "Current",
     "open": "Open",
