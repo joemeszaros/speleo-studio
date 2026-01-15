@@ -60,6 +60,10 @@ class Grid {
     }
   }
 
+  hide() {
+    this.grid.visible = false;
+  }
+
   roll() {
     const oldMode = this.options.scene.grid.mode;
     let newMode;

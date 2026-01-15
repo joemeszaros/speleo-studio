@@ -342,6 +342,20 @@ class ProjectManager {
       }
     }
 
+    // adjust grid
+    const boundingBox = this.scene.computeBoundingBox();
+    const [w, h, d] = boundingBox.getSize(new THREE.Vector3());
+
+    if (!(w === 0 && h === 0 && d === 0)) {
+      this.scene.grid.adjust(boundingBox);
+
+      if (this.options.scene.grid.mode === 'hidden') {
+        this.scene.grid.hide();
+      } else {
+        this.scene.view.renderView();
+      }
+    }
+
     await this.projectSystem.removeCaveFromProject(projectId, caveId);
 
     switch (source) {
@@ -741,11 +755,16 @@ class ProjectManager {
       }
 
       const boundingBox = this.scene.computeBoundingBox();
+
       const [w, h, d] = boundingBox.getSize(new THREE.Vector3());
 
       // if the center lines or splays are not visible
       if (!(w === 0 && h === 0 && d === 0)) {
         this.scene.grid.adjust(boundingBox);
+
+        if (this.options.scene.grid.mode === 'hidden') {
+          this.scene.grid.hide();
+        }
 
         this.scene.views.forEach((view) => {
           view.initiated = false;
@@ -787,7 +806,7 @@ class ProjectManager {
         await this.googleDriveSync.uploadCaveToProject(cave, currentProject, revInfo);
         await this.revisionStore.saveRevision(revInfo);
       } catch (error) {
-        console.log('Failed to sync to Google Drive', error);
+        console.warn('Failed to sync to Google Drive', error);
       }
     }
   }
