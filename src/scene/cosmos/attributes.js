@@ -106,7 +106,8 @@ export class AttributesScene {
   }
 
   // for section and component attributes
-  showFragmentAttribute(id, segments, attribute, format = '${name}', color, caveName, position, offset) {
+  showFragmentAttribute(id, segments, attribute, format = '${name}', color, caveName, position, offset, render = true) {
+
     if (!this.sectionAttributes.has(id)) {
       // Create tube geometry for the attribute path
       const tubeGroup = SegmentScene.createTubeGeometryFromSegments(segments, this.options.scene.sections.width);
@@ -159,7 +160,9 @@ export class AttributesScene {
         segments : segments,
         color    : color
       });
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
@@ -240,7 +243,7 @@ export class AttributesScene {
     matchingIds.forEach((id) => this.disposeSectionAttribute(id));
   }
 
-  disposeSectionAttribute(id) {
+  disposeSectionAttribute(id, render = true) {
     if (this.sectionAttributes.has(id)) {
       const e = this.sectionAttributes.get(id);
 
@@ -263,7 +266,9 @@ export class AttributesScene {
         sprite.geometry.dispose();
       }
       this.sectionAttributes.delete(id);
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
@@ -342,23 +347,32 @@ export class AttributesScene {
       });
   }
 
-  showStationAttribute(id, station, attribute, caveName, position, offset) {
+  showStationAttribute(id, station, attribute, caveName, position, offset, render = true, onComplete = () => {}) {
     if (!this.stationAttributes.has(id)) {
       if (['bedding', 'fault'].includes(attribute.name)) {
-        this.showPlaneFor(id, station, attribute, caveName, position, offset);
+        this.showPlaneFor(id, station, attribute, caveName, position, offset, render);
+        onComplete();
       } else if (attribute.name === 'photo' && attribute.url) {
-        this.showPhotoAttribute(id, station, attribute, caveName, position, offset);
+        this.showPhotoAttribute(id, station, attribute, caveName, position, offset, render).then(onComplete);
       } else if (
         attribute.name === 'calcite_raft' &&
         attribute.thickness !== undefined &&
         attribute.thickness !== null
       ) {
-        this.showCalciteRaftFor(id, station, attribute, caveName, position, offset);
+        this.showCalciteRaftFor(id, station, attribute, caveName, position, offset, render);
+        onComplete();
       } else if (attribute.name === 'draft' && attribute.direction) {
-        this.showDraftFor(id, station, attribute, caveName, position, offset);
+        this.showDraftFor(id, station, attribute, caveName, position, offset, render, onComplete);
       } else {
-        this.showIconFor(id, station, attribute, caveName, position, offset);
+        // async funtion call
+        this.showIconFor(id, station, attribute, caveName, position, offset, {}, render).then(() => {
+          onComplete();
+        });
       }
+    } else {
+      // Attribute already exists, still call onComplete
+      console.warn(`Attribute ${id} already exists`);
+      onComplete();
     }
   }
 
@@ -421,7 +435,7 @@ export class AttributesScene {
       .map((v) => v.sprite);
   }
 
-  showPlaneFor(id, station, attribute, caveName, position, offset) {
+  showPlaneFor(id, station, attribute, caveName, position, offset, render = true) {
     if (!this.stationAttributes.has(id)) {
       const finalPosition = this.calculateAttributePosition(station.position, position, offset);
 
@@ -488,7 +502,9 @@ export class AttributesScene {
       this.stationAttributes.set(id, entry);
       this.updateLabelPosition(entry);
 
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
@@ -564,7 +580,7 @@ export class AttributesScene {
     return textSprite;
   }
 
-  showCalciteRaftFor(id, station, attribute, caveName, position, offset) {
+  showCalciteRaftFor(id, station, attribute, caveName, position, offset, render = true) {
     if (!this.stationAttributes.has(id)) {
       const finalPosition = this.calculateAttributePosition(station.position, position, offset);
 
@@ -666,11 +682,13 @@ export class AttributesScene {
       };
       this.stationAttributes.set(id, entry);
 
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
-  showDraftFor(id, station, attribute, caveName, position, offset) {
+  showDraftFor(id, station, attribute, caveName, position, offset, render = true, onComplete = () => {}) {
     if (!this.stationAttributes.has(id)) {
       const directionStationName = attribute.direction;
       const strength = attribute.strength || 1; // Default strength if not specified (1-5)
@@ -680,6 +698,7 @@ export class AttributesScene {
       const cave = this.scene.db.getCave(caveName);
       if (!cave || !cave.stations) {
         console.warn(`Cave ${caveName} or stations not found for draft attribute ${id}`);
+        onComplete();
         return;
       }
 
@@ -687,6 +706,7 @@ export class AttributesScene {
       const directionStation = cave.stations.get(directionStationName);
       if (!directionStation) {
         console.warn(`Direction station ${directionStationName} not found for draft attribute ${id}`);
+        onComplete();
         return;
       }
 
@@ -697,6 +717,7 @@ export class AttributesScene {
 
       if (distance === 0) {
         console.warn(`Direction station ${directionStationName} is at same position as current station`);
+        onComplete();
         return;
       }
 
@@ -710,20 +731,31 @@ export class AttributesScene {
 
       direction.normalize();
       // Use showIconFor with draft icon and direction info for rotation
-      //this.options.scene.stationAttributes.iconScale
-      this.showIconFor(id, station, attribute, caveName, position, offset, {
-        iconPath  : `icons/draft_${season}_${strength}.svg`,
-        rotation  : 0, // Initial rotation, will be updated by updateDraftRotations
-        iconScale : this.options.scene.stationAttributes.iconScale * 1.1 * (1 + (10 * strength) / 100),
-        width     : dimenstionsByStrength[strength].width,
-        height    : dimenstionsByStrength[strength].height,
-        extraData : {
-          hasDraft         : true,
-          direction        : direction,
-          directionStation : directionStation,
-          strength         : strength
-        }
-      });
+      this.showIconFor(
+        id,
+        station,
+        attribute,
+        caveName,
+        position,
+        offset,
+        {
+          iconPath  : `icons/draft_${season}_${strength}.svg`,
+          rotation  : 0, // Initial rotation, will be updated by updateDraftRotations
+          iconScale : this.options.scene.stationAttributes.iconScale * 1.1 * (1 + (10 * strength) / 100),
+          width     : dimenstionsByStrength[strength].width,
+          height    : dimenstionsByStrength[strength].height,
+          extraData : {
+            hasDraft         : true,
+            direction        : direction,
+            directionStation : directionStation,
+            strength         : strength
+          }
+        },
+        render
+      ).then(onComplete);
+
+    } else {
+      onComplete();
     }
   }
 
@@ -1159,8 +1191,13 @@ export class AttributesScene {
    * @param {object} offset - Offset from station position (optional)
    * @param {object} config - Optional configuration: { iconPath, rotation, extraData, highRes }
    */
-  showIconFor(id, station, attribute, caveName, position, offset, config = {}) {
-    if (!this.stationAttributes.has(id)) {
+  showIconFor(id, station, attribute, caveName, position, offset, config = {}, render = true) {
+    return new Promise((resolve, reject) => {
+      if (this.stationAttributes.has(id)) {
+        resolve(this.stationAttributes.get(id));
+        return;
+      }
+
       const finalPosition = this.calculateAttributePosition(station.position, position, offset);
 
       // Create a sprite with the SVG icon
@@ -1206,19 +1243,23 @@ export class AttributesScene {
           }
 
           this.layoutStationAttributes();
-          this.scene.view.renderView();
+          if (render) {
+            this.scene.view.renderView();
+          }
+          resolve(entry);
         },
         (error) => {
           console.warn(`Failed to load icon for ${attribute.name}:`, error);
+          reject(error);
         },
         512,
         config.width,
         config.height
       );
-    }
+    });
   }
 
-  async showPhotoAttribute(id, station, attribute, caveName, position, offset) {
+  async showPhotoAttribute(id, station, attribute, caveName, position, offset, render = true) {
 
     try {
       // Check if browser supports Cache API and imageCache is available
@@ -1276,7 +1317,9 @@ export class AttributesScene {
       });
 
       this.layoutStationAttributes();
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     } catch (error) {
       console.error(`Failed to load photo from ${attribute.url}:`, error);
     }
@@ -1289,28 +1332,29 @@ export class AttributesScene {
         matchingIds.push(id);
       }
     }
-    matchingIds.forEach((id) => this.disposeStationAttribute(id));
+    matchingIds.forEach((id) => this.disposeStationAttribute(id, false));
+    this.scene.view.renderView();
   }
 
-  disposeStationAttribute(id) {
+  disposeStationAttribute(id, render = true) {
     if (this.stationAttributes.has(id)) {
       const entry = this.stationAttributes.get(id);
       const attributeName = entry.attribute.name;
       if (['bedding', 'fault'].includes(attributeName)) {
-        this.disposePlaneFor(id);
+        this.disposePlaneFor(id, render);
       } else if (entry.hasRaft) {
-        this.disposeRaftFor(id);
+        this.disposeRaftFor(id, render);
       } else if (entry.hasDraft) {
-        this.disposeDraftFor(id);
+        this.disposeDraftFor(id, render);
       } else if (entry.hasImage) {
-        this.disposeImageFor(id);
+        this.disposeImageFor(id, render);
       } else {
-        this.disposeIconFor(id);
+        this.disposeIconFor(id, render);
       }
     }
   }
 
-  disposeImageFor(id) {
+  disposeImageFor(id, render = true) {
     if (this.stationAttributes.has(id)) {
       const entry = this.stationAttributes.get(id);
       this.stationAttributes3DGroup.remove(entry.sprite);
@@ -1320,11 +1364,13 @@ export class AttributesScene {
       entry.sprite.geometry?.dispose();
       this.stationAttributes.delete(id);
       this.layoutStationAttributes();
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
-  disposeIconFor(id) {
+  disposeIconFor(id, render = true) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
 
@@ -1339,11 +1385,13 @@ export class AttributesScene {
       this.stationAttributes3DGroup.remove(sprite);
       this.stationAttributes.delete(id);
       this.layoutStationAttributes();
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
-  disposePlaneFor(id) {
+  disposePlaneFor(id, render = true) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
       const group = e.group;
@@ -1374,11 +1422,13 @@ export class AttributesScene {
 
       this.stationAttributes3DGroup.remove(group);
       this.stationAttributes.delete(id);
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
-  disposeRaftFor(id) {
+  disposeRaftFor(id, render = true) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
       const sprite = e.sprite;
@@ -1393,11 +1443,13 @@ export class AttributesScene {
       }
 
       this.stationAttributes.delete(id);
-      this.scene.view.renderView();
+      if (render) {
+        this.scene.view.renderView();
+      }
     }
   }
 
-  disposeDraftFor(id, renderView = true) {
+  disposeDraftFor(id, render = true) {
     if (this.stationAttributes.has(id)) {
       const e = this.stationAttributes.get(id);
 
@@ -1413,7 +1465,7 @@ export class AttributesScene {
       }
 
       this.stationAttributes.delete(id);
-      if (renderView) {
+      if (render) {
         this.scene.view.renderView();
       }
     }
@@ -1466,21 +1518,30 @@ export class AttributesScene {
     this.sectionAttributes.forEach((sa) => (sa.caveName = newName)); //TODO: what to do with component attributes here?
   }
 
-  toggleAllAttributesVisibility(visible) {
+  toggleAllAttributesVisibility(showOrHide) {
     // Update visibility in all caves' attribute data structures
     const allCaves = this.scene.db.getAllCaves();
+    const visible = showOrHide.mode === 'show';
+
     allCaves.forEach((cave) => {
       let stationHasChanges = false;
       let sectionHasChanges = false;
       let componentHasChanges = false;
 
+      const promises = [];
       cave.attributes.stationAttributes.forEach((sa) => {
         if (sa.visible !== visible) {
           if (visible === true && cave.stations.has(sa.name)) {
             const station = cave.stations.get(sa.name);
-            this.showStationAttribute(sa.id, station, sa.attribute, cave.name, sa.position, sa.offset);
+            promises.push(
+              new Promise((resolve) => {
+                this.showStationAttribute(sa.id, station, sa.attribute, cave.name, sa.position, sa.offset, false, () =>
+                  resolve()
+                );
+              })
+            );
           } else {
-            this.disposeStationAttribute(sa.id);
+            this.disposeStationAttribute(sa.id, false);
           }
           sa.visible = visible;
           stationHasChanges = true;
@@ -1498,10 +1559,11 @@ export class AttributesScene {
               sa.color,
               cave.name,
               sa.position,
-              sa.offset
+              sa.offset,
+              false
             );
           } else {
-            this.disposeSectionAttribute(sa.id);
+            this.disposeSectionAttribute(sa.id, false);
           }
           sa.visible = visible;
           sectionHasChanges = true;
@@ -1519,15 +1581,26 @@ export class AttributesScene {
               ca.color,
               cave.name,
               ca.position,
-              ca.offset
+              ca.offset,
+              false
             );
           } else {
-            this.disposeSectionAttribute(ca.id);
+            this.disposeSectionAttribute(ca.id, false);
           }
           ca.visible = visible;
           componentHasChanges = true;
         }
       });
+
+      if (stationHasChanges || sectionHasChanges || componentHasChanges) {
+        if (promises.length > 0) {
+          Promise.all(promises).then(() => {
+            this.scene.view.renderView();
+          });
+        } else {
+          this.scene.view.renderView();
+        }
+      }
 
       // Emit change events to notify open attribute editors
       if (stationHasChanges) {
@@ -1553,8 +1626,6 @@ export class AttributesScene {
           })
         );
       }
-
-      this.scene.view.renderView();
     });
   }
 

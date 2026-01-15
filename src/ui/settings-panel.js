@@ -51,26 +51,6 @@ export class SettingsPanel {
       ])
     );
 
-    // Print Layout Section
-    this.createSection(
-      '🖨️ ' + i18n.t('ui.settingsPanel.sections.print'),
-      [
-        this.createSelect(
-          i18n.t('ui.settingsPanel.labels.printLayout'),
-          [i18n.t('ui.settingsPanel.options.portrait'), i18n.t('ui.settingsPanel.options.landscape')],
-          i18n.t(`ui.settingsPanel.options.${this.options.print.layout}`),
-          (value) => {
-            if (value === i18n.t('ui.settingsPanel.options.portrait')) {
-              this.options.print.layout = 'portrait';
-            } else {
-              this.options.print.layout = 'landscape';
-            }
-          }
-        )
-      ],
-      true
-    );
-
     // Survey Lines Section (expanded by default)
     this.createSection(
       '➜ ' + i18n.t('ui.settingsPanel.sections.surveyLines'),
@@ -287,92 +267,86 @@ export class SettingsPanel {
     this.createSection(
       '🏷️ ' + i18n.t('ui.settingsPanel.sections.stationLabels'),
       [
-        this.createSubGroup(
-          i18n.t('ui.settingsPanel.groups.stationLabels'),
-          [
-            this.createSelect(
-              i18n.t('ui.settingsPanel.labels.labelMode'),
-              [i18n.t('ui.settingsPanel.options.name'), i18n.t('ui.settingsPanel.options.depth')],
-              i18n.t(`ui.settingsPanel.options.${this.options.scene.stationLabels.mode}`),
-              (value) => {
-                if (value === i18n.t('ui.settingsPanel.options.name')) {
-                  this.options.scene.stationLabels.mode = 'name';
-                } else {
-                  this.options.scene.stationLabels.mode = 'depth';
-                }
-              }
-            ),
-            this.createColorInput(
-              i18n.t('ui.settingsPanel.labels.color'),
-              this.options.scene.stationLabels.color,
-              (value) => {
-                this.options.scene.stationLabels.color = value;
-              }
-            ),
-            this.createRangeInput(
-              i18n.t('ui.settingsPanel.labels.size'),
-              this.options.scene.stationLabels.size,
-              1,
-              60,
-              1,
-              (value) => {
-                this.options.scene.stationLabels.size = value;
-              }
-            ),
-            this.createRangeInput(
-              i18n.t('ui.settingsPanel.labels.offset'),
-              this.options.scene.stationLabels.offset,
-              0.1,
-              10,
-              0.1,
-              (value) => {
-                this.options.scene.stationLabels.offset = value;
-              }
-            ),
-            this.createSelect(
-              i18n.t('ui.settingsPanel.labels.offsetDirection'),
-              [
-                i18n.t('ui.settingsPanel.options.up'),
-                i18n.t('ui.settingsPanel.options.down'),
-                i18n.t('ui.settingsPanel.options.left'),
-                i18n.t('ui.settingsPanel.options.right')
-              ],
-              i18n.t(`ui.settingsPanel.options.${this.options.scene.stationLabels.offsetDirection}`),
-              (value) => {
-                if (value === i18n.t('ui.settingsPanel.options.up')) {
-                  this.options.scene.stationLabels.offsetDirection = 'up';
-                } else if (value === i18n.t('ui.settingsPanel.options.down')) {
-                  this.options.scene.stationLabels.offsetDirection = 'down';
-                } else if (value === i18n.t('ui.settingsPanel.options.left')) {
-                  this.options.scene.stationLabels.offsetDirection = 'left';
-                } else if (value === i18n.t('ui.settingsPanel.options.right')) {
-                  this.options.scene.stationLabels.offsetDirection = 'right';
-                }
-
-              }
-            ),
-            this.createCheckbox(
-              i18n.t('ui.settingsPanel.labels.stroke'),
-              this.options.scene.stationLabels.stroke,
-              (value) => {
-                this.options.scene.stationLabels.stroke = value;
-              }
-            ),
-            this.createColorInput(
-              i18n.t('ui.settingsPanel.labels.strokeColor'),
-              this.options.scene.stationLabels.strokeColor,
-              (value) => {
-                this.options.scene.stationLabels.strokeColor = value;
-              }
-            )
-          ],
-          this.options.scene.stationLabels,
+        this.createSelect(
+          i18n.t('ui.settingsPanel.labels.labelMode'),
+          [i18n.t('ui.settingsPanel.options.name'), i18n.t('ui.settingsPanel.options.depth')],
+          i18n.t(`ui.settingsPanel.options.${this.options.scene.stationLabels.mode}`),
           (value) => {
-            this.options.scene.stationLabels.show = value;
+            if (value === i18n.t('ui.settingsPanel.options.name')) {
+              this.options.scene.stationLabels.mode = 'name';
+            } else {
+              this.options.scene.stationLabels.mode = 'depth';
+            }
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.color'),
+          this.options.scene.stationLabels.color,
+          (value) => {
+            this.options.scene.stationLabels.color = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.size'),
+          this.options.scene.stationLabels.size,
+          1,
+          60,
+          1,
+          (value) => {
+            this.options.scene.stationLabels.size = value;
+          }
+        ),
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.offset'),
+          this.options.scene.stationLabels.offset,
+          0.1,
+          10,
+          0.1,
+          (value) => {
+            this.options.scene.stationLabels.offset = value;
+          }
+        ),
+        this.createSelect(
+          i18n.t('ui.settingsPanel.labels.offsetDirection'),
+          [
+            i18n.t('ui.settingsPanel.options.up'),
+            i18n.t('ui.settingsPanel.options.down'),
+            i18n.t('ui.settingsPanel.options.left'),
+            i18n.t('ui.settingsPanel.options.right')
+          ],
+          i18n.t(`ui.settingsPanel.options.${this.options.scene.stationLabels.offsetDirection}`),
+          (value) => {
+            if (value === i18n.t('ui.settingsPanel.options.up')) {
+              this.options.scene.stationLabels.offsetDirection = 'up';
+            } else if (value === i18n.t('ui.settingsPanel.options.down')) {
+              this.options.scene.stationLabels.offsetDirection = 'down';
+            } else if (value === i18n.t('ui.settingsPanel.options.left')) {
+              this.options.scene.stationLabels.offsetDirection = 'left';
+            } else if (value === i18n.t('ui.settingsPanel.options.right')) {
+              this.options.scene.stationLabels.offsetDirection = 'right';
+            }
+          }
+        ),
+        this.createCheckbox(
+          i18n.t('ui.settingsPanel.labels.stroke'),
+          this.options.scene.stationLabels.stroke,
+          (value) => {
+            this.options.scene.stationLabels.stroke = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.strokeColor'),
+          this.options.scene.stationLabels.strokeColor,
+          (value) => {
+            this.options.scene.stationLabels.strokeColor = value;
           }
         )
       ],
-      true
+      true,
+      this.options.scene.stationLabels,
+      (value) => {
+        this.options.scene.stationLabels.show = value;
+      }
     );
 
     // Appearance Section
@@ -486,13 +460,24 @@ export class SettingsPanel {
     this.createSection(
       '🅰️ ' + i18n.t('ui.settingsPanel.sections.attributes'),
       [
-        this.createCheckbox(
-          i18n.t('ui.settingsPanel.labels.showAllAttributes'),
-          this.options.scene.attributes.show,
-          (value) => {
-            this.options.scene.attributes.show = value;
+        this.createIconButtonRow([
+          {
+            icon    : 'icons/visible.svg',
+            label   : i18n.t('ui.editors.attributes.buttons.showAll'),
+            tooltip : i18n.t('ui.editors.attributes.buttons.showAll'),
+            onClick : () => {
+              this.options.scene.attributes.showOrHide = { mode: 'show' };
+            }
+          },
+          {
+            icon    : 'icons/invisible.svg',
+            label   : i18n.t('ui.editors.attributes.buttons.hideAll'),
+            tooltip : i18n.t('ui.editors.attributes.buttons.hideAll'),
+            onClick : () => {
+              this.options.scene.attributes.showOrHide = { mode: 'hide' };
+            }
           }
-        ),
+        ]),
         this.createColorInput(
           i18n.t('ui.settingsPanel.labels.labelColor'),
           this.options.scene.sections.labels.color,
@@ -507,7 +492,6 @@ export class SettingsPanel {
             this.options.scene.sections.labels.strokeColor = value;
           }
         ),
-
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.labelSize'),
           this.options.scene.sections.labels.size,
@@ -518,7 +502,6 @@ export class SettingsPanel {
             this.options.scene.sections.labels.size = value;
           }
         ),
-
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.stationIconScale'),
           this.options.scene.stationAttributes.iconScale,
@@ -731,17 +714,58 @@ export class SettingsPanel {
     this.createColorGradientSection();
   }
 
-  createSection(title, items, collapsed = false) {
+  createSection(title, items, collapsed = false, visibilityKey = null, onVisibilityChange = null) {
     const section = document.createElement('div');
     section.className = 'settings-group';
 
     const titleElement = document.createElement('h3');
     titleElement.className = 'settings-group-title';
-    titleElement.innerHTML = `
-      <span class="settings-group-toggle">${collapsed ? '▶' : '▼'}</span>
-      <span>${title}</span>
-    `;
-    titleElement.onclick = () => this.toggleSection(section);
+
+    const toggleSpan = document.createElement('span');
+    toggleSpan.className = 'settings-group-toggle';
+    toggleSpan.textContent = collapsed ? '▶' : '▼';
+
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = title;
+
+    titleElement.appendChild(toggleSpan);
+    titleElement.appendChild(titleSpan);
+
+    // Add visibility toggle if provided
+    if (visibilityKey && onVisibilityChange) {
+      const eyeIcon = document.createElement('span');
+      eyeIcon.className = 'visibility-toggle section-visibility';
+      eyeIcon.style.cursor = 'pointer';
+      eyeIcon.style.fontSize = '14px';
+      eyeIcon.style.marginLeft = 'auto';
+
+      if (visibilityKey.show === false) {
+        eyeIcon.innerHTML = '<span class="eye-strikethrough">👁️</span>';
+      } else {
+        eyeIcon.innerHTML = '👁️';
+      }
+
+      eyeIcon.onclick = (e) => {
+        e.stopPropagation();
+        const newValue = !visibilityKey.show;
+        visibilityKey.show = newValue;
+        onVisibilityChange(newValue);
+
+        if (newValue) {
+          eyeIcon.innerHTML = '👁️';
+        } else {
+          eyeIcon.innerHTML = '<span class="eye-strikethrough">👁️</span>';
+        }
+      };
+
+      titleElement.appendChild(eyeIcon);
+    }
+
+    titleElement.onclick = (e) => {
+      if (!e.target.closest('.visibility-toggle')) {
+        this.toggleSection(section);
+      }
+    };
     section.appendChild(titleElement);
 
     const content = document.createElement('div');
@@ -1014,6 +1038,33 @@ export class SettingsPanel {
     buttons.forEach((button) => {
       container.appendChild(button);
     });
+    return container;
+  }
+
+  createIconButtonRow(buttons) {
+    const container = document.createElement('div');
+    container.className = 'config-buttons-container';
+
+    buttons.forEach((btn) => {
+      const button = document.createElement('button');
+      button.className = 'settings-button';
+      button.title = btn.tooltip || '';
+      button.onclick = btn.onClick;
+
+      const img = document.createElement('img');
+      img.src = btn.icon;
+      img.style.width = '16px';
+      img.style.height = '16px';
+      img.style.verticalAlign = 'middle';
+      button.appendChild(img);
+
+      if (btn.label) {
+        button.appendChild(document.createTextNode(' ' + btn.label));
+      }
+
+      container.appendChild(button);
+    });
+
     return container;
   }
 

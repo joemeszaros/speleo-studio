@@ -112,8 +112,8 @@ export const DEFAULT_OPTIONS = {
       iconScale : 7.0
     },
     attributes : {
-      show     : true,
-      tectonic : {
+      showOrHide : { mode: 'show' }, // this is just  a trigger field for show/hide, we need to use an object to always have a unique value thats not the same as actual value
+      tectonic   : {
         circle : {
           color : {
             bedding : '#8b4513',
@@ -219,9 +219,6 @@ export const DEFAULT_OPTIONS = {
   },
   import : {
     cavesMaxDistance : 10000
-  },
-  print : {
-    layout : 'landscape'
   }
 };
 
@@ -905,7 +902,7 @@ export class ConfigChanges {
 
   handleAttributeVisibilityChanges(path, oldValue, newValue) {
     switch (path) {
-      case 'scene.attributes.show':
+      case 'scene.attributes.showOrHide':
         this.scene.attributes.toggleAllAttributesVisibility(newValue);
         break;
     }
@@ -1046,7 +1043,7 @@ export class ConfigChanges {
       this.handleStationLabelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.attributes.tectonic')) {
       this.handleTectonicAttributeChanges(path, oldValue, newValue);
-    } else if (path === 'scene.attributes.show') {
+    } else if (path === 'scene.attributes.showOrHide') {
       this.handleAttributeVisibilityChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.grid.')) {
       this.handleGridChanges(path, oldValue, newValue);
@@ -1058,8 +1055,6 @@ export class ConfigChanges {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('ui.stationDetails.')) {
       // do nothing, no action on sidebar changes
-    } else if (path.startsWith('print.layout')) {
-      // do nothing, no action on print layout changes
     } else {
       console.log(`⚠️ No handler for path: ${path}`);
     }
