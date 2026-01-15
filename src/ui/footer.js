@@ -82,69 +82,9 @@ class Footer {
   }
 
   showMessage(message) {
-    // Truncate long URLs and overall message if needed
-    const truncatedMessage = this.truncateMessage(message);
     // Wrap content in a span to ensure proper text truncation
     // Use inline-block so it can be centered by flexbox, with max-width for truncation
-    this.messagesContainer.innerHTML = `<span style="display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${truncatedMessage}</span>`;
-  }
-
-  /**
-   * Truncates long messages, especially URLs, to fit in the footer
-   */
-  truncateMessage(message) {
-    if (!message) {
-      return '';
-    }
-
-    // Create a temporary element to measure text width
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.visibility = 'hidden';
-    tempDiv.style.whiteSpace = 'nowrap';
-    tempDiv.style.font = window.getComputedStyle(this.messagesContainer).font;
-    document.body.appendChild(tempDiv);
-
-    // Get available width for content (footer width minus meta info and separators)
-    const footerWidth = this.element.offsetWidth;
-    const metaInfoWidth =
-      this.projectInfoContainer.offsetWidth +
-      this.coordinateInfoContainer.offsetWidth +
-      (this.driveSeparator.style.display !== 'none' ? this.driveSeparator.offsetWidth : 0) +
-      (this.googleDriveSyncIndicator.style.display !== 'none' ? this.googleDriveSyncIndicator.offsetWidth : 0);
-    const separatorsWidth = 60; // Approximate width for separators and margins
-    const availableWidth = footerWidth - metaInfoWidth - separatorsWidth - 30; // 30px for padding/margins
-
-    // Check if the message fits
-    tempDiv.innerHTML = message;
-    let currentMessage = message;
-
-    if (tempDiv.offsetWidth > availableWidth) {
-      // Message is too long, truncate it
-      const parts = currentMessage.split(' | ');
-      const truncatedParts = [];
-
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        tempDiv.innerHTML = truncatedParts.join(' | ') + (truncatedParts.length > 0 ? ' | ' : '') + part;
-
-        if (tempDiv.offsetWidth <= availableWidth - 50) {
-          // Leave some margin
-          truncatedParts.push(part);
-        } else {
-          // Add ellipsis to indicate truncation
-          if (truncatedParts.length > 0) {
-            truncatedParts.push('...');
-          }
-          break;
-        }
-      }
-
-      currentMessage = truncatedParts.join(' | ');
-    }
-
-    document.body.removeChild(tempDiv);
-    return currentMessage;
+    this.messagesContainer.innerHTML = `<span style="display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${message}</span>`;
   }
 
   clearMessage() {
