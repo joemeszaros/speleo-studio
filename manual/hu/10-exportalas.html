@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Exportálás és megosztás - Speleo Studio</title>
+    <title>Exportálás, PDF generálás és nyomtatás - Speleo Studio</title>
     <link rel="stylesheet" href="manual.css" />
     <style>
       img.emoji {
@@ -25,7 +25,7 @@
       <div class="logo">
         <img src="../../images/logo.png" alt="Speleo Studio Logo" />
       </div>
-      <h1>Exportálás és megosztás</h1>
+      <h1>Exportálás, PDF generálás és nyomtatás</h1>
 
       <div class="nav">
         <a href="09-eszkozok.html">← Előző: Eszközök</a>
@@ -33,20 +33,24 @@
         <a href="11-beallitasok.html">Következő: Beállítások →</a>
       </div>
 
-      <h2>Exportálás áttekintése</h2>
+      <h2>Áttekintés</h2>
       <p
-        >A Speleo Studio számos formátumot támogat az adatok exportálásához és megosztásához. Ez lehetővé teszi a
-        barlang adatok más alkalmazásokkal való használatát és a projekt, beállítások megosztását más
-        felhasználókkal.</p
-      >
+        >A Speleo Studio több formátumot támogat az adatok exportálásához és megosztásához. Ez lehetővé teszi a barlang
+        adatok más alkalmazásokkal való használatát és a projekt, beállítások megosztását más felhasználókkal. A PDF
+        generálás lehetővé teszi a barlang több oldalra bontott, milliméter pontosságú exportálását, amely alaprajzi és
+        hosszmetszeti térképek készítésénél lehet hasznos. A nyomtatás segítségével kinyomtathatjuk azt, amit éppen
+        látunk az adott nézetben, amely alaprajzi és hosszmetszeti térképek készítéséhez kevésbé alkalmas.
+      </p>
 
       <div class="info">
         <h3>Támogatott export formátumok:</h3>
         <ul>
-          <li><strong>JSON:</strong> Teljes projekt adatok és beállítások</li>
+          <li><strong>JSON:</strong> Teljes projekt adatok</li>
           <li><strong>PNG:</strong> Képernyő kép exportálás</li>
           <li><strong>DXF:</strong> CAD kompatibilis formátum</li>
           <li><strong>Polygon (.cave):</strong> Polygon szoftver kompatibilis</li>
+          <li><strong>SVG:</strong> Vektorgrafikus formátum</li>
+          <li><strong>KML:</strong> Google Earth kompatibilis formátum</li>
         </ul>
       </div>
 
@@ -71,6 +75,11 @@
           >
           <div class="image-placeholder black column-2"> <img src="images/8-exportalas.png" /> </div>
         </div>
+      </div>
+
+      <div class="step">
+        <h3>4. lépés: Letöltés</h3>
+        <p>Az exportált fájl letöltésre kerül a böngészőben.</p>
       </div>
 
       <h2>JSON exportálás</h2>
@@ -104,6 +113,8 @@
           <li>A fájlnevek automatikusan generálódnak az előtag alapján</li>
         </ul>
       </div>
+
+      <p>Amennyiben az összes barlangot exportálni kívánja, javaolt inkább a projekt exportálását használni.</p>
 
       <h2>PNG képernyő kép exportálás</h2>
 
@@ -192,6 +203,41 @@
         <p>4. Válassza ki a mentési helyet</p>
       </div>
 
+      <h2>KML exportálás</h2>
+
+      <div class="format-box">
+        <h4>KML formátum</h4>
+        <p
+          >A KML (Keyhole Markup Language) egy Google Earth és más térinformatikai szoftverek által támogatott formátum,
+          amely lehetővé teszi a barlang adatok megjelenítését térképen.</p
+        >
+
+        <h5>Előnyök:</h5>
+        <ul>
+          <li>Google Earth kompatibilitás</li>
+          <li>WGS84 koordináták automatikus konverziója</li>
+          <li>3D megjelenítés támogatása</li>
+          <li>Állomások és mérési vonalak exportálása</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>KML exportálás lépései</h3>
+        <p>1. Válassza a "KML (Google Earth)" formátumot az exportálás panelben</p>
+        <p>2. Adja meg a fájlnevet</p>
+        <p>3. Kattintson az "Exportálás" gombra</p>
+        <p>4. Válassza ki a mentési helyet</p>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ KML exportálás megjegyzések</h3>
+        <ul>
+          <li>A KML exportáláshoz be kell állítani a barlang koordinátarendszerét</li>
+          <li>A koordináták automatikusan WGS84 formátumra konvertálódnak</li>
+          <li>Az exportált fájl megnyitható Google Earth-ben vagy más GIS szoftverben</li>
+        </ul>
+      </div>
+
       <h2>Formátumok összehasonlítása</h2>
 
       <div class="comparison-table">
@@ -237,6 +283,14 @@
               <td>Nem</td>
               <td>Igen</td>
               <td>Polygon</td>
+              <td>Kicsi</td>
+            </tr>
+            <tr>
+              <td>KML</td>
+              <td>Állomások, Vonalak</td>
+              <td>Nem</td>
+              <td>Igen</td>
+              <td>Google Earth, GIS</td>
               <td>Kicsi</td>
             </tr>
           </tbody>
