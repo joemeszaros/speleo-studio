@@ -39,23 +39,14 @@ export class PrintUtils {
     const sourceCanvas = document.getElementById('viewport').querySelector('canvas');
     const canvas = document.createElement('canvas');
 
-    const layout = this.options.print.layout;
-
     const _297mm = Math.round((29.7 / 2.54) * this.options.screen.DPI);
     const _210mm = Math.round((21 / 2.54) * this.options.screen.DPI);
 
-    if (layout === 'landscape') {
-      document.body.classList.add('landscape');
-      document.body.classList.remove('portrait');
-      canvas.width = _297mm; // A4 landscape width at 96 DPI (11.69 inches * 96)
-      canvas.height = _210mm; // A4 landscape height at 96 DPI (8.27 inches * 96)
-
-    } else {
-      document.body.classList.add('portrait');
-      document.body.classList.remove('landscape');
-      canvas.width = _210mm; // A4 width at 96 DPI (8.27 inches * 96)
-      canvas.height = _297mm; // A4 height at 96 DPI (11.69 inches * 96)
-    }
+    //assume landscape layout
+    document.body.classList.add('landscape');
+    document.body.classList.remove('portrait');
+    canvas.width = _297mm; // A4 landscape width at 96 DPI (11.69 inches * 96)
+    canvas.height = _210mm; // A4 landscape height at 96 DPI (8.27 inches * 96)
 
     const context = canvas.getContext('2d');
 
