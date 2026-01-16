@@ -417,6 +417,7 @@
         "project": "Project",
         "ratio": "Ratio",
         "page": "Page",
+        "custom": "Custom",
         "pageType": "Page type",
         "customSize": "Custom size",
         "orientation": "Orientation",

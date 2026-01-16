@@ -20,19 +20,6 @@ import { i18n } from '../i18n/i18n.js';
 import { showErrorPanel } from './popups.js';
 import { generatePDF } from '../io/pdf.js';
 
-// Page dimensions in mm (width x height in portrait orientation)
-const PAGE_SIZES = {
-  A5     : { width: 148, height: 210, name: 'A5' },
-  A4     : { width: 210, height: 297, name: 'A4' },
-  A3     : { width: 297, height: 420, name: 'A3' },
-  A2     : { width: 420, height: 594, name: 'A2' },
-  A1     : { width: 594, height: 841, name: 'A1' },
-  A0     : { width: 841, height: 1189, name: 'A0' },
-  Letter : { width: 216, height: 279, name: 'Letter' },
-  Legal  : { width: 216, height: 356, name: 'Legal' },
-  Custom : { width: 210, height: 297, name: 'Custom' }
-};
-
 class PDFPrintDialog {
 
   constructor(caves, scene, project = null, panel, options = null) {
@@ -70,6 +57,20 @@ class PDFPrintDialog {
 
     // Original cave center (before rotation) for rotating around
     this.originalCaveCenter = { x: 0, y: 0 };
+  }
+
+  getPageSizes() {
+    // Page dimensions in mm (width x height in portrait orientation)
+    // it's not a constant because it uses i18n
+    return {
+      A5     : { width: 148, height: 210, name: 'A5' },
+      A4     : { width: 210, height: 297, name: 'A4' },
+      A3     : { width: 297, height: 420, name: 'A3' },
+      A2     : { width: 420, height: 594, name: 'A2' },
+      A1     : { width: 594, height: 841, name: 'A1' },
+      A0     : { width: 841, height: 1189, name: 'A0' },
+      Custom : { width: 210, height: 297, name: i18n.t('ui.panels.pdfPrint.custom') }
+    };
   }
 
   // Get the camera rotation angle from the scene (in radians)
@@ -161,7 +162,7 @@ class PDFPrintDialog {
       width = this.customWidth;
       height = this.customHeight;
     } else {
-      const pageSize = PAGE_SIZES[this.pageType] || PAGE_SIZES.A4;
+      const pageSize = this.getPageSizes()[this.pageType] || this.getPageSizes().A4;
       width = pageSize.width;
       height = pageSize.height;
     }
@@ -536,10 +537,10 @@ class PDFPrintDialog {
 
   build(contentElmnt, close) {
     // Build page type options
-    const pageTypeOptions = Object.keys(PAGE_SIZES)
+    const pageTypeOptions = Object.keys(this.getPageSizes())
       .map(
         (type) =>
-          `<option value="${type}" ${type === this.pageType ? 'selected' : ''}>${PAGE_SIZES[type].name}</option>`
+          `<option value="${type}" ${type === this.pageType ? 'selected' : ''}>${this.getPageSizes()[type].name}</option>`
       )
       .join('');
 
