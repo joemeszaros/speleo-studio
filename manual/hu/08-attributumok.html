@@ -191,7 +191,34 @@
             attribútum neve után zárójelben a paraméterek listája következik egy speciális ◌̦ karakterrel
             elválasztva.</li
           >
+          <li
+            ><strong>P X, P Y, P Z:</strong> Pozíció koordináták - A megjelenített ikon/sík/kép/nyíl abszolút pozíciója
+            a attribútumhoz rendelt pont koordinátái helyett. Helyi 3D koordináták, méterben megadva, mindhárom
+            koordináta szükséges.</li
+          >
+          <li
+            ><strong>E X, E Y, E Z:</strong> Eltolás koordináták - A megjelenített ikon/sík/kép/nyíl az attribútumhoz
+            rendelt pont koordinátáihoz képest eltolva jelenik meg X, Y vagy Z irányban. Egy eltolás érték megadása
+            elegendő, nem szükséges mindhárom kitöltése. Az értékek méterben értendők.</li
+          >
         </ul>
+      </div>
+
+      <div class="info">
+        <h4>💡 Pozíció és eltolás használata</h4>
+        <p>
+          A pozíció és eltolás oszlopok segítségével pontosan elhelyezhetjük az attribútum vizualizációját a 3D
+          jelenetben. Ez különösen hasznos, ha:
+        </p>
+        <ul>
+          <li>Az attribútum ikont el szeretnénk mozdítani a ponttól, hogy ne takarjon el más elemeket</li>
+          <li>A rétegdőlés vagy vető síkját pontosabban szeretnénk pozícionálni</li>
+          <li>Fotó attribútumot szeretnénk a megfelelő helyre tenni</li>
+        </ul>
+        <p>
+          <strong>Megjegyzés:</strong> A pozíció és eltolás egyszerre nem adható meg - vagy abszolút pozíciót, vagy
+          relatív eltolást használjunk!
+        </p>
       </div>
 
       <div class="editor-box">
@@ -397,6 +424,15 @@
           >
           <li><strong>Formátum:</strong> A szakasz címke testreszabását teszi lehetővé</li>
           <li><strong>Interpolált:</strong> A szakasz címke formátumnak megfelelő testreszabott értéke</li>
+          <li
+            ><strong>P X, P Y, P Z:</strong> Pozíció koordináták - a címke megjelenítésének abszolút pozíciója a 3D
+            térben. Ha meg van adva, a címke ezen a pozíción jelenik meg a szakasz közepének automatikusan számított
+            pozíciója helyett. Helyi 3D koordináták, méterben megadva, mindhárom koordináta szükséges.</li
+          >
+          <li
+            ><strong>E X, E Y, E Z:</strong> Eltolás koordináták - a címke megjelenítésének relatív eltolása az
+            automatikusan számított pozíciótól méterben.</li
+          >
         </ul>
       </div>
 
@@ -502,6 +538,15 @@
           >
           <li><strong>Formátum:</strong> A komponens címke testreszabását teszi lehetővé</li>
           <li><strong>Interpolált:</strong> A komponens címke formátumnak megfelelő testreszabott értéke</li>
+          <li
+            ><strong>P X, P Y, P Z:</strong> Pozíció koordináták - a címke megjelenítésének abszolút pozíciója a 3D
+            térben. Ha meg van adva, a címke ezen a pozíción jelenik meg a komponens középpontjának automatikusan
+            számított pozíciója helyett. Helyi 3D koordináták, méterben megadva, mindhárom koordináta szükséges.</li
+          >
+          <li
+            ><strong>E X, E Y, E Z:</strong> Eltolás koordináták - a címke megjelenítésének relatív eltolása az
+            automatikusan számított pozíciótól méterben.</li
+          >
         </ul>
       </div>
 
