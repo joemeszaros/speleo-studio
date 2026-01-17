@@ -187,8 +187,8 @@ class View {
   }
 
   #setRatio() {
-    // Math.floor() is used also to show the ratio text
-    const ratioRaw = prompt(i18n.t('errors.views.enterRatioValue'), Math.floor(this.ratio));
+    // Math.round() is used to avoid floating-point precision issues (e.g., 99.999... -> 100)
+    const ratioRaw = prompt(i18n.t('errors.views.enterRatioValue'), Math.round(this.ratio));
     if (ratioRaw === null) return;
     if (!Number.isInteger(Number.parseInt(ratioRaw, 10))) {
       showWarningPanel(i18n.t('errors.views.ratioNotInteger', { ratio: ratioRaw }));
@@ -253,7 +253,7 @@ class View {
     this.ratioIndicator.width = Math.max(50, Math.min(400, rulerWidthInPixels)); // between 50-400px
     this.ratioIndicator.scale.set(this.ratioIndicator.width, 15, 1);
 
-    const ratioText = `${formatDistance(rulerWidthInMeters)} - M 1:${Math.floor(this.ratio)}`;
+    const ratioText = `${formatDistance(rulerWidthInMeters)} - M 1:${Math.round(this.ratio)}`;
     this.ratioText.update(`${ratioText}`);
   }
 

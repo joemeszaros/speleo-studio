@@ -484,7 +484,7 @@ class Exporter {
       );
 
       // Ratio text
-      const ratioValue = `M 1:${Math.floor(ratio)}`;
+      const ratioValue = `M 1:${Math.round(ratio)}`;
       const ratioText = `${formatDistance(targetRulerDistance)} - ${ratioValue}`;
       const textY = rulerY - 15;
       const textX = rulerX + rulerWidth / 2;
@@ -507,7 +507,7 @@ class Exporter {
       };
       const viewName = viewNameMap[view.name] || view.name;
       const ratio = scene.view.ratio;
-      const ratioValue = `M 1:${Math.floor(ratio)}`;
+      const ratioValue = `M 1:${Math.round(ratio)}`;
       // Get export date
       const exportDate = new Date();
       const dateText = exportDate.toLocaleDateString();
