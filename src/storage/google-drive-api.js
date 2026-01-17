@@ -30,7 +30,9 @@ export class GoogleDriveAPI {
   }
 
   getOauthCallbackURL() {
-    return window.location.origin + window.location.pathname + 'oauth-callback.html';
+    const url = window.location.origin + window.location.pathname + 'pages/oauth-callback.html';
+    console.log('Oauth callback URL:', url);
+    return url;
   }
 
   /**
