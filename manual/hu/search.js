@@ -14,10 +14,11 @@ class ManualSearch {
       { url: '07-felmereek-szerkesztese.html', title: 'Felmérések szerkesztése' },
       { url: '08-attributumok.html', title: 'Attribútumok kezelése' },
       { url: '09-eszkozok.html', title: 'Eszközök és számítások' },
-      { url: '10-exportalas.html', title: 'Exportálás és megosztás' },
-      { url: '11-beallitasok.html', title: 'Beállítások és testreszabás' },
-      { url: '12-tamogatas.html', title: 'Támogatás és adományozás' },
-      { url: '13-about.html', title: 'A projektről' }
+      { url: '10-google-drive.html', title: 'Google Drive integráció' },
+      { url: '11-exportalas.html', title: 'Exportálás és megosztás' },
+      { url: '12-beallitasok.html', title: 'Beállítások és testreszabás' },
+      { url: '13-tamogatas.html', title: 'Támogatás és adományozás' },
+      { url: '14-about.html', title: 'A projektről' }
     ];
     this.pageContent = new Map();
     this.init();

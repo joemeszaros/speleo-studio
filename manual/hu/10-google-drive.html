@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Drive integráció - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>Google Drive integráció</h1>
+
+      <div class="nav">
+        <a href="09-eszkozok.html">← Előző: Eszközök</a>
+        <a href="index.html">Főoldal</a>
+        <a href="11-exportalas.html">Következő: Exportálás →</a>
+      </div>
+
+      <h2>Miért érdemes használni?</h2>
+      <p>
+        A Google Drive integráció lehetővé teszi az adatok biztonsági mentését, ami különösen hasznos azoknak, akik
+        szeretnék biztosítani adataik biztonságát. A Drive integráció segítésével többen is szerkeszthetik ugyanazt a
+        projektet, lehetővé téve a kollaboratív szerkesztést, amely hasznos azok számára is, akik több eszköz között
+        szeretnék adataikat szinkronizálni.
+      </p>
+
+      <div class="info">
+        <h3>A Google Drive integráció előnyei:</h3>
+        <ul>
+          <li
+            ><strong>☁️ Felhő alapú tárolás:</strong> Az adatok biztonságosan tárolódnak a Google Drive-on, így nem
+            vesznek el a számítógép meghibásodása esetén sem, vagy ha a böngésző kiüríti a lokális tárhelyet.</li
+          >
+          <li
+            ><strong>🔄 Automatikus szinkronizálás:</strong> A változtatások automatikusan menthetők a felhőbe, így
+            mindig naprakész marad a projekt</li
+          >
+          <li
+            ><strong>👥 Együttműködés:</strong> Több felhasználó is dolgozhat ugyanazon a projekten, megosztva az
+            adatokat</li
+          >
+          <li
+            ><strong>📱 Több eszköz:</strong> Otthoni és munkahelyi számítógépen, vagy akár telefonon is elérheti az
+            adatokat</li
+          >
+          <li
+            ><strong>📜 Verziókezelés:</strong> A Google Drive automatikusan menti a fájlok korábbi verzióit, így
+            bármikor visszaállítható egy korábbi állapot</li
+          >
+        </ul>
+      </div>
+
+      <h2>Google Drive integráció engedélyezése</h2>
+
+      <p>
+        A Google Drive integráció használatához először engedélyeznie kell a Speleo Studio-nak, hogy hozzáférjen az Ön
+        Google Drive fiókjához, ezt hívjuk hitelesítésnek. Ez egy egyszeri beállítás, amelyet a böngészőben kell
+        elvégeznie.
+      </p>
+
+      <div class="info">
+        <h3>Hitelesítés - titkos kulcsok</h3>
+        <p
+          >A hitelesítés során szükséges egy <strong>Ügyfél azonosító</strong> és egy <strong>Ügyfél titok</strong>,
+          amelyeket a legtöbb esetben a Speleo Studio csapatától fog megkapni.
+          <strong>Kérjük kezelje ezeket jelszavakhoz hasonlóan bizalmasan </strong>és mással ne ossza meg őket,
+          ellenkező esetben a Google Drive fiókjához mások is hozzáférhetnek.
+        </p>
+      </div>
+
+      <div class="row">
+        <div class="column-2 step">
+          <h3>1. lépés: Google Drive konfigurációs panel</h3>
+          <p
+            >Kattintson az "Eszközök" menü "Google Drive szinkronizálás" menü elemére. Megnyílik a konfigurációs
+            panel.</p
+          >
+          <div class="image-placeholder black column-2"> <img src="images/10-google-drive-panel.png" /> </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3>2. lépés: Adatok megadása</h3>
+        <p>Adja meg a következő adatokat:</p>
+        <ul>
+          <li><strong>Ügyfél azonosító:</strong> A Speleo Studio csapatától kapott OAuth 2.0 kliens azonosító</li>
+          <li><strong>Ügyfél titok:</strong> A Speleo Studio csapatától kapott OAuth 2.0 kliens titkos kulcs</li>
+          <li
+            ><strong>Példány neve:</strong> A Speleo Studio futó példányának azonosítához szolgál, amely kollaboratív
+            szerkesztés esetén azonosítja az ön Speleo Studio példányát egy adott böngészőben</li
+          >
+          <li
+            ><strong>Mappa név:</strong> A Speleo Studio mappa neve a Google Drive-ban (alapértelmezett: "Speleo
+            Studio"). Kollaboratív szerkesztés esetén egy Önnel megosztott mappa nevének kell lennie.
+          </li>
+          <li><strong>Barlangok mappa:</strong> A barlangok almappa neve (alapértelmezett: "Caves")</li>
+          <li><strong>Projektek mappa:</strong> A projektek almappa neve (alapértelmezett: "Projects")</li>
+        </ul>
+        <p>
+          Döntse el, hogy szeretne-e <strong>automatikus szinkronizálást</strong> használni, amely minden mentés után
+          automatikusan feltölti a változtatásokat a Google Drive-ra, vagy manuálisan szeretne szinkronizálni minden
+          változtatás után?</p
+        >
+        <p>
+          Döntse el, hogy kollaboratív szerkesztés esetén ha ütközés van, akkor mi legyen a stratégia? Ha szeretné
+          mindig a saját változtatásai feltölteni, akkor válassza a "Saját változtatások feltöltése" opciót. Ha szeretné
+          a másik változtatásokat feltölteni, akkor válassza a
+          <strong>"Ütközések figyelmen kívül hagyása"</strong> opciót.</p
+        >
+      </div>
+
+      <div class="step">
+        <h3>3. lépés: Hitelesítés</h3>
+        <p
+          >Válassza a "Szinkronizálás beállításai" opciót a menüből. Megnyílik a beállítások panel, ahol megadhatja a
+          Google OAuth hitelesítő adatokat.</p
+        >
+      </div>
+
+      <div class="step">
+        <h3>3. lépés: Hitelesítő adatok megadása</h3>
+        <p>Adja meg a következő adatokat:</p>
+        <ul>
+          <li><strong>Client ID:</strong> A Google Cloud Console-ban létrehozott OAuth 2.0 kliens azonosító</li>
+          <li><strong>Client Secret:</strong> A kliens titkos kulcs</li>
+          <li
+            ><strong>Mappa név:</strong> A Speleo Studio mappa neve a Google Drive-ban (alapértelmezett: "Speleo
+            Studio")</li
+          >
+          <li><strong>Barlangok mappa:</strong> A barlangok almappa neve (alapértelmezett: "Caves")</li>
+          <li><strong>Projektek mappa:</strong> A projektek almappa neve (alapértelmezett: "Projects")</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>4. lépés: Engedélyezés</h3>
+        <p
+          >Kattintson az "Engedélyezés" gombra. Egy felugró ablakban a Google bejelentkezési oldala jelenik meg, ahol be
+          kell jelentkeznie a Google fiókjába és engedélyeznie kell a Speleo Studio hozzáférését.</p
+        >
+      </div>
+
+      <div class="step">
+        <h3>5. lépés: Engedélyek megadása</h3>
+        <p>A Google fiókjában engedélyezze a Speleo Studio alkalmazásnak a következő jogosultságokat:</p>
+        <ul>
+          <li>Google Drive fájlok létrehozása és kezelése</li>
+          <li>Google Drive mappák létrehozása és kezelése</li>
+        </ul>
+      </div>
+
+      <div class="warning">
+        <h4>⚠️ Google Cloud Console beállítás</h4>
+        <p>
+          A Google Drive integráció használatához először létre kell hoznia egy OAuth 2.0 kliens alkalmazást a Google
+          Cloud Console-ban. Ez a beállítás szükséges ahhoz, hogy a Speleo Studio biztonságosan hozzáférhessen a Google
+          Drive fiókjához.
+        </p>
+        <p>A Google Cloud Console beállításának lépései:</p>
+        <ol>
+          <li>Nyissa meg a <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>-t</li>
+          <li>Hozzon létre egy új projektet vagy válasszon egy meglévőt</li>
+          <li>Engedélyezze a Google Drive API-t</li>
+          <li>Hozzon létre OAuth 2.0 hitelesítő adatokat</li>
+          <li>Adja hozzá a domain-t az engedélyezett eredet URL-ekhez</li>
+          <li>Adja hozzá az átirányítási URL-t (pl. domain.com/oauth-callback.html)</li>
+        </ol>
+      </div>
+
+      <h2>Együttműködés és csapatmunka</h2>
+
+      <p>
+        A Google Drive integráció kiváló eszköz a csapatmunkához és az együttműködéshez. Több felhasználó is dolgozhat
+        ugyanazon a projekten, és az adatok automatikusan szinkronizálódnak a felhőben.
+      </p>
+
+      <div class="info">
+        <h3>Együttműködés jellemzői:</h3>
+        <ul>
+          <li
+            ><strong>Megosztott projektek:</strong> A Google Drive mappák megoszthatók más felhasználókkal, így mindenki
+            hozzáférhet a projekt adataihoz</li
+          >
+          <li
+            ><strong>Valós idejű frissítések:</strong> A változtatások azonnal láthatók minden felhasználó számára a
+            szinkronizálás után</li
+          >
+          <li
+            ><strong>Jogosultságok kezelése:</strong> A Google Drive beépített jogosultság-kezelő rendszerével
+            szabályozható, ki mit érhet el és módosíthat</li
+          >
+          <li
+            ><strong>Értesítések:</strong> A Google Drive értesítéseket küld a változtatásokról, így mindenki naprakész
+            marad</li
+          >
+        </ul>
+      </div>
+
+      <h3>Együttműködés beállítása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Mappa megosztása</h4>
+        <p
+          >Nyissa meg a Google Drive-ot böngészőben, keresse meg a Speleo Studio mappát, és ossza meg a kívánt
+          felhasználókkal.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Jogosultságok beállítása</h4>
+        <p>Állítsa be a megfelelő jogosultságokat:</p>
+        <ul>
+          <li><strong>Megtekintő:</strong> Csak olvasási jogosultság</li>
+          <li><strong>Szerkesztő:</strong> Olvasási és írási jogosultság</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h4>3. lépés: Megosztott adatok használata</h4>
+        <p
+          >A megosztott felhasználók a saját Speleo Studio alkalmazásukban láthatják és szerkeszthetik a megosztott
+          projekteket a Google Drive szinkronizálás után.</p
+        >
+      </div>
+
+      <h2>Konfliktusok és revíziók kezelése</h2>
+
+      <p>
+        Amikor több felhasználó dolgozik ugyanazon a projekten, előfordulhatnak konfliktusok, ha egyszerre módosítják
+        ugyanazt az adatot. A Speleo Studio és a Google Drive együttműködve kezeli ezeket a helyzeteket.
+      </p>
+
+      <div class="info">
+        <h3>Mi a konfliktus?</h3>
+        <p>
+          Konfliktus akkor keletkezik, amikor két vagy több felhasználó egyszerre módosítja ugyanazt a fájlt, és a
+          változtatásokat nem lehet automatikusan egyesíteni. Ilyenkor a rendszer megpróbálja a lehető legjobban kezelni
+          a helyzetet, de előfordulhat, hogy manuális beavatkozásra van szükség.
+        </p>
+      </div>
+
+      <h3>Konfliktusok elkerülése</h3>
+
+      <div class="step">
+        <h4>1. Kommunikáció</h4>
+        <p
+          >A csapattagoknak érdemes egyeztetniük, hogy ki melyik barlangon vagy felmérése dolgozik éppen. Ez
+          minimalizálja az átfedéseket.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>2. Gyakori szinkronizálás</h4>
+        <p
+          >Rendszeresen szinkronizálja az adatokat, hogy a legfrissebb verzióval dolgozzon. Az automatikus
+          szinkronizálás bekapcsolása különösen hasznos lehet.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>3. Munkamegosztás</h4>
+        <p
+          >Osszák fel a munkát úgy, hogy a csapattagok különböző barlangokon vagy felméréseken dolgozzanak egyszerre.</p
+        >
+      </div>
+
+      <h3>Revíziók kezelése</h3>
+
+      <p>
+        A Google Drive automatikusan menti a fájlok korábbi verzióit (revízióit), így bármikor visszaállítható egy
+        korábbi állapot. Ez különösen hasznos, ha véletlenül hibás adatot mentünk, vagy vissza szeretnénk nézni a
+        korábbi változatokat.
+      </p>
+
+      <div class="step">
+        <h4>Korábbi verzió visszaállítása</h4>
+        <ol>
+          <li>Nyissa meg a Google Drive-ot böngészőben</li>
+          <li>Keresse meg a kívánt fájlt a Speleo Studio mappában</li>
+          <li>Kattintson jobb gombbal a fájlra és válassza a "Verzióelőzmények kezelése" opciót</li>
+          <li>Válassza ki a visszaállítani kívánt verziót</li>
+          <li>Kattintson a "Visszaállítás" gombra</li>
+        </ol>
+      </div>
+
+      <div class="warning">
+        <h4>⚠️ Revíziók megőrzése</h4>
+        <p>
+          A Google Drive alapértelmezetten 30 napig őrzi meg a revíziókat, vagy 100 verziót, attól függően, hogy melyik
+          következik be előbb. Fontos dokumentumok esetén érdemes rendszeres biztonsági mentést készíteni helyi tárolóra
+          is.
+        </p>
+      </div>
+
+      <h2>Automatikus szinkronizálás (Autosync)</h2>
+
+      <p>
+        Az automatikus szinkronizálás funkció lehetővé teszi, hogy a Speleo Studio automatikusan mentse a
+        változtatásokat a Google Drive-ra minden mentés után. Így nem kell manuálisan szinkronizálni, és mindig
+        naprakész marad a felhőben tárolt verzió.
+      </p>
+
+      <div class="info">
+        <h3>Az Autosync előnyei:</h3>
+        <ul>
+          <li><strong>Kényelmes:</strong> Nem kell manuálisan szinkronizálni minden változtatás után</li>
+          <li><strong>Biztonságos:</strong> A változtatások azonnal mentésre kerülnek a felhőbe</li>
+          <li><strong>Naprakész:</strong> A csapattagok mindig a legfrissebb adatokkal dolgozhatnak</li>
+        </ul>
+      </div>
+
+      <h3>Autosync bekapcsolása</h3>
+
+      <div class="step">
+        <h4>1. lépés: Google Drive menü</h4>
+        <p>Kattintson a "Google Drive" menüre a navigációs sávban.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. lépés: Automatikus szinkronizálás</h4>
+        <p
+          >Válassza az "Automatikus szinkronizálás" opciót. A menüpont mellett egy pipa jelzi, ha az automatikus
+          szinkronizálás be van kapcsolva.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>3. lépés: Működés</h4>
+        <p
+          >Az automatikus szinkronizálás bekapcsolása után minden projekt vagy barlang mentésekor automatikusan
+          feltöltődnek az adatok a Google Drive-ra.</p
+        >
+      </div>
+
+      <div class="warning">
+        <h4>⚠️ Internetkapcsolat szükséges</h4>
+        <p>
+          Az automatikus szinkronizálás működéséhez folyamatos internetkapcsolat szükséges. Ha nincs internet, a
+          változtatások helyben tárolódnak, és a kapcsolat helyreállása után manuálisan kell szinkronizálni.
+        </p>
+      </div>
+
+      <h2>Manuális szinkronizálás</h2>
+
+      <p>
+        Az automatikus szinkronizálás mellett bármikor manuálisan is szinkronizálhat a Google Drive-ral. Ez hasznos
+        lehet, ha gyorsan szeretné feltölteni a változtatásokat, vagy ha az automatikus szinkronizálás ki van kapcsolva.
+      </p>
+
+      <h3>Adatok feltöltése</h3>
+
+      <div class="step">
+        <h4>Minden adat szinkronizálása</h4>
+        <p
+          >Válassza a "Google Drive" menüből a "Minden szinkronizálása" opciót a projektek és barlangok egyidejű
+          feltöltéséhez.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>Csak projektek szinkronizálása</h4>
+        <p>Válassza a "Projektek szinkronizálása" opciót csak a projekt adatok feltöltéséhez.</p>
+      </div>
+
+      <div class="step">
+        <h4>Csak barlangok szinkronizálása</h4>
+        <p>Válassza a "Barlangok szinkronizálása" opciót csak a barlang adatok feltöltéséhez.</p>
+      </div>
+
+      <h3>Adatok visszaállítása</h3>
+
+      <div class="step">
+        <h4>Minden adat visszaállítása</h4>
+        <p
+          >Válassza a "Google Drive" menüből a "Minden visszaállítása" opciót az összes adat letöltéséhez a Google
+          Drive-ról.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>Csak projektek visszaállítása</h4>
+        <p>Válassza a "Projektek visszaállítása" opciót csak a projekt adatok letöltéséhez.</p>
+      </div>
+
+      <div class="step">
+        <h4>Csak barlangok visszaállítása</h4>
+        <p>Válassza a "Barlangok visszaállítása" opciót csak a barlang adatok letöltéséhez.</p>
+      </div>
+
+      <h2>Mappa struktúra a Google Drive-ban</h2>
+
+      <p>A Speleo Studio a következő mappa struktúrát hozza létre a Google Drive-ban:</p>
+
+      <div class="format-box">
+        <h4>Mappa struktúra</h4>
+        <pre>
+Speleo Studio/
+├── Projects/
+│   ├── Projekt1.json
+│   ├── Projekt2.json
+│   └── ...
+└── Caves/
+    ├── Projekt1_Barlang1.json
+    ├── Projekt1_Barlang2.json
+    ├── Projekt2_Barlang1.json
+    └── ...</pre
+        >
+      </div>
+
+      <div class="info">
+        <h4>Megjegyzések a mappa struktúrához:</h4>
+        <ul>
+          <li>A mappák automatikusan létrejönnek, ha nem léteznek</li>
+          <li>A mappa nevek testreszabhatók a beállításokban</li>
+          <li>A barlang fájlok neve tartalmazza a projekt nevét is az egyértelműség kedvéért</li>
+        </ul>
+      </div>
+
+      <h2>Kizárt adatok</h2>
+
+      <p>A következő adatok <strong>nem</strong> kerülnek szinkronizálásra a Google Drive-ra:</p>
+
+      <ul>
+        <li
+          ><strong>Felmérés szerkesztő állapotok:</strong> Ideiglenes szerkesztési állapotok és mentetlen
+          változtatások</li
+        >
+        <li><strong>Deklináció gyorsítótár:</strong> A helyi deklináció értékek gyorsítótára (újra generálható)</li>
+      </ul>
+
+      <h2>Hibaelhárítás</h2>
+
+      <h3>Gyakori problémák</h3>
+
+      <div class="warning">
+        <h4>1. Engedélyezés sikertelen</h4>
+        <ul>
+          <li>Ellenőrizze, hogy a Client ID és Client Secret helyes-e</li>
+          <li>Győződjön meg róla, hogy a domain hozzá van adva az engedélyezett eredet URL-ekhez</li>
+          <li>Ellenőrizze az átirányítási URL helyes konfigurációját</li>
+        </ul>
+      </div>
+
+      <div class="warning">
+        <h4>2. Szinkronizálás sikertelen</h4>
+        <ul>
+          <li>Ellenőrizze az internetkapcsolatot</li>
+          <li>Győződjön meg róla, hogy van elegendő tárhely a Google Drive-on</li>
+          <li>Ellenőrizze, hogy a hitelesítés még érvényes-e (a tokenek lejárhatnak)</li>
+        </ul>
+      </div>
+
+      <div class="warning">
+        <h4>3. Mappa nem található</h4>
+        <ul>
+          <li>A Speleo Studio automatikusan létrehozza a mappákat, ha nem léteznek</li>
+          <li>Ellenőrizze, hogy van írási jogosultsága a Google Drive-on</li>
+        </ul>
+      </div>
+
+      <h3>Újra hitelesítés</h3>
+
+      <p>Ha hitelesítési hibákat tapasztal:</p>
+
+      <div class="step">
+        <h4>1. Kapcsolat bontása</h4>
+        <p>Nyissa meg a Google Drive beállításokat és kattintson a "Kapcsolat bontása" gombra.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Újra engedélyezés</h4>
+        <p>Adja meg újra a hitelesítő adatokat és kattintson az "Engedélyezés" gombra.</p>
+      </div>
+
+      <h2>Következő lépések</h2>
+      <p
+        >Most, hogy megismerte a Google Drive integrációt, folytathatja az
+        <a href="11-exportalas.html">exportálás és megosztás</a> fejezettel, ahol megtanulja, hogyan exportálhatja az
+        adatokat különböző formátumokba.</p
+      >
+
+      <div class="nav">
+        <a href="09-eszkozok.html">← Előző: Eszközök</a>
+        <a href="index.html">Főoldal</a>
+        <a href="11-exportalas.html">Következő: Exportálás →</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="13-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="13-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
