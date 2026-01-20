@@ -44,7 +44,7 @@ export class GoogleDriveAPI {
       client_id     : this.config.get('clientId'),
       redirect_uri  : this.getOauthCallbackURL(),
       response_type : 'code',
-      scope         : 'https://www.googleapis.com/auth/drive',
+      scope         : 'https://www.googleapis.com/auth/drive.file',
       access_type   : 'offline',
       prompt        : 'consent'
     });
