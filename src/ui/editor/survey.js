@@ -407,6 +407,14 @@ export class SurveyEditor extends Editor {
         }
       },
       {
+        label  : `<span class="prefix-station"></span><span>${i18n.t('ui.editors.survey.menu.renameFromStation')}<span/>`,
+        action : (e, row) => this.#renameStation(row.getData().from)
+      },
+      {
+        label  : `<span class="prefix-station"></span><span>${i18n.t('ui.editors.survey.menu.renameToStation')}<span/>`,
+        action : (e, row) => this.#renameStation(row.getData().to)
+      },
+      {
         label  : `<span class="prefix-station"></span><span>${i18n.t('ui.editors.survey.menu.prefixStations')}<span/>`,
         action : () => {
           const prefix = prompt(i18n.t('ui.editors.survey.menu.prefixStationsPrompt'));
@@ -427,6 +435,29 @@ export class SurveyEditor extends Editor {
       }
     ];
   }
+
+  #renameStation(stationName) {
+    if (stationName === undefined || stationName === null || stationName === '') {
+      return;
+    }
+
+    const newName = prompt(i18n.t('ui.editors.survey.menu.renameStationPrompt'), stationName);
+    if (newName) {
+      const renamed = this.table.getData().map((row) => {
+        if (row.from === stationName) {
+          row.from = newName;
+        }
+        if (row.to === stationName) {
+          row.to = newName;
+        }
+        return row;
+      });
+
+      this.surveyModified = true;
+      this.table.replaceData(renamed);
+    }
+  }
+
   setupPanel() {
     //TODO: downsize if the table is too wide (settings > viewport)
 
