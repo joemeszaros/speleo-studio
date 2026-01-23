@@ -1327,6 +1327,19 @@ body {
   display: inline-block;
 }
 
+.survey-stats {
+  margin-top: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.survey-stats span {
+  margin-top: 5px;
+  margin-left: 10px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
 .cave-revision-info {
   font-size: 11px;
   margin-top: 5px;

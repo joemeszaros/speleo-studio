@@ -641,6 +641,18 @@
         "buttons": {
           "addMember": "Tag hozzáadása",
           "addInstrument": "Mérőeszköz hozzáadása"
+        },
+        "stats": {
+          "length": "Hossz",
+          "orphanLength": "Hossz (árva)",
+          "invalidLength": "Hossz (érvénytelen)",
+          "auxiliaryLength": "Hossz (segéd)",
+          "splays": "Tüskék",
+          "shots": "Mérések",
+          "stations": "Pontok",
+          "minZ": "Legmélyebb pont",
+          "maxZ": "Legmagasabb pont",
+          "vertical": "Vertikális kiterjedés"
         }
       },
       "stationComments": {

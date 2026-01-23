@@ -207,6 +207,11 @@ export class SurveySheetEditor extends BaseEditor {
 
     this.updateDeclinationText();
 
+    // Add survey stats
+    if (this.survey !== undefined) {
+      this.#setupStats(form);
+    }
+
     form.onsubmit = (e) => {
       e.preventDefault();
 
@@ -408,6 +413,119 @@ export class SurveySheetEditor extends BaseEditor {
       default:
         return undefined;
     }
+  }
+
+  #setupStats(contentElmnt) {
+    const statFields = U.node`<div class="survey-stats"></div>`;
+    const stats = this.survey?.getStats();
+
+    // Calculate Z stats from cave stations filtered by this survey
+    const zStats = this.#calculateZStats();
+
+    [
+      {
+        id        : 'length',
+        label     : i18n.t('ui.editors.surveySheet.stats.length'),
+        field     : 'length',
+        bold      : true,
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'vertical',
+        label     : i18n.t('ui.editors.surveySheet.stats.vertical'),
+        value     : zStats.vertical,
+        bold      : true,
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      { id: 'shots', label: i18n.t('ui.editors.surveySheet.stats.shots'), field: 'shots', formatter: (v) => v },
+      {
+        id        : 'stations',
+        label     : i18n.t('ui.editors.surveySheet.stats.stations'),
+        field     : 'stations',
+        formatter : (v) => v
+      },
+      { id: 'splays', label: i18n.t('ui.editors.surveySheet.stats.splays'), field: 'splays', formatter: (v) => v },
+      { break: true },
+      {
+        id        : 'orphanLength',
+        label     : i18n.t('ui.editors.surveySheet.stats.orphanLength'),
+        field     : 'orphanLength',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'invalidLength',
+        label     : i18n.t('ui.editors.surveySheet.stats.invalidLength'),
+        field     : 'invalidLength',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'auxiliaryLength',
+        label     : i18n.t('ui.editors.surveySheet.stats.auxiliaryLength'),
+        field     : 'auxiliaryLength',
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      { break: true },
+      {
+        id        : 'minZ',
+        label     : i18n.t('ui.editors.surveySheet.stats.minZ'),
+        value     : zStats.minZ,
+        formatter : (v) => v.toFixed(2) + ' m'
+      },
+      {
+        id        : 'maxZ',
+        label     : i18n.t('ui.editors.surveySheet.stats.maxZ'),
+        value     : zStats.maxZ,
+        formatter : (v) => v.toFixed(2) + ' m'
+      }
+
+    ].forEach((s) => {
+      let node;
+      if (s.break) {
+        node = U.node`<br>`;
+      } else {
+        const value = s.formatter(s.value !== undefined ? s.value : (stats?.[s.field] ?? 0));
+        node = U.node`<span style="${s.bold ? 'font-weight: bold;' : ''}">${s.label}: ${value}</span>`;
+      }
+      statFields.appendChild(node);
+    });
+    contentElmnt.appendChild(U.node`<hr/>`);
+    contentElmnt.appendChild(statFields);
+  }
+
+  #calculateZStats() {
+    let minZ = undefined;
+    let maxZ = undefined;
+
+    if (this.cave?.stations) {
+      this.cave.stations.forEach((station) => {
+        // Only include stations from this survey
+        if (station.survey?.name !== this.survey.name) {
+          return;
+        }
+        // Only include center stations (not splays)
+        if (!station.isCenter()) {
+          return;
+        }
+
+        const zCoord = station.position?.z;
+        if (zCoord === undefined || zCoord === null) {
+          return;
+        }
+
+        if (minZ === undefined || zCoord < minZ) {
+          minZ = zCoord;
+        }
+        if (maxZ === undefined || zCoord > maxZ) {
+          maxZ = zCoord;
+        }
+      });
+    }
+
+    return {
+      minZ     : minZ ?? 0,
+      maxZ     : maxZ ?? 0,
+      vertical : minZ !== undefined && maxZ !== undefined ? maxZ - minZ : 0
+    };
   }
 
   #emitSurveyChanged() {

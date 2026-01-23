@@ -638,6 +638,18 @@
         "buttons": {
           "addMember": "Add member",
           "addInstrument": "Add instrument"
+        },
+        "stats": {
+          "length": "Length",
+          "orphanLength": "Length (orphan)",
+          "invalidLength": "Length (invalid)",
+          "auxiliaryLength": "Length (auxiliary)",
+          "splays": "Splays",
+          "shots": "Shots",
+          "stations": "Stations",
+          "minZ": "Deepest point",
+          "maxZ": "Highest point",
+          "vertical": "Vertical extent"
         }
       },
       "stationComments": {

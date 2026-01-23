@@ -352,6 +352,55 @@ class Survey {
     return new Set(this.shots.filter((sh) => !sh.isComplete() || !sh.isValid()).map((sh) => sh.id));
   }
 
+  getStats() {
+    let length = 0;
+    let orphanLength = 0;
+    let auxiliaryLength = 0;
+    let invalidLength = 0;
+    let splays = 0;
+    let shots = 0;
+
+    const stationNames = new Set();
+
+    this.shots.forEach((shot) => {
+      shots++;
+
+      if (shot.from) stationNames.add(shot.from);
+      if (shot.to && shot.isCenter()) stationNames.add(shot.to);
+
+      if (shot.length === undefined || shot.length === null || isNaN(shot.length) || typeof shot.length !== 'number') {
+        return;
+      }
+
+      if (this.orphanShotIds.has(shot.id)) {
+        orphanLength += shot.length;
+      }
+      if (this.invalidShotIds.has(shot.id)) {
+        invalidLength += shot.length;
+      }
+
+      if (shot.isAuxiliary()) {
+        auxiliaryLength += shot.length;
+      } else if (shot.isCenter()) {
+        length += shot.length;
+      }
+
+      if (shot.isSplay()) {
+        splays++;
+      }
+    });
+
+    return {
+      length          : length,
+      orphanLength    : orphanLength,
+      auxiliaryLength : auxiliaryLength,
+      invalidLength   : invalidLength,
+      splays          : splays,
+      shots           : shots,
+      stations        : stationNames.size
+    };
+  }
+
   /**
    * Returns all the attributes with the given name for all stations
    *
