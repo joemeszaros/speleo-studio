@@ -713,7 +713,10 @@
           "detailsFrom": "Details about from",
           "detailsTo": "Details about to",
           "prefixStations": "Prefix stations",
-          "prefixStationsPrompt": "Enter the prefix (prefix)"
+          "prefixStationsPrompt": "Enter the prefix (prefix)",
+          "renameFromStation": "Rename from station",
+          "renameToStation": "Rename to station",
+          "renameStationPrompt": "Enter the new station name"
         },
         "errors": {
           "invalidShotIdsMismatch": "Invalid shot ids do not match for survey '{surveyIds}' and rows '{rowIds}'"
@@ -1061,6 +1064,16 @@
       "auxiliary": "Auxiliary",
       "splay": "Splay"
     }
+  },
+  "oauth": {
+    "title": "Google Drive Authorization",
+    "processing": "Processing authorization...",
+    "success": "Authorization successful!",
+    "successMessage": "You can now close this window and return to Speleo Studio.",
+    "closeWindow": "Close Window",
+    "errorPrefix": "Authorization failed:",
+    "noCode": "No authorization code received.",
+    "tryAgain": "Please try again."
   },
   "common": {
     "refresh": "Refresh",

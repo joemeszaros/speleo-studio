@@ -725,12 +725,15 @@
         },
         "menu": {
           "invertRow": "Mérés megfordítása",
-          "locateFrom": "Ponttól megkeresése",
-          "locateTo": "Pontig megkeresése",
-          "detailsFrom": "Ponttól részletei",
-          "detailsTo": "Pontig részletei",
+          "locateFrom": "'Ponttól' megkeresése",
+          "locateTo": "'Pontig' megkeresése",
+          "detailsFrom": "'Ponttól' részletei",
+          "detailsTo": "'Pontig' részletei",
           "prefixStations": "Pontok prefixelése (előtaggal)",
-          "prefixStationsPrompt": "Adja meg a prefixet (előtagot)"
+          "prefixStationsPrompt": "Adja meg a prefixet (előtagot)",
+          "renameFromStation": "'Ponttól' átnevezése",
+          "renameToStation": "'Pontig' átnevezése",
+          "renameStationPrompt": "Adja meg a pont új nevét"
         },
         "errors": {
           "invalidShotIdsMismatch": "A felmérés '{surveyIds}' és a sorok '{rowIds}' érvénytelen mérés azonosítói nem egyeznek"
@@ -1084,6 +1087,16 @@
       "auxiliary": "Segéd",
       "splay": "Tüske"
     }
+  },
+  "oauth": {
+    "title": "Google Drive Engedélyezés",
+    "processing": "Engedélyezés folyamatban...",
+    "success": "Engedélyezés sikeres!",
+    "successMessage": "Most bezárhatja ezt az ablakot és visszatérhet a Speleo Studio-ba.",
+    "closeWindow": "Ablak bezárása",
+    "errorPrefix": "Az engedélyezés sikertelen:",
+    "noCode": "Nem érkezett engedélyezési kód.",
+    "tryAgain": "Kérjük, próbálja újra."
   },
   "common": {
     "refresh": "Frissítés",

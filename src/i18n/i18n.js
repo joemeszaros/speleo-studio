@@ -23,13 +23,14 @@ import { node } from '../utils/utils.js';
 
 class I18nManager {
 
-  constructor() {
+  constructor(options = {}) {
     this.fallbackLanguage = 'en';
     this.translations = {};
     this.supportedLanguages = new Map([
       ['en', 'English'],
       ['hu', 'Magyar']
     ]);
+    this.translationsPath = options.translationsPath || './src/i18n/translations';
   }
 
   async init(storage = localStorage) {
@@ -69,7 +70,7 @@ class I18nManager {
    */
   async loadTranslations(language) {
     try {
-      const response = await fetch(`./src/i18n/translations/${language}.json`);
+      const response = await fetch(`${this.translationsPath}/${language}.json`);
       if (!response.ok) {
         throw new Error(`Failed to load translations for ${language}`);
       }

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Google Drive Authorization - Speleo Studio</title>
+    <title data-i18n="oauth.title">Google Drive Authorization - Speleo Studio</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -62,17 +62,38 @@
   </head>
   <body>
     <div class="container">
-      <h1>Google Drive Authorization</h1>
+      <h1 data-i18n="oauth.title">Google Drive Authorization</h1>
       <div id="status">
         <div class="spinner"></div>
-        <p class="loading">Processing authorization...</p>
+        <p class="loading" data-i18n="oauth.processing">Processing authorization...</p>
       </div>
       <div id="message" style="display: none"></div>
-      <button id="closeButton" class="button" style="display: none" onclick="window.close()">Close Window</button>
+      <button
+        id="closeButton"
+        class="button"
+        style="display: none"
+        onclick="window.close()"
+        data-i18n="oauth.closeWindow"
+        >Close Window</button
+      >
     </div>
 
-    <script>
-      (async function () {
+    <script type="module">
+      import { I18nManager } from '../src/i18n/i18n.js';
+
+      // Create i18n instance with custom translations path (relative to this page)
+      const i18n = new I18nManager({
+        translationsPath: '../src/i18n/translations'
+      });
+
+      async function main() {
+        // Initialize i18n
+        await i18n.init();
+        i18n.updatePageTranslations();
+
+        // Update document title
+        document.title = i18n.t('oauth.title') + ' - Speleo Studio';
+
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const error = urlParams.get('error');
@@ -85,9 +106,9 @@
           statusDiv.style.display = 'none';
           messageDiv.style.display = 'block';
           messageDiv.innerHTML = `
-                    <p class="error">Authorization failed: ${error}</p>
-                    <p>Please try again.</p>
-                `;
+            <p class="error">${i18n.t('oauth.errorPrefix')} ${error}</p>
+            <p>${i18n.t('oauth.tryAgain')}</p>
+          `;
           closeButton.style.display = 'block';
           return;
         }
@@ -96,9 +117,9 @@
           statusDiv.style.display = 'none';
           messageDiv.style.display = 'block';
           messageDiv.innerHTML = `
-                    <p class="error">No authorization code received.</p>
-                    <p>Please try again.</p>
-                `;
+            <p class="error">${i18n.t('oauth.noCode')}</p>
+            <p>${i18n.t('oauth.tryAgain')}</p>
+          `;
           closeButton.style.display = 'block';
           return;
         }
@@ -118,26 +139,28 @@
           statusDiv.style.display = 'none';
           messageDiv.style.display = 'block';
           messageDiv.innerHTML = `
-                    <p class="success">Authorization successful!</p>
-                    <p>You can now close this window and return to Speleo Studio.</p>
-                `;
+            <p class="success">${i18n.t('oauth.success')}</p>
+            <p>${i18n.t('oauth.successMessage')}</p>
+          `;
           closeButton.style.display = 'block';
 
           // Auto-close after 3 seconds
           setTimeout(() => {
             window.close();
           }, 3000);
-        } catch (error) {
-          console.error('Authorization error:', error);
+        } catch (err) {
+          console.error('Authorization error:', err);
           statusDiv.style.display = 'none';
           messageDiv.style.display = 'block';
           messageDiv.innerHTML = `
-                    <p class="error">Authorization failed: ${error.message}</p>
-                    <p>Please try again.</p>
-                `;
+            <p class="error">${i18n.t('oauth.errorPrefix')} ${err.message}</p>
+            <p>${i18n.t('oauth.tryAgain')}</p>
+          `;
           closeButton.style.display = 'block';
         }
-      })();
+      }
+
+      main();
     </script>
   </body>
 </html>
