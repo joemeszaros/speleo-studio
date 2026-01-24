@@ -22,6 +22,7 @@ import { showErrorPanel } from './popups.js';
 import { RotationTool } from './tool/rotation.js';
 import { ShortestPathTool } from './tool/shortestpath.js';
 import { DipStrikeCalculatorTool } from './tool/dipstrike.js';
+import { RoseDiagramTool } from './tool/rosediagram.js';
 
 class NavigationBar {
 
@@ -203,6 +204,11 @@ class NavigationBar {
             name  : i18n.t('ui.navbar.menu.tools.shortestPath'),
             icon  : 'icons/shortest_path.svg',
             click : () => new ShortestPathTool(this.db, this.options, this.scene).show()
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.tools.roseDiagram'),
+            icon  : 'icons/rose_diagram.svg',
+            click : () => new RoseDiagramTool(this.db).show()
           },
           {
             name  : i18n.t('ui.navbar.menu.tools.drive'),

@@ -21,6 +21,7 @@
           "name": "Tools",
           "dipStrike": "Dip & Strike Calculator",
           "shortestPath": "Shortest path",
+          "roseDiagram": "Rose Diagram",
           "drive": "Google Drive sync"
         },
         "help": {
@@ -356,6 +357,19 @@
         "to": "To",
         "cannotFindPath": "Cannot find path between '{from}' and '{to}'",
         "cannotFindStations": "Cannot find stations '{from}' or '{to}'"
+      },
+      "roseDiagram": {
+        "title": "Rose Diagram",
+        "selectCave": "Select a cave",
+        "noData": "No centerline data available",
+        "binCount": "Bins",
+        "meanDirection": "Mean direction",
+        "stats": {
+          "totalLength": "Total length",
+          "shotCount": "Center shots",
+          "meanDirection": "Mean direction",
+          "meanLength": "Mean shot length"
+        }
       },
       "surfacePointDetails": {
         "title": "Surface point details",

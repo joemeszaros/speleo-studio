@@ -21,6 +21,7 @@
           "name": "Eszközök",
           "dipStrike": "Dőlés és irány számító",
           "shortestPath": "Legrövidebb út",
+          "roseDiagram": "Rózsa diagram",
           "drive": "Google Drive szinkronizálás"
         },
         "help": {
@@ -338,6 +339,19 @@
         "length": "Hossz",
         "cannotFindPath": "Nem található út a(z) '{from}' és '{to}' között",
         "cannotFindStations": "Nem található a(z) '{from}' vagy '{to}' pont"
+      },
+      "roseDiagram": {
+        "title": "Rózsa diagram",
+        "selectCave": "Válassz barlangot",
+        "noData": "Nincs elérhető középvonal adat",
+        "binCount": "Szeletek",
+        "meanDirection": "Átlagos irány",
+        "stats": {
+          "totalLength": "Összhossz",
+          "shotCount": "Középvonal mérések",
+          "meanDirection": "Átlagos irány",
+          "meanLength": "Átlagos mérés hossz"
+        }
       },
       "pdfPrint": {
         "title": "PDF generálás",
