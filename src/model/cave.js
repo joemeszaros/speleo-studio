@@ -470,7 +470,15 @@ class Cave {
       pure.revision = 1;
     }
     pure.geoData = pure.geoData === undefined ? undefined : GeoData.fromPure(pure.geoData);
-    pure.surveys = pure.surveys.map((s) => Survey.fromPure(s));
+    pure.surveys = pure.surveys.map((s, index) => {
+      const survey = Survey.fromPure(s);
+      // Clear start station for non-first surveys
+      if (index > 0) {
+        survey.start = undefined;
+        console.log('Cleared start station for survey', survey.name);
+      }
+      return survey;
+    });
     pure.aliases = pure.aliases === undefined ? [] : pure.aliases.map((a) => SurveyAlias.fromPure(a));
     pure.startPosition = Vector.fromPure(pure.startPosition);
 

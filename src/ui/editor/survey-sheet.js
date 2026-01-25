@@ -144,14 +144,16 @@ export class SurveySheetEditor extends BaseEditor {
     );
 
     // Column 2: Start station and declination
-    createField(
-      {
-        label : i18n.t('ui.editors.surveySheet.fields.start'),
-        id    : 'start',
-        type  : 'text'
-      },
-      column2
-    );
+    if (this.survey?.start !== undefined) {
+      createField(
+        {
+          label : i18n.t('ui.editors.surveySheet.fields.start'),
+          id    : 'start',
+          type  : 'text'
+        },
+        column2
+      );
+    }
 
     createField(
       {
@@ -244,7 +246,7 @@ export class SurveySheetEditor extends BaseEditor {
         }
       }
 
-      if ((this.survey?.shots ?? []).length > 0) {
+      if ((this.survey?.shots ?? []).length > 0 && this.survey?.start !== undefined) {
         const hasStart = this.survey.shots.find((s) => s.from === this.formData.start || s.to === this.formData.start);
         if (hasStart === undefined) {
           showErrorPanel(
@@ -253,6 +255,8 @@ export class SurveySheetEditor extends BaseEditor {
           return;
         }
       }
+
+      const start = this.survey?.start !== undefined ? this.formData.start : undefined; // we don't want to store start station for second and subsequent surveys
 
       if (this.survey === undefined) {
 
@@ -275,12 +279,12 @@ export class SurveySheetEditor extends BaseEditor {
         ) {
           metadata.convergence = this.getConvergence(this.cave.geoData);
         }
-        this.survey = new Survey(this.formData.name, true, metadata, this.formData.start);
+        this.survey = new Survey(this.formData.name, true, metadata, start);
         this.#emitSurveyAdded();
       } else if (this.surveyHasChanged) {
 
         this.survey.metadata = metadata;
-        this.survey.start = this.formData.start;
+        this.survey.start = start;
         this.#emitSurveyChanged();
 
       }

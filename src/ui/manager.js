@@ -596,6 +596,10 @@ class ProjectManager {
 
   addSurvey(caveName, survey) {
     const cave = this.db.getCave(caveName);
+    // Clear start station for non-first surveys
+    if (cave.surveys.length > 0) {
+      survey.start = undefined;
+    }
     cave.surveys.push(survey);
     this.explorer.addSurvey(cave, survey);
     if (survey.shots.length > 0) {

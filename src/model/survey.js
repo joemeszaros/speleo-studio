@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { Vector, Polar } from '../model.js';
+import { Polar } from '../model.js';
 import { degreesToRads } from '../utils/utils.js';
-import { StationCoordinates } from './geo.js';
 
 /**
  * Enum for Shot types

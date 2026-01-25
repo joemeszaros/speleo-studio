@@ -108,8 +108,6 @@ class SurveyHelper {
       );
     }
 
-    survey.start = startStationName;
-
     survey.shots.forEach((sh) => {
       sh.processed = false;
       sh.fromAlias = undefined;

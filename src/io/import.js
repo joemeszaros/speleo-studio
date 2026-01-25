@@ -340,7 +340,9 @@ class PolygonImporter extends Importer {
             instruments
           );
 
-          const survey = new Survey(surveyNameStr, true, metadata, fixPointName, shots);
+          // Only store start station for the first survey
+          const surveyStart = surveyIndex === 0 ? fixPointName : undefined;
+          const survey = new Survey(surveyNameStr, true, metadata, surveyStart, shots);
           SurveyHelper.calculateSurveyStations(
             survey,
             surveys,
