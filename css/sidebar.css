@@ -1181,3 +1181,276 @@ body {
   width: auto;
   margin-right: 2px;
 }
+
+/* Models Panel Styles */
+.models-panel {
+  color: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.models-tree {
+  background: #1e1e1e;
+  border-radius: 6px;
+  padding: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.models-tree-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Category styles */
+.models-tree-category {
+  background: #252525;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.models-tree-category-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  background: #2d2d2d;
+  border-bottom: 1px solid #404040;
+  gap: 8px;
+}
+
+.models-tree-category-header:hover {
+  background: #353535;
+}
+
+.models-tree-toggle {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.models-tree-toggle.expanded {
+  transform: rotate(90deg);
+}
+
+.models-tree-category-icon {
+  font-size: 14px;
+}
+
+.models-tree-category-label {
+  flex: 1;
+  font-weight: 500;
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.models-tree-count {
+  background: #04aa6d;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Children container */
+.models-tree-children {
+  padding: 4px 8px 8px 8px;
+}
+
+/* Model node styles */
+.models-tree-node {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  margin: 2px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+  transition: background 0.15s ease;
+}
+
+.models-tree-node:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.models-tree-node.selected {
+  background: linear-gradient(135deg, rgba(4, 170, 109, 0.3) 0%, rgba(4, 170, 109, 0.15) 100%);
+  border-left: 3px solid #04aa6d;
+  padding-left: 5px;
+}
+
+.models-tree-node-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.models-tree-node-label {
+  flex: 1;
+  font-size: 12px;
+  color: #cccccc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.models-tree-node.selected .models-tree-node-label {
+  color: #ffffff;
+}
+
+.models-tree-visibility {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.models-tree-visibility:hover {
+  opacity: 1;
+}
+
+.models-tree-visibility .eye-strikethrough {
+  position: relative;
+  display: inline-block;
+}
+
+.models-tree-visibility .eye-strikethrough::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ff4444;
+  transform: translateY(-50%) rotate(-45deg);
+  transform-origin: center;
+}
+
+/* Empty state */
+.models-tree-empty {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Properties Panel Styles */
+.models-properties {
+  background: #2d2d2d;
+  border-top: 1px solid #404040;
+  flex-shrink: 0;
+}
+
+.models-properties-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.models-properties-header {
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #ffffff;
+  background: #333;
+  border-bottom: 1px solid #404040;
+  letter-spacing: 0.5px;
+}
+
+.models-properties-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.models-properties-empty {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.models-properties-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.models-properties-section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.models-properties-inputs {
+  display: flex;
+  gap: 8px;
+}
+
+.models-properties-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.models-properties-axis-label {
+  font-size: 10px;
+  color: #666;
+  font-weight: 500;
+}
+
+.models-properties-input {
+  width: 100%;
+  padding: 6px 8px;
+  background: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.models-properties-input:focus {
+  border-color: #04aa6d;
+  box-shadow: 0 0 0 2px rgba(4, 170, 109, 0.2);
+}
+
+.models-properties-input:hover {
+  border-color: #555;
+}
+
+/* Hide spinner buttons on number inputs for cleaner look */
+.models-properties-input[type='number']::-webkit-inner-spin-button,
+.models-properties-input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.models-properties-input[type='number'] {
+  -moz-appearance: textfield;
+}

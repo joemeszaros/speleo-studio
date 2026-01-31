@@ -189,16 +189,32 @@
     "sidebar": {
       "tabs": {
         "explorer": "Felfedező",
+        "models": "Modellek",
         "settings": "Beállítások"
       },
       "tooltips": {
         "explorer": "Barlang és felmérés böngésző (Ctrl+E)",
+        "models": "3D modellek és objektumok (Ctrl+M)",
         "settings": "Jelenet és megjelenítési beállítások (Ctrl+D)",
         "toggle": "Oldalsáv ki/be (Ctrl+B)",
         "positionToggle": "Oldalsáv pozíció váltás (Bal/Jobb)"
       },
       "overview": {
         "title": "Jelenet áttekintő (Ctrl+G)"
+      }
+    },
+    "models": {
+      "categories": {
+        "models3d": "3D Modellek",
+        "svgFiles": "SVG Fájlok"
+      },
+      "noModels": "Nincsenek betöltött modellek",
+      "properties": {
+        "title": "Tulajdonságok",
+        "noSelection": "Válassz ki egy modellt a tulajdonságok szerkesztéséhez",
+        "position": "Pozíció",
+        "rotation": "Forgatás",
+        "scale": "Méretezés"
       }
     },
     "welcome": {

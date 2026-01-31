@@ -81,6 +81,10 @@ limitations under the License.
             >Explorer</button
           >
 
+          <button class="sidebar-tab" data-tab="models" role="tab" aria-selected="false" aria-controls="models-panel"
+            >Models</button
+          >
+
           <button
             class="sidebar-tab"
             data-tab="settings"
@@ -102,6 +106,13 @@ limitations under the License.
           <div id="explorer-panel" class="sidebar-panel active" aria-hidden="false">
             <div class="explorer-panel">
               <div id="explorer-tree" class="explorer-tree"></div>
+            </div>
+          </div>
+
+          <div id="models-panel" class="sidebar-panel" aria-hidden="true">
+            <div class="models-panel">
+              <div id="models-tree" class="models-tree"></div>
+              <div id="models-properties" class="models-properties"></div>
             </div>
           </div>
 

@@ -26,6 +26,7 @@ import { Footer } from './ui/footer.js';
 
 import { Sidebar } from './ui/sidebar.js';
 import { ExplorerTree } from './ui/explorer-tree.js';
+import { ModelsTree } from './ui/models-tree.js';
 import { SettingsPanel } from './ui/settings-panel.js';
 
 import { AttributesDefinitions } from './attributes.js';
@@ -175,6 +176,15 @@ class Main {
     // Initialize settings panel in sidebar
     this.settingsPanel = new SettingsPanel(document.getElementById('settings-content'), options);
 
+    // Initialize models tree in sidebar
+    this.modelsTree = new ModelsTree(
+      db,
+      options,
+      scene,
+      document.getElementById('models-tree'),
+      document.getElementById('models-properties')
+    );
+
     this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem, attributeDefs);
     if (
       this.googleDriveSync.config.isConfigured() &&
@@ -321,9 +331,15 @@ class Main {
     const colorGradients = SurfaceHelper.getColorGradients(surface.points, this.options.scene.surface.color);
     const _3dobjects = this.scene.models.getSurfaceObjects(cloud, colorGradients);
     this.scene.models.addSurface(surface, _3dobjects);
-    const boundingBox = this.scene.computeBoundingBox();
-    this.scene.grid.adjust(boundingBox);
-    this.scene.view.fitScreen(boundingBox);
+
+    // Add to models tree for management
+    if (this.modelsTree) {
+      this.modelsTree.addModel(surface, cloud);
+    }
+
+    //const boundingBox = this.scene.computeBoundingBox();
+    //this.scene.grid.adjust(boundingBox);
+    //this.scene.view.fitScreen(boundingBox);
   }
 
   async #tryAddSurvey(survey) {

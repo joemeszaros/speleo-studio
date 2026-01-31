@@ -189,16 +189,32 @@
     "sidebar": {
       "tabs": {
         "explorer": "Explorer",
+        "models": "Models",
         "settings": "Settings"
       },
       "tooltips": {
         "explorer": "Cave and survey explorer (Ctrl+E)",
+        "models": "3D models and objects (Ctrl+M)",
         "settings": "Scene and visualization settings (Ctrl+D)",
         "toggle": "Toggle sidebar (Ctrl+B)",
         "positionToggle": "Toggle sidebar position (Left/Right)"
       },
       "overview": {
         "title": "Scene Overview (Ctrl+G)"
+      }
+    },
+    "models": {
+      "categories": {
+        "models3d": "3D Models",
+        "svgFiles": "SVG Files"
+      },
+      "noModels": "No models loaded",
+      "properties": {
+        "title": "Properties",
+        "noSelection": "Select a model to edit its properties",
+        "position": "Position",
+        "rotation": "Rotation",
+        "scale": "Scale"
       }
     },
     "welcome": {

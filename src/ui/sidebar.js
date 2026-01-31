@@ -241,6 +241,13 @@ export class Sidebar {
         this.focus();
       }
 
+      // Ctrl/Cmd + M to focus models
+      if ((e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'M') {
+        e.preventDefault();
+        this.switchTab('models');
+        this.focus();
+      }
+
       // Ctrl/Cmd + Shift + S to focus settings
       if ((e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'D') {
         e.preventDefault();
@@ -316,6 +323,7 @@ export class Sidebar {
   addTooltips() {
     const tooltips = {
       explorer                  : '♎ ' + i18n.t('ui.sidebar.tooltips.explorer'),
+      models                    : '📦 ' + i18n.t('ui.sidebar.tooltips.models'),
       settings                  : '⚙️ ' + i18n.t('ui.sidebar.tooltips.settings'),
       'sidebar-toggle'          : i18n.t('ui.sidebar.tooltips.toggle'),
       'sidebar-position-toggle' : i18n.t('ui.sidebar.tooltips.positionToggle')
@@ -434,13 +442,17 @@ export class Sidebar {
   updateTabLabels() {
     // Update tab labels
     const explorerTab = document.querySelector('[data-tab="explorer"]');
+    const modelsTab = document.querySelector('[data-tab="models"]');
     const settingsTab = document.querySelector('[data-tab="settings"]');
 
     if (explorerTab) {
-      explorerTab.textContent = '♎ ' + i18n.t('ui.sidebar.tabs.explorer');
+      explorerTab.textContent = '♎';
+    }
+    if (modelsTab) {
+      modelsTab.textContent = '📦';
     }
     if (settingsTab) {
-      settingsTab.textContent = '⚙️ ' + i18n.t('ui.sidebar.tabs.settings');
+      settingsTab.textContent = '⚙️';
     }
   }
 

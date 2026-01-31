@@ -475,7 +475,6 @@ class Cave {
       // Clear start station for non-first surveys
       if (index > 0) {
         survey.start = undefined;
-        console.log('Cleared start station for survey', survey.name);
       }
       return survey;
     });
