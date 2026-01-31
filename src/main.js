@@ -337,9 +337,9 @@ class Main {
       this.modelsTree.addModel(surface, cloud);
     }
 
-    //const boundingBox = this.scene.computeBoundingBox();
-    //this.scene.grid.adjust(boundingBox);
-    //this.scene.view.fitScreen(boundingBox);
+    const boundingBox = this.scene.computeBoundingBox();
+    this.scene.grid.adjust(boundingBox);
+    this.scene.view.fitScreen(boundingBox);
   }
 
   async #tryAddSurvey(survey) {

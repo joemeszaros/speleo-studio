@@ -680,6 +680,12 @@ class PlySurfaceImporter extends Importer {
   async importText(text, onModelLoad, name) {
     const loader = new PLYLoader();
     const geometry = loader.parse(text);
+
+    // Apply coordinate normalization if global origin is initialized
+    // This handles the case where PLY coordinates are in the same coordinate system
+    // as the loaded caves (e.g., UTM coordinates)
+    this.normalizeGeometry(geometry);
+
     geometry.computeBoundingBox();
     const center = geometry.boundingBox.getCenter(new THREE.Vector3());
     const material = new THREE.PointsMaterial({
@@ -697,6 +703,98 @@ class PlySurfaceImporter extends Importer {
     }
     const surface = new Surface(name, points, new Vector(center.x, center.y, center.z));
     await onModelLoad(surface, cloud);
+  }
+
+  /**
+   * Normalize geometry coordinates relative to the global coordinate origin.
+   * This ensures PLY models with UTM/EOV coordinates appear correctly
+   * relative to caves that have been loaded.
+   *
+   * Only normalizes if the PLY coordinates appear to be in the same coordinate
+   * system (i.e., coordinates are close to the global origin). This prevents
+   * breaking PLY files that use local/relative coordinates.
+   *
+   * @param {THREE.BufferGeometry} geometry - The geometry to normalize
+   */
+  normalizeGeometry(geometry) {
+    if (!globalNormalizer.isInitialized()) {
+      // No global origin set yet - coordinates will be used as-is
+      return;
+    }
+
+    const origin = globalNormalizer.globalOrigin;
+    if (!origin) return;
+
+    const position = geometry.getAttribute('position');
+    const positionArray = position.array;
+
+    // Determine offset based on what type of coordinates are in the global origin
+    // For UTM: easting/northing/elevation, for EOV: y/x/elevation
+    const offsetX = origin.easting !== undefined ? origin.easting : origin.y || 0;
+    const offsetY = origin.northing !== undefined ? origin.northing : origin.x || 0;
+    const offsetZ = origin.elevation || 0;
+
+    // Check if the PLY coordinates are likely in the same coordinate system
+    // by examining if they're within a reasonable distance from the origin
+    // If coordinates are local (near 0), don't normalize
+    if (!this.shouldNormalizeCoordinates(positionArray, offsetX, offsetY)) {
+      return;
+    }
+
+    console.log(`Normalizing PLY coordinates with offset: (${offsetX}, ${offsetY}, ${offsetZ})`);
+
+    // Modify each vertex position in-place
+    for (let i = 0; i < positionArray.length; i += 3) {
+      positionArray[i] -= offsetX; // X coordinate
+      positionArray[i + 1] -= offsetY; // Y coordinate
+      positionArray[i + 2] -= offsetZ; // Z coordinate
+    }
+
+    // Mark the attribute as needing update
+    position.needsUpdate = true;
+  }
+
+  /**
+   * Determine if PLY coordinates should be normalized based on their values.
+   * If coordinates are small (local/relative system), don't normalize.
+   * If coordinates are large and close to the global origin, normalize.
+   *
+   * @param {Float32Array} positionArray - The vertex positions
+   * @param {number} originX - The global origin X
+   * @param {number} originY - The global origin Y
+   * @returns {boolean} True if coordinates should be normalized
+   */
+  shouldNormalizeCoordinates(positionArray, originX, originY) {
+    if (positionArray.length < 3) return false;
+
+    // Sample a few points to determine coordinate system type
+    const sampleCount = Math.min(100, positionArray.length / 3);
+    let sumX = 0,
+      sumY = 0;
+
+    for (let i = 0; i < sampleCount * 3; i += 3) {
+      sumX += positionArray[i];
+      sumY += positionArray[i + 1];
+    }
+
+    const avgX = sumX / sampleCount;
+    const avgY = sumY / sampleCount;
+
+    // If the global origin has large coordinates (UTM/EOV typically > 100000)
+    // and the PLY average coordinates are also large and within reasonable range
+    const originMagnitude = Math.max(Math.abs(originX), Math.abs(originY));
+    const plyMagnitude = Math.max(Math.abs(avgX), Math.abs(avgY));
+
+    // Consider coordinates "global" if:
+    // 1. The origin is large (UTM/EOV style coordinates)
+    // 2. The PLY coordinates are also large (same order of magnitude)
+    // 3. The PLY coordinates are within 100km of the origin
+    const isOriginLarge = originMagnitude > 10000;
+    const isPlyLarge = plyMagnitude > 10000;
+    const distanceFromOrigin = Math.sqrt(Math.pow(avgX - originX, 2) + Math.pow(avgY - originY, 2));
+    const isWithinRange = distanceFromOrigin < 100000; // 100km threshold
+
+    return isOriginLarge && isPlyLarge && isWithinRange;
   }
 }
 

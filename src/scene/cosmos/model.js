@@ -42,9 +42,19 @@ export class ModelScene {
   addSurface(surface, entry) {
     this.surfaceObject3DGroup.add(entry.cloud);
 
+    // Disable frustum culling - required for large point clouds that may have
+    // an incorrect bounding sphere calculated by Three.js
+    // When Three.js calculates the bounding sphere for frustum culling on large
+    // point clouds (especially after coordinate normalization), it can incorrectly
+    // determine that the object is outside the camera's view frustum, causing it to not render.
+    entry.cloud.frustumCulled = false;
+
     if (this.surfaceObjects.has(surface.name)) {
       throw new Error(i18n.t('errors.scene.surfaceObjectAlreadyAdded', { name: surface.name }));
     }
     this.surfaceObjects.set(surface.name, entry);
+
+    // Force render to display the surface
+    this.scene.view.renderView();
   }
 }
