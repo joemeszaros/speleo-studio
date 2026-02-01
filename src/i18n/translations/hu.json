@@ -82,7 +82,7 @@
       "noProjectLoaded": "Nincs betöltött projekt",
       "raycastingEnabled": "Pont kiválasztás engedélyezve",
       "raycastingDisabled": "Pont kiválasztás letiltva",
-      "surfacePoint": "Felszíni pont ({x}, {y}, {z})",
+      "pointCloudPoint": "Pontfelhő pont ({x}, {y}, {z})",
       "coordinateSystem": "Koordináták",
       "noCoordinateSystemLoaded": "Nincs koordináta-rendszer",
       "privacyPolicy": "Adatvédelmi irányelvek",
@@ -443,7 +443,7 @@
           "calculationError": "Számítási hiba: {error}"
         }
       },
-      "surfacePointDetails": {
+      "pointCloudPointDetails": {
         "title": "Felszíni pont részletei",
         "fileName": "Fájl neve"
       },

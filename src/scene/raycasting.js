@@ -156,12 +156,13 @@ export class Raycasting {
 
   getIntersectedPointCloudMeta(mouseCoordinates) {
     this.setPointer(this.getMousePosition(mouseCoordinates));
-    this.raycaster.setFromCamera(this.pointer, this.scene.view.camera);
     this.raycaster.params.Points.threshold = 0.3;
+    this.raycaster.layers.enableAll(); // Enable all layers for point cloud intersection
+    this.raycaster.setFromCamera(this.pointer, this.scene.view.camera);
 
     // Only raycast against point clouds, not meshes
     for (const [name, entry] of this.scene.models.pointCloudObjects) {
-      const intersectedPoints = this.raycaster.intersectObject(entry.object3D, false);
+      const intersectedPoints = this.raycaster.intersectObject(entry.object3D, true);
       if (intersectedPoints.length) {
         return { position: intersectedPoints[0].point, type: 'pointcloud', name: name };
       }

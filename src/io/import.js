@@ -818,6 +818,11 @@ class PlyModelImporter extends Importer {
 
     // Mark the attribute as needing update
     position.needsUpdate = true;
+
+    // Recompute bounding box and sphere after modifying positions
+    // This is critical for raycasting to work correctly
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
   }
 
   /**

@@ -82,7 +82,7 @@
       "noProjectLoaded": "No project loaded",
       "raycastingEnabled": "Point selection enabled",
       "raycastingDisabled": "Point selection disabled",
-      "surfacePoint": "Surface point ({x}, {y}, {z})",
+      "pointCloudPoint": "Point cloud point ({x}, {y}, {z})",
       "coordinateSystem": "Coordinate System",
       "noCoordinateSystemLoaded": "No coordinate system",
       "privacyPolicy": "Privacy Policy",
@@ -391,7 +391,7 @@
           "meanLength": "Mean shot length"
         }
       },
-      "surfacePointDetails": {
+      "pointCloudPointDetails": {
         "title": "Surface point details",
         "fileName": "File name"
       },

@@ -84,8 +84,8 @@ class SceneInteraction {
           const rect = this.scene.getBoundingClientRect();
           if (this.selectedStation.type === 'station') {
             this.showStationDetailsPanel(this.selectedStation, event.clientX - rect.left, event.clientY - rect.top);
-          } else if (this.selectedStation.type === 'surface') {
-            this.showSurfacePointDetailsPanel(
+          } else if (this.selectedStation.type === 'pointcloud') {
+            this.showPointCloudPointDetailsPanel(
               this.selectedStation,
               event.clientX - rect.left,
               event.clientY - rect.top
@@ -385,9 +385,9 @@ class SceneInteraction {
     this.showSphere(this.scene.points.focusSphere);
     if (st.type === 'station') {
       this.footer.showMessage(this.getSelectedStationDetails(st));
-    } else if (st.type === 'surface') {
+    } else if (st.type === 'pointcloud') {
       this.footer.showMessage(
-        i18n.t('ui.footer.surfacePoint', {
+        i18n.t('ui.footer.pointCloudPoint', {
           x : st.position.x.toFixed(2),
           y : st.position.y.toFixed(2),
           z : st.position.z.toFixed(2)
@@ -487,15 +487,15 @@ class SceneInteraction {
         }
       }
 
-      if (intersectedObject.type !== 'surface' && intersectedObject === this.selectedStation) {
+      if (intersectedObject.type !== 'pointcloud' && intersectedObject === this.selectedStation) {
         // clicked on the same sphere again
         this.#clearSelected();
       } else if (
-        intersectedObject.type === 'surface' &&
+        intersectedObject.type === 'pointcloud' &&
         intersectedObject === this.selectedStation &&
         intersectedObject.position.distanceTo(this.selectedPosition) < 0.2
       ) {
-        // clicked on the same surface point again
+        // clicked on the same point cloud point again
         this.#clearSelected();
       } else {
         // clicked on a different object
@@ -646,8 +646,8 @@ class SceneInteraction {
     const polar = toPolar(diffVector);
 
     const fromDetails =
-      from.type === 'surface' ? from.name : `${from.cave.name} → ${from.station.survey.name} → ${from.name}`;
-    const toDetails = to.type === 'surface' ? to.name : `${to.cave.name} → ${to.station.survey.name} → ${to.name}`;
+      from.type === 'pointcloud' ? from.name : `${from.cave.name} → ${from.station.survey.name} → ${from.name}`;
+    const toDetails = to.type === 'pointcloud' ? to.name : `${to.cave.name} → ${to.station.survey.name} → ${to.name}`;
     content.innerHTML = `
         ${i18n.t('common.from')}: ${fromDetails}<br>
         X: ${fp.x.toFixed(3)}<br>
@@ -678,12 +678,12 @@ class SceneInteraction {
 
   }
 
-  showSurfacePointDetailsPanel(stationMeta, left, top) {
+  showPointCloudPointDetailsPanel(stationMeta, left, top) {
     this.infoPanel.style.width = '350px';
     wm.makeFloatingPanel(
       this.infoPanel,
-      (contentElmnt) => this.buildSurfacePointDetailsPanel(contentElmnt, stationMeta, left, top),
-      'ui.panels.surfacePointDetails.title',
+      (contentElmnt) => this.buildPointCloudPointDetailsPanel(contentElmnt, stationMeta, left, top),
+      'ui.panels.pointCloudPointDetails.title',
       false,
       false,
       {},
@@ -697,10 +697,10 @@ class SceneInteraction {
     );
   }
 
-  buildSurfacePointDetailsPanel(contentElmnt, pointMeta, left, top) {
+  buildPointCloudPointDetailsPanel(contentElmnt, pointMeta, left, top) {
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
-        ${i18n.t('ui.panels.surfacePointDetails.fileName')}: ${pointMeta.name}<br><br>
+        ${i18n.t('ui.panels.pointCloudPointDetails.fileName')}: ${pointMeta.name}<br><br>
         X: ${pointMeta.position.x.toFixed(3)}<br>
         Y: ${pointMeta.position.y.toFixed(3)}<br>
         Z: ${pointMeta.position.z.toFixed(3)}<br>`;
