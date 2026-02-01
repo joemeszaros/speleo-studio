@@ -580,21 +580,40 @@ class StationAttribute {
   }
 }
 
-class Surface {
+/**
+ * Represents a 3D point cloud loaded from PLY files.
+ */
+class PointCloud {
   /**
-   *
-   * @param {string} name - The name of the surface
-   * @param {Array[Vector]} points - The points that define the surface
-   * @param {Vector} center - The center of the surface bounding box
-   * @param {boolean} visible - The visibility property of the surface
+   * @param {string} name - The name of the point cloud
+   * @param {Array[Vector]} points - The points that define the point cloud
+   * @param {Vector} center - The center of the bounding box
+   * @param {boolean} hasVertexColors - Whether the point cloud has vertex colors
+   * @param {boolean} visible - The visibility property
    */
-  constructor(name, points = [], center, visible = true) {
+  constructor(name, points = [], center, hasVertexColors = false, visible = true) {
     this.name = name;
     this.points = points;
     this.center = center;
+    this.hasVertexColors = hasVertexColors;
     this.visible = visible;
   }
-
 }
 
-export { Vector, Offset, Polar, Color, StationAttribute, SectionAttribute, ComponentAttribute, Surface };
+/**
+ * Represents a 3D mesh loaded from PLY or OBJ files.
+ */
+class Mesh3D {
+  /**
+   * @param {string} name - The name of the mesh
+   * @param {Vector} center - The center of the bounding box
+   * @param {boolean} visible - The visibility property
+   */
+  constructor(name, center, visible = true) {
+    this.name = name;
+    this.center = center;
+    this.visible = visible;
+  }
+}
+
+export { Vector, Offset, Polar, Color, StationAttribute, SectionAttribute, ComponentAttribute, PointCloud, Mesh3D };

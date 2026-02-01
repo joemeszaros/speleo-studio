@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-import { Color } from './model.js';
+import { Color } from '../model.js';
 
-class SurfaceHelper {
+/**
+ * Helper class for point cloud operations.
+ */
+class PointCloudHelper {
 
+  /**
+   * Generates color gradients based on Z-height for point cloud visualization.
+   * @param {Array[Vector]} points - The points of the point cloud
+   * @param {Object} colorConfig - Configuration with start and end colors
+   * @returns {Array} Flat array of RGB values
+   */
   static getColorGradients(points, colorConfig) {
     const startColor = new Color(colorConfig.start);
     const endColor = new Color(colorConfig.end);
@@ -44,4 +53,4 @@ class SurfaceHelper {
   }
 }
 
-export { SurfaceHelper };
+export { PointCloudHelper };

@@ -143,8 +143,20 @@ class MyScene {
   }
 
   computeBoundingBox() {
-    //FIXME: incorporate surface
-    return this.speleo.computeBoundingBox();
+    let boundingBox = this.speleo.computeBoundingBox();
+
+    // Extend bounding box with loaded 3D models
+    const group = this.models.get3DModelsGroup();
+    if (group.children.length > 0) {
+      const modelBox = new THREE.Box3().setFromObject(group);
+      if (boundingBox === undefined) {
+        boundingBox = modelBox;
+      } else if (!modelBox.isEmpty()) {
+        boundingBox.union(modelBox);
+      }
+    }
+
+    return boundingBox;
   }
 
   changeView(viewName) {

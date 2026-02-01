@@ -939,7 +939,8 @@
     "scene": {
       "surveyObjectsAlreadyAdded": "A(z) {caveName} / {surveyName} felmérés objektumai már hozzá lettek adva a jelenethez!",
       "unknownSurfaceColorConfiguration": "Ismeretlen konfiguráció a felszín színekhez: {value}",
-      "surfaceObjectAlreadyAdded": "A(z) {name} felszín objektum már hozzá lett adva a jelenethez!",
+      "pointCloudAlreadyAdded": "A(z) {name} pontfelhő már hozzá lett adva a jelenethez!",
+      "meshAlreadyAdded": "A(z) {name} háló már hozzá lett adva a jelenethez!",
       "caveAlreadyExists": "A(z) {name} nevű barlang már létezik!",
       "surveyAlreadyExists": "A(z) {name} nevű felmérés már létezik!"
     },
@@ -954,7 +955,8 @@
       "caveAlreadyExists": "A(z) {name} nevű barlang már létezik!",
       "surveyDoesNotExist": "A(z) '{name}' nevű felmérés nem létezik!",
       "surveyAlreadyExists": "A(z) '{name}' nevű felmérés már létezik!",
-      "surfaceAlreadyAdded": "A(z) {name} felszín már hozzá lett adva!"
+      "pointCloudAlreadyAdded": "A(z) {name} pontfelhő már hozzá lett adva!",
+      "meshAlreadyAdded": "A(z) {name} háló már hozzá lett adva!"
     },
     "storage": {
       "revisionStore": {

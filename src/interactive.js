@@ -473,11 +473,11 @@ class SceneInteraction {
 
     const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
     const intersectedStation = this.raycasting.getIntersectedStationMeta(this.mouseCoordinates, worldUnitsFor5Pixels);
-    const intersectsSurfacePoint = this.raycasting.getIntersectedSurfacePointMeta(this.mouseCoordinates);
-    const hasIntersection = intersectedStation !== undefined || intersectsSurfacePoint !== undefined;
+    const intersectsPointCloud = this.raycasting.getIntersectedPointCloudMeta(this.mouseCoordinates);
+    const hasIntersection = intersectedStation !== undefined || intersectsPointCloud !== undefined;
 
     if (hasIntersection) {
-      const intersectedObject = intersectsSurfacePoint !== undefined ? intersectsSurfacePoint : intersectedStation;
+      const intersectedObject = intersectsPointCloud !== undefined ? intersectsPointCloud : intersectedStation;
 
       // Check if we're in distance measurement mode
       if (this.distanceMeasurementMode && (this.distanceFromStation || this.distanceToStation)) {

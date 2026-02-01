@@ -20,7 +20,8 @@ class Database {
 
   constructor() {
     this.caves = new Map();
-    this.surfaces = new Map();
+    this.pointClouds = new Map();
+    this.meshes = new Map();
   }
 
   deleteSurvey(caveName, surveyName) {
@@ -126,15 +127,30 @@ class Database {
     survey.name = newName;
   }
 
-  getSurface(name) {
-    return this.surfaces.get(name);
+  getPointCloud(name) {
+    return this.pointClouds.get(name);
   }
 
-  addSurface(surface) {
-    if (this.surfaces.has(surface.name)) {
-      throw new Error(i18n.t('errors.db.surfaceAlreadyAdded', { name: surface.name }));
+  addPointCloud(pointCloud) {
+    if (this.pointClouds.has(pointCloud.name)) {
+      throw new Error(i18n.t('errors.db.pointCloudAlreadyAdded', { name: pointCloud.name }));
     }
-    this.surfaces.set(surface.name, surface);
+    this.pointClouds.set(pointCloud.name, pointCloud);
+  }
+
+  getMesh(name) {
+    return this.meshes.get(name);
+  }
+
+  addMesh(mesh) {
+    if (this.meshes.has(mesh.name)) {
+      throw new Error(i18n.t('errors.db.meshAlreadyAdded', { name: mesh.name }));
+    }
+    this.meshes.set(mesh.name, mesh);
+  }
+
+  getAllModels() {
+    return new Map([...this.pointClouds, ...this.meshes]);
   }
 
   deleteCave(caveName) {
@@ -145,7 +161,8 @@ class Database {
 
   clear() {
     this.caves.clear();
-    this.surfaces.clear();
+    this.pointClouds.clear();
+    this.meshes.clear();
   }
 
   reorderSurvey(caveName, surveyName, newIndex) {

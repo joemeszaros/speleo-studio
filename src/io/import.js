@@ -18,7 +18,7 @@ import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { showErrorPanel } from '../ui/popups.js';
 import { Shot, ShotType } from '../model/survey.js';
-import { Vector, Surface } from '../model.js';
+import { Vector, PointCloud, Mesh3D } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument } from '../model/survey.js';
 import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
@@ -34,6 +34,7 @@ import {
 import { CoordinateSystemDialog } from '../ui/coordinate-system-dialog.js';
 import { EncodingSelectionDialog } from '../ui/encoding-selection-dialog.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as THREE from 'three';
 import { i18n } from '../i18n/i18n.js';
 /**
@@ -76,6 +77,37 @@ class Importer {
       };
 
       reader.readAsText(file, endcoding);
+    });
+  }
+
+  async importFileAsArrayBuffer(file, name, onLoadFn) {
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    const nameToUse = name ?? file.name;
+    const errorMessage = i18n.t('errors.import.importFileFailed', {
+      name : nameToUse.substring(nameToUse.lastIndexOf('/') + 1)
+    });
+
+    await new Promise((resolve, reject) => {
+      reader.onload = async (event) => {
+        try {
+          await this.importData(event.target.result, onLoadFn, name);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      };
+
+      reader.onerror = (error) => {
+        console.error(errorMessage, error);
+        showErrorPanel(`${errorMessage}: ${error}`, 0);
+        reject(error);
+      };
+
+      reader.readAsArrayBuffer(file);
     });
   }
 
@@ -667,19 +699,21 @@ class JsonImporter extends Importer {
   }
 }
 
-class PlySurfaceImporter extends Importer {
+class PlyModelImporter extends Importer {
 
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
   }
 
   async importFile(file, name, onModelLoad) {
-    await super.importFile(file, name, onModelLoad);
+    // Use ArrayBuffer reading for binary PLY support
+    await super.importFileAsArrayBuffer(file, name, onModelLoad);
   }
 
-  async importText(text, onModelLoad, name) {
+  async importData(data, onModelLoad, name) {
     const loader = new PLYLoader();
-    const geometry = loader.parse(text);
+    // PLYLoader.parse() accepts both string (ASCII PLY) and ArrayBuffer (binary PLY)
+    const geometry = loader.parse(data);
 
     // Apply coordinate normalization if global origin is initialized
     // This handles the case where PLY coordinates are in the same coordinate system
@@ -688,21 +722,53 @@ class PlySurfaceImporter extends Importer {
 
     geometry.computeBoundingBox();
     const center = geometry.boundingBox.getCenter(new THREE.Vector3());
-    const material = new THREE.PointsMaterial({
-      color        : 0xffffff,
-      size         : 2,
-      vertexColors : true
-    });
-    const cloud = new THREE.Points(geometry, material);
-    const position = geometry.getAttribute('position');
-    const points = [];
 
-    for (let i = 0; i < position.count; i++) {
-      const point = new Vector(position.getX(i), position.getY(i), position.getZ(i));
-      points.push(point);
+    // Determine if the PLY has faces (indexed geometry) or just points
+    const hasFaces = geometry.index !== null && geometry.index.count > 0;
+    const hasVertexColors = geometry.getAttribute('color') !== undefined;
+    const centerVector = new Vector(center.x, center.y, center.z);
+
+    if (hasFaces) {
+      // PLY has faces - render as a mesh
+      // Ensure normals exist for proper 3D shading
+      if (!geometry.getAttribute('normal')) {
+        geometry.computeVertexNormals();
+      }
+
+      // Use MeshNormalMaterial for 3D appearance if no vertex colors,
+      // otherwise use MeshBasicMaterial with vertex colors
+      const material = hasVertexColors
+        ? new THREE.MeshBasicMaterial({
+            vertexColors : true,
+            color        : 0xffffff,
+            side         : THREE.DoubleSide
+          })
+        : new THREE.MeshNormalMaterial({
+            side        : THREE.DoubleSide,
+            flatShading : false
+          });
+
+      const meshObject = new THREE.Mesh(geometry, material);
+      const mesh = new Mesh3D(name, centerVector);
+      await onModelLoad(mesh, meshObject);
+    } else {
+      // PLY is point cloud only - render as points
+      // Extract vertices only for point clouds (needed for raycasting and color gradients)
+      const position = geometry.getAttribute('position');
+      const points = [];
+      for (let i = 0; i < position.count; i++) {
+        points.push(new Vector(position.getX(i), position.getY(i), position.getZ(i)));
+      }
+
+      const material = new THREE.PointsMaterial({
+        color        : 0xffffff,
+        size         : 2,
+        vertexColors : true // Always true: either native colors or gradient colors will be applied
+      });
+      const pointsObject = new THREE.Points(geometry, material);
+      const pointCloud = new PointCloud(name, points, centerVector, hasVertexColors);
+      await onModelLoad(pointCloud, pointsObject);
     }
-    const surface = new Surface(name, points, new Vector(center.x, center.y, center.z));
-    await onModelLoad(surface, cloud);
   }
 
   /**
@@ -798,4 +864,160 @@ class PlySurfaceImporter extends Importer {
   }
 }
 
-export { PolygonImporter, TopodroidImporter, JsonImporter, PlySurfaceImporter, Importer };
+/**
+ * Importer for OBJ 3D model files.
+ * OBJ files can contain meshes, which are imported as Three.js Mesh objects.
+ */
+class ObjModelImporter extends Importer {
+
+  constructor(db, options, scene, manager) {
+    super(db, options, scene, manager);
+  }
+
+  async importFile(file, name, onModelLoad) {
+    await super.importFile(file, name, onModelLoad);
+  }
+
+  async importText(text, onModelLoad, name) {
+    const loader = new OBJLoader();
+    const object = loader.parse(text);
+
+    // Apply coordinate normalization to all geometries in the object
+    this.normalizeObject(object);
+
+    // Compute bounding box for the entire object
+    const boundingBox = new THREE.Box3().setFromObject(object);
+    const center = boundingBox.getCenter(new THREE.Vector3());
+
+    // Apply a default material if none exists
+    this.applyDefaultMaterial(object);
+
+    const mesh = new Mesh3D(name, new Vector(center.x, center.y, center.z));
+    await onModelLoad(mesh, object);
+  }
+
+  /**
+   * Apply a default material to meshes that don't have one
+   * Uses MeshNormalMaterial which shows 3D form based on surface normals
+   * without requiring lights in the scene
+   * @param {THREE.Object3D} object - The loaded OBJ object
+   */
+  applyDefaultMaterial(object) {
+    const defaultMaterial = new THREE.MeshNormalMaterial({
+      side        : THREE.DoubleSide,
+      flatShading : false
+    });
+
+    object.traverse((child) => {
+      if (child.isMesh) {
+        // Ensure normals are computed for proper shading
+        if (!child.geometry.getAttribute('normal')) {
+          child.geometry.computeVertexNormals();
+        }
+        // Use normal material for 3D appearance without lights
+        child.material = defaultMaterial;
+      }
+    });
+  }
+
+  /**
+   * Normalize object coordinates relative to the global coordinate origin.
+   * @param {THREE.Object3D} object - The loaded OBJ object
+   */
+  normalizeObject(object) {
+    if (!globalNormalizer.isInitialized()) {
+      return;
+    }
+
+    const origin = globalNormalizer.globalOrigin;
+    if (!origin) return;
+
+    // Determine offset based on coordinate type
+    const offsetX = origin.easting !== undefined ? origin.easting : origin.y || 0;
+    const offsetY = origin.northing !== undefined ? origin.northing : origin.x || 0;
+    const offsetZ = origin.elevation || 0;
+
+    // Check if normalization should be applied by sampling vertices
+    const shouldNormalize = this.shouldNormalizeObject(object, offsetX, offsetY);
+    if (!shouldNormalize) {
+      return;
+    }
+
+    console.log(`Normalizing OBJ coordinates with offset: (${offsetX}, ${offsetY}, ${offsetZ})`);
+
+    // Normalize all geometries in the object
+    object.traverse((child) => {
+      if (child.isMesh && child.geometry) {
+        this.normalizeGeometry(child.geometry, offsetX, offsetY, offsetZ);
+      }
+    });
+  }
+
+  /**
+   * Check if the object should be normalized based on vertex positions
+   * @param {THREE.Object3D} object - The loaded OBJ object
+   * @param {number} originX - The global origin X
+   * @param {number} originY - The global origin Y
+   * @returns {boolean} True if coordinates should be normalized
+   */
+  shouldNormalizeObject(object, originX, originY) {
+    let sumX = 0,
+      sumY = 0,
+      count = 0;
+
+    object.traverse((child) => {
+      if (child.isMesh && child.geometry) {
+        const position = child.geometry.getAttribute('position');
+        if (position) {
+          const sampleCount = Math.min(100, position.count);
+          for (let i = 0; i < sampleCount; i++) {
+            sumX += position.getX(i);
+            sumY += position.getY(i);
+            count++;
+          }
+        }
+      }
+    });
+
+    if (count === 0) return false;
+
+    const avgX = sumX / count;
+    const avgY = sumY / count;
+
+    const originMagnitude = Math.max(Math.abs(originX), Math.abs(originY));
+    const objMagnitude = Math.max(Math.abs(avgX), Math.abs(avgY));
+    const distanceFromOrigin = Math.sqrt(Math.pow(avgX - originX, 2) + Math.pow(avgY - originY, 2));
+
+    const isOriginLarge = originMagnitude > 10000;
+    const isObjLarge = objMagnitude > 10000;
+    const isWithinRange = distanceFromOrigin < 100000;
+
+    return isOriginLarge && isObjLarge && isWithinRange;
+  }
+
+  /**
+   * Normalize a single geometry's coordinates
+   * @param {THREE.BufferGeometry} geometry - The geometry to normalize
+   * @param {number} offsetX - X offset
+   * @param {number} offsetY - Y offset
+   * @param {number} offsetZ - Z offset
+   */
+  normalizeGeometry(geometry, offsetX, offsetY, offsetZ) {
+    const position = geometry.getAttribute('position');
+    if (!position) return;
+
+    const positionArray = position.array;
+
+    for (let i = 0; i < positionArray.length; i += 3) {
+      positionArray[i] -= offsetX;
+      positionArray[i + 1] -= offsetY;
+      positionArray[i + 2] -= offsetZ;
+    }
+
+    position.needsUpdate = true;
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
+  }
+}
+
+export { PolygonImporter, TopodroidImporter, JsonImporter, PlyModelImporter, ObjModelImporter, Importer };

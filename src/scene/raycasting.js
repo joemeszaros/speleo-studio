@@ -154,16 +154,16 @@ export class Raycasting {
     return intersectedSprites.length > 0 ? intersectedSprites[0].object : undefined;
   }
 
-  getIntersectedSurfacePointMeta(mouseCoordinates) {
+  getIntersectedPointCloudMeta(mouseCoordinates) {
     this.setPointer(this.getMousePosition(mouseCoordinates));
     this.raycaster.setFromCamera(this.pointer, this.scene.view.camera);
     this.raycaster.params.Points.threshold = 0.3;
 
-    for (const [name, cloud] of this.scene.models.surfaceObjects) {
-      const intersectedPoints = this.raycaster.intersectObject(cloud.cloud, false);
-      //this.raycaster.layers.enableAll(); may be needed here
+    // Only raycast against point clouds, not meshes
+    for (const [name, entry] of this.scene.models.pointCloudObjects) {
+      const intersectedPoints = this.raycaster.intersectObject(entry.object3D, false);
       if (intersectedPoints.length) {
-        return { position: intersectedPoints[0].point, type: 'surface', name: name };
+        return { position: intersectedPoints[0].point, type: 'pointcloud', name: name };
       }
     }
 

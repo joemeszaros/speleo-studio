@@ -916,7 +916,8 @@
     "scene": {
       "surveyObjectsAlreadyAdded": "Survey {caveName} / {surveyName} objects have already been added to the scene!",
       "unknownSurfaceColorConfiguration": "Unknown configuration for surface colors: {value}",
-      "surfaceObjectAlreadyAdded": "Surface {name} object has already been added to the scene!",
+      "pointCloudAlreadyAdded": "Point cloud {name} has already been added to the scene!",
+      "meshAlreadyAdded": "Mesh {name} has already been added to the scene!",
       "caveAlreadyExists": "Cave with {name} already exists!",
       "surveyAlreadyExists": "Survey with {name} already exists!"
     },
@@ -931,7 +932,8 @@
       "caveAlreadyExists": "Cave with {name} already exists!",
       "surveyDoesNotExist": "Survey '{name}' does not exist!",
       "surveyAlreadyExists": "Survey '{name}' already exists!",
-      "surfaceAlreadyAdded": "Surface {name} has already been added!"
+      "pointCloudAlreadyAdded": "Point cloud {name} has already been added!",
+      "meshAlreadyAdded": "Mesh {name} has already been added!"
     },
     "survey": {
       "atLeastTwoGradientColorsRequired": "At least 2 gradient colors are required",

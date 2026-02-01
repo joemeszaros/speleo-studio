@@ -16,7 +16,14 @@
 
 import { Database } from './db.js';
 import { MyScene, SceneOverview } from './scene/scene.js';
-import { PlySurfaceImporter, PolygonImporter, TopodroidImporter, JsonImporter, Importer } from './io/import.js';
+import {
+  PlyModelImporter,
+  ObjModelImporter,
+  PolygonImporter,
+  TopodroidImporter,
+  JsonImporter,
+  Importer
+} from './io/import.js';
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
@@ -40,7 +47,8 @@ import { GoogleDriveSync } from './storage/google-drive-sync.js';
 import { GoogleDriveSettings } from './ui/google-drive-settings.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
-import { SurfaceHelper } from './surface.js';
+import { PointCloudHelper } from './utils/models.js';
+import { PointCloud, Mesh3D } from './model.js';
 import { PrintUtils } from './utils/print.js';
 import { node } from './utils/utils.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
@@ -252,7 +260,8 @@ class Main {
       topodroid : new TopodroidImporter(db, options, scene, this.projectManager),
       polygon   : new PolygonImporter(db, options, scene, this.projectManager),
       json      : new JsonImporter(db, options, scene, this.projectManager, attributeDefs),
-      ply       : new PlySurfaceImporter(db, options, scene, this.projectManager)
+      ply       : new PlyModelImporter(db, options, scene, this.projectManager),
+      obj       : new ObjModelImporter(db, options, scene, this.projectManager)
     };
 
     this.#setupEventListeners();
@@ -319,22 +328,38 @@ class Main {
   #setupModelFileInputListener() {
     Importer.setupFileInputListener({
       inputId  : 'modelInput',
-      handlers : new Map([['ply', this.importers.ply]]),
-      onLoad   : async (surface, cloud) => await this.#tryAddModel(surface, cloud)
+      handlers : new Map([
+        ['ply', this.importers.ply],
+        ['obj', this.importers.obj]
+      ]),
+      onLoad : async (model, object3D) => await this.#tryAddModel(model, object3D)
     });
   }
 
-  async #tryAddModel(surface, cloud) {
+  async #tryAddModel(model, object3D) {
+    let entry;
 
-    //FIXME: check if surface already exists and is not too far from previously imported caves / objects
-    this.db.addSurface(surface);
-    const colorGradients = SurfaceHelper.getColorGradients(surface.points, this.options.scene.surface.color);
-    const _3dobjects = this.scene.models.getSurfaceObjects(cloud, colorGradients);
-    this.scene.models.addSurface(surface, _3dobjects);
+    if (model instanceof PointCloud) {
+      // Handle point cloud (PLY without faces)
+      this.db.addPointCloud(model);
+
+      // Only calculate gradient colors if the point cloud doesn't have vertex colors
+      const colorGradients = model.hasVertexColors
+        ? null
+        : PointCloudHelper.getColorGradients(model.points, this.options.scene.surface.color);
+
+      entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
+      this.scene.models.addPointCloud(model, entry);
+    } else if (model instanceof Mesh3D) {
+      // Handle mesh (PLY with faces or OBJ)
+      this.db.addMesh(model);
+      entry = this.scene.models.getMeshObject(object3D);
+      this.scene.models.addMesh(model, entry);
+    }
 
     // Add to models tree for management
     if (this.modelsTree) {
-      this.modelsTree.addModel(surface, cloud);
+      this.modelsTree.addModel(model, entry.object3D);
     }
 
     const boundingBox = this.scene.computeBoundingBox();
