@@ -762,7 +762,7 @@ class PlyModelImporter extends Importer {
 
       const material = new THREE.PointsMaterial({
         color        : 0xffffff,
-        size         : 2,
+        size         : this.options.scene.models.pointSize,
         vertexColors : true // Always true: either native colors or gradient colors will be applied
       });
       const pointsObject = new THREE.Points(geometry, material);

@@ -17,6 +17,7 @@
 import * as THREE from 'three';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
+import { PointCloudHelper } from '../../utils/models.js';
 
 export class ModelScene {
 
@@ -132,6 +133,39 @@ export class ModelScene {
 
   get3DModelsGroup() {
     return this.object3DGroup;
+  }
+
+  /**
+   * Updates the point size of all point cloud materials.
+   * @param {number} size - The new point size
+   */
+  updatePointCloudPointSize(size) {
+    for (const [, entry] of this.pointCloudObjects) {
+      if (entry.object3D.material) {
+        entry.object3D.material.size = size;
+        entry.object3D.material.needsUpdate = true;
+      }
+    }
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Updates the colors of all point clouds based on the color configuration.
+   * Only updates point clouds that don't have native vertex colors.
+   * @param {Object} colorConfig - The color configuration with start and end colors
+   */
+  updatePointCloudColors(colorConfig) {
+    for (const [name, entry] of this.pointCloudObjects) {
+      const pointCloud = this.scene.db.getPointCloud(name);
+      // Only update colors for point clouds without native vertex colors
+      if (pointCloud && !pointCloud.hasVertexColors) {
+        const colorGradients = PointCloudHelper.getColorGradients(pointCloud.points, colorConfig);
+        if (colorGradients && entry.object3D.geometry) {
+          entry.object3D.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorGradients, 3));
+        }
+      }
+    }
+    this.scene.view.renderView();
   }
 
 }

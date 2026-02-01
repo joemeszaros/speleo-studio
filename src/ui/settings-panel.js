@@ -452,6 +452,38 @@ export class SettingsPanel {
       true
     );
 
+    // 3D Models Section
+    this.createSection(
+      '📦 ' + i18n.t('ui.settingsPanel.sections.models3D'),
+      [
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.pointCloudPointSize'),
+          this.options.scene.models.pointSize,
+          1,
+          20,
+          1,
+          (value) => {
+            this.options.scene.models.pointSize = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.pointCloudColorStart'),
+          this.options.scene.models.color.start,
+          (value) => {
+            this.options.scene.models.color.start = value;
+          }
+        ),
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.pointCloudColorEnd'),
+          this.options.scene.models.color.end,
+          (value) => {
+            this.options.scene.models.color.end = value;
+          }
+        )
+      ],
+      true
+    );
+
     this.createSection(
       '🅰️ ' + i18n.t('ui.settingsPanel.sections.attributes'),
       [

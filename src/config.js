@@ -79,8 +79,9 @@ export const DEFAULT_OPTIONS = {
         color  : '#00ff00'
       }
     },
-    surface : {
-      color : {
+    models : {
+      pointSize : 2,
+      color     : {
         start : '#39b14d',
         end   : '#9f2d2d',
         mode  : 'gradientByZ'
@@ -362,6 +363,39 @@ export class ConfigManager {
 
     if (config.scene.grid.opacity === undefined) {
       config.scene.grid.opacity = 0.4;
+    }
+
+    // Migrate surface -> models rename
+    if (config.scene.models === undefined) {
+      if (config.scene.surface !== undefined) {
+        // Migrate from old 'surface' config
+        config.scene.models = config.scene.surface;
+        delete config.scene.surface;
+      } else {
+        // Create default models config
+        config.scene.models = {
+          pointSize : 2,
+          color     : {
+            start : '#39b14d',
+            end   : '#9f2d2d',
+            mode  : 'gradientByZ'
+          }
+        };
+      }
+    }
+
+    // Ensure pointSize exists (might be missing from old configs)
+    if (config.scene.models.pointSize === undefined) {
+      config.scene.models.pointSize = 2;
+    }
+
+    // Ensure color config exists
+    if (config.scene.models.color === undefined) {
+      config.scene.models.color = {
+        start : '#39b14d',
+        end   : '#9f2d2d',
+        mode  : 'gradientByZ'
+      };
     }
   }
 
@@ -1012,6 +1046,18 @@ export class ConfigChanges {
     this.scene.view.renderView();
   }
 
+  handleModelChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.models.pointSize':
+        this.scene.models.updatePointCloudPointSize(newValue);
+        break;
+      case 'scene.models.color.start':
+      case 'scene.models.color.end':
+        this.scene.models.updatePointCloudColors(this.watchedConfig.scene.models.color);
+        break;
+    }
+  }
+
   /**
    * Main onChange handler that routes to specific handlers
    */
@@ -1051,6 +1097,8 @@ export class ConfigChanges {
       this.handleSprites3DChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.camera')) {
       this.handleCameraChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.models.')) {
+      this.handleModelChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('ui.stationDetails.')) {

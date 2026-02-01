@@ -346,7 +346,7 @@ class Main {
       // Only calculate gradient colors if the point cloud doesn't have vertex colors
       const colorGradients = model.hasVertexColors
         ? null
-        : PointCloudHelper.getColorGradients(model.points, this.options.scene.surface.color);
+        : PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
 
       entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
       this.scene.models.addPointCloud(model, entry);
