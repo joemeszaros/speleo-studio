@@ -218,7 +218,8 @@
         "noSelection": "Válassz ki egy modellt a tulajdonságok szerkesztéséhez",
         "position": "Pozíció",
         "rotation": "Forgatás",
-        "scale": "Méretezés"
+        "scale": "Méretezés",
+        "opacity": "Átlátszóság"
       }
     },
     "welcome": {

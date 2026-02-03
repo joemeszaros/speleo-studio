@@ -32,6 +32,7 @@ export class ModelsTree {
     this.categories = new Map();
     this.selectedNode = null;
     this.expandedCategories = new Set(['3d-models']); // Expanded by default
+    this.propertiesPanelExpanded = true; // Properties panel expanded by default
 
     document.addEventListener('languageChanged', () => this.render());
 
@@ -100,6 +101,7 @@ export class ModelsTree {
       y : object3D.scale.y,
       z : object3D.scale.z
     };
+    modelNode.opacity = 1.0;
 
     category.children.push(modelNode);
     this.render();
@@ -224,6 +226,32 @@ export class ModelsTree {
         this.selectedNode.object3D.scale[axis] = numValue;
       }
     }
+  }
+
+  /**
+   * Update model opacity
+   * @param {number} value - Opacity value from 0 to 1
+   */
+  updateOpacity(value) {
+    if (!this.selectedNode || this.selectedNode.type !== 'model') return;
+
+    const numValue = parseMyFloat(value);
+    if (isNaN(numValue)) return;
+
+    this.selectedNode.opacity = Math.max(0, Math.min(1, numValue));
+
+    // Apply to Three.js object materials
+    if (this.selectedNode.object3D) {
+      this.selectedNode.object3D.traverse((child) => {
+        if (child.material) {
+          child.material.transparent = this.selectedNode.opacity < 1;
+          child.material.opacity = this.selectedNode.opacity;
+          child.material.needsUpdate = true;
+        }
+      });
+    }
+
+    this.scene.view.renderView();
   }
 
   /**
@@ -352,6 +380,14 @@ export class ModelsTree {
   }
 
   /**
+   * Toggle properties panel expansion
+   */
+  togglePropertiesPanel() {
+    this.propertiesPanelExpanded = !this.propertiesPanelExpanded;
+    this.renderPropertiesPanel();
+  }
+
+  /**
    * Render the properties panel
    */
   renderPropertiesPanel() {
@@ -360,11 +396,26 @@ export class ModelsTree {
     const panel = document.createElement('div');
     panel.className = 'models-properties-panel';
 
-    // Header
+    // Collapsible Header
     const header = document.createElement('div');
     header.className = 'models-properties-header';
-    header.textContent = i18n.t('ui.models.properties.title');
+
+    const toggle = document.createElement('span');
+    toggle.className = 'models-properties-toggle';
+    toggle.textContent = this.propertiesPanelExpanded ? '▼' : '▶';
+    header.appendChild(toggle);
+
+    const title = document.createElement('span');
+    title.className = 'models-properties-title';
+    title.textContent = i18n.t('ui.models.properties.title');
+    header.appendChild(title);
+
+    header.onclick = () => this.togglePropertiesPanel();
     panel.appendChild(header);
+
+    // Content wrapper (for collapse animation)
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = `models-properties-content-wrapper ${this.propertiesPanelExpanded ? '' : 'collapsed'}`;
 
     // Content
     const content = document.createElement('div');
@@ -385,9 +436,11 @@ export class ModelsTree {
         this.createTransformSection('rotation', i18n.t('ui.models.properties.rotation'), 'x', 'y', 'z', '°')
       );
       content.appendChild(this.createTransformSection('scale', i18n.t('ui.models.properties.scale'), 'x', 'y', 'z'));
+      content.appendChild(this.createOpacitySection());
     }
 
-    panel.appendChild(content);
+    contentWrapper.appendChild(content);
+    panel.appendChild(contentWrapper);
     this.propertiesContainer.appendChild(panel);
   }
 
@@ -437,6 +490,66 @@ export class ModelsTree {
     });
 
     section.appendChild(inputs);
+    return section;
+  }
+
+  /**
+   * Create the opacity slider section
+   */
+  createOpacitySection() {
+    const section = document.createElement('div');
+    section.className = 'models-properties-section';
+
+    const sectionLabel = document.createElement('div');
+    sectionLabel.className = 'models-properties-section-label';
+    sectionLabel.textContent = i18n.t('ui.models.properties.opacity');
+    section.appendChild(sectionLabel);
+
+    const sliderContainer = document.createElement('div');
+    sliderContainer.className = 'models-properties-slider-container';
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.className = 'models-properties-slider';
+    slider.min = '0';
+    slider.max = '1';
+    slider.step = '0.05';
+    slider.value = this.selectedNode.opacity;
+
+    const valueDisplay = document.createElement('input');
+    valueDisplay.type = 'number';
+    valueDisplay.className = 'models-properties-slider-value';
+    valueDisplay.min = '0';
+    valueDisplay.max = '1';
+    valueDisplay.step = '0.05';
+    valueDisplay.value = this.selectedNode.opacity.toFixed(2);
+
+    slider.oninput = (e) => {
+      const val = parseFloat(e.target.value);
+      valueDisplay.value = val.toFixed(2);
+      this.updateOpacity(val);
+    };
+
+    slider.onchange = (e) => {
+      const val = parseFloat(e.target.value);
+      valueDisplay.value = val.toFixed(2);
+      this.updateOpacity(val);
+    };
+
+    valueDisplay.onchange = (e) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val) && val >= 0 && val <= 1) {
+        slider.value = val;
+        this.updateOpacity(val);
+      } else {
+        valueDisplay.value = this.selectedNode.opacity.toFixed(2);
+      }
+    };
+
+    sliderContainer.appendChild(slider);
+    sliderContainer.appendChild(valueDisplay);
+    section.appendChild(sliderContainer);
+
     return section;
   }
 
