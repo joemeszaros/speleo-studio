@@ -223,7 +223,9 @@
         "size": "Méret"
       },
       "menu": {
-        "loadTextures": "Textúrák betöltése"
+        "loadTextures": "Textúrák betöltése",
+        "delete": "Modell törlése",
+        "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{{name}}' modellt? A kapcsolódó textúrák is törlődnek."
       }
     },
     "welcome": {

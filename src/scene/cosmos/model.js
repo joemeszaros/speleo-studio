@@ -169,6 +169,21 @@ export class ModelScene {
   }
 
   /**
+   * Remove a single model from the scene by name.
+   * @param {string} name - The model name
+   */
+  removeModel(name) {
+    let entry = this.pointCloudObjects.get(name) || this.meshObjects.get(name);
+    if (!entry) return;
+
+    this.#disposeObject3D(entry.object3D);
+    this.object3DGroup.remove(entry.object3D);
+    this.pointCloudObjects.delete(name);
+    this.meshObjects.delete(name);
+    this.scene.view.renderView();
+  }
+
+  /**
    * Clear all models from the scene.
    * Removes all point clouds and meshes, disposing their geometries and materials.
    */

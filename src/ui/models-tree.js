@@ -205,6 +205,19 @@ export class ModelsTree {
   }
 
   /**
+   * Dispatch a modelDeleted event for the manager to handle cleanup
+   * @param {Object} node - The model tree node
+   */
+  dispatchModelDeleted(node) {
+    document.dispatchEvent(new CustomEvent('modelDeleted', {
+      detail : {
+        name        : node.label,
+        modelFileId : node.modelFileId
+      }
+    }));
+  }
+
+  /**
    * Clear all models from the tree UI.
    * Used when switching projects.
    */
@@ -761,6 +774,17 @@ export class ModelsTree {
           this.textureInput.targetModelNode = node;
           this.textureInput.click();
           this.hideContextMenu();
+        }
+      },
+      {
+        icon    : '🗑️',
+        title   : i18n.t('ui.models.menu.delete'),
+        onclick : () => {
+          this.hideContextMenu();
+          const result = confirm(i18n.t('ui.models.menu.deleteConfirm', { name: node.label }));
+          if (result) {
+            this.dispatchModelDeleted(node);
+          }
         }
       }
     ];

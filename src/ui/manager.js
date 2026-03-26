@@ -44,7 +44,9 @@ class ProjectManager {
     editorStateSystem,
     googleDriveSync,
     revisionStore,
-    attributeDefs
+    attributeDefs,
+    modelSystem = null,
+    modelsTree = null
   ) {
     this.db = db;
     this.options = options;
@@ -57,9 +59,12 @@ class ProjectManager {
     this.googleDriveSync = googleDriveSync;
     this.revisionStore = revisionStore;
     this.attributeDefs = attributeDefs;
+    this.modelSystem = modelSystem;
+    this.modelsTree = modelsTree;
     this.firstEdit = true;
 
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
+    document.addEventListener('modelDeleted', (e) => this.onModelDeleted(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('caveChanged', (e) => this.onCaveChanged(e));
@@ -390,6 +395,37 @@ class ProjectManager {
       default:
         throw new Error(`Unknown source: ${source}`);
     }
+  }
+
+  async onModelDeleted(e) {
+    const { name, modelFileId } = e.detail;
+
+    // Remove from scene
+    this.scene.models.removeModel(name);
+
+    // Remove from UI tree
+    if (this.modelsTree) {
+      this.modelsTree.removeModel(name);
+    }
+
+    // Delete from storage (model file, textures, settings)
+    if (modelFileId && this.modelSystem) {
+      try {
+        await this.modelSystem.deleteModelFile(modelFileId);
+      } catch (err) {
+        console.error('Failed to delete model from storage:', err);
+      }
+    }
+
+    // Adjust grid
+    const boundingBox = this.scene.computeBoundingBox();
+    if (boundingBox) {
+      const size = boundingBox.getSize(new THREE.Vector3());
+      if (!(size.x === 0 && size.y === 0 && size.z === 0)) {
+        this.scene.grid.adjust(boundingBox);
+      }
+    }
+    this.scene.view.renderView();
   }
 
   async reloadCave(cave) {

@@ -89,6 +89,52 @@ export class ModelSystem {
     });
   }
 
+  /**
+   * Delete a model file and all associated data (textures, settings)
+   * @param {string} id - Model file ID
+   */
+  async deleteModelFile(id) {
+    if (id === null || id === undefined || id === '') {
+      throw new Error(i18n.t('errors.storage.modelSystem.idRequired'));
+    }
+
+    // Delete the model file itself
+    await new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_FILES_STORE);
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error(i18n.t('errors.storage.modelSystem.failedToDeleteModelFile')));
+    });
+
+    // Delete associated texture files
+    await this.deleteTextureFilesByModel(id);
+
+    // Delete associated settings
+    await this.deleteModelFileSettings(id).catch(() => {});
+
+    console.log(`🗑️ Model file deleted: ${id}`);
+  }
+
+  /**
+   * Delete all texture files associated with a model
+   * @param {string} modelId - The model file ID
+   */
+  async deleteTextureFilesByModel(modelId) {
+    if (modelId === null || modelId === undefined || modelId === '') {
+      throw new Error(i18n.t('errors.storage.modelSystem.idRequired'));
+    }
+
+    const textures = await this.getTextureFilesByModel(modelId);
+    for (const texture of textures) {
+      await new Promise((resolve, reject) => {
+        const store = this.dbManager.getReadWriteStore(ModelSystem.TEXTURE_FILES_STORE);
+        const request = store.delete(texture.id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(new Error(i18n.t('errors.storage.modelSystem.failedToDeleteTextureFile')));
+      });
+    }
+  }
+
   async saveTextureFile(projectId, textureFile) {
 
     const record = {
@@ -154,6 +200,10 @@ export class ModelSystem {
    * @param {string} id - Model file ID
    */
   async deleteModelFileSettings(id) {
+    if (id === null || id === undefined || id === '') {
+      throw new Error(i18n.t('errors.storage.modelSystem.idRequired'));
+    }
+
     return new Promise((resolve, reject) => {
       const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_FILE_SETTINGS_STORE);
       const request = store.delete(id);

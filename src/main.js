@@ -224,7 +224,9 @@ class Main {
       this.editorStateSystem,
       this.googleDriveSync,
       this.revisionStore,
-      attributeDefs
+      attributeDefs,
+      this.modelSystem,
+      this.modelsTree
     );
 
     // Initialize project panel

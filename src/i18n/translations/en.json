@@ -223,7 +223,9 @@
         "size": "Size"
       },
       "menu": {
-        "loadTextures": "Load textures"
+        "loadTextures": "Load textures",
+        "delete": "Delete model",
+        "deleteConfirm": "Are you sure you want to delete the model '{{name}}'? This will also delete associated textures."
       }
     },
     "welcome": {
