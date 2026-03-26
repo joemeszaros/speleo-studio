@@ -42,13 +42,14 @@ import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
 import { DatabaseManager } from './storage/database-manager.js';
+import { ModelSystem } from './storage/model-system.js';
 import { DeclinationCache } from './storage/declination-cache.js';
 import { GoogleDriveSync } from './storage/google-drive-sync.js';
 import { GoogleDriveSettings } from './ui/google-drive-settings.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { PointCloudHelper } from './utils/models.js';
-import { PointCloud, Mesh3D } from './model.js';
+import { PointCloud, Mesh3D, ModelFile } from './model.js';
 import { PrintUtils } from './utils/print.js';
 import { node } from './utils/utils.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
@@ -88,6 +89,7 @@ class Main {
           this.databaseManager = new DatabaseManager();
           this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
           this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
+          this.modelSystem = new ModelSystem(this.databaseManager);
           this.editorStateSystem = new EditorStateSystem(this.databaseManager);
           this.declinationCache = new DeclinationCache(this.databaseManager);
           this.revisionStore = new RevisionStore(this.databaseManager);
@@ -190,7 +192,11 @@ class Main {
       options,
       scene,
       document.getElementById('models-tree'),
-      document.getElementById('models-properties')
+      document.getElementById('models-properties'),
+      document.getElementById('models-context-menu'),
+      document.getElementById('textureInput'),
+      this.modelSystem,
+      this.projectSystem
     );
 
     this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem, attributeDefs);
@@ -229,7 +235,9 @@ class Main {
       this.caveSystem,
       this.googleDriveSync,
       this.revisionStore,
-      attributeDefs
+      attributeDefs,
+      'projectInput',
+      this.modelSystem
     );
     this.projectPanel.setupPanel();
     this.projectPanel.show();
@@ -289,11 +297,181 @@ class Main {
     this.#setupCaveFileInputListener();
     this.#setupSurveyFileInputListeners();
     this.#setupModelFileInputListener();
+    this.#setupProjectChangeListener();
     ConfigManager.setupConfigFileInputListener(
       this.options,
       this.settingsPanel,
       document.getElementById('configInput')
     );
+  }
+
+  /**
+   * Setup listener for project changes to load/clear models
+   */
+  #setupProjectChangeListener() {
+    document.addEventListener('currentProjectChanged', async (e) => {
+      const project = e.detail?.project;
+      if (project) {
+        // Clear existing models before loading new project's models
+        this.#clearAllModels();
+        // Load models for the new project
+        await this.#loadProjectModels(project.id);
+      }
+    });
+
+    document.addEventListener('currentProjectDeleted', () => {
+      this.#clearAllModels();
+    });
+  }
+
+  /**
+   * Clear all models from the scene and UI
+   */
+  #clearAllModels() {
+    // Clear models from scene
+    if (this.scene?.models) {
+      this.scene.models.clearModels();
+    }
+    // Clear models from UI tree
+    if (this.modelsTree) {
+      this.modelsTree.clear();
+    }
+  }
+
+  /**
+   * Load all models for a project from IndexedDB
+   * @param {string} projectId - The project ID
+   */
+  async #loadProjectModels(projectId) {
+    if (!this.modelSystem) return;
+
+    try {
+      const modelFiles = await this.modelSystem.getModelFilesByProject(projectId);
+
+      for (const modelFile of modelFiles) {
+        await this.#loadModelFromStorage(modelFile);
+      }
+
+      if (modelFiles.length > 0) {
+        console.log(`📦 Loaded ${modelFiles.length} model(s) from storage`);
+        // Update scene bounds after loading all models
+        const boundingBox = this.scene.computeBoundingBox();
+        this.scene.grid.adjust(boundingBox);
+      }
+    } catch (error) {
+      console.error('Failed to load project models:', error);
+    }
+  }
+
+  /**
+   * Load a single model from storage record
+   * @param {Object} modelFile - The model file record from IndexedDB
+   */
+  async #loadModelFromStorage(modelFile) {
+    try {
+      // Get the raw data from the blob
+      const data = await modelFile.data.arrayBuffer();
+
+      // Determine which importer to use based on file type
+      const importer = this.importers[modelFile.type];
+      if (!importer) {
+        console.warn(`No importer found for model type: ${modelFile.type}`);
+        return;
+      }
+
+      // Import the model (without saving again to storage)
+      const importMethod = modelFile.type === 'ply' ? 'importData' : 'importText';
+      const importData = modelFile.type === 'ply' ? data : await modelFile.data.text();
+
+      await importer[importMethod](
+        importData,
+        async (model, object3D) => {
+          await this.#addModelFromStorage(model, object3D, modelFile);
+        },
+        modelFile.filename
+      );
+
+    } catch (error) {
+      console.error(`Failed to load model ${modelFile.filename}:`, error);
+    }
+  }
+
+  /**
+   * Add a model loaded from storage to the scene (without re-saving)
+   * @param {PointCloud|Mesh3D} model - The model data
+   * @param {THREE.Object3D} object3D - The Three.js object
+   * @param {Object} modelFile - The model file record
+   */
+  async #addModelFromStorage(model, object3D, modelFile) {
+    let entry;
+
+    if (model instanceof PointCloud) {
+      // Handle point cloud
+      this.db.addPointCloud(model);
+
+      // Calculate color gradients if the point cloud doesn't have vertex colors
+      let colorGradients = null;
+      if (!model.hasVertexColors) {
+        colorGradients = PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
+      }
+
+      entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
+      this.scene.models.addPointCloud(model, entry);
+    } else if (model instanceof Mesh3D) {
+      // Handle mesh
+      this.db.addMesh(model);
+      entry = this.scene.models.getMeshObject(object3D);
+      this.scene.models.addMesh(model, entry);
+    }
+
+    // Add to models tree for management
+    if (this.modelsTree && entry) {
+      this.modelsTree.addModel(model, entry.object3D);
+    }
+
+    // Load associated textures/materials if any
+    await this.#loadModelAssets(model, modelFile);
+  }
+
+  /**
+   * Load and apply assets (MTL, textures) for a model
+   * @param {PointCloud|Mesh3D} model - The model data
+   * @param {Object} modelFile - The model file record
+   */
+  async #loadModelAssets(model, modelFile) {
+    try {
+      const assets = await this.modelSystem.getTextureFilesByModel(modelFile.id);
+      if (assets.length === 0) return;
+
+      // Separate MTL and texture files
+      const mtlAssets = assets.filter((a) => a.type === 'mtl');
+      const textureAssets = assets.filter((a) => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(a.type));
+
+      if (mtlAssets.length === 0) return;
+
+      // Create texture map from blob URLs
+      const textureMap = new Map();
+      for (const texture of textureAssets) {
+        const url = URL.createObjectURL(texture.data);
+        textureMap.set(texture.filename, url);
+        textureMap.set(texture.filename.toLowerCase(), url);
+      }
+
+      // Find the model node in the tree
+      const modelNode = this.modelsTree?.categories
+        .get('3d-models')
+        ?.children.find((n) => n.label === model.name);
+
+      if (modelNode) {
+        // Apply each MTL file
+        for (const mtlAsset of mtlAssets) {
+          const mtlText = await mtlAsset.data.text();
+          await this.modelsTree.applyMTLToModel(modelNode, mtlText, textureMap);
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to load assets for model ${model.name}:`, error);
+    }
   }
 
   #setupCaveFileInputListener() {
@@ -332,11 +510,11 @@ class Main {
         ['ply', this.importers.ply],
         ['obj', this.importers.obj]
       ]),
-      onLoad : async (model, object3D) => await this.#tryAddModel(model, object3D)
+      onLoad : async (model, object3D, modelFile) => await this.#tryAddModel(model, object3D, modelFile)
     });
   }
 
-  async #tryAddModel(model, object3D) {
+  async #tryAddModel(model, object3D, modelFile) {
     let entry;
 
     if (model instanceof PointCloud) {
@@ -362,9 +540,28 @@ class Main {
       this.modelsTree.addModel(model, entry.object3D);
     }
 
+    // Save model file to IndexedDB for persistence
+    if (modelFile && this.projectSystem.getCurrentProject()) {
+      await this.#saveModelToStorage(model, modelFile);
+    }
+
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);
     this.scene.view.fitScreen(boundingBox);
+  }
+
+  /**
+   * Save a model file to IndexedDB for persistence
+   * @param {PointCloud|Mesh3D} model - The model data
+   * @param {ModelFile} modelFile - File info with rawData, type, filename
+   */
+  async #saveModelToStorage(model, modelFile) {
+    try {
+      const projectId = this.projectSystem.getCurrentProject().id;
+      await this.modelSystem.saveModelFile(projectId, modelFile);
+    } catch (error) {
+      console.error('Failed to save model file to IndexedDB:', error);
+    }
   }
 
   async #tryAddSurvey(survey) {

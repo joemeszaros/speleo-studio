@@ -30,7 +30,8 @@ export class ProjectPanel {
     googleDriveSync,
     revisionStore,
     attributeDefs,
-    projectInput = 'projectInput'
+    projectInput = 'projectInput',
+    modelSystem = null
   ) {
     this.db = db;
     this.panel = panel;
@@ -39,6 +40,7 @@ export class ProjectPanel {
     this.googleDriveSync = googleDriveSync;
     this.revisionStore = revisionStore;
     this.attributeDefs = attributeDefs;
+    this.modelSystem = modelSystem;
     this.isVisible = false;
     this.fileInputElement = document.getElementById(projectInput);
     this.driveProjects = new Map();
@@ -189,13 +191,20 @@ export class ProjectPanel {
     if (currentProject) {
       const caveNames = await this.projectSystem.getCaveNamesForProject(currentProject.id);
       const caveCount = caveNames.length;
+      const modelCount = this.modelSystem ? (await this.modelSystem.getModelFilesByProject(currentProject.id)).length : 0;
       const lastModified = new Date(currentProject.updatedAt).toLocaleString();
+
+      const metaParts = [];
+      if (caveCount > 0) metaParts.push(`${caveCount} ${i18n.t('ui.panels.projectManager.caves')}`);
+      if (modelCount > 0) metaParts.push(`${modelCount} ${i18n.t('ui.panels.projectManager.models')}`);
+      metaParts.push(lastModified);
+      const metaText = metaParts.join(' • ');
 
       currentProjectInfo.innerHTML = `
         <div class="project-info">
           <div class="current-project-header">
             <span class="current-project-name">${currentProject.name}</span>
-            <span class="current-project-meta">${caveCount} ${i18n.t('ui.panels.projectManager.caves')} • ${lastModified}</span>
+            <span class="current-project-meta">${metaText}</span>
           </div>
           ${currentProject.description ? `<div class="current-project-description">${currentProject.description}</div>` : ''}
           <div class="current-project-actions">
@@ -233,7 +242,7 @@ export class ProjectPanel {
     }
   }
 
-  getProjectItemNode(project, caveNames, lastModified, isCurrent, isLocal) {
+  getProjectItemNode(project, caveNames, lastModified, isCurrent, isLocal, modelCount = 0) {
     const buttons = [
       { label: i18n.t('common.rename'), click: () => this.renameProject(project.id) },
       { label: i18n.t('common.export'), click: () => this.exportProject(project.id) },
@@ -244,7 +253,7 @@ export class ProjectPanel {
       }
     ];
 
-    return this.projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal);
+    return this.projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal, modelCount);
   }
 
   async updateRecentProjectsList() {
@@ -266,9 +275,10 @@ export class ProjectPanel {
           const caves = await this.caveSystem.getCaveFieldsByProjectId(project.id, ['name', 'id', 'revision']);
           cavesForLocalProjects.set(project.id, caves);
           const caveNames = caves.map((c) => c.name);
+          const modelCount = this.modelSystem ? (await this.modelSystem.getModelFilesByProject(project.id)).length : 0;
           const lastModified = new Date(project.updatedAt).toLocaleDateString();
           const isCurrent = this.projectSystem.getCurrentProject()?.id === project.id;
-          return this.getProjectItemNode(project, caveNames, lastModified, isCurrent, true);
+          return this.getProjectItemNode(project, caveNames, lastModified, isCurrent, true, modelCount);
         })
       );
 
@@ -673,7 +683,13 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
 
   }
 
-  projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal = true) {
+  projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal = true, modelCount = 0) {
+    const metaParts = [];
+    if (caveNames.length > 0) metaParts.push(`${caveNames.length} ${i18n.t('ui.panels.projectManager.caves')}`);
+    if (modelCount > 0) metaParts.push(`${modelCount} ${i18n.t('ui.panels.projectManager.models')}`);
+    metaParts.push(lastModified);
+    const metaText = metaParts.join(' • ');
+
     const panel = U.node`
     <div id="project-item-${project.id}" class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">
       <div class="project-item-header">
@@ -684,7 +700,7 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
           <span class="project-caves" id="project-caves-${project.id}">${caveNames ? `• ${caveNames.join(', ')}` : ''}</span>
         </div>
         <div class="project-item-meta">
-          <span class="project-meta-text">${caveNames.length} ${i18n.t('ui.panels.projectManager.caves')} • ${lastModified}</span>
+          <span class="project-meta-text">${metaText}</span>
           ${isCurrent ? `<span class="current-badge">${i18n.t('common.current')}</span>` : ''}
         </div>
       </div>

@@ -16,17 +16,35 @@
 
 import { i18n } from '../i18n/i18n.js';
 import { degreesToRads, parseMyFloat, radsToDegrees } from '../utils/utils.js';
+import { TextureFile } from '../model.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import * as THREE from 'three';
+
 /**
  * ModelsTree - UI component for managing 3D models in the sidebar
  * Provides a tree structure with visibility controls and property editing
  */
 export class ModelsTree {
-  constructor(db, options, scene, treeContainer, propertiesContainer) {
+  constructor(
+    db,
+    options,
+    scene,
+    treeContainer,
+    propertiesContainer,
+    contextMenu,
+    textureInput,
+    modelSystem,
+    projectSystem
+  ) {
     this.db = db;
     this.options = options;
     this.scene = scene;
     this.treeContainer = treeContainer;
     this.propertiesContainer = propertiesContainer;
+    this.contextMenu = contextMenu;
+    this.textureInput = textureInput;
+    this.modelSystem = modelSystem;
+    this.projectSystem = projectSystem;
 
     // Node structure: categories contain model nodes
     this.categories = new Map();
@@ -35,10 +53,31 @@ export class ModelsTree {
     this.propertiesPanelExpanded = true; // Properties panel expanded by default
 
     document.addEventListener('languageChanged', () => this.render());
+    document.addEventListener('click', (e) => this.handleOutsideClick(e));
 
+    this.setupTextureInput();
     this.initializeCategories();
     this.render();
     this.renderPropertiesPanel();
+  }
+
+  /**
+   * Setup the texture file input handler
+   */
+  setupTextureInput() {
+    if (!this.textureInput) return;
+
+    this.textureInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      const targetNode = this.textureInput.targetModelNode;
+      if (!targetNode) return;
+
+      await this.loadTexturesForModel(targetNode, files);
+      this.textureInput.value = ''; // Reset input
+      this.textureInput.targetModelNode = null;
+    });
   }
 
   /**
@@ -103,8 +142,14 @@ export class ModelsTree {
     };
     modelNode.opacity = 1.0;
 
+    const wasEmpty = category.children.length === 0;
     category.children.push(modelNode);
     this.render();
+
+    // Activate the models tab when the first model is added
+    if (wasEmpty) {
+      document.dispatchEvent(new CustomEvent('switchSidebarTab', { detail: { tab: 'models' } }));
+    }
 
     return modelNode;
   }
@@ -129,6 +174,25 @@ export class ModelsTree {
 
       this.render();
     }
+  }
+
+  /**
+   * Clear all models from the tree UI.
+   * Used when switching projects.
+   */
+  clear() {
+    // Clear all children from 3d-models category
+    const category = this.categories.get('3d-models');
+    if (category) {
+      category.children = [];
+    }
+
+    // Clear selection
+    this.selectedNode = null;
+
+    // Re-render
+    this.render();
+    this.renderPropertiesPanel();
   }
 
   /**
@@ -225,6 +289,7 @@ export class ModelsTree {
       } else if (property === 'scale') {
         this.selectedNode.object3D.scale[axis] = numValue;
       }
+      this.scene.view.renderView();
     }
   }
 
@@ -356,10 +421,11 @@ export class ModelsTree {
     label.textContent = node.label;
     nodeElement.appendChild(label);
 
-    // Click to select
+    // Click to select and show context menu
     nodeElement.onclick = (e) => {
       e.stopPropagation();
       this.selectNode(node.id);
+      this.showModelContextMenu(node);
     };
 
     // Visibility toggle
@@ -437,6 +503,7 @@ export class ModelsTree {
       );
       content.appendChild(this.createTransformSection('scale', i18n.t('ui.models.properties.scale'), 'x', 'y', 'z'));
       content.appendChild(this.createOpacitySection());
+      content.appendChild(this.createSizeSection());
     }
 
     contentWrapper.appendChild(content);
@@ -552,6 +619,409 @@ export class ModelsTree {
 
     return section;
   }
+
+  /**
+   * Create a read-only section showing the model's file size (model + textures)
+   */
+  createSizeSection() {
+    const section = document.createElement('div');
+    section.className = 'models-properties-section';
+
+    const sectionLabel = document.createElement('div');
+    sectionLabel.className = 'models-properties-section-label';
+    sectionLabel.textContent = i18n.t('ui.models.properties.size');
+    section.appendChild(sectionLabel);
+
+    const sizeValue = document.createElement('div');
+    sizeValue.className = 'models-properties-size-value';
+    sizeValue.textContent = '...';
+    section.appendChild(sizeValue);
+
+    // Load size asynchronously
+    this.computeModelFileSize(this.selectedNode).then((size) => {
+      sizeValue.textContent = size;
+    });
+
+    return section;
+  }
+
+  /**
+   * Compute total file size of a model and its associated texture files
+   * @param {Object} node - The model node
+   * @returns {Promise<string>} Human-readable file size
+   */
+  async computeModelFileSize(node) {
+    let totalBytes = 0;
+
+    if (!this.modelSystem || !this.projectSystem) return this.formatBytes(0);
+
+    const currentProject = this.projectSystem.getCurrentProject();
+    if (!currentProject) return this.formatBytes(0);
+
+    try {
+      const modelFiles = await this.modelSystem.getModelFilesByProject(currentProject.id);
+      const modelFile = modelFiles.find((f) => f.filename === node.label);
+
+      if (modelFile) {
+        if (modelFile.data instanceof Blob) totalBytes += modelFile.data.size;
+        const textures = await this.modelSystem.getTextureFilesByModel(modelFile.id);
+        for (const tex of textures) {
+          if (tex.data instanceof Blob) totalBytes += tex.data.size;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to compute model file size:', error);
+    }
+
+    return this.formatBytes(totalBytes);
+  }
+
+  /**
+   * Format bytes into human-readable string
+   * @param {number} bytes
+   * @returns {string}
+   */
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const k = 1024;
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i];
+  }
+
+  // ==================== Context Menu Methods ====================
+
+  /**
+   * Show context menu for a model node
+   * @param {Object} node - The model node
+   */
+  showModelContextMenu(node) {
+    if (!this.contextMenu) return;
+
+    const items = [
+      {
+        icon    : '🧶',
+        title   : i18n.t('ui.models.menu.loadTextures'),
+        onclick : () => {
+          this.textureInput.targetModelNode = node;
+          this.textureInput.click();
+          this.hideContextMenu();
+        }
+      }
+    ];
+
+    this.renderContextMenu(node, items);
+  }
+
+  /**
+   * Render the context menu with given items
+   * @param {Object} node - The node to position menu relative to
+   * @param {Array} items - Menu items
+   */
+  renderContextMenu(node, items) {
+    this.contextMenu.innerHTML = '';
+
+    items.forEach((option) => {
+      const optionElement = document.createElement('div');
+      optionElement.className = 'context-menu-option';
+      optionElement.innerHTML = option.icon;
+      optionElement.title = option.title;
+      optionElement.onclick = (e) => {
+        e.stopPropagation();
+        option.onclick();
+      };
+      this.contextMenu.appendChild(optionElement);
+    });
+
+    // Position the context menu relative to the selected node
+    const element = this.treeContainer.querySelector(`[data-node-id="${node.id}"]`);
+    if (element) {
+      const rect = element.getBoundingClientRect();
+
+      this.contextMenu.style.position = 'fixed';
+      this.contextMenu.style.setProperty('display', 'flex', 'important');
+      this.contextMenu.node = node;
+
+      // Get context menu dimensions
+      const menuWidth = this.contextMenu.offsetWidth;
+      const menuHeight = this.contextMenu.offsetHeight;
+
+      // Calculate positions ensuring menu stays within viewport
+      const left = Math.min(rect.left + 10, window.innerWidth - menuWidth);
+      const top = Math.min(rect.top + 30, window.innerHeight - menuHeight);
+
+      this.contextMenu.style.left = `${Math.max(0, left)}px`;
+      this.contextMenu.style.top = `${Math.max(0, top)}px`;
+    }
+  }
+
+  /**
+   * Hide the context menu
+   */
+  hideContextMenu() {
+    if (this.contextMenu) {
+      this.contextMenu.style.display = 'none';
+      this.contextMenu.node = null;
+    }
+  }
+
+  /**
+   * Handle clicks outside the context menu
+   * @param {Event} event - Click event
+   */
+  handleOutsideClick(event) {
+    if (!this.contextMenu || this.contextMenu.style.display === 'none') return;
+
+    // Check if click is inside context menu
+    if (this.contextMenu.contains(event.target)) return;
+
+    // Check if click is on the selected node
+    const nodeElement = this.treeContainer.querySelector(`[data-node-id="${this.contextMenu.node?.id}"]`);
+    if (nodeElement && nodeElement.contains(event.target)) return;
+
+    this.hideContextMenu();
+  }
+
+  // ==================== Texture Loading Methods ====================
+
+  /**
+   * Load textures for a model from selected files
+   * @param {Object} node - The model node
+   * @param {File[]} files - Array of selected files (MTL and image files)
+   */
+  async loadTexturesForModel(node, files) {
+    if (!node.object3D) return;
+
+    // Separate MTL files and texture files
+    const mtlFiles = files.filter((f) => f.name.toLowerCase().endsWith('.mtl'));
+    const textureFiles = files.filter((f) => /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(f.name));
+
+    if (mtlFiles.length === 0) {
+      console.warn('No MTL file selected');
+      return;
+    }
+
+    // Create a map of texture files by name for quick lookup
+    const textureMap = new Map();
+    for (const file of textureFiles) {
+      const url = URL.createObjectURL(file);
+      textureMap.set(file.name, url);
+      // Also store with lowercase for case-insensitive matching
+      textureMap.set(file.name.toLowerCase(), url);
+    }
+
+    // Load each MTL file
+    for (const mtlFile of mtlFiles) {
+      try {
+        const mtlText = await this.readFileAsText(mtlFile);
+        await this.applyMTLToModel(node, mtlText, textureMap);
+      } catch (error) {
+        console.error(`Error loading MTL file ${mtlFile.name}:`, error);
+      }
+    }
+
+    // Store texture info on node for future reference
+    node.textureFiles = textureFiles.map((f) => f.name);
+    node.mtlFiles = mtlFiles.map((f) => f.name);
+
+    // Save asset files to IndexedDB for persistence
+    await this.saveAssetFilesToStorage(node, mtlFiles, textureFiles);
+
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Save asset files (MTL, textures) to IndexedDB
+   * @param {Object} node - The model node
+   * @param {File[]} mtlFiles - MTL files
+   * @param {File[]} textureFiles - Texture files
+   */
+  async saveAssetFilesToStorage(node, mtlFiles, textureFiles) {
+    if (!this.modelSystem || !this.projectSystem) return;
+
+    const currentProject = this.projectSystem.getCurrentProject();
+    if (!currentProject) return;
+
+    const projectId = currentProject.id;
+    const modelId = `${projectId}/${node.label}`;
+
+    try {
+      // Save MTL files
+      for (const file of mtlFiles) {
+        const text = await this.readFileAsText(file);
+        const textureFile = new TextureFile(modelId, file.name, 'mtl', text);
+        await this.modelSystem.saveTextureFile(projectId, textureFile);
+      }
+
+      // Save texture files
+      for (const file of textureFiles) {
+        const arrayBuffer = await this.readFileAsArrayBuffer(file);
+        const extension = file.name.split('.').pop().toLowerCase();
+        const textureFile = new TextureFile(modelId, file.name, extension, arrayBuffer);
+        await this.modelSystem.saveTextureFile(projectId, textureFile);
+      }
+    } catch (error) {
+      console.error('Failed to save asset files to IndexedDB:', error);
+    }
+  }
+
+  /**
+   * Read a file as ArrayBuffer
+   * @param {File} file - File to read
+   * @returns {Promise<ArrayBuffer>} File contents as ArrayBuffer
+   */
+  readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  /**
+   * Read a file as text
+   * @param {File} file - File to read
+   * @returns {Promise<string>} File contents as text
+   */
+  readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(file);
+    });
+  }
+
+  /**
+   * Apply MTL materials to a model
+   * @param {Object} node - The model node
+   * @param {string} mtlText - MTL file contents
+   * @param {Map<string, string>} textureMap - Map of texture filename to blob URL
+   */
+  async applyMTLToModel(node, mtlText, textureMap) {
+    // Create a promise that resolves when all textures are loaded
+    const texturesLoaded = new Promise((resolve) => {
+      const loadingManager = new THREE.LoadingManager();
+
+      // Called when all textures finish loading
+      loadingManager.onLoad = () => {
+        resolve();
+      };
+
+      // Called on error - still resolve to continue
+      loadingManager.onError = (url) => {
+        console.warn(`Failed to load texture: ${url}`);
+      };
+
+      loadingManager.setURLModifier((url) => {
+        // Extract just the filename from the URL
+        const filename = url.split('/').pop();
+        // Look up in our texture map
+        const blobUrl = textureMap.get(filename) || textureMap.get(filename.toLowerCase());
+        if (blobUrl) {
+          return blobUrl;
+        }
+        // Return original if not found (will likely fail, but provides error info)
+        return url;
+      });
+
+      const mtlLoader = new MTLLoader(loadingManager);
+      mtlLoader.setMaterialOptions({
+        side : THREE.DoubleSide
+      });
+
+      // Parse MTL - this creates a MaterialCreator
+      const materials = mtlLoader.parse(mtlText, '');
+
+      // Preload will now use our custom URL modifier to load textures from blob URLs
+      materials.preload();
+
+      // Apply materials to meshes
+      this.applyMaterialsToMeshes(node, materials);
+
+      // If no textures to load, resolve immediately
+      if (textureMap.size === 0) {
+        resolve();
+      }
+    });
+
+    // Wait for all textures to load
+    await texturesLoaded;
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Apply parsed materials to mesh children
+   * @param {Object} node - The model node
+   * @param {Object} materials - The MaterialCreator object
+   */
+  applyMaterialsToMeshes(node, materials) {
+
+    // Apply materials to meshes
+    node.object3D.traverse((child) => {
+      if (child.isMesh) {
+        const originalMatName = child.userData.originalMaterialName;
+        const originalMatNames = child.userData.originalMaterialNames;
+
+        if (originalMatNames && Array.isArray(originalMatNames)) {
+          // Multi-material mesh
+          const newMaterials = originalMatNames.map((name) => {
+            const mat = materials.materials[name];
+            return mat || child.material;
+          });
+          child.material = newMaterials;
+        } else if (originalMatName && materials.materials[originalMatName]) {
+          // Single material mesh
+          child.material = materials.materials[originalMatName];
+        } else {
+          // Try to find any matching material by mesh name
+          const matByMeshName = materials.materials[child.name];
+          if (matByMeshName) {
+            child.material = matByMeshName;
+          }
+        }
+
+        // Preserve opacity setting
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((m) => {
+              m.transparent = node.opacity < 1;
+              m.opacity = node.opacity;
+            });
+          } else {
+            child.material.transparent = node.opacity < 1;
+            child.material.opacity = node.opacity;
+          }
+        }
+      }
+    });
+
+    // Mark that materials have been loaded
+    node.hasMaterials = true;
+  }
+
+  /**
+   * Load a texture from URL
+   * @param {THREE.TextureLoader} loader - Texture loader
+   * @param {string} url - Texture URL
+   * @returns {Promise<THREE.Texture>} Loaded texture
+   */
+  loadTexture(loader, url) {
+    return new Promise((resolve, reject) => {
+      loader.load(
+        url,
+        (texture) => {
+          texture.colorSpace = THREE.SRGBColorSpace;
+          resolve(texture);
+        },
+        undefined,
+        reject
+      );
+    });
+  }
+
+  // ==================== Getter Methods ====================
 
   /**
    * Get all models

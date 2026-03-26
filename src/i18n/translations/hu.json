@@ -219,7 +219,11 @@
         "position": "Pozíció",
         "rotation": "Forgatás",
         "scale": "Méretezés",
-        "opacity": "Átlátszóság"
+        "opacity": "Átlátszóság",
+        "size": "Méret"
+      },
+      "menu": {
+        "loadTextures": "Textúrák betöltése"
       }
     },
     "welcome": {
@@ -294,6 +298,7 @@
         "deleteProjectConfirmation": "Biztosan törölni akarod ezt a projektet? Ez a művelet nem vonható vissza.",
         "deleteProjectFromDriveConfirmation": "Törölni akarod ezt a projektet a Google Drive-ról? Ez a művelet nem vonható vissza.",
         "caves": "barlang",
+        "models": "modell",
         "projectId": "Projekt azonosító",
         "errors": {
           "noProjectsToExport": "Nincsenek exportálható projektek",
@@ -988,6 +993,16 @@
         "failedToLoadProjects": "Nem lehet betölteni a projekteket",
         "projectNotFound": "Projekt nem található",
         "failedToDeleteProject": "Nem lehet törölni a projektet"
+      },
+      "modelSystem": {
+        "idRequired": "Az azonosító szükséges a törléshez",
+        "failedToSaveModelFile": "Nem sikerült menteni a modell fájlt",
+        "failedToLoadModelFile": "Nem sikerült betölteni a modell fájlt",
+        "failedToLoadModelFiles": "Nem sikerült betölteni a modell fájlokat",
+        "failedToDeleteModelFile": "Nem sikerült törölni a modell fájlt",
+        "failedToSaveTextureFile": "Nem sikerült menteni a textúra fájlt",
+        "failedToLoadTextureFiles": "Nem sikerült betölteni a textúra fájlokat",
+        "failedToDeleteTextureFile": "Nem sikerült törölni a textúra fájlt"
       },
       "databaseManager": {
         "failedToOpenIndexedDb": "Nem lehet megnyitni az IndexedDB-t",

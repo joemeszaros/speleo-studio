@@ -15,7 +15,7 @@
  */
 
 import { CaveSection, CaveComponent } from './model/cave.js';
-import { fromPolar, toPolar, isFloatStr } from './utils/utils.js';
+import { fromPolar, toPolar, isFloatStr, randomAlphaNumbericString } from './utils/utils.js';
 import { MigrationSupportV5, MigrationSupportV6 } from './attributes.js';
 
 class Vector {
@@ -598,6 +598,10 @@ class PointCloud {
     this.hasVertexColors = hasVertexColors;
     this.visible = visible;
   }
+
+  static generateId() {
+    return 'point_cloud_' + Date.now() + '_' + randomAlphaNumbericString(5);
+  }
 }
 
 /**
@@ -609,11 +613,80 @@ class Mesh3D {
    * @param {Vector} center - The center of the bounding box
    * @param {boolean} visible - The visibility property
    */
-  constructor(name, center, visible = true) {
+  constructor(name, center, visible = true, opacity = 1.0) {
+    this.id = Mesh3D.generateId();
     this.name = name;
     this.center = center;
     this.visible = visible;
+    this.opacity = opacity;
+  }
+
+  static generateId() {
+    return 'mesh_' + Date.now() + '_' + randomAlphaNumbericString(5);
   }
 }
 
-export { Vector, Offset, Polar, Color, StationAttribute, SectionAttribute, ComponentAttribute, PointCloud, Mesh3D };
+class ModelFile {
+
+  constructor(filename, type, data) {
+    this.id = ModelFile.generateId();
+    this.filename = filename;
+    this.type = type;
+    if (data instanceof Blob) {
+      this.data = data;
+    } else if (typeof data === 'string') {
+      this.data = new Blob([data], { type: 'text/plain' });
+    } else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
+      this.data = new Blob([data]);
+    } else {
+      this.data = data;
+    }
+  }
+
+  static generateId() {
+    return 'model_file_' + Date.now() + '_' + randomAlphaNumbericString(5);
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new ModelFile(), pure);
+  }
+}
+
+class TextureFile {
+
+  constructor(modelId, filename, type, data) {
+    this.id = TextureFile.generateId();
+    this.modelId = modelId;
+    this.filename = filename;
+    this.type = type;
+    if (data instanceof Blob) {
+      this.data = data;
+    } else if (typeof data === 'string') {
+      this.data = new Blob([data], { type: 'text/plain' });
+    } else {
+      this.data = new Blob([data]);
+    }
+  }
+
+  static generateId() {
+    return 'asset_file_' + Date.now() + '_' + randomAlphaNumbericString(5);
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new TextureFile(), pure);
+  }
+}
+
+export {
+  Vector,
+  Offset,
+  Polar,
+  Color,
+  StationAttribute,
+  SectionAttribute,
+  ComponentAttribute,
+  PointCloud,
+  Mesh3D,
+  ModelFile,
+  TextureFile
+};

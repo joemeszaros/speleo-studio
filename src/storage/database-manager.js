@@ -21,11 +21,13 @@ import { i18n } from '../i18n/i18n.js';
  * 1. Initial version
  * 2. Added declinationCache store
  * 3. Added revisions store
+ * 4. Added modelFiles and assetFiles stores for 3D model persistence
+ * 5. Renamed assetFiles to textureFiles
  */
 export class DatabaseManager {
   constructor() {
     this.dbName = 'SpeleoStudioDB';
-    this.dbVersion = 3;
+    this.dbVersion = 5;
     this.indexedDb = null;
     this.stores = {
       projects : {
@@ -54,6 +56,26 @@ export class DatabaseManager {
       revisions : {
         keyPath : 'id',
         indexes : []
+      },
+      // Store for 3D model files (PLY, OBJ)
+      modelFiles : {
+        keyPath : 'id',
+        indexes : [
+          { name: 'projectId', keyPath: 'projectId', options: { unique: false } },
+          { name: 'modelId', keyPath: 'modelId', options: { unique: false } },
+          { name: 'filename', keyPath: 'filename', options: { unique: false } },
+          { name: 'type', keyPath: 'type', options: { unique: false } }
+        ]
+      },
+      // Generic store for texture files (MTL, JPG, PNG, etc.)
+      textureFiles : {
+        keyPath : 'id',
+        indexes : [
+          { name: 'projectId', keyPath: 'projectId', options: { unique: false } },
+          { name: 'modelId', keyPath: 'modelId', options: { unique: false } },
+          { name: 'filename', keyPath: 'filename', options: { unique: false } },
+          { name: 'type', keyPath: 'type', options: { unique: false } }
+        ]
       }
     };
   }

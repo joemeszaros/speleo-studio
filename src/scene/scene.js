@@ -90,6 +90,9 @@ class MyScene {
     this.threejsScene.name = 'main scene';
     this.threejsScene.background = new THREE.Color(this.options.scene.background.color);
 
+    // Add lights for 3D models with textures/materials
+    this.setupLights();
+
     this.speleo = new SpeleoScene(db, options, materials, this);
     this.startPoint = new StartPointScene(options, materials, this);
     this.models = new ModelScene(this);
@@ -120,6 +123,17 @@ class MyScene {
   setBackground(val) {
     this.threejsScene.background = new THREE.Color(val);
     this.view.renderView();
+  }
+
+  /**
+   * Setup scene lights for 3D models with textures/materials
+   */
+  setupLights() {
+    // Ambient light for overall illumination (so no part is completely dark)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    ambientLight.name = 'ambientLight';
+    this.threejsScene.add(ambientLight);
+
   }
 
   getBoundingClientRect() {

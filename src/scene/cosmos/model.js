@@ -168,4 +168,52 @@ export class ModelScene {
     this.scene.view.renderView();
   }
 
+  /**
+   * Clear all models from the scene.
+   * Removes all point clouds and meshes, disposing their geometries and materials.
+   */
+  clearModels() {
+    // Dispose and remove all point clouds
+    for (const [, entry] of this.pointCloudObjects) {
+      this.#disposeObject3D(entry.object3D);
+    }
+    this.pointCloudObjects.clear();
+
+    // Dispose and remove all meshes
+    for (const [, entry] of this.meshObjects) {
+      this.#disposeObject3D(entry.object3D);
+    }
+    this.meshObjects.clear();
+
+    // Clear all children from the group
+    while (this.object3DGroup.children.length > 0) {
+      this.object3DGroup.remove(this.object3DGroup.children[0]);
+    }
+
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Dispose a 3D object and its resources.
+   * @param {THREE.Object3D} object3D - The object to dispose
+   */
+  #disposeObject3D(object3D) {
+    object3D.traverse((child) => {
+      if (child.geometry) {
+        child.geometry.dispose();
+      }
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => {
+            if (m.map) m.map.dispose();
+            m.dispose();
+          });
+        } else {
+          if (child.material.map) child.material.map.dispose();
+          child.material.dispose();
+        }
+      }
+    });
+  }
+
 }

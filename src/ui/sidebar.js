@@ -71,6 +71,11 @@ export class Sidebar {
         this.switchTab(targetTab);
       });
     });
+
+    document.addEventListener('switchSidebarTab', (e) => {
+      const tab = e.detail?.tab;
+      if (tab) this.switchTab(tab);
+    });
   }
 
   switchTab(tabName) {

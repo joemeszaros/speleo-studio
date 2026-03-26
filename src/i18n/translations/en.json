@@ -219,7 +219,11 @@
         "position": "Position",
         "rotation": "Rotation",
         "scale": "Scale",
-        "opacity": "Opacity"
+        "opacity": "Opacity",
+        "size": "Size"
+      },
+      "menu": {
+        "loadTextures": "Load textures"
       }
     },
     "welcome": {
@@ -294,6 +298,7 @@
         "deleteProjectConfirmation": "Are you sure you want to delete this project? This action cannot be undone.",
         "deleteProjectFromDriveConfirmation": "Do you want to delete this project from Google Drive? This action cannot be undone.",
         "caves": "caves",
+        "models": "models",
         "projectId": "Project ID",
         "errors": {
           "noProjectsToExport": "No projects to export",
@@ -970,6 +975,16 @@
         "failedToLoadProjects": "Failed to load projects",
         "projectNotFound": "Project not found",
         "failedToDeleteProject": "Failed to delete project"
+      },
+      "modelSystem": {
+        "idRequired": "Id is required",
+        "failedToSaveModelFile": "Failed to save model file",
+        "failedToLoadModelFile": "Failed to load model file",
+        "failedToLoadModelFiles": "Failed to load model files",
+        "failedToDeleteModelFile": "Failed to delete model file",
+        "failedToSaveTextureFile": "Failed to save texture file",
+        "failedToLoadTextureFiles": "Failed to load texture files",
+        "failedToDeleteTextureFile": "Failed to delete texture file"
       },
       "databaseManager": {
         "failedToOpenIndexedDb": "Failed to open IndexedDB",

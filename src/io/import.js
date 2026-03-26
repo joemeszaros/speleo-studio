@@ -18,7 +18,7 @@ import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { showErrorPanel } from '../ui/popups.js';
 import { Shot, ShotType } from '../model/survey.js';
-import { Vector, PointCloud, Mesh3D } from '../model.js';
+import { Vector, PointCloud, Mesh3D, ModelFile } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument } from '../model/survey.js';
 import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
@@ -131,8 +131,8 @@ class Importer {
               throw new Error(i18n.t('errors.import.unsupportedFileType', { extension }));
             }
             // Serialize cave file imports to prevent coordinate system dialog conflicts
-            await handler.importFile(file, file.name, async (importedData, arg1) => {
-              await onLoad(importedData, arg1);
+            await handler.importFile(file, file.name, async (importedData, arg1, arg2) => {
+              await onLoad(importedData, arg1, arg2);
             });
           } catch (error) {
             const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
@@ -728,6 +728,9 @@ class PlyModelImporter extends Importer {
     const hasVertexColors = geometry.getAttribute('color') !== undefined;
     const centerVector = new Vector(center.x, center.y, center.z);
 
+    // File info for storage
+    const modelFile = new ModelFile(name, 'ply', data);
+
     if (hasFaces) {
       // PLY has faces - render as a mesh
       // Ensure normals exist for proper 3D shading
@@ -750,7 +753,7 @@ class PlyModelImporter extends Importer {
 
       const meshObject = new THREE.Mesh(geometry, material);
       const mesh = new Mesh3D(name, centerVector);
-      await onModelLoad(mesh, meshObject);
+      await onModelLoad(mesh, meshObject, modelFile);
     } else {
       // PLY is point cloud only - render as points
       // Extract vertices only for point clouds (needed for raycasting and color gradients)
@@ -767,7 +770,7 @@ class PlyModelImporter extends Importer {
       });
       const pointsObject = new THREE.Points(geometry, material);
       const pointCloud = new PointCloud(name, points, centerVector, hasVertexColors);
-      await onModelLoad(pointCloud, pointsObject);
+      await onModelLoad(pointCloud, pointsObject, modelFile);
     }
   }
 
@@ -897,14 +900,18 @@ class ObjModelImporter extends Importer {
     // Apply a default material if none exists
     this.applyDefaultMaterial(object);
 
+    // File info for storage
+    const modelFile = new ModelFile(name, 'obj', text);
+
     const mesh = new Mesh3D(name, new Vector(center.x, center.y, center.z));
-    await onModelLoad(mesh, object);
+    await onModelLoad(mesh, object, modelFile);
   }
 
   /**
    * Apply a default material to meshes that don't have one
    * Uses MeshNormalMaterial which shows 3D form based on surface normals
-   * without requiring lights in the scene
+   * without requiring lights in the scene.
+   * Preserves original material names in userData for future MTL loading.
    * @param {THREE.Object3D} object - The loaded OBJ object
    */
   applyDefaultMaterial(object) {
@@ -915,12 +922,25 @@ class ObjModelImporter extends Importer {
 
     object.traverse((child) => {
       if (child.isMesh) {
+        // Preserve original material name(s) for future MTL loading
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            // Multi-material mesh
+            child.userData.originalMaterialNames = child.material.map((m) => m.name || null);
+          } else {
+            // Single material mesh
+            child.userData.originalMaterialName = child.material.name || null;
+          }
+        }
+
         // Ensure normals are computed for proper shading
         if (!child.geometry.getAttribute('normal')) {
           child.geometry.computeVertexNormals();
         }
+
         // Use normal material for 3D appearance without lights
-        child.material = defaultMaterial;
+        // Clone to allow per-object opacity changes
+        child.material = defaultMaterial.clone();
       }
     });
   }
