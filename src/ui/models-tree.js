@@ -51,6 +51,7 @@ export class ModelsTree {
     this.selectedNode = null;
     this.expandedCategories = new Set(['3d-models']); // Expanded by default
     this.propertiesPanelExpanded = true; // Properties panel expanded by default
+    this._saveTimers = new Map(); // modelFileId -> debounce timeout
 
     document.addEventListener('languageChanged', () => this.render());
     document.addEventListener('click', (e) => this.handleOutsideClick(e));
@@ -110,37 +111,64 @@ export class ModelsTree {
    * @param {Object} model - The model data object
    * @param {THREE.Object3D} object3D - The Three.js object
    */
-  addModel(model, object3D) {
+  addModel(model, object3D, modelFileId = null, savedSettings = null) {
     const category = this.categories.get('3d-models');
     if (!category || !model || !object3D) return null;
 
     const modelNode = {
-      id        : `model-${model.name}`,
-      type      : 'model',
-      label     : model.name,
-      data      : model,
-      object3D  : object3D,
-      parent    : category,
-      visible   : true,
-      transform : {}
+      id          : `model-${model.name}`,
+      type        : 'model',
+      label       : model.name,
+      data        : model,
+      object3D    : object3D,
+      parent      : category,
+      visible     : true,
+      modelFileId : modelFileId,
+      transform   : {}
     };
 
-    modelNode.transform.position = {
-      x : object3D.position.x,
-      y : object3D.position.y,
-      z : object3D.position.z
-    };
-    modelNode.transform.rotation = {
-      x : radsToDegrees(object3D.rotation.x),
-      y : radsToDegrees(object3D.rotation.y),
-      z : radsToDegrees(object3D.rotation.z)
-    };
-    modelNode.transform.scale = {
-      x : object3D.scale.x,
-      y : object3D.scale.y,
-      z : object3D.scale.z
-    };
-    modelNode.opacity = 1.0;
+    if (savedSettings?.transform) {
+      // Restore saved transform
+      modelNode.transform = savedSettings.transform;
+      modelNode.opacity = savedSettings.opacity ?? 1.0;
+      modelNode.visible = savedSettings.visible ?? true;
+
+      // Apply to Three.js object
+      const t = savedSettings.transform;
+      object3D.position.set(t.position.x, t.position.y, t.position.z);
+      object3D.rotation.set(degreesToRads(t.rotation.x), degreesToRads(t.rotation.y), degreesToRads(t.rotation.z));
+      object3D.scale.set(t.scale.x, t.scale.y, t.scale.z);
+      object3D.visible = modelNode.visible;
+
+      // Apply opacity to materials
+      if (modelNode.opacity < 1) {
+        object3D.traverse((child) => {
+          if (child.material) {
+            child.material.transparent = true;
+            child.material.opacity = modelNode.opacity;
+            child.material.needsUpdate = true;
+          }
+        });
+      }
+    } else {
+      // Use defaults from the object3D
+      modelNode.transform.position = {
+        x : object3D.position.x,
+        y : object3D.position.y,
+        z : object3D.position.z
+      };
+      modelNode.transform.rotation = {
+        x : radsToDegrees(object3D.rotation.x),
+        y : radsToDegrees(object3D.rotation.y),
+        z : radsToDegrees(object3D.rotation.z)
+      };
+      modelNode.transform.scale = {
+        x : object3D.scale.x,
+        y : object3D.scale.y,
+        z : object3D.scale.z
+      };
+      modelNode.opacity = 1.0;
+    }
 
     const wasEmpty = category.children.length === 0;
     category.children.push(modelNode);
@@ -225,9 +253,11 @@ export class ModelsTree {
     // Update the Three.js object visibility
     if (node.object3D) {
       node.object3D.visible = node.visible;
+      this.scene.view.renderView();
     }
 
     this.render();
+    this._scheduleSave(node);
   }
 
   /**
@@ -291,6 +321,7 @@ export class ModelsTree {
       }
       this.scene.view.renderView();
     }
+    this._scheduleSave(this.selectedNode);
   }
 
   /**
@@ -317,6 +348,30 @@ export class ModelsTree {
     }
 
     this.scene.view.renderView();
+    this._scheduleSave(this.selectedNode);
+  }
+
+  /**
+   * Debounced save of model properties to IndexedDB
+   * @param {Object} node - The model node
+   */
+  _scheduleSave(node) {
+    if (!node?.modelFileId || !this.modelSystem || !this.projectSystem) return;
+
+    const existing = this._saveTimers.get(node.modelFileId);
+    if (existing) clearTimeout(existing);
+
+    this._saveTimers.set(node.modelFileId, setTimeout(() => {
+      this._saveTimers.delete(node.modelFileId);
+      const currentProject = this.projectSystem.getCurrentProject();
+      if (!currentProject) return;
+
+      this.modelSystem.saveModelFileSettings(node.modelFileId, currentProject.id, {
+        transform : node.transform,
+        opacity   : node.opacity,
+        visible   : node.visible
+      }).catch((err) => console.error('Failed to persist model properties:', err));
+    }, 500));
   }
 
   /**

@@ -403,6 +403,9 @@ class Main {
    * @param {Object} modelFile - The model file record
    */
   async #addModelFromStorage(model, object3D, modelFile) {
+    // Hide the object until fully loaded (settings + textures) to avoid visual pop-in
+    object3D.visible = false;
+
     let entry;
 
     if (model instanceof PointCloud) {
@@ -424,13 +427,28 @@ class Main {
       this.scene.models.addMesh(model, entry);
     }
 
-    // Add to models tree for management
+    // Load saved settings (transform, opacity, visibility)
+    let savedSettings = null;
+    try {
+      savedSettings = await this.modelSystem.getModelFileSettings(modelFile.id);
+    } catch (err) {
+      console.warn('Failed to load model settings:', err);
+    }
+
+    // Add to models tree for management (applies saved transform/opacity)
     if (this.modelsTree && entry) {
-      this.modelsTree.addModel(model, entry.object3D);
+      this.modelsTree.addModel(model, entry.object3D, modelFile.id, savedSettings);
     }
 
     // Load associated textures/materials if any
     await this.#loadModelAssets(model, modelFile);
+
+    // Now reveal the model with final transform and textures applied
+    const finalVisible = savedSettings?.visible ?? true;
+    if (entry) {
+      entry.object3D.visible = finalVisible;
+    }
+    this.scene.view.renderView();
   }
 
   /**
@@ -535,14 +553,14 @@ class Main {
       this.scene.models.addMesh(model, entry);
     }
 
-    // Add to models tree for management
-    if (this.modelsTree) {
-      this.modelsTree.addModel(model, entry.object3D);
-    }
-
     // Save model file to IndexedDB for persistence
     if (modelFile && this.projectSystem.getCurrentProject()) {
       await this.#saveModelToStorage(model, modelFile);
+    }
+
+    // Add to models tree for management (pass modelFileId for settings persistence)
+    if (this.modelsTree) {
+      this.modelsTree.addModel(model, entry.object3D, modelFile?.id);
     }
 
     const boundingBox = this.scene.computeBoundingBox();

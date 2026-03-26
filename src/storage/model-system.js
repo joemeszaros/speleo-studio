@@ -24,6 +24,7 @@ import { TextureFile, ModelFile } from '../model.js';
 export class ModelSystem {
 
   static MODEL_FILES_STORE = 'modelFiles';
+  static MODEL_FILE_SETTINGS_STORE = 'modelFileSettings';
   static TEXTURE_FILES_STORE = 'textureFiles';
 
   constructor(databaseManager) {
@@ -107,6 +108,57 @@ export class ModelSystem {
       request.onerror = () => {
         reject(new Error(i18n.t('errors.storage.modelSystem.failedToSaveTextureFile')));
       };
+    });
+  }
+
+  // ==================== Model File Settings ====================
+
+  /**
+   * Save or update model file settings (transform, opacity, visibility)
+   * @param {string} id - Model file ID (same as modelFiles record)
+   * @param {string} projectId - Project ID
+   * @param {Object} properties - { transform, opacity, visible }
+   */
+  async saveModelFileSettings(id, projectId, properties) {
+    const record = {
+      id,
+      projectId,
+      ...properties,
+      updatedAt : new Date().toISOString()
+    };
+
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_FILE_SETTINGS_STORE);
+      const request = store.put(record);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error('Failed to save model file settings'));
+    });
+  }
+
+  /**
+   * Get model file settings by ID
+   * @param {string} id - Model file ID
+   * @returns {Promise<Object|null>} The settings record or null
+   */
+  async getModelFileSettings(id) {
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadOnlyStore(ModelSystem.MODEL_FILE_SETTINGS_STORE);
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(new Error('Failed to load model file settings'));
+    });
+  }
+
+  /**
+   * Delete model file settings
+   * @param {string} id - Model file ID
+   */
+  async deleteModelFileSettings(id) {
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_FILE_SETTINGS_STORE);
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error('Failed to delete model file settings'));
     });
   }
 
