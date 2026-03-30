@@ -1033,7 +1033,9 @@
         "zoneLetterOutOfRange": "Zóna betű kívül esik a következő határokon: C - X",
         "latitudeOutOfRange": "Szélesség kívül esik a következő határokon: 80 deg S - 84 deg N",
         "longitudeOutOfRange": "Hosszúság kívül esik a következő határokon: 180 deg W - 180 deg E",
-        "latOrLonNaN": "A szélesség vagy hosszúság nem egy érvényes szám (NaN)"
+        "latOrLonNaN": "A szélesség vagy hosszúság nem egy érvényes szám (NaN)",
+        "eovLatitudeOutOfRange": "A szélesség kívül esik az EOV tartományon (45,5° és 49,0° között kell lennie)",
+        "eovLongitudeOutOfRange": "A hosszúság kívül esik az EOV tartományon (16,0° és 23,0° között kell lennie)"
       }
     },
     "export": {

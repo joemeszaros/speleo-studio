@@ -298,10 +298,11 @@ class ProjectManager {
     // Load models for this project
     await this.loadProjectModels(project.id);
 
-    // Adjust grid to fit all content (caves + models)
+    // Adjust grid and camera to fit all content (caves + models)
     const boundingBox = this.scene.computeBoundingBox();
     if (boundingBox) {
       this.scene.grid.adjust(boundingBox);
+      this.scene.view.fitScreen(boundingBox);
     }
 
     this.scene.view.renderView();

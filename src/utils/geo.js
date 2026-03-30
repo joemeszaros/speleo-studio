@@ -156,6 +156,7 @@ class EOVToWGS84Transformer {
   static FROMhd72TOwgs84_p2 = [6378160, 6356774.516, 6378137, 6356752.3142];
   static FROMwgs84TOhd72_p2 = [6378137, 6356752.3142, 6378160, 6356774.516];
   static FROMhd72TOwgs84_p3 = [52.684, -71.194, -13.975, 0.312, 0.1063, 0.3729, 0.0000010191];
+  static FROMwgs84TOhd72_p3 = [-52.684, 71.194, 13.975, -0.312, -0.1063, -0.3729, -0.0000010191];
 
   static eovTOwgs84(a, b) {
     let hd72_a = this.eovTOhd72(a, b);
@@ -165,6 +166,31 @@ class EOVToWGS84Transformer {
       EOVToWGS84Transformer.FROMhd72TOwgs84_p3
     );
     return wgsCoord;
+  }
+
+  static wgs84TOeov(lat, lon) {
+    if (lat < 45.5 || lat > 49.0) {
+      throw new RangeError(i18n.t('errors.utils.geo.eovLatitudeOutOfRange'));
+    }
+    if (lon < 16.0 || lon > 23.0) {
+      throw new RangeError(i18n.t('errors.utils.geo.eovLongitudeOutOfRange'));
+    }
+
+    let eovY = 650000;
+    let eovX = 200000;
+
+    for (let i = 0; i < 20; i++) {
+      const [computedLat, computedLon] = this.eovTOwgs84(eovY, eovX);
+      const dLat = lat - computedLat;
+      const dLon = lon - computedLon;
+
+      if (Math.abs(dLat) < 1e-12 && Math.abs(dLon) < 1e-12) break;
+
+      eovX += dLat * 111320;
+      eovY += dLon * 75500;
+    }
+
+    return [eovY, eovX];
   }
 
   static eovTOhd72(b, a) {
@@ -268,6 +294,15 @@ class WGS84Converter {
         undefined,
         coordinateSystem.northern
       );
+    }
+  }
+
+  static fromLatLon(latitude, longitude, coordinateSystem) {
+    if (coordinateSystem.type === CoordinateSystemType.EOV) {
+      const [eovY, eovX] = EOVToWGS84Transformer.wgs84TOeov(latitude, longitude);
+      return { y: eovY, x: eovX };
+    } else if (coordinateSystem.type === CoordinateSystemType.UTM) {
+      return UTMConverter.fromLatLon(latitude, longitude);
     }
   }
 }

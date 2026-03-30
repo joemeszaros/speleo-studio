@@ -1010,7 +1010,9 @@
         "zoneLetterOutOfRange": "Zone letter out of range (must be between C and X)",
         "latitudeOutOfRange": "Latitude out of range (must be between 80 deg S and 84 deg N)",
         "longitudeOutOfRange": "Longitude out of range (must be between 180 deg W and 180 deg E)",
-        "latOrLonNaN": "Latitude or longitude is not a valid number (NaN)"
+        "latOrLonNaN": "Latitude or longitude is not a valid number (NaN)",
+        "eovLatitudeOutOfRange": "Latitude out of EOV range (must be between 45.5° and 49.0°)",
+        "eovLongitudeOutOfRange": "Longitude out of EOV range (must be between 16.0° and 23.0°)"
       }
     },
     "export": {
