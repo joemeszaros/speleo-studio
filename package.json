@@ -5,7 +5,8 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "format": "npx prettier --write ./src/**"
   },
   "repository": {
@@ -27,6 +28,7 @@
     "eslint": "^9.18.0",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^15.14.0",
-    "prettier": "^3.4.2"
+    "prettier": "^3.4.2",
+    "vitest": "^3.2.4"
   }
 }
