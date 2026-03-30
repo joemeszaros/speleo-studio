@@ -228,6 +228,18 @@ class Main {
       this.modelSystem,
       this.modelsTree
     );
+    this.projectManager.setModelLoader(async (modelFile, onModelParsed) => {
+      const importer = this.importers[modelFile.type];
+      if (!importer) {
+        console.warn(`No importer found for model type: ${modelFile.type}`);
+        return;
+      }
+      const importMethod = modelFile.type === 'ply' ? 'importData' : 'importText';
+      const importData = modelFile.type === 'ply'
+        ? await modelFile.data.arrayBuffer()
+        : await modelFile.data.text();
+      await importer[importMethod](importData, onModelParsed, modelFile.filename);
+    });
 
     // Initialize project panel
     this.projectPanel = new ProjectPanel(
@@ -299,199 +311,11 @@ class Main {
     this.#setupCaveFileInputListener();
     this.#setupSurveyFileInputListeners();
     this.#setupModelFileInputListener();
-    this.#setupProjectChangeListener();
     ConfigManager.setupConfigFileInputListener(
       this.options,
       this.settingsPanel,
       document.getElementById('configInput')
     );
-  }
-
-  /**
-   * Setup listener for project changes to load/clear models
-   */
-  #setupProjectChangeListener() {
-    document.addEventListener('currentProjectChanged', async (e) => {
-      const project = e.detail?.project;
-      if (project) {
-        // Clear existing models before loading new project's models
-        this.#clearAllModels();
-        // Load models for the new project
-        await this.#loadProjectModels(project.id);
-      }
-    });
-
-    document.addEventListener('currentProjectDeleted', () => {
-      this.#clearAllModels();
-    });
-  }
-
-  /**
-   * Clear all models from the scene and UI
-   */
-  #clearAllModels() {
-    // Clear models from scene
-    if (this.scene?.models) {
-      this.scene.models.clearModels();
-    }
-    // Clear models from UI tree
-    if (this.modelsTree) {
-      this.modelsTree.clear();
-    }
-  }
-
-  /**
-   * Load all models for a project from IndexedDB
-   * @param {string} projectId - The project ID
-   */
-  async #loadProjectModels(projectId) {
-    if (!this.modelSystem) return;
-
-    try {
-      const modelFiles = await this.modelSystem.getModelFilesByProject(projectId);
-
-      for (const modelFile of modelFiles) {
-        await this.#loadModelFromStorage(modelFile);
-      }
-
-      if (modelFiles.length > 0) {
-        console.log(`📦 Loaded ${modelFiles.length} model(s) from storage`);
-        // Update scene bounds after loading all models
-        const boundingBox = this.scene.computeBoundingBox();
-        this.scene.grid.adjust(boundingBox);
-      }
-    } catch (error) {
-      console.error('Failed to load project models:', error);
-    }
-  }
-
-  /**
-   * Load a single model from storage record
-   * @param {Object} modelFile - The model file record from IndexedDB
-   */
-  async #loadModelFromStorage(modelFile) {
-    try {
-      // Get the raw data from the blob
-      const data = await modelFile.data.arrayBuffer();
-
-      // Determine which importer to use based on file type
-      const importer = this.importers[modelFile.type];
-      if (!importer) {
-        console.warn(`No importer found for model type: ${modelFile.type}`);
-        return;
-      }
-
-      // Import the model (without saving again to storage)
-      const importMethod = modelFile.type === 'ply' ? 'importData' : 'importText';
-      const importData = modelFile.type === 'ply' ? data : await modelFile.data.text();
-
-      await importer[importMethod](
-        importData,
-        async (model, object3D) => {
-          await this.#addModelFromStorage(model, object3D, modelFile);
-        },
-        modelFile.filename
-      );
-
-    } catch (error) {
-      console.error(`Failed to load model ${modelFile.filename}:`, error);
-    }
-  }
-
-  /**
-   * Add a model loaded from storage to the scene (without re-saving)
-   * @param {PointCloud|Mesh3D} model - The model data
-   * @param {THREE.Object3D} object3D - The Three.js object
-   * @param {Object} modelFile - The model file record
-   */
-  async #addModelFromStorage(model, object3D, modelFile) {
-    // Hide the object until fully loaded (settings + textures) to avoid visual pop-in
-    object3D.visible = false;
-
-    let entry;
-
-    if (model instanceof PointCloud) {
-      // Handle point cloud
-      this.db.addPointCloud(model);
-
-      // Calculate color gradients if the point cloud doesn't have vertex colors
-      let colorGradients = null;
-      if (!model.hasVertexColors) {
-        colorGradients = PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
-      }
-
-      entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
-      this.scene.models.addPointCloud(model, entry);
-    } else if (model instanceof Mesh3D) {
-      // Handle mesh
-      this.db.addMesh(model);
-      entry = this.scene.models.getMeshObject(object3D);
-      this.scene.models.addMesh(model, entry);
-    }
-
-    // Load saved settings (transform, opacity, visibility)
-    let savedSettings = null;
-    try {
-      savedSettings = await this.modelSystem.getModelFileSettings(modelFile.id);
-    } catch (err) {
-      console.warn('Failed to load model settings:', err);
-    }
-
-    // Add to models tree for management (applies saved transform/opacity)
-    if (this.modelsTree && entry) {
-      this.modelsTree.addModel(model, entry.object3D, modelFile.id, savedSettings);
-    }
-
-    // Load associated textures/materials if any
-    await this.#loadModelAssets(model, modelFile);
-
-    // Now reveal the model with final transform and textures applied
-    const finalVisible = savedSettings?.visible ?? true;
-    if (entry) {
-      entry.object3D.visible = finalVisible;
-    }
-    this.scene.view.renderView();
-  }
-
-  /**
-   * Load and apply assets (MTL, textures) for a model
-   * @param {PointCloud|Mesh3D} model - The model data
-   * @param {Object} modelFile - The model file record
-   */
-  async #loadModelAssets(model, modelFile) {
-    try {
-      const assets = await this.modelSystem.getTextureFilesByModel(modelFile.id);
-      if (assets.length === 0) return;
-
-      // Separate MTL and texture files
-      const mtlAssets = assets.filter((a) => a.type === 'mtl');
-      const textureAssets = assets.filter((a) => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(a.type));
-
-      if (mtlAssets.length === 0) return;
-
-      // Create texture map from blob URLs
-      const textureMap = new Map();
-      for (const texture of textureAssets) {
-        const url = URL.createObjectURL(texture.data);
-        textureMap.set(texture.filename, url);
-        textureMap.set(texture.filename.toLowerCase(), url);
-      }
-
-      // Find the model node in the tree
-      const modelNode = this.modelsTree?.categories
-        .get('3d-models')
-        ?.children.find((n) => n.label === model.name);
-
-      if (modelNode) {
-        // Apply each MTL file
-        for (const mtlAsset of mtlAssets) {
-          const mtlText = await mtlAsset.data.text();
-          await this.modelsTree.applyMTLToModel(modelNode, mtlText, textureMap);
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to load assets for model ${model.name}:`, error);
-    }
   }
 
   #setupCaveFileInputListener() {

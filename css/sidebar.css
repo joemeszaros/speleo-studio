@@ -1393,6 +1393,13 @@ body {
   flex: 1;
 }
 
+.models-properties-header-size {
+  font-weight: 400;
+  font-size: 11px;
+  color: #999;
+  margin-left: 8px;
+}
+
 .models-properties-content-wrapper {
   overflow: hidden;
   transition: max-height 0.2s ease-out;

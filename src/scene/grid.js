@@ -44,6 +44,7 @@ class Grid {
     this.scene.removeObjectFromScene(this.grid);
     this.grid = new GridHelper(width, height, this.options.scene.grid.step, this.material);
     this.grid.layers.set(1);
+    this.grid.visible = this.options.scene.grid.mode !== 'hidden';
     this.center = boundingBox.getCenter(new THREE.Vector3());
     this.minZ = Math.min(boundingBox.min.z, boundingBox.max.z);
     this.maxZ = Math.max(boundingBox.min.z, boundingBox.max.z);

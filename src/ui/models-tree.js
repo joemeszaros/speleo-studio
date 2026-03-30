@@ -552,6 +552,17 @@ export class ModelsTree {
     title.textContent = i18n.t('ui.models.properties.title');
     header.appendChild(title);
 
+    // Show file size in header when a model is selected
+    if (this.selectedNode?.type === 'model') {
+      const sizeLabel = document.createElement('span');
+      sizeLabel.className = 'models-properties-header-size';
+      sizeLabel.textContent = '...';
+      header.appendChild(sizeLabel);
+      this.computeModelFileSize(this.selectedNode).then((size) => {
+        sizeLabel.textContent = size;
+      });
+    }
+
     header.onclick = () => this.togglePropertiesPanel();
     panel.appendChild(header);
 
@@ -579,7 +590,6 @@ export class ModelsTree {
       );
       content.appendChild(this.createTransformSection('scale', i18n.t('ui.models.properties.scale'), 'x', 'y', 'z'));
       content.appendChild(this.createOpacitySection());
-      content.appendChild(this.createSizeSection());
     }
 
     contentWrapper.appendChild(content);

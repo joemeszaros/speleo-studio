@@ -24,6 +24,8 @@ import { showErrorPanel } from './popups.js';
 import { i18n } from '../i18n/i18n.js';
 import * as THREE from 'three';
 import { RevisionInfo } from '../model/misc.js';
+import { PointCloud, Mesh3D } from '../model.js';
+import { PointCloudHelper } from '../utils/models.js';
 
 class ProjectManager {
 
@@ -61,6 +63,7 @@ class ProjectManager {
     this.attributeDefs = attributeDefs;
     this.modelSystem = modelSystem;
     this.modelsTree = modelsTree;
+    this.modelLoader = null; // set via setModelLoader() after construction
     this.firstEdit = true;
 
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
@@ -278,6 +281,7 @@ class ProjectManager {
     });
 
     this.db.clear();
+    this.clearAllModels();
 
     const caves = await this.caveSystem.getCavesByProjectId(project.id);
 
@@ -290,6 +294,16 @@ class ProjectManager {
       this.calculateFragmentAttributes(cave);
       this.addCave(cave);
     });
+
+    // Load models for this project
+    await this.loadProjectModels(project.id);
+
+    // Adjust grid to fit all content (caves + models)
+    const boundingBox = this.scene.computeBoundingBox();
+    if (boundingBox) {
+      this.scene.grid.adjust(boundingBox);
+    }
+
     this.scene.view.renderView();
     this.projectSystem.setCurrentProject(project);
 
@@ -325,6 +339,7 @@ class ProjectManager {
     });
 
     this.db.clear();
+    this.clearAllModels();
     this.scene.view.renderView();
   }
 
@@ -432,6 +447,121 @@ class ProjectManager {
       }
     }
     this.scene.view.renderView();
+  }
+
+  // ==================== Model Loading ====================
+
+  /**
+   * Set the model loader function that parses raw model files (PLY/OBJ blobs)
+   * into Three.js objects. Keeps import/parsing logic out of the manager.
+   * @param {Function} loaderFn - async (modelFile, onModelParsed) => void
+   */
+  setModelLoader(loaderFn) {
+    this.modelLoader = loaderFn;
+  }
+
+  clearAllModels() {
+    if (this.scene?.models) {
+      this.scene.models.clearModels();
+    }
+    if (this.modelsTree) {
+      this.modelsTree.clear();
+    }
+  }
+
+  async loadProjectModels(projectId) {
+    if (!this.modelSystem || !this.modelLoader) return;
+
+    try {
+      const modelFiles = await this.modelSystem.getModelFilesByProject(projectId);
+
+      for (const modelFile of modelFiles) {
+        await this.modelLoader(modelFile, async (model, object3D) => {
+          await this.addModelFromStorage(model, object3D, modelFile);
+        });
+      }
+
+      if (modelFiles.length > 0) {
+        console.log(`📦 Loaded ${modelFiles.length} model(s) from storage`);
+      }
+    } catch (error) {
+      console.error('Failed to load project models:', error);
+    }
+  }
+
+  async addModelFromStorage(model, object3D, modelFile) {
+    // Hide until fully loaded (settings + textures) to avoid visual pop-in
+    object3D.visible = false;
+
+    let entry;
+
+    if (model instanceof PointCloud) {
+      this.db.addPointCloud(model);
+      let colorGradients = null;
+      if (!model.hasVertexColors) {
+        colorGradients = PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
+      }
+      entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
+      this.scene.models.addPointCloud(model, entry);
+    } else if (model instanceof Mesh3D) {
+      this.db.addMesh(model);
+      entry = this.scene.models.getMeshObject(object3D);
+      this.scene.models.addMesh(model, entry);
+    }
+
+    // Load saved settings (transform, opacity, visibility)
+    let savedSettings = null;
+    try {
+      savedSettings = await this.modelSystem.getModelFileSettings(modelFile.id);
+    } catch (err) {
+      console.warn('Failed to load model settings:', err);
+    }
+
+    // Add to models tree (applies saved transform/opacity)
+    if (this.modelsTree && entry) {
+      this.modelsTree.addModel(model, entry.object3D, modelFile.id, savedSettings);
+    }
+
+    // Load associated textures/materials
+    await this.loadModelAssets(model, modelFile);
+
+    // Reveal the model with final transform and textures applied
+    const finalVisible = savedSettings?.visible ?? true;
+    if (entry) {
+      entry.object3D.visible = finalVisible;
+    }
+  }
+
+  async loadModelAssets(model, modelFile) {
+    try {
+      const assets = await this.modelSystem.getTextureFilesByModel(modelFile.id);
+      if (assets.length === 0) return;
+
+      const mtlAssets = assets.filter((a) => a.type === 'mtl');
+      const textureAssets = assets.filter((a) => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(a.type));
+
+      if (mtlAssets.length === 0) return;
+
+      const textureMap = new Map();
+      for (const texture of textureAssets) {
+        const url = URL.createObjectURL(texture.data);
+        textureMap.set(texture.filename, url);
+        textureMap.set(texture.filename.toLowerCase(), url);
+      }
+
+      const modelNode = this.modelsTree?.categories
+        .get('3d-models')
+        ?.children.find((n) => n.label === model.name);
+
+      if (modelNode) {
+        for (const mtlAsset of mtlAssets) {
+          const mtlText = await mtlAsset.data.text();
+          await this.modelsTree.applyMTLToModel(modelNode, mtlText, textureMap);
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to load assets for model ${model.name}:`, error);
+    }
   }
 
   async reloadCave(cave) {
