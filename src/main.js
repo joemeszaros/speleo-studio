@@ -524,13 +524,63 @@ class Main {
   }
 
   #setupModelFileInputListener() {
-    Importer.setupFileInputListener({
-      inputId  : 'modelInput',
-      handlers : new Map([
-        ['ply', this.importers.ply],
-        ['obj', this.importers.obj]
-      ]),
-      onLoad : async (model, object3D, modelFile) => await this.#tryAddModel(model, object3D, modelFile)
+    const modelExtensions = new Set(['ply', 'obj']);
+    const input = document.getElementById('modelInput');
+
+    input.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      try {
+        // Separate model files from asset files (MTL, textures)
+        const modelFiles = [];
+        const assetFiles = [];
+
+        for (const file of files) {
+          const ext = file.name.toLowerCase().split('.').pop();
+          if (modelExtensions.has(ext)) {
+            modelFiles.push(file);
+          } else {
+            assetFiles.push(file);
+          }
+        }
+
+        const hasAssets = assetFiles.length > 0;
+
+        // Import each model file
+        const importedNodes = [];
+        for (const file of modelFiles) {
+          const ext = file.name.toLowerCase().split('.').pop();
+          const handler = this.importers[ext];
+          if (!handler) continue;
+
+          await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
+            // Hide model until textures are applied to prevent visual pop-in
+            if (hasAssets) object3D.visible = false;
+
+            await this.#tryAddModel(model, object3D, modelFile);
+
+            // Find the newly added model node for texture application
+            if (hasAssets && this.modelsTree) {
+              const node = this.modelsTree.categories
+                .get('3d-models')
+                ?.children.find((n) => n.label === model.name);
+              if (node) importedNodes.push(node);
+            }
+          });
+        }
+
+        // Apply asset files (MTL + textures) to imported models, then reveal
+        if (hasAssets && importedNodes.length > 0) {
+          for (const node of importedNodes) {
+            await this.modelsTree.loadTexturesForModel(node, assetFiles);
+            node.object3D.visible = true;
+          }
+          this.scene.view.renderView();
+        }
+      } finally {
+        input.value = '';
+      }
     });
   }
 
