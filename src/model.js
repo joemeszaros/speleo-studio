@@ -591,12 +591,13 @@ class PointCloud {
    * @param {boolean} hasVertexColors - Whether the point cloud has vertex colors
    * @param {boolean} visible - The visibility property
    */
-  constructor(name, points = [], center, hasVertexColors = false, visible = true) {
+  constructor(name, points = [], center, hasVertexColors = false, visible = true, geoData = null) {
     this.name = name;
     this.points = points;
     this.center = center;
     this.hasVertexColors = hasVertexColors;
     this.visible = visible;
+    this.geoData = geoData;
   }
 
   static generateId() {
@@ -613,12 +614,13 @@ class Mesh3D {
    * @param {Vector} center - The center of the bounding box
    * @param {boolean} visible - The visibility property
    */
-  constructor(name, center, visible = true, opacity = 1.0) {
+  constructor(name, center, visible = true, opacity = 1.0, geoData = null) {
     this.id = Mesh3D.generateId();
     this.name = name;
     this.center = center;
     this.visible = visible;
     this.opacity = opacity;
+    this.geoData = geoData;
   }
 
   static generateId() {
@@ -677,6 +679,27 @@ class TextureFile {
   }
 }
 
+/**
+ * Metadata for a 3D model, stored separately from the large geometry blob.
+ * Contains coordinate/geo information and other lightweight model properties.
+ */
+class ModelMetadata {
+  constructor(modelFileId, name, geoData = null) {
+    this.id = ModelMetadata.generateId();
+    this.modelFileId = modelFileId;
+    this.name = name;
+    this.geoData = geoData;
+  }
+
+  static generateId() {
+    return 'model_meta_' + Date.now() + '_' + randomAlphaNumbericString(5);
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new ModelMetadata(), pure);
+  }
+}
+
 export {
   Vector,
   Offset,
@@ -688,5 +711,6 @@ export {
   PointCloud,
   Mesh3D,
   ModelFile,
-  TextureFile
+  TextureFile,
+  ModelMetadata
 };

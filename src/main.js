@@ -49,7 +49,11 @@ import { GoogleDriveSettings } from './ui/google-drive-settings.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { PointCloudHelper } from './utils/models.js';
-import { PointCloud, Mesh3D, ModelFile } from './model.js';
+import { PointCloud, Mesh3D, ModelFile, ModelMetadata } from './model.js';
+import { ModelCoordinateDialog } from './ui/model-coordinate-dialog.js';
+import { GeoData, UTMCoordinateWithElevation, UTMCoordinateSystem, StationWithCoordinate } from './model/geo.js';
+import { UTMConverter } from './utils/geo.js';
+import { globalNormalizer } from './utils/global-coordinate-normalizer.js';
 import { PrintUtils } from './utils/print.js';
 import { node } from './utils/utils.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
@@ -371,27 +375,51 @@ class Main {
 
         const hasAssets = assetFiles.length > 0;
 
-        // Import each model file
-        const importedNodes = [];
+        // Parse model files first to extract embedded coordinates
+        const parsedModels = [];
         for (const file of modelFiles) {
           const ext = file.name.toLowerCase().split('.').pop();
           const handler = this.importers[ext];
           if (!handler) continue;
 
           await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
-            // Hide model until textures are applied to prevent visual pop-in
-            if (hasAssets) object3D.visible = false;
-
-            await this.#tryAddModel(model, object3D, modelFile);
-
-            // Find the newly added model node for texture application
-            if (hasAssets && this.modelsTree) {
-              const node = this.modelsTree.categories
-                .get('3d-models')
-                ?.children.find((n) => n.label === model.name);
-              if (node) importedNodes.push(node);
-            }
+            parsedModels.push({ model, object3D, modelFile });
           });
+        }
+
+        // Show coordinate dialog with embedded coordinates pre-filled (if found)
+        const firstModel = parsedModels[0]?.model;
+        const embeddedCoords = firstModel?.embeddedCoords || null;
+        const modelCoordDialog = new ModelCoordinateDialog();
+        const wgs84Coords = await modelCoordDialog.show(
+          modelFiles[0]?.name || '',
+          embeddedCoords
+        );
+
+        // Convert WGS84 to GeoData if coordinates were provided
+        let geoData = null;
+        if (wgs84Coords) {
+          geoData = this.#createGeoDataFromWGS84(wgs84Coords);
+        }
+
+        // Add parsed models to the scene
+        const importedNodes = [];
+        for (const { model, object3D, modelFile } of parsedModels) {
+          // Hide model until textures are applied to prevent visual pop-in
+          if (hasAssets) object3D.visible = false;
+
+          // Set geoData on the model if coordinates were provided
+          if (geoData) model.geoData = geoData;
+
+          await this.#tryAddModel(model, object3D, modelFile);
+
+          // Find the newly added model node for texture application
+          if (hasAssets && this.modelsTree) {
+            const node = this.modelsTree.categories
+              .get('3d-models')
+              ?.children.find((n) => n.label === model.name);
+            if (node) importedNodes.push(node);
+          }
         }
 
         // Apply asset files (MTL + textures) to imported models, then reveal
@@ -434,6 +462,13 @@ class Main {
       await this.#saveModelToStorage(model, modelFile);
     }
 
+    // Emit coordinate system change if the model has geoData
+    if (model.geoData?.coordinateSystem) {
+      document.dispatchEvent(new CustomEvent('coordinateSystemChanged', {
+        detail: { coordinateSystem: model.geoData.coordinateSystem }
+      }));
+    }
+
     // Add to models tree for management (pass modelFileId for settings persistence)
     if (this.modelsTree) {
       this.modelsTree.addModel(model, entry.object3D, modelFile?.id);
@@ -445,6 +480,22 @@ class Main {
   }
 
   /**
+   * Convert WGS84 coordinates to GeoData with UTM coordinate system.
+   * If a project coordinate system already exists, converts to that system instead.
+   * @param {{latitude: number, longitude: number, elevation: number}} wgs84
+   * @returns {GeoData}
+   */
+  #createGeoDataFromWGS84(wgs84) {
+    const { latitude, longitude, elevation } = wgs84;
+    const { easting, northing, zoneNum, zoneLetter } = UTMConverter.fromLatLon(latitude, longitude);
+    const northern = zoneLetter >= 'N';
+    const coordinateSystem = new UTMCoordinateSystem(zoneNum, northern);
+    const coordinate = new UTMCoordinateWithElevation(easting, northing, elevation);
+
+    return new GeoData(coordinateSystem, [new StationWithCoordinate('origin', coordinate)]);
+  }
+
+  /**
    * Save a model file to IndexedDB for persistence
    * @param {PointCloud|Mesh3D} model - The model data
    * @param {ModelFile} modelFile - File info with rawData, type, filename
@@ -453,6 +504,11 @@ class Main {
     try {
       const project = this.projectSystem.getCurrentProject();
       await this.modelSystem.saveModelFile(project.id, modelFile);
+
+      // Save model metadata (name, geoData)
+      const metadata = new ModelMetadata(modelFile.id, model.name, model.geoData);
+      await this.modelSystem.saveModelMetadata(project.id, metadata);
+
       await this.projectSystem.saveProject(project);
     } catch (error) {
       console.error('Failed to save model file to IndexedDB:', error);

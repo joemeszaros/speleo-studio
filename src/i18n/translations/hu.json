@@ -228,6 +228,12 @@
         "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{{name}}' modellt? A kapcsolódó textúrák is törlődnek."
       }
     },
+    "dialogs": {
+      "modelCoordinate": {
+        "message": "Adja meg a WGS84 koordinátákat ehhez a 3D modellhez. Ez lehetővé teszi a modell helyes pozicionálását a barlangokhoz képest. Kihagyhatja ezt a lépést, ha a modell helyi koordinátákat használ.",
+        "wgs84Coordinates": "WGS84 koordináták"
+      }
+    },
     "welcome": {
       "title": "Üdvözöljük a Speleo Studio-ban",
       "subtitle": "Egy átfogó barlang vizualizációs és felmérés kezelő platform.",
@@ -1206,7 +1212,8 @@
     "attributes": "Attribútumok",
     "length": "Hossz",
     "new": "Új",
-    "import": "Importálás"
+    "import": "Importálás",
+    "skip": "Kihagyás"
   },
   "attributes": {
     "title": "Attribútum referencia",

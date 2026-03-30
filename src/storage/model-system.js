@@ -15,7 +15,7 @@
  */
 
 import { i18n } from '../i18n/i18n.js';
-import { TextureFile, ModelFile } from '../model.js';
+import { TextureFile, ModelFile, ModelMetadata } from '../model.js';
 
 /**
  * ModelSystem - Manages 3D model files and their assets in IndexedDB
@@ -25,6 +25,7 @@ export class ModelSystem {
 
   static MODEL_FILES_STORE = 'modelFiles';
   static MODEL_FILE_SETTINGS_STORE = 'modelFileSettings';
+  static MODEL_METADATA_STORE = 'modelMetadata';
   static TEXTURE_FILES_STORE = 'textureFiles';
 
   constructor(databaseManager) {
@@ -112,6 +113,9 @@ export class ModelSystem {
     // Delete associated settings
     await this.deleteModelFileSettings(id).catch(() => {});
 
+    // Delete associated metadata
+    await this.deleteModelMetadataByModelFileId(id).catch(() => {});
+
     console.log(`🗑️ Model file deleted: ${id}`);
   }
 
@@ -154,6 +158,80 @@ export class ModelSystem {
       request.onerror = () => {
         reject(new Error(i18n.t('errors.storage.modelSystem.failedToSaveTextureFile')));
       };
+    });
+  }
+
+  // ==================== Model Metadata ====================
+
+  /**
+   * Save model metadata (coordinate/geo information)
+   * @param {string} projectId - Project ID
+   * @param {ModelMetadata} metadata - The metadata object
+   */
+  async saveModelMetadata(projectId, metadata) {
+    const record = {
+      ...metadata,
+      projectId,
+      updatedAt : new Date().toISOString()
+    };
+
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_METADATA_STORE);
+      const request = store.put(record);
+      request.onsuccess = () => resolve(metadata.id);
+      request.onerror = () => reject(new Error('Failed to save model metadata'));
+    });
+  }
+
+  /**
+   * Get model metadata by model file ID
+   * @param {string} modelFileId - The model file ID
+   * @returns {Promise<ModelMetadata|null>}
+   */
+  async getModelMetadataByModelFileId(modelFileId) {
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadOnlyStore(ModelSystem.MODEL_METADATA_STORE);
+      const index = store.index('modelFileId');
+      const request = index.get(modelFileId);
+      request.onsuccess = () => {
+        resolve(request.result ? ModelMetadata.fromPure(request.result) : null);
+      };
+      request.onerror = () => reject(new Error('Failed to load model metadata'));
+    });
+  }
+
+  /**
+   * Get all model metadata for a project
+   * @param {string} projectId - The project ID
+   * @returns {Promise<Array<ModelMetadata>>}
+   */
+  async getModelMetadataByProject(projectId) {
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadOnlyStore(ModelSystem.MODEL_METADATA_STORE);
+      const index = store.index('projectId');
+      const request = index.getAll(projectId);
+      request.onsuccess = () => resolve((request.result || []).map(ModelMetadata.fromPure));
+      request.onerror = () => reject(new Error('Failed to load model metadata'));
+    });
+  }
+
+  /**
+   * Delete model metadata by model file ID
+   * @param {string} modelFileId - The model file ID
+   */
+  async deleteModelMetadataByModelFileId(modelFileId) {
+    if (modelFileId === null || modelFileId === undefined || modelFileId === '') {
+      throw new Error(i18n.t('errors.storage.modelSystem.idRequired'));
+    }
+
+    const metadata = await this.getModelMetadataByModelFileId(modelFileId);
+    if (!metadata) return;
+
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_METADATA_STORE);
+      const request = store.delete(metadata.id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error('Failed to delete model metadata'));
     });
   }
 

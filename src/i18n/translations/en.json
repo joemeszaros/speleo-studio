@@ -228,6 +228,12 @@
         "deleteConfirm": "Are you sure you want to delete the model '{{name}}'? This will also delete associated textures."
       }
     },
+    "dialogs": {
+      "modelCoordinate": {
+        "message": "Set WGS84 coordinates for this 3D model. This allows the model to be positioned correctly relative to caves. You can skip this step if the model uses local coordinates.",
+        "wgs84Coordinates": "WGS84 Coordinates"
+      }
+    },
     "welcome": {
       "title": "Welcome to Speleo Studio",
       "subtitle": "Your comprehensive cave visualization and survey management platform.<br />Explore, analyze, and visualize caves with a professional tool.",
@@ -1183,7 +1189,8 @@
     "attributes": "Attributes",
     "length": "Length",
     "new": "New",
-    "import": "Import"
+    "import": "Import",
+    "skip": "Skip"
   },
   "attributes": {
     "title": "Attribute Definitions Reference",

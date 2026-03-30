@@ -24,11 +24,12 @@ import { i18n } from '../i18n/i18n.js';
  * 4. Added modelFiles and assetFiles stores for 3D model persistence
  * 5. Renamed assetFiles to textureFiles
  * 6. Added modelFileSettings store for model transform/opacity/visibility persistence
+ * 7. Added modelMetadata store for model coordinate/geo information
  */
 export class DatabaseManager {
   constructor() {
     this.dbName = 'SpeleoStudioDB';
-    this.dbVersion = 6;
+    this.dbVersion = 7;
     this.indexedDb = null;
     this.stores = {
       projects : {
@@ -73,6 +74,14 @@ export class DatabaseManager {
         keyPath : 'id',
         indexes : [
           { name: 'projectId', keyPath: 'projectId', options: { unique: false } }
+        ]
+      },
+      // Model metadata (coordinate/geo information)
+      modelMetadata : {
+        keyPath : 'id',
+        indexes : [
+          { name: 'projectId', keyPath: 'projectId', options: { unique: false } },
+          { name: 'modelFileId', keyPath: 'modelFileId', options: { unique: false } }
         ]
       },
       // Generic store for texture files (MTL, JPG, PNG, etc.)

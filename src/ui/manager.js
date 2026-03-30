@@ -518,6 +518,16 @@ class ProjectManager {
       console.warn('Failed to load model settings:', err);
     }
 
+    // Load metadata (geoData/coordinates)
+    try {
+      const metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFile.id);
+      if (metadata?.geoData) {
+        model.geoData = metadata.geoData;
+      }
+    } catch (err) {
+      console.warn('Failed to load model metadata:', err);
+    }
+
     // Add to models tree (applies saved transform/opacity)
     if (this.modelsTree && entry) {
       this.modelsTree.addModel(model, entry.object3D, modelFile.id, savedSettings);

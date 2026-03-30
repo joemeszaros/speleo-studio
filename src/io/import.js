@@ -887,6 +887,9 @@ class ObjModelImporter extends Importer {
   }
 
   async importText(text, onModelLoad, name) {
+    // Extract WGS84 coordinates from OBJ comments before parsing
+    const embeddedCoords = ObjModelImporter.extractCoordinates(text);
+
     const loader = new OBJLoader();
     const object = loader.parse(text);
 
@@ -904,7 +907,41 @@ class ObjModelImporter extends Importer {
     const modelFile = new ModelFile(name, 'obj', text);
 
     const mesh = new Mesh3D(name, new Vector(center.x, center.y, center.z));
+    mesh.embeddedCoords = embeddedCoords;
     await onModelLoad(mesh, object, modelFile);
+  }
+
+  /**
+   * Extract WGS84 coordinates from OBJ file comment headers.
+   * Supports Scaniverse-style comments: # Latitude: 47.6, # Longitude: 18.9, # Elevation: 275.0
+   * @param {string} text - Raw OBJ file text
+   * @returns {{latitude: number, longitude: number, elevation: number}|null}
+   */
+  static extractCoordinates(text) {
+    let latitude = null, longitude = null, elevation = null;
+
+    const lines = text.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('#')) {
+        // Stop scanning once we hit non-comment lines (geometry data)
+        if (trimmed.length > 0) break;
+        continue;
+      }
+      const latMatch = trimmed.match(/^#\s*Latitude:\s*([-\d.]+)/i);
+      if (latMatch) latitude = parseFloat(latMatch[1]);
+
+      const lonMatch = trimmed.match(/^#\s*Longitude:\s*([-\d.]+)/i);
+      if (lonMatch) longitude = parseFloat(lonMatch[1]);
+
+      const elevMatch = trimmed.match(/^#\s*Elevation:\s*([-\d.]+)/i);
+      if (elevMatch) elevation = parseFloat(elevMatch[1]);
+    }
+
+    if (latitude !== null && longitude !== null) {
+      return { latitude, longitude, elevation: elevation ?? 0 };
+    }
+    return null;
   }
 
   /**
