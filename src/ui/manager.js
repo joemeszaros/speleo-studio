@@ -417,6 +417,12 @@ class ProjectManager {
       }
     }
 
+    // Update project timestamp
+    const project = this.projectSystem.getCurrentProject();
+    if (project) {
+      await this.projectSystem.saveProject(project);
+    }
+
     // Adjust grid
     const boundingBox = this.scene.computeBoundingBox();
     if (boundingBox) {

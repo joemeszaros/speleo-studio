@@ -383,7 +383,8 @@ export class ModelsTree {
         transform : node.transform,
         opacity   : node.opacity,
         visible   : node.visible
-      }).catch((err) => console.error('Failed to persist model properties:', err));
+      }).then(() => this.projectSystem.saveProject(currentProject))
+        .catch((err) => console.error('Failed to persist model properties:', err));
     }, 500));
   }
 
@@ -489,8 +490,15 @@ export class ModelsTree {
     label.textContent = node.label;
     nodeElement.appendChild(label);
 
-    // Click to select and show context menu
+    // Left-click to select
     nodeElement.onclick = (e) => {
+      e.stopPropagation();
+      this.selectNode(node.id);
+    };
+
+    // Right-click to show context menu
+    nodeElement.oncontextmenu = (e) => {
+      e.preventDefault();
       e.stopPropagation();
       this.selectNode(node.id);
       this.showModelContextMenu(node);
@@ -916,13 +924,13 @@ export class ModelsTree {
    * @param {File[]} textureFiles - Texture files
    */
   async saveAssetFilesToStorage(node, mtlFiles, textureFiles) {
-    if (!this.modelSystem || !this.projectSystem) return;
+    if (!this.modelSystem || !this.projectSystem || !node.modelFileId) return;
 
     const currentProject = this.projectSystem.getCurrentProject();
     if (!currentProject) return;
 
     const projectId = currentProject.id;
-    const modelId = `${projectId}/${node.label}`;
+    const modelId = node.modelFileId;
 
     try {
       // Save MTL files

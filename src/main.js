@@ -627,8 +627,9 @@ class Main {
    */
   async #saveModelToStorage(model, modelFile) {
     try {
-      const projectId = this.projectSystem.getCurrentProject().id;
-      await this.modelSystem.saveModelFile(projectId, modelFile);
+      const project = this.projectSystem.getCurrentProject();
+      await this.modelSystem.saveModelFile(project.id, modelFile);
+      await this.projectSystem.saveProject(project);
     } catch (error) {
       console.error('Failed to save model file to IndexedDB:', error);
     }
