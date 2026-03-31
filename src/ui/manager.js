@@ -68,6 +68,7 @@ class ProjectManager {
 
     document.addEventListener('caveDeleted', (e) => this.onCaveDeleted(e));
     document.addEventListener('modelDeleted', (e) => this.onModelDeleted(e));
+    document.addEventListener('modelChanged', (e) => this.onModelChanged(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('caveChanged', (e) => this.onCaveChanged(e));
@@ -518,11 +519,12 @@ class ProjectManager {
       console.warn('Failed to load model settings:', err);
     }
 
-    // Load metadata (geoData/coordinates)
+    // Load metadata (name, geoData/coordinates)
     try {
       const metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFile.id);
-      if (metadata?.geoData) {
-        model.geoData = metadata.geoData;
+      if (metadata) {
+        if (metadata.name) model.name = metadata.name;
+        if (metadata.geoData) model.geoData = metadata.geoData;
       }
     } catch (err) {
       console.warn('Failed to load model metadata:', err);
@@ -572,6 +574,37 @@ class ProjectManager {
       }
     } catch (error) {
       console.error(`Failed to load assets for model ${model.name}:`, error);
+    }
+  }
+
+  async onModelChanged(e) {
+    const { modelFileId, geoData, name, oldName } = e.detail;
+
+    if (!modelFileId || !this.modelSystem) return;
+
+    const project = this.projectSystem.getCurrentProject();
+    if (!project) return;
+
+    try {
+      let metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFileId);
+      if (metadata) {
+        metadata.geoData = geoData;
+        if (name) metadata.name = name;
+        await this.modelSystem.saveModelMetadata(project.id, metadata);
+      }
+
+      // Re-render model tree if name changed
+      if (oldName && name && oldName !== name && this.modelsTree) {
+        this.modelsTree.render();
+      }
+
+      if (geoData?.coordinateSystem) {
+        this.#emitCoordinateSystemChange(geoData.coordinateSystem);
+      }
+
+      await this.projectSystem.saveProject(project);
+    } catch (err) {
+      console.error('Failed to save model metadata:', err);
     }
   }
 

@@ -223,6 +223,7 @@
         "size": "Méret"
       },
       "menu": {
+        "sheet": "Modell adatlap",
         "loadTextures": "Textúrák betöltése",
         "delete": "Modell törlése",
         "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{{name}}' modellt? A kapcsolódó textúrák is törlődnek."
@@ -658,6 +659,14 @@
           "addCoordinate": "Koordináta hozzáadása",
           "convertGPS": "GPS konvertálás"
         }
+      },
+      "modelSheet": {
+        "title": "Modell adatlap: {name}",
+        "addCoordinate": "Koordináta hozzáadása",
+        "fileInfo": "Fájl információ",
+        "modelFile": "Modell fájl",
+        "textureFiles": "Textúra fájlok",
+        "totalSize": "Teljes méret"
       },
       "surveySheet": {
         "title": "Felmérés adatlap: {name}",

@@ -17,6 +17,7 @@
 import { i18n } from '../i18n/i18n.js';
 import { degreesToRads, parseMyFloat, radsToDegrees } from '../utils/utils.js';
 import { TextureFile } from '../model.js';
+import { ModelSheetEditor } from './editor/model-sheet.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 import * as THREE from 'three';
 
@@ -785,6 +786,21 @@ export class ModelsTree {
     if (!this.contextMenu) return;
 
     const items = [
+      {
+        icon    : '🔠',
+        title   : i18n.t('ui.models.menu.sheet'),
+        onclick : () => {
+          this.hideContextMenu();
+          const editor = new ModelSheetEditor(
+            node,
+            this.modelSystem,
+            this.projectSystem,
+            document.getElementById('fixed-size-editor')
+          );
+          editor.setupPanel();
+          editor.show();
+        }
+      },
       {
         icon    : '🧶',
         title   : i18n.t('ui.models.menu.loadTextures'),

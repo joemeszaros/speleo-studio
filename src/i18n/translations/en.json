@@ -223,6 +223,7 @@
         "size": "Size"
       },
       "menu": {
+        "sheet": "Model sheet",
         "loadTextures": "Load textures",
         "delete": "Delete model",
         "deleteConfirm": "Are you sure you want to delete the model '{{name}}'? This will also delete associated textures."
@@ -655,6 +656,14 @@
           "addCoordinate": "Add coordinate",
           "convertGPS": "Convert GPS"
         }
+      },
+      "modelSheet": {
+        "title": "Model sheet: {name}",
+        "addCoordinate": "Add coordinate",
+        "fileInfo": "File information",
+        "modelFile": "Model file",
+        "textureFiles": "Texture files",
+        "totalSize": "Total size"
       },
       "surveySheet": {
         "title": "Survey sheet editor: {name}",

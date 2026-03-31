@@ -29,7 +29,7 @@ import { i18n } from '../i18n/i18n.js';
 export class DatabaseManager {
   constructor() {
     this.dbName = 'SpeleoStudioDB';
-    this.dbVersion = 7;
+    this.dbVersion = 9;
     this.indexedDb = null;
     this.stores = {
       projects : {
