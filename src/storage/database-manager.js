@@ -29,7 +29,7 @@ import { i18n } from '../i18n/i18n.js';
 export class DatabaseManager {
   constructor() {
     this.dbName = 'SpeleoStudioDB';
-    this.dbVersion = 9;
+    this.dbVersion = 4;
     this.indexedDb = null;
     this.stores = {
       projects : {
@@ -72,9 +72,7 @@ export class DatabaseManager {
       // Lightweight store for model properties (transform, opacity, visibility)
       modelFileSettings : {
         keyPath : 'id',
-        indexes : [
-          { name: 'projectId', keyPath: 'projectId', options: { unique: false } }
-        ]
+        indexes : [{ name: 'projectId', keyPath: 'projectId', options: { unique: false } }]
       },
       // Model metadata (coordinate/geo information)
       modelMetadata : {
