@@ -371,7 +371,7 @@ export class ModelSheetEditor extends BaseEditor {
         // Left column: model file
         const leftCol = U.node`<div style="flex: 1;">
           <div style="font-size: 11px; font-weight: 600; color: #ddd; margin-bottom: 4px;">${i18n.t('ui.editors.modelSheet.modelFile')}</div>
-          <div style="font-size: 11px; color: #ccc; margin-left: 8px;">${modelFile.filename} (${this.#formatBytes(modelSize)})</div>
+          <div style="font-size: 11px; color: #ccc; margin-left: 8px;">${modelFile.filename} (${U.formatBytes(modelSize)})</div>
         </div>`;
         columns.appendChild(leftCol);
 
@@ -383,7 +383,7 @@ export class ModelSheetEditor extends BaseEditor {
           for (const tex of textures) {
             const texSize = tex.data instanceof Blob ? tex.data.size : 0;
             rightCol.appendChild(
-              U.node`<div style="font-size: 11px; color: #ccc; margin-bottom: 2px; margin-left: 8px;">${tex.filename} (${this.#formatBytes(texSize)})</div>`
+              U.node`<div style="font-size: 11px; color: #ccc; margin-bottom: 2px; margin-left: 8px;">${tex.filename} (${U.formatBytes(texSize)})</div>`
             );
           }
           columns.appendChild(rightCol);
@@ -393,18 +393,11 @@ export class ModelSheetEditor extends BaseEditor {
       }
 
       container.appendChild(
-        U.node`<div style="font-size: 11px; font-weight: 600; color: #fff; margin-top: 8px;">${i18n.t('ui.editors.modelSheet.totalSize')}: ${this.#formatBytes(totalBytes)}</div>`
+        U.node`<div style="font-size: 11px; font-weight: 600; color: #fff; margin-top: 8px;">${i18n.t('ui.editors.modelSheet.totalSize')}: ${U.formatBytes(totalBytes)}</div>`
       );
     } catch (err) {
       container.innerHTML = `<div style="color: #f66; font-size: 11px;">${err.message}</div>`;
     }
   }
 
-  #formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    const k = 1024;
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i];
-  }
 }

@@ -325,20 +325,24 @@ class View {
 
   fitScreen(boundingBox) {
     if (boundingBox === undefined) return;
+
+    // Center the camera on the bounding box
+    const center = boundingBox.getCenter(new THREE.Vector3());
+    this.target.copy(center);
+    this.control.setTarget(center);
+    this.control.updateCameraPosition();
+
     const rotation = new THREE.Matrix4().extractRotation(this.camera.matrix);
     boundingBox.applyMatrix4(rotation); // this is a side effect if fitScreen() is called multiple times
     const width = boundingBox.max.x - boundingBox.min.x;
     const height = boundingBox.max.y - boundingBox.min.y;
     const zoomLevel = Math.min(this.camera.width / width, this.camera.height / height); // camera width and height in world units
-    const zoomChanged = this.control.zoom !== zoomLevel;
     this.control.setZoomLevel(zoomLevel);
 
-    if (zoomChanged) {
-      this.updateOverviewCameraZoom(boundingBox);
-      if (this.frustumFrame) this.updateFrustumFrame();
-      this.onZoomLevelChange(zoomLevel);
-      this.renderView();
-    }
+    this.updateOverviewCameraZoom(boundingBox);
+    if (this.frustumFrame) this.updateFrustumFrame();
+    this.onZoomLevelChange(zoomLevel);
+    this.renderView();
   }
 
   panCameraTo(position) {

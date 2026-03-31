@@ -35,6 +35,7 @@ export class ExplorerTree {
     this.nodes = new Map();
     this.selectedNode = null;
     this.expandedNodes = new Set();
+    this.cavesCategoryExpanded = true;
     this.filterText = '';
     this.filteredNodes = new Map();
     this.searchMode = 'caveSurvey'; // 'caveSurvey' or 'shotNames'
@@ -733,7 +734,7 @@ export class ExplorerTree {
     const treeContentContainer = document.createElement('div');
     treeContentContainer.className = 'explorer-tree-content';
 
-    // Check if we have any caves at all (not just filtered results)
+    // Check if we have any caves at all
     if (this.nodes.size === 0) {
       const emptyMessage = document.createElement('div');
       emptyMessage.className = 'explorer-empty';
@@ -742,6 +743,7 @@ export class ExplorerTree {
       emptyMessage.style.textAlign = 'center';
       emptyMessage.style.color = '#666';
       treeContentContainer.appendChild(emptyMessage);
+      this.container.appendChild(treeContentContainer);
       return;
     }
 
@@ -749,7 +751,6 @@ export class ExplorerTree {
     const nodesToRender = this.filterText ? this.filteredNodes : this.nodes;
 
     if (nodesToRender.size === 0 && this.filterText) {
-      // Show "no results" message when filtering returns nothing
       const noResultsMessage = document.createElement('div');
       noResultsMessage.className = 'explorer-empty';
       noResultsMessage.textContent = i18n.t('ui.explorer.filter.noResults');
@@ -927,33 +928,171 @@ export class ExplorerTree {
     this.updateFilterInputUI();
   }
 
+  renderCaveNode(node, container) {
+    const categoryElement = document.createElement('div');
+    categoryElement.className = 'models-tree-category';
+    categoryElement.setAttribute('data-node-id', node.id);
+
+    // Category-style header
+    const header = document.createElement('div');
+    header.className = 'models-tree-category-header';
+    if (node.selected) header.classList.add('selected');
+
+    // Toggle arrow
+    const toggle = document.createElement('div');
+    toggle.className = `models-tree-toggle ${node.expanded ? 'expanded' : 'collapsed'}`;
+    toggle.innerHTML = '▶';
+    toggle.onclick = (e) => {
+      e.stopPropagation();
+      this.toggleNodeExpansion(node.id);
+    };
+    header.appendChild(toggle);
+
+    // Cave name label
+    const label = document.createElement('span');
+    label.className = 'models-tree-category-label';
+    label.textContent = node.label;
+    if (node.data.color) {
+      label.style.color = node.data.color;
+    }
+    header.appendChild(label);
+
+    // Survey status badges
+    if (node.children && node.children.length > 0) {
+      let valid = 0, warning = 0, isolated = 0;
+      for (const child of node.children) {
+        const s = child.data;
+        if (s.isolated === true) {
+          isolated++;
+        } else if (s.invalidShotIds?.size > 0 || s.orphanShotIds?.size > 0 || s.duplicateShotIds?.size > 0) {
+          warning++;
+        } else {
+          valid++;
+        }
+      }
+
+      const badgeContainer = document.createElement('span');
+      badgeContainer.style.display = 'flex';
+      badgeContainer.style.gap = '3px';
+
+      if (valid > 0) {
+        const b = document.createElement('span');
+        b.className = 'models-tree-count';
+        b.textContent = valid;
+        badgeContainer.appendChild(b);
+      }
+      if (warning > 0) {
+        const b = document.createElement('span');
+        b.className = 'models-tree-count';
+        b.style.background = '#e6a817';
+        b.textContent = warning;
+        badgeContainer.appendChild(b);
+      }
+      if (isolated > 0) {
+        const b = document.createElement('span');
+        b.className = 'models-tree-count';
+        b.style.background = '#d44';
+        b.textContent = isolated;
+        badgeContainer.appendChild(b);
+      }
+
+      header.appendChild(badgeContainer);
+    }
+
+    // Visibility toggle
+    const visibility = document.createElement('div');
+    visibility.className = `explorer-tree-visibility ${node.visible ? 'visible' : 'hidden'}`;
+    visibility.innerHTML = node.visible ? '👁️' : '<span class="eye-strikethrough">👁️</span>';
+    visibility.onclick = (e) => {
+      e.stopPropagation();
+      this.toggleNodeVisibility(node.id);
+    };
+    header.appendChild(visibility);
+
+    // Left-click to select
+    header.onclick = (e) => {
+      e.stopPropagation();
+      this.selectNode(node.id);
+    };
+
+    // Right-click for context menu
+    header.oncontextmenu = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.selectNode(node.id);
+      this.showCaveContextMenu(node);
+    };
+
+    // Drag and drop for cave reordering
+    header.draggable = true;
+    header.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', node.id);
+      e.dataTransfer.effectAllowed = 'move';
+      categoryElement.classList.add('dragging');
+      this.draggedNode = node;
+    });
+    header.addEventListener('dragend', () => {
+      categoryElement.classList.remove('dragging');
+      if (this.draggedNode && this.currentDropTarget && this.currentDropTarget !== categoryElement) {
+        const targetNodeId = this.currentDropTarget.getAttribute('data-node-id');
+        if (targetNodeId) this.handleCaveDrop(this.draggedNode.id, targetNodeId);
+      }
+      this.draggedNode = null;
+      this.clearDropIndicators();
+    });
+    categoryElement.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      this.showDropIndicator(categoryElement, e);
+    });
+    categoryElement.addEventListener('dragleave', (e) => {
+      if (!categoryElement.contains(e.relatedTarget)) this.clearDropIndicators();
+    });
+    categoryElement.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.handleCaveDrop(e.dataTransfer.getData('text/plain'), node.id);
+      this.clearDropIndicators();
+    });
+
+    categoryElement.appendChild(header);
+    node.element = header;
+
+    // Render survey children when expanded
+    if (node.expanded && node.children && node.children.length > 0) {
+      const childrenContainer = document.createElement('div');
+      childrenContainer.className = 'models-tree-children';
+
+      node.children.forEach((child) => {
+        this.renderNode(child, 0, childrenContainer);
+      });
+
+      categoryElement.appendChild(childrenContainer);
+    }
+
+    container.appendChild(categoryElement);
+  }
+
   renderNode(node, level, container) {
+    if (node.type === 'cave') {
+      this.renderCaveNode(node, container);
+      return;
+    }
+
     const nodeElement = document.createElement('div');
     nodeElement.className = 'explorer-tree-node';
-    nodeElement.style.paddingLeft = `${level * 10}px`;
     nodeElement.setAttribute('data-node-id', node.id);
 
     if (node.selected) {
       nodeElement.classList.add('selected');
     }
 
-    // Toggle button for expandable nodes
-    if (node.children && node.children.length > 0) {
-      const toggle = document.createElement('div');
-      toggle.className = `explorer-tree-toggle ${node.expanded ? 'expanded' : 'collapsed'}`;
-      toggle.innerHTML = '▶';
-      toggle.onclick = (e) => {
-        e.stopPropagation();
-        this.toggleNodeExpansion(node.id);
-      };
-      nodeElement.appendChild(toggle);
-    } else {
-      // Spacer for leaf nodes
-      const spacer = document.createElement('div');
-      spacer.className = 'explorer-tree-toggle';
-      spacer.style.visibility = 'hidden';
-      nodeElement.appendChild(spacer);
-    }
+    // Spacer for leaf nodes (surveys don't have children toggle)
+    const spacer = document.createElement('div');
+    spacer.className = 'explorer-tree-toggle';
+    spacer.style.visibility = 'hidden';
+    nodeElement.appendChild(spacer);
 
     // Warning icons for surveys with issues
     if (node.type === 'survey') {
@@ -1004,13 +1143,6 @@ export class ExplorerTree {
     if (node.data.color) {
       label.style.color = node.data.color;
     }
-    // Add double-click to expand/collapse
-    label.ondblclick = (e) => {
-      e.stopPropagation();
-      if (node.children && node.children.length > 0 && node.type === 'cave') {
-        this.toggleNodeExpansion(node.id);
-      }
-    };
     nodeElement.appendChild(label);
     nodeElement.onclick = (e) => {
       e.stopPropagation();
@@ -1022,9 +1154,7 @@ export class ExplorerTree {
       e.preventDefault();
       e.stopPropagation();
       this.selectNode(node.id);
-      if (node.type === 'cave') {
-        this.showCaveContextMenu(node);
-      } else if (node.type === 'survey') {
+      if (node.type === 'survey') {
         this.showSurveyContextMenu(node);
       }
     };
@@ -1093,57 +1223,6 @@ export class ExplorerTree {
       });
     }
 
-    // Add drag and drop functionality for cave nodes
-    if (node.type === 'cave') {
-      nodeElement.draggable = true;
-      nodeElement.classList.add('draggable-cave');
-
-      nodeElement.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', node.id);
-        e.dataTransfer.effectAllowed = 'move';
-        nodeElement.classList.add('dragging');
-        this.draggedNode = node;
-      });
-
-      nodeElement.addEventListener('dragend', () => {
-        nodeElement.classList.remove('dragging');
-
-        // Fallback: if we have a current drop target but no drop event was triggered
-        if (this.draggedNode && this.currentDropTarget && this.currentDropTarget !== nodeElement) {
-          const draggedNodeId = this.draggedNode.id;
-          const targetNodeId = this.currentDropTarget.getAttribute('data-node-id');
-          if (targetNodeId) {
-            this.handleCaveDrop(draggedNodeId, targetNodeId);
-          }
-        }
-
-        this.draggedNode = null;
-        this.clearDropIndicators();
-      });
-
-      nodeElement.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = 'move';
-        this.showDropIndicator(nodeElement, e);
-      });
-
-      nodeElement.addEventListener('dragleave', (e) => {
-        // Only clear indicators if we're leaving the entire element
-        if (!nodeElement.contains(e.relatedTarget)) {
-          this.clearDropIndicators();
-        }
-      });
-
-      nodeElement.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const draggedNodeId = e.dataTransfer.getData('text/plain');
-        this.handleCaveDrop(draggedNodeId, node.id);
-        this.clearDropIndicators();
-      });
-    }
-
     // Visibility toggle
     const visibility = document.createElement('div');
     visibility.className = `explorer-tree-visibility ${node.visible ? 'visible' : 'hidden'}`;
@@ -1162,13 +1241,6 @@ export class ExplorerTree {
 
     container.appendChild(nodeElement);
     node.element = nodeElement;
-
-    // Render children if expanded
-    if (node.expanded && node.children && node.children.length > 0) {
-      node.children.forEach((child) => {
-        this.renderNode(child, level + 1, container);
-      });
-    }
   }
 
   getVisibleNodes() {

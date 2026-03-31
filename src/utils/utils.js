@@ -445,6 +445,14 @@ async function waitForEvent(eventName, matcher, timeoutMillis = 2000) {
   });
 }
 
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const k = 1024;
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i];
+}
+
 export {
   fromPolar,
   toPolar,
@@ -466,6 +474,7 @@ export {
   toPolygonDate,
   formatDateISO,
   formatDistance,
+  formatBytes,
   fitString,
   falsy,
   toAscii,

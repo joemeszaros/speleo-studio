@@ -398,77 +398,19 @@ export class ModelsTree {
     const treeContent = document.createElement('div');
     treeContent.className = 'models-tree-content';
 
-    // Render each category
-    for (const [, category] of this.categories) {
-      this.renderCategory(category, treeContent);
-    }
-
-    this.treeContainer.appendChild(treeContent);
-  }
-
-  /**
-   * Render a category node
-   */
-  renderCategory(category, container) {
-    const categoryElement = document.createElement('div');
-    categoryElement.className = 'models-tree-category';
-    categoryElement.setAttribute('data-node-id', category.id);
-
-    // Category header
-    const header = document.createElement('div');
-    header.className = 'models-tree-category-header';
-
-    // Expand/collapse toggle
-    const toggle = document.createElement('div');
-    toggle.className = `models-tree-toggle ${category.expanded ? 'expanded' : 'collapsed'}`;
-    toggle.innerHTML = '▶';
-    toggle.onclick = (e) => {
-      e.stopPropagation();
-      this.toggleCategoryExpansion(category.id);
-    };
-    header.appendChild(toggle);
-
-    // Icon
-    const icon = document.createElement('span');
-    icon.className = 'models-tree-category-icon';
-    icon.textContent = category.icon;
-    header.appendChild(icon);
-
-    // Label
-    const label = document.createElement('span');
-    label.className = 'models-tree-category-label';
-    label.textContent = typeof category.label === 'function' ? category.label() : category.label;
-    header.appendChild(label);
-
-    // Count badge
-    const count = document.createElement('span');
-    count.className = 'models-tree-count';
-    count.textContent = category.children.length;
-    header.appendChild(count);
-
-    categoryElement.appendChild(header);
-
-    // Children container
-    if (category.expanded && category.children.length > 0) {
-      const childrenContainer = document.createElement('div');
-      childrenContainer.className = 'models-tree-children';
-
+    const category = this.categories.get('3d-models');
+    if (category && category.children.length > 0) {
       category.children.forEach((child) => {
-        this.renderModelNode(child, childrenContainer);
+        this.renderModelNode(child, treeContent);
       });
-
-      categoryElement.appendChild(childrenContainer);
-    }
-
-    // Empty state
-    if (category.expanded && category.children.length === 0) {
+    } else {
       const emptyState = document.createElement('div');
       emptyState.className = 'models-tree-empty';
       emptyState.textContent = i18n.t('ui.models.noModels');
-      categoryElement.appendChild(emptyState);
+      treeContent.appendChild(emptyState);
     }
 
-    container.appendChild(categoryElement);
+    this.treeContainer.appendChild(treeContent);
   }
 
   /**
