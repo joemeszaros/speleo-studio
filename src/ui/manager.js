@@ -577,6 +577,8 @@ class ProjectManager {
         const url = URL.createObjectURL(texture.data);
         textureMap.set(texture.filename, url);
         textureMap.set(texture.filename.toLowerCase(), url);
+        textureMap.set(texture.filename.normalize('NFC'), url);
+        textureMap.set(texture.filename.normalize('NFC').toLowerCase(), url);
       }
 
       const modelNode = this.modelsTree?.categories

@@ -912,12 +912,15 @@ export class ModelsTree {
     }
 
     // Create a map of texture files by name for quick lookup
+    // Store multiple key variants (original, lowercase, NFC-normalized) to handle
+    // Unicode normalization differences (e.g. ó as single codepoint vs o + combining accent)
     const textureMap = new Map();
     for (const file of textureFiles) {
       const url = URL.createObjectURL(file);
       textureMap.set(file.name, url);
-      // Also store with lowercase for case-insensitive matching
       textureMap.set(file.name.toLowerCase(), url);
+      textureMap.set(file.name.normalize('NFC'), url);
+      textureMap.set(file.name.normalize('NFC').toLowerCase(), url);
     }
 
     // Load each MTL file
@@ -1025,9 +1028,10 @@ export class ModelsTree {
       };
 
       loadingManager.setURLModifier((url) => {
-        // Extract just the filename from the URL
-        const filename = url.split('/').pop();
-        // Look up in our texture map
+        // Extract just the filename from the URL, decode and strip quotes
+        // (MTL files may quote filenames that contain spaces)
+        const filename = decodeURIComponent(url.split('/').pop()).replace(/^["']|["']$/g, '').normalize('NFC');
+        // Look up in our texture map (try original, lowercase, NFC variants)
         const blobUrl = textureMap.get(filename) || textureMap.get(filename.toLowerCase());
         if (blobUrl) {
           return blobUrl;
@@ -1041,8 +1045,12 @@ export class ModelsTree {
         side : THREE.DoubleSide
       });
 
+      // Strip quotes from texture paths (e.g. map_Kd "file with spaces.jpg" → map_Kd file with spaces.jpg)
+      // Some software (Agisoft Metashape) quotes filenames with spaces, which Three.js MTLLoader doesn't handle
+      const cleanedMtlText = mtlText.replace(/^(map_\w+)\s+"([^"]+)"/gm, '$1 $2');
+
       // Parse MTL - this creates a MaterialCreator
-      const materials = mtlLoader.parse(mtlText, '');
+      const materials = mtlLoader.parse(cleanedMtlText, '');
 
       // Preload will now use our custom URL modifier to load textures from blob URLs
       materials.preload();

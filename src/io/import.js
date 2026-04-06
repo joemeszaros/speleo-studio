@@ -746,9 +746,12 @@ class PlyModelImporter extends Importer {
             color        : 0xffffff,
             side         : THREE.DoubleSide
           })
-        : new THREE.MeshNormalMaterial({
+        : new THREE.MeshStandardMaterial({
+            color       : 0x888888,
             side        : THREE.DoubleSide,
-            flatShading : false
+            flatShading : false,
+            roughness   : 0.8,
+            metalness   : 0.1
           });
 
       const meshObject = new THREE.Mesh(geometry, material);
@@ -946,15 +949,17 @@ class ObjModelImporter extends Importer {
 
   /**
    * Apply a default material to meshes that don't have one
-   * Uses MeshNormalMaterial which shows 3D form based on surface normals
-   * without requiring lights in the scene.
+   * Uses MeshStandardMaterial with a neutral color for proper lighting.
    * Preserves original material names in userData for future MTL loading.
    * @param {THREE.Object3D} object - The loaded OBJ object
    */
   applyDefaultMaterial(object) {
-    const defaultMaterial = new THREE.MeshNormalMaterial({
+    const defaultMaterial = new THREE.MeshStandardMaterial({
+      color       : 0x888888,
       side        : THREE.DoubleSide,
-      flatShading : false
+      flatShading : false,
+      roughness   : 0.8,
+      metalness   : 0.1
     });
 
     object.traverse((child) => {
@@ -975,7 +980,7 @@ class ObjModelImporter extends Importer {
           child.geometry.computeVertexNormals();
         }
 
-        // Use normal material for 3D appearance without lights
+        // Use standard material for proper lighting
         // Clone to allow per-object opacity changes
         child.material = defaultMaterial.clone();
       }

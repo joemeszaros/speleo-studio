@@ -130,10 +130,21 @@ class MyScene {
    */
   setupLights() {
     // Ambient light for overall illumination (so no part is completely dark)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     ambientLight.name = 'ambientLight';
     this.threejsScene.add(ambientLight);
 
+    // Directional light for shading on 3D models
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    dirLight.name = 'directionalLight';
+    dirLight.position.set(1, 1, 1);
+    this.threejsScene.add(dirLight);
+
+    // Secondary fill light from opposite direction to reduce harsh shadows
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    fillLight.name = 'fillLight';
+    fillLight.position.set(-1, -0.5, -1);
+    this.threejsScene.add(fillLight);
   }
 
   getBoundingClientRect() {
