@@ -247,6 +247,15 @@
 
 .project-item-actions {
   margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.project-crs {
+  color: #aaa;
+  font-size: 11px;
+  margin-left: auto;
 }
 
 .project-action-btn {

@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D modellek kezelése - Speleo Studio</title>
+    <link rel="stylesheet" href="manual.css" />
+    <style>
+      img.emoji {
+        height: 1em;
+        width: 1em;
+        margin: 0 0.05em 0 0.1em;
+        vertical-align: -0.1em;
+      }
+    </style>
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
+    <script>
+      window.onload = function () {
+        twemoji.parse(document.body);
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="../../images/logo.png" alt="Speleo Studio Logo" />
+      </div>
+      <h1>3D modellek kezelése</h1>
+
+      <div class="nav">
+        <a href="08-attributumok.html">&larr; Előző: Attribútumok</a>
+        <a href="index.html">Főoldal</a>
+        <a href="10-eszkozok.html">Következő: Eszközök &rarr;</a>
+      </div>
+
+      <h2>Áttekintés</h2>
+      <p>
+        A Speleo Studio támogatja 3D modellek importálását és kezelését. A 3D modellek lehetővé teszik felszíni
+        modellek, barlangjáratok és egyéb 3D szkenneléssel készített objektumok megjelenítését a barlangok mellett. A
+        modellek textúrákkal együtt is betölthetők.
+      </p>
+
+      <div class="info">
+        <h3>Támogatott formátumok</h3>
+        <ul>
+          <li><strong>PLY</strong> (Polygon File Format) &mdash; pontfelhők és háromszöghálók</li>
+          <li><strong>OBJ</strong> (Wavefront OBJ) &mdash; háromszöghálók textúra támogatással</li>
+          <li><strong>MTL</strong> (Material Template Library) &mdash; anyag- és textúra definíciók OBJ fájlokhoz</li>
+          <li><strong>JPG, PNG</strong> &mdash; textúra képfájlok</li>
+        </ul>
+      </div>
+
+      <h2>3D modell importálása</h2>
+
+      <div class="step">
+        <h3>1. lépés: Modell megnyitása</h3>
+        <p>Kattintson a <strong>Fájl &rarr; Modell megnyitása</strong> menüpontra.</p>
+      </div>
+
+      <div class="step">
+        <h3>2. lépés: Fájlok kiválasztása</h3>
+        <p>
+          A fájl tallózó ablakban válassza ki a modell fájlt (.ply vagy .obj). Ha a modellhez textúra fájlok is
+          tartoznak (.mtl és képfájlok), azokat is kiválaszthatja egyszerre. A Speleo Studio automatikusan felismeri és
+          alkalmazza a textúrákat.
+        </p>
+      </div>
+
+      <div class="step row">
+        <div class="column-2">
+          <h3>3. lépés: Koordináták megadása (opcionális)</h3>
+
+          <p>
+            A modell megnyitásakor megjelenik egy koordináta ablak. Itt WGS84 koordinátákat (szélesség, hosszúság,
+            tengerszint feletti magasság) adhat meg a modellhez. Ha az OBJ fájl tartalmaz beágyazott koordinátákat
+            (például Scaniverse alkalmazással készült fájlok), azok automatikusan megjelennek az ablakban.
+          </p>
+          <p>
+            Ha a projektnek már van koordináta rendszere, a WGS84 koordináták automatikusan átkonvertálódnak a projekt
+            koordináta rendszerébe (UTM vagy EOV), és a modell a barlanghoz képest helyesen pozícionálódik.
+          </p>
+          <p>
+            A <strong>Kihagyás</strong> gombra kattintva a modell koordináták nélkül nyílik meg. Ebben az esetben a
+            modell a projekt fixpontjának pozíciójába kerül.
+          </p>
+        </div>
+        <div class="image-placeholder black small-padding column-2" style="flex: 20%">
+          <img src="images/9-koordinate-rendszer.png" />
+        </div>
+      </div>
+
+      <div class="warning">
+        <h3>&#9888;&#65039; Távolság ellenőrzés</h3>
+        <p>
+          Ha a modell koordinátái túl messze vannak a projektben lévő barlangoktól, a Speleo Studio figyelmeztetést
+          jelenít meg és nem engedi megnyitni a modellt. Ez megakadályozza, hogy véletlenül rossz koordinátákkal
+          nyissunk meg egy modellt és a nézetünk teljesen szétessen.
+        </p>
+      </div>
+
+      <h2>Modell böngésző</h2>
+      <p>
+        Az importált 3D modellek a <strong>Modellek</strong> fülön jelennek meg az oldalsávban. Minden modell egy
+        listaelem, amelyen a következő műveletek végezhetők:
+      </p>
+
+      <ul>
+        <li><strong>Bal kattintás:</strong> Modell kiválasztása &mdash; megjelenik a tulajdonságok panel</li>
+        <li><strong>Jobb kattintás:</strong> Helyi menü megnyitása a következő opciókkal:</li>
+      </ul>
+
+      <div class="image-placeholder black small-padding">
+        <img src="images/9-modell-panel.png" />
+      </div>
+
+      <h3>Helyi menü (jobb kattintás)</h3>
+      <table>
+        <tr><th>Ikon</th><th>Művelet</th><th>Leírás</th></tr>
+        <tr
+          ><td>&#128288;</td><td>Modell adatlap</td
+          ><td>Koordináta rendszer, koordináták és név szerkesztése, fájl információk megjelenítése</td></tr
+        >
+        <tr><td>&#129526;</td><td>Textúrák betöltése</td><td>MTL és textúra fájlok utólagos betöltése</td></tr>
+        <tr
+          ><td>&#128279;</td><td>Beágyazás / Beágyazás megszüntetése</td
+          ><td>Modell beágyazása a projektbe exportáláshoz</td></tr
+        >
+        <tr><td>&#128465;&#65039;</td><td>Modell törlése</td><td>Modell és kapcsolódó textúrák törlése</td></tr>
+      </table>
+
+      <h3>Láthatóság</h3>
+      <p>
+        A modell neve mellett található szem (&#128065;&#65039;) ikonra kattintva a modell láthatósága kapcsolható. Ez
+        hasznos, ha több modell van betöltve és csak bizonyos modelleket szeretnénk látni.
+      </p>
+
+      <h2>Tulajdonságok panel</h2>
+      <p>
+        A modell kiválasztásakor (bal kattintás) megjelenik a tulajdonságok panel az oldalsáv alján. Itt módosíthatók a
+        modell megjelenési tulajdonságai:
+      </p>
+
+      <table>
+        <tr><th>Tulajdonság</th><th>Leírás</th></tr>
+        <tr><td>Pozíció (X, Y, Z)</td><td>A modell pozíciója a 3D térben</td></tr>
+        <tr><td>Forgatás (X, Y, Z)</td><td>A modell forgatása fokban az adott tengely körül</td></tr>
+        <tr
+          ><td>Méretezés (X, Y, Z)</td><td>A modell méretezése (nagyítás / kicsinyítés) az adott tengely mentén</td></tr
+        >
+        <tr><td>Átlátszóság</td><td>A modell átlátszósága (0 = teljesen átlátszó, 1 = teljesen látható)</td></tr>
+      </table>
+
+      <p>A módosítások automatikusan mentődnek és a projekt újranyitásakor visszaállítódnak.</p>
+
+      <div class="image-placeholder black small-padding">
+        <img src="images/9-tulajdonsagok.png" />
+      </div>
+
+      <h2>Modell adatlap</h2>
+      <p> A modell adatlap (&#128288; ikon a helyi menüben) lehetővé teszi a modell részletes beállításait: </p>
+
+      <h3>Név</h3>
+      <p>A modell megjelenített neve módosítható. Ez nem változtatja meg a fájl nevét, csak a megjelenített nevet.</p>
+
+      <h3>Koordináta rendszer</h3>
+      <p>
+        A modell adatlapon beállítható a modell koordináta rendszere (EOV, UTM vagy nincs). A koordináta rendszer
+        kiválasztása után megadhatók a modell koordinátái. Ez lehetővé teszi a modell pontos pozícionálását a
+        barlangokhoz képest.
+      </p>
+
+      <h3>Fájl információk</h3>
+      <p> Az adatlap alján megjelennek a modellhez tartozó fájlok és azok méretei: </p>
+      <ul>
+        <li><strong>Modell fájl:</strong> Az OBJ vagy PLY fájl neve és mérete</li>
+        <li><strong>Textúra fájlok:</strong> Az MTL és képfájlok nevei és méretei</li>
+        <li><strong>Teljes méret:</strong> Az összes fájl összesített mérete</li>
+      </ul>
+
+      <div class="image-placeholder black small-padding">
+        <img src="images/9-adatlap.png" />
+      </div>
+
+      <h2>Modell beágyazása</h2>
+      <p>
+        Alapértelmezetten a 3D modellek <strong>nem</strong> kerülnek bele az exportált projekt fájlba, mivel a modellek
+        fájlmérete nagyon nagy lehet (akár több száz MB). A modell beágyazásával (&#128279; ikon a helyi menüben) a
+        modell és a hozzá tartozó textúrák bekerülnek az exportált projekt fájlba.
+      </p>
+
+      <div class="info">
+        <h3>Beágyazás jellemzők</h3>
+        <ul>
+          <li>A beágyazott modellek a modell böngésző listában &#128279; ikonnal jelöltek</li>
+          <li>Ha a modell mérete meghaladja az 5 MB-ot, megerősítést kér a beágyazás előtt</li>
+          <li>Beágyazott modelleket tartalmazó projekt <code>.json.gz</code> (tömörített) formátumban exportálódik</li>
+          <li>Beágyazás nélküli projektek egyszerű <code>.json</code> formátumban exportálódnak</li>
+          <li>A beágyazás bármikor megszüntethető a helyi menüből</li>
+        </ul>
+      </div>
+
+      <div class="tip-box">
+        <strong>Tipp:</strong> Csak akkor ágyazzon be modelleket, ha a projektet más gépre szeretné átvinni vagy
+        biztonsági másolatot szeretne készíteni a modellekkel együtt. A nagy fájlméret miatt az exportálás és importálás
+        lassabb lehet.
+      </div>
+
+      <h2>Modellek és barlangok együttes használata</h2>
+      <p>
+        A Speleo Studio lehetővé teszi barlangok és 3D modellek egyidejű megjelenítését ugyanabban a projektben. Ha a
+        barlang és a modell is rendelkezik koordinátákkal, automatikusan a megfelelő pozícióba kerülnek egymáshoz
+        képest.
+      </p>
+
+      <h3>Koordináta rendszer kezelés</h3>
+      <ul>
+        <li
+          >Ha a projektben már van barlang koordináta rendszerrel (UTM vagy EOV), a modell WGS84 koordinátái
+          automatikusan átkonvertálódnak a meglévő koordináta rendszerbe</li
+        >
+        <li
+          >Ha a projektben nincs koordináta rendszer és a modellnek vannak WGS84 koordinátái, a projekt koordináta
+          rendszere UTM-re áll be a WGS84 &rarr; UTM konverzió után</li
+        >
+        <li>Ha a modellnek nincsenek koordinátái (kihagyva), a modell a projekt fixpontjának pozíciójába kerül</li>
+      </ul>
+
+      <h2>Textúrák utólagos betöltése</h2>
+      <p> Ha egy OBJ modellt textúra nélkül nyitott meg, a textúrákat utólag is betöltheti: </p>
+      <div class="step">
+        <h3>Textúra betöltése</h3>
+        <p>1. Kattintson jobb egérgombbal a modellre a modell fában</p>
+        <p>2. Válassza a &#129526; <strong>Textúrák betöltése</strong> menüpontot</p>
+        <p>3. Válassza ki az MTL és képfájlokat a fájl tallózóban</p>
+        <p>4. A textúrák automatikusan alkalmazódnak a modellre</p>
+      </div>
+
+      <div class="nav">
+        <a href="08-attributumok.html">&larr; Előző: Attribútumok</a>
+        <a href="index.html">Főoldal</a>
+        <a href="10-eszkozok.html">Következő: Eszközök &rarr;</a>
+      </div>
+
+      <div class="donation-footer">
+        <h3>&#128157; Támogassa a Speleo Studio fejlesztését!</h3>
+        <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
+        <div class="donation-actions">
+          <a href="14-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="14-tamogatas.html" class="donation-button-secondary">További információk</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

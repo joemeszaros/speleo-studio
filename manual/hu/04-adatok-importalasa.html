@@ -301,38 +301,45 @@
         >
       </div>
 
-      <h2>PLY felszín modellek importálása</h2>
+      <h2>3D modellek importálása (PLY és OBJ)</h2>
 
       <div class="format-box">
-        <h4>PLY formátum</h4>
-        <p
-          >A PLY (Polygon File Format) egy 3D felszín modell formátum, amelyet 3D szkennelés vagy fotogrammetria
-          eredményeként kaphat.</p
-        >
-
-        <h5>Előnyök:</h5>
+        <h4>Támogatott 3D formátumok</h4>
+        <p>A Speleo Studio két 3D modell formátumot támogat:</p>
         <ul>
-          <li>3D felszín megjelenítés</li>
-          <li>Magas részletesség</li>
-          <li>Színes textúrák</li>
+          <li><strong>PLY</strong> (Polygon File Format) &mdash; pontfelhők és háromszöghálók, 3D szkenneléből vagy fotogrammetriából</li>
+          <li><strong>OBJ</strong> (Wavefront OBJ) &mdash; háromszöghálók textúra támogatással (MTL + képfájlok)</li>
         </ul>
       </div>
 
       <div class="step">
-        <h3>PLY fájl importálása</h3>
-        <p>1. Kattintson a "Fájl" → "Model megnyitása" menüre</p>
-        <p>2. Válassza ki a .ply fájlt</p>
-        <p>3. Az alkalmazás betölti a 3D modellt</p>
+        <h3>3D modell importálása</h3>
+        <p>1. Kattintson a <strong>Fájl &rarr; Modell megnyitása</strong> menüre</p>
+        <p>2. Válassza ki a modell fájlt (.ply vagy .obj). OBJ fájlokhoz az MTL és textúra fájlokat is kiválaszthatja egyszerre.</p>
+        <p>3. Opcionálisan adja meg a WGS84 koordinátákat a megjelenő ablakban</p>
+        <p>4. Az alkalmazás betölti a 3D modellt (textúrákkal együtt, ha kiválasztotta)</p>
+      </div>
+
+      <div class="info">
+        <h3>Textúrák betöltése</h3>
+        <p>OBJ fájlokhoz textúrákat (MTL + képfájlok) kétféleképpen tölthet be:</p>
+        <ul>
+          <li><strong>Importáláskor:</strong> Válassza ki az összes fájlt egyszerre a fájl tallózóban</li>
+          <li><strong>Utólag:</strong> Jobb kattintás a modellre a modell fában &rarr; &#129526; Textúrák betöltése</li>
+        </ul>
       </div>
 
       <div class="warning">
-        <h3>⚠️ PLY importálás megjegyzések</h3>
+        <h3>&#9888;&#65039; 3D modell importálás megjegyzések</h3>
         <ul>
           <li>Nagy fájlok lassú betöltést okozhatnak</li>
           <li>Memória igényes lehet</li>
-          <li>Nem szerkeszthető</li>
+          <li>A modellek nem szerkeszthetők, csak a pozíció, méretezés és átlátszóság módosítható</li>
+          <li>Ha a modell koordinátái túl messze vannak a meglévő barlangoktól, a Speleo Studio figyelmeztet</li>
         </ul>
       </div>
+
+      <p>A 3D modellek kezeléséről bővebben a <a href="09-3d-modellek.html">3D modellek kezelése</a> fejezetben olvashat.</p>
 
       <h2>Importált felmérés sorrendjének módosítása</h2>
       <p
@@ -432,8 +439,8 @@
         <h3>💝 Támogassa a Speleo Studio fejlesztését!</h3>
         <p>A Speleo Studio ingyenesen elérhető. Ha hasznosnak találja, fontolóra veheti a projekt támogatását.</p>
         <div class="donation-actions">
-          <a href="13-tamogatas.html" class="donation-button-primary">Támogatás</a>
-          <a href="13-tamogatas.html" class="donation-button-secondary">További információk</a>
+          <a href="14-tamogatas.html" class="donation-button-primary">Támogatás</a>
+          <a href="14-tamogatas.html" class="donation-button-secondary">További információk</a>
         </div>
       </div>
     </div>

@@ -52,8 +52,8 @@ import { LoadingOverlay } from './ui/loading-overlay.js';
 import { PointCloudHelper } from './utils/models.js';
 import { PointCloud, Mesh3D, ModelFile, ModelMetadata } from './model.js';
 import { ModelCoordinateDialog } from './ui/model-coordinate-dialog.js';
-import { GeoData, UTMCoordinateWithElevation, UTMCoordinateSystem, StationWithCoordinate } from './model/geo.js';
-import { UTMConverter } from './utils/geo.js';
+import { GeoData, UTMCoordinateWithElevation, UTMCoordinateSystem, EOVCoordinateWithElevation, EOVCoordinateSystem, StationWithCoordinate, CoordinateSystemType } from './model/geo.js';
+import { UTMConverter, WGS84Converter } from './utils/geo.js';
 import { globalNormalizer } from './utils/global-coordinate-normalizer.js';
 import { PrintUtils } from './utils/print.js';
 import { node } from './utils/utils.js';
@@ -442,6 +442,13 @@ class Main {
   }
 
   async #tryAddModel(model, object3D, modelFile) {
+    // Check distance from existing caves before adding
+    const distanceWarning = this.projectManager.checkModelDistance(model);
+    if (distanceWarning) {
+      showErrorPanel(distanceWarning);
+      return;
+    }
+
     let entry;
 
     if (model instanceof PointCloud) {
@@ -461,6 +468,9 @@ class Main {
       entry = this.scene.models.getMeshObject(object3D);
       this.scene.models.addMesh(model, entry);
     }
+
+    // Position model using geoData coordinates
+    this.#positionModelFromGeoData(model, entry.object3D);
 
     // Save model file to IndexedDB for persistence
     if (modelFile && this.projectSystem.getCurrentProject()) {
@@ -485,6 +495,18 @@ class Main {
   }
 
   /**
+   * Position a model's object3D based on its geoData coordinates using the global normalizer.
+   * If no geoData, the model stays at (0,0,0) which is the cave fixpoint position.
+   */
+  #positionModelFromGeoData(model, object3D) {
+    const coordinate = model.geoData?.coordinates?.[0]?.coordinate;
+    if (!coordinate || !globalNormalizer.isInitialized()) return;
+
+    const normalizedPos = globalNormalizer.getNormalizedVector(coordinate);
+    object3D.position.set(normalizedPos.x, normalizedPos.y, normalizedPos.z);
+  }
+
+  /**
    * Convert WGS84 coordinates to GeoData with UTM coordinate system.
    * If a project coordinate system already exists, converts to that system instead.
    * @param {{latitude: number, longitude: number, elevation: number}} wgs84
@@ -492,11 +514,27 @@ class Main {
    */
   #createGeoDataFromWGS84(wgs84) {
     const { latitude, longitude, elevation } = wgs84;
+
+    // If a project coordinate system already exists (from caves), convert to that system
+    const existingCoordSystem = this.db.getAllCaves()
+      .find((c) => c.geoData?.coordinateSystem)?.geoData?.coordinateSystem;
+
+    if (existingCoordSystem?.type === CoordinateSystemType.EOV) {
+      const { y, x } = WGS84Converter.fromLatLon(latitude, longitude, existingCoordSystem);
+      const coordinate = new EOVCoordinateWithElevation(y, x, elevation);
+      return new GeoData(existingCoordSystem, [new StationWithCoordinate('origin', coordinate)]);
+    }
+
+    // Default: convert to UTM
     const { easting, northing, zoneNum, zoneLetter } = UTMConverter.fromLatLon(latitude, longitude);
     const northern = zoneLetter >= 'N';
-    const coordinateSystem = new UTMCoordinateSystem(zoneNum, northern);
-    const coordinate = new UTMCoordinateWithElevation(easting, northing, elevation);
 
+    // Use existing UTM system if available (preserves zone), otherwise create new
+    const coordinateSystem = (existingCoordSystem?.type === CoordinateSystemType.UTM)
+      ? existingCoordSystem
+      : new UTMCoordinateSystem(zoneNum, northern);
+
+    const coordinate = new UTMCoordinateWithElevation(easting, northing, elevation);
     return new GeoData(coordinateSystem, [new StationWithCoordinate('origin', coordinate)]);
   }
 

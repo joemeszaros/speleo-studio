@@ -936,6 +936,7 @@
       "failedToLoadCaveFromUrl": "Nem lehet betölteni a(z) {name} barlangot a URL-ből: {error}",
       "failedToLoadProjectOrCaveFromUrl": "Nem lehet betölteni a(z) {name} projektet és barlangot a URL-ből: {error}",
       "cavesReallyFar": "A(z) {name} nevű barlang túl messze van a korábban importált barlangoktól: {caves}",
+      "modelFarFromCaves": "A(z) {name} modell messze van a meglévő barlangoktól: {caves}",
       "unknownDistance": "Ismeretlen távolság, nincs EOV koordináta valamelyik barlangnál",
       "surveyNameAlreadyExists": "A(z) {name} nevű felmérés többször szerepel",
       "invalidCoordinates": "Érvénytelen koordináták: {error}",

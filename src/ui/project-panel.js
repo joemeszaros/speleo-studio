@@ -19,6 +19,7 @@ import * as U from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
 import { DriveProject, FatProject, Project, FatProjects } from '../model/project.js';
 import { Cave, DriveCaveMetadata } from '../model/cave.js';
+import { CoordinateSystem } from '../model/geo.js';
 import { RevisionInfo } from '../model/misc.js';
 import { LoadingOverlay } from './loading-overlay.js';
 
@@ -240,7 +241,7 @@ export class ProjectPanel {
     }
   }
 
-  getProjectItemNode(project, caveNames, modelNames, lastModified, isCurrent, isLocal) {
+  getProjectItemNode(project, caveNames, modelNames, lastModified, isCurrent, isLocal, coordinateSystems = []) {
     const buttons = [
       { label: i18n.t('common.rename'), click: () => this.renameProject(project.id) },
       { label: i18n.t('common.export'), click: () => this.exportProject(project.id) },
@@ -251,7 +252,16 @@ export class ProjectPanel {
       }
     ];
 
-    return this.projectItemNode(project, caveNames, modelNames, buttons, lastModified, isCurrent, isLocal);
+    return this.projectItemNode(
+      project,
+      caveNames,
+      modelNames,
+      buttons,
+      lastModified,
+      isCurrent,
+      isLocal,
+      coordinateSystems
+    );
   }
 
   async updateRecentProjectsList() {
@@ -270,14 +280,35 @@ export class ProjectPanel {
       this.driveProjects.clear();
       const projectListItems = await Promise.all(
         projects.map(async (project) => {
-          const caves = await this.caveSystem.getCaveFieldsByProjectId(project.id, ['name', 'id', 'revision']);
+          const caves = await this.caveSystem.getCaveFieldsByProjectId(project.id, [
+            'name',
+            'id',
+            'revision',
+            'geoData'
+          ]);
           cavesForLocalProjects.set(project.id, caves);
           const caveNames = caves.map((c) => c.name);
+          const coordinateSystems = [
+            ...new Set(
+              caves
+                .map((c) => c.geoData?.coordinateSystem)
+                .filter(Boolean)
+                .map((cs) => CoordinateSystem.fromPure(cs).toString())
+            )
+          ];
           const modelMetadata = this.modelSystem ? await this.modelSystem.getModelMetadataByProject(project.id) : [];
           const modelNames = modelMetadata.map((m) => m.name);
           const lastModified = new Date(project.updatedAt).toLocaleDateString();
           const isCurrent = this.projectSystem.getCurrentProject()?.id === project.id;
-          return this.getProjectItemNode(project, caveNames, modelNames, lastModified, isCurrent, true);
+          return this.getProjectItemNode(
+            project,
+            caveNames,
+            modelNames,
+            lastModified,
+            isCurrent,
+            true,
+            coordinateSystems
+          );
         })
       );
 
@@ -343,7 +374,8 @@ export class ProjectPanel {
         localProjects.forEach((project) => {
           const button = U.node`<button class="project-action-btn">${i18n.t('common.upload')}</button>`;
           const buttonContainer = recentProjectsList.querySelector(`#project-item-actions-${project.id}`);
-          buttonContainer.appendChild(button);
+          const crsSpan = buttonContainer.querySelector('.project-crs');
+          crsSpan ? buttonContainer.insertBefore(button, crsSpan) : buttonContainer.appendChild(button);
           // Use wrapper function for click handler
           button.addEventListener(
             'click',
@@ -444,6 +476,14 @@ export class ProjectPanel {
           await this.createClickHandler(event, async () => await this.downloadProject(driveProject))
       }
     ];
+    const coordinateSystems = [
+      ...new Set(
+        driveProject.caves
+          .map((c) => c.geoData?.coordinateSystem)
+          .filter(Boolean)
+          .map((cs) => CoordinateSystem.fromPure(cs).toString())
+      )
+    ];
     return this.projectItemNode(
       driveProject.project,
       driveProject.caves.map((c) => c.name).map((n) => `🔵 ${n}`),
@@ -451,7 +491,8 @@ export class ProjectPanel {
       buttons,
       new Date(driveProject.project.updatedAt).toLocaleDateString(),
       false,
-      false
+      false,
+      coordinateSystems
     );
   }
 
@@ -683,12 +724,22 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
 
   }
 
-  projectItemNode(project, caveNames, modelNames, buttons, lastModified, isCurrent, isLocal = true) {
+  projectItemNode(
+    project,
+    caveNames,
+    modelNames,
+    buttons,
+    lastModified,
+    isCurrent,
+    isLocal = true,
+    coordinateSystems = []
+  ) {
     const metaParts = [];
     if (caveNames.length > 0) metaParts.push(`${caveNames.length} ${i18n.t('ui.panels.projectManager.caves')}`);
     if (modelNames.length > 0) metaParts.push(`${modelNames.length} ${i18n.t('ui.panels.projectManager.models')}`);
     metaParts.push(lastModified);
     const metaText = metaParts.join(' • ');
+    const crsText = coordinateSystems.length > 0 ? coordinateSystems.join(', ') : '';
 
     const allNames = [...caveNames, ...modelNames];
     const namesText = allNames.length > 0 ? `• ${allNames.join(', ')}` : '';
@@ -724,6 +775,11 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
       b.addEventListener('click', button.click);
       buttonContainer.appendChild(b);
     });
+
+    if (crsText) {
+      buttonContainer.appendChild(U.node`<span class="project-crs">${crsText}</span>`);
+    }
+
     return panel;
   }
 

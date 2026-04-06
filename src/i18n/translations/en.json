@@ -913,6 +913,7 @@
       "failedToLoadCaveFromUrl": "Failed to load cave from URL: {error}",
       "failedToLoadProjectOrCaveFromUrl": "Failed to load project or cave from URL: {error}",
       "cavesReallyFar": "Cave {name} is too far from previously imported caves: {caves}",
+      "modelFarFromCaves": "Model {name} is far from existing caves: {caves}",
       "unknownDistance": "Unknown distance, no EOV coordinates for one of the caves",
       "surveyNameAlreadyExists": "Survey name {name} exists multiple times",
       "invalidCoordinates": "Invalid coordinates for start position: {error}",

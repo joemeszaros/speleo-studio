@@ -26,6 +26,7 @@ import * as THREE from 'three';
 import { RevisionInfo } from '../model/misc.js';
 import { PointCloud, Mesh3D } from '../model.js';
 import { PointCloudHelper } from '../utils/models.js';
+import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 
 class ProjectManager {
 
@@ -544,6 +545,13 @@ class ProjectManager {
       console.warn('Failed to load model metadata:', err);
     }
 
+    // Position model from geoData coordinates (before user transforms are applied)
+    const coordinate = model.geoData?.coordinates?.[0]?.coordinate;
+    if (coordinate && globalNormalizer.isInitialized()) {
+      const normalizedPos = globalNormalizer.getNormalizedVector(coordinate);
+      entry.object3D.position.set(normalizedPos.x, normalizedPos.y, normalizedPos.z);
+    }
+
     // Add to models tree (applies saved transform/opacity)
     if (this.modelsTree && entry) {
       const node = this.modelsTree.addModel(model, entry.object3D, modelFile.id, savedSettings);
@@ -1049,6 +1057,37 @@ class ProjectManager {
         console.warn('Failed to sync to Google Drive', error);
       }
     }
+  }
+
+  /**
+   * Check if a model's coordinates are far from existing caves.
+   * @param {PointCloud|Mesh3D} model - The model with geoData
+   * @returns {string|null} Warning message or null
+   */
+  checkModelDistance(model) {
+    const modelCoord = model.geoData?.coordinates?.[0]?.coordinate;
+    if (!modelCoord) return null;
+
+    const caves = this.db.getAllCaves();
+    if (caves.length === 0) return null;
+
+    const maxDistance = this.options.import.cavesMaxDistance;
+    const farCaves = [];
+
+    for (const cave of caves) {
+      const caveCoord = cave.geoData?.coordinates?.[0]?.coordinate;
+      if (!caveCoord) continue;
+
+      const distance = modelCoord.distanceTo?.(caveCoord);
+      if (distance !== undefined && distance > maxDistance) {
+        farCaves.push(`${cave.name} - ${U.formatDistance(distance, 0)}`);
+      }
+    }
+
+    if (farCaves.length > 0) {
+      return i18n.t('errors.import.modelFarFromCaves', { name: model.name, caves: farCaves.join('<br>') });
+    }
+    return null;
   }
 
   /**

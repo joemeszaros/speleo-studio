@@ -326,6 +326,15 @@ class CoordinateSystem {
     return other !== undefined && this.type === other.type && this.epsgId === other.epsgId;
   }
 
+  static fromPure(pure) {
+    switch (pure.type) {
+      case CoordinateSystemType.EOV:
+        return EOVCoordinateSystem.fromPure(pure);
+      case CoordinateSystemType.UTM:
+        return UTMCoordinateSystem.fromPure(pure);
+    }
+  }
+
 }
 
 class EOVCoordinateSystem extends CoordinateSystem {
@@ -370,16 +379,6 @@ class UTMCoordinateSystem extends CoordinateSystem {
   }
 }
 
-function deserializeCoordinateSystem(pure) {
-
-  switch (pure.type) {
-    case CoordinateSystemType.EOV:
-      return EOVCoordinateSystem.fromPure(pure);
-    case CoordinateSystemType.UTM:
-      return UTMCoordinateSystem.fromPure(pure);
-  }
-}
-
 class GeoData {
   constructor(coordinateSystem, coordinates = []) {
     this.coordinateSystem = coordinateSystem;
@@ -414,7 +413,7 @@ class GeoData {
       return new GeoData(new EOVCoordinateSystem(), coords);
     } else {
       if (pure.coordinateSystem) {
-        pure.coordinateSystem = deserializeCoordinateSystem(pure.coordinateSystem);
+        pure.coordinateSystem = CoordinateSystem.fromPure(pure.coordinateSystem);
       }
       pure.coordinates = pure.coordinates.map((c) => StationWithCoordinate.fromPure(c));
       return Object.assign(new GeoData(), pure);
