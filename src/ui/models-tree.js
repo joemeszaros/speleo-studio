@@ -491,9 +491,10 @@ export class ModelsTree {
       nodeElement.appendChild(embedIcon);
     }
 
-    // Left-click to select
+    // Left-click to select and hide context menu
     nodeElement.onclick = (e) => {
       e.stopPropagation();
+      this.hideContextMenu();
       this.selectNode(node.id);
     };
 

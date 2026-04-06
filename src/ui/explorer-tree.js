@@ -1009,9 +1009,10 @@ export class ExplorerTree {
     };
     header.appendChild(visibility);
 
-    // Left-click to select
+    // Left-click to select and hide context menu
     header.onclick = (e) => {
       e.stopPropagation();
+      this.hideContextMenu();
       this.selectNode(node.id);
     };
 
@@ -1146,6 +1147,7 @@ export class ExplorerTree {
     nodeElement.appendChild(label);
     nodeElement.onclick = (e) => {
       e.stopPropagation();
+      this.hideContextMenu();
       this.selectNode(node.id);
     };
 

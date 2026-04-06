@@ -240,7 +240,7 @@ export class ProjectPanel {
     }
   }
 
-  getProjectItemNode(project, caveNames, lastModified, isCurrent, isLocal, modelCount = 0) {
+  getProjectItemNode(project, caveNames, modelNames, lastModified, isCurrent, isLocal) {
     const buttons = [
       { label: i18n.t('common.rename'), click: () => this.renameProject(project.id) },
       { label: i18n.t('common.export'), click: () => this.exportProject(project.id) },
@@ -251,7 +251,7 @@ export class ProjectPanel {
       }
     ];
 
-    return this.projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal, modelCount);
+    return this.projectItemNode(project, caveNames, modelNames, buttons, lastModified, isCurrent, isLocal);
   }
 
   async updateRecentProjectsList() {
@@ -273,10 +273,11 @@ export class ProjectPanel {
           const caves = await this.caveSystem.getCaveFieldsByProjectId(project.id, ['name', 'id', 'revision']);
           cavesForLocalProjects.set(project.id, caves);
           const caveNames = caves.map((c) => c.name);
-          const modelCount = this.modelSystem ? (await this.modelSystem.getModelFilesByProject(project.id)).length : 0;
+          const modelMetadata = this.modelSystem ? await this.modelSystem.getModelMetadataByProject(project.id) : [];
+          const modelNames = modelMetadata.map((m) => m.name);
           const lastModified = new Date(project.updatedAt).toLocaleDateString();
           const isCurrent = this.projectSystem.getCurrentProject()?.id === project.id;
-          return this.getProjectItemNode(project, caveNames, lastModified, isCurrent, true, modelCount);
+          return this.getProjectItemNode(project, caveNames, modelNames, lastModified, isCurrent, true);
         })
       );
 
@@ -446,6 +447,7 @@ export class ProjectPanel {
     return this.projectItemNode(
       driveProject.project,
       driveProject.caves.map((c) => c.name).map((n) => `🔵 ${n}`),
+      [],
       buttons,
       new Date(driveProject.project.updatedAt).toLocaleDateString(),
       false,
@@ -681,12 +683,15 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
 
   }
 
-  projectItemNode(project, caveNames, buttons, lastModified, isCurrent, isLocal = true, modelCount = 0) {
+  projectItemNode(project, caveNames, modelNames, buttons, lastModified, isCurrent, isLocal = true) {
     const metaParts = [];
     if (caveNames.length > 0) metaParts.push(`${caveNames.length} ${i18n.t('ui.panels.projectManager.caves')}`);
-    if (modelCount > 0) metaParts.push(`${modelCount} ${i18n.t('ui.panels.projectManager.models')}`);
+    if (modelNames.length > 0) metaParts.push(`${modelNames.length} ${i18n.t('ui.panels.projectManager.models')}`);
     metaParts.push(lastModified);
     const metaText = metaParts.join(' • ');
+
+    const allNames = [...caveNames, ...modelNames];
+    const namesText = allNames.length > 0 ? `• ${allNames.join(', ')}` : '';
 
     const panel = U.node`
     <div id="project-item-${project.id}" class="project-item ${isCurrent ? 'current' : ''}" data-project-id="${project.id}">
@@ -695,7 +700,7 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
           ${!isLocal ? `<img src="icons/drive.svg" class="drive-icon"/>` : ''}
           <span id="project-name-${project.id}" class="project-name">${project.name}</span>
           ${project.description ? `<span class="project-description">• ${project.description}</span>` : ''}
-          <span class="project-caves" id="project-caves-${project.id}">${caveNames ? `• ${caveNames.join(', ')}` : ''}</span>
+          <span class="project-caves" id="project-caves-${project.id}">${namesText}</span>
         </div>
         <div class="project-item-meta">
           <span class="project-meta-text">${metaText}</span>
@@ -1305,6 +1310,7 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         const panel = this.projectItemNode(
           driveProject.project,
           driveProject.caves.map((c) => c.name).map((n) => `🟢 ${n}`),
+          [],
           buttons,
           new Date(driveProject.project.updatedAt).toLocaleDateString(),
           false,
