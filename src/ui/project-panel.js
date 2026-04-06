@@ -20,6 +20,7 @@ import { i18n } from '../i18n/i18n.js';
 import { DriveProject, FatProject, Project, FatProjects } from '../model/project.js';
 import { Cave, DriveCaveMetadata } from '../model/cave.js';
 import { RevisionInfo } from '../model/misc.js';
+import { LoadingOverlay } from './loading-overlay.js';
 
 export class ProjectPanel {
   constructor(
@@ -46,35 +47,30 @@ export class ProjectPanel {
     this.driveProjects = new Map();
     this.clickHandlerActive = false;
     this.driveOperationsController = null;
+    this.loadingOverlay = new LoadingOverlay();
 
-    this.fileInputElement.addEventListener('change', (e) => {
+    this.fileInputElement.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = async (event) => {
+      await this.loadingOverlay.guard(i18n.t('ui.panels.projectManager.importing'), async () => {
         try {
-          const text = event.target.result;
-          const pure = JSON.parse(text);
-          if (pure.projects !== undefined) {
-            await this.importFatProjects(text, this.attributeDefs);
+          const result = await FatProject.deserialize(file, this.attributeDefs);
+          if (result instanceof FatProjects) {
+            await U.sequential(
+              result.projects.map((fatProject) => async () => {
+                await this.importFatProject(fatProject, this.attributeDefs);
+              })
+            );
           } else {
-            const fatProject = FatProject.fromPure(pure, attributeDefs);
-            await this.importFatProject(fatProject, this.attributeDefs);
-
+            await this.importFatProject(result, this.attributeDefs);
           }
-
         } catch (error) {
           console.error(i18n.t('ui.panels.projectManager.errors.projectImportFailed'), error);
           showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
         }
-      };
+      });
 
-      reader.onerror = (error) => {
-        showErrorPanel(i18n.t('ui.panels.projectManager.errors.fileReadFailed', { error: error.message }));
-      };
-
-      reader.readAsText(file);
       this.fileInputElement.value = '';
     });
   }
@@ -191,7 +187,9 @@ export class ProjectPanel {
     if (currentProject) {
       const caveNames = await this.projectSystem.getCaveNamesForProject(currentProject.id);
       const caveCount = caveNames.length;
-      const modelCount = this.modelSystem ? (await this.modelSystem.getModelFilesByProject(currentProject.id)).length : 0;
+      const modelCount = this.modelSystem
+        ? (await this.modelSystem.getModelFilesByProject(currentProject.id)).length
+        : 0;
       const lastModified = new Date(currentProject.updatedAt).toLocaleString();
 
       const metaParts = [];
@@ -799,18 +797,6 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
     }
   }
 
-  async importFatProjects(fatProjectsText, attributeDefs) {
-
-    const pure = JSON.parse(fatProjectsText);
-    const fatProjects = FatProjects.fromPure(pure, attributeDefs);
-    await U.sequential(
-      fatProjects.projects.map((fatProject) => async () => {
-        await this.importFatProject(fatProject, attributeDefs);
-      })
-    );
-
-  }
-
   async importFatProject(fatProject, attributeDefs) {
     //generate new ids to avoid conflicts with existing projects and caves
     fatProject.project.id = Project.generateId();
@@ -819,7 +805,35 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
     });
     const success = await this.importProject(fatProject.project, fatProject.caves, attributeDefs);
     if (success) {
+      // Import embedded models if present
+      if (fatProject.models.length > 0 && this.modelSystem) {
+        await this.importModels(fatProject.project.id, fatProject.models);
+      }
       this.updateDisplay();
+    }
+  }
+
+  /**
+   * Import embedded models from an exported project JSON
+   * @param {string} projectId - The project ID to associate models with
+   * @param {Array<Model>} models - Array of Model instances
+   */
+  async importModels(projectId, models) {
+    for (const model of models) {
+      try {
+        await this.modelSystem.saveModelFile(projectId, model.modelFile);
+        for (const tex of model.textures) {
+          await this.modelSystem.saveTextureFile(projectId, tex);
+        }
+        await this.modelSystem.saveModelMetadata(projectId, model.metadata);
+        if (model.settings) {
+          await this.modelSystem.saveModelFileSettings(model.modelFile.id, projectId, model.settings);
+        }
+
+        console.log(`🌐 Imported embedded model: ${model.metadata.name}`);
+      } catch (err) {
+        console.error(`Failed to import embedded model ${model.metadata?.name}:`, err);
+      }
     }
   }
 
@@ -1111,60 +1125,69 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
   }
 
   async exportAllProjects() {
-    try {
-      const projects = await this.projectSystem.getAllProjects();
-      if (projects.length === 0) {
-        showErrorPanel(i18n.t('ui.panels.projectManager.errors.noProjectsToExport'));
-        return;
+    await this.loadingOverlay.guard(i18n.t('ui.panels.projectManager.exporting'), async () => {
+      try {
+        const projects = await this.projectSystem.getAllProjects();
+        if (projects.length === 0) {
+          showErrorPanel(i18n.t('ui.panels.projectManager.errors.noProjectsToExport'));
+          return;
+        }
+
+        const fatProjectList = await Promise.all(
+          projects.map(async (project) => {
+            const caves = await this.caveSystem.getCavesByProjectId(project.id);
+            const models = this.modelSystem ? await this.modelSystem.getModelsForExport(project.id) : [];
+            return new FatProject(project, caves, models);
+          })
+        );
+
+        const fatProjects = new FatProjects(fatProjectList);
+        const { blob, compressed } = await fatProjects.serialize();
+        const ext = compressed ? '.json.gz' : '.json';
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `speleo-studio-projects${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showSuccessPanel(i18n.t('ui.panels.projectManager.allProjectsExported'));
+      } catch (error) {
+        console.error(error);
+        showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
       }
-      const fatProjectList = await Promise.all(
-        projects.map((project) =>
-          this.caveSystem.getCavesByProjectId(project.id).then((caves) => new FatProject(project, caves))
-        )
-      );
-      const fatProjects = new FatProjects(fatProjectList);
-      const data = fatProjects.toExport();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `speleo-studio-projects.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      showSuccessPanel(i18n.t('ui.panels.projectManager.allProjectsExported'));
-    } catch (error) {
-      console.error(error);
-      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
-    }
+    });
   }
 
   async exportProject(projectId) {
-    const project = await this.projectSystem.loadProjectById(projectId);
-    try {
+    await this.loadingOverlay.guard(i18n.t('ui.panels.projectManager.exporting'), async () => {
+      const project = await this.projectSystem.loadProjectById(projectId);
+      try {
+        const caves = await this.caveSystem.getCavesByProjectId(projectId);
+        const models = this.modelSystem ? await this.modelSystem.getModelsForExport(projectId) : [];
+        const fatProject = new FatProject(project, caves, models);
+        const { blob, compressed } = await fatProject.serialize();
+        const baseName = project.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const ext = compressed ? '.json.gz' : '.json';
 
-      const caves = await this.caveSystem.getCavesByProjectId(projectId);
-      const projectWithCaves = new FatProject(project, caves);
-      const projectData = projectWithCaves.toExport();
-      const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseName}_project${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${project.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_project.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      showSuccessPanel(i18n.t('ui.panels.projectManager.projectExported', { name: project.name }));
-    } catch (error) {
-      console.error(error);
-      showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
-    }
+        showSuccessPanel(i18n.t('ui.panels.projectManager.projectExported', { name: project.name }));
+      } catch (error) {
+        console.error(error);
+        showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
+      }
+    });
   }
 
   async renameProject(projectId) {

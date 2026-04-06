@@ -48,6 +48,7 @@ import { GoogleDriveSync } from './storage/google-drive-sync.js';
 import { GoogleDriveSettings } from './ui/google-drive-settings.js';
 import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
+import { LoadingOverlay } from './ui/loading-overlay.js';
 import { PointCloudHelper } from './utils/models.js';
 import { PointCloud, Mesh3D, ModelFile, ModelMetadata } from './model.js';
 import { ModelCoordinateDialog } from './ui/model-coordinate-dialog.js';
@@ -282,6 +283,8 @@ class Main {
 
     );
 
+    this.loadingOverlay = new LoadingOverlay();
+
     this.importers = {
       topodroid : new TopodroidImporter(db, options, scene, this.projectManager),
       polygon   : new PolygonImporter(db, options, scene, this.projectManager),
@@ -359,6 +362,7 @@ class Main {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
 
+      await this.loadingOverlay.guard(i18n.t('ui.loading.openingModel'), async () => {
       try {
         // Separate model files from asset files (MTL, textures)
         const modelFiles = [];
@@ -433,6 +437,7 @@ class Main {
       } finally {
         input.value = '';
       }
+      });
     });
   }
 

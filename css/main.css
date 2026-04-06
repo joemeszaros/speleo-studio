@@ -666,6 +666,45 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.loading-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #555;
+  border-top-color: #04aa6d;
+  border-radius: 50%;
+  animation: loading-spin 0.8s linear infinite;
+}
+
+.loading-message {
+  color: #ccc;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
 .dialog-container {
   color: #ffffff;
   position: absolute;

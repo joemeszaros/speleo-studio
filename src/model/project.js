@@ -15,26 +15,70 @@
  */
 
 import { Cave, DriveCaveMetadata } from './cave.js';
+import { Model } from '../model.js';
+import { compressToGzip, decompressGzip, isGzipped } from '../utils/compression.js';
 
 export class FatProject {
 
-  constructor(project, caves) {
+  constructor(project, caves, models) {
     this.project = project;
     this.caves = caves;
+    this.models = models;
   }
 
-  toExport() {
-    return {
+  hasModels() {
+    return this.models.length > 0;
+  }
+
+  async toExport() {
+    const exported = {
       project : this.project.toExport(),
       caves   : this.caves.map((cave) => cave.toExport())
     };
+    if (this.hasModels()) {
+      exported.models = await Promise.all(this.models.map((m) => m.toExport()));
+    }
+    return exported;
+  }
+
+  /**
+   * Serialize to a Blob. Uses gzip compression if models are present.
+   * @returns {Promise<{blob: Blob, compressed: boolean}>}
+   */
+  async serialize() {
+    const data = await this.toExport();
+    const jsonString = JSON.stringify(data, null, 2);
+    if (this.hasModels()) {
+      return { blob: await compressToGzip(jsonString), compressed: true };
+    }
+    return { blob: new Blob([jsonString], { type: 'application/json' }), compressed: false };
+  }
+
+  /**
+   * Deserialize from a File/Blob. Handles both plain JSON and gzip.
+   * @param {File|Blob} file
+   * @param {AttributesDefinitions} attributeDefs
+   * @returns {Promise<FatProject>}
+   */
+  static async deserialize(file, attributeDefs) {
+    let text;
+    if (await isGzipped(file)) {
+      text = await decompressGzip(file);
+    } else {
+      text = await file.text();
+    }
+    const pure = JSON.parse(text);
+    if (pure.projects !== undefined) {
+      return FatProjects.fromPure(pure, attributeDefs);
+    }
+    return FatProject.fromPure(pure, attributeDefs);
   }
 
   static fromPure(pure, attributeDefs) {
     const project = Project.fromPure(pure.project);
     const caves = pure.caves.map((cave) => Cave.fromPure(cave, attributeDefs));
-    return new FatProject(project, caves);
-
+    const models = (pure.models || []).map(Model.fromPure);
+    return new FatProject(project, caves, models);
   }
 }
 
@@ -43,10 +87,27 @@ export class FatProjects {
     this.projects = fatProjects;
   }
 
-  toExport() {
+  hasModels() {
+    return this.projects.some((p) => p.hasModels());
+  }
+
+  async toExport() {
     return {
-      projects : this.projects.map((project) => project.toExport())
+      projects : await Promise.all(this.projects.map((project) => project.toExport()))
     };
+  }
+
+  /**
+   * Serialize to a Blob. Uses gzip compression if any project has models.
+   * @returns {Promise<{blob: Blob, compressed: boolean}>}
+   */
+  async serialize() {
+    const data = await this.toExport();
+    const jsonString = JSON.stringify(data, null, 2);
+    if (this.hasModels()) {
+      return { blob: await compressToGzip(jsonString), compressed: true };
+    }
+    return { blob: new Blob([jsonString], { type: 'application/json' }), compressed: false };
   }
 
   static fromPure(pure, attributeDefs) {

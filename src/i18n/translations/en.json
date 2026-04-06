@@ -77,6 +77,9 @@
         "manual": "User Manual"
       }
     },
+    "loading": {
+      "openingModel": "Opening 3D model..."
+    },
     "footer": {
       "project": "Project",
       "noProjectLoaded": "No project loaded",
@@ -225,8 +228,12 @@
       "menu": {
         "sheet": "Model sheet",
         "loadTextures": "Load textures",
+        "embed": "Embed model",
+        "unembed": "Unembed model",
+        "embedded": "Embedded",
+        "embedLargeConfirm": "This model is {size}. Embedding large models will increase the exported project file size. Continue?",
         "delete": "Delete model",
-        "deleteConfirm": "Are you sure you want to delete the model '{{name}}'? This will also delete associated textures."
+        "deleteConfirm": "Are you sure you want to delete the model '{name}'? This will also delete associated textures."
       }
     },
     "dialogs": {
@@ -297,6 +304,8 @@
         "projectCreated": "Project \"{name}\" created successfully",
         "projectSaved": "Project saved successfully",
         "projectExported": "Project \"{name}\" exported successfully",
+        "exporting": "Exporting project...",
+        "importing": "Importing project...",
         "allProjectsExported": "All projects exported successfully",
         "projectDownloaded": "Project \"{name}\" downloaded successfully",
         "projectRenamed": "Project renamed to \"{name}\" successfully",

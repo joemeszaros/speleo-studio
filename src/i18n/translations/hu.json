@@ -77,6 +77,9 @@
         "manual": "Felhasználói kézikönyv"
       }
     },
+    "loading": {
+      "openingModel": "3D modell megnyitása..."
+    },
     "footer": {
       "project": "Projekt",
       "noProjectLoaded": "Nincs betöltött projekt",
@@ -225,8 +228,12 @@
       "menu": {
         "sheet": "Modell adatlap",
         "loadTextures": "Textúrák betöltése",
+        "embed": "Modell beágyazása",
+        "unembed": "Beágyazás megszüntetése",
+        "embedded": "Beágyazott",
+        "embedLargeConfirm": "Ez a modell {size} méretű. Nagy modellek beágyazása növeli az exportált projekt fájl méretét. Folytatod?",
         "delete": "Modell törlése",
-        "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{{name}}' modellt? A kapcsolódó textúrák is törlődnek."
+        "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{name}' modellt? A kapcsolódó textúrák is törlődnek."
       }
     },
     "dialogs": {
@@ -297,6 +304,8 @@
         "projectCreated": "Projekt \"{name}\" létrehozva",
         "projectSaved": "Projekt mentve",
         "projectExported": "Projekt \"{name}\" exportálva",
+        "exporting": "Projekt exportálása...",
+        "importing": "Projekt importálása...",
         "allProjectsExported": "Összes projekt exportálva",
         "projectDownloaded": "Projekt \"{name}\" sikeresen letöltve",
         "projectRenamed": "Projekt sikeresen átnevezve: \"{name}\" ",

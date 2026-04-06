@@ -21,10 +21,7 @@ import { i18n } from '../i18n/i18n.js';
  * 1. Initial version
  * 2. Added declinationCache store
  * 3. Added revisions store
- * 4. Added modelFiles and assetFiles stores for 3D model persistence
- * 5. Renamed assetFiles to textureFiles
- * 6. Added modelFileSettings store for model transform/opacity/visibility persistence
- * 7. Added modelMetadata store for model coordinate/geo information
+ * 4. Added modelFiles, textureFiles, modelFileSettings and modelMetadata stores for 3D model persistence
  */
 export class DatabaseManager {
   constructor() {

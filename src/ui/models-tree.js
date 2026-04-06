@@ -15,7 +15,8 @@
  */
 
 import { i18n } from '../i18n/i18n.js';
-import { degreesToRads, parseMyFloat, radsToDegrees } from '../utils/utils.js';
+import { degreesToRads, parseMyFloat, radsToDegrees, formatBytes } from '../utils/utils.js';
+import * as U from '../utils/utils.js';
 import { TextureFile } from '../model.js';
 import { ModelSheetEditor } from './editor/model-sheet.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
@@ -91,7 +92,7 @@ export class ModelsTree {
       id       : '3d-models',
       type     : 'category',
       label    : () => i18n.t('ui.models.categories.models3d'),
-      icon     : '📦',
+      icon     : '🌐',
       children : [],
       expanded : true
     });
@@ -209,13 +210,57 @@ export class ModelsTree {
    * Dispatch a modelDeleted event for the manager to handle cleanup
    * @param {Object} node - The model tree node
    */
-  dispatchModelDeleted(node) {
-    document.dispatchEvent(new CustomEvent('modelDeleted', {
-      detail : {
-        name        : node.label,
-        modelFileId : node.modelFileId
+  /**
+   * Toggle embed state of a model. Warns if model is large.
+   * @param {Object} node - The model tree node
+   */
+  async toggleEmbed(node) {
+    const newEmbedded = !node.embedded;
+
+    // Warn if embedding a large model
+    if (newEmbedded && node.modelFileId && this.modelSystem) {
+      const threshold = this.options?.scene?.models?.embedSizeWarningThreshold ?? 5 * 1024 * 1024;
+      try {
+        const modelFile = await this.modelSystem.getModelFile(node.modelFileId);
+        let totalSize = modelFile?.data instanceof Blob ? modelFile.data.size : 0;
+        const textures = await this.modelSystem.getTextureFilesByModel(node.modelFileId);
+        for (const tex of textures) {
+          totalSize += tex.data instanceof Blob ? tex.data.size : 0;
+        }
+        if (totalSize > threshold) {
+          const sizeStr = formatBytes(totalSize);
+          const ok = confirm(i18n.t('ui.models.menu.embedLargeConfirm', { size: sizeStr }));
+          if (!ok) return;
+        }
+      } catch (err) {
+        console.warn('Failed to check model size:', err);
       }
-    }));
+    }
+
+    node.embedded = newEmbedded;
+
+    document.dispatchEvent(
+      new CustomEvent('modelChanged', {
+        detail : {
+          modelFileId : node.modelFileId,
+          name        : node.label,
+          embedded    : newEmbedded
+        }
+      })
+    );
+
+    this.render();
+  }
+
+  dispatchModelDeleted(node) {
+    document.dispatchEvent(
+      new CustomEvent('modelDeleted', {
+        detail : {
+          name        : node.label,
+          modelFileId : node.modelFileId
+        }
+      })
+    );
   }
 
   /**
@@ -375,18 +420,22 @@ export class ModelsTree {
     const existing = this._saveTimers.get(node.modelFileId);
     if (existing) clearTimeout(existing);
 
-    this._saveTimers.set(node.modelFileId, setTimeout(() => {
-      this._saveTimers.delete(node.modelFileId);
-      const currentProject = this.projectSystem.getCurrentProject();
-      if (!currentProject) return;
+    this._saveTimers.set(
+      node.modelFileId,
+      setTimeout(() => {
+        this._saveTimers.delete(node.modelFileId);
+        const currentProject = this.projectSystem.getCurrentProject();
+        if (!currentProject) return;
 
-      this.modelSystem.saveModelFileSettings(node.modelFileId, currentProject.id, {
-        transform : node.transform,
-        opacity   : node.opacity,
-        visible   : node.visible
-      }).then(() => this.projectSystem.saveProject(currentProject))
-        .catch((err) => console.error('Failed to persist model properties:', err));
-    }, 500));
+        this.modelSystem
+          .saveModelFileSettings(node.modelFileId, currentProject.id, {
+            transform : node.transform,
+            opacity   : node.opacity,
+            visible   : node.visible
+          }).then(() => this.projectSystem.saveProject(currentProject))
+          .catch((err) => console.error('Failed to persist model properties:', err));
+      }, 500)
+    );
   }
 
   /**
@@ -432,6 +481,15 @@ export class ModelsTree {
     label.className = 'models-tree-node-label';
     label.textContent = node.label;
     nodeElement.appendChild(label);
+
+    // Embedded indicator
+    if (node.embedded) {
+      const embedIcon = document.createElement('span');
+      embedIcon.className = 'models-tree-embed-icon';
+      embedIcon.textContent = '🔗';
+      embedIcon.title = i18n.t('ui.models.menu.embedded');
+      nodeElement.appendChild(embedIcon);
+    }
 
     // Left-click to select
     nodeElement.onclick = (e) => {
@@ -682,10 +740,10 @@ export class ModelsTree {
   async computeModelFileSize(node) {
     let totalBytes = 0;
 
-    if (!this.modelSystem || !this.projectSystem) return this.formatBytes(0);
+    if (!this.modelSystem || !this.projectSystem) return formatBytes(0);
 
     const currentProject = this.projectSystem.getCurrentProject();
-    if (!currentProject) return this.formatBytes(0);
+    if (!currentProject) return formatBytes(0);
 
     try {
       const modelFiles = await this.modelSystem.getModelFilesByProject(currentProject.id);
@@ -702,20 +760,7 @@ export class ModelsTree {
       console.warn('Failed to compute model file size:', error);
     }
 
-    return this.formatBytes(totalBytes);
-  }
-
-  /**
-   * Format bytes into human-readable string
-   * @param {number} bytes
-   * @returns {string}
-   */
-  formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    const k = 1024;
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i];
+    return U.formatBytes(totalBytes);
   }
 
   // ==================== Context Menu Methods ====================
@@ -750,6 +795,16 @@ export class ModelsTree {
           this.textureInput.targetModelNode = node;
           this.textureInput.click();
           this.hideContextMenu();
+        }
+      },
+      {
+        icon : node.embedded
+          ? '<span style="text-decoration: line-through; text-decoration-color: red; text-decoration-thickness: 2px; transform: rotate(45deg); display: inline-block;">🔗</span>'
+          : '🔗',
+        title   : node.embedded ? i18n.t('ui.models.menu.unembed') : i18n.t('ui.models.menu.embed'),
+        onclick : () => {
+          this.hideContextMenu();
+          this.toggleEmbed(node);
         }
       },
       {

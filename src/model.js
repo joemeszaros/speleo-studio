@@ -17,6 +17,8 @@
 import { CaveSection, CaveComponent } from './model/cave.js';
 import { fromPolar, toPolar, isFloatStr, randomAlphaNumbericString } from './utils/utils.js';
 import { MigrationSupportV5, MigrationSupportV6 } from './attributes.js';
+import { blobToBase64, base64ToBlob } from './utils/compression.js';
+import { GeoData } from './model/geo.js';
 
 class Vector {
 
@@ -630,6 +632,8 @@ class Mesh3D {
 
 class ModelFile {
 
+  static TEXT_TYPES = new Set(['obj', 'mtl', 'txt']);
+
   constructor(filename, type, data) {
     this.id = ModelFile.generateId();
     this.filename = filename;
@@ -643,6 +647,34 @@ class ModelFile {
     } else {
       this.data = data;
     }
+  }
+
+  isText() {
+    return ModelFile.TEXT_TYPES.has(this.type);
+  }
+
+  async toExport() {
+    const isText = this.isText();
+    const data = isText ? await this.data.text() : await blobToBase64(this.data);
+    return {
+      filename : this.filename,
+      type     : this.type,
+      data     : data,
+      ...(!isText && { encoding: 'base64' })
+    };
+  }
+
+  /**
+   * Deserialize from the JSON export format where binary data is base64-encoded
+   * and text data is stored as plain strings. Unlike fromPure() which restores
+   * from IndexedDB records (where Blobs are stored natively), this method must
+   * convert base64 strings back to Blobs.
+   */
+  static fromExport(exported) {
+    const data = exported.encoding === 'base64'
+      ? base64ToBlob(exported.data)
+      : new Blob([exported.data], { type: 'text/plain' });
+    return new ModelFile(exported.filename, exported.type, data);
   }
 
   static generateId() {
@@ -670,6 +702,34 @@ class TextureFile {
     }
   }
 
+  isText() {
+    return ModelFile.TEXT_TYPES.has(this.type);
+  }
+
+  async toExport() {
+    const isText = this.isText();
+    const data = isText ? await this.data.text() : await blobToBase64(this.data);
+    return {
+      filename : this.filename,
+      type     : this.type,
+      data     : data,
+      ...(!isText && { encoding: 'base64' })
+    };
+  }
+
+  /**
+   * Deserialize from the JSON export format where binary data is base64-encoded
+   * and text data is stored as plain strings. Unlike fromPure() which restores
+   * from IndexedDB records (where Blobs are stored natively), this method must
+   * convert base64 strings back to Blobs and link to a model file via modelFileId.
+   */
+  static fromExport(modelFileId, exported) {
+    const data = exported.encoding === 'base64'
+      ? base64ToBlob(exported.data)
+      : new Blob([exported.data], { type: 'text/plain' });
+    return new TextureFile(modelFileId, exported.filename, exported.type, data);
+  }
+
   static generateId() {
     return 'asset_file_' + Date.now() + '_' + randomAlphaNumbericString(5);
   }
@@ -684,11 +744,20 @@ class TextureFile {
  * Contains coordinate/geo information and other lightweight model properties.
  */
 class ModelMetadata {
-  constructor(modelFileId, name, geoData = null) {
+  constructor(modelFileId, name, geoData = null, embedded = false) {
     this.id = ModelMetadata.generateId();
     this.modelFileId = modelFileId;
     this.name = name;
     this.geoData = geoData;
+    this.embedded = embedded;
+  }
+
+  toExport() {
+    return {
+      name     : this.name,
+      geoData  : this.geoData?.toExport?.() ?? this.geoData,
+      embedded : this.embedded
+    };
   }
 
   static generateId() {
@@ -696,7 +765,46 @@ class ModelMetadata {
   }
 
   static fromPure(pure) {
-    return Object.assign(new ModelMetadata(), pure);
+    const meta = Object.assign(new ModelMetadata(), pure);
+    if (meta.geoData && !(meta.geoData instanceof GeoData)) {
+      meta.geoData = GeoData.fromPure(meta.geoData);
+    }
+    return meta;
+  }
+}
+
+/**
+ * Represents a complete embedded model with all associated data for export/import.
+ */
+class Model {
+  constructor(metadata, modelFile, textures = [], settings = null) {
+    this.metadata = metadata;
+    this.modelFile = modelFile;
+    this.textures = textures;
+    this.settings = settings;
+  }
+
+  async toExport() {
+    const exported = {
+      metadata : this.metadata.toExport(),
+      file     : await this.modelFile.toExport(),
+      textures : await Promise.all(this.textures.map((t) => t.toExport()))
+    };
+    if (this.settings) {
+      exported.settings = {
+        transform : this.settings.transform,
+        opacity   : this.settings.opacity,
+        visible   : this.settings.visible
+      };
+    }
+    return exported;
+  }
+
+  static fromPure(exported) {
+    const modelFile = ModelFile.fromExport(exported.file);
+    const textures = (exported.textures || []).map((t) => TextureFile.fromExport(modelFile.id, t));
+    const metadata = new ModelMetadata(modelFile.id, exported.metadata.name, exported.metadata.geoData, true);
+    return new Model(metadata, modelFile, textures, exported.settings || null);
   }
 }
 
@@ -712,5 +820,6 @@ export {
   Mesh3D,
   ModelFile,
   TextureFile,
-  ModelMetadata
+  ModelMetadata,
+  Model
 };

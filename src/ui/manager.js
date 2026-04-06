@@ -286,10 +286,6 @@ class ProjectManager {
 
     const caves = await this.caveSystem.getCavesByProjectId(project.id);
 
-    if (caves.length === 0) {
-      this.#emitCoordinateSystemChange(null);
-    }
-
     caves.forEach((cave) => {
       this.recalculateCave(cave);
       this.calculateFragmentAttributes(cave);
@@ -297,7 +293,11 @@ class ProjectManager {
     });
 
     // Load models for this project
-    await this.loadProjectModels(project.id);
+    const modelCoordSystem = await this.loadProjectModels(project.id);
+
+    // Emit coordinate system from caves or models
+    const caveCoordSystem = caves.find((c) => c.geoData?.coordinateSystem)?.geoData?.coordinateSystem;
+    this.#emitCoordinateSystemChange(caveCoordSystem || modelCoordSystem || null);
 
     // Adjust grid and camera to fit all content (caves + models)
     const boundingBox = this.scene.computeBoundingBox();
@@ -471,8 +471,15 @@ class ProjectManager {
     }
   }
 
+  /**
+   * Load all models for a project from storage.
+   * @param {string} projectId
+   * @returns {Promise<CoordinateSystem|null>} The first coordinate system found among models
+   */
   async loadProjectModels(projectId) {
-    if (!this.modelSystem || !this.modelLoader) return;
+    if (!this.modelSystem || !this.modelLoader) return null;
+
+    let coordSystem = null;
 
     try {
       const modelFiles = await this.modelSystem.getModelFilesByProject(projectId);
@@ -480,15 +487,21 @@ class ProjectManager {
       for (const modelFile of modelFiles) {
         await this.modelLoader(modelFile, async (model, object3D) => {
           await this.addModelFromStorage(model, object3D, modelFile);
+          if (!coordSystem && model.geoData?.coordinateSystem) {
+            coordSystem = model.geoData.coordinateSystem;
+          }
         });
       }
 
       if (modelFiles.length > 0) {
-        console.log(`📦 Loaded ${modelFiles.length} model(s) from storage`);
+        console.log(`🌐 Loaded ${modelFiles.length} model(s) from storage`);
+        if (this.modelsTree) this.modelsTree.render();
       }
     } catch (error) {
       console.error('Failed to load project models:', error);
     }
+
+    return coordSystem;
   }
 
   async addModelFromStorage(model, object3D, modelFile) {
@@ -519,9 +532,10 @@ class ProjectManager {
       console.warn('Failed to load model settings:', err);
     }
 
-    // Load metadata (name, geoData/coordinates)
+    // Load metadata (name, geoData/coordinates, embedded)
+    let metadata = null;
     try {
-      const metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFile.id);
+      metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFile.id);
       if (metadata) {
         if (metadata.name) model.name = metadata.name;
         if (metadata.geoData) model.geoData = metadata.geoData;
@@ -532,7 +546,10 @@ class ProjectManager {
 
     // Add to models tree (applies saved transform/opacity)
     if (this.modelsTree && entry) {
-      this.modelsTree.addModel(model, entry.object3D, modelFile.id, savedSettings);
+      const node = this.modelsTree.addModel(model, entry.object3D, modelFile.id, savedSettings);
+      if (node && metadata?.embedded) {
+        node.embedded = true;
+      }
     }
 
     // Load associated textures/materials
@@ -578,7 +595,7 @@ class ProjectManager {
   }
 
   async onModelChanged(e) {
-    const { modelFileId, geoData, name, oldName } = e.detail;
+    const { modelFileId, geoData, name, oldName, embedded } = e.detail;
 
     if (!modelFileId || !this.modelSystem) return;
 
@@ -588,8 +605,9 @@ class ProjectManager {
     try {
       let metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFileId);
       if (metadata) {
-        metadata.geoData = geoData;
-        if (name) metadata.name = name;
+        if (geoData !== undefined) metadata.geoData = geoData;
+        if (name !== undefined) metadata.name = name;
+        if (embedded !== undefined) metadata.embedded = embedded;
         await this.modelSystem.saveModelMetadata(project.id, metadata);
       }
 

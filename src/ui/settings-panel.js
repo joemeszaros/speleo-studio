@@ -454,7 +454,7 @@ export class SettingsPanel {
 
     // 3D Models Section
     this.createSection(
-      '📦 ' + i18n.t('ui.settingsPanel.sections.models3D'),
+      '🌐 ' + i18n.t('ui.settingsPanel.sections.models3D'),
       [
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.pointCloudPointSize'),

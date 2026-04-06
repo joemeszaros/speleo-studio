@@ -328,7 +328,7 @@ export class Sidebar {
   addTooltips() {
     const tooltips = {
       explorer                  : '♎ ' + i18n.t('ui.sidebar.tooltips.explorer'),
-      models                    : '📦 ' + i18n.t('ui.sidebar.tooltips.models'),
+      models                    : '🌐 ' + i18n.t('ui.sidebar.tooltips.models'),
       settings                  : '⚙️ ' + i18n.t('ui.sidebar.tooltips.settings'),
       'sidebar-toggle'          : i18n.t('ui.sidebar.tooltips.toggle'),
       'sidebar-position-toggle' : i18n.t('ui.sidebar.tooltips.positionToggle')
@@ -454,7 +454,7 @@ export class Sidebar {
       explorerTab.textContent = '♎';
     }
     if (modelsTab) {
-      modelsTab.textContent = '📦';
+      modelsTab.textContent = '🌐';
     }
     if (settingsTab) {
       settingsTab.textContent = '⚙️';

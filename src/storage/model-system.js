@@ -15,7 +15,7 @@
  */
 
 import { i18n } from '../i18n/i18n.js';
-import { TextureFile, ModelFile, ModelMetadata } from '../model.js';
+import { TextureFile, ModelFile, ModelMetadata, Model } from '../model.js';
 
 /**
  * ModelSystem - Manages 3D model files and their assets in IndexedDB
@@ -288,6 +288,36 @@ export class ModelSystem {
       request.onsuccess = () => resolve();
       request.onerror = () => reject(new Error('Failed to delete model file settings'));
     });
+  }
+
+  /**
+   * Get all models marked for export (embedded) for a project as Model instances.
+   * @param {string} projectId - The project ID
+   * @returns {Promise<Array<Model>>} Array of Model instances
+   */
+  async getModelsForExport(projectId) {
+    const allMetadata = await this.getModelMetadataByProject(projectId);
+    const exportable = allMetadata.filter((m) => m.embedded);
+    if (exportable.length === 0) return [];
+
+    const result = [];
+
+    for (const metadata of exportable) {
+      try {
+        const modelFile = await this.getModelFile(metadata.modelFileId);
+        if (!modelFile) continue;
+
+        const textures = await this.getTextureFilesByModel(metadata.modelFileId);
+        let settings = null;
+        try { settings = await this.getModelFileSettings(metadata.modelFileId); } catch (e) { /* no settings */ }
+
+        result.push(new Model(metadata, modelFile, textures, settings));
+      } catch (err) {
+        console.error(`Failed to export model ${metadata.name}:`, err);
+      }
+    }
+
+    return result;
   }
 
   async getTextureFilesByModel(modelId) {
