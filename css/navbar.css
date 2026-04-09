@@ -82,6 +82,12 @@
   text-align: left;
 }
 
+.mydropdown-content a.disabled,
+.mydropdown-content a[disabled] {
+  color: #999;
+  cursor: default;
+}
+
 .mydropdown .mydropdown-content img {
   padding: 0px;
   margin-right: 10px;

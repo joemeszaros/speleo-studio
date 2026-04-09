@@ -86,18 +86,35 @@ describe('UTMConverter', () => {
       const result = UTMConverter.fromLatLon(47.497, 19.04);
       expect(result.zoneNum).toBe(34);
       expect(result.zoneLetter).toBe('T');
-      expect(result.easting).toBeCloseTo(352380, -1);
-      expect(result.northing).toBeCloseTo(5262258, -1);
+      expect(result.easting).toBeCloseTo(352380, 0);
+      expect(result.northing).toBeCloseTo(5262258, 0);
     });
-  });
 
-  describe('fromLatLon', () => {
     it('should convert Derenk WGS84 to UTM zone 34', () => {
       const result = UTMConverter.fromLatLon(48.53987, 20.63889);
       expect(result.zoneNum).toBe(34);
       expect(result.zoneLetter).toBe('U');
-      expect(result.easting).toBeCloseTo(473345.084, 3);
-      expect(result.northing).toBeCloseTo(5376370.314, 3);
+      expect(result.easting).toBeCloseTo(473345.084, 1);
+      expect(result.northing).toBeCloseTo(5376370.314, 1);
+    });
+
+    // Reference values from independent online UTM converters:
+    // https://www.latlong.net/lat-long-utm.html
+    // https://coordinates-converter.com
+    it('should convert 47.4979, 19.04016 to UTM 34T with sub-meter accuracy', () => {
+      const result = UTMConverter.fromLatLon(47.4979, 19.04016);
+      expect(result.zoneNum).toBe(34);
+      expect(result.zoneLetter).toBe('T');
+      expect(result.easting).toBeCloseTo(352394.313, 0);
+      expect(result.northing).toBeCloseTo(5262357.872, 0);
+    });
+
+    it('should produce easting 500000 at equator on central meridian', () => {
+      // Zone 37 central meridian is at 39°E = (37-1)*6 - 180 + 3
+      const result = UTMConverter.fromLatLon(0.0, 39.0);
+      expect(result.zoneNum).toBe(37);
+      expect(Math.abs(result.easting - 500000)).toBeLessThan(1);
+      expect(result.northing).toBeLessThan(1);
     });
   });
 

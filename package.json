@@ -7,6 +7,9 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "npx playwright test",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:debug": "npx playwright test --debug",
     "format": "npx prettier --write ./src/**"
   },
   "repository": {
@@ -24,10 +27,13 @@
   "homepage": "https://github.com/joemeszaros/speleo-studio#readme",
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@playwright/test": "^1.59.1",
     "@yikes2000/prettier-plugin-merge-extras": "^0.7.1-extras.4",
     "eslint": "^9.18.0",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^15.14.0",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.4.2",
     "vitest": "^3.2.4"
   }

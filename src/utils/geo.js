@@ -392,7 +392,7 @@ class UTMConverter {
 
   static K0 = 0.9996;
 
-  static E = 0.00669438;
+  static E = 0.00669437999014;
   static E2 = Math.pow(this.E, 2);
   static E3 = Math.pow(this.E, 3);
   static E_P2 = this.E / (1 - this.E);

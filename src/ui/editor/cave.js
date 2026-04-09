@@ -444,6 +444,7 @@ class CaveEditor extends Editor {
           this.caveData.name !== this.cave?.name
         ) {
           showErrorPanel(i18n.t('ui.editors.caveSheet.messages.caveNameAlreadyExists', { name: this.caveData.name }));
+          return;
         }
 
         const caveMetadata = new CaveMetadata(
@@ -498,20 +499,42 @@ class CaveEditor extends Editor {
           return;
         }
 
-        const cNames = [];
-        this.db.getAllCaves().forEach((c) => {
-          const isEqual =
-            (c.geoData?.coordinateSystem === undefined && this.caveData?.coordinateSystem === undefined) ||
-            (c.geoData?.coordinateSystem !== undefined &&
-              c.geoData.coordinateSystem.isEqual(this.caveData?.coordinateSystem));
-          if (!isEqual && this.cave !== c) {
-            cNames.push(c.name);
-          }
-        });
+        // Check coordinate system mismatch against all caves AND models
+        const mismatchNames = [];
+        if (this.caveData?.coordinateSystem !== undefined) {
+          // Check caves
+          this.db.getAllCaves().forEach((c) => {
+            if (c === this.cave) return; // skip self
+            if (c.geoData?.coordinateSystem !== undefined &&
+                !c.geoData.coordinateSystem.isEqual(this.caveData.coordinateSystem)) {
+              mismatchNames.push(c.name);
+            }
+          });
+          // Check models
+          this.db.getAllModels().forEach((m) => {
+            if (m.geoData?.coordinateSystem !== undefined &&
+                !m.geoData.coordinateSystem.isEqual(this.caveData.coordinateSystem)) {
+              mismatchNames.push(m.name);
+            }
+          });
+        }
 
-        if (cNames.length > 0) {
-          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.coordinateSystemMismatch', { caves: cNames.join(', ') }));
+        if (mismatchNames.length > 0) {
+          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.coordinateSystemMismatch', { caves: mismatchNames.join(', ') }));
           return;
+        }
+
+        // Check if coordinates are too far from existing caves/models
+        if (geoData?.coordinates?.length > 0) {
+          const firstCoord = geoData.coordinates[0]?.coordinate;
+          const maxDistance = this.options.import.cavesMaxDistance;
+          const farEntities = this.db.getFarEntities(firstCoord, this.cave?.name, maxDistance);
+          if (farEntities.length > 0) {
+            showErrorPanel(
+              i18n.t('ui.editors.caveSheet.errors.coordinatesTooFar', { entities: farEntities.join(', ') })
+            );
+            return;
+          }
         }
 
         const aliases = this.caveData.aliases.map((a) => new SurveyAlias(a.from, a.to));

@@ -826,12 +826,17 @@ class ProjectManager {
       });
     }
 
-    const cavesReallyFar = this.getFarCaves(caves, cave);
+    const firstStationName = cave.getFirstStationName();
+    const firstStationCoordinate = cave.geoData?.coordinates?.find((c) => c.name === firstStationName)?.coordinate;
+    const firstStation = cave.getFirstStation();
+    const coordinate = firstStationCoordinate ?? firstStation?.position;
+    const maxDistance = this.options.import.cavesMaxDistance;
+    const farEntities = this.db.getFarEntities(coordinate, cave.name, maxDistance);
 
     if (this.db.hasCave(cave.name)) {
       return i18n.t('errors.import.caveAlreadyImported', { name: cave.name });
-    } else if (cavesReallyFar.length > 0) {
-      return i18n.t('errors.import.cavesReallyFar', { name: cave.name, caves: cavesReallyFar.join('<br>') });
+    } else if (farEntities.length > 0) {
+      return i18n.t('errors.import.cavesReallyFar', { name: cave.name, caves: farEntities.join('<br>') });
     }
 
     return undefined;
@@ -1060,7 +1065,7 @@ class ProjectManager {
   }
 
   /**
-   * Check if a model's coordinates are far from existing caves.
+   * Check if a model's coordinates are far from existing caves and models.
    * @param {PointCloud|Mesh3D} model - The model with geoData
    * @returns {string|null} Warning message or null
    */
@@ -1068,77 +1073,13 @@ class ProjectManager {
     const modelCoord = model.geoData?.coordinates?.[0]?.coordinate;
     if (!modelCoord) return null;
 
-    const caves = this.db.getAllCaves();
-    if (caves.length === 0) return null;
-
     const maxDistance = this.options.import.cavesMaxDistance;
-    const farCaves = [];
+    const farEntities = this.db.getFarEntities(modelCoord, model.name, maxDistance);
 
-    for (const cave of caves) {
-      const caveCoord = cave.geoData?.coordinates?.[0]?.coordinate;
-      if (!caveCoord) continue;
-
-      const distance = modelCoord.distanceTo?.(caveCoord);
-      if (distance !== undefined && distance > maxDistance) {
-        farCaves.push(`${cave.name} - ${U.formatDistance(distance, 0)}`);
-      }
-    }
-
-    if (farCaves.length > 0) {
-      return i18n.t('errors.import.modelFarFromCaves', { name: model.name, caves: farCaves.join('<br>') });
+    if (farEntities.length > 0) {
+      return i18n.t('errors.import.modelFarFromCaves', { name: model.name, caves: farEntities.join('<br>') });
     }
     return null;
-  }
-
-  /**
-   * Get a list of caves that are farther than a specified distance from a given position.
-   *
-   * @param {Map<string, Cave>} caves - A map of cave objects, where each key is a cave identifier and each value is a cave object.
-   * @param {Vector} position - The position to measure the distance from.
-   * @returns {Array<string>} An array of strings, each representing a cave name and its distance from the position, formatted as "caveName - distance m".
-   */
-  getFarCaves(caves, cave) {
-
-    const firstStationName = cave.getFirstStationName();
-    if (firstStationName === undefined) {
-      return [];
-    }
-    // this works without any shots
-    const firstStationCoordinate = cave.geoData?.coordinates?.find((c) => c.name === firstStationName)?.coordinate;
-    // this works only with shots
-    const firstStation = cave.getFirstStation();
-
-    // if there is no coordinate or any shots within the survey
-    if (firstStationCoordinate === undefined && firstStation === undefined) {
-      return [];
-    }
-
-    const maxDistance = this.options.import.cavesMaxDistance;
-
-    return Array.from(caves.values()).reduce((acc, c) => {
-      const cFirstStationName = c.getFirstStationName();
-      const cFirstStationCoordinate = c.geoData?.coordinates?.find((c) => c.name === cFirstStationName)?.coordinate;
-      const cFirstStation = c.getFirstStation();
-
-      let distanceBetweenCaves = undefined;
-      // since the coordinate systems are the same, we should assume cFirstStationCoordinate is not undefined
-      if (firstStationCoordinate !== undefined) {
-        distanceBetweenCaves = firstStationCoordinate.distanceTo(cFirstStationCoordinate);
-      }
-
-      if (
-        distanceBetweenCaves === undefined &&
-        firstStation?.position !== undefined &&
-        cFirstStation?.position !== undefined
-      ) {
-        distanceBetweenCaves = firstStation?.position?.distanceTo(cFirstStation?.position);
-      }
-
-      if (distanceBetweenCaves !== undefined && distanceBetweenCaves > maxDistance) {
-        acc.push(`${c.name} - ${U.formatDistance(distanceBetweenCaves, 0)}`);
-      }
-      return acc;
-    }, []);
   }
 
 }

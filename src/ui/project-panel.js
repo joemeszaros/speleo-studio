@@ -50,6 +50,13 @@ export class ProjectPanel {
     this.driveOperationsController = null;
     this.loadingOverlay = new LoadingOverlay();
 
+    document.addEventListener('languageChanged', () => {
+      this.setupPanel();
+      if (this.isVisible) {
+        this.updateDisplay();
+      }
+    });
+
     this.fileInputElement.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;

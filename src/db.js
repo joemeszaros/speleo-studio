@@ -15,6 +15,7 @@
  */
 
 import { i18n } from './i18n/i18n.js';
+import { formatDistance } from './utils/utils.js';
 
 class Database {
 
@@ -151,6 +152,96 @@ class Database {
 
   getAllModels() {
     return new Map([...this.pointClouds, ...this.meshes]);
+  }
+
+  getAllModelNames() {
+    return [...this.pointClouds.keys(), ...this.meshes.keys()];
+  }
+
+  hasModel(name) {
+    return this.pointClouds.has(name) || this.meshes.has(name);
+  }
+
+  getModel(name) {
+    return this.pointClouds.get(name) ?? this.meshes.get(name);
+  }
+
+  deleteModel(name) {
+    this.pointClouds.delete(name);
+    this.meshes.delete(name);
+  }
+
+  renameModel(oldName, newName) {
+    if (this.hasModel(newName)) {
+      throw new Error(i18n.t('errors.db.modelAlreadyExists', { name: newName }));
+    }
+    if (this.pointClouds.has(oldName)) {
+      const model = this.pointClouds.get(oldName);
+      model.name = newName;
+      this.pointClouds.delete(oldName);
+      this.pointClouds.set(newName, model);
+    } else if (this.meshes.has(oldName)) {
+      const model = this.meshes.get(oldName);
+      model.name = newName;
+      this.meshes.delete(oldName);
+      this.meshes.set(newName, model);
+    }
+  }
+
+  /**
+   * Get all coordinate systems from caves and models.
+   * @returns {Array<{name: string, type: string, coordinateSystem: Object}>}
+   */
+  getAllCoordinateSystems() {
+    const result = [];
+    this.caves.forEach((c) => {
+      if (c.geoData?.coordinateSystem) {
+        result.push({ name: c.name, type: 'cave', coordinateSystem: c.geoData.coordinateSystem });
+      }
+    });
+    this.getAllModels().forEach((m) => {
+      if (m.geoData?.coordinateSystem) {
+        result.push({ name: m.name, type: 'model', coordinateSystem: m.geoData.coordinateSystem });
+      }
+    });
+    return result;
+  }
+
+  /**
+   * Check if a coordinate is too far from existing caves and models.
+   * @param {Object} coordinate - Coordinate with distanceTo method
+   * @param {string} skipName - Name of the entity being edited (to skip self)
+   * @param {number} maxDistance - Maximum allowed distance in meters
+   * @returns {string[]} Array of names that are too far, with distance info
+   */
+  getFarEntities(coordinate, skipName, maxDistance) {
+    if (!coordinate || !maxDistance) return [];
+
+    const farEntities = [];
+
+    // Check caves
+    this.caves.forEach((cave) => {
+      if (cave.name === skipName) return;
+      const caveCoord = cave.geoData?.coordinates?.[0]?.coordinate;
+      if (!caveCoord) return;
+      const distance = coordinate.distanceTo(caveCoord);
+      if (distance > maxDistance) {
+        farEntities.push(`${cave.name} - ${formatDistance(distance, 0)}`);
+      }
+    });
+
+    // Check models
+    this.getAllModels().forEach((model) => {
+      if (model.name === skipName) return;
+      const modelCoord = model.geoData?.coordinates?.[0]?.coordinate;
+      if (!modelCoord) return;
+      const distance = coordinate.distanceTo(modelCoord);
+      if (distance > maxDistance) {
+        farEntities.push(`${model.name} - ${formatDistance(distance, 0)}`);
+      }
+    });
+
+    return farEntities;
   }
 
   deleteCave(caveName) {

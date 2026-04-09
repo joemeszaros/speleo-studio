@@ -1,0 +1,60 @@
+{
+    "id": "cave_1700000000000_looperr",
+    "version": 1,
+    "revision": 1,
+    "name": "Error Cave",
+    "metadata": {
+        "country": "Hungary",
+        "region": "Bukk",
+        "settlement": "Lillafured",
+        "catasterCode": "EC001",
+        "date": 1700000000000,
+        "creator": "Test"
+    },
+    "aliases": [],
+    "attributes": {
+        "stationAttributes": [],
+        "sectionAttributes": [],
+        "componentAttributes": [],
+        "schemaVersion": "1.0.0"
+    },
+    "stationComments": [],
+    "surveys": [
+        {
+            "name": "Loop Survey",
+            "visible": true,
+            "start": "L0",
+            "metadata": {
+                "date": 1700000000000,
+                "declination": 0,
+                "convergence": 0
+            },
+            "shots": [
+                {
+                    "type": "center",
+                    "from": "L0",
+                    "to": "L1",
+                    "length": 10.0,
+                    "azimuth": 0,
+                    "clino": 0
+                },
+                {
+                    "type": "center",
+                    "from": "L1",
+                    "to": "L2",
+                    "length": 10.0,
+                    "azimuth": 90,
+                    "clino": 0
+                },
+                {
+                    "type": "center",
+                    "from": "L2",
+                    "to": "L0",
+                    "length": 14.5,
+                    "azimuth": 222,
+                    "clino": 2
+                }
+            ]
+        }
+    ]
+}

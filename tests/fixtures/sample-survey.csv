@@ -1,0 +1,11 @@
+# name: Test Survey
+# date: 2024-01-15
+# team: Test Team
+# declination: 0
+# from to tape compass clino extend flags
+B0@Test_Survey,-,1.2,0,90,,,
+B0@Test_Survey,B1@Test_Survey,4.5,60,5,,,
+B1@Test_Survey,-,0.8,180,-10,,,
+B1@Test_Survey,B2@Test_Survey,3.2,110,-15,,,
+B2@Test_Survey,-,2.0,270,0,,,
+B2@Test_Survey,B3@Test_Survey,5.1,45,10,,,

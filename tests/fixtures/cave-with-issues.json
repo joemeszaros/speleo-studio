@@ -1,0 +1,114 @@
+{
+    "id": "cave_1700000000000_issues",
+    "version": 1,
+    "revision": 1,
+    "name": "Issue Cave",
+    "metadata": {
+        "country": "Hungary",
+        "region": "Bukk",
+        "settlement": "Lillafured",
+        "catasterCode": "IC001",
+        "date": 1700000000000,
+        "creator": "Test"
+    },
+    "aliases": [],
+    "attributes": {
+        "stationAttributes": [],
+        "sectionAttributes": [],
+        "componentAttributes": [],
+        "schemaVersion": "1.0.0"
+    },
+    "stationComments": [],
+    "surveys": [
+        {
+            "name": "Valid Survey",
+            "visible": true,
+            "start": "A0",
+            "metadata": {
+                "date": 1700000000000,
+                "declination": 0,
+                "convergence": 0
+            },
+            "shots": [
+                {
+                    "type": "center",
+                    "from": "A0",
+                    "to": "A1",
+                    "length": 5.0,
+                    "azimuth": 45,
+                    "clino": -10
+                },
+                {
+                    "type": "center",
+                    "from": "A1",
+                    "to": "A2",
+                    "length": 3.0,
+                    "azimuth": 90,
+                    "clino": 0
+                }
+            ]
+        },
+        {
+            "name": "Orphan Survey",
+            "visible": true,
+            "metadata": {
+                "date": 1700000000000,
+                "declination": 0,
+                "convergence": 0
+            },
+            "shots": [
+                {
+                    "type": "center",
+                    "from": "A1",
+                    "to": "B1",
+                    "length": 4.0,
+                    "azimuth": 120,
+                    "clino": -5
+                },
+                {
+                    "type": "center",
+                    "from": "B1",
+                    "to": "B2",
+                    "length": 6.0,
+                    "azimuth": 200,
+                    "clino": 15
+                },
+                {
+                    "type": "center",
+                    "from": "X1",
+                    "to": "X2",
+                    "length": 2.5,
+                    "azimuth": 0,
+                    "clino": 0
+                }
+            ]
+        },
+        {
+            "name": "Isolated Survey",
+            "visible": true,
+            "metadata": {
+                "date": 1700000000000,
+                "declination": 0,
+                "convergence": 0
+            },
+            "shots": [
+                {
+                    "type": "center",
+                    "from": "Z0",
+                    "to": "Z1",
+                    "length": 3.0,
+                    "azimuth": 180,
+                    "clino": 0
+                },
+                {
+                    "type": "center",
+                    "from": "Z1",
+                    "to": "Z2",
+                    "length": 4.0,
+                    "azimuth": 270,
+                    "clino": -10
+                }
+            ]
+        }
+    ]
+}

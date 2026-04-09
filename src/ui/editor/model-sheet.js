@@ -18,6 +18,7 @@ import * as U from '../../utils/utils.js';
 import { BaseEditor } from './base.js';
 import { wm } from '../window.js';
 import { i18n } from '../../i18n/i18n.js';
+import { showErrorPanel } from '../popups.js';
 import {
   GeoData,
   EOVCoordinateWithElevation,
@@ -35,11 +36,14 @@ import { UTMConverter } from '../../utils/geo.js';
  */
 export class ModelSheetEditor extends BaseEditor {
 
-  constructor(modelNode, modelSystem, projectSystem, panel) {
+  constructor(modelNode, modelSystem, projectSystem, panel, db, modelsTree, options) {
     super(panel);
     this.modelNode = modelNode;
     this.modelSystem = modelSystem;
     this.projectSystem = projectSystem;
+    this.db = db;
+    this.modelsTree = modelsTree;
+    this.options = options;
     this.hasChanged = false;
 
     // Working copy of coordinate data
@@ -258,13 +262,13 @@ export class ModelSheetEditor extends BaseEditor {
       fields    : fields,
       nodes     : [],
       onAdd     : () => {
-        const empty = { elevation: 0 };
+        const empty = { elevation: '' };
         if (this.coordData.coordinateSystem?.type === CoordinateSystemType.UTM) {
-          empty.easting = 0;
-          empty.northing = 0;
+          empty.easting = '';
+          empty.northing = '';
         } else if (this.coordData.coordinateSystem?.type === CoordinateSystemType.EOV) {
-          empty.y = 0;
-          empty.x = 0;
+          empty.y = '';
+          empty.x = '';
         }
         this.coordData.coordinates.push(empty);
         this.renderCoords();
@@ -286,6 +290,23 @@ export class ModelSheetEditor extends BaseEditor {
   async #handleSave() {
     if (!this.hasChanged) {
       this.closeEditor();
+      return;
+    }
+
+    const newName = this.panel.querySelector('#model-name').value.trim();
+    const oldName = this.modelNode.label;
+
+    // Validate: duplicate model name (check db, not tree)
+    if (newName && newName !== oldName) {
+      if (this.db?.hasModel?.(newName)) {
+        showErrorPanel(i18n.t('ui.editors.modelSheet.errors.modelNameAlreadyExists', { name: newName }));
+        return;
+      }
+    }
+
+    // Validate: coordinate system set but no coordinates
+    if (this.coordData.coordinateSystem !== undefined && (this.coordData.coordinates?.length ?? 0) === 0) {
+      showErrorPanel(i18n.t('ui.editors.modelSheet.errors.missingCoordinates'));
       return;
     }
 
@@ -313,18 +334,58 @@ export class ModelSheetEditor extends BaseEditor {
         return new StationWithCoordinate('origin', coordinate);
       });
       geoData = new GeoData(this.coordData.coordinateSystem, coordinates);
+
+      // Validate coordinates
+      let errors = [];
+      geoData.coordinates?.forEach((coord) => {
+        const coordErrors = coord.coordinate.validate(i18n);
+        if (coordErrors.length > 0) {
+          errors.push(...coordErrors);
+        }
+      });
+      if (errors.length > 0) {
+        showErrorPanel(i18n.t('ui.editors.modelSheet.errors.invalidCoordinates') + '<br>' + errors.join('<br><br>'));
+        return;
+      }
+
+      // Validate: coordinate system mismatch with existing caves AND models
+      const allCoordSystems = this.db?.getAllCoordinateSystems?.() ?? [];
+      const mismatchNames = [];
+      allCoordSystems.forEach((entry) => {
+        // Skip the current model being edited
+        if (entry.name === oldName && entry.type === 'model') return;
+        const isEqual = entry.coordinateSystem.isEqual(this.coordData?.coordinateSystem);
+        if (!isEqual) {
+          mismatchNames.push(entry.name);
+        }
+      });
+      if (mismatchNames.length > 0) {
+        showErrorPanel(i18n.t('ui.editors.modelSheet.errors.coordinateSystemMismatch', { caves: mismatchNames.join(', ') }));
+        return;
+      }
+
+      // Check if coordinates are too far from existing caves/models
+      if (geoData.coordinates?.length > 0) {
+        const firstCoord = geoData.coordinates[0]?.coordinate;
+        const maxDistance = this.options?.import?.cavesMaxDistance ?? 10000;
+        const farEntities = this.db?.getFarEntities?.(firstCoord, oldName, maxDistance) ?? [];
+        if (farEntities.length > 0) {
+          showErrorPanel(
+            i18n.t('ui.editors.modelSheet.errors.coordinatesTooFar', { entities: farEntities.join(', ') })
+          );
+          return;
+        }
+      }
     } else {
       geoData = undefined;
     }
 
-    const newName = this.panel.querySelector('#model-name').value.trim();
-
     // Update model's geoData
     this.modelNode.data.geoData = geoData;
 
-    // Update name if changed
-    const oldName = this.modelNode.label;
+    // Update name in db if changed
     if (newName && newName !== oldName) {
+      this.db?.renameModel?.(oldName, newName);
       this.modelNode.label = newName;
       this.modelNode.data.name = newName;
     }
@@ -340,6 +401,15 @@ export class ModelSheetEditor extends BaseEditor {
         }
       })
     );
+
+    // Emit coordinate system change if geoData was set or changed
+    if (geoData?.coordinateSystem) {
+      document.dispatchEvent(
+        new CustomEvent('coordinateSystemChanged', {
+          detail : { coordinateSystem: geoData.coordinateSystem }
+        })
+      );
+    }
 
     this.closeEditor();
   }

@@ -1,0 +1,37 @@
+POLYGON Cave Surveying Software
+Polygon Program Version   = 2
+Polygon Data File Version = 1
+1998-2001 ===> Prepostffy Zsolt
+-------------------------------
+
+*** Project ***
+Project name: TestCave
+Project place: Bukk
+Project code: 1234
+Made by: Test
+Made date: 45000.000000
+Last modi: 0
+AutoCorrect: 1
+AutoSize: 20.0
+
+*** Surveys ***
+Survey name: MainSurvey
+Survey team:
+	Tester
+	
+	
+	
+	
+Survey date: 45000.000000
+Declination: 3.5
+Instruments:
+	0
+	0
+	0
+Fix point: T0
+650000	240000	350	0	0	0	0
+Survey data
+From	To	Length	Azimuth	Vertical	Label	Left	Right	Up	Down	Note
+T0	T1	5.20	45.0	-10.0		0.00	0.00	0.00	0.00	
+T1	T2	3.80	120.0	-5.0		0.00	0.00	0.00	0.00	
+T2	T3	6.10	200.0	15.0		0.00	0.00	0.00	0.00	

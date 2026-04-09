@@ -1,0 +1,103 @@
+{
+    "id": "cave_1700000000000_loops",
+    "version": 1,
+    "revision": 1,
+    "name": "Loop Cave",
+    "metadata": {
+        "country": "Hungary",
+        "region": "Bukk",
+        "settlement": "Lillafured",
+        "catasterCode": "LC001",
+        "date": 1700000000000,
+        "creator": "Test"
+    },
+    "aliases": [],
+    "attributes": {
+        "stationAttributes": [],
+        "sectionAttributes": [],
+        "componentAttributes": [],
+        "schemaVersion": "1.0.0"
+    },
+    "stationComments": [],
+    "surveys": [
+        {
+            "name": "Main Gallery",
+            "visible": true,
+            "start": "A0",
+            "metadata": {
+                "date": 1700000000000,
+                "declination": 0,
+                "convergence": 0
+            },
+            "shots": [
+                {
+                    "type": "center",
+                    "from": "A0",
+                    "to": "A1",
+                    "length": 10.0,
+                    "azimuth": 0,
+                    "clino": 0
+                },
+                {
+                    "type": "center",
+                    "from": "A1",
+                    "to": "A2",
+                    "length": 10.0,
+                    "azimuth": 90,
+                    "clino": 0
+                },
+                {
+                    "type": "center",
+                    "from": "A2",
+                    "to": "A3",
+                    "length": 10.0,
+                    "azimuth": 180,
+                    "clino": 0
+                },
+                {
+                    "type": "center",
+                    "from": "A3",
+                    "to": "A0",
+                    "length": 10.0,
+                    "azimuth": 270,
+                    "clino": 0
+                }
+            ]
+        },
+        {
+            "name": "Side Passage",
+            "visible": true,
+            "metadata": {
+                "date": 1700000000000,
+                "declination": 0,
+                "convergence": 0
+            },
+            "shots": [
+                {
+                    "type": "center",
+                    "from": "A1",
+                    "to": "B1",
+                    "length": 8.0,
+                    "azimuth": 45,
+                    "clino": -10
+                },
+                {
+                    "type": "center",
+                    "from": "B1",
+                    "to": "B2",
+                    "length": 6.0,
+                    "azimuth": 135,
+                    "clino": 5
+                },
+                {
+                    "type": "center",
+                    "from": "B2",
+                    "to": "A2",
+                    "length": 7.0,
+                    "azimuth": 225,
+                    "clino": 0
+                }
+            ]
+        }
+    ]
+}

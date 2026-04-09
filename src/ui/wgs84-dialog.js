@@ -39,10 +39,10 @@ export class WGS84Dialog {
   createDialog() {
     // Create dialog container
     this.dialog = document.createElement('div');
-    this.dialog.className = 'coordinate-system-dialog';
+    this.dialog.className = 'dialog-overlay';
     const doubleQuote = '"';
     this.dialog.innerHTML = `
-      <div class="coordinate-system-container coordinate-system-content">
+      <div class="dialog-container dialog-content">
         <h3>${i18n.t('ui.panels.wgs84.title')}</h3>
 
         <div class="settings-group">
@@ -116,7 +116,7 @@ export class WGS84Dialog {
     // Show dialog
     document.body.appendChild(this.dialog);
     this.dialog.style.display = 'block';
-    this.dialog.querySelector('.coordinate-system-container').focus();
+    this.dialog.querySelector('.dialog-container').focus();
   }
 
   setupEventListeners() {

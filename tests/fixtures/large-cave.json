@@ -1,0 +1,48 @@
+{
+  "id": "cave_1700000000000_large",
+  "version": 1,
+  "revision": 1,
+  "name": "Large Cave",
+  "metadata": {
+    "country": "Hungary",
+    "region": "Bukk",
+    "settlement": "Lillafured",
+    "catasterCode": "LC001",
+    "date": 1700000000000,
+    "creator": "Test"
+  },
+  "aliases": [],
+  "attributes": {
+    "stationAttributes": [],
+    "sectionAttributes": [],
+    "componentAttributes": [],
+    "schemaVersion": "1.0.0"
+  },
+  "stationComments": [],
+  "surveys": [
+    {
+      "name": "Long Survey",
+      "visible": true,
+      "start": "L0",
+      "metadata": {
+        "date": 1700000000000,
+        "declination": 0,
+        "convergence": 0
+      },
+      "shots": [
+        { "type": "center", "from": "L0", "to": "L1", "length": 50, "azimuth": 0, "clino": 0 },
+        { "type": "center", "from": "L1", "to": "L2", "length": 50, "azimuth": 0, "clino": 0 },
+        { "type": "center", "from": "L2", "to": "L3", "length": 50, "azimuth": 90, "clino": 0 },
+        { "type": "center", "from": "L3", "to": "L4", "length": 50, "azimuth": 90, "clino": 0 },
+        { "type": "center", "from": "L4", "to": "L5", "length": 50, "azimuth": 180, "clino": 0 },
+        { "type": "center", "from": "L5", "to": "L6", "length": 50, "azimuth": 180, "clino": 0 },
+        { "type": "center", "from": "L6", "to": "L7", "length": 50, "azimuth": 270, "clino": 0 },
+        { "type": "center", "from": "L7", "to": "L8", "length": 50, "azimuth": 270, "clino": 0 },
+        { "type": "center", "from": "L8", "to": "L9", "length": 50, "azimuth": 0, "clino": 0 },
+        { "type": "center", "from": "L9", "to": "L10", "length": 50, "azimuth": 0, "clino": 0 },
+        { "type": "center", "from": "L10", "to": "L11", "length": 50, "azimuth": 90, "clino": 0 },
+        { "type": "center", "from": "L11", "to": "L12", "length": 50, "azimuth": 90, "clino": 0 }
+      ]
+    }
+  ]
+}

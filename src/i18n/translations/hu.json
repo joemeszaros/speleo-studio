@@ -660,9 +660,11 @@
           "invalidAliases": "Érvénytelen aliasok",
           "missingCoordinates": "Nincsenek koordináták a kiválasztott koordináta-rendszerhez",
           "coordinateSystemMismatch": "A(z) {caves} barlang(ok) koordináta-rendszere nem egyezik a kiválasztott koordináta-rendszerrel",
+          "coordinatesTooFar": "A koordináták túl messze vannak a meglévő barlangoktól/modellektől: {entities}",
           "convertGPS": "Nem lehet GPS koordinátákat konvertálni, mert már vannak koordináták más koordináta-rendszerben ({coordinateSystems})",
           "convertGPSDifferentZone": "A(z) UTM zóna {zoneNum} ({northern}) más, mint a(z) konverzió eredményeként kapott {newZoneNum} ({newNorthern}) zóna"
         },
+        "warnings": {},
         "buttons": {
           "addAlias": "Alias hozzáadása",
           "addCoordinate": "Koordináta hozzáadása",
@@ -675,7 +677,14 @@
         "fileInfo": "Fájl információ",
         "modelFile": "Modell fájl",
         "textureFiles": "Textúra fájlok",
-        "totalSize": "Teljes méret"
+        "totalSize": "Teljes méret",
+        "errors": {
+          "modelNameAlreadyExists": "Egy '{name}' nevű modell már létezik",
+          "missingCoordinates": "A koordináta rendszer meg van adva, de nincsenek koordináták",
+          "invalidCoordinates": "Érvénytelen koordináták",
+          "coordinateSystemMismatch": "A modell koordináta rendszere különbözik a meglévő barlangoktól: {caves}",
+          "coordinatesTooFar": "A modell koordinátái túl messze vannak a meglévő barlangoktól/modellektől: {entities}"
+        }
       },
       "surveySheet": {
         "title": "Felmérés adatlap: {name}",
@@ -993,7 +1002,8 @@
       "surveyDoesNotExist": "A(z) '{name}' nevű felmérés nem létezik!",
       "surveyAlreadyExists": "A(z) '{name}' nevű felmérés már létezik!",
       "pointCloudAlreadyAdded": "A(z) {name} pontfelhő már hozzá lett adva!",
-      "meshAlreadyAdded": "A(z) {name} háló már hozzá lett adva!"
+      "meshAlreadyAdded": "A(z) {name} háló már hozzá lett adva!",
+      "modelAlreadyExists": "A(z) '{name}' nevű modell már létezik!"
     },
     "storage": {
       "revisionStore": {

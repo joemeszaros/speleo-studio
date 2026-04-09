@@ -1,0 +1,37 @@
+POLYGON Cave Surveying Software
+Polygon Program Version   = 2
+Polygon Data File Version = 1
+1998-2001 ===> Prepostffy Zsolt
+-------------------------------
+
+*** Project ***
+Project name: Próba-barlang
+Project place: Pilis
+Project code: 5678
+Made by: Kovács József
+Made date: 45000.000000
+Last modi: 0
+AutoCorrect: 0
+AutoSize: 20.0
+
+*** Surveys ***
+Survey name: Bejárat
+Survey team:
+	Kovács József
+	
+	
+	
+	
+Survey date: 45000.000000
+Declination: 4.0
+Instruments:
+	0
+	0
+	0
+Fix point: P0
+650000	240000	400	0	0	0	0
+Survey data
+From	To	Length	Azimuth	Vertical	Label	Left	Right	Up	Down	Note
+P0	P1	4.50	90.0	-5.0		0.00	0.00	0.00	0.00	
+P1	P2	3.20	180.0	-10.0		0.00	0.00	0.00	0.00	
+P2	P3	5.00	270.0	0.0		0.00	0.00	0.00	0.00	

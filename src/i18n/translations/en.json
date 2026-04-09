@@ -657,9 +657,11 @@
           "invalidAliases": "Invalid aliases",
           "missingCoordinates": "Missing coordinates for the selected coordinate system",
           "coordinateSystemMismatch": "Coordinate system of caves {caves} does not match the selected coordinate system",
+          "coordinatesTooFar": "The coordinates are too far from existing caves/models: {entities}",
           "convertGPS": "You cannot convert GPS coordinates due to existing coordnates on other coordinate systems {coordinateSystems}",
           "convertGPSDifferentZone": "Existing UTM zone {zoneNum} ({northern}) is different from the result of the conversion to new zone {newZoneNum} ({newNorthern})"
         },
+        "warnings": {},
         "buttons": {
           "addAlias": "Add alias",
           "addCoordinate": "Add coordinate",
@@ -672,7 +674,14 @@
         "fileInfo": "File information",
         "modelFile": "Model file",
         "textureFiles": "Texture files",
-        "totalSize": "Total size"
+        "totalSize": "Total size",
+        "errors": {
+          "modelNameAlreadyExists": "A model with the name '{name}' already exists",
+          "missingCoordinates": "Coordinate system is set but no coordinates are provided",
+          "invalidCoordinates": "Invalid coordinates",
+          "coordinateSystemMismatch": "Model coordinate system is different from existing caves: {caves}",
+          "coordinatesTooFar": "The model coordinates are too far from existing caves/models: {entities}"
+        }
       },
       "surveySheet": {
         "title": "Survey sheet editor: {name}",
@@ -970,7 +979,8 @@
       "surveyDoesNotExist": "Survey '{name}' does not exist!",
       "surveyAlreadyExists": "Survey '{name}' already exists!",
       "pointCloudAlreadyAdded": "Point cloud {name} has already been added!",
-      "meshAlreadyAdded": "Mesh {name} has already been added!"
+      "meshAlreadyAdded": "Mesh {name} has already been added!",
+      "modelAlreadyExists": "Model with name '{name}' already exists!"
     },
     "survey": {
       "atLeastTwoGradientColorsRequired": "At least 2 gradient colors are required",

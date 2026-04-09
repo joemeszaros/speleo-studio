@@ -179,8 +179,9 @@ class NavigationBar {
             shortkeys : ['crtl⊕shift⊕p']
           },
           {
-            name  : i18n.t('ui.navbar.menu.project.export'),
-            click : () => {
+            name     : i18n.t('ui.navbar.menu.project.export'),
+            disabled : () => this.projectSystem.getCurrentProject() === null,
+            click    : () => {
               const currentProject = this.projectSystem.getCurrentProject();
               if (currentProject) {
                 this.projectPanel.exportProject(currentProject.id);
@@ -201,14 +202,16 @@ class NavigationBar {
             }
           },
           {
-            name  : i18n.t('ui.navbar.menu.tools.shortestPath'),
-            icon  : 'icons/shortest_path.svg',
-            click : () => new ShortestPathTool(this.db, this.options, this.scene).show()
+            name     : i18n.t('ui.navbar.menu.tools.shortestPath'),
+            icon     : 'icons/shortest_path.svg',
+            disabled : () => this.db.getAllCaveNames().length === 0,
+            click    : () => new ShortestPathTool(this.db, this.options, this.scene).show()
           },
           {
-            name  : i18n.t('ui.navbar.menu.tools.roseDiagram'),
-            icon  : 'icons/rose_diagram.svg',
-            click : () => new RoseDiagramTool(this.db).show()
+            name     : i18n.t('ui.navbar.menu.tools.roseDiagram'),
+            icon     : 'icons/rose_diagram.svg',
+            disabled : () => this.db.getAllCaveNames().length === 0,
+            click    : () => new RoseDiagramTool(this.db).show()
           },
           {
             name  : i18n.t('ui.navbar.menu.tools.drive'),
@@ -354,7 +357,7 @@ class NavigationBar {
       {
         tooltip : i18n.t('ui.navbar.tooltips.donate'),
         icon    : 'icons/donate.svg',
-        click   : () => window.open('https://joemeszaros.github.io/speleo-studio/manual/hu/12-tamogatas.html', '_blank')
+        click   : () => window.open('manual/hu/14-tamogatas.html', '_blank')
       }
 
     ];
@@ -407,6 +410,8 @@ class NavigationBar {
       c.setAttribute('class', 'mydropdown-content');
       c.setAttribute('id', 'myDropdown');
 
+      const dynamicItems = [];
+
       elements.forEach((e) => {
         const a = document.createElement('a');
         if (e.icon !== undefined) {
@@ -417,12 +422,33 @@ class NavigationBar {
           a.appendChild(img);
         }
         a.appendChild(document.createTextNode(shortKeyText(e.shortkeys, e.name)));
-        a.onclick = e.click;
+        if (e.disabled) {
+          dynamicItems.push({ element: a, disabledFn: e.disabled, clickFn: e.click });
+          a.onclick = () => {
+            if (!a.hasAttribute('disabled')) e.click();
+          };
+        } else {
+          a.onclick = e.click;
+        }
         if (e.shortkeys) {
           addShortkeys(e.shortkeys, e.click);
         }
         c.appendChild(a);
       });
+
+      const updateDynamicItems = () => {
+        dynamicItems.forEach(({ element, disabledFn }) => {
+          const isDisabled = typeof disabledFn === 'function' ? disabledFn() : disabledFn;
+          if (isDisabled) {
+            element.setAttribute('disabled', '');
+            element.classList.add('disabled');
+          } else {
+            element.removeAttribute('disabled');
+            element.classList.remove('disabled');
+          }
+        });
+      };
+      updateDynamicItems();
 
       const d = document.createElement('div');
       d.setAttribute('class', 'mydropdown');
@@ -431,6 +457,7 @@ class NavigationBar {
       b.disabled = disabled;
 
       b.onclick = function () {
+        updateDynamicItems();
         c.classList.toggle('mydropdown-show');
         document.querySelectorAll('.mydropdown-content').forEach((element) => {
           if (element !== c) {

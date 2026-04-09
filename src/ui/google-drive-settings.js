@@ -27,6 +27,13 @@ export class GoogleDriveSettings {
     this.config = this.sync.config;
     this.isVisible = false;
     this.setupEventListeners();
+
+    document.addEventListener('languageChanged', () => {
+      if (this.isVisible) {
+        this.hide();
+        this.show();
+      }
+    });
   }
 
   /**

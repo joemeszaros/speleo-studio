@@ -1,0 +1,54 @@
+{
+  "id": "cave_1700000000000_test2",
+  "version": 1,
+  "revision": 1,
+  "name": "Multi Survey Cave",
+  "metadata": {
+    "country": "Hungary",
+    "region": "Bukk",
+    "settlement": "Lillafured",
+    "catasterCode": "MC001",
+    "date": 1700000000000,
+    "creator": "Test"
+  },
+  "aliases": [],
+  "attributes": {
+    "stationAttributes": [],
+    "sectionAttributes": [],
+    "componentAttributes": [],
+    "schemaVersion": "1.0.0"
+  },
+  "stationComments": [],
+  "surveys": [
+    {
+      "name": "Entrance Survey",
+      "visible": true,
+      "start": "E0",
+      "metadata": {
+        "date": 1700000000000,
+        "declination": 0,
+        "convergence": 0
+      },
+      "shots": [
+        { "type": "center", "from": "E0", "to": "E1", "length": 4.0, "azimuth": 30, "clino": -5 },
+        { "type": "center", "from": "E1", "to": "E2", "length": 6.5, "azimuth": 80, "clino": -15 },
+        { "type": "center", "from": "E2", "to": "E3", "length": 3.2, "azimuth": 150, "clino": 0 }
+      ]
+    },
+    {
+      "name": "Inner Survey",
+      "visible": true,
+      "start": "E3",
+      "metadata": {
+        "date": 1700000000000,
+        "declination": 0,
+        "convergence": 0
+      },
+      "shots": [
+        { "type": "center", "from": "E3", "to": "I1", "length": 7.0, "azimuth": 200, "clino": -30 },
+        { "type": "center", "from": "I1", "to": "I2", "length": 5.5, "azimuth": 250, "clino": -10 },
+        { "type": "splay", "from": "I2", "length": 3.0, "azimuth": 0, "clino": 0 }
+      ]
+    }
+  ]
+}

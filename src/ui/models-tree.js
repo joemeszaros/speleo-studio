@@ -55,7 +55,10 @@ export class ModelsTree {
     this.propertiesPanelExpanded = true; // Properties panel expanded by default
     this._saveTimers = new Map(); // modelFileId -> debounce timeout
 
-    document.addEventListener('languageChanged', () => this.render());
+    document.addEventListener('languageChanged', () => {
+      this.render();
+      this.renderPropertiesPanel();
+    });
     document.addEventListener('click', (e) => this.handleOutsideClick(e));
 
     this.setupTextureInput();
@@ -185,6 +188,28 @@ export class ModelsTree {
   }
 
   /**
+   * Get all model names in the tree
+   * @returns {string[]} Array of model names
+   */
+  getModelNames() {
+    const category = this.categories.get('3d-models');
+    if (!category) return [];
+    return category.children.map((m) => m.label);
+  }
+
+  /**
+   * Get all models with their coordinate systems
+   * @returns {Array<{name: string, coordinateSystem: Object|undefined}>}
+   */
+  getModelsWithCoordinateSystems() {
+    const category = this.categories.get('3d-models');
+    if (!category) return [];
+    return category.children
+      .filter((m) => m.data?.geoData?.coordinateSystem !== undefined)
+      .map((m) => ({ name: m.label, coordinateSystem: m.data.geoData.coordinateSystem }));
+  }
+
+  /**
    * Remove a model from the tree
    * @param {string} modelName - Name of the model to remove
    */
@@ -253,6 +278,9 @@ export class ModelsTree {
   }
 
   dispatchModelDeleted(node) {
+    // Remove from in-memory database
+    this.db.deleteModel(node.label);
+
     document.dispatchEvent(
       new CustomEvent('modelDeleted', {
         detail : {
@@ -783,7 +811,10 @@ export class ModelsTree {
             node,
             this.modelSystem,
             this.projectSystem,
-            document.getElementById('fixed-size-editor')
+            document.getElementById('fixed-size-editor'),
+            this.db,
+            this,
+            this.options
           );
           editor.setupPanel();
           editor.show();
