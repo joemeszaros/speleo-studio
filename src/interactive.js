@@ -52,7 +52,7 @@ class SceneInteraction {
     this.distanceMeasurementMode = false;
     this.distanceFromStation = undefined;
     this.distanceToStation = undefined;
-    this.raycastingEnabled = true;
+    this.raycastingEnabled = this.options.interactive.raycasting;
 
     this.mouseOnEditor = false;
 
@@ -195,6 +195,7 @@ class SceneInteraction {
 
   toggleRaycasting() {
     this.raycastingEnabled = !this.raycastingEnabled;
+    this.options.interactive.raycasting = this.raycastingEnabled;
     if (this.raycastingEnabled) {
       this.footer.showMessage(i18n.t('ui.footer.raycastingEnabled'));
     } else {

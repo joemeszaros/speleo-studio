@@ -337,10 +337,8 @@ export class ModelsTree {
 
     node.visible = !node.visible;
 
-    // Update the Three.js object visibility
     if (node.object3D) {
-      node.object3D.visible = node.visible;
-      this.scene.view.renderView();
+      this.scene.models.setModelVisibility(node.object3D, node.visible);
     }
 
     this.render();
@@ -397,16 +395,8 @@ export class ModelsTree {
 
     this.selectedNode.transform[property][axis] = numValue;
 
-    // Apply to Three.js object
     if (this.selectedNode.object3D) {
-      if (property === 'position') {
-        this.selectedNode.object3D.position[axis] = numValue;
-      } else if (property === 'rotation') {
-        this.selectedNode.object3D.rotation[axis] = degreesToRads(numValue);
-      } else if (property === 'scale') {
-        this.selectedNode.object3D.scale[axis] = numValue;
-      }
-      this.scene.view.renderView();
+      this.scene.models.setModelTransform(this.selectedNode.object3D, property, axis, numValue);
     }
     this._scheduleSave(this.selectedNode);
   }
@@ -423,18 +413,10 @@ export class ModelsTree {
 
     this.selectedNode.opacity = Math.max(0, Math.min(1, numValue));
 
-    // Apply to Three.js object materials
     if (this.selectedNode.object3D) {
-      this.selectedNode.object3D.traverse((child) => {
-        if (child.material) {
-          child.material.transparent = this.selectedNode.opacity < 1;
-          child.material.opacity = this.selectedNode.opacity;
-          child.material.needsUpdate = true;
-        }
-      });
+      this.scene.models.setModelOpacity(this.selectedNode.object3D, this.selectedNode.opacity);
     }
 
-    this.scene.view.renderView();
     this._scheduleSave(this.selectedNode);
   }
 
@@ -534,6 +516,17 @@ export class ModelsTree {
       this.showModelContextMenu(node);
     };
 
+    // Hamburger menu button
+    const menuBtn = document.createElement('div');
+    menuBtn.className = 'tree-node-menu-btn';
+    menuBtn.textContent = '⋮';
+    menuBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.selectNode(node.id);
+      this.showModelContextMenu(node);
+    };
+    nodeElement.appendChild(menuBtn);
+
     // Visibility toggle
     const visibility = document.createElement('div');
     visibility.className = `models-tree-visibility ${node.visible ? 'visible' : 'hidden'}`;
@@ -582,7 +575,7 @@ export class ModelsTree {
     title.textContent = i18n.t('ui.models.properties.title');
     header.appendChild(title);
 
-    // Show file size in header when a model is selected
+    // Show file size and matrix button in header when a model is selected
     if (this.selectedNode?.type === 'model') {
       const sizeLabel = document.createElement('span');
       sizeLabel.className = 'models-properties-header-size';
@@ -591,6 +584,16 @@ export class ModelsTree {
       this.computeModelFileSize(this.selectedNode).then((size) => {
         sizeLabel.textContent = size;
       });
+
+      const matrixBtn = document.createElement('button');
+      matrixBtn.className = 'models-properties-matrix-btn';
+      matrixBtn.title = i18n.t('ui.models.properties.matrix');
+      matrixBtn.innerHTML = '<img src="icons/matrix.svg" alt="4x4">';
+      matrixBtn.onclick = (e) => {
+        e.stopPropagation();
+        this.showMatrixDialog();
+      };
+      header.appendChild(matrixBtn);
     }
 
     header.onclick = () => this.togglePropertiesPanel();
@@ -790,6 +793,155 @@ export class ModelsTree {
     }
 
     return U.formatBytes(totalBytes);
+  }
+
+  /**
+   * Show a dialog for pasting a 4x4 transformation matrix
+   */
+  showMatrixDialog() {
+    // Build current 4x4 matrix from the node's position, rotation, and scale
+    const t = this.selectedNode.transform;
+    const matrix = new THREE.Matrix4();
+    matrix.compose(
+      new THREE.Vector3(t.position.x, t.position.y, t.position.z),
+      new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(degreesToRads(t.rotation.x), degreesToRads(t.rotation.y), degreesToRads(t.rotation.z))
+      ),
+      new THREE.Vector3(t.scale.x, t.scale.y, t.scale.z)
+    );
+    const e = matrix.elements; // column-major
+    const fmt = (v) => (Math.abs(v) < 1e-10 ? '0' : v.toFixed(6).replace(/\.?0+$/, ''));
+    const currentMatrix = [
+      [fmt(e[0]), fmt(e[4]), fmt(e[8]), fmt(e[12])].join('\t'),
+      [fmt(e[1]), fmt(e[5]), fmt(e[9]), fmt(e[13])].join('\t'),
+      [fmt(e[2]), fmt(e[6]), fmt(e[10]), fmt(e[14])].join('\t'),
+      [fmt(e[3]), fmt(e[7]), fmt(e[11]), fmt(e[15])].join('\t')
+    ].join('\n');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.innerHTML = `
+      <div class="dialog-container dialog-content" style="max-width: 420px;">
+        <h3 style="margin: 0 0 8px 0;">${i18n.t('ui.models.properties.matrixDialogTitle')}</h3>
+        <p style="margin: 0 0 12px 0; font-size: 0.85em; opacity: 0.7;">${i18n.t('ui.models.properties.matrixDialogDescription')}</p>
+        <textarea id="matrix-input" rows="5" style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 12px; background: var(--bg-secondary, #1a1a1a); color: #ccc; border: 1px solid #444; border-radius: 4px; padding: 8px; resize: vertical;"></textarea>
+        <div id="matrix-error" style="color: #f66; font-size: 0.85em; min-height: 1.2em; margin-top: 4px;"></div>
+        <div class="config-buttons-container" style="margin-top: 12px;">
+          <button type="button" class="settings-button" id="matrix-ok">${i18n.t('common.ok')}</button>
+          <button type="button" class="settings-button" id="matrix-cancel">${i18n.t('common.cancel')}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.style.display = 'block';
+
+    const textarea = overlay.querySelector('#matrix-input');
+    textarea.value = currentMatrix;
+    const errorDiv = overlay.querySelector('#matrix-error');
+    textarea.focus();
+    textarea.select();
+
+    const close = () => overlay.remove();
+
+    overlay.querySelector('#matrix-cancel').onclick = close;
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close();
+    });
+
+    overlay.querySelector('#matrix-ok').onclick = () => {
+      const result = this.applyMatrix(textarea.value);
+      if (result.success) {
+        close();
+      } else {
+        errorDiv.textContent = result.error;
+      }
+    };
+  }
+
+  /**
+   * Parse a 4x4 matrix string and apply it as position, rotation, and scale.
+   * @param {string} text - Matrix text (rows of numbers separated by whitespace/commas)
+   * @returns {{success: boolean, error?: string}}
+   */
+  applyMatrix(text) {
+    // Parse numbers from the text: split by whitespace, commas, semicolons
+    const numbers = text
+      .split(/[\n\r]+/)
+      .filter((line) => line.trim().length > 0)
+      .flatMap((line) => line.trim().split(/[\s,;]+/))
+      .map(Number);
+
+    if (numbers.length !== 16 || numbers.some(isNaN)) {
+      return { success: false, error: i18n.t('ui.models.properties.matrixInvalid') };
+    }
+
+    if (!numbers.every(isFinite)) {
+      return { success: false, error: i18n.t('ui.models.properties.matrixNotFinite') };
+    }
+
+    // Warn if bottom row is not [0, 0, 0, 1]
+    if (numbers[12] !== 0 || numbers[13] !== 0 || numbers[14] !== 0 || numbers[15] !== 1) {
+      return { success: false, error: i18n.t('ui.models.properties.matrixBottomRow') };
+    }
+
+    // THREE.Matrix4.set() takes row-major arguments
+    const matrix = new THREE.Matrix4();
+    matrix.set(
+      numbers[0],
+      numbers[1],
+      numbers[2],
+      numbers[3],
+      numbers[4],
+      numbers[5],
+      numbers[6],
+      numbers[7],
+      numbers[8],
+      numbers[9],
+      numbers[10],
+      numbers[11],
+      numbers[12],
+      numbers[13],
+      numbers[14],
+      numbers[15]
+    );
+
+    const position = new THREE.Vector3();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    matrix.decompose(position, quaternion, scale);
+
+    const euler = new THREE.Euler().setFromQuaternion(quaternion);
+
+    // Update node transform
+    const t = this.selectedNode.transform;
+    t.position.x = position.x;
+    t.position.y = position.y;
+    t.position.z = position.z;
+    t.rotation.x = radsToDegrees(euler.x);
+    t.rotation.y = radsToDegrees(euler.y);
+    t.rotation.z = radsToDegrees(euler.z);
+    t.scale.x = scale.x;
+    t.scale.y = scale.y;
+    t.scale.z = scale.z;
+
+    // Apply to Three.js object
+    if (this.selectedNode.object3D) {
+      const obj = this.selectedNode.object3D;
+      obj.position.copy(position);
+      obj.rotation.copy(euler);
+      obj.scale.copy(scale);
+
+      const boundingBox = this.scene.computeBoundingBox();
+      if (boundingBox) {
+        this.scene.grid.adjust(boundingBox);
+      }
+      this.scene.view.renderView();
+    }
+
+    this._scheduleSave(this.selectedNode);
+    this.renderPropertiesPanel();
+
+    return { success: true };
   }
 
   // ==================== Context Menu Methods ====================
@@ -1062,7 +1214,9 @@ export class ModelsTree {
       loadingManager.setURLModifier((url) => {
         // Extract just the filename from the URL, decode and strip quotes
         // (MTL files may quote filenames that contain spaces)
-        const filename = decodeURIComponent(url.split('/').pop()).replace(/^["']|["']$/g, '').normalize('NFC');
+        const filename = decodeURIComponent(url.split('/').pop())
+          .replace(/^["']|["']$/g, '')
+          .normalize('NFC');
         // Look up in our texture map (try original, lowercase, NFC variants)
         const blobUrl = textureMap.get(filename) || textureMap.get(filename.toLowerCase());
         if (blobUrl) {

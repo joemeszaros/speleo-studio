@@ -21,7 +21,7 @@ import { i18n } from '../i18n/i18n.js';
  * 1. Initial version
  * 2. Added declinationCache store
  * 3. Added revisions store
- * 4. Added modelFiles, textureFiles, modelFileSettings and modelMetadata stores for 3D model persistence
+ * 4. Added modelFiles, textureFiles, modelFileSettings, octreeCache and modelMetadata stores for 3D model persistence
  */
 export class DatabaseManager {
   constructor() {
@@ -78,6 +78,11 @@ export class DatabaseManager {
           { name: 'projectId', keyPath: 'projectId', options: { unique: false } },
           { name: 'modelFileId', keyPath: 'modelFileId', options: { unique: false } }
         ]
+      },
+      // Cache for LAS/LAZ octree data (avoids expensive rebuild on project reload)
+      octreeCache : {
+        keyPath : 'modelFileId',
+        indexes : [{ name: 'projectId', keyPath: 'projectId', options: { unique: false } }]
       },
       // Generic store for texture files (MTL, JPG, PNG, etc.)
       textureFiles : {

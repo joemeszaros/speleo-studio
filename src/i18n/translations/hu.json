@@ -78,7 +78,14 @@
       }
     },
     "loading": {
-      "openingModel": "3D modell megnyitása..."
+      "openingModel": "3D modell megnyitása...",
+      "lasHeader": "LAS fejléc feldolgozása...",
+      "lasParsing": "LAS feldolgozás: {percent}%",
+      "lazDecompressing": "LAZ kicsomagolás: {percent}%",
+      "lasOctreeStart": "Octree építése...",
+      "lasOctreeBuilding": "Octree építése: {count} csomópont",
+      "pointsSubsampled": "{name}: {displayed} / {total} pont betöltve (max. betöltött pontok: {max}). Ezt a Beállítások → 3D modellek menüben módosíthatja.",
+      "partialLoad": "{name}: a fájl hibákat tartalmaz. {loaded} / {total} pont sikeresen betöltve."
     },
     "footer": {
       "project": "Projekt",
@@ -173,6 +180,8 @@
         "pointCloudPointSize": "Pontfelhő pontméret",
         "pointCloudColorStart": "Pontfelhő szín (felső)",
         "pointCloudColorEnd": "Pontfelhő szín (alsó)",
+        "pointBudget": "Max. pontszám (millió)",
+        "maxPoints": "Max. betöltött pontok (millió)",
         "targetPoint": "Kamera célpont",
         "sectionsLabel": "Szakasz címkék",
         "circleOpacity": "Dőlés - Tektonikus kör átlátszóság",
@@ -223,7 +232,13 @@
         "rotation": "Forgatás",
         "scale": "Méretezés",
         "opacity": "Átlátszóság",
-        "size": "Méret"
+        "size": "Méret",
+        "matrix": "4x4 Mátrix",
+        "matrixDialogTitle": "Transzformációs mátrix alkalmazása",
+        "matrixDialogDescription": "Illessz be egy 4x4-es transzformációs mátrixot (pl. CloudCompare-ből)",
+        "matrixInvalid": "Érvénytelen mátrix. 16 szám szükséges 4x4-es formátumban.",
+        "matrixNotFinite": "A mátrix érvénytelen számokat tartalmaz (végtelen vagy NaN).",
+        "matrixBottomRow": "Figyelmeztetés: az alsó sornak [0, 0, 0, 1]-nek kell lennie egy érvényes affin transzformációhoz."
       },
       "menu": {
         "sheet": "Modell adatlap",
@@ -239,7 +254,8 @@
     "dialogs": {
       "modelCoordinate": {
         "message": "Adja meg a WGS84 koordinátákat ehhez a 3D modellhez. Ez lehetővé teszi a modell helyes pozicionálását a barlangokhoz képest. Kihagyhatja ezt a lépést, ha a modell helyi koordinátákat használ.",
-        "wgs84Coordinates": "WGS84 koordináták"
+        "wgs84Coordinates": "WGS84 koordináták",
+        "firstPoint": "Első pont a fájlban"
       }
     },
     "welcome": {
@@ -304,6 +320,7 @@
         "projectCreated": "Projekt \"{name}\" létrehozva",
         "projectSaved": "Projekt mentve",
         "projectExported": "Projekt \"{name}\" exportálva",
+        "nonEmbeddedModelsWarning": "\"{project}\" projekt: a következő modellek nincsenek beágyazva és nem kerültek az exportba: {names}. A beágyazáshoz kattintson jobb gombbal a modellre és válassza a \"Modell beágyazása\" opciót.",
         "exporting": "Projekt exportálása...",
         "importing": "Projekt importálása...",
         "allProjectsExported": "Összes projekt exportálva",
@@ -678,6 +695,7 @@
         "modelFile": "Modell fájl",
         "textureFiles": "Textúra fájlok",
         "totalSize": "Teljes méret",
+        "pointCount": "Pontok",
         "errors": {
           "modelNameAlreadyExists": "Egy '{name}' nevű modell már létezik",
           "missingCoordinates": "A koordináta rendszer meg van adva, de nincsenek koordináták",

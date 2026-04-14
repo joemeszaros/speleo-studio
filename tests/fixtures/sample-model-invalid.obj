@@ -1,0 +1,4 @@
+# Invalid OBJ - face references non-existent vertices
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+f 1 2 99 100

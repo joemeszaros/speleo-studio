@@ -45,6 +45,8 @@
         <ul>
           <li><strong>PLY</strong> (Polygon File Format) &mdash; pontfelhők és háromszöghálók</li>
           <li><strong>OBJ</strong> (Wavefront OBJ) &mdash; háromszöghálók textúra támogatással</li>
+          <li><strong>LAS</strong> (ASPRS LAS 1.0&ndash;1.4) &mdash; LiDAR pontfelhők</li>
+          <li><strong>LAZ</strong> (tömörített LAS) &mdash; tömörített LiDAR pontfelhők</li>
           <li><strong>MTL</strong> (Material Template Library) &mdash; anyag- és textúra definíciók OBJ fájlokhoz</li>
           <li><strong>JPG, PNG</strong> &mdash; textúra képfájlok</li>
         </ul>
@@ -60,7 +62,7 @@
       <div class="step">
         <h3>2. lépés: Fájlok kiválasztása</h3>
         <p>
-          A fájl tallózó ablakban válassza ki a modell fájlt (.ply vagy .obj). Ha a modellhez textúra fájlok is
+          A fájl tallózó ablakban válassza ki a modell fájlt (.ply, .obj, .las vagy .laz). Ha a modellhez textúra fájlok is
           tartoznak (.mtl és képfájlok), azokat is kiválaszthatja egyszerre. A Speleo Studio automatikusan felismeri és
           alkalmazza a textúrákat.
         </p>
@@ -98,6 +100,63 @@
         </p>
       </div>
 
+      <h2>Nagy pontfelhők</h2>
+
+      <p>
+        A Speleo Studio nagy pontfelhőket (akár több tízmillió pont) is képes kezelni. Az első betöltésnél
+        az alkalmazás feldolgozza a pontfelhőt, ami nagy fájloknál néhány másodpercet vehet igénybe.
+        A következő megnyitásnál a betöltés szinte azonnali.
+      </p>
+
+      <p>
+        Ha a pontfelhő több pontot tartalmaz, mint a <strong>Max. betöltött pontok</strong> beállítás,
+        az alkalmazás automatikusan ritkítja a pontokat a betöltéskor. Erről egy üzenet tájékoztatja a felhasználót.
+      </p>
+
+      <div class="info">
+        <h3>Pontfelhő beállítások</h3>
+        <p>A <strong>Beállítások &rarr; 3D modellek</strong> szekcióban konfigurálható:</p>
+        <ul>
+          <li><strong>Pontfelhő pontméret:</strong> a megjelenített pontok mérete pixelben</li>
+          <li><strong>Pontfelhő szín:</strong> magasság alapú színátmenet a szín nélküli pontfelhőkhöz</li>
+        </ul>
+
+        <h4>Max. pontszám és Max. betöltött pontok &mdash; mi a különbség?</h4>
+        <p>Ez a két beállítás különböző dolgokat vezérel:</p>
+        <table>
+          <tr>
+            <th></th>
+            <th>Max. betöltött pontok (millió)</th>
+            <th>Max. pontszám (millió)</th>
+          </tr>
+          <tr>
+            <td><strong>Mikor hat?</strong></td>
+            <td>A fájl megnyitásakor</td>
+            <td>A megjelenítés során, minden képkockánál</td>
+          </tr>
+          <tr>
+            <td><strong>Mit csinál?</strong></td>
+            <td>Korlátozza, hogy a fájlból hány pont kerüljön betöltésre a memóriába. Ha a fájl több pontot tartalmaz, a pontok ritkítva lesznek.</td>
+            <td>Korlátozza, hogy egyszerre hány pont jelenjen meg a képernyőn. A kamera közelébe eső területek részletesebben, a távolabbi területek kevesebb ponttal jelennek meg.</td>
+          </tr>
+          <tr>
+            <td><strong>Mire hat?</strong></td>
+            <td>Memóriahasználat, betöltési idő</td>
+            <td>Képkocka sebesség (FPS), megjelenítési részletesség</td>
+          </tr>
+          <tr>
+            <td><strong>Alapértelmezés</strong></td>
+            <td>20 millió</td>
+            <td>2 millió</td>
+          </tr>
+        </table>
+        <p>
+          <strong>Példa:</strong> Ha egy 50 milliós pontfelhőt nyit meg 20 milliós betöltési limittel,
+          a fájlból 20 millió pont kerül betöltésre. Ebből a 2 milliós megjelenítési limit miatt
+          egyszerre csak ~2 millió pont jelenik meg a képernyőn, a kamera pozíciójától függően.
+        </p>
+      </div>
+
       <h2>Modell böngésző</h2>
       <p>
         Az importált 3D modellek a <strong>Modellek</strong> fülön jelennek meg az oldalsávban. Minden modell egy
@@ -106,7 +165,7 @@
 
       <ul>
         <li><strong>Bal kattintás:</strong> Modell kiválasztása &mdash; megjelenik a tulajdonságok panel</li>
-        <li><strong>Jobb kattintás:</strong> Helyi menü megnyitása a következő opciókkal:</li>
+        <li><strong>Jobb kattintás</strong> vagy <strong>&#8942; menü gomb:</strong> Helyi menü megnyitása a következő opciókkal:</li>
       </ul>
 
       <div class="image-placeholder black small-padding">
@@ -154,6 +213,30 @@
 
       <div class="image-placeholder black small-padding">
         <img src="images/9-tulajdonsagok.png" />
+      </div>
+
+      <h3>4x4 Transzformációs mátrix</h3>
+      <p>
+        A tulajdonságok panel fejlécében, a fájlméret mellett található egy kis mátrix ikon
+        (<img src="../../icons/matrix.svg" style="width: 14px; height: 14px; vertical-align: middle; filter: invert(1);" alt="mátrix ikon">).
+        Erre kattintva megnyílik egy párbeszédablak, ahol egy <strong>4&times;4-es transzformációs mátrixot</strong>
+        lehet beilleszteni, például CloudCompare-ből vagy más 3D szoftverből.
+      </p>
+      <p>
+        A mátrix egyszerre tartalmazza a pozíciót (eltolás), a forgatást és a méretezést. Az alkalmazás automatikusan
+        felbontja ezeket az összetevőket és alkalmazza a modellre. A párbeszédablak megnyitásakor a jelenlegi
+        transzformáció jelenik meg mátrix formában, így az könnyen másolható más alkalmazásba is.
+      </p>
+
+      <div class="info">
+        <h3>Mátrix formátum</h3>
+        <p>A mátrix 4 sorból és 4 oszlopból áll, az értékek szóközzel, tabulátorral, vesszővel vagy pontosvesszővel
+          elválaszthatók. Az utolsó sornak <code>0 0 0 1</code>-nek kell lennie (affin transzformáció).</p>
+        <p><strong>Példa</strong> (15&deg;-os forgatás a Z tengely körül, 10.5 és -3.2 eltolással):</p>
+        <pre style="background: #1a1a1a; color: #ccc; padding: 8px; border-radius: 4px; font-size: 13px;">0.9659   -0.2588    0.0000   10.5000
+0.2588    0.9659    0.0000   -3.2000
+0.0000    0.0000    1.0000    0.0000
+0.0000    0.0000    0.0000    1.0000</pre>
       </div>
 
       <h2>Modell adatlap</h2>

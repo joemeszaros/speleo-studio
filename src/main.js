@@ -19,6 +19,7 @@ import { MyScene, SceneOverview } from './scene/scene.js';
 import {
   PlyModelImporter,
   ObjModelImporter,
+  LasModelImporter,
   PolygonImporter,
   TopodroidImporter,
   JsonImporter,
@@ -239,11 +240,12 @@ class Main {
         console.warn(`No importer found for model type: ${modelFile.type}`);
         return;
       }
-      const importMethod = modelFile.type === 'ply' ? 'importData' : 'importText';
-      const importData = modelFile.type === 'ply'
+      const binaryTypes = new Set(['ply', 'las', 'laz']);
+      const importMethod = binaryTypes.has(modelFile.type) ? 'importData' : 'importText';
+      const importData = binaryTypes.has(modelFile.type)
         ? await modelFile.data.arrayBuffer()
         : await modelFile.data.text();
-      await importer[importMethod](importData, onModelParsed, modelFile.filename);
+      await importer[importMethod](importData, onModelParsed, modelFile.filename, modelFile.id);
     });
 
     // Initialize project panel
@@ -284,13 +286,23 @@ class Main {
     );
 
     this.loadingOverlay = new LoadingOverlay();
+    this.projectManager.loadingOverlay = this.loadingOverlay;
+
+    // Listen for LAS/LAZ loading progress to update the overlay
+    document.addEventListener('pointCloudLoadProgress', (e) => {
+      if (this.loadingOverlay.isActive()) {
+        this.loadingOverlay.updateMessage(e.detail.message);
+      }
+    });
 
     this.importers = {
       topodroid : new TopodroidImporter(db, options, scene, this.projectManager),
       polygon   : new PolygonImporter(db, options, scene, this.projectManager),
       json      : new JsonImporter(db, options, scene, this.projectManager, attributeDefs),
       ply       : new PlyModelImporter(db, options, scene, this.projectManager),
-      obj       : new ObjModelImporter(db, options, scene, this.projectManager)
+      obj       : new ObjModelImporter(db, options, scene, this.projectManager),
+      las       : new LasModelImporter(db, options, scene, this.projectManager),
+      laz       : new LasModelImporter(db, options, scene, this.projectManager)
     };
 
     this.#setupEventListeners();
@@ -355,7 +367,7 @@ class Main {
   }
 
   #setupModelFileInputListener() {
-    const modelExtensions = new Set(['ply', 'obj']);
+    const modelExtensions = new Set(['ply', 'obj', 'las', 'laz']);
     const input = document.getElementById('modelInput');
 
     input.addEventListener('change', async (e) => {
@@ -394,10 +406,12 @@ class Main {
         // Show coordinate dialog with embedded coordinates pre-filled (if found)
         const firstModel = parsedModels[0]?.model;
         const embeddedCoords = firstModel?.embeddedCoords || null;
+        const firstPointCoords = firstModel?.firstPointCoords || null;
         const modelCoordDialog = new ModelCoordinateDialog();
         const wgs84Coords = await modelCoordDialog.show(
           modelFiles[0]?.name || '',
-          embeddedCoords
+          embeddedCoords,
+          firstPointCoords
         );
 
         // Convert WGS84 to GeoData if coordinates were provided
@@ -452,11 +466,12 @@ class Main {
     let entry;
 
     if (model instanceof PointCloud) {
-      // Handle point cloud (PLY without faces)
+      // Handle point cloud (PLY without faces, or LAS/LAZ)
       this.db.addPointCloud(model);
 
-      // Only calculate gradient colors if the point cloud doesn't have vertex colors
-      const colorGradients = model.hasVertexColors
+      // LAS/LAZ octree point clouds have colors pre-computed (RGB or gradient in worker)
+      // PLY point clouds without vertex colors need gradient colors computed here
+      const colorGradients = (model.hasVertexColors || model.hasOctree)
         ? null
         : PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
 

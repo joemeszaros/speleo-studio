@@ -15,6 +15,7 @@
  */
 
 import * as THREE from 'three';
+import { degreesToRads } from '../../utils/utils.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { PointCloudHelper } from '../../utils/models.js';
@@ -27,6 +28,9 @@ export class ModelScene {
     // Separate tracking for point clouds and meshes
     this.pointCloudObjects = new Map();
     this.meshObjects = new Map();
+
+    // Octree instances for LAS/LAZ point clouds (used for per-frame LOD updates)
+    this.pointCloudOctrees = [];
 
     // Single group for all 3D model objects
     this.object3DGroup = new THREE.Group();
@@ -67,6 +71,14 @@ export class ModelScene {
       throw new Error(i18n.t('errors.scene.pointCloudAlreadyAdded', { name: pointCloud.name }));
     }
     this.pointCloudObjects.set(pointCloud.name, entry);
+
+    // Track octree for per-frame LOD updates.
+    // Run updateVisibility once immediately so nodes are visible for
+    // bounding box computation and camera fitting.
+    if (pointCloud.hasOctree && pointCloud.octree) {
+      this.pointCloudOctrees.push(pointCloud.octree);
+      pointCloud.octree.updateVisibility(this.scene.view.camera, this.scene.sceneRenderer);
+    }
 
     this.scene.view.renderView();
   }
@@ -136,6 +148,70 @@ export class ModelScene {
   }
 
   /**
+   * Updates the point budget for all point cloud octrees.
+   * @param {number} budget - The new point budget
+   */
+  updatePointBudget(budget) {
+    for (const octree of this.pointCloudOctrees) {
+      octree.pointBudget = budget;
+    }
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Set visibility of a model.
+   * @param {THREE.Object3D} object3D - The model's Three.js object
+   * @param {boolean} visible - Whether the model should be visible
+   */
+  setModelVisibility(object3D, visible) {
+    object3D.visible = visible;
+
+    const boundingBox = this.scene.computeBoundingBox();
+    if (boundingBox) {
+      this.scene.grid.adjust(boundingBox);
+    }
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Set opacity of a model.
+   * @param {THREE.Object3D} object3D - The model's Three.js object
+   * @param {number} opacity - Opacity value (0-1)
+   */
+  setModelOpacity(object3D, opacity) {
+    object3D.traverse((child) => {
+      if (child.material) {
+        child.material.transparent = opacity < 1;
+        child.material.opacity = opacity;
+        child.material.needsUpdate = true;
+      }
+    });
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Apply a transform change to a model.
+   * @param {THREE.Object3D} object3D - The model's Three.js object
+   * @param {string} property - 'position', 'rotation', or 'scale'
+   * @param {string} axis - 'x', 'y', or 'z'
+   * @param {number} value - The new value (rotation in degrees)
+   */
+  setModelTransform(object3D, property, axis, value) {
+    if (property === 'position') {
+      object3D.position[axis] = value;
+    } else if (property === 'rotation') {
+      object3D.rotation[axis] = degreesToRads(value);
+    } else if (property === 'scale') {
+      object3D.scale[axis] = value;
+    }
+    const boundingBox = this.scene.computeBoundingBox();
+    if (boundingBox) {
+      this.scene.grid.adjust(boundingBox);
+    }
+    this.scene.view.renderView();
+  }
+
+  /**
    * Updates the point size of all point cloud materials.
    * @param {number} size - The new point size
    */
@@ -145,6 +221,9 @@ export class ModelScene {
         entry.object3D.material.size = size;
         entry.object3D.material.needsUpdate = true;
       }
+    }
+    for (const octree of this.pointCloudOctrees) {
+      octree.updatePointSize(size);
     }
     this.scene.view.renderView();
   }
@@ -159,9 +238,15 @@ export class ModelScene {
       const pointCloud = this.scene.db.getPointCloud(name);
       // Only update colors for point clouds without native vertex colors
       if (pointCloud && !pointCloud.hasVertexColors) {
-        const colorGradients = PointCloudHelper.getColorGradients(pointCloud.points, colorConfig);
-        if (colorGradients && entry.object3D.geometry) {
-          entry.object3D.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorGradients, 3));
+        if (pointCloud.hasOctree && pointCloud.octree) {
+          // LAS/LAZ octree: update gradient colors on all nodes
+          pointCloud.octree.updateGradientColors(colorConfig.start, colorConfig.end, false);
+        } else {
+          // PLY point cloud: update via PointCloudHelper
+          const colorGradients = PointCloudHelper.getColorGradients(pointCloud.points, colorConfig);
+          if (colorGradients && entry.object3D.geometry) {
+            entry.object3D.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorGradients, 3));
+          }
         }
       }
     }
@@ -176,6 +261,13 @@ export class ModelScene {
     let entry = this.pointCloudObjects.get(name) || this.meshObjects.get(name);
     if (!entry) return;
 
+    // Clean up octree if this is a LAS point cloud
+    const pointCloud = this.scene.db.getPointCloud(name);
+    if (pointCloud?.hasOctree && pointCloud.octree) {
+      pointCloud.octree.dispose();
+      this.pointCloudOctrees = this.pointCloudOctrees.filter(o => o !== pointCloud.octree);
+    }
+
     this.#disposeObject3D(entry.object3D);
     this.object3DGroup.remove(entry.object3D);
     this.pointCloudObjects.delete(name);
@@ -188,6 +280,12 @@ export class ModelScene {
    * Removes all point clouds and meshes, disposing their geometries and materials.
    */
   clearModels() {
+    // Dispose octrees
+    for (const octree of this.pointCloudOctrees) {
+      octree.dispose();
+    }
+    this.pointCloudOctrees = [];
+
     // Dispose and remove all point clouds
     for (const [, entry] of this.pointCloudObjects) {
       this.#disposeObject3D(entry.object3D);

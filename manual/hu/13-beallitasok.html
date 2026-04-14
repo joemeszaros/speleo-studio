@@ -46,6 +46,7 @@
           <li><strong>➜ Felmérés vonalak:</strong> Vonalak megjelenítési beállításai</li>
           <li><strong>📍 Pontok:</strong> Pontok megjelenítése és méretezése</li>
           <li><strong>🏷️ Pont címkék:</strong> Pont címkék megjelenítése és formázása</li>
+          <li><strong>🌐 3D modellek:</strong> Pontfelhő megjelenítési beállítások (pontméret, max. pontszám, színek)</li>
           <li><strong>🖼️ Megjelenés:</strong> Általános vizualizációs beállítások</li>
           <li><strong>🅰️ Attribútumok:</strong> Attribútum megjelenítési beállítások</li>
           <li><strong>ⓘ Pont részletek:</strong> Footer-ben megjelenő pont információk</li>
@@ -342,6 +343,24 @@
           <h5>Körvonal szín</h5>
           <p>Állítsa be a címkék körvonalának színét.</p>
         </div>
+      </div>
+
+      <h2>🌐 3D modellek beállításai</h2>
+
+      <div class="settings-box">
+        <h4>Pontfelhő megjelenítés</h4>
+        <table>
+          <tr><th>Beállítás</th><th>Leírás</th><th>Alapértelmezés</th></tr>
+          <tr><td>Pontfelhő pontméret</td><td>A megjelenített pontok mérete pixelben</td><td>2</td></tr>
+          <tr><td>Pontfelhő szín (felső)</td><td>A magasság alapú színátmenet felső színe</td><td>Zöld</td></tr>
+          <tr><td>Pontfelhő szín (alsó)</td><td>A magasság alapú színátmenet alsó színe</td><td>Piros</td></tr>
+          <tr><td>Max. pontszám (millió)</td><td>Az egyszerre megjelenített pontok maximális száma. A kamera közelében részletesebb, távolabb kevesebb pont jelenik meg. Nagyobb érték = részletesebb, de lassabb megjelenítés.</td><td>2</td></tr>
+          <tr><td>Max. betöltött pontok (millió)</td><td>A fájlból betöltött pontok maximális száma. Ha a fájl ennél többet tartalmaz, a pontok ritkítva lesznek. Nagyobb érték = több pont a memóriában, de hosszabb betöltési idő.</td><td>20</td></tr>
+        </table>
+        <p>
+          A két beállítás különböző dolgot vezérel: a <strong>Max. betöltött pontok</strong> határozza meg, hogy a fájlból mennyi pont kerül a memóriába (betöltéskor),
+          míg a <strong>Max. pontszám</strong> azt szabályozza, hogy ebből egyszerre hány pont jelenik meg a képernyőn (megjelenítéskor).
+        </p>
       </div>
 
       <h2>🖼️ Megjelenés beállításai</h2>

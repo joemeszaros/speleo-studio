@@ -1318,6 +1318,31 @@ body {
   opacity: 0.7;
 }
 
+.tree-node-menu-btn {
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  color: #888;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.models-tree-node:hover .tree-node-menu-btn,
+.models-tree-category-header:hover .tree-node-menu-btn,
+.explorer-tree-node:hover .tree-node-menu-btn {
+  opacity: 1;
+}
+
+.tree-node-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
 .models-tree-visibility {
   width: 20px;
   height: 20px;
@@ -1404,6 +1429,36 @@ body {
   font-size: 11px;
   color: #999;
   margin-left: 8px;
+}
+
+.models-properties-matrix-btn {
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.models-properties-matrix-btn img {
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+}
+
+.models-properties-matrix-btn:hover {
+  background: #404040;
+  border-color: #04aa6d;
+}
+
+.models-properties-matrix-btn:hover img {
+  opacity: 1;
 }
 
 .models-properties-content-wrapper {

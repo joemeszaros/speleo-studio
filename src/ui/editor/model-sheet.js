@@ -462,8 +462,27 @@ export class ModelSheetEditor extends BaseEditor {
         container.appendChild(columns);
       }
 
+      // Point count for point clouds
+      const model = this.modelNode.data;
+      if (model?.points !== undefined) {
+        let pointCountText;
+        if (model.hasOctree && model.octree) {
+          let total = 0;
+          for (const node of model.octree.nodes.values()) {
+            total += node.data.pointCount;
+          }
+          pointCountText = total.toLocaleString();
+        }
+        if (!pointCountText) {
+          pointCountText = model.points.length.toLocaleString();
+        }
+        container.appendChild(
+          U.node`<div style="font-size: 11px; font-weight: 600; color: #fff; margin-top: 8px;">${i18n.t('ui.editors.modelSheet.pointCount')}: ${pointCountText}</div>`
+        );
+      }
+
       container.appendChild(
-        U.node`<div style="font-size: 11px; font-weight: 600; color: #fff; margin-top: 8px;">${i18n.t('ui.editors.modelSheet.totalSize')}: ${U.formatBytes(totalBytes)}</div>`
+        U.node`<div style="font-size: 11px; font-weight: 600; color: #fff; margin-top: 4px;">${i18n.t('ui.editors.modelSheet.totalSize')}: ${U.formatBytes(totalBytes)}</div>`
       );
     } catch (err) {
       container.innerHTML = `<div style="color: #f66; font-size: 11px;">${err.message}</div>`;

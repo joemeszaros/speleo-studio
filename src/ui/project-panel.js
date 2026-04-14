@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { showErrorPanel, showSuccessPanel } from './popups.js';
+import { showErrorPanel, showSuccessPanel, showInfoPanel } from './popups.js';
 import * as U from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
 import { DriveProject, FatProject, Project, FatProjects } from '../model/project.js';
@@ -1223,6 +1223,9 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         URL.revokeObjectURL(url);
 
         showSuccessPanel(i18n.t('ui.panels.projectManager.allProjectsExported'));
+        for (const project of projects) {
+          await this.#warnNonEmbeddedModels(project.id, project.name);
+        }
       } catch (error) {
         console.error(error);
         showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
@@ -1251,11 +1254,22 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         URL.revokeObjectURL(url);
 
         showSuccessPanel(i18n.t('ui.panels.projectManager.projectExported', { name: project.name }));
+        await this.#warnNonEmbeddedModels(projectId, project.name);
       } catch (error) {
         console.error(error);
         showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectExportFailed', { error: error.message }));
       }
     });
+  }
+
+  async #warnNonEmbeddedModels(projectId, projectName) {
+    if (!this.modelSystem) return;
+    const allMetadata = await this.modelSystem.getModelMetadataByProject(projectId);
+    const nonEmbedded = allMetadata.filter((m) => !m.embedded);
+    if (nonEmbedded.length > 0) {
+      const names = nonEmbedded.map((m) => m.name).join(', ');
+      showInfoPanel(i18n.t('ui.panels.projectManager.nonEmbeddedModelsWarning', { project: projectName, names }));
+    }
   }
 
   async renameProject(projectId) {

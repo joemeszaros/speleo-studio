@@ -1,0 +1,7 @@
+newmtl TestMaterial
+Ka 1.0 1.0 1.0
+Kd 0.8 0.2 0.2
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 2

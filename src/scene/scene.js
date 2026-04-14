@@ -170,12 +170,17 @@ class MyScene {
   computeBoundingBox() {
     let boundingBox = this.speleo.computeBoundingBox();
 
-    // Extend bounding box with loaded 3D models
+    // Extend bounding box with visible 3D models only
     const group = this.models.get3DModelsGroup();
     if (group.children.length > 0) {
-      const modelBox = new THREE.Box3().setFromObject(group);
+      const modelBox = new THREE.Box3();
+      for (const child of group.children) {
+        if (child.visible) {
+          modelBox.expandByObject(child);
+        }
+      }
       if (boundingBox === undefined) {
-        boundingBox = modelBox;
+        boundingBox = modelBox.isEmpty() ? undefined : modelBox;
       } else if (!modelBox.isEmpty()) {
         boundingBox.union(modelBox);
       }
@@ -198,6 +203,17 @@ class MyScene {
   animate() {
     const delta = this.clock.getDelta();
     this.view.animate(delta);
+
+    // Update point cloud octree LOD visibility and re-render.
+    // This must run after view.animate() updates the camera, and must
+    // trigger a render so visibility changes are displayed immediately
+    // (the view's own render in onControlChange happens BEFORE this).
+    if (this.models && this.view.camera && this.models.pointCloudOctrees.length > 0) {
+      for (const octree of this.models.pointCloudOctrees) {
+        octree.updateVisibility(this.view.camera, this.sceneRenderer);
+      }
+      this.view.renderView();
+    }
   }
 
   onRotate() {

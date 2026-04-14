@@ -53,6 +53,16 @@ export class LoadingOverlay {
   }
 
   /**
+   * Update the message text on the currently visible overlay.
+   * @param {string} message - The new message to display
+   */
+  updateMessage(message) {
+    if (!this.element) return;
+    const msgEl = this.element.querySelector('.loading-message');
+    if (msgEl) msgEl.textContent = message;
+  }
+
+  /**
    * Hide and remove the loading overlay.
    */
   hide() {

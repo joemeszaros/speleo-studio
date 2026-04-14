@@ -78,7 +78,14 @@
       }
     },
     "loading": {
-      "openingModel": "Opening 3D model..."
+      "openingModel": "Opening 3D model...",
+      "lasHeader": "Parsing LAS header...",
+      "lasParsing": "Parsing LAS: {percent}%",
+      "lazDecompressing": "Decompressing LAZ: {percent}%",
+      "lasOctreeStart": "Building octree...",
+      "lasOctreeBuilding": "Building octree: {count} nodes",
+      "pointsSubsampled": "{name}: {displayed} of {total} points loaded (max loaded points: {max}). You can increase this in Settings → 3D models.",
+      "partialLoad": "{name}: the file contains errors. {loaded} of {total} points were loaded successfully."
     },
     "footer": {
       "project": "Project",
@@ -173,6 +180,8 @@
         "pointCloudPointSize": "Point cloud point size",
         "pointCloudColorStart": "Point cloud color (top)",
         "pointCloudColorEnd": "Point cloud color (bottom)",
+        "pointBudget": "Max point count (millions)",
+        "maxPoints": "Max loaded points (millions)",
         "targetPoint": "Camera target point",
         "sectionsLabel": "Sections label",
         "circleOpacity": "Bedding - tectonic circle opacity",
@@ -223,7 +232,13 @@
         "rotation": "Rotation",
         "scale": "Scale",
         "opacity": "Opacity",
-        "size": "Size"
+        "size": "Size",
+        "matrix": "4x4 Matrix",
+        "matrixDialogTitle": "Apply transformation matrix",
+        "matrixDialogDescription": "Paste a 4x4 transformation matrix (e.g. from CloudCompare)",
+        "matrixInvalid": "Invalid matrix. Expected 16 numbers in a 4x4 format.",
+        "matrixNotFinite": "Matrix contains invalid numbers (Infinity or NaN).",
+        "matrixBottomRow": "Warning: bottom row should be [0, 0, 0, 1] for a valid affine transform."
       },
       "menu": {
         "sheet": "Model sheet",
@@ -239,7 +254,8 @@
     "dialogs": {
       "modelCoordinate": {
         "message": "Set WGS84 coordinates for this 3D model. This allows the model to be positioned correctly relative to caves. You can skip this step if the model uses local coordinates.",
-        "wgs84Coordinates": "WGS84 Coordinates"
+        "wgs84Coordinates": "WGS84 Coordinates",
+        "firstPoint": "First point in file"
       }
     },
     "welcome": {
@@ -304,6 +320,7 @@
         "projectCreated": "Project \"{name}\" created successfully",
         "projectSaved": "Project saved successfully",
         "projectExported": "Project \"{name}\" exported successfully",
+        "nonEmbeddedModelsWarning": "Project \"{project}\": the following models are not embedded and were not included in the export: {names}. To include them, right-click the model and select \"Embed model\".",
         "exporting": "Exporting project...",
         "importing": "Importing project...",
         "allProjectsExported": "All projects exported successfully",
@@ -675,6 +692,7 @@
         "modelFile": "Model file",
         "textureFiles": "Texture files",
         "totalSize": "Total size",
+        "pointCount": "Points",
         "errors": {
           "modelNameAlreadyExists": "A model with the name '{name}' already exists",
           "missingCoordinates": "Coordinate system is set but no coordinates are provided",

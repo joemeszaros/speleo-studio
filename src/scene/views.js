@@ -232,6 +232,7 @@ class View {
 
   onZoomLevelChange(level) {
     this.updateRationSprites(level);
+    document.dispatchEvent(new CustomEvent('zoomLevelChanged', { detail: { level } }));
   }
 
   updateRationSprites(level) {

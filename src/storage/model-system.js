@@ -27,6 +27,7 @@ export class ModelSystem {
   static MODEL_FILE_SETTINGS_STORE = 'modelFileSettings';
   static MODEL_METADATA_STORE = 'modelMetadata';
   static TEXTURE_FILES_STORE = 'textureFiles';
+  static OCTREE_CACHE_STORE = 'octreeCache';
 
   constructor(databaseManager) {
     this.dbManager = databaseManager;
@@ -115,6 +116,9 @@ export class ModelSystem {
 
     // Delete associated metadata
     await this.deleteModelMetadataByModelFileId(id).catch(() => {});
+
+    // Delete cached octree data
+    await this.deleteOctreeCache(id).catch(() => {});
 
     console.log(`🗑️ Model file deleted: ${id}`);
   }
@@ -309,7 +313,11 @@ export class ModelSystem {
 
         const textures = await this.getTextureFilesByModel(metadata.modelFileId);
         let settings = null;
-        try { settings = await this.getModelFileSettings(metadata.modelFileId); } catch (e) { /* no settings */ }
+        try {
+          settings = await this.getModelFileSettings(metadata.modelFileId);
+        } catch (e) {
+          /* no settings */
+        }
 
         result.push(new Model(metadata, modelFile, textures, settings));
       } catch (err) {
@@ -329,6 +337,65 @@ export class ModelSystem {
       request.onerror = () => {
         reject(new Error(i18n.t('errors.storage.modelSystem.failedToLoadTextureFiles')));
       };
+    });
+  }
+
+  // ==================== Octree Cache ====================
+
+  /**
+   * Save cached octree data for a LAS/LAZ model file.
+   * @param {string} modelFileId - The model file ID
+   * @param {string} projectId - The project ID
+   * @param {Object} data - { nodes, header, hasColors, totalPoints, displayedPoints, nodeCount, maxPoints }
+   */
+  async saveOctreeCache(modelFileId, projectId, data) {
+    const record = {
+      modelFileId,
+      projectId,
+      ...data,
+      createdAt : new Date().toISOString()
+    };
+
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadWriteStore(ModelSystem.OCTREE_CACHE_STORE);
+      const request = store.put(record);
+      request.onsuccess = () => {
+        console.log(`💾 Octree cache saved for model: ${modelFileId}`);
+        resolve();
+      };
+      request.onerror = () => reject(new Error('Failed to save octree cache'));
+    });
+  }
+
+  /**
+   * Get cached octree data for a model file.
+   * @param {string} modelFileId - The model file ID
+   * @returns {Promise<Object|null>} The cached octree record or null
+   */
+  async getOctreeCache(modelFileId) {
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadOnlyStore(ModelSystem.OCTREE_CACHE_STORE);
+      const request = store.get(modelFileId);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(new Error('Failed to load octree cache'));
+    });
+  }
+
+  /**
+   * Delete cached octree data for a model file.
+   * @param {string} modelFileId - The model file ID
+   */
+  async deleteOctreeCache(modelFileId) {
+
+    if (modelFileId === null || modelFileId === undefined || modelFileId === '') {
+      throw new Error(i18n.t('errors.storage.modelSystem.idRequired'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const store = this.dbManager.getReadWriteStore(ModelSystem.OCTREE_CACHE_STORE);
+      const request = store.delete(modelFileId);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error('Failed to delete octree cache'));
     });
   }
 

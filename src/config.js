@@ -80,8 +80,11 @@ export const DEFAULT_OPTIONS = {
       }
     },
     models : {
-      pointSize : 2,
-      color     : {
+      pointSize    : 2,
+      pointBudget  : 2000000,
+      maxPoints    : 20000000,
+      sseThreshold : 1.5,
+      color        : {
         start : '#39b14d',
         end   : '#9f2d2d',
         mode  : 'gradientByZ'
@@ -169,6 +172,10 @@ export const DEFAULT_OPTIONS = {
   screen : {
     DPI : 96
   },
+  interactive : {
+    raycasting : true
+  },
+
   ui : {
     editor : {
       survey : {
@@ -387,6 +394,22 @@ export class ConfigManager {
     // Ensure pointSize exists (might be missing from old configs)
     if (config.scene.models.pointSize === undefined) {
       config.scene.models.pointSize = 2;
+    }
+
+    // Ensure point cloud octree options exist
+    if (config.scene.models.pointBudget === undefined) {
+      config.scene.models.pointBudget = 2000000;
+    }
+    if (config.scene.models.maxPoints === undefined) {
+      config.scene.models.maxPoints = 20000000;
+    }
+    if (config.scene.models.sseThreshold === undefined) {
+      config.scene.models.sseThreshold = 1.5;
+    }
+
+    // Ensure interactive config exists
+    if (config.interactive === undefined) {
+      config.interactive = { raycasting: true };
     }
 
     // Ensure color config exists
@@ -1055,6 +1078,9 @@ export class ConfigChanges {
       case 'scene.models.color.end':
         this.scene.models.updatePointCloudColors(this.watchedConfig.scene.models.color);
         break;
+      case 'scene.models.pointBudget':
+        this.scene.models.updatePointBudget(newValue);
+        break;
     }
   }
 
@@ -1099,6 +1125,8 @@ export class ConfigChanges {
       this.handleCameraChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.models.')) {
       this.handleModelChanges(path, oldValue, newValue);
+    } else if (path.startsWith('interactive.')) {
+      // do nothing, persisted via auto-save
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('ui.stationDetails.')) {

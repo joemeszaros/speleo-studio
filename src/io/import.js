@@ -16,7 +16,7 @@
 
 import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
-import { showErrorPanel } from '../ui/popups.js';
+import { showErrorPanel, showInfoPanel } from '../ui/popups.js';
 import { Shot, ShotType } from '../model/survey.js';
 import { Vector, PointCloud, Mesh3D, ModelFile } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
@@ -37,6 +37,7 @@ import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as THREE from 'three';
 import { i18n } from '../i18n/i18n.js';
+import { PointCloudOctree } from '../utils/point-cloud-octree.js';
 /**
  * Base class for cave importerers
  */
@@ -148,6 +149,7 @@ class Importer {
       }
     });
   }
+
 }
 
 class PolygonImporter extends Importer {
@@ -699,7 +701,131 @@ class JsonImporter extends Importer {
   }
 }
 
-class PlyModelImporter extends Importer {
+/**
+ * Base class for point cloud importers (PLY and LAS/LAZ).
+ * Provides shared octree creation, caching, and coordinate normalization.
+ */
+class PointCloudImporter extends Importer {
+
+  // Increment when octree construction or position encoding changes to invalidate stale caches
+  static OCTREE_CACHE_VERSION = 3;
+
+  createOctreeFromNodes(msg, name, opts) {
+    const octree = new PointCloudOctree(msg.nodes, opts);
+
+    // Position the model: positions were centered in the worker (for Float32 precision).
+    // positionOffset = the bbox center that was subtracted.
+    // If a global normalizer exists, subtract the global origin from it.
+    // If no normalizer, keep group at 0,0,0 (model appears at origin, which is correct
+    // for case 3: no project CS, the centered positions are fine for viewing).
+    const po = msg.header.positionOffset || [0, 0, 0];
+    let groupX = po[0], groupY = po[1], groupZ = po[2];
+
+    if (globalNormalizer.isInitialized()) {
+      const origin = globalNormalizer.globalOrigin;
+      if (origin) {
+        const ox = origin.easting !== undefined ? origin.easting : origin.y || 0;
+        const oy = origin.northing !== undefined ? origin.northing : origin.x || 0;
+        const oz = origin.elevation || 0;
+        groupX -= ox;
+        groupY -= oy;
+        groupZ -= oz;
+      }
+    } else {
+      // No global reference — place model at origin
+      groupX = 0;
+      groupY = 0;
+      groupZ = 0;
+    }
+
+    octree.group.position.set(groupX, groupY, groupZ);
+
+    const samplePoints = this.samplePointsFromLeaves(msg.nodes);
+    const center = this.computeOctreeCenter(msg.header);
+    const pointCloud = new PointCloud(name, samplePoints, center, msg.hasColors);
+    pointCloud.octree = octree;
+    pointCloud.hasOctree = true;
+    pointCloud.firstPointCoords = msg.firstPoint || null;
+
+    return { pointCloud, octree };
+  }
+
+  async tryLoadOctreeFromCache(modelFileId, name, onModelLoad, opts) {
+    if (!this.manager?.modelSystem) return false;
+    try {
+      const cached = await this.manager.modelSystem.getOctreeCache(modelFileId);
+      if (!cached || cached.maxPoints !== opts.maxPoints || cached.cacheVersion !== PointCloudImporter.OCTREE_CACHE_VERSION) return false;
+
+      console.log(
+        `Octree: loading from cache (${cached.nodeCount} nodes, point budget: ${opts.pointBudget.toLocaleString()})`
+      );
+
+      const result = this.createOctreeFromNodes(cached, name, opts);
+      await onModelLoad(result.pointCloud, result.octree.group);
+      return true;
+    } catch (e) {
+      console.warn('Octree cache load failed, falling back to worker:', e);
+      return false;
+    }
+  }
+
+  saveOctreeToCache(modelFileId, msg, maxPoints) {
+    if (!this.manager?.modelSystem) return;
+
+    const projectSystem = this.manager.projectSystem;
+    const projectId = projectSystem?.getCurrentProject()?.id;
+    if (!projectId) return;
+
+    this.manager.modelSystem
+      .saveOctreeCache(modelFileId, projectId, {
+        nodes           : msg.nodes,
+        header          : msg.header,
+        hasColors       : msg.hasColors,
+        totalPoints     : msg.totalPoints,
+        displayedPoints : msg.displayedPoints,
+        nodeCount       : msg.nodeCount,
+        maxPoints       : maxPoints,
+        cacheVersion    : PointCloudImporter.OCTREE_CACHE_VERSION
+      })
+      .catch((err) => console.warn('Failed to cache octree:', err));
+  }
+
+  samplePointsFromLeaves(nodes) {
+    const points = [];
+    const maxSamplePoints = 50000;
+    let totalLeafPoints = 0;
+
+    for (const node of nodes) {
+      if (node.isLeaf) totalLeafPoints += node.pointCount;
+    }
+
+    const skip = Math.max(1, Math.floor(totalLeafPoints / maxSamplePoints));
+    let globalIdx = 0;
+
+    for (const node of nodes) {
+      if (!node.isLeaf) continue;
+      const pos = node.positions;
+      for (let i = 0; i < node.pointCount; i++) {
+        if (globalIdx % skip === 0) {
+          points.push(new Vector(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]));
+        }
+        globalIdx++;
+      }
+    }
+
+    return points;
+  }
+
+  computeOctreeCenter(header) {
+    return new Vector(
+      (header.mins[0] + header.maxs[0]) / 2,
+      (header.mins[1] + header.maxs[1]) / 2,
+      (header.mins[2] + header.maxs[2]) / 2
+    );
+  }
+}
+
+class PlyModelImporter extends PointCloudImporter {
 
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
@@ -710,7 +836,9 @@ class PlyModelImporter extends Importer {
     await super.importFileAsArrayBuffer(file, name, onModelLoad);
   }
 
-  async importData(data, onModelLoad, name) {
+  async importData(data, onModelLoad, name, modelFileId = null) {
+    const OCTREE_THRESHOLD = 5000;
+
     const loader = new PLYLoader();
     // PLYLoader.parse() accepts both string (ASCII PLY) and ArrayBuffer (binary PLY)
     const geometry = loader.parse(data);
@@ -733,13 +861,10 @@ class PlyModelImporter extends Importer {
 
     if (hasFaces) {
       // PLY has faces - render as a mesh
-      // Ensure normals exist for proper 3D shading
       if (!geometry.getAttribute('normal')) {
         geometry.computeVertexNormals();
       }
 
-      // Use MeshNormalMaterial for 3D appearance if no vertex colors,
-      // otherwise use MeshBasicMaterial with vertex colors
       const material = hasVertexColors
         ? new THREE.MeshBasicMaterial({
             vertexColors : true,
@@ -758,23 +883,148 @@ class PlyModelImporter extends Importer {
       const mesh = new Mesh3D(name, centerVector);
       await onModelLoad(mesh, meshObject, modelFile);
     } else {
-      // PLY is point cloud only - render as points
-      // Extract vertices only for point clouds (needed for raycasting and color gradients)
       const position = geometry.getAttribute('position');
-      const points = [];
-      for (let i = 0; i < position.count; i++) {
-        points.push(new Vector(position.getX(i), position.getY(i), position.getZ(i)));
-      }
+      const pointCount = position.count;
 
-      const material = new THREE.PointsMaterial({
-        color        : 0xffffff,
-        size         : this.options.scene.models.pointSize,
-        vertexColors : true // Always true: either native colors or gradient colors will be applied
-      });
-      const pointsObject = new THREE.Points(geometry, material);
-      const pointCloud = new PointCloud(name, points, centerVector, hasVertexColors);
-      await onModelLoad(pointCloud, pointsObject, modelFile);
+      if (pointCount > OCTREE_THRESHOLD) {
+        // Large point cloud — use octree with LOD
+        await this.#importAsOctree(geometry, name, modelFile, modelFileId, hasVertexColors, onModelLoad);
+      } else {
+        // Small point cloud — simple THREE.Points (no octree overhead)
+        const points = [];
+        for (let i = 0; i < pointCount; i++) {
+          points.push(new Vector(position.getX(i), position.getY(i), position.getZ(i)));
+        }
+
+        const material = new THREE.PointsMaterial({
+          color        : 0xffffff,
+          size         : this.options.scene.models.pointSize,
+          vertexColors : true
+        });
+        const pointsObject = new THREE.Points(geometry, material);
+        const pointCloud = new PointCloud(name, points, centerVector, hasVertexColors);
+        if (points.length > 0) {
+          pointCloud.firstPointCoords = [points[0].x, points[0].y, points[0].z];
+        }
+        await onModelLoad(pointCloud, pointsObject, modelFile);
+      }
     }
+  }
+
+  /**
+   * Import a large PLY point cloud using the octree system.
+   * Sends pre-parsed positions/colors to the worker for octree construction.
+   */
+  async #importAsOctree(geometry, name, modelFile, modelFileId, hasVertexColors, onModelLoad) {
+    const options = this.options;
+    const pointBudget = options.scene.models.pointBudget;
+    const sseThreshold = options.scene.models.sseThreshold;
+    const pointSize = options.scene.models.pointSize;
+    const colorStart = options.scene.models.color.start;
+    const colorEnd = options.scene.models.color.end;
+    const maxPoints = options.scene.models.maxPoints;
+
+    // Try loading from cached octree
+    if (modelFileId) {
+      const cached = await this.tryLoadOctreeFromCache(modelFileId, name, onModelLoad, {
+        pointBudget,
+        sseThreshold,
+        pointSize,
+        maxPoints
+      });
+      if (cached) return;
+    }
+
+    // Extract flat typed arrays from PLYLoader geometry
+    const posAttr = geometry.getAttribute('position');
+    const positions = new Float32Array(posAttr.array); // copy — worker will transfer
+
+    let colors = null;
+    if (hasVertexColors) {
+      const colAttr = geometry.getAttribute('color');
+      // PLY colors are Float32 (0-1), convert to Uint8 (0-255) for the worker
+      colors = new Uint8Array(colAttr.count * 3);
+      for (let i = 0; i < colAttr.count; i++) {
+        colors[i * 3] = Math.round(colAttr.getX(i) * 255);
+        colors[i * 3 + 1] = Math.round(colAttr.getY(i) * 255);
+        colors[i * 3 + 2] = Math.round(colAttr.getZ(i) * 255);
+      }
+    }
+
+    const bb = geometry.boundingBox;
+    const bounds = {
+      min : [bb.min.x, bb.min.y, bb.min.z],
+      max : [bb.max.x, bb.max.y, bb.max.z]
+    };
+
+    return new Promise((resolve, reject) => {
+      const workerUrl = new URL('./point-cloud-worker.js', import.meta.url);
+      const worker = new Worker(workerUrl);
+
+      worker.onmessage = async (e) => {
+        const msg = e.data;
+
+        if (msg.type === 'progress') {
+          document.dispatchEvent(
+            new CustomEvent('pointCloudLoadProgress', {
+              detail : {
+                message : i18n.t('ui.loading.lasOctreeBuilding', { count: msg.nodeCount || 0 }),
+                percent : msg.percent,
+                phase   : msg.phase
+              }
+            })
+          );
+        } else if (msg.type === 'result') {
+          try {
+            const result = this.createOctreeFromNodes(msg, name, {
+              pointBudget,
+              sseThreshold,
+              pointSize
+            });
+
+            console.log(
+              `PLY: loaded ${msg.displayedPoints.toLocaleString()} points, ${msg.nodeCount} octree nodes, point budget: ${pointBudget.toLocaleString()}`
+            );
+
+            await onModelLoad(result.pointCloud, result.octree.group, modelFile);
+
+            this.saveOctreeToCache(modelFileId || modelFile.id, msg, maxPoints);
+
+            resolve();
+          } catch (err) {
+            reject(err);
+          } finally {
+            worker.terminate();
+          }
+        } else if (msg.type === 'error') {
+          worker.terminate();
+          reject(new Error(msg.message));
+        }
+      };
+
+      worker.onerror = (err) => {
+        worker.terminate();
+        reject(new Error('Octree worker error: ' + err.message));
+      };
+
+      // Transfer arrays to worker for octree construction only
+      const transferables = [positions.buffer];
+      if (colors) transferables.push(colors.buffer);
+
+      worker.postMessage(
+        {
+          type       : 'build-octree',
+          positions  : positions.buffer,
+          colors     : colors ? colors.buffer : null,
+          pointCount : posAttr.count,
+          bounds     : bounds,
+          hasColors  : hasVertexColors,
+          colorStart : colorStart,
+          colorEnd   : colorEnd
+        },
+        transferables
+      );
+    });
   }
 
   /**
@@ -921,7 +1171,9 @@ class ObjModelImporter extends Importer {
    * @returns {{latitude: number, longitude: number, elevation: number}|null}
    */
   static extractCoordinates(text) {
-    let latitude = null, longitude = null, elevation = null;
+    let latitude = null,
+      longitude = null,
+      elevation = null;
 
     const lines = text.split('\n');
     for (const line of lines) {
@@ -1087,4 +1339,162 @@ class ObjModelImporter extends Importer {
   }
 }
 
-export { PolygonImporter, TopodroidImporter, JsonImporter, PlyModelImporter, ObjModelImporter, Importer };
+/**
+ * Importer for LAS/LAZ point cloud files.
+ * Parses the file in a Web Worker, builds a client-side octree with LOD,
+ * and creates a PointCloudOctree for efficient rendering.
+ */
+class LasModelImporter extends PointCloudImporter {
+
+  constructor(db, options, scene, manager) {
+    super(db, options, scene, manager);
+  }
+
+  async importFile(file, name, onModelLoad) {
+    await super.importFileAsArrayBuffer(file, name, onModelLoad);
+  }
+
+  async importData(data, onModelLoad, name, modelFileId = null) {
+    const options = this.options;
+    const pointBudget = options.scene.models.pointBudget;
+    const sseThreshold = options.scene.models.sseThreshold;
+    const pointSize = options.scene.models.pointSize;
+    const colorStart = options.scene.models.color?.start;
+    const colorEnd = options.scene.models.color?.end;
+    const maxPoints = options.scene.models.maxPoints;
+
+    // Try loading from cached octree (fast path for project reload)
+    if (modelFileId && this.manager?.modelSystem) {
+      const cached = await this.tryLoadOctreeFromCache(modelFileId, name, onModelLoad, {
+        pointBudget,
+        sseThreshold,
+        pointSize,
+        maxPoints
+      });
+      if (cached) return;
+    }
+
+    // Ensure we have an ArrayBuffer
+    const buffer = data instanceof ArrayBuffer ? data : await data.arrayBuffer();
+
+    // Keep a copy for ModelFile persistence — the original will be transferred to the worker
+    const bufferForStorage = buffer.slice(0);
+
+    return new Promise((resolve, reject) => {
+      const workerUrl = new URL('./point-cloud-worker.js', import.meta.url);
+      const worker = new Worker(workerUrl);
+
+      worker.onmessage = async (e) => {
+        const msg = e.data;
+
+        if (msg.type === 'progress') {
+          // Format i18n message from structured worker progress data
+          let message;
+          switch (msg.phase) {
+            case 'header':
+              message = i18n.t('ui.loading.lasHeader');
+              break;
+            case 'parsing':
+              message = i18n.t('ui.loading.lasParsing', { percent: msg.percent });
+              break;
+            case 'decompressing':
+              message = i18n.t('ui.loading.lazDecompressing', { percent: msg.percent });
+              break;
+            case 'octree':
+              message = msg.nodeCount
+                ? i18n.t('ui.loading.lasOctreeBuilding', { count: msg.nodeCount })
+                : i18n.t('ui.loading.lasOctreeStart');
+              break;
+            default:
+              message = i18n.t('ui.loading.openingModel');
+          }
+          document.dispatchEvent(
+            new CustomEvent('pointCloudLoadProgress', {
+              detail : { message, percent: msg.percent, phase: msg.phase }
+            })
+          );
+        } else if (msg.type === 'result') {
+          try {
+            const result = this.createOctreeFromNodes(msg, name, {
+              pointBudget,
+              sseThreshold,
+              pointSize
+            });
+
+            const modelFile = new ModelFile(name, 'las', bufferForStorage);
+
+            if (msg.totalPoints !== msg.displayedPoints) {
+              console.log(
+                `LAS: loaded ${msg.displayedPoints.toLocaleString()} of ${msg.totalPoints.toLocaleString()} points (subsampled), ${msg.nodeCount} octree nodes, point budget: ${pointBudget.toLocaleString()}`
+              );
+              showInfoPanel(
+                i18n.t('ui.loading.pointsSubsampled', {
+                  name      : name,
+                  displayed : msg.displayedPoints.toLocaleString(),
+                  total     : msg.totalPoints.toLocaleString(),
+                  max       : maxPoints.toLocaleString()
+                })
+              );
+            } else {
+              console.log(
+                `LAS: loaded ${msg.displayedPoints.toLocaleString()} points, ${msg.nodeCount} octree nodes, point budget: ${pointBudget.toLocaleString()}`
+              );
+            }
+
+            if (msg.warning) {
+              showInfoPanel(i18n.t('ui.loading.partialLoad', {
+                name    : name,
+                loaded  : msg.displayedPoints.toLocaleString(),
+                total   : msg.totalPoints.toLocaleString()
+              }));
+              console.warn('LAS parse warning:', msg.warning);
+            }
+
+            await onModelLoad(result.pointCloud, result.octree.group, modelFile);
+
+            // Cache octree for fast reload on next project open
+            // Use the stored modelFileId if reloading, otherwise the new modelFile's id
+            this.saveOctreeToCache(modelFileId || modelFile.id, msg, maxPoints);
+
+            resolve();
+          } catch (err) {
+            reject(err);
+          } finally {
+            worker.terminate();
+          }
+        } else if (msg.type === 'error') {
+          worker.terminate();
+          reject(new Error(msg.message));
+        }
+      };
+
+      worker.onerror = (err) => {
+        worker.terminate();
+        reject(new Error('LAS worker error: ' + err.message));
+      };
+
+      // Transfer the ArrayBuffer to the worker (zero-copy)
+      worker.postMessage(
+        {
+          type       : 'parse',
+          buffer     : buffer,
+          maxPoints  : maxPoints,
+          colorStart : colorStart,
+          colorEnd   : colorEnd
+        },
+        [buffer]
+      );
+    });
+  }
+
+}
+
+export {
+  PolygonImporter,
+  TopodroidImporter,
+  JsonImporter,
+  PlyModelImporter,
+  ObjModelImporter,
+  LasModelImporter,
+  Importer
+};

@@ -1,0 +1,12 @@
+ply
+format ascii 1.0
+comment PLY without colors (position only)
+element vertex 4
+property float x
+property float y
+property float z
+end_header
+0.0 0.0 0.0
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.5 0.5 1.0

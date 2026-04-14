@@ -323,6 +323,12 @@ export class ExplorerTree {
       this.scene.startPoint.updateStartingPointVisibility(node.data.name, node.visible);
 
     }
+
+    const boundingBox = this.scene.computeBoundingBox();
+    if (boundingBox) {
+      this.scene.grid.adjust(boundingBox);
+    }
+
     this.render();
   }
 
@@ -999,6 +1005,17 @@ export class ExplorerTree {
       header.appendChild(badgeContainer);
     }
 
+    // Hamburger menu button
+    const menuBtn = document.createElement('div');
+    menuBtn.className = 'tree-node-menu-btn';
+    menuBtn.textContent = '⋮';
+    menuBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.selectNode(node.id);
+      this.showCaveContextMenu(node);
+    };
+    header.appendChild(menuBtn);
+
     // Visibility toggle
     const visibility = document.createElement('div');
     visibility.className = `explorer-tree-visibility ${node.visible ? 'visible' : 'hidden'}`;
@@ -1223,6 +1240,19 @@ export class ExplorerTree {
         this.handleSurveyDrop(draggedNodeId, node.id);
         this.clearDropIndicators();
       });
+    }
+
+    // Hamburger menu button
+    if (node.type === 'survey') {
+      const menuBtn = document.createElement('div');
+      menuBtn.className = 'tree-node-menu-btn';
+      menuBtn.textContent = '⋮';
+      menuBtn.onclick = (e) => {
+        e.stopPropagation();
+        this.selectNode(node.id);
+        this.showSurveyContextMenu(node);
+      };
+      nodeElement.appendChild(menuBtn);
     }
 
     // Visibility toggle

@@ -1,0 +1,15 @@
+ply
+format ascii 1.0
+comment PLY with float RGB colors (0.0-1.0 range)
+element vertex 4
+property float x
+property float y
+property float z
+property float red
+property float green
+property float blue
+end_header
+0.0 0.0 0.0 1.0 0.0 0.0
+1.0 0.0 0.0 0.0 1.0 0.0
+0.0 1.0 0.0 0.0 0.0 1.0
+0.5 0.5 1.0 0.5 0.5 0.5

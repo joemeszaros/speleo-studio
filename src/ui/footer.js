@@ -36,10 +36,16 @@ class Footer {
     // Get existing legal links container from HTML (if present)
     this.legalLinksContainer = element.querySelector('.footer-legal-links');
 
+    // Create zoom level container
+    this.zoomSeparator = node`<div class="footer-separator">|</div>`;
+    this.zoomInfoContainer = node`<div class="meta-info"></div>`;
+
     // Add elements to footer
     element.appendChild(this.projectInfoContainer);
     element.appendChild(node`<div class="footer-separator">|</div>`);
     element.appendChild(this.coordinateInfoContainer);
+    element.appendChild(this.zoomSeparator);
+    element.appendChild(this.zoomInfoContainer);
     element.appendChild(this.driveSeparator);
     element.appendChild(this.googleDriveSyncIndicator);
     element.appendChild(this.messagesContainer);
@@ -57,6 +63,7 @@ class Footer {
       this.updateLegalLinksTitles();
     });
     document.addEventListener('coordinateSystemChanged', (e) => this.updateCoordinateInfo(e.detail.coordinateSystem));
+    document.addEventListener('zoomLevelChanged', (e) => this.updateZoomLevel(e.detail.level));
 
     // Listen for Google Drive sync status changes
     document.addEventListener('googleDriveSyncStarted', () => this.showGoogleDriveSyncIndicator());
@@ -70,6 +77,10 @@ class Footer {
     } else {
       this.coordinateInfoContainer.innerHTML = i18n.t('ui.footer.noCoordinateSystemLoaded');
     }
+  }
+
+  updateZoomLevel(level) {
+    this.zoomInfoContainer.innerHTML = `🔍&nbsp;<span class="meta-value">${level.toFixed(1)}</span>`;
   }
 
   updateProjectInfo(project) {

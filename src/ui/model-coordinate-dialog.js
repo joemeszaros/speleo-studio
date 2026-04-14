@@ -33,17 +33,29 @@ export class ModelCoordinateDialog {
    * @param {{latitude: number, longitude: number, elevation: number}|null} embeddedCoords - Pre-filled coords from file
    * @returns {Promise<{latitude: number, longitude: number, elevation: number}|null>}
    */
-  show(modelName, embeddedCoords = null) {
+  /**
+   * @param {string} modelName - Name of the model being imported
+   * @param {{latitude: number, longitude: number, elevation: number}|null} embeddedCoords - Pre-filled coords
+   * @param {number[]|null} firstPointCoords - [x, y, z] of first point in file (original coordinates)
+   */
+  show(modelName, embeddedCoords = null, firstPointCoords = null) {
     return new Promise((resolve) => {
       this.resolve = resolve;
-      this.createDialog(modelName, embeddedCoords);
+      this.createDialog(modelName, embeddedCoords, firstPointCoords);
     });
   }
 
-  createDialog(modelName, embeddedCoords) {
+  createDialog(modelName, embeddedCoords, firstPointCoords) {
     const latVal = embeddedCoords?.latitude ?? '';
     const lonVal = embeddedCoords?.longitude ?? '';
     const elevVal = embeddedCoords?.elevation ?? 0;
+
+    const firstPointHtml = firstPointCoords
+      ? `<div class="info-box" style="margin-bottom: 12px; padding: 8px; background: var(--bg-secondary, #2a2a2a); border-radius: 4px; font-size: 0.85em;">
+           <span style="opacity: 0.7">${i18n.t('ui.dialogs.modelCoordinate.firstPoint')}:</span>
+           X=${firstPointCoords[0].toFixed(3)}, Y=${firstPointCoords[1].toFixed(3)}, Z=${firstPointCoords[2].toFixed(3)}
+         </div>`
+      : '';
 
     this.dialog = document.createElement('div');
     this.dialog.className = 'dialog-overlay';
@@ -51,6 +63,7 @@ export class ModelCoordinateDialog {
       <div class="dialog-container dialog-content">
         <p class="about-description">${i18n.t('ui.dialogs.modelCoordinate.message')}</p>
         <p><strong>${modelName}</strong></p>
+        ${firstPointHtml}
 
         <div class="settings-group">
           <div class="settings-group-title">

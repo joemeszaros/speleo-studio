@@ -484,20 +484,31 @@ class ProjectManager {
 
     try {
       const modelFiles = await this.modelSystem.getModelFilesByProject(projectId);
+      if (modelFiles.length === 0) return null;
 
-      for (const modelFile of modelFiles) {
-        await this.modelLoader(modelFile, async (model, object3D) => {
-          await this.addModelFromStorage(model, object3D, modelFile);
-          if (!coordSystem && model.geoData?.coordinateSystem) {
-            coordSystem = model.geoData.coordinateSystem;
-          }
-        });
+      // Show loading overlay for point cloud models that may need rebuilding
+      const hasPointClouds = modelFiles.some(f => ['las', 'laz', 'ply'].includes(f.type));
+      if (hasPointClouds && this.loadingOverlay) {
+        this.loadingOverlay.show(i18n.t('ui.loading.openingModel'));
       }
 
-      if (modelFiles.length > 0) {
-        console.log(`🌐 Loaded ${modelFiles.length} model(s) from storage`);
-        if (this.modelsTree) this.modelsTree.render();
+      try {
+        for (const modelFile of modelFiles) {
+          await this.modelLoader(modelFile, async (model, object3D) => {
+            await this.addModelFromStorage(model, object3D, modelFile);
+            if (!coordSystem && model.geoData?.coordinateSystem) {
+              coordSystem = model.geoData.coordinateSystem;
+            }
+          });
+        }
+      } finally {
+        if (hasPointClouds && this.loadingOverlay) {
+          this.loadingOverlay.hide();
+        }
       }
+
+      console.log(`🌐 Loaded ${modelFiles.length} model(s) from storage`);
+      if (this.modelsTree) this.modelsTree.render();
     } catch (error) {
       console.error('Failed to load project models:', error);
     }
@@ -513,8 +524,9 @@ class ProjectManager {
 
     if (model instanceof PointCloud) {
       this.db.addPointCloud(model);
+      // LAS/LAZ octree point clouds have colors pre-computed; PLY needs gradient here
       let colorGradients = null;
-      if (!model.hasVertexColors) {
+      if (!model.hasVertexColors && !model.hasOctree) {
         colorGradients = PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
       }
       entry = this.scene.models.getPointCloudObject(object3D, colorGradients);

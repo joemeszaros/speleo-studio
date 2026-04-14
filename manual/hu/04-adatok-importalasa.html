@@ -45,7 +45,9 @@
           <li><strong>JSON:</strong> Speleo Studio natív formátuma</li>
           <li><strong>Polygon (.cave):</strong> Polygon szoftver formátuma</li>
           <li><strong>TopoDroid (.csv):</strong> TopoDroid Android alkalmazás exportja</li>
-          <li><strong>PLY:</strong> 3D felszín modellek</li>
+          <li><strong>PLY:</strong> 3D felszín modellek és pontfelhők</li>
+          <li><strong>OBJ:</strong> 3D háromszöghálók textúra támogatással</li>
+          <li><strong>LAS/LAZ:</strong> LiDAR pontfelhők (tömörített és tömörítetlen)</li>
         </ul>
       </div>
 
@@ -57,7 +59,7 @@
           <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő importálási opciót:</p>
           <ul>
             <li><strong>"Barlang(ok) megnyitása":</strong> JSON és .cave fájlokhoz</li>
-            <li><strong>"Model megnyitása":</strong> PLY fájlokhoz</li>
+            <li><strong>"Model megnyitása":</strong> PLY, OBJ, LAS és LAZ fájlokhoz</li>
           </ul>
         </div>
 
@@ -301,23 +303,36 @@
         >
       </div>
 
-      <h2>3D modellek importálása (PLY és OBJ)</h2>
+      <h2>3D modellek és pontfelhők importálása</h2>
 
       <div class="format-box">
         <h4>Támogatott 3D formátumok</h4>
-        <p>A Speleo Studio két 3D modell formátumot támogat:</p>
+        <p>A Speleo Studio a következő 3D formátumokat támogatja:</p>
         <ul>
           <li><strong>PLY</strong> (Polygon File Format) &mdash; pontfelhők és háromszöghálók, 3D szkenneléből vagy fotogrammetriából</li>
           <li><strong>OBJ</strong> (Wavefront OBJ) &mdash; háromszöghálók textúra támogatással (MTL + képfájlok)</li>
+          <li><strong>LAS</strong> (ASPRS LAS) &mdash; LiDAR pontfelhők (1.0&ndash;1.4 verzió, 0&ndash;8 pont formátum)</li>
+          <li><strong>LAZ</strong> (tömörített LAS) &mdash; tömörített LiDAR pontfelhők</li>
         </ul>
       </div>
 
       <div class="step">
         <h3>3D modell importálása</h3>
         <p>1. Kattintson a <strong>Fájl &rarr; Modell megnyitása</strong> menüre</p>
-        <p>2. Válassza ki a modell fájlt (.ply vagy .obj). OBJ fájlokhoz az MTL és textúra fájlokat is kiválaszthatja egyszerre.</p>
+        <p>2. Válassza ki a modell fájlt (.ply, .obj, .las vagy .laz). OBJ fájlokhoz az MTL és textúra fájlokat is kiválaszthatja egyszerre.</p>
         <p>3. Opcionálisan adja meg a WGS84 koordinátákat a megjelenő ablakban</p>
         <p>4. Az alkalmazás betölti a 3D modellt (textúrákkal együtt, ha kiválasztotta)</p>
+      </div>
+
+      <div class="info">
+        <h3>LiDAR pontfelhők (LAS/LAZ)</h3>
+        <p>A LAS és LAZ fájlok LiDAR szkennerből származó pontfelhőket tartalmaznak.</p>
+        <ul>
+          <li>A LAZ (tömörített) fájlok automatikusan kicsomagolásra kerülnek</li>
+          <li>Akár <strong>több millió pont</strong> is megjeleníthető interaktív sebességgel</li>
+          <li>Ha a fájl RGB színadatokat tartalmaz, azok megjelennek; egyébként magasság alapú színátmenet kerül alkalmazásra</li>
+          <li>Az első betöltés nagy fájloknál néhány másodpercet vehet igénybe, a következő megnyitás szinte azonnali</li>
+        </ul>
       </div>
 
       <div class="info">
@@ -332,8 +347,8 @@
       <div class="warning">
         <h3>&#9888;&#65039; 3D modell importálás megjegyzések</h3>
         <ul>
-          <li>Nagy fájlok lassú betöltést okozhatnak</li>
-          <li>Memória igényes lehet</li>
+          <li>Nagy pontfelhők automatikusan optimalizálódnak a gyorsabb megjelenítés érdekében</li>
+          <li>A megjelenített pontok száma a <strong>Max. pontszám</strong> beállítással szabályozható (Beállítások &rarr; 3D modellek)</li>
           <li>A modellek nem szerkeszthetők, csak a pozíció, méretezés és átlátszóság módosítható</li>
           <li>Ha a modell koordinátái túl messze vannak a meglévő barlangoktól, a Speleo Studio figyelmeztet</li>
         </ul>
