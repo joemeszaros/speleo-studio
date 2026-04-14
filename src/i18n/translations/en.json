@@ -247,6 +247,7 @@
         "unembed": "Unembed model",
         "embedded": "Embedded",
         "embedLargeConfirm": "This model is {size}. Embedding large models will increase the exported project file size. Continue?",
+        "download": "Download model",
         "delete": "Delete model",
         "deleteConfirm": "Are you sure you want to delete the model '{name}'? This will also delete associated textures."
       }

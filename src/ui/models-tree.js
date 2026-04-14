@@ -992,6 +992,26 @@ export class ModelsTree {
         }
       },
       {
+        icon    : '💾',
+        title   : i18n.t('ui.models.menu.download'),
+        onclick : async () => {
+          this.hideContextMenu();
+          if (!node.modelFileId || !this.modelSystem) return;
+          try {
+            const modelFile = await this.modelSystem.getModelFile(node.modelFileId);
+            if (!modelFile?.data) return;
+            const url = URL.createObjectURL(modelFile.data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = modelFile.filename;
+            a.click();
+            URL.revokeObjectURL(url);
+          } catch (error) {
+            console.error('Download failed:', error);
+          }
+        }
+      },
+      {
         icon    : '🗑️',
         title   : i18n.t('ui.models.menu.delete'),
         onclick : () => {

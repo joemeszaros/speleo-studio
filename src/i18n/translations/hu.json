@@ -247,6 +247,7 @@
         "unembed": "Beágyazás megszüntetése",
         "embedded": "Beágyazott",
         "embedLargeConfirm": "Ez a modell {size} méretű. Nagy modellek beágyazása növeli az exportált projekt fájl méretét. Folytatod?",
+        "download": "Modell letöltése",
         "delete": "Modell törlése",
         "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{name}' modellt? A kapcsolódó textúrák is törlődnek."
       }
