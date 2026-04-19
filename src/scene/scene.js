@@ -73,6 +73,11 @@ class MyScene {
     this.sceneRenderer.setSize(container.offsetWidth, container.offsetHeight);
     this.sceneRenderer.autoClear = false; // To allow render overlay on top of normal scene
     this.sceneRenderer.setAnimationLoop(() => this.animate());
+    this._insideAnimateLoop = false; // true while animate() is executing
+    this._pendingRender = false; // a renderView() call was deferred during this tick
+    this._rendererSize = new THREE.Vector2(); // reused each frame to avoid allocation
+    this._lastLODUpdate = 0; // timestamp of last LOD update — used to throttle during interaction
+    this._lodThrottleMs = 33; // throttle LOD updates to ~30Hz during interaction (control events fire ~60Hz)
 
     this.clock = new THREE.Clock(); // only used for animations
     this.domElement = this.sceneRenderer.domElement; // auto generate canvas
@@ -164,7 +169,9 @@ class MyScene {
     this.height = newHeigth;
     this.sceneRenderer.setSize(this.width, this.height);
     this.views.forEach((view) => view.onResize(this.width, this.height));
+    this.updatePointCloudLOD();
     this.view.renderView();
+    this.renderOverview(this.view.overviewCamera);
   }
 
   computeBoundingBox() {
@@ -200,18 +207,74 @@ class MyScene {
     }
   }
 
-  animate() {
-    const delta = this.clock.getDelta();
-    this.view.animate(delta);
+  /**
+   * Update point cloud octree LOD visibility and budget allocation.
+   * Called from onOrbitAdjustment (camera moved), updatePointBudget (budget changed),
+   * and onResize (screen size changed). Not called every frame when scene is static.
+   */
+  updatePointCloudLOD() {
+    const octrees = this.models?.pointCloudOctrees;
+    if (!octrees?.length || !this.view.camera) return;
 
-    // Update point cloud octree LOD visibility and re-render.
-    // This must run after view.animate() updates the camera, and must
-    // trigger a render so visibility changes are displayed immediately
-    // (the view's own render in onControlChange happens BEFORE this).
-    if (this.models && this.view.camera && this.models.pointCloudOctrees.length > 0) {
-      for (const octree of this.models.pointCloudOctrees) {
-        octree.updateVisibility(this.view.camera, this.sceneRenderer);
-      }
+    // Throttle LOD updates during interaction: control events fire ~60Hz but a
+    // walk over ~9k nodes isn't worth doing every event. Non-interactive calls
+    // (onControlOperationEnd, onResize, updatePointBudget) always run — they
+    // are the moments where "final" LOD quality matters.
+    const now = performance.now();
+    if (this.view.isInteracting && now - this._lastLODUpdate < this._lodThrottleMs) {
+      return;
+    }
+    this._lastLODUpdate = now;
+
+    const camera = this.view.camera;
+    camera.updateMatrixWorld();
+    camera.updateProjectionMatrix();
+
+    // Halve the point budget during user interaction (rotate/pan/zoom) to keep
+    // frames cheap. Full budget is restored when onControlOperationEnd runs another
+    // updatePointCloudLOD() with isInteracting = false.
+    const rawBudget = this.options.scene.models.pointBudget;
+    const globalBudget = this.view.isInteracting ? Math.max(5000, Math.floor(rawBudget / 2)) : rawBudget;
+    const renderer = this.sceneRenderer;
+    const screenH = renderer.getSize(this._rendererSize).y;
+    const tanHalfFov = Math.tan(((camera.fov || 60) * Math.PI) / 180 / 2);
+
+    // Allocate budget proportionally to each octree's screen-space size (SSE of root).
+    // Larger/closer octrees get more budget; small/distant ones get less.
+    let totalWeight = 0;
+    const weights = [];
+    for (const octree of octrees) {
+      const root = octree.nodes.get(0);
+      if (!root || !octree.group.visible) { weights.push(0); continue; }
+      const b = root.data.bbox;
+      const dx = b.max[0] - b.min[0], dy = b.max[1] - b.min[1], dz = b.max[2] - b.min[2];
+      const nodeSize = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const dist = Math.max(camera.position.distanceTo(octree.group.position), 0.1);
+      const w = (nodeSize * screenH) / (dist * 2 * tanHalfFov);
+      weights.push(w);
+      totalWeight += w;
+    }
+    for (let i = 0; i < octrees.length; i++) {
+      const share = totalWeight > 0 ? weights[i] / totalWeight : 1 / octrees.length;
+      octrees[i].pointBudget = Math.max(5000, Math.floor(globalBudget * share));
+      octrees[i].updateVisibility(camera, renderer, { skipCameraUpdate: true });
+    }
+  }
+
+  animate() {
+    // Mark that we're inside the rAF loop so renderView() defers instead of
+    // rendering immediately. All deferred renders are coalesced into one at the end.
+    this._insideAnimateLoop = true;
+    this._pendingRender = false;
+    try {
+      const delta = this.clock.getDelta();
+      this.view.animate(delta); // may call renderView() → sets _pendingRender
+    } finally {
+      this._insideAnimateLoop = false;
+    }
+
+    if (this._pendingRender) {
+      this._pendingRender = false;
       this.view.renderView();
     }
   }
@@ -221,7 +284,7 @@ class MyScene {
     this.attributes.layoutStationAttributes();
   }
 
-  renderScene(camera, overViewCamera, spriteCamera, helper) {
+  renderScene(camera, spriteCamera, helper) {
     if (this.options.scene.stationLabels.show) {
       this.#updateStationLabelsBillboarding();
     }
@@ -238,11 +301,12 @@ class MyScene {
     if (helper !== undefined) {
       helper.render(this.sceneRenderer);
     }
+  }
 
-    if (overViewCamera !== undefined) {
-      this.overview.renderer.render(this.threejsScene, overViewCamera);
+  renderOverview(overviewCamera) {
+    if (overviewCamera !== undefined) {
+      this.overview.renderer.render(this.threejsScene, overviewCamera);
     }
-
   }
 
   #initializeCameraTracking() {

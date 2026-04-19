@@ -358,6 +358,7 @@ class View {
     this.overviewCamera.position.copy(position);
     this.overviewCamera.lookAt(this.target);
     this.overviewCamera.updateProjectionMatrix();
+    this.scene.renderOverview(this.overviewCamera);
   }
 
   zoomCameraTo(level) {
@@ -387,6 +388,7 @@ class View {
     ); // camera width and height in world units
     this.overviewCamera.zoom = zoomLevel;
     this.overviewCamera.updateProjectionMatrix();
+    this.scene.renderOverview(this.overviewCamera);
   }
 
   updateFrustumFrame() {
@@ -402,10 +404,13 @@ class View {
       color        : 0xffffff,
       linewidth    : 1,
       worldUnits   : false,
-      vertexColors : false
+      vertexColors : false,
+      depthTest    : false,
+      transparent  : true
     });
     this.frustumFrame = new LineSegments2(geometry, material);
     this.frustumFrame.layers.set(31);
+    this.frustumFrame.renderOrder = 999;
     this.scene.threejsScene.add(this.frustumFrame);
   }
 
@@ -431,7 +436,15 @@ class View {
   }
 
   renderView() {
-    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera);
+    this.scene.renderScene(this.camera, this.spriteCamera);
+    if (!this.isInteracting) {
+      this.scene.renderOverview(this.overviewCamera);
+    }
+  }
+
+  onOrbitAdjustment() {
+    this.scene.updatePointCloudLOD();
+    this.renderView();
   }
 
   // eslint-disable-next-line no-unused-vars
@@ -553,6 +566,7 @@ class View {
     camera.height = frustrum; // custom property
     camera.layers.enable(0);
     camera.layers.enable(1);
+    camera.layers.enable(2);
     camera.layers.disable(31);
     return camera;
   }
@@ -566,6 +580,7 @@ class SpatialView extends View {
 
     this.overviewCamera = View.createOrthoCamera(1);
     this.overviewCamera.layers.disable(1);
+    this.overviewCamera.layers.enable(2);
     this.overviewCamera.layers.enable(31);
 
     this.control = new SpatialViewControl(this.camera, this.domElement);
@@ -636,20 +651,20 @@ class SpatialView extends View {
     } else if (e.type === 'pan') {
       this.scene.points.setCameraTargetPosition(this.control.getTarget());
     }
-    //render for rotate and pan also
-    this.renderView();
+    super.onOrbitAdjustment();
   }
 
   onControlOperationEnd() {
+    this.isInteracting = false;
     const newpos = this.camera.position.clone().sub(this.control.target);
     this.overviewCamera.position.copy(this.target.clone().add(newpos));
     this.overviewCamera.rotation.copy(this.camera.rotation);
     this.overviewCamera.updateProjectionMatrix();
     if (this.frustumFrame) this.updateFrustumFrame();
     this.#updateDipIndicator();
+    this.scene.updatePointCloudLOD();
     this.renderView();
     this.onZoomLevelChange(this.control.zoom);
-    this.isInteracting = false;
   }
 
   onResize(width, height) {
@@ -701,7 +716,15 @@ class SpatialView extends View {
   }
 
   renderView() {
-    this.scene.renderScene(this.camera, this.overviewCamera, this.spriteCamera, this.viewHelper);
+    if (this.scene._insideAnimateLoop) {
+      // Defer to end of the rAF tick — animate() will coalesce all requests into one render
+      this.scene._pendingRender = true;
+      return;
+    }
+    this.scene.renderScene(this.camera, this.spriteCamera, this.viewHelper);
+    if (!this.isInteracting) {
+      this.scene.renderOverview(this.overviewCamera);
+    }
   }
 
   animate(delta) {
@@ -999,6 +1022,7 @@ class PlanView extends View {
 
     this.overviewCamera = View.createOrthoCamera(1);
     this.overviewCamera.layers.disable(1);
+    this.overviewCamera.layers.enable(2);
     this.overviewCamera.layers.enable(31);
 
     this.control = new PlanViewControl(this.camera, domElement);
@@ -1037,8 +1061,7 @@ class PlanView extends View {
     } else if (e.type === 'pan') {
       this.scene.points.setCameraTargetPosition(this.control.getTarget());
     }
-    //render for rotate and pan also
-    this.renderView();
+    super.onOrbitAdjustment();
   }
 
   onControlOperationEnd(params) {
@@ -1053,6 +1076,7 @@ class PlanView extends View {
     } else if (params.type === 'pan') {
       this.updateFrustumFrame();
     }
+    this.scene.updatePointCloudLOD();
     this.renderView();
   }
 
@@ -1148,6 +1172,7 @@ class ProfileView extends View {
 
     this.overviewCamera = View.createOrthoCamera(1);
     this.overviewCamera.layers.disable(1);
+    this.overviewCamera.layers.enable(2);
     this.overviewCamera.layers.enable(31);
     this.overviewCamera.up = new THREE.Vector3(0, 0, 1);
 
@@ -1205,8 +1230,7 @@ class ProfileView extends View {
     } else if (e.type === 'pan') {
       this.scene.points.setCameraTargetPosition(this.control.getTarget());
     }
-    //render for rotate and pan also
-    this.renderView();
+    super.onOrbitAdjustment();
   }
 
   onControlOperationEnd(params) {
@@ -1219,6 +1243,7 @@ class ProfileView extends View {
     } else if (params.type === 'pan') {
       if (this.frustumFrame) this.updateFrustumFrame();
     }
+    this.scene.updatePointCloudLOD();
     this.renderView();
   }
 

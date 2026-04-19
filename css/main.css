@@ -701,6 +701,22 @@ body {
   margin-top: 12px;
 }
 
+.loading-progress {
+  width: 240px;
+  height: 6px;
+  margin-top: 10px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.loading-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: #04aa6d;
+  transition: width 120ms linear;
+}
+
 @keyframes loading-spin {
   to { transform: rotate(360deg); }
 }

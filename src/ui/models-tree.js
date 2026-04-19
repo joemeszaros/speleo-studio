@@ -821,10 +821,10 @@ export class ModelsTree {
     const overlay = document.createElement('div');
     overlay.className = 'dialog-overlay';
     overlay.innerHTML = `
-      <div class="dialog-container dialog-content" style="max-width: 420px;">
+      <div class="dialog-container dialog-content" style="max-width: 620px; min-width: 520px;">
         <h3 style="margin: 0 0 8px 0;">${i18n.t('ui.models.properties.matrixDialogTitle')}</h3>
         <p style="margin: 0 0 12px 0; font-size: 0.85em; opacity: 0.7;">${i18n.t('ui.models.properties.matrixDialogDescription')}</p>
-        <textarea id="matrix-input" rows="5" style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 12px; background: var(--bg-secondary, #1a1a1a); color: #ccc; border: 1px solid #444; border-radius: 4px; padding: 8px; resize: vertical;"></textarea>
+        <textarea id="matrix-input" rows="5"></textarea>
         <div id="matrix-error" style="color: #f66; font-size: 0.85em; min-height: 1.2em; margin-top: 4px;"></div>
         <div class="config-buttons-container" style="margin-top: 12px;">
           <button type="button" class="settings-button" id="matrix-ok">${i18n.t('common.ok')}</button>

@@ -292,6 +292,7 @@ class Main {
     document.addEventListener('pointCloudLoadProgress', (e) => {
       if (this.loadingOverlay.isActive()) {
         this.loadingOverlay.updateMessage(e.detail.message);
+        this.loadingOverlay.updateProgress(e.detail.percent);
       }
     });
 
@@ -393,14 +394,23 @@ class Main {
 
         // Parse model files first to extract embedded coordinates
         const parsedModels = [];
-        for (const file of modelFiles) {
-          const ext = file.name.toLowerCase().split('.').pop();
-          const handler = this.importers[ext];
-          if (!handler) continue;
+        this.loadingOverlay.beginBatch(modelFiles.length);
+        try {
+          for (const file of modelFiles) {
+            const ext = file.name.toLowerCase().split('.').pop();
+            const handler = this.importers[ext];
+            if (!handler) {
+              this.loadingOverlay.advanceBatch();
+              continue;
+            }
 
-          await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
-            parsedModels.push({ model, object3D, modelFile });
-          });
+            await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
+              parsedModels.push({ model, object3D, modelFile });
+            });
+            this.loadingOverlay.advanceBatch();
+          }
+        } finally {
+          this.loadingOverlay.endBatch();
         }
 
         // Show coordinate dialog with embedded coordinates pre-filled (if found)

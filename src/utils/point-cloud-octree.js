@@ -46,6 +46,7 @@ export class PointCloudOctree {
     this._bbox = new THREE.Box3();
     this._bboxSize = new THREE.Vector3();
     this._bboxCenter = new THREE.Vector3();
+    this._prevVisible = new Set(); // nodes visible last frame — used for cheap hide-only-changed
 
     // Build node map from serialized data
     for (const nodeData of nodesData) {
@@ -62,93 +63,93 @@ export class PointCloudOctree {
    * Shows/hides nodes to maintain the point budget with hierarchical LOD.
    * @param {THREE.Camera} camera
    * @param {THREE.WebGLRenderer} renderer
+   * @param {object} [opts]
+   * @param {boolean} [opts.skipCameraUpdate] - Skip camera matrix updates (caller already did them)
    */
-  updateVisibility(camera, renderer) {
-    // Ensure camera matrices are current (they may be stale if updateVisibility
-    // runs before the renderer's own matrix update within the animation loop)
-    camera.updateMatrixWorld();
-    camera.updateProjectionMatrix();
+  updateVisibility(camera, renderer, opts = {}) {
+    // Ensure camera matrices are current. Callers that process multiple octrees
+    // can hoist this once and pass skipCameraUpdate=true to avoid 8× redundancy.
+    if (!opts.skipCameraUpdate) {
+      camera.updateMatrixWorld();
+      camera.updateProjectionMatrix();
+    }
 
     // Build frustum from camera
     this._projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     this._frustum.setFromProjectionMatrix(this._projScreenMatrix);
     const screenHeight = renderer.getSize(this._size).y;
 
-    // Reset all nodes to hidden
-    for (const node of this.nodes.values()) {
+    // Hide only nodes that were visible last frame (avoids iterating all ~1000 nodes each frame)
+    for (const node of this._prevVisible) {
       if (node.threePoints) node.threePoints.visible = false;
       node.visible = false;
     }
+    this._prevVisible.clear();
 
-    // Level-by-level (breadth-first) traversal with additive refinement.
-    // Each level is processed fully. The refinement decision (whether to go
-    // one level deeper) is made for the ENTIRE level collectively — if most
-    // visible nodes at a level want to refine, ALL refine. This prevents
-    // per-node SSE differences from creating rectangular density boundaries.
-    let currentLevel = [];
+    // Coarse octree-level frustum cull: if the entire octree's root bbox is
+    // outside the frustum, skip all ~1000 node iterations and return early.
     const root = this.nodes.get(0);
     if (!root) return;
+    if (this.group.matrixWorldNeedsUpdate) this.group.updateMatrixWorld();
+    this._bbox.min.set(root.data.bbox.min[0], root.data.bbox.min[1], root.data.bbox.min[2]);
+    this._bbox.max.set(root.data.bbox.max[0], root.data.bbox.max[1], root.data.bbox.max[2]);
+    this._bbox.applyMatrix4(this.group.matrixWorld);
+    if (!this._frustum.intersectsBox(this._bbox)) return;
 
-    currentLevel.push(0); // root node ID
+    // Level-by-level (breadth-first) traversal with additive refinement.
+    // All in-frustum nodes at a level are shown together (uniform density),
+    // and the budget is checked BETWEEN levels — never mid-level — to avoid
+    // rectangular density holes at node boundaries.
+    let currentLevel = [0]; // root node ID
     let visiblePoints = 0;
 
     while (currentLevel.length > 0) {
-      // First pass: show all nodes at this level, compute SSE for each
+      // Show all in-frustum nodes at this level, compute SSE for refinement decision
       let refineCount = 0;
       let visibleCount = 0;
-      const nodesAtLevel = []; // { node, shouldRefine }
+      let nonLeafCount = 0;
+      const nextLevel = [];
 
       for (const nodeId of currentLevel) {
         const node = this.nodes.get(nodeId);
         if (!node) continue;
-
         const { data } = node;
 
-        // Build bbox
         this._bbox.min.set(data.bbox.min[0], data.bbox.min[1], data.bbox.min[2]);
         this._bbox.max.set(data.bbox.max[0], data.bbox.max[1], data.bbox.max[2]);
-
-        if (this.group.matrixWorldNeedsUpdate) this.group.updateMatrixWorld();
         this._bbox.applyMatrix4(this.group.matrixWorld);
 
-        // Frustum cull
         if (!this._frustum.intersectsBox(this._bbox)) continue;
 
-        // Always show this node (disjoint point sets — additive refinement)
         this.#showNode(node);
         visiblePoints += data.pointCount;
         visibleCount++;
 
-        // Compute SSE
-        this._bbox.getSize(this._bboxSize);
-        const nodeSize = this._bboxSize.length();
-        this._bbox.getCenter(this._bboxCenter);
-        const distance = Math.max(camera.position.distanceTo(this._bboxCenter), 0.1);
-        const fov = ((camera.fov || 60) * Math.PI) / 180;
-        const sse = (nodeSize * screenHeight) / (distance * 2 * Math.tan(fov / 2));
+        if (!data.isLeaf) {
+          this._bbox.getSize(this._bboxSize);
+          const nodeSize = this._bboxSize.length();
+          this._bbox.getCenter(this._bboxCenter);
+          const distance = Math.max(camera.position.distanceTo(this._bboxCenter), 0.1);
+          const fov = ((camera.fov || 60) * Math.PI) / 180;
+          const sse = (nodeSize * screenHeight) / (distance * 2 * Math.tan(fov / 2));
 
-        const wantsRefine = sse >= this.sseThreshold && !data.isLeaf;
-        nodesAtLevel.push({ node, wantsRefine });
-        if (wantsRefine) refineCount++;
-      }
-
-      // Collective refinement decision: if majority of visible nodes want to
-      // refine, refine ALL non-leaf nodes at this level (uniform density).
-      const shouldRefineLevel = visibleCount > 0 && refineCount > visibleCount * 0.3;
-      const nextLevel = [];
-
-      if (shouldRefineLevel) {
-        for (const { node } of nodesAtLevel) {
-          if (!node.data.isLeaf) {
-            for (const childId of node.data.childIds) {
+          nonLeafCount++;
+          if (sse >= this.sseThreshold) {
+            refineCount++;
+            for (const childId of data.childIds) {
               if (childId >= 0) nextLevel.push(childId);
             }
           }
         }
       }
 
-      // Check budget BETWEEN levels
-      if (visiblePoints >= this.pointBudget || nextLevel.length === 0) break;
+      // Budget check between levels — never cut mid-level to avoid density holes
+      if (visiblePoints >= this.pointBudget) break;
+
+      // Collective refinement: >30% of refinable (non-leaf) nodes must want to go deeper.
+      // Leaf nodes are excluded from the denominator — they can't refine regardless.
+      if (nonLeafCount === 0 || refineCount <= nonLeafCount * 0.3) break;
+      if (nextLevel.length === 0) break;
 
       currentLevel = nextLevel;
     }
@@ -166,10 +167,12 @@ export class PointCloudOctree {
 
       node.threePoints = new THREE.Points(geometry, this.material);
       node.threePoints.frustumCulled = false; // We do our own frustum culling at the octree level
+      node.threePoints.layers.set(2); // dedicated "3D models" layer — visible in overview too
       this.group.add(node.threePoints);
     }
     node.threePoints.visible = true;
     node.visible = true;
+    this._prevVisible.add(node);
   }
 
   /**
@@ -242,5 +245,6 @@ export class PointCloudOctree {
     }
     this.material.dispose();
     this.nodes.clear();
+    this._prevVisible.clear();
   }
 }

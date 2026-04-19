@@ -31,6 +31,34 @@ export class LoadingOverlay {
   constructor() {
     this.element = null;
     this.active = false;
+    this._batchTotal = 0;
+    this._batchDone = 0;
+  }
+
+  /**
+   * Begin a batch of N items. The progress bar will scale sub-item progress
+   * to the overall batch (e.g. item 3/8 at 50% shows as ~31% of the batch).
+   * @param {number} total - Total number of items in the batch
+   */
+  beginBatch(total) {
+    this._batchTotal = Number.isFinite(total) && total > 0 ? total : 0;
+    this._batchDone = 0;
+    if (this._batchTotal > 0) this.updateProgress(0);
+  }
+
+  /**
+   * Mark one batch item as done. Bar jumps to the next item's starting value.
+   */
+  advanceBatch() {
+    if (this._batchTotal <= 0) return;
+    this._batchDone = Math.min(this._batchDone + 1, this._batchTotal);
+    this.updateProgress(0);
+  }
+
+  /** End the current batch and clear state. */
+  endBatch() {
+    this._batchTotal = 0;
+    this._batchDone = 0;
   }
 
   /**
@@ -47,6 +75,9 @@ export class LoadingOverlay {
       <div class="loading-overlay-content">
         <div class="loading-spinner"></div>
         <div class="loading-message">${message}</div>
+        <div class="loading-progress" style="visibility: hidden;">
+          <div class="loading-progress-fill"></div>
+        </div>
       </div>`;
     this.element.style.display = 'block';
     document.body.appendChild(this.element);
@@ -63,6 +94,26 @@ export class LoadingOverlay {
   }
 
   /**
+   * Update the progress bar. Reveals the bar on first call.
+   * @param {number} percent - 0..100. Omitted/non-numeric leaves the bar unchanged
+   *   so a missing percent on one progress event doesn't make the bar flicker.
+   */
+  updateProgress(percent) {
+    if (!this.element) return;
+    if (typeof percent !== 'number' || !Number.isFinite(percent)) return;
+    const bar = this.element.querySelector('.loading-progress');
+    const fill = this.element.querySelector('.loading-progress-fill');
+    if (!bar || !fill) return;
+    const clamped = Math.max(0, Math.min(100, percent));
+    // If a batch is active, map the per-item percent to the overall batch span.
+    const display = this._batchTotal > 0
+      ? ((this._batchDone + clamped / 100) / this._batchTotal) * 100
+      : clamped;
+    bar.style.visibility = 'visible';
+    fill.style.width = `${display}%`;
+  }
+
+  /**
    * Hide and remove the loading overlay.
    */
   hide() {
@@ -71,6 +122,7 @@ export class LoadingOverlay {
       this.element = null;
     }
     this.active = false;
+    this.endBatch();
   }
 
   /**

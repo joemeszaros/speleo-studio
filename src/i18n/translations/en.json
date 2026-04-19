@@ -84,6 +84,8 @@
       "lazDecompressing": "Decompressing LAZ: {percent}%",
       "lasOctreeStart": "Building octree...",
       "lasOctreeBuilding": "Building octree: {count} nodes",
+      "octreeCacheReading": "Reading cached octree...",
+      "octreeCacheBuilding": "Rebuilding octree from cache...",
       "pointsSubsampled": "{name}: {displayed} of {total} points loaded (max loaded points: {max}). You can increase this in Settings → 3D models.",
       "partialLoad": "{name}: the file contains errors. {loaded} of {total} points were loaded successfully."
     },

@@ -108,7 +108,7 @@ export class ModelScene {
 
     // For meshes (especially OBJ groups), set layers on all children
     entry.object3D.traverse((child) => {
-      child.layers.set(1);
+      child.layers.set(2);
       child.frustumCulled = false;
     });
 
@@ -127,8 +127,8 @@ export class ModelScene {
   #addObject3D(object3D) {
     this.object3DGroup.add(object3D);
 
-    // Set layer 1 for the object to match other scene objects
-    object3D.layers.set(1);
+    // Layer 2 is the dedicated "3D models" layer — both main and overview cameras render it.
+    object3D.layers.set(2);
 
     // Disable frustum culling - required for large models that may have
     // an incorrect bounding sphere calculated by Three.js
@@ -151,10 +151,8 @@ export class ModelScene {
    * Updates the point budget for all point cloud octrees.
    * @param {number} budget - The new point budget
    */
-  updatePointBudget(budget) {
-    for (const octree of this.pointCloudOctrees) {
-      octree.pointBudget = budget;
-    }
+  updatePointBudget(_budget) {
+    this.scene.updatePointCloudLOD();
     this.scene.view.renderView();
   }
 

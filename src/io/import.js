@@ -715,9 +715,8 @@ class PointCloudImporter extends Importer {
 
     // Position the model: positions were centered in the worker (for Float32 precision).
     // positionOffset = the bbox center that was subtracted.
-    // If a global normalizer exists, subtract the global origin from it.
-    // If no normalizer, keep group at 0,0,0 (model appears at origin, which is correct
-    // for case 3: no project CS, the centered positions are fine for viewing).
+    // group.position = positionOffset (- globalOrigin if one exists), so that:
+    //   rendered = group.position + local_vertex = (C - origin) + (P - C) = P - origin
     const po = msg.header.positionOffset || [0, 0, 0];
     let groupX = po[0], groupY = po[1], groupZ = po[2];
 
@@ -731,11 +730,6 @@ class PointCloudImporter extends Importer {
         groupY -= oy;
         groupZ -= oz;
       }
-    } else {
-      // No global reference — place model at origin
-      groupX = 0;
-      groupY = 0;
-      groupZ = 0;
     }
 
     octree.group.position.set(groupX, groupY, groupZ);
@@ -753,6 +747,11 @@ class PointCloudImporter extends Importer {
   async tryLoadOctreeFromCache(modelFileId, name, onModelLoad, opts) {
     if (!this.manager?.modelSystem) return false;
     try {
+      document.dispatchEvent(
+        new CustomEvent('pointCloudLoadProgress', {
+          detail : { message: i18n.t('ui.loading.octreeCacheReading'), percent: 0, phase: 'cache-read' }
+        })
+      );
       const cached = await this.manager.modelSystem.getOctreeCache(modelFileId);
       if (!cached || cached.maxPoints !== opts.maxPoints || cached.cacheVersion !== PointCloudImporter.OCTREE_CACHE_VERSION) return false;
 
@@ -760,7 +759,25 @@ class PointCloudImporter extends Importer {
         `Octree: loading from cache (${cached.nodeCount} nodes, point budget: ${opts.pointBudget.toLocaleString()})`
       );
 
+      document.dispatchEvent(
+        new CustomEvent('pointCloudLoadProgress', {
+          detail : {
+            message : i18n.t('ui.loading.octreeCacheBuilding'),
+            percent : 60,
+            phase   : 'cache-build'
+          }
+        })
+      );
       const result = this.createOctreeFromNodes(cached, name, opts);
+      document.dispatchEvent(
+        new CustomEvent('pointCloudLoadProgress', {
+          detail : {
+            message : i18n.t('ui.loading.lasOctreeBuilding', { count: cached.nodeCount }),
+            percent : 95,
+            phase   : 'cache-build'
+          }
+        })
+      );
       await onModelLoad(result.pointCloud, result.octree.group);
       return true;
     } catch (e) {

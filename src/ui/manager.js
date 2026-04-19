@@ -493,6 +493,9 @@ class ProjectManager {
       }
 
       try {
+        if (hasPointClouds && this.loadingOverlay) {
+          this.loadingOverlay.beginBatch(modelFiles.length);
+        }
         for (const modelFile of modelFiles) {
           await this.modelLoader(modelFile, async (model, object3D) => {
             await this.addModelFromStorage(model, object3D, modelFile);
@@ -500,6 +503,9 @@ class ProjectManager {
               coordSystem = model.geoData.coordinateSystem;
             }
           });
+          if (hasPointClouds && this.loadingOverlay) {
+            this.loadingOverlay.advanceBatch();
+          }
         }
       } finally {
         if (hasPointClouds && this.loadingOverlay) {

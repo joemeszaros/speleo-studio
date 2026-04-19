@@ -84,6 +84,8 @@
       "lazDecompressing": "LAZ kicsomagolás: {percent}%",
       "lasOctreeStart": "Octree építése...",
       "lasOctreeBuilding": "Octree építése: {count} csomópont",
+      "octreeCacheReading": "Gyorsítótárazott octree olvasása...",
+      "octreeCacheBuilding": "Octree újraépítése gyorsítótárból...",
       "pointsSubsampled": "{name}: {displayed} / {total} pont betöltve (max. betöltött pontok: {max}). Ezt a Beállítások → 3D modellek menüben módosíthatja.",
       "partialLoad": "{name}: a fájl hibákat tartalmaz. {loaded} / {total} pont sikeresen betöltve."
     },

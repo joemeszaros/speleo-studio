@@ -480,52 +480,26 @@ export class SettingsPanel {
             this.options.scene.models.color.end = value;
           }
         ),
-        (() => {
-          const budgetEl = this.createRangeInput(
-            i18n.t('ui.settingsPanel.labels.pointBudget'),
-            this.options.scene.models.pointBudget / 1000000,
-            0.1,
-            this.options.scene.models.maxPoints / 1000000,
-            0.1,
-            (value) => {
-              this.options.scene.models.pointBudget = value * 1000000;
-            }
-          );
-          this._pointBudgetRangeEl = budgetEl;
-          return budgetEl;
-        })(),
-        (() => {
-          const el = this.createNumberInput(
-            i18n.t('ui.settingsPanel.labels.maxPoints'),
-            this.options.scene.models.maxPoints / 1000000,
-            1,
-            100,
-            1,
-            (value) => {
-              // Don't allow maxPoints below current point budget
-              const currentBudgetM = this.options.scene.models.pointBudget / 1000000;
-              if (value < currentBudgetM) {
-                value = Math.ceil(currentBudgetM);
-                // Update the input field to show the corrected value
-                if (this._maxPointsInputEl) {
-                  const input = this._maxPointsInputEl.querySelector('input[type="number"]');
-                  if (input) input.value = value;
-                }
-              }
-
-              this.options.scene.models.maxPoints = value * 1000000;
-              // Update point budget range max to match
-              if (this._pointBudgetRangeEl) {
-                const range = this._pointBudgetRangeEl.querySelector('.settings-range');
-                const display = this._pointBudgetRangeEl.querySelector('.settings-range-value');
-                if (range) range.max = value;
-                if (display) display.max = value;
-              }
-            }
-          );
-          this._maxPointsInputEl = el;
-          return el;
-        })()
+        this.createRangeInput(
+          i18n.t('ui.settingsPanel.labels.pointBudget'),
+          this.options.scene.models.pointBudget / 1000000,
+          0.1,
+          50,
+          0.1,
+          (value) => {
+            this.options.scene.models.pointBudget = value * 1000000;
+          }
+        ),
+        this.createNumberInput(
+          i18n.t('ui.settingsPanel.labels.maxPoints'),
+          this.options.scene.models.maxPoints / 1000000,
+          0.1,
+          50,
+          0.1,
+          (value) => {
+            this.options.scene.models.maxPoints = value * 1000000;
+          }
+        )
       ],
       true
     );
