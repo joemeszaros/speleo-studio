@@ -287,6 +287,7 @@ class Main {
 
     this.loadingOverlay = new LoadingOverlay();
     this.projectManager.loadingOverlay = this.loadingOverlay;
+    scene.loadingOverlay = this.loadingOverlay;
 
     // Listen for LAS/LAZ loading progress to update the overlay
     document.addEventListener('pointCloudLoadProgress', (e) => {
@@ -483,7 +484,7 @@ class Main {
       // PLY point clouds without vertex colors need gradient colors computed here
       const colorGradients = (model.hasVertexColors || model.hasOctree)
         ? null
-        : PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
+        : PointCloudHelper.getColorGradientsMultiColor(model.points, this.options.scene.models.color.gradientColors);
 
       entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
       this.scene.models.addPointCloud(model, entry);
@@ -511,8 +512,15 @@ class Main {
 
     // Add to models tree for management (pass modelFileId for settings persistence)
     if (this.modelsTree) {
-      this.modelsTree.addModel(model, entry.object3D, modelFile?.id);
+      const modelNode = this.modelsTree.addModel(model, entry.object3D, modelFile?.id);
+      // Sync saved per-model color into ModelScene
+      if (modelNode?.color) {
+        this.scene.models.modelColors.set(model.name, modelNode.color);
+      }
     }
+
+    // Apply current color mode to the newly added model
+    await this.scene.models.updateModelColorMode(this.options.scene.models.color.mode);
 
     const boundingBox = this.scene.computeBoundingBox();
     this.scene.grid.adjust(boundingBox);

@@ -919,22 +919,10 @@ test.describe('Config Visual Impact - 3D Models', () => {
     expect(config.data.scene.models.pointSize).toBe(10);
   });
 
-  test('point cloud color start changes config', async ({ page }) => {
-    const section = await expandSection(page, 4);
-    const colorStart = section.locator('.settings-group-content input[type="color"]').first();
-    await changeColor(colorStart, '#ff0000');
-
+  test('model color mode is gradientByZ by default', async ({ page }) => {
     const config = await getStoredConfig(page);
-    expect(config.data.scene.models.color.start).toBe('#ff0000');
-  });
-
-  test('point cloud color end changes config', async ({ page }) => {
-    const section = await expandSection(page, 4);
-    const colorEnd = section.locator('.settings-group-content input[type="color"]').nth(1);
-    await changeColor(colorEnd, '#0000ff');
-
-    const config = await getStoredConfig(page);
-    expect(config.data.scene.models.color.end).toBe('#0000ff');
+    expect(config.data.scene.models.color.mode).toBe('gradientByZ');
+    expect(Array.isArray(config.data.scene.models.color.gradientColors)).toBe(true);
   });
 });
 

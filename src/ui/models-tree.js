@@ -20,6 +20,7 @@ import * as U from '../utils/utils.js';
 import { TextureFile } from '../model.js';
 import { ModelSheetEditor } from './editor/model-sheet.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import { PointCloud } from '../model.js';
 import * as THREE from 'three';
 
 /**
@@ -137,6 +138,7 @@ export class ModelsTree {
       modelNode.transform = savedSettings.transform;
       modelNode.opacity = savedSettings.opacity ?? 1.0;
       modelNode.visible = savedSettings.visible ?? true;
+      modelNode.color = savedSettings.color ?? null;
 
       // Apply to Three.js object
       const t = savedSettings.transform;
@@ -441,7 +443,8 @@ export class ModelsTree {
           .saveModelFileSettings(node.modelFileId, currentProject.id, {
             transform : node.transform,
             opacity   : node.opacity,
-            visible   : node.visible
+            visible   : node.visible,
+            color     : node.color ?? null
           }).then(() => this.projectSystem.saveProject(currentProject))
           .catch((err) => console.error('Failed to persist model properties:', err));
       }, 500)
@@ -483,13 +486,21 @@ export class ModelsTree {
     // Model icon
     const icon = document.createElement('span');
     icon.className = 'models-tree-node-icon';
-    icon.textContent = '🗿';
+    if (node.data instanceof PointCloud) {
+      icon.textContent = '☁️';
+    } else {
+      icon.textContent = '🗿';
+    }
+    
     nodeElement.appendChild(icon);
 
     // Label
     const label = document.createElement('span');
     label.className = 'models-tree-node-label';
     label.textContent = node.label;
+    if (node.color) {
+      label.style.color = node.color;
+    }
     nodeElement.appendChild(label);
 
     // Embedded indicator
@@ -1012,6 +1023,44 @@ export class ModelsTree {
         }
       },
       {
+        icon    : '🎨',
+        title   : i18n.t('ui.models.menu.setColor'),
+        onclick : () => {
+          this.hideContextMenu();
+          const colorPicker = document.createElement('input');
+          colorPicker.type = 'color';
+          colorPicker.value = node.color || '#ffffff';
+          colorPicker.style.display = 'none';
+          document.body.appendChild(colorPicker);
+          colorPicker.oninput = (e) => {
+            node.color = e.target.value;
+            this.options.scene.models.color.trigger = {
+              reason : 'modelColor',
+              model  : node.label,
+              color  : e.target.value
+            };
+            this._scheduleSave(node);
+            this.render();
+          };
+          colorPicker.onchange = () => colorPicker.remove();
+          colorPicker.click();
+        }
+      },
+      {
+        icon    : '<span style="text-decoration: line-through; text-decoration-color: red; text-decoration-thickness: 2px; transform: rotate(45deg); display: inline-block;">🎨</span>',
+        title   : i18n.t('ui.models.menu.clearColor'),
+        onclick : () => {
+          this.hideContextMenu();
+          node.color = null;
+          this.options.scene.models.color.trigger = {
+            reason : 'modelColorCleared',
+            model  : node.label
+          };
+          this._scheduleSave(node);
+          this.render();
+        }
+      },
+      {
         icon    : '🗑️',
         title   : i18n.t('ui.models.menu.delete'),
         onclick : () => {
@@ -1140,6 +1189,10 @@ export class ModelsTree {
     // Store texture info on node for future reference
     node.textureFiles = textureFiles.map((f) => f.name);
     node.mtlFiles = mtlFiles.map((f) => f.name);
+    node.hasMaterials = true;
+
+    // Notify scene that this model now has textures (skip color mode)
+    this.scene.models.markAsTextured(node.label);
 
     // Save asset files to IndexedDB for persistence
     await this.saveAssetFilesToStorage(node, mtlFiles, textureFiles);

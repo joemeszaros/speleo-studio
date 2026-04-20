@@ -43,6 +43,7 @@
         "3d": "3D",
         "boundingBox": "Bounding box",
         "lineColor": "Line color mode",
+        "modelColor": "Model color mode",
         "grid": "Grid position/visibility",
         "locate": "Locate point",
         "rotation": "Rotation tool",
@@ -56,6 +57,11 @@
         "gradientByDistance": "Gradient by distance",
         "percave": "Per cave",
         "persurvey": "Per survey"
+      },
+      "modelColorModes": {
+        "gradientByZ": "Gradient by Z",
+        "perModel": "Per model",
+        "ownColor": "Own color"
       }
     },
     "about": {
@@ -79,6 +85,7 @@
     },
     "loading": {
       "openingModel": "Opening 3D model...",
+      "calculatingModelColors": "Calculating model colors...",
       "lasHeader": "Parsing LAS header...",
       "lasParsing": "Parsing LAS: {percent}%",
       "lazDecompressing": "Decompressing LAZ: {percent}%",
@@ -113,6 +120,8 @@
         "appearance": "Appearance",
         "models3D": "3D Models",
         "colorGradient": "Color Gradient",
+        "caveGradient": "Cave Lines",
+        "modelColorGradient": "Models",
         "stationDetails": "Station details (in footer)",
         "sprites3D": "3D helpers",
         "print": "Print",
@@ -255,7 +264,9 @@
         "embedLargeConfirm": "This model is {size}. Embedding large models will increase the exported project file size. Continue?",
         "download": "Download model",
         "delete": "Delete model",
-        "deleteConfirm": "Are you sure you want to delete the model '{name}'? This will also delete associated textures."
+        "deleteConfirm": "Are you sure you want to delete the model '{name}'? This will also delete associated textures.",
+        "setColor": "Set color",
+        "clearColor": "Clear color"
       }
     },
     "dialogs": {

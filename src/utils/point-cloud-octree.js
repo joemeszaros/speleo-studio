@@ -15,6 +15,7 @@
  */
 
 import * as THREE from 'three';
+import { interpolateGradientColor } from './models.js';
 
 /**
  * Client-side octree for efficient point cloud rendering with LOD.
@@ -51,9 +52,10 @@ export class PointCloudOctree {
     // Build node map from serialized data
     for (const nodeData of nodesData) {
       this.nodes.set(nodeData.id, {
-        data        : nodeData,
-        threePoints : null,
-        visible     : false
+        data          : nodeData,
+        nativeColors  : nodeData.colors ? new Uint8Array(nodeData.colors) : null,
+        threePoints   : null,
+        visible       : false
       });
     }
   }
@@ -230,6 +232,96 @@ export class PointCloudOctree {
       if (node.threePoints) {
         const geometry = node.threePoints.geometry;
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3, true));
+      }
+    }
+  }
+
+  /**
+   * Update gradient colors using multi-stop gradient stops.
+   * @param {Array} gradientColors - [{depth:0-100, color:'#hex'}, ...]
+   * @param {number|undefined} globalMinZ - Global min world Z for normalization
+   * @param {number|undefined} globalMaxZ - Global max world Z for normalization
+   * @param {number} worldOffsetZ - World Z offset of this octree's group (group.position.z)
+   */
+  updateGradientColorsMultiStop(gradientColors, globalMinZ, globalMaxZ, worldOffsetZ = 0) {
+    const sortedColors = [...gradientColors].sort((a, b) => a.depth - b.depth);
+
+    let minZ = globalMinZ;
+    let maxZ = globalMaxZ;
+    if (minZ === undefined || maxZ === undefined) {
+      // Fall back to this octree's own world Z range
+      minZ = Infinity;
+      maxZ = -Infinity;
+      for (const node of this.nodes.values()) {
+        const pos = node.data.positions;
+        for (let i = 2; i < pos.length; i += 3) {
+          const wz = pos[i] + worldOffsetZ;
+          if (wz < minZ) minZ = wz;
+          if (wz > maxZ) maxZ = wz;
+        }
+      }
+    }
+
+    const rangeZ = maxZ - minZ || 1;
+
+    for (const node of this.nodes.values()) {
+      const pos = node.data.positions;
+      const count = pos.length / 3;
+      const colors = new Uint8Array(count * 3);
+
+      for (let i = 0; i < count; i++) {
+        const worldZ = pos[i * 3 + 2] + worldOffsetZ;
+        const depth = ((maxZ - worldZ) / rangeZ) * 100;
+        const c = interpolateGradientColor(depth, sortedColors, 'depth');
+        colors[i * 3] = Math.round(c.r * 255);
+        colors[i * 3 + 1] = Math.round(c.g * 255);
+        colors[i * 3 + 2] = Math.round(c.b * 255);
+      }
+
+      node.data.colors = colors;
+
+      if (node.threePoints) {
+        const geometry = node.threePoints.geometry;
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3, true));
+      }
+    }
+  }
+
+  /**
+   * Apply a flat solid color to all points.
+   * @param {string} hexColor - Hex color string e.g. '#ff0000'
+   */
+  updateFlatColor(hexColor) {
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+
+    for (const node of this.nodes.values()) {
+      const count = node.data.positions.length / 3;
+      const colors = new Uint8Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        colors[i * 3] = r;
+        colors[i * 3 + 1] = g;
+        colors[i * 3 + 2] = b;
+      }
+      node.data.colors = colors;
+      if (node.threePoints) {
+        const geometry = node.threePoints.geometry;
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3, true));
+      }
+    }
+  }
+
+  /**
+   * Restore the original colors from when the octree was first loaded.
+   */
+  restoreOriginalColors() {
+    for (const node of this.nodes.values()) {
+      if (!node.nativeColors) continue;
+      node.data.colors = node.nativeColors;
+      if (node.threePoints) {
+        const geometry = node.threePoints.geometry;
+        geometry.setAttribute('color', new THREE.BufferAttribute(node.nativeColors, 3, true));
       }
     }
   }

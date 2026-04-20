@@ -937,8 +937,10 @@ class PlyModelImporter extends PointCloudImporter {
     const pointBudget = options.scene.models.pointBudget;
     const sseThreshold = options.scene.models.sseThreshold;
     const pointSize = options.scene.models.pointSize;
-    const colorStart = options.scene.models.color.start;
-    const colorEnd = options.scene.models.color.end;
+    const gradientColors = options.scene.models.color.gradientColors ?? [];
+    const sorted = [...gradientColors].sort((a, b) => a.depth - b.depth);
+    const colorStart = sorted[0]?.color ?? '#39b14d';
+    const colorEnd = sorted[sorted.length - 1]?.color ?? '#9f2d2d';
     const maxPoints = options.scene.models.maxPoints;
 
     // Try loading from cached octree
@@ -1376,8 +1378,10 @@ class LasModelImporter extends PointCloudImporter {
     const pointBudget = options.scene.models.pointBudget;
     const sseThreshold = options.scene.models.sseThreshold;
     const pointSize = options.scene.models.pointSize;
-    const colorStart = options.scene.models.color?.start;
-    const colorEnd = options.scene.models.color?.end;
+    const gradientColors = options.scene.models.color?.gradientColors ?? [];
+    const sorted = [...gradientColors].sort((a, b) => a.depth - b.depth);
+    const colorStart = sorted[0]?.color ?? '#39b14d';
+    const colorEnd = sorted[sorted.length - 1]?.color ?? '#9f2d2d';
     const maxPoints = options.scene.models.maxPoints;
 
     // Try loading from cached octree (fast path for project reload)

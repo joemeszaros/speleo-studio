@@ -43,6 +43,7 @@
         "3d": "3D",
         "boundingBox": "Határoló doboz",
         "lineColor": "Vonal szín mód",
+        "modelColor": "Modell szín mód",
         "grid": "Rács pozíció/láthatóság",
         "locate": "Pont megkeresése",
         "rotation": "Forgatás eszköz",
@@ -56,6 +57,11 @@
         "gradientByDistance": "Távolság szerint",
         "percave": "Barlangonként",
         "persurvey": "Felmérésenként"
+      },
+      "modelColorModes": {
+        "gradientByZ": "Mélység szerint",
+        "perModel": "Modellenként",
+        "ownColor": "Saját szín"
       }
     },
     "about": {
@@ -79,6 +85,7 @@
     },
     "loading": {
       "openingModel": "3D modell megnyitása...",
+      "calculatingModelColors": "Modell színek kiszámítása...",
       "lasHeader": "LAS fejléc feldolgozása...",
       "lasParsing": "LAS feldolgozás: {percent}%",
       "lazDecompressing": "LAZ kicsomagolás: {percent}%",
@@ -113,6 +120,8 @@
         "appearance": "Megjelenés",
         "models3D": "3D modellek",
         "colorGradient": "Szín átmenet",
+        "caveGradient": "Barlang vonalak",
+        "modelColorGradient": "Modellek",
         "stationDetails": "Pont részletek (láblécben)",
         "sprites3D": "3D segédek",
         "print": "Nyomtatás",
@@ -255,7 +264,9 @@
         "embedLargeConfirm": "Ez a modell {size} méretű. Nagy modellek beágyazása növeli az exportált projekt fájl méretét. Folytatod?",
         "download": "Modell letöltése",
         "delete": "Modell törlése",
-        "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{name}' modellt? A kapcsolódó textúrák is törlődnek."
+        "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{name}' modellt? A kapcsolódó textúrák is törlődnek.",
+        "setColor": "Szín beállítása",
+        "clearColor": "Szín törlése"
       }
     },
     "dialogs": {

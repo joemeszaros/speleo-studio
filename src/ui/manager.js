@@ -533,7 +533,7 @@ class ProjectManager {
       // LAS/LAZ octree point clouds have colors pre-computed; PLY needs gradient here
       let colorGradients = null;
       if (!model.hasVertexColors && !model.hasOctree) {
-        colorGradients = PointCloudHelper.getColorGradients(model.points, this.options.scene.models.color);
+        colorGradients = PointCloudHelper.getColorGradientsMultiColor(model.points, this.options.scene.models.color.gradientColors);
       }
       entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
       this.scene.models.addPointCloud(model, entry);
@@ -576,10 +576,17 @@ class ProjectManager {
       if (node && metadata?.embedded) {
         node.embedded = true;
       }
+      // Sync saved per-model color into ModelScene
+      if (node?.color) {
+        this.scene.models.modelColors.set(model.name, node.color);
+      }
     }
 
     // Load associated textures/materials
     await this.loadModelAssets(model, modelFile);
+
+    // Apply current color mode after model and textures are loaded
+    await this.scene.models.updateModelColorMode(this.options.scene.models.color.mode);
 
     // Reveal the model with final transform and textures applied
     const finalVisible = savedSettings?.visible ?? true;

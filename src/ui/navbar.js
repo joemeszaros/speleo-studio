@@ -324,6 +324,21 @@ class NavigationBar {
         }))
       },
       {
+        tooltip  : i18n.t('ui.navbar.tooltips.modelColor'),
+        icon     : 'icons/model_color.svg',
+        elements : [
+          { id: 'gradientByZ', title: i18n.t('ui.navbar.modelColorModes.gradientByZ') },
+          { id: 'perModel',    title: i18n.t('ui.navbar.modelColorModes.perModel') },
+          { id: 'ownColor',    title: i18n.t('ui.navbar.modelColorModes.ownColor') }
+        ].map((e) => ({
+          name     : e.title,
+          selected : this.options.scene.models.color.mode === e.id,
+          click    : () => {
+            this.options.scene.models.color.mode = e.id;
+          }
+        }))
+      },
+      {
         tooltip : i18n.t('ui.navbar.tooltips.grid'),
         icon    : 'icons/grid.svg',
         click   : () => this.scene.grid.roll()

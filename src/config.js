@@ -85,9 +85,14 @@ export const DEFAULT_OPTIONS = {
       maxPoints    : 20000000,
       sseThreshold : 1.5,
       color        : {
-        start : '#39b14d',
-        end   : '#9f2d2d',
-        mode  : 'gradientByZ'
+        trigger        : '',
+        mode           : 'gradientByZ',
+        gradientColors : [
+          { depth: 0, color: '#e1ff00' },
+          { depth: 30, color: '#c20534' },
+          { depth: 40, color: '#2de51f' },
+          { depth: 70, color: '#1c38a6' }
+        ]
       }
     },
     edl : {
@@ -388,9 +393,14 @@ export class ConfigManager {
         config.scene.models = {
           pointSize : 2,
           color     : {
-            start : '#39b14d',
-            end   : '#9f2d2d',
-            mode  : 'gradientByZ'
+            trigger        : '',
+            mode           : 'gradientByZ',
+            gradientColors : [
+              { depth: 0, color: '#e1ff00' },
+              { depth: 30, color: '#c20534' },
+              { depth: 40, color: '#2de51f' },
+              { depth: 70, color: '#1c38a6' }
+            ]
           }
         };
       }
@@ -435,13 +445,21 @@ export class ConfigManager {
       config.interactive = { raycasting: true };
     }
 
-    // Ensure color config exists
-    if (config.scene.models.color === undefined) {
+    // Ensure color config exists (migrate from old start/end structure)
+    if (config.scene.models.color === undefined || config.scene.models.color.gradientColors === undefined) {
       config.scene.models.color = {
-        start : '#39b14d',
-        end   : '#9f2d2d',
-        mode  : 'gradientByZ'
+        trigger        : '',
+        mode           : config.scene.models.color?.mode ?? 'gradientByZ',
+        gradientColors : [
+          { depth: 0, color: '#e1ff00' },
+          { depth: 30, color: '#c20534' },
+          { depth: 40, color: '#2de51f' },
+          { depth: 70, color: '#1c38a6' }
+        ]
       };
+    }
+    if (config.scene.models.color.trigger === undefined) {
+      config.scene.models.color.trigger = '';
     }
   }
 
@@ -1097,12 +1115,26 @@ export class ConfigChanges {
       case 'scene.models.pointSize':
         this.scene.models.updatePointCloudPointSize(newValue);
         break;
-      case 'scene.models.color.start':
-      case 'scene.models.color.end':
-        this.scene.models.updatePointCloudColors(this.watchedConfig.scene.models.color);
-        break;
       case 'scene.models.pointBudget':
         this.scene.models.updatePointBudget(newValue);
+        break;
+    }
+  }
+
+  handleModelColorChanges(path, oldValue, newValue) {
+    const existingMode = this.watchedConfig.scene.models.color.mode;
+
+    switch (path) {
+      case 'scene.models.color.trigger':
+        this.scene.models.updateModelColorMode(existingMode, newValue).then(() => {});
+        break;
+      case 'scene.models.color.mode':
+        this.scene.models.updateModelColorMode(newValue).then(() => {});
+        break;
+      case 'scene.models.color.gradientColors':
+        if (['gradientByZ', 'perModel'].includes(existingMode)) {
+          this.scene.models.updateModelColorMode(existingMode).then(() => {});
+        }
         break;
     }
   }
@@ -1160,6 +1192,8 @@ export class ConfigChanges {
       this.handleSprites3DChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.camera')) {
       this.handleCameraChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.models.color')) {
+      this.handleModelColorChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.models.')) {
       this.handleModelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.edl.')) {

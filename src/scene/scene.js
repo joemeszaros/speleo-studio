@@ -101,6 +101,8 @@ class MyScene {
     // Add lights for 3D models with textures/materials
     this.setupLights();
 
+    this.loadingOverlay = null; // Set from main.js after LoadingOverlay is created
+
     this.speleo = new SpeleoScene(db, options, materials, this);
     this.startPoint = new StartPointScene(options, materials, this);
     this.models = new ModelScene(this);

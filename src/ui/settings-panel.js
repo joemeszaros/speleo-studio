@@ -466,20 +466,6 @@ export class SettingsPanel {
             this.options.scene.models.pointSize = value;
           }
         ),
-        this.createColorInput(
-          i18n.t('ui.settingsPanel.labels.pointCloudColorStart'),
-          this.options.scene.models.color.start,
-          (value) => {
-            this.options.scene.models.color.start = value;
-          }
-        ),
-        this.createColorInput(
-          i18n.t('ui.settingsPanel.labels.pointCloudColorEnd'),
-          this.options.scene.models.color.end,
-          (value) => {
-            this.options.scene.models.color.end = value;
-          }
-        ),
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.pointBudget'),
           this.options.scene.models.pointBudget / 1000000,
@@ -798,8 +784,8 @@ export class SettingsPanel {
       true
     );
 
-    // Color Gradient Section
-    this.createColorGradientSection();
+    // Color Gradient Section (merged cave + model)
+    this.createCombinedGradientSection();
   }
 
   createSection(title, items, collapsed = false, visibilityKey = null, onVisibilityChange = null) {
@@ -1185,9 +1171,9 @@ export class SettingsPanel {
     return container;
   }
 
-  createColorGradientSection(collapsed = true) {
+  createCombinedGradientSection(collapsed = true) {
     const section = document.createElement('div');
-    section.className = 'settings-group';
+    section.className = 'settings-group combined-gradient-section';
 
     const titleElement = document.createElement('h3');
     titleElement.className = 'settings-group-title';
@@ -1200,20 +1186,56 @@ export class SettingsPanel {
 
     const content = document.createElement('div');
     content.className = 'settings-group-content';
-    if (collapsed) {
-      content.style.display = 'none';
-    }
+    if (collapsed) content.style.display = 'none';
+
+    // Cave lines subsection
+    const caveSubGroup = this.#createGradientSubGroup(
+      i18n.t('ui.settingsPanel.sections.caveGradient'),
+      () => this.addGradientColor(),
+      (container) => this.renderGradientColors(container),
+      'cave-gradient-content'
+    );
+    caveSubGroup.style.marginBottom = '16px';
+    content.appendChild(caveSubGroup);
+
+    // Model subsection
+    const modelSubGroup = this.#createGradientSubGroup(
+      i18n.t('ui.settingsPanel.sections.modelColorGradient'),
+      () => this.addModelGradientColor(),
+      (container) => this.renderModelGradientColors(container),
+      'model-gradient-content'
+    );
+    content.appendChild(modelSubGroup);
+
+    section.appendChild(content);
+    this.container.appendChild(section);
+  }
+
+  #createGradientSubGroup(title, onAdd, renderFn, contentClass) {
+    const group = document.createElement('div');
+    group.className = 'settings-subgroup';
+
+    const header = document.createElement('div');
+    header.className = 'settings-subgroup-title';
+    header.textContent = title;
+    group.appendChild(header);
+
+    const content = document.createElement('div');
+    content.className = 'settings-subgroup-content';
 
     const addButton = document.createElement('button');
     addButton.className = 'settings-input settings-add-button';
     addButton.textContent = i18n.t('ui.settingsPanel.labels.addColorStop');
-    addButton.onclick = () => this.addGradientColor();
+    addButton.onclick = onAdd;
     content.appendChild(addButton);
 
-    this.renderGradientColors(content);
+    const contentDiv = document.createElement('div');
+    contentDiv.className = contentClass;
+    renderFn(contentDiv);
+    content.appendChild(contentDiv);
 
-    section.appendChild(content);
-    this.container.appendChild(section);
+    group.appendChild(content);
+    return group;
   }
 
   renderGradientColors(container) {
@@ -1326,9 +1348,152 @@ export class SettingsPanel {
   }
 
   reloadGradientSection() {
-    const gradientSection = this.container.querySelector('.settings-group:last-child .settings-group-content');
-    if (gradientSection) {
-      this.renderGradientColors(gradientSection);
+    const container = this.container.querySelector('.cave-gradient-content');
+    if (container) {
+      this.renderGradientColors(container);
+    }
+  }
+
+  // ==================== Model Color Gradient Section ====================
+
+  createModelColorGradientSection(collapsed = true) {
+    const section = document.createElement('div');
+    section.className = 'settings-group model-color-gradient-section';
+
+    const titleElement = document.createElement('h3');
+    titleElement.className = 'settings-group-title';
+    titleElement.innerHTML = `
+      <span class="settings-group-toggle">${collapsed ? '▶' : '▼'}</span>
+      <span>🌈 ${i18n.t('ui.settingsPanel.sections.modelColorGradient')}</span>
+    `;
+    titleElement.onclick = () => this.toggleSection(section);
+    section.appendChild(titleElement);
+
+    const content = document.createElement('div');
+    content.className = 'settings-group-content';
+    if (collapsed) {
+      content.style.display = 'none';
+    }
+
+    const addButton = document.createElement('button');
+    addButton.className = 'settings-input settings-add-button';
+    addButton.textContent = i18n.t('ui.settingsPanel.labels.addColorStop');
+    addButton.onclick = () => this.addModelGradientColor();
+    content.appendChild(addButton);
+
+    this.renderModelGradientColors(content);
+
+    section.appendChild(content);
+    this.container.appendChild(section);
+  }
+
+  renderModelGradientColors(container) {
+    const existingControls = container.querySelectorAll('.model-gradient-color-control');
+    existingControls.forEach((control) => control.remove());
+
+    this.options.scene.models.color.gradientColors.forEach((gradientColor, index) => {
+      const control = this.createModelGradientColorControl(gradientColor, index);
+      container.appendChild(control);
+    });
+  }
+
+  createModelGradientColorControl(gradientColor, index) {
+    const container = document.createElement('div');
+    container.className = 'model-gradient-color-control gradient-color-control settings-item';
+
+    const controlsRow = document.createElement('div');
+    controlsRow.style.display = 'flex';
+    controlsRow.style.gap = '8px';
+    controlsRow.style.alignItems = 'end';
+
+    const depthContainer = document.createElement('div');
+    depthContainer.style.flex = '1';
+
+    const depthLabel = document.createElement('label');
+    depthLabel.className = 'settings-label';
+    depthLabel.textContent = i18n.t('ui.settingsPanel.labels.depth');
+
+    const depthInput = document.createElement('input');
+    depthInput.type = 'number';
+    depthInput.className = 'settings-input';
+    depthInput.value = gradientColor.depth;
+    depthInput.min = 0;
+    depthInput.max = 100;
+    depthInput.style.padding = '4px 6px';
+    depthInput.style.marginLeft = '8px';
+    depthInput.onchange = (e) => {
+      gradientColor.depth = parseFloat(e.target.value);
+      const colors = [...this.options.scene.models.color.gradientColors];
+      colors.sort((a, b) => a.depth - b.depth);
+      this.options.scene.models.color.gradientColors = [...colors];
+      this.reloadModelGradientSection();
+    };
+
+    depthContainer.appendChild(depthLabel);
+    depthContainer.appendChild(depthInput);
+    controlsRow.appendChild(depthContainer);
+
+    const colorContainer = document.createElement('div');
+    colorContainer.style.width = '60px';
+
+    const colorLabel = document.createElement('label');
+    colorLabel.className = 'settings-label';
+    colorLabel.textContent = i18n.t('ui.settingsPanel.labels.color');
+
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.className = 'settings-input';
+    colorInput.value = gradientColor.color;
+    colorInput.style.height = '24px';
+    colorInput.style.padding = '2px';
+    colorInput.onchange = (e) => {
+      const colors = [...this.options.scene.models.color.gradientColors];
+      const item = colors.find((color) => color.depth === gradientColor.depth);
+      colors.splice(colors.indexOf(item), 1, { ...item, color: e.target.value });
+      this.options.scene.models.color.gradientColors = [...colors];
+    };
+
+    colorContainer.appendChild(colorLabel);
+    colorContainer.appendChild(colorInput);
+    controlsRow.appendChild(colorContainer);
+
+    const removeButton = document.createElement('button');
+    removeButton.textContent = i18n.t('ui.settingsPanel.labels.remove');
+    removeButton.style.background = '#dc2626';
+    removeButton.style.color = 'white';
+    removeButton.style.border = 'none';
+    removeButton.style.cursor = 'pointer';
+    removeButton.style.borderRadius = '4px';
+    removeButton.onclick = () => this.removeModelGradientColor(index);
+    controlsRow.appendChild(removeButton);
+
+    container.appendChild(controlsRow);
+    return container;
+  }
+
+  addModelGradientColor() {
+    const maxDepth = Math.max(...this.options.scene.models.color.gradientColors.map((gc) => gc.depth));
+    const newColor = { depth: Math.min(maxDepth + 25, 100), color: '#ffffff' };
+    const colors = [...this.options.scene.models.color.gradientColors];
+    colors.push(newColor);
+    colors.sort((a, b) => a.depth - b.depth);
+    this.options.scene.models.color.gradientColors = [...colors];
+    this.reloadModelGradientSection();
+  }
+
+  removeModelGradientColor(index) {
+    if (this.options.scene.models.color.gradientColors.length > 2) {
+      const colors = [...this.options.scene.models.color.gradientColors];
+      colors.splice(index, 1);
+      this.options.scene.models.color.gradientColors = [...colors];
+      this.reloadModelGradientSection();
+    }
+  }
+
+  reloadModelGradientSection() {
+    const container = this.container.querySelector('.model-gradient-content');
+    if (container) {
+      this.renderModelGradientColors(container);
     }
   }
 
