@@ -42,7 +42,7 @@
         "profile": "Profile",
         "3d": "3D",
         "boundingBox": "Bounding box",
-        "lineColor": "Line color mode",
+        "lineColor": "Cave lines color mode",
         "modelColor": "Model color mode",
         "grid": "Grid position/visibility",
         "locate": "Locate point",

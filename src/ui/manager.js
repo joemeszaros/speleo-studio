@@ -284,6 +284,7 @@ class ProjectManager {
 
     this.db.clear();
     this.clearAllModels();
+    globalNormalizer.reset();
 
     const caves = await this.caveSystem.getCavesByProjectId(project.id);
 
@@ -343,6 +344,7 @@ class ProjectManager {
 
     this.db.clear();
     this.clearAllModels();
+    globalNormalizer.reset();
     this.scene.view.renderView();
   }
 
