@@ -162,6 +162,7 @@ export class Raycasting {
 
     // Only raycast against point clouds, not meshes
     for (const [name, entry] of this.scene.models.pointCloudObjects) {
+      if (!entry.object3D.visible) continue;
       const intersectedPoints = this.raycaster.intersectObject(entry.object3D, true);
       if (intersectedPoints.length) {
         return { position: intersectedPoints[0].point, type: 'pointcloud', name: name };

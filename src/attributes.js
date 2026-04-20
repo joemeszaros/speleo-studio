@@ -66,6 +66,10 @@ export class AttributesDefinitions {
 
   createFromPure(attribute) {
     const def = this.#getDefiniton((d) => d.name === attribute.name);
+    if (def === undefined) {
+      console.error(`Attribute ${attribute.name} not found in definitions, skipping`);
+      return undefined;
+    }
     const newAttribute = new Attribute(def);
     const paramNames = Object.keys(def.params);
     paramNames.forEach((pName) => {
