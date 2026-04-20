@@ -125,6 +125,7 @@
         "centerStations": "Közép pontok",
         "splayStations": "Tüske pontok",
         "auxiliaryStations": "Segéd pontok",
+        "edl": "Eye-Dome Lighting (EDL)",
         "generalSettings": "Általános beállítások",
         "stationLabels": "Pont címkék"
       },
@@ -184,6 +185,9 @@
         "pointCloudColorEnd": "Pontfelhő szín (alsó)",
         "pointBudget": "Max. pontszám (millió)",
         "maxPoints": "Max. betöltött pontok (millió)",
+        "edlEnabled": "EDL árnyalás engedélyezése",
+        "edlStrength": "EDL erősség",
+        "edlRadius": "EDL sugár (px)",
         "targetPoint": "Kamera célpont",
         "sectionsLabel": "Szakasz címkék",
         "circleOpacity": "Dőlés - Tektonikus kör átlátszóság",

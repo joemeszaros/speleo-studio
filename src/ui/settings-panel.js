@@ -499,6 +499,38 @@ export class SettingsPanel {
           (value) => {
             this.options.scene.models.maxPoints = value * 1000000;
           }
+        ),
+        this.createSubGroup(
+          i18n.t('ui.settingsPanel.groups.edl'),
+          [
+            this.createCheckbox(
+              i18n.t('ui.settingsPanel.labels.edlEnabled'),
+              this.options.scene.edl.enabled,
+              (value) => {
+                this.options.scene.edl.enabled = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.edlStrength'),
+              this.options.scene.edl.strength,
+              0.1,
+              30.0,
+              0.1,
+              (value) => {
+                this.options.scene.edl.strength = value;
+              }
+            ),
+            this.createRangeInput(
+              i18n.t('ui.settingsPanel.labels.edlRadius'),
+              this.options.scene.edl.radius,
+              0.5,
+              6.0,
+              0.1,
+              (value) => {
+                this.options.scene.edl.radius = value;
+              }
+            )
+          ]
         )
       ],
       true

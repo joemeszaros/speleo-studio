@@ -90,6 +90,11 @@ export const DEFAULT_OPTIONS = {
         mode  : 'gradientByZ'
       }
     },
+    edl : {
+      enabled  : false,
+      strength : 5.0,
+      radius   : 1.5
+    },
     caveLines : {
       color : {
         trigger        : '', // this is used when the survey or cave color changes
@@ -405,6 +410,24 @@ export class ConfigManager {
     }
     if (config.scene.models.sseThreshold === undefined) {
       config.scene.models.sseThreshold = 1.5;
+    }
+
+    if (config.scene.edl === undefined) {
+      config.scene.edl = {
+        enabled  : false,
+        strength : 5.0,
+        radius   : 1.5
+      };
+    } else {
+      if (config.scene.edl.enabled === undefined) {
+        config.scene.edl.enabled = false;
+      }
+      if (config.scene.edl.strength === undefined) {
+        config.scene.edl.strength = 5.0;
+      }
+      if (config.scene.edl.radius === undefined) {
+        config.scene.edl.radius = 1.5;
+      }
     }
 
     // Ensure interactive config exists
@@ -1084,6 +1107,20 @@ export class ConfigChanges {
     }
   }
 
+  handleEdlChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.edl.enabled':
+        this.scene.setEdlEnabled(newValue);
+        break;
+      case 'scene.edl.strength':
+      case 'scene.edl.radius':
+        this.scene.setEdlParams(this.watchedConfig.scene.edl);
+        break;
+    }
+
+    this.scene.view.renderView();
+  }
+
   /**
    * Main onChange handler that routes to specific handlers
    */
@@ -1125,6 +1162,8 @@ export class ConfigChanges {
       this.handleCameraChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.models.')) {
       this.handleModelChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.edl.')) {
+      this.handleEdlChanges(path, oldValue, newValue);
     } else if (path.startsWith('interactive.')) {
       // do nothing, persisted via auto-save
     } else if (path.startsWith('ui.sidebar.')) {

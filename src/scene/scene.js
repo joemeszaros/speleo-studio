@@ -24,6 +24,7 @@ import { SegmentScene } from './cosmos/segments.js';
 import { AttributesScene } from './cosmos/attributes.js';
 import { SpatialView, PlanView, ProfileView } from './views.js';
 import { TextSprite } from './textsprite.js';
+import { EdlPass } from './edl-pass.js';
 import { ImageCache } from '../utils/image-cache.js';
 
 class SceneOverview {
@@ -36,6 +37,8 @@ class SceneOverview {
     container.appendChild(this.domElement);
     this.width = container.offsetWidth;
     this.height = container.offsetHeight;
+    this.edlPass = null;
+    this.edlEnabled = false;
   }
 
 }
@@ -123,6 +126,9 @@ class MyScene {
 
     window.addEventListener('resize', () => this.onWindowResize());
     document.addEventListener('viewport-resized', () => this.onViewportResized());
+
+    this.setEdlEnabled(this.options.scene.edl?.enabled === true);
+    this.setEdlParams(this.options.scene.edl ?? {});
   }
 
   setBackground(val) {
@@ -168,6 +174,9 @@ class MyScene {
     this.width = newWidth;
     this.height = newHeigth;
     this.sceneRenderer.setSize(this.width, this.height);
+    if (this.edlEnabled && this.edlPass) {
+      this.edlPass.setSize(this.width, this.height);
+    }
     this.views.forEach((view) => view.onResize(this.width, this.height));
     this.updatePointCloudLOD();
     this.view.renderView();
@@ -290,16 +299,54 @@ class MyScene {
     }
 
     if (spriteCamera === undefined) {
-      this.sceneRenderer.render(this.threejsScene, camera);
+      if (this.edlEnabled && this.edlPass) {
+        this.edlPass.render(this.sceneRenderer, this.threejsScene, camera);
+      } else {
+        this.sceneRenderer.render(this.threejsScene, camera);
+      }
     } else {
       this.sceneRenderer.clear();
-      this.sceneRenderer.render(this.threejsScene, camera);
+      if (this.edlEnabled && this.edlPass) {
+        this.edlPass.render(this.sceneRenderer, this.threejsScene, camera);
+      } else {
+        this.sceneRenderer.render(this.threejsScene, camera);
+      }
       this.sceneRenderer.clearDepth();
       this.sceneRenderer.render(this.spriteScene, spriteCamera);
     }
 
     if (helper !== undefined) {
       helper.render(this.sceneRenderer);
+    }
+  }
+
+  setEdlEnabled(enabled) {
+    const nextEnabled = enabled === true;
+
+    if (nextEnabled) {
+      if (!this.edlPass) {
+        try {
+          this.edlPass = new EdlPass(this.width, this.height, this.options.scene.edl ?? {});
+        } catch (error) {
+          console.warn('Failed to initialize EDL pass, falling back to standard rendering:', error);
+          this.edlPass = null;
+          this.edlEnabled = false;
+          return;
+        }
+      }
+    } else if (this.edlPass) {
+      if (typeof this.edlPass.dispose === 'function') {
+        this.edlPass.dispose();
+      }
+      this.edlPass = null;
+    }
+
+    this.edlEnabled = nextEnabled;
+  }
+
+  setEdlParams(params) {
+    if (this.edlPass && typeof this.edlPass.setParams === 'function') {
+      this.edlPass.setParams(params);
     }
   }
 

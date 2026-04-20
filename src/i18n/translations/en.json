@@ -125,6 +125,7 @@
         "centerStations": "Center Stations",
         "splayStations": "Splay Stations",
         "auxiliaryStations": "Auxiliary Stations",
+        "edl": "Eye-Dome Lighting (EDL)",
         "generalSettings": "General Settings",
         "stationLabels": "Station Labels"
       },
@@ -184,6 +185,9 @@
         "pointCloudColorEnd": "Point cloud color (bottom)",
         "pointBudget": "Max point count (millions)",
         "maxPoints": "Max loaded points (millions)",
+        "edlEnabled": "Enable EDL shading",
+        "edlStrength": "EDL strength",
+        "edlRadius": "EDL radius (px)",
         "targetPoint": "Camera target point",
         "sectionsLabel": "Sections label",
         "circleOpacity": "Bedding - tectonic circle opacity",
