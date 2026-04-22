@@ -369,15 +369,16 @@ class ProjectManager {
 
     // adjust grid
     const boundingBox = this.scene.computeBoundingBox();
-    const [w, h, d] = boundingBox.getSize(new THREE.Vector3());
+    if (boundingBox) {
+      const size = boundingBox.getSize(new THREE.Vector3());
+      if (!(size.x === 0 && size.y === 0 && size.z === 0)) {
+        this.scene.grid.adjust(boundingBox);
 
-    if (!(w === 0 && h === 0 && d === 0)) {
-      this.scene.grid.adjust(boundingBox);
-
-      if (this.options.scene.grid.mode === 'hidden') {
-        this.scene.grid.hide();
-      } else {
-        this.scene.view.renderView();
+        if (this.options.scene.grid.mode === 'hidden') {
+          this.scene.grid.hide();
+        } else {
+          this.scene.view.renderView();
+        }
       }
     }
 
@@ -758,10 +759,11 @@ class ProjectManager {
     this.scene.attributes.reloadSectionAttributes(cave);
 
     const boundingBox = this.scene.computeBoundingBox();
-    const center = boundingBox.getCenter(new THREE.Vector3());
-    this.scene.grid.adjust(boundingBox);
-    this.scene.view.panCameraTo(center);
-    this.scene.view.fitScreen(boundingBox);
+    if (boundingBox) {
+      this.scene.grid.adjust(boundingBox);
+      this.scene.view.panCameraTo(boundingBox.getCenter(new THREE.Vector3()));
+      this.scene.view.fitScreen(boundingBox);
+    }
   }
 
   #emitSurveyRecalculated(cave, survey) {

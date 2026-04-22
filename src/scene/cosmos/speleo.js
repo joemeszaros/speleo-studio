@@ -330,7 +330,6 @@ export class SpeleoScene {
       entry.stationLabels.visible = value && s.stationLabels.show;
       entry.stationLabels.hidden = !value;
     }
-    this.scene.view.renderView();
   }
 
   getSurveyObjects(survey, cave, polygonSegments, splaySegments, auxiliarySegments, visibility) {

@@ -329,6 +329,7 @@ export class ExplorerTree {
       this.scene.grid.adjust(boundingBox);
     }
 
+    this.scene.view.renderView();
     this.render();
   }
 

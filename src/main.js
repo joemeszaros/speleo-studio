@@ -523,8 +523,10 @@ class Main {
     await this.scene.models.updateModelColorMode(this.options.scene.models.color.mode);
 
     const boundingBox = this.scene.computeBoundingBox();
-    this.scene.grid.adjust(boundingBox);
-    this.scene.view.fitScreen(boundingBox);
+    if (boundingBox) {
+      this.scene.grid.adjust(boundingBox);
+      this.scene.view.fitScreen(boundingBox);
+    }
   }
 
   /**
