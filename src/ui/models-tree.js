@@ -20,6 +20,7 @@ import * as U from '../utils/utils.js';
 import { TextureFile } from '../model.js';
 import { ModelSheetEditor } from './editor/model-sheet.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { PointCloud } from '../model.js';
 import * as THREE from 'three';
 
@@ -1188,7 +1189,7 @@ export class ModelsTree {
 
     // Separate MTL files and texture files
     const mtlFiles = files.filter((f) => f.name.toLowerCase().endsWith('.mtl'));
-    const textureFiles = files.filter((f) => /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(f.name));
+    const textureFiles = files.filter((f) => /\.(jpg|jpeg|png|gif|bmp|webp|exr)$/i.test(f.name));
 
     if (mtlFiles.length === 0) {
       console.warn('No MTL file selected');
@@ -1304,6 +1305,41 @@ export class ModelsTree {
     // Create a promise that resolves when all textures are loaded
     const texturesLoaded = new Promise((resolve) => {
       const loadingManager = new THREE.LoadingManager();
+
+      // MTLLoader calls manager.getHandler(url) before falling back to TextureLoader,
+      // so registering EXRLoader here makes .exr textures loadable from MTL files.
+      // The manager must be passed to EXRLoader so the URL modifier (blob URLs) and
+      // itemStart/itemEnd tracking route through this manager — otherwise the loader
+      // uses DefaultLoadingManager and onLoad never fires.
+      //
+      // Wrapping mode: photogrammetry tools (e.g. RealityCapture) emit multi-texture
+      // OBJs with UDIM-style UVs where each material's triangles have their U
+      // coordinate offset by the tile index (group 0 → [0,1], group 1 → [1,2],
+      // etc.). The correct content lives within each material's own [0,1] texture
+      // once U is wrapped modulo 1. Three.js defaults to ClampToEdgeWrapping, which
+      // pins U>1 to the black padding at the texture's right edge and makes the
+      // model appear mostly black. RepeatWrapping fixes this by taking U mod 1.
+      //
+      // Colorspace is left as EXRLoader's default (LinearSRGBColorSpace) because
+      // WebGL forbids SRGBColorSpace on HalfFloatType textures — the renderer's
+      // outputColorSpace=sRGB handles the linear→sRGB conversion at display.
+      //
+      // flipY is left as EXRLoader's default (false) since the decoded EXR data
+      // already matches OBJ's V-origin convention.
+      const exrLoader = new EXRLoader(loadingManager);
+      const exrLoad = exrLoader.load.bind(exrLoader);
+      exrLoader.load = (url, onLoad, onProgress, onError) =>
+        exrLoad(
+          url,
+          (texture, texData) => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            if (onLoad) onLoad(texture, texData);
+          },
+          onProgress,
+          onError
+        );
+      loadingManager.addHandler(/\.exr$/i, exrLoader);
 
       // Called when all textures finish loading
       loadingManager.onLoad = () => {

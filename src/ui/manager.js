@@ -609,7 +609,7 @@ class ProjectManager {
       if (assets.length === 0) return;
 
       const mtlAssets = assets.filter((a) => a.type === 'mtl');
-      const textureAssets = assets.filter((a) => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(a.type));
+      const textureAssets = assets.filter((a) => ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'exr'].includes(a.type));
 
       if (mtlAssets.length === 0) return;
 
