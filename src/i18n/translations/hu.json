@@ -189,6 +189,7 @@
         "startPoint": "Barlang kezdőpont",
         "startPointSize": "Kezdőpont mérete",
         "startPointColor": "Kezdőpont színe",
+        "modelDefaultColor": "Modell alapértelmezett színe (saját szín módban)",
         "pointCloudPointSize": "Pontfelhő pontméret",
         "pointCloudColorStart": "Pontfelhő szín (felső)",
         "pointCloudColorEnd": "Pontfelhő szín (alsó)",
@@ -266,7 +267,9 @@
         "delete": "Modell törlése",
         "deleteConfirm": "Biztosan törölni szeretnéd a(z) '{name}' modellt? A kapcsolódó textúrák is törlődnek.",
         "setColor": "Szín beállítása",
-        "clearColor": "Szín törlése"
+        "clearColor": "Szín törlése",
+        "wireframe": "Drótvázas megjelenítés",
+        "solid": "Tömör megjelenítés"
       }
     },
     "dialogs": {

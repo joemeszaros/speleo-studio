@@ -456,6 +456,13 @@ export class SettingsPanel {
     this.createSection(
       '🌐 ' + i18n.t('ui.settingsPanel.sections.models3D'),
       [
+        this.createColorInput(
+          i18n.t('ui.settingsPanel.labels.modelDefaultColor'),
+          this.options.scene.models.color.defaultColor,
+          (value) => {
+            this.options.scene.models.color.defaultColor = value;
+          }
+        ),
         this.createRangeInput(
           i18n.t('ui.settingsPanel.labels.pointCloudPointSize'),
           this.options.scene.models.pointSize,

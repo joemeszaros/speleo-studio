@@ -1225,12 +1225,14 @@ class ObjModelImporter extends Importer {
    * @param {THREE.Object3D} object - The loaded OBJ object
    */
   applyDefaultMaterial(object) {
-    const defaultMaterial = new THREE.MeshStandardMaterial({
-      color       : 0x888888,
+    // Phong gives sharper highlights and deeper shadows than Standard (PBR) —
+    // closer to the CloudCompare look cave users expect.
+    const defaultMaterial = new THREE.MeshPhongMaterial({
+      color       : 0xb8b8b8,
+      specular    : 0x222222,
+      shininess   : 40,
       side        : THREE.DoubleSide,
-      flatShading : false,
-      roughness   : 0.8,
-      metalness   : 0.1
+      flatShading : false
     });
 
     object.traverse((child) => {

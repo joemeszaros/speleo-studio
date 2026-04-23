@@ -142,6 +142,9 @@ export class LoadingOverlay {
   async guard(message, fn) {
     if (this.active) return;
     this.show(message);
+    // Wait for a real paint cycle so the overlay is on screen before heavy
+    // synchronous work (OBJ/PLY parsing) blocks the main thread.
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 0))));
     try {
       return await fn();
     } finally {

@@ -189,6 +189,7 @@
         "startPoint": "Cave start point",
         "startPointSize": "Start point size",
         "startPointColor": "Start point color",
+        "modelDefaultColor": "Model default color (own color mode)",
         "pointCloudPointSize": "Point cloud point size",
         "pointCloudColorStart": "Point cloud color (top)",
         "pointCloudColorEnd": "Point cloud color (bottom)",
@@ -266,7 +267,9 @@
         "delete": "Delete model",
         "deleteConfirm": "Are you sure you want to delete the model '{name}'? This will also delete associated textures.",
         "setColor": "Set color",
-        "clearColor": "Clear color"
+        "clearColor": "Clear color",
+        "wireframe": "Show as wireframe",
+        "solid": "Show as solid"
       }
     },
     "dialogs": {

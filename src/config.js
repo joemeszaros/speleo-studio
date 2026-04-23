@@ -87,6 +87,7 @@ export const DEFAULT_OPTIONS = {
       color        : {
         trigger        : '',
         mode           : 'gradientByZ',
+        defaultColor   : '#90ee90',
         gradientColors : [
           { depth: 0, color: '#e1ff00' },
           { depth: 30, color: '#c20534' },
@@ -450,6 +451,7 @@ export class ConfigManager {
       config.scene.models.color = {
         trigger        : '',
         mode           : config.scene.models.color?.mode ?? 'gradientByZ',
+        defaultColor   : config.scene.models.color?.defaultColor ?? '#90ee90',
         gradientColors : [
           { depth: 0, color: '#e1ff00' },
           { depth: 30, color: '#c20534' },
@@ -460,6 +462,9 @@ export class ConfigManager {
     }
     if (config.scene.models.color.trigger === undefined) {
       config.scene.models.color.trigger = '';
+    }
+    if (config.scene.models.color.defaultColor === undefined) {
+      config.scene.models.color.defaultColor = '#90ee90';
     }
   }
 
@@ -1133,6 +1138,11 @@ export class ConfigChanges {
         break;
       case 'scene.models.color.gradientColors':
         if (['gradientByZ', 'perModel'].includes(existingMode)) {
+          this.scene.models.updateModelColorMode(existingMode).then(() => {});
+        }
+        break;
+      case 'scene.models.color.defaultColor':
+        if (['ownColor', 'perModel'].includes(existingMode)) {
           this.scene.models.updateModelColorMode(existingMode).then(() => {});
         }
         break;

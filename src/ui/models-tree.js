@@ -139,6 +139,7 @@ export class ModelsTree {
       modelNode.opacity = savedSettings.opacity ?? 1.0;
       modelNode.visible = savedSettings.visible ?? true;
       modelNode.color = savedSettings.color ?? null;
+      modelNode.wireframe = savedSettings.wireframe ?? false;
 
       // Apply to Three.js object
       const t = savedSettings.transform;
@@ -156,6 +157,11 @@ export class ModelsTree {
             child.material.needsUpdate = true;
           }
         });
+      }
+
+      // Apply wireframe to mesh materials
+      if (modelNode.wireframe && this.scene?.models) {
+        this.scene.models.setModelWireframe(model.name, true);
       }
     } else {
       // Use defaults from the object3D
@@ -444,7 +450,8 @@ export class ModelsTree {
             transform : node.transform,
             opacity   : node.opacity,
             visible   : node.visible,
-            color     : node.color ?? null
+            color     : node.color ?? null,
+            wireframe : node.wireframe ?? false
           }).then(() => {
             this.projectSystem.saveProject(currentProject);
             document.dispatchEvent(new CustomEvent('modelFileSettingsSaved', {
@@ -1077,6 +1084,25 @@ export class ModelsTree {
         }
       }
     ];
+
+    // Wireframe toggle — meshes only, and skip textured meshes.
+    const isMesh = !(node.data instanceof PointCloud);
+    const isTextured = this.scene?.models?.texturedModels?.has(node.label) ?? false;
+    if (isMesh && !isTextured) {
+      const wireframeOn = node.wireframe === true;
+      items.splice(items.length - 1, 0, {
+        icon    : wireframeOn ? '🐢' : '𓆉︎',
+        title   : wireframeOn ? i18n.t('ui.models.menu.solid') : i18n.t('ui.models.menu.wireframe'),
+        onclick : () => {
+          this.hideContextMenu();
+          node.wireframe = !wireframeOn;
+          if (this.scene?.models) {
+            this.scene.models.setModelWireframe(node.label, node.wireframe);
+          }
+          this._scheduleSave(node);
+        }
+      });
+    }
 
     this.renderContextMenu(node, items);
   }

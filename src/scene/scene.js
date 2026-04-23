@@ -142,22 +142,33 @@ class MyScene {
    * Setup scene lights for 3D models with textures/materials
    */
   setupLights() {
-    // Ambient light for overall illumination (so no part is completely dark)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    ambientLight.name = 'ambientLight';
-    this.threejsScene.add(ambientLight);
+    // Sky/ground hemisphere — kept dim so shadowed surfaces stay dark.
+    // Scene is Z-up: +Z = sky, -Z = ground.
+    const hemiLight = new THREE.HemisphereLight(0xdfe6ef, 0x3a3a3a, 0.45);
+    hemiLight.name = 'hemisphereLight';
+    hemiLight.position.set(0, 0, 1);
+    this.threejsScene.add(hemiLight);
 
-    // Directional light for shading on 3D models
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    // Strong key light from upper-front-side for sharp contrast
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
     dirLight.name = 'directionalLight';
-    dirLight.position.set(1, 1, 1);
+    dirLight.position.set(1, 0.5, 2);
     this.threejsScene.add(dirLight);
 
-    // Secondary fill light from opposite direction to reduce harsh shadows
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-    fillLight.name = 'fillLight';
-    fillLight.position.set(-1, -0.5, -1);
-    this.threejsScene.add(fillLight);
+    // Second key from other side to reveal shape without flattening
+    const sideLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    sideLight.name = 'sideLight';
+    sideLight.position.set(-1.5, -1, 1);
+    this.threejsScene.add(sideLight);
+
+    // Camera-following headlight — always lights whatever surface the user
+    // is looking at, so the visible side of the model is never pitch black.
+    // Position & target are updated per-frame in renderScene().
+    this.headLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    this.headLight.name = 'headLight';
+    this.threejsScene.add(this.headLight);
+    // Target must be in the scene for its matrixWorld to update
+    this.threejsScene.add(this.headLight.target);
   }
 
   getBoundingClientRect() {

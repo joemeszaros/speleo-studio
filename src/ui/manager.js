@@ -498,31 +498,27 @@ class ProjectManager {
       const modelFiles = await this.modelSystem.getModelFilesByProject(projectId);
       if (modelFiles.length === 0) return null;
 
-      // Show loading overlay for point cloud models that may need rebuilding
-      const hasPointClouds = modelFiles.some(f => ['las', 'laz', 'ply'].includes(f.type));
-      if (hasPointClouds && this.loadingOverlay) {
-        this.loadingOverlay.show(i18n.t('ui.loading.openingModel'));
-      }
-
-      try {
-        if (hasPointClouds && this.loadingOverlay) {
-          this.loadingOverlay.beginBatch(modelFiles.length);
-        }
-        for (const modelFile of modelFiles) {
-          await this.modelLoader(modelFile, async (model, object3D) => {
-            await this.addModelFromStorage(model, object3D, modelFile);
-            if (!coordSystem && model.geoData?.coordinateSystem) {
-              coordSystem = model.geoData.coordinateSystem;
-            }
-          });
-          if (hasPointClouds && this.loadingOverlay) {
-            this.loadingOverlay.advanceBatch();
+      const runLoad = async () => {
+        if (this.loadingOverlay) this.loadingOverlay.beginBatch(modelFiles.length);
+        try {
+          for (const modelFile of modelFiles) {
+            await this.modelLoader(modelFile, async (model, object3D) => {
+              await this.addModelFromStorage(model, object3D, modelFile);
+              if (!coordSystem && model.geoData?.coordinateSystem) {
+                coordSystem = model.geoData.coordinateSystem;
+              }
+            });
+            if (this.loadingOverlay) this.loadingOverlay.advanceBatch();
           }
+        } finally {
+          if (this.loadingOverlay) this.loadingOverlay.endBatch();
         }
-      } finally {
-        if (hasPointClouds && this.loadingOverlay) {
-          this.loadingOverlay.hide();
-        }
+      };
+
+      if (this.loadingOverlay) {
+        await this.loadingOverlay.guard(i18n.t('ui.loading.openingModel'), runLoad);
+      } else {
+        await runLoad();
       }
 
       console.log(`🌐 Loaded ${modelFiles.length} model(s) from storage`);

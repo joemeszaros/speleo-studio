@@ -18,7 +18,7 @@ import * as THREE from 'three';
 import { degreesToRads } from '../../utils/utils.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
-import { PointCloudHelper } from '../../utils/models.js';
+import { PointCloudHelper, interpolateGradientColor } from '../../utils/models.js';
 
 export class ModelScene {
 
@@ -38,10 +38,65 @@ export class ModelScene {
     // Models with loaded textures (skip color mode for these)
     this.texturedModels = new Set();
 
+    // Models rendered as wireframe (per-model override, meshes only)
+    this.wireframeModels = new Set();
+
+    // Lazy-attached camera listeners that sync the headlight. Only active
+    // while at least one model is loaded — see #ensureHeadlightListeners /
+    // #detachHeadlightListeners.
+    this.headlightListenersAttached = false;
+    this.onCameraChangeForHeadlight = null;
+
     // Single group for all 3D model objects
     this.object3DGroup = new THREE.Group();
     this.object3DGroup.name = 'model objects';
     scene.addObjectToScene(this.object3DGroup);
+  }
+
+  /**
+   * Attach orbit listeners that keep the headlight aligned with the active
+   * camera. Called lazily the first time a model is added so cave-only
+   * projects never pay the cost.
+   */
+  #ensureHeadlightListeners() {
+    if (this.headlightListenersAttached) return;
+    if (!this.scene.views || !this.scene.headLight) return;
+
+    this.onCameraChangeForHeadlight = () => {
+      const view = this.scene.view;
+      if (!view) return;
+      const cam = view.camera;
+      const target = view.control?.target;
+      console.log('Updating headlight in model scene');
+      this.scene.headLight.position.copy(cam.position);
+      if (target) {
+        this.scene.headLight.target.position.copy(target);
+        this.scene.headLight.target.updateMatrixWorld();
+      }
+    };
+
+    for (const view of this.scene.views.values()) {
+      view.control.addEventListener('orbitChange', this.onCameraChangeForHeadlight);
+      view.control.addEventListener('orbitSet', this.onCameraChangeForHeadlight);
+    }
+    this.headlightListenersAttached = true;
+
+    // Initial sync so the first render after the first model loads has the
+    // headlight pointing the right way without waiting for user interaction.
+    this.onCameraChangeForHeadlight();
+  }
+
+  /**
+   * Detach the headlight listeners when the scene no longer contains any models.
+   */
+  #detachHeadlightListeners() {
+    if (!this.headlightListenersAttached || !this.onCameraChangeForHeadlight) return;
+    for (const view of this.scene.views.values()) {
+      view.control.removeEventListener('orbitChange', this.onCameraChangeForHeadlight);
+      view.control.removeEventListener('orbitSet', this.onCameraChangeForHeadlight);
+    }
+    this.onCameraChangeForHeadlight = null;
+    this.headlightListenersAttached = false;
   }
 
   /**
@@ -91,6 +146,7 @@ export class ModelScene {
       pointCloud.octree.updateVisibility(this.scene.view.camera, this.scene.sceneRenderer);
     }
 
+    this.#ensureHeadlightListeners();
     this.scene.view.renderView();
   }
 
@@ -128,6 +184,7 @@ export class ModelScene {
     }
     this.meshObjects.set(mesh.name, entry);
 
+    this.#ensureHeadlightListeners();
     this.scene.view.renderView();
   }
 
@@ -179,6 +236,33 @@ export class ModelScene {
     if (boundingBox) {
       this.scene.grid.adjust(boundingBox);
     }
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Toggle wireframe rendering on a mesh model. No-op for point clouds
+   * and textured meshes. Orthogonal to color mode — only touches material.wireframe.
+   * @param {string} name - The model name
+   * @param {boolean} enabled - True for wireframe, false for solid
+   */
+  setModelWireframe(name, enabled) {
+    if (this.texturedModels.has(name)) return;
+    const entry = this.meshObjects.get(name);
+    if (!entry) return;
+
+    entry.object3D.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+      if (Array.isArray(child.material)) {
+        child.material.forEach((m) => { m.wireframe = enabled; m.needsUpdate = true; });
+      } else {
+        child.material.wireframe = enabled;
+        child.material.needsUpdate = true;
+      }
+    });
+
+    if (enabled) this.wireframeModels.add(name);
+    else this.wireframeModels.delete(name);
+
     this.scene.view.renderView();
   }
 
@@ -258,8 +342,6 @@ export class ModelScene {
    * @param {string} mode - 'gradientByZ' | 'perModel' | 'ownColor'
    * @param {Object} [trigger] - Optional trigger object with reason/model/color fields
    */
-  static PER_MODEL_FALLBACK_COLOR = '#90ee90';
-
   async updateModelColorMode(mode, trigger) {
     const colorConfig = this.scene.options.scene.models.color;
 
@@ -289,13 +371,14 @@ export class ModelScene {
         applyFn();
       }
     } else if (mode === 'perModel') {
+      const fallback = colorConfig.defaultColor;
       for (const [name] of this.#allModelEntries()) {
         if (this.texturedModels.has(name)) continue;
         const color = this.modelColors.get(name);
-        this.#applyPerModelColor(name, color ?? ModelScene.PER_MODEL_FALLBACK_COLOR);
+        this.#applyPerModelColor(name, color ?? fallback);
       }
     } else if (mode === 'ownColor') {
-      this.#applyOwnColor();
+      this.#applyOwnColor(colorConfig.defaultColor);
       // Still apply per-model override if set
       for (const [name] of this.#allModelEntries()) {
         if (this.texturedModels.has(name)) continue;
@@ -312,8 +395,7 @@ export class ModelScene {
   }
 
   #applyGradientByZ(gradientColors) {
-    // Compute combined WORLD Z range across all non-textured point clouds.
-    // Octree positions are local (auto-centered); add group.position.z to get world Z.
+    // Compute combined WORLD Z range across all non-textured models (point clouds + meshes).
     let globalMinZ = Infinity;
     let globalMaxZ = -Infinity;
 
@@ -338,6 +420,21 @@ export class ModelScene {
           if (wz > globalMaxZ) globalMaxZ = wz;
         }
       }
+    }
+
+    for (const [name, entry] of this.meshObjects) {
+      if (this.texturedModels.has(name)) continue;
+      const offsetZ = entry.object3D.position.z;
+      entry.object3D.traverse((child) => {
+        if (!child.isMesh || !child.geometry) return;
+        const pos = child.geometry.getAttribute('position');
+        if (!pos) return;
+        for (let i = 0; i < pos.count; i++) {
+          const wz = pos.getZ(i) + offsetZ;
+          if (wz < globalMinZ) globalMinZ = wz;
+          if (wz > globalMaxZ) globalMaxZ = wz;
+        }
+      });
     }
 
     const hasRange = isFinite(globalMinZ) && isFinite(globalMaxZ);
@@ -368,6 +465,54 @@ export class ModelScene {
         }
       }
     }
+
+    for (const [name, entry] of this.meshObjects) {
+      if (this.texturedModels.has(name)) continue;
+      const offsetZ = entry.object3D.position.z;
+      entry.object3D.traverse((child) => {
+        if (!child.isMesh || !child.geometry) return;
+        const colors = this.#computeMeshGradientColors(
+          child.geometry, gradientColors,
+          hasRange ? globalMinZ : undefined,
+          hasRange ? globalMaxZ : undefined,
+          offsetZ
+        );
+        if (colors) {
+          child.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+          child.geometry.attributes.color.needsUpdate = true;
+          child.material.vertexColors = true;
+          child.material.needsUpdate = true;
+        }
+      });
+    }
+  }
+
+  #computeMeshGradientColors(geometry, gradientColors, minZ, maxZ, offsetZ = 0) {
+    const pos = geometry.getAttribute('position');
+    if (!pos) return null;
+    const sortedColors = [...gradientColors].sort((a, b) => a.depth - b.depth);
+    let computedMinZ = minZ;
+    let computedMaxZ = maxZ;
+    if (computedMinZ === undefined || computedMaxZ === undefined) {
+      computedMinZ = Infinity;
+      computedMaxZ = -Infinity;
+      for (let i = 0; i < pos.count; i++) {
+        const wz = pos.getZ(i) + offsetZ;
+        if (wz < computedMinZ) computedMinZ = wz;
+        if (wz > computedMaxZ) computedMaxZ = wz;
+      }
+    }
+    const diffZ = computedMaxZ - computedMinZ;
+    const colors = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      const worldZ = pos.getZ(i) + offsetZ;
+      const depth = diffZ === 0 ? 0 : ((computedMaxZ - worldZ) / diffZ) * 100;
+      const c = interpolateGradientColor(depth, sortedColors, 'depth');
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    return colors;
   }
 
   #applyGradientByZToModel(name, gradientColors) {
@@ -415,6 +560,7 @@ export class ModelScene {
       const threeColor = new THREE.Color(hexColor);
       meshEntry.object3D.traverse((child) => {
         if (child.isMesh && child.material) {
+          child.material.vertexColors = false;
           child.material.color = threeColor;
           child.material.needsUpdate = true;
         }
@@ -422,7 +568,7 @@ export class ModelScene {
     }
   }
 
-  #applyOwnColor() {
+  #applyOwnColor(defaultColor) {
     for (const [name, entry] of this.pointCloudObjects) {
       if (this.texturedModels.has(name)) continue;
       const pc = this.scene.db.getPointCloud(name);
@@ -435,7 +581,18 @@ export class ModelScene {
         entry.object3D.geometry.attributes.color.needsUpdate = true;
       }
     }
-    // Meshes keep their native materials; no action needed
+    // Meshes have no native vertex colors — apply the configurable default color
+    // (and clear any vertex colors left from gradient mode).
+    const threeColor = new THREE.Color(defaultColor);
+    for (const [name, entry] of this.meshObjects) {
+      if (this.texturedModels.has(name)) continue;
+      entry.object3D.traverse((child) => {
+        if (!child.isMesh || !child.material) return;
+        child.material.vertexColors = false;
+        child.material.color = threeColor;
+        child.material.needsUpdate = true;
+      });
+    }
   }
 
   /**
@@ -457,6 +614,12 @@ export class ModelScene {
     this.object3DGroup.remove(entry.object3D);
     this.pointCloudObjects.delete(name);
     this.meshObjects.delete(name);
+    this.wireframeModels.delete(name);
+
+    if (this.pointCloudObjects.size === 0 && this.meshObjects.size === 0) {
+      this.#detachHeadlightListeners();
+    }
+
     this.scene.view.renderView();
   }
 
@@ -482,6 +645,9 @@ export class ModelScene {
       this.#disposeObject3D(entry.object3D);
     }
     this.meshObjects.clear();
+    this.wireframeModels.clear();
+
+    this.#detachHeadlightListeners();
 
     // Clear all children from the group
     while (this.object3DGroup.children.length > 0) {
