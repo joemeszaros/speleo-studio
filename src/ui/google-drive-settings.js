@@ -26,6 +26,8 @@ export class GoogleDriveSettings {
     this.sync = googleDriveSync;
     this.config = this.sync.config;
     this.isVisible = false;
+    this.projectPanel = null;
+    this._projectPanelWasVisible = false;
     this.setupEventListeners();
 
     document.addEventListener('languageChanged', () => {
@@ -74,6 +76,11 @@ export class GoogleDriveSettings {
       return;
     }
 
+    this._projectPanelWasVisible = this.projectPanel?.isVisible ?? false;
+    if (this._projectPanelWasVisible) {
+      this.projectPanel.hide();
+    }
+
     this.isVisible = true;
     this.createPanel();
     this.updateUI();
@@ -92,6 +99,11 @@ export class GoogleDriveSettings {
       panel.remove();
     }
     this.isVisible = false;
+
+    if (this._projectPanelWasVisible) {
+      this._projectPanelWasVisible = false;
+      this.projectPanel.show();
+    }
   }
 
   /**
@@ -122,17 +134,46 @@ export class GoogleDriveSettings {
             <input type="text" id="instance-name" placeholder="${i18n.t('ui.panels.googleDriveSettings.instanceNamePlaceholder')}" value="">
           </div>
 
-          <div class="google-drive-form-group">
-            <label for="folder-name">${i18n.t('ui.panels.googleDriveSettings.folderName')}</label>
-            <input type="text" id="folder-name" placeholder="${i18n.t('ui.panels.googleDriveSettings.folderNamePlaceholder')}" value="${i18n.t('ui.panels.googleDriveSettings.folderNamePlaceholder')}">
-          </div>
-          <div class="google-drive-form-group">
-            <label for="caves-folder">${i18n.t('ui.panels.googleDriveSettings.cavesFolder')}</label>
-            <input type="text" id="caves-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.cavesFolderPlaceholder')}" value="${i18n.t('ui.panels.googleDriveSettings.cavesFolderPlaceholder')}">
-          </div>
-          <div class="google-drive-form-group">
-            <label for="projects-folder">${i18n.t('ui.panels.googleDriveSettings.projectsFolder')}</label>
-            <input type="text" id="projects-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder')}" value="${i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder')}">
+          <div class="google-drive-folder-columns">
+            <div class="google-drive-folder-col">
+              <div class="google-drive-folder-col-header">${i18n.t('ui.panels.googleDriveSettings.generalFolders')}</div>
+              <div class="google-drive-form-group">
+                <label for="folder-name">${i18n.t('ui.panels.googleDriveSettings.folderName')}</label>
+                <input type="text" id="folder-name" placeholder="${i18n.t('ui.panels.googleDriveSettings.folderNamePlaceholder')}" title="${i18n.t('ui.panels.googleDriveSettings.folderNameHint')}">
+              </div>
+              <div class="google-drive-folder-hint">${i18n.t('ui.panels.googleDriveSettings.folderNameHint')}</div>
+              <div class="google-drive-form-group">
+                <label for="caves-folder">${i18n.t('ui.panels.googleDriveSettings.cavesFolder')}</label>
+                <input type="text" id="caves-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.cavesFolderPlaceholder')}">
+              </div>
+              <div class="google-drive-form-group">
+                <label for="projects-folder">${i18n.t('ui.panels.googleDriveSettings.projectsFolder')}</label>
+                <input type="text" id="projects-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder')}">
+              </div>
+              <div class="google-drive-form-group">
+                <label for="models-folder">${i18n.t('ui.panels.googleDriveSettings.modelsFolder')}</label>
+                <input type="text" id="models-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.modelsFolderPlaceholder')}">
+              </div>
+            </div>
+            <div class="google-drive-folder-col">
+              <div class="google-drive-folder-col-header">${i18n.t('ui.panels.googleDriveSettings.modelFolders')}</div>
+              <div class="google-drive-form-group">
+                <label for="model-files-folder">${i18n.t('ui.panels.googleDriveSettings.modelFilesFolder')}</label>
+                <input type="text" id="model-files-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.modelFilesFolderPlaceholder')}">
+              </div>
+              <div class="google-drive-form-group">
+                <label for="texture-files-folder">${i18n.t('ui.panels.googleDriveSettings.textureFilesFolder')}</label>
+                <input type="text" id="texture-files-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.textureFilesFolderPlaceholder')}">
+              </div>
+              <div class="google-drive-form-group">
+                <label for="model-metadata-folder">${i18n.t('ui.panels.googleDriveSettings.modelMetadataFolder')}</label>
+                <input type="text" id="model-metadata-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.modelMetadataFolderPlaceholder')}">
+              </div>
+              <div class="google-drive-form-group">
+                <label for="model-settings-folder">${i18n.t('ui.panels.googleDriveSettings.modelSettingsFolder')}</label>
+                <input type="text" id="model-settings-folder" placeholder="${i18n.t('ui.panels.googleDriveSettings.modelSettingsFolderPlaceholder')}">
+              </div>
+            </div>
           </div>
           <div class="google-drive-form-group">
             <label>
@@ -177,7 +218,12 @@ export class GoogleDriveSettings {
     });
 
     // Configuration inputs
-    const inputs = ['client-id', 'client-secret', 'instance-name', 'folder-name', 'caves-folder', 'projects-folder'];
+    const inputs = [
+      'client-id', 'client-secret', 'instance-name',
+      'folder-name', 'caves-folder', 'projects-folder',
+      'models-folder', 'model-files-folder', 'texture-files-folder',
+      'model-metadata-folder', 'model-settings-folder'
+    ];
     inputs.forEach((id) => {
       const input = panel.querySelector(`#${id}`);
       input.addEventListener('input', () => {
@@ -210,22 +256,28 @@ export class GoogleDriveSettings {
    */
   saveConfiguration() {
     const panel = document.getElementById('google-drive-settings-panel');
-
-    const clientId = panel.querySelector('#client-id').value;
-    const clientSecret = panel.querySelector('#client-secret').value;
-    const instanceName = panel.querySelector('#instance-name').value;
+    const val = (id) => panel.querySelector(`#${id}`).value.trim();
 
     this.config.updateConfig({
-      clientId     : clientId,
-      clientSecret : clientSecret,
-      appName      : instanceName,
+      clientId     : val('client-id'),
+      clientSecret : val('client-secret'),
+      appName      : val('instance-name'),
       folderName   :
-        panel.querySelector('#folder-name').value || i18n.t('ui.panels.googleDriveSettings.folderNamePlaceholder'),
+        val('folder-name') || i18n.t('ui.panels.googleDriveSettings.folderNamePlaceholder'),
       cavesFolderName :
-        panel.querySelector('#caves-folder').value || i18n.t('ui.panels.googleDriveSettings.cavesFolderPlaceholder'),
+        val('caves-folder') || i18n.t('ui.panels.googleDriveSettings.cavesFolderPlaceholder'),
       projectsFolderName :
-        panel.querySelector('#projects-folder').value ||
-        i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder')
+        val('projects-folder') || i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder'),
+      modelsFolderName :
+        val('models-folder') || i18n.t('ui.panels.googleDriveSettings.modelsFolderPlaceholder'),
+      modelFilesFolderName :
+        val('model-files-folder') || i18n.t('ui.panels.googleDriveSettings.modelFilesFolderPlaceholder'),
+      textureFilesFolderName :
+        val('texture-files-folder') || i18n.t('ui.panels.googleDriveSettings.textureFilesFolderPlaceholder'),
+      modelMetadataFolderName :
+        val('model-metadata-folder') || i18n.t('ui.panels.googleDriveSettings.modelMetadataFolderPlaceholder'),
+      modelSettingsFolderName :
+        val('model-settings-folder') || i18n.t('ui.panels.googleDriveSettings.modelSettingsFolderPlaceholder')
     });
 
     this.updateUI();
@@ -255,6 +307,16 @@ export class GoogleDriveSettings {
       this.config.get('cavesFolderName') || i18n.t('ui.panels.googleDriveSettings.cavesFolderPlaceholder');
     panel.querySelector('#projects-folder').value =
       this.config.get('projectsFolderName') || i18n.t('ui.panels.googleDriveSettings.projectsFolderPlaceholder');
+    panel.querySelector('#models-folder').value =
+      this.config.get('modelsFolderName') || i18n.t('ui.panels.googleDriveSettings.modelsFolderPlaceholder');
+    panel.querySelector('#model-files-folder').value =
+      this.config.get('modelFilesFolderName') || i18n.t('ui.panels.googleDriveSettings.modelFilesFolderPlaceholder');
+    panel.querySelector('#texture-files-folder').value =
+      this.config.get('textureFilesFolderName') || i18n.t('ui.panels.googleDriveSettings.textureFilesFolderPlaceholder');
+    panel.querySelector('#model-metadata-folder').value =
+      this.config.get('modelMetadataFolderName') || i18n.t('ui.panels.googleDriveSettings.modelMetadataFolderPlaceholder');
+    panel.querySelector('#model-settings-folder').value =
+      this.config.get('modelSettingsFolderName') || i18n.t('ui.panels.googleDriveSettings.modelSettingsFolderPlaceholder');
     panel.querySelector('#auto-sync').checked = this.config.get('autoSync') || false;
     panel.querySelector('#ignore-conflict').checked = this.config.get('ignoreConflict') || false;
 

@@ -17,7 +17,7 @@
 import { showErrorPanel, showSuccessPanel, showInfoPanel } from './popups.js';
 import * as U from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
-import { DriveProject, FatProject, Project, FatProjects } from '../model/project.js';
+import { DriveProject, DriveModelMetadata, FatProject, Project, FatProjects } from '../model/project.js';
 import { Cave, DriveCaveMetadata } from '../model/cave.js';
 import { CoordinateSystem } from '../model/geo.js';
 import { RevisionInfo } from '../model/misc.js';
@@ -325,6 +325,7 @@ export class ProjectPanel {
       });
 
       let driveProjectFiles = [];
+      let driveAuthenticated = false;
       const signal = this.driveOperationsController?.signal;
 
       if (this.googleDriveSync.config.isConfigured()) {
@@ -336,7 +337,10 @@ export class ProjectPanel {
 
           if (signal?.aborted) return;
 
-          driveProjectFiles = await this.googleDriveSync.listProjects();
+          if (this.googleDriveSync.config.hasValidTokens()) {
+            driveProjectFiles = await this.googleDriveSync.listProjects();
+            driveAuthenticated = true;
+          }
         } catch (error) {
           console.error('Failed to list Google Drive projects', error);
         }
@@ -376,19 +380,20 @@ export class ProjectPanel {
 
         if (signal?.aborted) return;
 
-        // local projects without google drive pair
-        const localProjects = projects.filter((p) => !this.driveProjects.has(p.id));
-        localProjects.forEach((project) => {
-          const button = U.node`<button class="project-action-btn">${i18n.t('common.upload')}</button>`;
-          const buttonContainer = recentProjectsList.querySelector(`#project-item-actions-${project.id}`);
-          const crsSpan = buttonContainer.querySelector('.project-crs');
-          crsSpan ? buttonContainer.insertBefore(button, crsSpan) : buttonContainer.appendChild(button);
-          // Use wrapper function for click handler
-          button.addEventListener(
-            'click',
-            async (event) => await this.createClickHandler(event, async () => await this.uploadProject(project))
-          );
-        });
+        // Only show upload buttons when Drive is authenticated
+        if (driveAuthenticated) {
+          const localProjects = projects.filter((p) => !this.driveProjects.has(p.id));
+          localProjects.forEach((project) => {
+            const button = U.node`<button class="project-action-btn">${i18n.t('common.upload')}</button>`;
+            const buttonContainer = recentProjectsList.querySelector(`#project-item-actions-${project.id}`);
+            const crsSpan = buttonContainer.querySelector('.project-crs');
+            crsSpan ? buttonContainer.insertBefore(button, crsSpan) : buttonContainer.appendChild(button);
+            button.addEventListener(
+              'click',
+              async (event) => await this.createClickHandler(event, async () => await this.uploadProject(project))
+            );
+          });
+        }
       }
 
     } catch (error) {
@@ -406,15 +411,20 @@ export class ProjectPanel {
       const caveList = await this.getCaveList(caves, driveProject);
       const projectSyncInfo = await this.getProjectSyncInfo(driveProject, localProject);
 
+      const embeddedModels = this.modelSystem
+        ? await this.modelSystem.getModelsForExport(localProject.id)
+        : [];
+      const modelSyncInfo = await this.getModelSyncInfo(embeddedModels, driveProject);
+
       const projectNameElmnt = projectItemNode.querySelector(`#project-name-${localProject.id}`);
       projectNameElmnt.innerHTML = projectSyncInfo.decoratedName;
       projectNameElmnt.title = i18n.t('ui.panels.projectManager.projectId') + ': ' + driveProject?.project?.id;
       const projectCavesElmnt = projectItemNode.querySelector(`#project-caves-${localProject.id}`);
-      projectCavesElmnt.innerHTML =
-        ' • ' +
-        caveList
-          .map((c) => c.decoratedName)
-          .join(', ');
+      const allDecorated = [
+        ...caveList.map((c) => c.decoratedName),
+        ...modelSyncInfo.map((m) => m.decoratedName)
+      ];
+      projectCavesElmnt.innerHTML = ' • ' + allDecorated.join(', ');
       projectCavesElmnt.title = this.getTooltipText(caveList);
       const projectInfoElmnt = projectItemNode.querySelector(`#project-item-info-${localProject.id}`);
       projectInfoElmnt.insertBefore(
@@ -430,6 +440,9 @@ export class ProjectPanel {
             ['new', 'remote', 'remoteDeleted', 'localDeleted'].includes(c.state) ||
             (c.diff ?? 0) !== 0 ||
             (c.hasConflict && c.diff === 0)
+        ) ||
+        modelSyncInfo.some(
+          (m) => m.state === 'new' || (m.metaDiff ?? 0) !== 0 || (m.settingsDiff ?? 0) !== 0 || m.hasConflict
         );
       if (syncEnabled) {
         const cloudButton = U.node`<button id="sync-project-btn" class="project-action-btn sync">${i18n.t('common.sync')}</button>`;
@@ -439,7 +452,7 @@ export class ProjectPanel {
             await this.createClickHandler(
               event,
               async () =>
-                await this.syncProject(localProject, driveProject, caveList, projectSyncInfo, async (dProj) => {
+                await this.syncProject(localProject, driveProject, caveList, projectSyncInfo, modelSyncInfo, async (dProj) => {
                   const nCaves = await this.caveSystem.getCaveFieldsByProjectId(localProject.id, [
                     'name',
                     'id',
@@ -448,6 +461,7 @@ export class ProjectPanel {
                   const newNode = this.getProjectItemNode(
                     dProj.project,
                     nCaves.map((c) => c.name),
+                    [],
                     new Date(localProject.updatedAt).toLocaleDateString(),
                     this.projectSystem.getCurrentProject()?.id === localProject.id,
                     true
@@ -515,7 +529,7 @@ export class ProjectPanel {
 
     if (diff > 0) {
       hasConflict = !(
-        localRevisionInfo.originRevision === driveRevision && localRevisionInfo.originApp === driveRevision
+        localRevisionInfo.originRevision === driveRevision && localRevisionInfo.originApp === driveProject.app
       );
     } else if (diff < 0) {
       hasConflict = hasLocalChanges;
@@ -731,6 +745,62 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
 
   }
 
+  async getModelSyncInfo(embeddedModels, driveProject) {
+    const driveModels = driveProject.models || [];
+    return await Promise.all(
+      embeddedModels.map(async (model) => {
+        const modelFileId = model.modelFile.id;
+        const name = model.metadata.name;
+        const driveModel = driveModels.find((m) => m.id === modelFileId);
+
+        if (!driveModel) {
+          return { id: modelFileId, name, decoratedName: `🟢 ${name}`, state: 'new', hasConflict: false };
+        }
+
+        const [localMeta, localSettings] = await Promise.all([
+          this.revisionStore.loadRevision(`${modelFileId}_meta`),
+          this.revisionStore.loadRevision(`${modelFileId}_settings`)
+        ]);
+
+        const metaDiff = (localMeta?.revision ?? 1) - driveModel.metadataRevision;
+        const settingsDiff = (localSettings?.revision ?? 1) - driveModel.settingsRevision;
+
+        const calcConflict = (localRev, diff, driveRev, driveApp) => {
+          if (!localRev) return false;
+          if (diff > 0) return !(localRev.originRevision === driveRev && localRev.originApp === driveApp);
+          return !localRev.synced;
+        };
+
+        const metaConflict = calcConflict(localMeta, metaDiff, driveModel.metadataRevision, driveModel.metadataApp);
+        const settingsConflict = calcConflict(localSettings, settingsDiff, driveModel.settingsRevision, driveModel.settingsApp);
+        const hasConflict = metaConflict || settingsConflict;
+
+        const maxDiff = Math.max(metaDiff, settingsDiff);
+        let prefix = hasConflict ? '⚠️' : '';
+        let diffStr = '';
+
+        if (maxDiff > 0) {
+          diffStr = `(<span style="color: green"><strong>Δ ${maxDiff}</strong></span>)`;
+        } else if (maxDiff < 0) {
+          diffStr = `(<span style="color: red"><strong>∇ ${Math.abs(maxDiff)}</strong></span>)`;
+        } else if (!hasConflict) {
+          prefix = '✅️';
+        }
+
+        return {
+          id           : modelFileId,
+          name,
+          decoratedName : `${prefix} ${name} ${diffStr}`,
+          state        : 'existing',
+          metaDiff,
+          settingsDiff,
+          hasConflict,
+          model
+        };
+      })
+    );
+  }
+
   projectItemNode(
     project,
     caveNames,
@@ -933,7 +1003,7 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
     return true;
   }
 
-  async syncProject(localProject, driveProject, caveList, projectSyncInfo, onSuccess) {
+  async syncProject(localProject, driveProject, caveList, projectSyncInfo, modelSyncInfo, onSuccess) {
     try {
 
       const conflictMessages = this.getConflictMessages(caveList, projectSyncInfo);
@@ -1025,11 +1095,14 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         return new DriveCaveMetadata(cave.id, cave.name, cave.revision ?? 1, rev?.app ?? localApp);
       });
 
+      // Sync embedded models
+      const updatedModelsMetadata = await this.#syncModels(modelSyncInfo, localProject, localApp);
+
       const localRevisionInfo = await this.revisionStore.loadRevision(localProject?.id ?? driveProject.project.id);
 
       if (caveHasUploaded || projectSyncInfo.diff > 0 || (projectSyncInfo.diff === 0 && projectSyncInfo.hasConflict)) {
         localProject.updatedAt = new Date().toISOString();
-        updatedProject = new DriveProject(localProject, cavesMetadata, this.googleDriveSync.config.getApp());
+        updatedProject = new DriveProject(localProject, cavesMetadata, this.googleDriveSync.config.getApp(), [], updatedModelsMetadata);
         await this.googleDriveSync.uploadProject(updatedProject);
         localRevisionInfo.synced = true;
         localRevisionInfo.originApp = localApp;
@@ -1047,9 +1120,9 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         await this.revisionStore.saveRevision(new RevisionInfo(localProject.id, rev, app, true, app, rev));
 
         //due to local changes in caves we need to update the project
-        if (caveHasUploaded) {
+        if (caveHasUploaded || updatedModelsMetadata.length > 0) {
           project.updatedAt = new Date().toISOString();
-          updatedProject = new DriveProject(project, cavesMetadata, app);
+          updatedProject = new DriveProject(project, cavesMetadata, app, [], updatedModelsMetadata);
           await this.googleDriveSync.uploadProject(updatedProject);
         } else {
           updatedProject = driveProject;
@@ -1059,6 +1132,10 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         // we do not need to upload the project, but we need fresh drive project and properties
         const { _, project } = await this.googleDriveSync.fetchProject(localProject);
         updatedProject = project;
+        if (updatedModelsMetadata.length > 0) {
+          updatedProject.models = updatedModelsMetadata;
+          await this.googleDriveSync.uploadProject(updatedProject);
+        }
       }
 
       onSuccess(updatedProject);
@@ -1067,6 +1144,78 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
       showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectSyncFailed', { error: error.message }));
     }
   }
+  async #syncModels(modelSyncInfo, localProject, localApp) {
+    if (!this.modelSystem || !modelSyncInfo || modelSyncInfo.length === 0) return [];
+    const updatedModelsMetadata = [];
+
+    for (const m of modelSyncInfo) {
+      try {
+        const model = m.model;
+        const modelFileId = m.id;
+        const needsMetaUpload = m.state === 'new' || m.metaDiff > 0 || (m.metaDiff === 0 && m.hasConflict);
+        const needsSettingsUpload = m.state === 'new' || m.settingsDiff > 0 || (m.settingsDiff === 0 && m.hasConflict);
+
+        // Upload immutable binary files if not yet on Drive
+        if (model) {
+          await this.googleDriveSync.uploadModelFile(model.modelFile, localProject);
+          for (const texture of model.textures) {
+            await this.googleDriveSync.uploadTextureFile(texture, localProject);
+          }
+        }
+
+        let metaRev = await this.revisionStore.loadRevision(`${modelFileId}_meta`);
+        let settingsRev = await this.revisionStore.loadRevision(`${modelFileId}_settings`);
+
+        if (needsMetaUpload && model) {
+          if (!metaRev) metaRev = new RevisionInfo(`${modelFileId}_meta`, 1, localApp, false, localApp, 0);
+          await this.googleDriveSync.uploadModelMetadata(model.metadata, metaRev, localProject, m.state === 'new');
+          metaRev.synced = true;
+          metaRev.originApp = localApp;
+          metaRev.originRevision = metaRev.revision;
+          await this.revisionStore.saveRevision(metaRev);
+        } else if (m.metaDiff < 0) {
+          const result = await this.googleDriveSync.fetchModelMetadata(modelFileId);
+          if (result && model) {
+            await this.modelSystem.saveModelMetadata(localProject.id, result.metadata);
+            const driveRev = parseInt(result.properties?.revision ?? '1');
+            metaRev = new RevisionInfo(`${modelFileId}_meta`, driveRev, result.properties?.app ?? localApp, true, result.properties?.app ?? localApp, driveRev);
+            await this.revisionStore.saveRevision(metaRev);
+          }
+        }
+
+        if (needsSettingsUpload && model?.settings) {
+          if (!settingsRev) settingsRev = new RevisionInfo(`${modelFileId}_settings`, 1, localApp, false, localApp, 0);
+          await this.googleDriveSync.uploadModelSettings(model.settings, modelFileId, settingsRev, localProject, m.state === 'new');
+          settingsRev.synced = true;
+          settingsRev.originApp = localApp;
+          settingsRev.originRevision = settingsRev.revision;
+          await this.revisionStore.saveRevision(settingsRev);
+        } else if (m.settingsDiff < 0) {
+          const result = await this.googleDriveSync.fetchModelSettings(modelFileId);
+          if (result && model) {
+            await this.modelSystem.saveModelFileSettings(modelFileId, localProject.id, result.settings);
+            const driveRev = parseInt(result.properties?.revision ?? '1');
+            settingsRev = new RevisionInfo(`${modelFileId}_settings`, driveRev, result.properties?.app ?? localApp, true, result.properties?.app ?? localApp, driveRev);
+            await this.revisionStore.saveRevision(settingsRev);
+          }
+        }
+
+        updatedModelsMetadata.push(new DriveModelMetadata(
+          modelFileId,
+          m.name,
+          metaRev?.revision ?? 1,
+          metaRev?.app ?? localApp,
+          settingsRev?.revision ?? 1,
+          settingsRev?.app ?? localApp
+        ));
+      } catch (err) {
+        console.error(`Failed to sync model ${m.name}:`, err);
+      }
+    }
+
+    return updatedModelsMetadata;
+  }
+
   async downloadCave(driveCave, caveEntry, projectId, hasLocalCopy) {
     const caveId = caveEntry.id;
     const response = await this.googleDriveSync.fetchCave({ id: caveId });
@@ -1127,11 +1276,18 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         await this.revisionStore.saveRevision(
           new RevisionInfo(project.id, project.revision, driveProject.app, true, driveProject.app, project.revision)
         );
+
+        // Download embedded models
+        if (this.modelSystem && driveProject.models?.length > 0) {
+          await this.#downloadModels(driveProject.models, project.id, driveProject.app);
+        }
+
         const projectItem = this.panel.querySelector(`#project-item-${driveProject.project.id}`);
         const isCurrent = this.projectSystem.getCurrentProject()?.id === driveProject.project.id;
         const itemNode = this.getProjectItemNode(
           driveProject.project,
           driveProject.caves.map((c) => c.name),
+          [],
           new Date(driveProject.project.updatedAt).toLocaleDateString(),
           isCurrent,
           true
@@ -1148,11 +1304,48 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
     }
   }
 
+  async #downloadModels(driveModels, projectId, driveApp) {
+    for (const driveModel of driveModels) {
+      try {
+        const modelFileId = driveModel.id;
+        const [modelFileResult, metadataResult, settingsResult] = await Promise.all([
+          this.googleDriveSync.fetchModelFile(modelFileId),
+          this.googleDriveSync.fetchModelMetadata(modelFileId),
+          this.googleDriveSync.fetchModelSettings(modelFileId)
+        ]);
+
+        if (!modelFileResult || !metadataResult) continue;
+
+        modelFileResult.id = modelFileId;
+        const metadata = metadataResult.metadata;
+        metadata.modelFileId = modelFileId;
+
+        await this.modelSystem.saveModelFile(projectId, modelFileResult);
+        await this.modelSystem.saveModelMetadata(projectId, metadata);
+
+        if (settingsResult?.settings) {
+          await this.modelSystem.saveModelFileSettings(modelFileId, projectId, settingsResult.settings);
+        }
+
+        // Save revision info
+        await this.revisionStore.saveRevision(
+          new RevisionInfo(`${modelFileId}_meta`, driveModel.metadataRevision, driveModel.metadataApp, true, driveModel.metadataApp, driveModel.metadataRevision)
+        );
+        await this.revisionStore.saveRevision(
+          new RevisionInfo(`${modelFileId}_settings`, driveModel.settingsRevision, driveModel.settingsApp, true, driveModel.settingsApp, driveModel.settingsRevision)
+        );
+      } catch (err) {
+        console.error(`Failed to download model ${driveModel.name}:`, err);
+      }
+    }
+  }
+
   // this is always a new project upload and not an update
   async uploadProject(localProject) {
     try {
       const app = this.googleDriveSync.config.getApp();
       const caves = await this.caveSystem.getCavesByProjectId(localProject.id);
+      const embeddedModels = this.modelSystem ? await this.modelSystem.getModelsForExport(localProject.id) : [];
       const revisionInfo = new RevisionInfo(
         localProject.id,
         localProject.revision,
@@ -1162,7 +1355,30 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         localProject.revision
       );
       const cavesMetadata = caves.map((cave) => new DriveCaveMetadata(cave.id, cave.name, cave.revision ?? 1, app));
-      await this.googleDriveSync.uploadProject(new DriveProject(localProject, cavesMetadata, app), true);
+
+      // Upload models first (sequentially to avoid creating duplicate Drive folders)
+      const modelsMetadata = [];
+      await U.sequential(
+        embeddedModels.map((model) => async () => {
+          await this.googleDriveSync.uploadModelFile(model.modelFile, localProject);
+          for (const texture of model.textures) {
+            await this.googleDriveSync.uploadTextureFile(texture, localProject);
+          }
+          const metaRevKey = `${model.modelFile.id}_meta`;
+          const settingsRevKey = `${model.modelFile.id}_settings`;
+          const metaRev = new RevisionInfo(metaRevKey, 1, app, true, app, 1);
+          const settingsRev = new RevisionInfo(settingsRevKey, 1, app, true, app, 1);
+          await this.googleDriveSync.uploadModelMetadata(model.metadata, metaRev, localProject, true);
+          if (model.settings) {
+            await this.googleDriveSync.uploadModelSettings(model.settings, model.modelFile.id, settingsRev, localProject, true);
+          }
+          await this.revisionStore.saveRevision(metaRev);
+          await this.revisionStore.saveRevision(settingsRev);
+          modelsMetadata.push(new DriveModelMetadata(model.modelFile.id, model.metadata.name, 1, app, 1, app));
+        })
+      );
+
+      await this.googleDriveSync.uploadProject(new DriveProject(localProject, cavesMetadata, app, [], modelsMetadata), true);
       await this.revisionStore.saveRevision(revisionInfo);
       // we need to upload caves sequentially to avoid parallel executions and multiple 'Caves' folders in google drive
       await U.sequential(
@@ -1177,11 +1393,12 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
       const newNode = this.getProjectItemNode(
         localProject,
         caves.map((c) => c.name),
+        embeddedModels.map((m) => m.metadata.name),
         new Date(localProject.updatedAt).toLocaleDateString(),
         isCurrent,
         true
       );
-      const driveProject = new DriveProject(localProject, cavesMetadata, app, []);
+      const driveProject = new DriveProject(localProject, cavesMetadata, app, [], modelsMetadata);
       const projects = await this.projectSystem.getAllProjects();
       const decoratedNode = await this.decorateProjectItemWithDrive(driveProject, projects, caves, newNode);
       projectItemNode.replaceWith(decoratedNode);
@@ -1316,10 +1533,8 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
 
       if (revInfo !== null) {
         const autoSync = this.googleDriveSync.config.get('autoSync');
-        const newRevInfo = new RevisionInfo(project.id, project.revision, localApp, true, localApp, project.revision);
+        const newRevInfo = new RevisionInfo(project.id, project.revision, localApp, false, revInfo.originApp, revInfo.originRevision);
         if (autoSync) {
-          newRevInfo.synced = true;
-          console.log('autosyncing project');
           const response = await this.googleDriveSync.fetchProject(project);
           const driveProject = response.project;
           driveProject.project.updatedAt = new Date().toISOString();
@@ -1327,9 +1542,9 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
           driveProject.project.name = project.name;
           driveProject.app = localApp;
           await this.googleDriveSync.uploadProject(driveProject);
-
-        } else {
-          newRevInfo.synced = false;
+          newRevInfo.synced = true;
+          newRevInfo.originApp = localApp;
+          newRevInfo.originRevision = project.revision;
         }
 
         await this.revisionStore.saveRevision(newRevInfo);

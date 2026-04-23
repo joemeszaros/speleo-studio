@@ -95,10 +95,10 @@ class Main {
           this.databaseManager = new DatabaseManager();
           this.caveSystem = new CaveSystem(this.databaseManager, attributeDefs);
           this.projectSystem = new ProjectSystem(this.databaseManager, this.caveSystem);
-          this.modelSystem = new ModelSystem(this.databaseManager);
+          this.revisionStore = new RevisionStore(this.databaseManager);
+          this.modelSystem = new ModelSystem(this.databaseManager, this.revisionStore);
           this.editorStateSystem = new EditorStateSystem(this.databaseManager);
           this.declinationCache = new DeclinationCache(this.databaseManager);
-          this.revisionStore = new RevisionStore(this.databaseManager);
 
           loader.load(
             'fonts/helvetiker_regular.typeface.json',
@@ -144,6 +144,7 @@ class Main {
     observer.watchChanges(new ConfigChanges(options, scene, materials).getOnChangeHandler());
 
     const footer = new Footer(document.getElementById('footer'));
+    footer.updateZoomLevel(scene.view.control.zoom);
 
     this.scene = scene;
     this.options = options;
@@ -205,7 +206,7 @@ class Main {
       this.projectSystem
     );
 
-    this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem, attributeDefs);
+    this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem, attributeDefs, this.modelSystem);
     if (
       this.googleDriveSync.config.isConfigured() &&
       this.googleDriveSync.config.hasTokens() &&
@@ -262,6 +263,7 @@ class Main {
     );
     this.projectPanel.setupPanel();
     this.projectPanel.show();
+    this.googleDriveSettings.projectPanel = this.projectPanel;
 
     this.printUtils = new PrintUtils(options, scene, this.projectSystem);
 

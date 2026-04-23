@@ -16,6 +16,7 @@
 
 import { i18n } from '../i18n/i18n.js';
 import { TextureFile, ModelFile, ModelMetadata, Model } from '../model.js';
+import { RevisionInfo } from '../model/misc.js';
 
 /**
  * ModelSystem - Manages 3D model files and their assets in IndexedDB
@@ -29,8 +30,9 @@ export class ModelSystem {
   static TEXTURE_FILES_STORE = 'textureFiles';
   static OCTREE_CACHE_STORE = 'octreeCache';
 
-  constructor(databaseManager) {
+  constructor(databaseManager, revisionStore = null) {
     this.dbManager = databaseManager;
+    this.revisionStore = revisionStore;
   }
 
   async saveModelFile(projectId, modelFile) {
@@ -120,6 +122,12 @@ export class ModelSystem {
     // Delete cached octree data
     await this.deleteOctreeCache(id).catch(() => {});
 
+    // Delete revision tracking entries
+    if (this.revisionStore) {
+      await this.revisionStore.deleteRevision(`${id}_meta`).catch(() => {});
+      await this.revisionStore.deleteRevision(`${id}_settings`).catch(() => {});
+    }
+
     console.log(`🗑️ Model file deleted: ${id}`);
   }
 
@@ -179,12 +187,18 @@ export class ModelSystem {
       updatedAt : new Date().toISOString()
     };
 
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_METADATA_STORE);
       const request = store.put(record);
       request.onsuccess = () => resolve(metadata.id);
       request.onerror = () => reject(new Error('Failed to save model metadata'));
     });
+
+    if (this.revisionStore) {
+      await this.#bumpRevision(`${metadata.modelFileId}_meta`);
+    }
+
+    return metadata.id;
   }
 
   /**
@@ -255,12 +269,16 @@ export class ModelSystem {
       updatedAt : new Date().toISOString()
     };
 
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const store = this.dbManager.getReadWriteStore(ModelSystem.MODEL_FILE_SETTINGS_STORE);
       const request = store.put(record);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(new Error('Failed to save model file settings'));
     });
+
+    if (this.revisionStore) {
+      await this.#bumpRevision(`${id}_settings`);
+    }
   }
 
   /**
@@ -379,6 +397,17 @@ export class ModelSystem {
       request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(new Error('Failed to load octree cache'));
     });
+  }
+
+  async #bumpRevision(key) {
+    const existing = await this.revisionStore.loadRevision(key);
+    if (existing) {
+      existing.revision += 1;
+      existing.synced = false;
+      await this.revisionStore.saveRevision(existing);
+    } else {
+      await this.revisionStore.saveRevision(new RevisionInfo(key, 1, 'local', false, 'local', 0));
+    }
   }
 
   /**

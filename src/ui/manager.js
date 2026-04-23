@@ -71,6 +71,15 @@ class ProjectManager {
     document.addEventListener('modelDeleted', (e) => this.onModelDeleted(e));
     document.addEventListener('modelChanged', (e) => this.onModelChanged(e));
     document.addEventListener('caveRenamed', (e) => this.onCaveRenamed(e));
+    this._modelSyncTimers = new Map();
+    document.addEventListener('modelFileSettingsSaved', (e) => {
+      const { modelFileId, projectId } = e.detail;
+      clearTimeout(this._modelSyncTimers.get(modelFileId));
+      this._modelSyncTimers.set(modelFileId, setTimeout(() => {
+        this._modelSyncTimers.delete(modelFileId);
+        this.#autoSyncModelSettings(modelFileId, projectId);
+      }, 2000));
+    });
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('caveChanged', (e) => this.onCaveChanged(e));
     document.addEventListener('caveSynced', (e) => this.onCaveSynced(e));
@@ -647,6 +656,7 @@ class ProjectManager {
         if (name !== undefined) metadata.name = name;
         if (embedded !== undefined) metadata.embedded = embedded;
         await this.modelSystem.saveModelMetadata(project.id, metadata);
+        await this.#autoSyncModelMeta(modelFileId, project);
       }
 
       // Re-render model tree if name changed
@@ -662,6 +672,59 @@ class ProjectManager {
     } catch (err) {
       console.error('Failed to save model metadata:', err);
     }
+  }
+
+  async #autoSyncModelMeta(modelFileId, project) {
+    if (!this.googleDriveSync?.isReady() || !this.googleDriveSync.config.get('autoSync')) return;
+    try {
+      const metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFileId);
+      if (!metadata?.embedded) return;
+      const rev = await this.revisionStore.loadRevision(`${modelFileId}_meta`);
+      if (!rev || rev.originRevision === 0) return;
+      const localApp = this.googleDriveSync.config.getApp();
+      await this.googleDriveSync.uploadModelMetadata(metadata, rev, project, false);
+      rev.synced = true;
+      rev.originApp = localApp;
+      rev.originRevision = rev.revision;
+      await this.revisionStore.saveRevision(rev);
+      await this.#updateDriveProjectModelRevision(project, modelFileId, { metadataRevision: rev.revision, metadataApp: localApp });
+    } catch (err) {
+      console.error('Auto-sync model metadata failed:', err);
+    }
+  }
+
+  async #autoSyncModelSettings(modelFileId, projectId) {
+    if (!this.googleDriveSync?.isReady() || !this.googleDriveSync.config.get('autoSync')) return;
+    const project = this.projectSystem.getCurrentProject();
+    if (!project || project.id !== projectId) return;
+    try {
+      const metadata = await this.modelSystem.getModelMetadataByModelFileId(modelFileId);
+      if (!metadata?.embedded) return;
+      const rev = await this.revisionStore.loadRevision(`${modelFileId}_settings`);
+      if (!rev || rev.originRevision === 0) return;
+      const settings = await this.modelSystem.getModelFileSettings(modelFileId);
+      if (!settings) return;
+      const localApp = this.googleDriveSync.config.getApp();
+      await this.googleDriveSync.uploadModelSettings(settings, modelFileId, rev, project, false);
+      rev.synced = true;
+      rev.originApp = localApp;
+      rev.originRevision = rev.revision;
+      await this.revisionStore.saveRevision(rev);
+      await this.#updateDriveProjectModelRevision(project, modelFileId, { settingsRevision: rev.revision, settingsApp: localApp });
+    } catch (err) {
+      console.error('Auto-sync model settings failed:', err);
+    }
+  }
+
+  async #updateDriveProjectModelRevision(project, modelFileId, { metadataRevision, metadataApp, settingsRevision, settingsApp } = {}) {
+    const result = await this.googleDriveSync.fetchProject({ id: project.id });
+    if (!result) return;
+    const driveProject = result.project;
+    const model = driveProject.models.find((m) => m.id === modelFileId);
+    if (!model) return;
+    if (metadataRevision !== undefined) { model.metadataRevision = metadataRevision; model.metadataApp = metadataApp; }
+    if (settingsRevision !== undefined) { model.settingsRevision = settingsRevision; model.settingsApp = settingsApp; }
+    await this.googleDriveSync.uploadProject(driveProject, false);
   }
 
   async reloadCave(cave) {

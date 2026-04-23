@@ -19,17 +19,20 @@ import { GoogleDriveAPI } from './google-drive-api.js';
 import { DriveProject } from '../model/project.js';
 import { Cave, DriveCaveMetadata } from '../model/cave.js';
 import { RevisionInfo } from '../model/misc.js';
+import { ModelFile, TextureFile, ModelMetadata } from '../model.js';
+import { compressBlobToGzip, decompressGzipToBlob } from '../utils/compression.js';
 
 /**
  * Google Drive synchronization manager
  * Handles syncing of caves and projects between IndexedDB and Google Drive
  */
 export class GoogleDriveSync {
-  constructor(databaseManager, projectSystem, caveSystem, attributeDefs) {
+  constructor(databaseManager, projectSystem, caveSystem, attributeDefs, modelSystem = null) {
     this.dbManager = databaseManager;
     this.projectSystem = projectSystem;
     this.caveSystem = caveSystem;
     this.attributeDefs = attributeDefs;
+    this.modelSystem = modelSystem;
     this.config = new GoogleDriveConfig();
     this.api = new GoogleDriveAPI(this.config);
   }
@@ -330,6 +333,176 @@ export class GoogleDriveSync {
       return null;
     }
     await this.api.deleteFile(file.id);
+  }
+
+  // ==================== Model sync ====================
+
+  getModelFileName(modelFileId) {
+    return `${modelFileId}.gz`;
+  }
+
+  getModelMetadataFileName(modelFileId) {
+    return `${modelFileId}.json`;
+  }
+
+  getModelDescription(metadata, project) {
+    return `Model: ${metadata.name} Project: ${project.name} App: ${this.config.getApp()} Email: ${this.config.get('email')}`;
+  }
+
+  async uploadModelFile(modelFile, project) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getModelFilesFolderId();
+      const fileName = this.getModelFileName(modelFile.id);
+      const existing = await this.api.findFileByName(fileName, folderId);
+      if (existing) return;
+      const blob = await compressBlobToGzip(modelFile.data);
+      const description = this.getModelDescription({ name: modelFile.filename }, project);
+      await this.api.uploadFile(fileName, blob, 'application/gzip', folderId, description, {
+        app : this.config.getApp()
+      });
+    });
+  }
+
+  async uploadTextureFile(textureFile, project) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getTextureFilesFolderId();
+      const fileName = this.getModelFileName(textureFile.id);
+      const existing = await this.api.findFileByName(fileName, folderId);
+      if (existing) return;
+      const blob = await compressBlobToGzip(textureFile.data);
+      const description = `Texture: ${textureFile.filename} App: ${this.config.getApp()} Email: ${this.config.get('email')}`;
+      await this.api.uploadFile(fileName, blob, 'application/gzip', folderId, description, {
+        app : this.config.getApp()
+      });
+    });
+  }
+
+  async uploadModelMetadata(metadata, revisionInfo, project, create = false) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getModelMetadataFolderId();
+      const fileName = this.getModelMetadataFileName(metadata.modelFileId);
+      const content = JSON.stringify({ id: metadata.id, modelFileId: metadata.modelFileId, ...metadata.toExport() });
+      const description = this.getModelDescription(metadata, project);
+      const properties = { app: this.config.getApp(), revision: revisionInfo.revision.toString() };
+      if (create) {
+        await this.api.uploadFile(fileName, content, 'application/json', folderId, description, properties);
+      } else {
+        const fileId = await this.api.getFileId(fileName, folderId);
+        if (!fileId) {
+          await this.api.uploadFile(fileName, content, 'application/json', folderId, description, properties);
+        } else {
+          await this.api.updateFile(fileId, content, 'application/json', description, properties);
+        }
+      }
+    });
+  }
+
+  async uploadModelSettings(settings, modelFileId, revisionInfo, project, create = false) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getModelSettingsFolderId();
+      const fileName = this.getModelMetadataFileName(modelFileId);
+      const content = JSON.stringify(settings);
+      const description = `Settings for model ${modelFileId} Project: ${project.name} App: ${this.config.getApp()}`;
+      const properties = { app: this.config.getApp(), revision: revisionInfo.revision.toString() };
+      if (create) {
+        await this.api.uploadFile(fileName, content, 'application/json', folderId, description, properties);
+      } else {
+        const fileId = await this.api.getFileId(fileName, folderId);
+        if (!fileId) {
+          await this.api.uploadFile(fileName, content, 'application/json', folderId, description, properties);
+        } else {
+          await this.api.updateFile(fileId, content, 'application/json', description, properties);
+        }
+      }
+    });
+  }
+
+  async fetchModelFile(modelFileId) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getModelFilesFolderId();
+      const fileName = this.getModelFileName(modelFileId);
+      const file = await this.api.findFileByName(fileName, folderId);
+      if (!file) return null;
+      const compressedBlob = await this.api.downloadFileAsBlob(file.id);
+      const dataBlob = await decompressGzipToBlob(compressedBlob);
+      const modelFile = new ModelFile('', '', dataBlob);
+      modelFile.id = modelFileId;
+      return modelFile;
+    });
+  }
+
+  async fetchTextureFile(textureFileId, modelFileId) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getTextureFilesFolderId();
+      const fileName = this.getModelFileName(textureFileId);
+      const file = await this.api.findFileByName(fileName, folderId);
+      if (!file) return null;
+      const compressedBlob = await this.api.downloadFileAsBlob(file.id);
+      const dataBlob = await decompressGzipToBlob(compressedBlob);
+      const textureFile = new TextureFile(modelFileId, '', '', dataBlob);
+      textureFile.id = textureFileId;
+      return textureFile;
+    });
+  }
+
+  async fetchModelMetadata(modelFileId) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getModelMetadataFolderId();
+      const fileName = this.getModelMetadataFileName(modelFileId);
+      const file = await this.api.findFileByName(fileName, folderId);
+      if (!file) return null;
+      const content = await this.api.downloadFile(file.id);
+      return { properties: file.properties, metadata: ModelMetadata.fromPure(content) };
+    });
+  }
+
+  async fetchModelSettings(modelFileId) {
+    return await this.operation(async () => {
+      const folderId = await this.api.getModelSettingsFolderId();
+      const fileName = this.getModelMetadataFileName(modelFileId);
+      const file = await this.api.findFileByName(fileName, folderId);
+      if (!file) return null;
+      const content = await this.api.downloadFile(file.id);
+      return { properties: file.properties, settings: content };
+    });
+  }
+
+  async getModelDriveRevisions(modelFileId) {
+    return await this.operation(async () => {
+      const [metaFile, settingsFile] = await Promise.all([
+        this.api.findFileByName(this.getModelMetadataFileName(modelFileId), await this.api.getModelMetadataFolderId()),
+        this.api.findFileByName(this.getModelMetadataFileName(modelFileId), await this.api.getModelSettingsFolderId())
+      ]);
+      return {
+        metadataRevision : metaFile ? parseInt(metaFile.properties?.revision ?? '0') : null,
+        metadataApp      : metaFile?.properties?.app ?? null,
+        settingsRevision : settingsFile ? parseInt(settingsFile.properties?.revision ?? '0') : null,
+        settingsApp      : settingsFile?.properties?.app ?? null
+      };
+    });
+  }
+
+  async deleteModelFromDrive(modelFileId, textureIds = []) {
+    return await this.operation(async () => {
+      const [modelFilesFolderId, textureFilesFolderId, metadataFolderId, settingsFolderId] = await Promise.all([
+        this.api.getModelFilesFolderId(),
+        this.api.getTextureFilesFolderId(),
+        this.api.getModelMetadataFolderId(),
+        this.api.getModelSettingsFolderId()
+      ]);
+
+      const deleteIfExists = async (fileName, folderId) => {
+        const file = await this.api.findFileByName(fileName, folderId);
+        if (file) await this.api.deleteFile(file.id);
+      };
+
+      await deleteIfExists(this.getModelFileName(modelFileId), modelFilesFolderId);
+      await deleteIfExists(this.getModelMetadataFileName(modelFileId), metadataFolderId);
+      await deleteIfExists(this.getModelMetadataFileName(modelFileId), settingsFolderId);
+      for (const textureId of textureIds) {
+        await deleteIfExists(this.getModelFileName(textureId), textureFilesFolderId);
+      }
+    });
   }
 
   disconnect() {

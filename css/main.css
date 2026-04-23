@@ -1719,7 +1719,7 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 600px;
+  width: 680px;
   max-width: 90vw;
   max-height: 80vh;
   background: #1e1e1e;
@@ -1811,6 +1811,42 @@ body {
   font-size: 11px;
   min-width: 100px;
   flex-shrink: 0;
+}
+
+.google-drive-folder-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid #333;
+}
+
+.google-drive-folder-col {
+  border-right: 1px solid #333;
+}
+
+.google-drive-folder-col:last-child {
+  border-right: none;
+}
+
+.google-drive-folder-col-header {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  padding: 5px 8px;
+  background: #252525;
+  border-bottom: 1px solid #333;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.google-drive-folder-col .google-drive-form-group label {
+  min-width: 80px;
+}
+
+.google-drive-folder-hint {
+  font-size: 10px;
+  color: #777;
+  padding: 0 8px 6px;
+  line-height: 1.4;
 }
 
 .google-drive-form-group input[type='text'],

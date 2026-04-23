@@ -445,7 +445,12 @@ export class ModelsTree {
             opacity   : node.opacity,
             visible   : node.visible,
             color     : node.color ?? null
-          }).then(() => this.projectSystem.saveProject(currentProject))
+          }).then(() => {
+            this.projectSystem.saveProject(currentProject);
+            document.dispatchEvent(new CustomEvent('modelFileSettingsSaved', {
+              detail: { modelFileId: node.modelFileId, projectId: currentProject.id }
+            }));
+          })
           .catch((err) => console.error('Failed to persist model properties:', err));
       }, 500)
     );

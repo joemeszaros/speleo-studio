@@ -44,7 +44,7 @@ export class GoogleDriveAPI {
       client_id     : this.config.get('clientId'),
       redirect_uri  : this.getOauthCallbackURL(),
       response_type : 'code',
-      scope         : 'https://www.googleapis.com/auth/drive.file',
+      scope         : 'https://www.googleapis.com/auth/drive',
       access_type   : 'offline',
       prompt        : 'consent'
     });
@@ -254,12 +254,41 @@ export class GoogleDriveAPI {
   }
 
   /**
-   * Get main Speleo Studio folder ID
+   * Fetch a folder by its Drive ID. Returns the ID if it exists and is a folder, null otherwise.
+   * Used to support shared folders that cannot be found by name search.
+   * @param {string} folderId
+   * @returns {Promise<string|null>}
+   */
+  async getFolderById(folderId) {
+    const cacheKey = `id:${folderId}`;
+    if (this.folderIdCache.has(cacheKey))  return this.folderIdCache.get(cacheKey); 
+    try {
+      const response = await this.makeAuthenticatedRequest(
+        `/files/${folderId}?fields=id,mimeType&supportsAllDrives=true`
+      );
+
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (data.mimeType !== 'application/vnd.google-apps.folder') return null;
+      this.folderIdCache.set(cacheKey, data.id);
+      return data.id;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get main Speleo Studio folder ID.
+   * The configured value is tried as a Drive folder ID first (to support shared folders),
+   * then falls back to find-or-create by name.
    * @returns {Promise<string>} Folder ID
    */
   async getMainFolderId() {
-    const folderName = this.config.get('folderName');
-    return await this.findOrCreateFolder(folderName);
+    const folderNameOrId = this.config.get('folderName');
+    const byId = await this.getFolderById(folderNameOrId);
+    if (byId) return byId;
+    console.log('main Folder not found by ID, creating by name:', folderNameOrId);
+    return await this.findOrCreateFolder(folderNameOrId);
   }
 
   /**
@@ -280,6 +309,32 @@ export class GoogleDriveAPI {
     const mainFolderId = await this.getMainFolderId();
     const projectsFolderName = this.config.get('projectsFolderName');
     return await this.findOrCreateFolder(projectsFolderName, mainFolderId);
+  }
+
+  async getModelsFolderId() {
+    const mainFolderId = await this.getMainFolderId();
+    const modelsFolderName = this.config.get('modelsFolderName');
+    return await this.findOrCreateFolder(modelsFolderName, mainFolderId);
+  }
+
+  async getModelFilesFolderId() {
+    const modelsFolderId = await this.getModelsFolderId();
+    return await this.findOrCreateFolder(this.config.get('modelFilesFolderName'), modelsFolderId);
+  }
+
+  async getTextureFilesFolderId() {
+    const modelsFolderId = await this.getModelsFolderId();
+    return await this.findOrCreateFolder(this.config.get('textureFilesFolderName'), modelsFolderId);
+  }
+
+  async getModelMetadataFolderId() {
+    const modelsFolderId = await this.getModelsFolderId();
+    return await this.findOrCreateFolder(this.config.get('modelMetadataFolderName'), modelsFolderId);
+  }
+
+  async getModelSettingsFolderId() {
+    const modelsFolderId = await this.getModelsFolderId();
+    return await this.findOrCreateFolder(this.config.get('modelSettingsFolderName'), modelsFolderId);
   }
 
   /**
@@ -304,75 +359,77 @@ export class GoogleDriveAPI {
   }
 
   /**
+   * Build a multipart/related body for Drive upload and update requests.
+   * FormData always produces multipart/form-data which Firefox rejects on the Drive upload
+   * endpoint — the API requires multipart/related (RFC 2387).
+   * @param {Object} metadata - Drive file metadata object
+   * @param {string|Blob} content - File content
+   * @param {string} mimeType - MIME type of the file part
+   * @returns {Promise<{body: Blob, contentType: string}>}
+   */
+  async #buildMultipartBody(metadata, content, mimeType) {
+    const boundary = 'speleo_' + Math.random().toString(36).substring(2, 15);
+    const encoder = new TextEncoder();
+    const header = encoder.encode(
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
+      JSON.stringify(metadata) +
+      `\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`
+    );
+    const footer = encoder.encode(`\r\n--${boundary}--`);
+    const fileData = content instanceof Blob ? await content.arrayBuffer() : encoder.encode(content);
+    return {
+      body        : new Blob([header, fileData, footer]),
+      contentType : `multipart/related; boundary=${boundary}`
+    };
+  }
+
+  /**
    * Update existing file content in Google Drive
    * @param {string} fileId - File ID to update
-   * @param {string} content - New file content
+   * @param {string|Blob} content - New file content
    * @param {string} mimeType - MIME type
    * @returns {Promise<string>} File ID
    */
+  // Uses #buildMultipartBody instead of FormData: FormData always sends multipart/form-data,
+  // which Firefox rejects on the Drive upload endpoint. The API requires multipart/related (RFC 2387).
   async updateFile(fileId, content, mimeType, description, properties) {
-    const metadata = {
-      description : description,
-      properties  : properties
-    };
-    const formData = new FormData();
-    formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    formData.append('file', new Blob([content], { type: mimeType }));
-
+    const { body, contentType } = await this.#buildMultipartBody(
+      { description, properties },
+      content,
+      mimeType
+    );
     const accessToken = await this.getValidAccessToken();
-
-    const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
-      method  : 'PATCH',
-      headers : {
-        Authorization : `Bearer ${accessToken}`
-      },
-      body : formData
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update file: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.id;
+    const response = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&supportsAllDrives=true`,
+      { method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': contentType }, body }
+    );
+    if (!response.ok) throw new Error(`Failed to update file: ${response.statusText}`);
+    return (await response.json()).id;
   }
 
   /**
    * Upload file to Google Drive
    * @param {string} fileName - File name
-   * @param {string} content - File content
+   * @param {string|Blob} content - File content
    * @param {string} mimeType - MIME type
-   * @param {string} parentId - Parent folder ID
+   * @param {string} folderId - Parent folder ID
    * @returns {Promise<string>} File ID
    */
+  // Uses #buildMultipartBody instead of FormData: FormData always sends multipart/form-data,
+  // which Firefox rejects on the Drive upload endpoint. The API requires multipart/related (RFC 2387).
   async uploadFile(fileName, content, mimeType, folderId, description, properties) {
-    const metadata = {
-      name        : fileName,
-      parents     : [folderId],
-      description : description,
-      properties  : properties
-    };
-
-    const formData = new FormData();
-    formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    formData.append('file', new Blob([content], { type: mimeType }));
-
+    const { body, contentType } = await this.#buildMultipartBody(
+      { name: fileName, parents: [folderId], description, properties },
+      content,
+      mimeType
+    );
     const accessToken = await this.getValidAccessToken();
-
-    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-      method  : 'POST',
-      headers : {
-        Authorization : `Bearer ${accessToken}`
-      },
-      body : formData
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to upload file: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.id;
+    const response = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true',
+      { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': contentType }, body }
+    );
+    if (!response.ok) throw new Error(`Failed to upload file: ${response.statusText}`);
+    return (await response.json()).id;
   }
 
   /**
@@ -388,6 +445,16 @@ export class GoogleDriveAPI {
     }
 
     return await response.json();
+  }
+
+  async downloadFileAsBlob(fileId) {
+    const response = await this.makeAuthenticatedRequest(`/files/${fileId}?alt=media`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    return await response.blob();
   }
 
   /**

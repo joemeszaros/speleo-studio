@@ -16,12 +16,32 @@
 
 /**
  * Compress a string to a gzip Blob using the Compression Streams API.
- * @param {string} text - The text to compress
+ * @param {string|ArrayBuffer} text - The text or binary data to compress
  * @returns {Promise<Blob>} The compressed gzip blob
  */
 export async function compressToGzip(text) {
   const blob = new Blob([text]);
   const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
+  return new Response(stream).blob();
+}
+
+/**
+ * Compress a Blob to a gzip Blob, preserving binary data.
+ * @param {Blob} blob - The blob to compress
+ * @returns {Promise<Blob>} The compressed gzip blob
+ */
+export async function compressBlobToGzip(blob) {
+  const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
+  return new Response(stream).blob();
+}
+
+/**
+ * Decompress a gzip Blob back to a Blob, preserving binary data.
+ * @param {Blob} blob - The gzip compressed blob
+ * @returns {Promise<Blob>} The decompressed blob
+ */
+export async function decompressGzipToBlob(blob) {
+  const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
   return new Response(stream).blob();
 }
 

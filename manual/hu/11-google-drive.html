@@ -106,12 +106,29 @@
             ><strong>Példány neve:</strong> A Speleo Studio futó példányának azonosítához szolgál, amely kollaboratív
             szerkesztés esetén azonosítja az ön Speleo Studio példányát egy adott böngészőben</li
           >
+        </ul>
+        <p>A mappa beállítások két oszlopban jelennek meg:</p>
+        <h4>Általános mappák</h4>
+        <ul>
           <li
-            ><strong>Mappa név:</strong> A Speleo Studio mappa neve a Google Drive-ban (alapértelmezett: "Speleo
-            Studio"). Kollaboratív szerkesztés esetén egy Önnel megosztott mappa nevének kell lennie.
+            ><strong>Gyökér:</strong> Ide megadható <strong>egy Google Drive mappa neve vagy egy mappa-azonosító</strong>
+            (pl. <code>1xM87V6FaOsgAQ2M8pxahDDfDtzHPwG2Y</code>). Ha nevet ad meg, a Speleo Studio keresi vagy létrehozza
+            azt a mappát (alapértelmezett: "Speleo Studio"). Ha mappa-azonosítót ad meg, a Speleo Studio közvetlenül azt
+            a mappát használja — ez különösen hasznos, ha egy Önnel megosztott mappát szeretne gyökérmappaként használni.
+            A mappa-azonosítót a Google Drive URL-jéből lehet kiolvasni:
+            <code>https://drive.google.com/drive/folders/<strong>AZONOSÍTÓ</strong></code
+            >. Az azonosítós keresés elsőbbséget élvez a névszerinti kereséssel szemben.
           </li>
-          <li><strong>Barlangok mappa:</strong> A barlangok almappa neve (alapértelmezett: "Caves")</li>
-          <li><strong>Projektek mappa:</strong> A projektek almappa neve (alapértelmezett: "Projects")</li>
+          <li><strong>Barlangok:</strong> A barlangok almappa neve (alapértelmezett: "Barlangok")</li>
+          <li><strong>Projektek:</strong> A projektek almappa neve (alapértelmezett: "Projektek")</li>
+          <li><strong>Modellek:</strong> A 3D modellek gyökérmappájának neve (alapértelmezett: "Models")</li>
+        </ul>
+        <h4>Modell almappák</h4>
+        <ul>
+          <li><strong>Modell fájlok:</strong> A tömörített geometriai binárisok mappája (alapértelmezett: "ModelFiles")</li>
+          <li><strong>Textúrák:</strong> A tömörített textúra fájlok mappája (alapértelmezett: "TextureFiles")</li>
+          <li><strong>Metaadatok:</strong> A modell metaadatok JSON fájljainak mappája (alapértelmezett: "Metadata")</li>
+          <li><strong>Beállítások:</strong> A modell beállítások JSON fájljainak mappája (alapértelmezett: "Settings")</li>
         </ul>
         <p>
           Döntse el, hogy szeretne-e <strong>automatikus szinkronizálást</strong> használni, amely minden mentés után
@@ -163,23 +180,174 @@
         </ul>
       </div>
 
+
       <div class="warning">
-        <h4>⚠️ Google Cloud Console beállítás</h4>
+        <h4>⚠️ Fontos: ne szerkessze a fájlokat manuálisan a Google Drive-on</h4>
         <p>
-          A Google Drive integráció használatához először létre kell hoznia egy OAuth 2.0 kliens alkalmazást a Google
-          Cloud Console-ban. Ez a beállítás szükséges ahhoz, hogy a Speleo Studio biztonságosan hozzáférhessen a Google
-          Drive fiókjához.
+          A Speleo Studio revíziószámlálókat és alkalmazás-metaadatokat tárol a Drive-on, amelyeket a szinkronizálás
+          során ütközésészleléshez és konzisztencia-ellenőrzéshez használ. Ha manuálisan átnevez, áthelyez, szerkeszt
+          vagy töröl fájlokat a Drive-on belül a Speleo Studio mappájában, a belső állapot össze fog keveredni, és
+          a szinkronizálás hibás ütközésjelzéseket mutathat, elveszhet adat, vagy teljesen leállhat.
         </p>
-        <p>A Google Cloud Console beállításának lépései:</p>
-        <ol>
-          <li>Nyissa meg a <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>-t</li>
-          <li>Hozzon létre egy új projektet vagy válasszon egy meglévőt</li>
-          <li>Engedélyezze a Google Drive API-t</li>
-          <li>Hozzon létre OAuth 2.0 hitelesítő adatokat</li>
-          <li>Adja hozzá a domain-t az engedélyezett eredet URL-ekhez</li>
-          <li>Adja hozzá az átirányítási URL-t (pl. domain.com/oauth-callback.html)</li>
-        </ol>
+        <ul>
+          <li>Ne nevezze át a Speleo Studio által létrehozott mappákat vagy fájlokat a Drive webes felületén</li>
+          <li>Ne töröljön fájlokat manuálisan a Drive-on — csak a Speleo Studio felületéről töröljön adatokat</li>
+          <li>Ne másolja vagy mozgassa a Speleo Studio mappa tartalmát más Drive-mappákba</li>
+          <li>Ha mégis manuális módosítás történt, bontsa a kapcsolatot, és töltse fel újra a projektet a nulláról</li>
+        </ul>
       </div>
+
+      <h2>Projekt panel — Drive szinkronizáció állapota</h2>
+
+      <p>
+        A projekt panel megjeleníti az összes helyi projektet, és ha a Google Drive hitelesítés aktív, minden projekt
+        mellett látható annak szinkronizációs állapota. A panel a Drive-on tárolt és a helyi adatok összehasonlítása
+        alapján határozza meg az állapotot.
+      </p>
+
+      <div class="image-placeholder black column-2"> <img src="images/10-google-drive-panel-2.png" /> </div>
+
+      <h3>Ikonok és jelzők a projekt listában</h3>
+
+      <p>
+        Minden projekt neve előtt egy ikon, mögötte opcionálisan egy revízió-különbség szám jelenik meg, attól függően,
+        hogy a helyi és a Drive-on lévő verzió mennyire tér el:
+      </p>
+
+      <table>
+        <thead>
+          <tr><th>Jelzés</th><th>Jelentés</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>✅ Projekt neve</td><td>Naprakész — a helyi és Drive verzió megegyezik</td></tr>
+          <tr><td>🟢 Barlang neve</td><td>Csak helyi — ez az elem még nincs feltöltve a Drive-ra</td></tr>
+          <tr><td>🔵 Barlang neve</td><td>Csak Drive-on — a Drive-on van, helyben nem létezik</td></tr>
+          <tr><td>🔴 Barlang neve</td><td>Drive-ról törölve — egy másik eszköz törölte a Drive-ról, helyben még megvan</td></tr>
+          <tr><td>⭕ Barlang neve</td><td>Helyileg törölt, Ön a tulajdonos — szinkronizáláskor törlődik a Drive-ról is</td></tr>
+          <tr><td>🚫 Barlang neve</td><td>Helyileg törölt, nem Ön a tulajdonos — szinkronizáláskor a Drive-ról letöltődik vissza</td></tr>
+          <tr>
+            <td>Projekt neve <span style="color:green"><strong>Δ 3</strong></span></td>
+            <td>
+              <strong style="color:green">Zöld Δ (delta) szám</strong> — a helyi verzió ennyivel újabb a Drive-nál.
+              Ez normális: ennyi változtatás vár feltöltésre.
+            </td>
+          </tr>
+          <tr>
+            <td>Projekt neve <span style="color:red"><strong>∇ 2</strong></span></td>
+            <td>
+              <strong style="color:red">Piros ∇ (nabla) szám</strong> — a Drive-on lévő verzió ennyivel újabb a helyinél.
+              Egy másik eszköz töltött fel újabb adatokat. Szinkronizáláskor a Drive verziója töltődik le.
+            </td>
+          </tr>
+          <tr>
+            <td>⚠️ Projekt neve</td>
+            <td>
+              <strong>Ütközés</strong> — mind a helyi, mind a Drive-on lévő verzió módosult a legutóbbi szinkron óta,
+              és a változtatások nem illeszthetők össze automatikusan. Szinkronizáláskor a rendszer megerősítést kér.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        A projekt neve alatt a barlangok és beágyazott 3D modellek is megjelennek ugyanezekkel a jelzőkkel, így egy
+        pillantással látható, melyik elem vár feltöltésre vagy letöltésre.
+      </p>
+
+      <h3>Gombok a projekt listában</h3>
+
+      <div class="info">
+        <h4>Feltöltés gomb (Upload)</h4>
+        <p>
+          Ha egy projektnek <strong>még nincs Drive-os másolata</strong>, az elem mellett egy <strong>Feltöltés</strong>
+          gomb jelenik meg. Erre kattintva a projekt és összes barlangja (valamint beágyazott modelljei) először
+          kerülnek fel a Drive-ra. Ezt követően a gomb eltűnik, és a Szinkronizálás gombra cserélődik.
+        </p>
+      </div>
+
+      <div class="info">
+        <h4>Szinkronizálás gomb (Sync)</h4>
+        <p>
+          Ha a projekt már fel van töltve és van különbség (zöld Δ, piros ∇ vagy ütközés), egy
+          <strong>Szinkronizálás</strong> gomb jelenik meg. A gomb:
+        </p>
+        <ul>
+          <li>Helyi változásokat (<span style="color:green">Δ</span>) feltölt a Drive-ra</li>
+          <li>Drive-os újabb változásokat (<span style="color:red">∇</span>) letölt és alkalmaz</li>
+          <li>Ütközés esetén (<span>⚠️</span>) megerősítést kér, majd a konfigurált stratégia szerint jár el</li>
+          <li>Új helyi barlangokat (🟢) feltölt; Drive-only barlangokat (🔵) letölt</li>
+          <li>Szinkronizálás közben a gomb letilt és "szinkronizálás..." feliratot mutat</li>
+        </ul>
+      </div>
+
+      <div class="info">
+        <h4>Letöltés gomb (Download)</h4>
+        <p>
+          Ha a Drive-on van egy projekt amelynek <strong>nincs helyi másolata</strong> (pl. egy másik eszközről
+          töltötték fel, vagy a böngésző adatai törlődtek), a projekt listaelem egy <strong>Letöltés</strong> gombbal
+          jelenik meg. Kattintásra a projekt, összes barlangja és beágyazott modelljei letöltődnek és megjelennek a
+          helyi listában.
+        </p>
+      </div>
+
+      <h3>Revízió-különbség értelmezése</h3>
+
+      <p>
+        A Speleo Studio minden módosításkor növel egy belső revíziószámlálót. A szám mögött zárójelben látható a
+        különbség a helyi és a Drive-on tárolt revízió között:
+      </p>
+
+      <ul>
+        <li>
+          <strong><span style="color:green">Δ N</span></strong> — a helyi revízió N-nel magasabb a Drive-nál.
+          Ez azt jelenti, hogy N mentési művelet történt azóta, hogy a projekt utoljára szinkronizálva lett.
+          Feltöltéskor ez a szám nullára csökken.
+        </li>
+        <li>
+          <strong><span style="color:red">∇ N</span></strong> — a Drive-os revízió N-nel magasabb a helyinél.
+          Valaki más (vagy egy másik eszköz) N változást töltött fel. Letöltés után ez nullára csökken.
+        </li>
+        <li>
+          Nincs szám — a projekt naprakész, revízió-különbség nulla (✅ ikon jelenik meg).
+        </li>
+      </ul>
+
+      <p>
+        A 3D modelleknél a metaadat (név, koordinátarendszer) és a beállítások (transzformáció, átlátszóság)
+        revíziói egymástól <strong>függetlenül</strong> követik a változásokat. A jelzett szám a kettő maximuma.
+      </p>
+
+      <h3>Ütközések (⚠️)</h3>
+
+      <p>
+        Az ⚠️ ikon ütközést jelez. Ez akkor fordul elő, ha:
+      </p>
+      <ul>
+        <li>
+          A helyi verzió újabb a Drive-nál (<span style="color:green">Δ</span>), <em>de</em> a helyi módosítás nem
+          az utolsó ismert Drive-verzióra épül — vagyis közben valaki más is módosított és feltöltött.
+        </li>
+        <li>
+          A Drive verzió újabb a helyinél (<span style="color:red">∇</span>), <em>és</em> helyi, még nem szinkronizált
+          változtatás is van.
+        </li>
+        <li>
+          A revíziók megegyeznek, de a helyi adat "szinkronizálatlan" jelzőt hordoz — ez ritka esetben fordulhat elő
+          ha a szinkronizálás megszakadt.
+        </li>
+      </ul>
+      <p>
+        Szinkronizáláskor az ütköző elemekre egy megerősítő párbeszédablak jelenik meg, amely megmutatja, melyik
+        elem ütközik és melyik Speleo Studio példányból érkezett az ütköző verzió. A konfigurált ütközési stratégia
+        (Saját változtatások / Figyelmen kívül hagyás) alapján folytatódik a szinkronizálás.
+      </p>
+
+      <h3>Frissítés gomb (Refresh)</h3>
+      <p>
+        A projekt panel tetején a <strong>Frissítés</strong> (🔁) gomb újra lekéri a Drive-ról a projektlistát és
+        frissíti az összes szinkronizációs jelzőt. Érdemes megnyomni, mielőtt szinkronizálni kezd, hogy a legfrissebb
+        Drive-állapotot lássa.
+      </p>
 
       <h2>Együttműködés és csapatmunka</h2>
 
@@ -340,10 +508,16 @@
 
       <div class="step">
         <h4>3. lépés: Működés</h4>
-        <p
-          >Az automatikus szinkronizálás bekapcsolása után minden projekt vagy barlang mentésekor automatikusan
-          feltöltődnek az adatok a Google Drive-ra.</p
-        >
+        <p>Az automatikus szinkronizálás bekapcsolása után a következő műveletek indítanak automatikus feltöltést:</p>
+        <ul>
+          <li>Projekt vagy barlang mentése</li>
+          <li>Beágyazott 3D modell átnevezése (metaadat frissítés)</li>
+          <li>Beágyazott 3D modell transzformációjának, átlátszóságának vagy láthatóságának módosítása (beállítás frissítés)</li>
+        </ul>
+        <p>
+          A transzformáció beviteli mezők változtatásai 2 másodperces késleltetéssel szinkronizálódnak, hogy a gyors,
+          egymást követő módosítások egyetlen feltöltésbe kerüljenek össze.
+        </p>
       </div>
 
       <div class="warning">
@@ -401,6 +575,47 @@
         <p>Válassza a "Barlangok visszaállítása" opciót csak a barlang adatok letöltéséhez.</p>
       </div>
 
+      <h2>3D modellek szinkronizálása</h2>
+
+      <p>
+        A Speleo Studio képes a beágyazott (<em>embedded</em>) 3D modelleket is szinkronizálni a Google Drive-ra.
+        Csak azok a modellek szinkronizálódnak, amelyeket a felhasználó beágyazottnak jelölt meg (a modell jobb
+        klikk menüjének 🔗 ikonjával). A nem beágyazott modellek helyi tárolóban maradnak.
+      </p>
+
+      <div class="info">
+        <h3>Mit tárol a Drive a modellekről?</h3>
+        <ul>
+          <li
+            ><strong>Geometria fájl (ModelFiles/):</strong> A modell bináris geometriája gzip tömörítéssel
+            (<code>.gz</code> kiterjesztéssel). Ez az adat feltöltés után változatlan marad — ha a geometria nem
+            változik, nem töltődik fel újra.</li
+          >
+          <li
+            ><strong>Textúra fájlok (TextureFiles/):</strong> Az MTL és képfájlok szintén gzip tömörítéssel.
+            Szintén immutábilis — egyszer töltődnek fel.</li
+          >
+          <li
+            ><strong>Metaadatok (Metadata/):</strong> A modell neve, koordinátarendszere és beágyazottsági jelzője
+            JSON formátumban. Minden módosítás után frissül.</li
+          >
+          <li
+            ><strong>Beállítások (Settings/):</strong> A modell transzformációja (pozíció, forgatás, méretezés),
+            átlátszósága és láthatósága JSON formátumban. Minden módosítás után frissül.</li
+          >
+        </ul>
+      </div>
+
+      <div class="info">
+        <h3>Független revíziókövetés</h3>
+        <p>
+          A metaadatok és a beállítások revíziói egymástól függetlenül követik a változásokat. Ha csak az átalakítást
+          módosítja, csak a beállítások fájl töltődik újra fel — a geometria és a metaadatok érintetlenek maradnak.
+          A projekt panelen a modell neve mellett megjelenik a szinkronizáció állapota (✅ naprakész, Δ helyi
+          változás, ⚠️ ütközés).
+        </p>
+      </div>
+
       <h2>Mappa struktúra a Google Drive-ban</h2>
 
       <p>A Speleo Studio a következő mappa struktúrát hozza létre a Google Drive-ban:</p>
@@ -413,11 +628,19 @@ Speleo Studio/
 │   ├── Projekt1.json
 │   ├── Projekt2.json
 │   └── ...
-└── Caves/
-    ├── Projekt1_Barlang1.json
-    ├── Projekt1_Barlang2.json
-    ├── Projekt2_Barlang1.json
-    └── ...</pre
+├── Caves/
+│   ├── Projekt1_Barlang1.json
+│   ├── Projekt1_Barlang2.json
+│   └── ...
+└── Models/
+    ├── ModelFiles/
+    │   └── {modell-azonosító}.gz
+    ├── TextureFiles/
+    │   └── {textúra-azonosító}.gz
+    ├── Metadata/
+    │   └── {modell-azonosító}.json
+    └── Settings/
+        └── {modell-azonosító}.json</pre
         >
       </div>
 
@@ -425,8 +648,14 @@ Speleo Studio/
         <h4>Megjegyzések a mappa struktúrához:</h4>
         <ul>
           <li>A mappák automatikusan létrejönnek, ha nem léteznek</li>
-          <li>A mappa nevek testreszabhatók a beállításokban</li>
+          <li>Minden mappa neve testreszabható a beállítások panelen</li>
           <li>A barlang fájlok neve tartalmazza a projekt nevét is az egyértelműség kedvéért</li>
+          <li>A modell geometria és textúra fájlok gzip tömörítéssel kerülnek tárolásra (<code>.gz</code>)</li>
+          <li
+            ><strong>A Drive fájlok info paneljén</strong> (jobb klikk → Részletek) látható a Speleo Studio által
+            tárolt metaadat: projekt neve, revíziószám, alkalmazás azonosítója és az utolsó szinkronizálás forrása.
+            Ez hasznos lehet diagnosztikánál vagy ha kézzel kell ellenőrizni egy fájl állapotát.</li
+          >
         </ul>
       </div>
 
@@ -436,10 +665,12 @@ Speleo Studio/
 
       <ul>
         <li
-          ><strong>Felmérés szerkesztő állapotok:</strong> Ideiglenes szerkesztési állapotok és mentetlen
+          ><strong>Nem beágyazott 3D modellek:</strong> Csak a beágyazottnak (🔗) jelölt modellek szinkronizálódnak</li
+        >
+        <li
+          ><strong>Felmérés szerkesztő ideiglenes, nem elmentett szerkesztések:</strong> Ideiglenes szerkesztési állapotok és mentetlen
           változtatások</li
         >
-        <li><strong>Deklináció gyorsítótár:</strong> A helyi deklináció értékek gyorsítótára (újra generálható)</li>
       </ul>
 
       <h2>Hibaelhárítás</h2>
@@ -465,10 +696,14 @@ Speleo Studio/
       </div>
 
       <div class="warning">
-        <h4>3. Mappa nem található</h4>
+        <h4>3. Mappa nem található / megosztott mappa nem érhető el</h4>
         <ul>
           <li>A Speleo Studio automatikusan létrehozza a mappákat, ha nem léteznek</li>
           <li>Ellenőrizze, hogy van írási jogosultsága a Google Drive-on</li>
+          <li
+            >Ha egy Önnel megosztott mappát szeretne gyökérmappaként használni, adja meg a mappa Drive
+            azonosítóját a "Gyökér" mezőbe a neve helyett (lásd a konfigurációs lépéseket)</li
+          >
         </ul>
       </div>
 

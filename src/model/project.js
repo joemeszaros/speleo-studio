@@ -18,6 +18,32 @@ import { Cave, DriveCaveMetadata } from './cave.js';
 import { Model } from '../model.js';
 import { compressToGzip, decompressGzip, isGzipped } from '../utils/compression.js';
 
+export class DriveModelMetadata {
+  constructor(id, name, metadataRevision, metadataApp, settingsRevision, settingsApp) {
+    this.id = id;
+    this.name = name;
+    this.metadataRevision = metadataRevision;
+    this.metadataApp = metadataApp;
+    this.settingsRevision = settingsRevision;
+    this.settingsApp = settingsApp;
+  }
+
+  toExport() {
+    return {
+      id               : this.id,
+      name             : this.name,
+      metadataRevision : this.metadataRevision,
+      metadataApp      : this.metadataApp,
+      settingsRevision : this.settingsRevision,
+      settingsApp      : this.settingsApp
+    };
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new DriveModelMetadata(), pure);
+  }
+}
+
 export class FatProject {
 
   constructor(project, caves, models) {
@@ -118,11 +144,12 @@ export class FatProjects {
 
 export class DriveProject {
 
-  constructor(project, caves, app, deletedCaveIds = []) {
+  constructor(project, caves, app, deletedCaveIds = [], models = []) {
     this.project = project;
     this.caves = caves;
     this.app = app;
     this.deletedCaveIds = deletedCaveIds;
+    this.models = models;
   }
 
   toExport() {
@@ -130,15 +157,16 @@ export class DriveProject {
       project        : this.project.toExport(),
       caves          : this.caves.map((cave) => cave.toExport()),
       app            : this.app,
-      deletedCaveIds : this.deletedCaveIds
+      deletedCaveIds : this.deletedCaveIds,
+      models         : this.models.map((m) => m.toExport())
     };
   }
 
   static fromPure(pure) {
     pure.project = Project.fromPure(pure.project);
     pure.caves = pure.caves.map((cave) => DriveCaveMetadata.fromPure(cave));
+    pure.models = (pure.models || []).map((m) => DriveModelMetadata.fromPure(m));
     return Object.assign(new DriveProject(), pure);
-
   }
 }
 
