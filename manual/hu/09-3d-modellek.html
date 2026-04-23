@@ -184,6 +184,18 @@
           ><td>&#128279;</td><td>Beágyazás / Beágyazás megszüntetése</td
           ><td>Modell beágyazása a projektbe exportáláshoz</td></tr
         >
+        <tr><td>&#128190;</td><td>Modell letöltése</td><td>Az eredeti modell fájl letöltése</td></tr>
+        <tr
+          ><td>&#127912;</td><td>Szín beállítása / Szín törlése</td
+          ><td>Egyedi szín beállítása a modellre (felülírja a globális szín módot). A
+          &#127912; áthúzott ikonnal az egyedi szín törölhető.</td></tr
+        >
+        <tr
+          ><td>&#128306;</td><td>Drótvázas / Tömör megjelenítés</td
+          ><td>A háromszögháló éleinek megjelenítése drótváz (wireframe) módban, a topológia vizsgálatához.
+          Csak textúra nélküli hálókra érhető el &mdash; pontfelhőkön és textúrázott modelleken nem jelenik meg.
+          A drótváz kompatibilis a szín módokkal (pl. Z szerinti színátmenet).</td></tr
+        >
         <tr><td>&#128465;&#65039;</td><td>Modell törlése</td><td>Modell és kapcsolódó textúrák törlése</td></tr>
       </table>
 
@@ -192,6 +204,43 @@
         A modell neve mellett található szem (&#128065;&#65039;) ikonra kattintva a modell láthatósága kapcsolható. Ez
         hasznos, ha több modell van betöltve és csak bizonyos modelleket szeretnénk látni.
       </p>
+
+      <h2>Modellek szín módjai</h2>
+      <p>
+        A modellek globális szín módja a felső menüsor <strong>Modell szín mód</strong> legördülőjéből
+        választható ki. A beállítás minden betöltött modellre érvényes, kivéve a textúrázott modelleket,
+        amelyek mindig a saját textúrájukkal jelennek meg.
+      </p>
+      <table>
+        <tr><th>Mód</th><th>Leírás</th></tr>
+        <tr>
+          <td>Z szerinti színátmenet</td>
+          <td>A modell pontjai/csúcsai a magasság (Z koordináta) alapján kapnak színt a
+          <strong>Beállítások &rarr; Színátmenet &rarr; Modellek</strong> szekcióban megadott
+          színátmenet szerint. Pontfelhőkre és hálókra egyaránt alkalmazható.</td>
+        </tr>
+        <tr>
+          <td>Modellenként</td>
+          <td>Minden modell saját, egyedileg beállított színt kap, amelyet a helyi menüből a
+          &#127912; <strong>Szín beállítása</strong> opcióval lehet kiválasztani. Ha a modellnek nincs
+          beállított egyedi színe, az alapértelmezett szín kerül alkalmazásra.</td>
+        </tr>
+        <tr>
+          <td>Saját szín</td>
+          <td>A pontfelhők a fájlban tárolt eredeti (nativ) színükkel jelennek meg. A hálók, mivel
+          általában nincs csúcsszínük, az alapértelmezett színt kapják.</td>
+        </tr>
+      </table>
+
+      <div class="info">
+        <h3>Alapértelmezett modell szín</h3>
+        <p>
+          A <strong>Beállítások &rarr; 3D modellek &rarr; Modell alapértelmezett színe</strong>
+          mezőben állítható be az a szín, amelyet a hálók a <em>Saját szín</em> módban, illetve a
+          <em>Modellenként</em> módban egyedi szín nélkül kapnak. Az alapértelmezett érték egy halvány
+          zöld árnyalat.
+        </p>
+      </div>
 
       <h2>Tulajdonságok panel</h2>
       <p>

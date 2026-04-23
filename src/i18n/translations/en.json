@@ -189,7 +189,7 @@
         "startPoint": "Cave start point",
         "startPointSize": "Start point size",
         "startPointColor": "Start point color",
-        "modelDefaultColor": "Model default color (own color mode)",
+        "modelDefaultColor": "Model default color",
         "pointCloudPointSize": "Point cloud point size",
         "pointCloudColorStart": "Point cloud color (top)",
         "pointCloudColorEnd": "Point cloud color (bottom)",

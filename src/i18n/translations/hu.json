@@ -189,7 +189,7 @@
         "startPoint": "Barlang kezdőpont",
         "startPointSize": "Kezdőpont mérete",
         "startPointColor": "Kezdőpont színe",
-        "modelDefaultColor": "Modell alapértelmezett színe (saját szín módban)",
+        "modelDefaultColor": "Modell alapértelmezett színe",
         "pointCloudPointSize": "Pontfelhő pontméret",
         "pointCloudColorStart": "Pontfelhő szín (felső)",
         "pointCloudColorEnd": "Pontfelhő szín (alsó)",
