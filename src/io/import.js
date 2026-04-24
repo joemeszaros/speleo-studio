@@ -95,7 +95,9 @@ class Importer {
     await new Promise((resolve, reject) => {
       reader.onload = async (event) => {
         try {
-          await this.importData(event.target.result, onLoadFn, name);
+          // Pass the File as the source Blob so importers can persist it without
+          // duplicating the ArrayBuffer on the main thread (important for large LAS/LAZ).
+          await this.importData(event.target.result, onLoadFn, name, null, file);
           resolve();
         } catch (e) {
           reject(e);
@@ -853,7 +855,7 @@ class PlyModelImporter extends PointCloudImporter {
     await super.importFileAsArrayBuffer(file, name, onModelLoad);
   }
 
-  async importData(data, onModelLoad, name, modelFileId = null) {
+  async importData(data, onModelLoad, name, modelFileId = null, sourceBlob = null) {
     const OCTREE_THRESHOLD = 5000;
 
     const loader = new PLYLoader();
@@ -873,8 +875,9 @@ class PlyModelImporter extends PointCloudImporter {
     const hasVertexColors = geometry.getAttribute('color') !== undefined;
     const centerVector = new Vector(center.x, center.y, center.z);
 
-    // File info for storage
-    const modelFile = new ModelFile(name, 'ply', data);
+    // Prefer the File Blob so large PLYs don't cost an extra ArrayBuffer copy on
+    // the main thread. See LasModelImporter.importData for the same rationale.
+    const modelFile = new ModelFile(name, 'ply', sourceBlob instanceof Blob ? sourceBlob : data);
 
     if (hasFaces) {
       // PLY has faces - render as a mesh
@@ -1367,15 +1370,35 @@ class ObjModelImporter extends Importer {
  */
 class LasModelImporter extends PointCloudImporter {
 
+  // Upper bound on the compressed buffer we can feed into laz-perf.
+  // laz-perf.js (emscripten asm.js, ALLOW_MEMORY_GROWTH=0) hosts its heap in a
+  // single ArrayBuffer that we pre-size before importScripts. V8 can allocate
+  // ~2GB ArrayBuffers reliably; we cap at 1.5GB to leave headroom for decoder
+  // state, stack and other allocations inside the WASM heap.
+  static MAX_LAZ_BYTES = 1.25 * 1024 * 1024 * 1024;
+  static MAX_LAS_BYTES = 2 * 1024 * 1024 * 1024;
+
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
   }
 
   async importFile(file, name, onModelLoad) {
+    if (file && typeof file.size === 'number') {
+      const ext = (name || file.name || '').toLowerCase().split('.').pop();
+      const isLaz = ext === 'laz';
+      const limit = isLaz ? LasModelImporter.MAX_LAZ_BYTES : LasModelImporter.MAX_LAS_BYTES;
+      if (file.size > limit) {
+        throw new Error(i18n.t('errors.import.pointCloudFileTooLarge', {
+          name  : name || file.name,
+          size  : (file.size / (1024 * 1024)).toFixed(0),
+          limit : (limit / (1024 * 1024)).toFixed(0)
+        }));
+      }
+    }
     await super.importFileAsArrayBuffer(file, name, onModelLoad);
   }
 
-  async importData(data, onModelLoad, name, modelFileId = null) {
+  async importData(data, onModelLoad, name, modelFileId = null, sourceBlob = null) {
     const options = this.options;
     const pointBudget = options.scene.models.pointBudget;
     const sseThreshold = options.scene.models.sseThreshold;
@@ -1400,8 +1423,18 @@ class LasModelImporter extends PointCloudImporter {
     // Ensure we have an ArrayBuffer
     const buffer = data instanceof ArrayBuffer ? data : await data.arrayBuffer();
 
-    // Keep a copy for ModelFile persistence — the original will be transferred to the worker
-    const bufferForStorage = buffer.slice(0);
+    // Persist the file as a Blob without duplicating the buffer. When the importer is
+    // called from a file picker we already have the File (a Blob backed by the OS file),
+    // so it costs no extra RAM. On project-reload paths a ModelFile already exists in
+    // IndexedDB and the callback ignores any new one, so we skip the ~1GB slice there.
+    let modelFileData;
+    if (sourceBlob instanceof Blob) {
+      modelFileData = sourceBlob;
+    } else if (modelFileId) {
+      modelFileData = null;
+    } else {
+      modelFileData = buffer.slice(0);
+    }
 
     return new Promise((resolve, reject) => {
       const workerUrl = new URL('./point-cloud-worker.js', import.meta.url);
@@ -1444,7 +1477,7 @@ class LasModelImporter extends PointCloudImporter {
               pointSize
             });
 
-            const modelFile = new ModelFile(name, 'las', bufferForStorage);
+            const modelFile = modelFileData ? new ModelFile(name, 'las', modelFileData) : null;
 
             if (msg.totalPoints !== msg.displayedPoints) {
               console.log(

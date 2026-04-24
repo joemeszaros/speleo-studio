@@ -1014,7 +1014,8 @@
       "importFileFailed": "A {name} fájl importálása sikertelen",
       "importFailed": "Importálás sikertelen",
       "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
-      "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott"
+      "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott",
+      "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot."
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",

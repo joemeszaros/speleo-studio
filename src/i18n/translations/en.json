@@ -991,7 +991,8 @@
       "importFileFailed": "Import of {name} failed",
       "importFailed": "Import failed",
       "unsupportedFileType": "Unsupported file type: {extension}",
-      "longFormatNotSupported": "Only the simplified format is supported"
+      "longFormatNotSupported": "Only the simplified format is supported",
+      "pointCloudFileTooLarge": "{name} is {size} MB, which is above the {limit} MB limit for point cloud imports. Try splitting the file or exporting a subsampled version."
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",

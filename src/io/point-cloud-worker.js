@@ -190,7 +190,7 @@ function parseLASPoints(arraybuffer, header, maxPoints) {
   return { positions, colors, pointCount: written, originalCount: totalPoints, positionOffset: [cx, cy, cz], firstPoint, parseError };
 }
 
-function parseLAZPoints(arraybuffer, header, maxPoints) {
+function parseLAZPoints(arraybuffer, header, maxPoints, onBufferCopied) {
   const totalPoints = header.pointsCount;
   let skip = 1;
   if (maxPoints > 0 && totalPoints > maxPoints) {
@@ -204,18 +204,22 @@ function parseLAZPoints(arraybuffer, header, maxPoints) {
   const hdrOffset = header.offset;
   const colorOff = header.colorOffset;
   const recordSize = header.pointsStructSize;
+  const byteLength = arraybuffer.byteLength;
 
   // Subtract bounding box center so Float32 positions stay near zero (full precision)
   const cx = (header.mins[0] + header.maxs[0]) / 2;
   const cy = (header.mins[1] + header.maxs[1]) / 2;
   const cz = (header.mins[2] + header.maxs[2]) / 2;
 
-  // Initialize laz-perf LASZip
+  // Initialize laz-perf LASZip. Copy the compressed buffer into the WASM heap,
+  // then release our reference to the original so it can be GCed during decompression.
   const laz = new Module.LASZip();
-  const abInt = new Uint8Array(arraybuffer);
-  const buf = Module._malloc(arraybuffer.byteLength);
-  Module.HEAPU8.set(abInt, buf);
-  laz.open(buf, arraybuffer.byteLength);
+  const buf = Module._malloc(byteLength);
+  if (!buf) throw new Error('LAZ: unable to allocate ' + byteLength + ' bytes in WASM heap');
+  Module.HEAPU8.set(new Uint8Array(arraybuffer), buf);
+  arraybuffer = null;
+  if (onBufferCopied) onBufferCopied();
+  laz.open(buf, byteLength);
 
   const pointBuf = Module._malloc(recordSize);
   let written = 0;
@@ -554,6 +558,23 @@ function sendOctreeResult(nodes, header, hasColors, totalPoints, displayedPoints
 
 let lazPerfLoaded = false;
 
+// Compressed LAZ is loaded into the WASM heap via Module._malloc(byteLength).
+// laz-perf.js was built with ALLOW_MEMORY_GROWTH=0 and a 160MB default heap,
+// so we must pre-size Module.TOTAL_MEMORY before importScripts to fit the file.
+// 64KiB page granularity + 128MiB slack for LAZ decoder state and stack.
+function loadLazPerf(requiredBytes) {
+  if (lazPerfLoaded) return;
+  const PAGE = 64 * 1024;
+  const MIN_HEAP = 160 * 1024 * 1024;
+  const slack = 128 * 1024 * 1024;
+  const wanted = Math.max(MIN_HEAP, requiredBytes + slack);
+  const heap = Math.ceil(wanted / PAGE) * PAGE;
+  self.Module = self.Module || {};
+  self.Module.TOTAL_MEMORY = heap;
+  importScripts('../../dependencies/laz-perf/laz-perf.js');
+  lazPerfLoaded = true;
+}
+
 onmessage = function (event) {
   const msg = event.data;
 
@@ -596,7 +617,8 @@ function handleBuildOctree(msg) {
 
 function handleParseLAS(msg) {
   try {
-    const arraybuffer = msg.buffer;
+    let arraybuffer = msg.buffer;
+    msg.buffer = null; // drop the caller's reference so only `arraybuffer` holds it
     const maxPoints = msg.maxPoints || 20000000;
     const colorStart = msg.colorStart || '#39b14d';
     const colorEnd = msg.colorEnd || '#9f2d2d';
@@ -605,17 +627,17 @@ function handleParseLAS(msg) {
     self.postMessage({ type: 'progress', percent: 0, phase: 'header' });
     const header = parseLASHeader(arraybuffer);
 
-    // Phase 1: Parse/decompress points
+    // Phase 2: Parse/decompress points
     let result;
     if (header.isCompressed) {
-      if (!lazPerfLoaded) {
-        // The worker is at src/io/point-cloud-worker.js, laz-perf is at dependencies/laz-perf/laz-perf.js
-        importScripts('../../dependencies/laz-perf/laz-perf.js');
-        lazPerfLoaded = true;
-      }
-      result = parseLAZPoints(arraybuffer, header, maxPoints);
+      loadLazPerf(arraybuffer.byteLength);
+      // Null out the local reference once laz-perf has copied into its heap, so
+      // the 800MB+ compressed buffer can be GCed before octree construction.
+      const releaseBuffer = () => { arraybuffer = null; };
+      result = parseLAZPoints(arraybuffer, header, maxPoints, releaseBuffer);
     } else {
       result = parseLASPoints(arraybuffer, header, maxPoints);
+      arraybuffer = null;
     }
 
     if (result.pointCount === 0) {

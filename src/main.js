@@ -407,9 +407,15 @@ class Main {
               continue;
             }
 
-            await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
-              parsedModels.push({ model, object3D, modelFile });
-            });
+            try {
+              await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
+                parsedModels.push({ model, object3D, modelFile });
+              });
+            } catch (error) {
+              const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
+              showErrorPanel(`${msgPrefix}: ${error.message}`);
+              console.error(msgPrefix, error);
+            }
             this.loadingOverlay.advanceBatch();
           }
         } finally {
