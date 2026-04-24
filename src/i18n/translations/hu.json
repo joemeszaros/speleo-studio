@@ -41,6 +41,7 @@
         "plan": "Alaprajz",
         "profile": "Hosszmetszet",
         "3d": "3D",
+        "projectionToggle": "Perspektivikus / ortografikus vetítés váltása",
         "boundingBox": "Határoló doboz",
         "lineColor": "Barlang vonal szín mód",
         "modelColor": "Modell szín mód",
@@ -203,7 +204,8 @@
         "sectionsLabel": "Szakasz címkék",
         "circleOpacity": "Dőlés - Tektonikus kör átlátszóság",
         "attributes": "Attribútumok",
-        "showAllAttributes": "Összes attribútum megjelenítése"
+        "showAllAttributes": "Összes attribútum megjelenítése",
+        "spatialProjection": "Térbeli nézet vetítése"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"
@@ -216,7 +218,9 @@
         "up": "Fent",
         "down": "Lent",
         "left": "Balra",
-        "right": "Jobbra"
+        "right": "Jobbra",
+        "orthographic": "Ortografikus",
+        "perspective": "Perspektivikus"
       }
     },
     "sidebar": {

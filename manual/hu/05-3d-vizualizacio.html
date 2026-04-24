@@ -210,6 +210,48 @@
         <p>Váltás alaprajz nézetre.</p>
       </div>
 
+      <h3 id="projection-mode">Vetítési mód (csak 3D nézetben)</h3>
+      <p
+        >A 3D nézet két vetítési módot támogat: ortografikus (párhuzamos vetítés, alapértelmezett) és perspektivikus
+        (a távolság szerint arányosan kicsinyítő vetítés). A vetítés váltása külön gombbal történik, amely közvetlenül
+        a 3D nézet gomb mellett található. A gomb ikonja az aktuális vetítési módot mutatja (<strong>O</strong> =
+        ortografikus, <strong>P</strong> = perspektivikus) és kattintásra vált a másik módra.</p
+      >
+
+      <div class="control-box">
+        <h4><img class="icon" src="../../icons/camera_ortho.svg" /> / <img class="icon" src="../../icons/camera_perspective.svg" />Vetítés váltása</h4>
+        <p
+          >A gomb csak akkor aktív, ha a projekt tartalmaz legalább egy 3D modellt. Barlangjárat-vonalakhoz a
+          perspektivikus vetítésnek nincs érdemi előnye, ezért modellek nélkül a gomb letiltott (halványabb, nem
+          kattintható).</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>Ortografikus vetítés</h4>
+        <p
+          >Párhuzamos vetítés: a távolság nem befolyásolja a méreteket, az objektumok mindenhol a valós arányukban
+          jelennek meg. Ez a klasszikus mérnöki nézet, alkalmas térképszerű megjelenítésre és méréshez. A mértékléc
+          (skálasáv) csak ebben a módban látható.</p
+        >
+      </div>
+
+      <div class="step">
+        <h4>Perspektivikus vetítés</h4>
+        <p
+          >A távolabbi objektumok kisebbnek látszanak, ahogy a valóságban is. Ez a mód különösen hasznos a 3D modellek
+          belsejének vizsgálatához: a pont kiválasztás engedélyezése után a modell felületén kiválasztott ponton bal
+          klikk &rarr; a megjelenő kontextus menüből „Forgáspont beállítása" opció. Ez a kamra belsejébe helyezi a
+          forgáspontot. Ezután az egér görgőjével ráközelítve a kamera áthalad a falon és a kamra belsejébe kerül, majd
+          a forgatás és eltolás a megszokott módon működik, csak most belülről. Egyszerű módja annak, hogy virtuálisan
+          bejárjon egy 3D szkennelt barlangot.</p
+        >
+        <p
+          >A két mód között a váltás megőrzi a kamera irányát és a látható részt (vizuális méret), így a váltáskor
+          nem „ugrik" a nézet.</p
+        >
+      </div>
+
       <h3>Határoló doboz</h3>
       <div class="control-box">
         <h4><img class="icon" src="../../icons/bounding_box.svg" />Határoló doboz megjelenítése</h4>

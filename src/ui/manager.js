@@ -306,6 +306,14 @@ class ProjectManager {
     // Load models for this project
     const modelCoordSystem = await this.loadProjectModels(project.id);
 
+    // Perspective projection is meaningless without a 3D model to fly into —
+    // if this project has only caves, force ortho so the view (and the navbar
+    // toggle icon, via the spatialProjectionChanged event) reflect reality.
+    const hasModels = (this.modelsTree?.getModelNames?.() ?? []).length > 0;
+    if (!hasModels && this.options.scene.spatialView?.projection === 'perspective') {
+      this.options.scene.spatialView.projection = 'ortho';
+    }
+
     // Emit coordinate system from caves or models
     const caveCoordSystem = caves.find((c) => c.geoData?.coordinateSystem)?.geoData?.coordinateSystem;
     this.#emitCoordinateSystemChange(caveCoordSystem || modelCoordSystem || null);
@@ -461,6 +469,15 @@ class ProjectManager {
         this.scene.grid.adjust(boundingBox);
       }
     }
+
+    // If the user just deleted the last 3D model while in perspective, the
+    // projection toggle becomes disabled — flip back to ortho so they don't
+    // end up stranded in an empty perspective view.
+    const hasModels = (this.modelsTree?.getModelNames?.() ?? []).length > 0;
+    if (!hasModels && this.options.scene.spatialView?.projection === 'perspective') {
+      this.options.scene.spatialView.projection = 'ortho';
+    }
+
     this.scene.view.renderView();
   }
 

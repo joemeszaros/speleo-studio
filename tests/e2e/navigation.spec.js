@@ -41,7 +41,7 @@ test.describe('3D Navigation Controls', () => {
     await viewButtons.nth(0).click();
     await expect(viewButtons.nth(0)).toHaveClass(/selected/);
 
-    // Switch back to 3D
+    // Clicking the 3D icon jumps directly to spatial view (dropdown is hover-only now).
     await viewButtons.nth(2).click();
     await expect(viewButtons.nth(2)).toHaveClass(/selected/);
     await expect(viewButtons.nth(0)).not.toHaveClass(/selected/);
@@ -76,8 +76,9 @@ test.describe('3D Navigation Controls', () => {
 
   test('only one view mode is selected at a time', async ({ page }) => {
     const viewButtons = page.locator('a[selectGroup="view"]');
+    const count = await viewButtons.count();
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < count; i++) {
       await viewButtons.nth(i).click();
       const selectedCount = await page.locator('a[selectGroup="view"].selected').count();
       expect(selectedCount).toBe(1);

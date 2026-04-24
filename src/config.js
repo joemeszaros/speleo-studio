@@ -79,6 +79,9 @@ export const DEFAULT_OPTIONS = {
         color  : '#00ff00'
       }
     },
+    spatialView : {
+      projection : 'ortho' // 'ortho' | 'perspective' — perspective allows dollying through walls into chambers
+    },
     models : {
       pointSize    : 2,
       pointBudget  : 2000000,
@@ -466,6 +469,10 @@ export class ConfigManager {
     if (config.scene.models.color.defaultColor === undefined) {
       config.scene.models.color.defaultColor = '#90ee90';
     }
+
+    if (config.scene.spatialView === undefined || config.scene.spatialView.projection === undefined) {
+      config.scene.spatialView = { projection: 'ortho' };
+    }
   }
 
   /**
@@ -539,6 +546,7 @@ export class ConfigManager {
       console.log('No saved configuration found, using defaults');
       return defaultConfig;
     }
+
     savedConfig.isDefault = false;
     return savedConfig;
   }
@@ -1115,6 +1123,15 @@ export class ConfigChanges {
     this.scene.view.renderView();
   }
 
+  handleSpatialViewChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.spatialView.projection':
+        this.scene.views.get('spatial').setProjection(newValue);
+        document.dispatchEvent(new CustomEvent('spatialProjectionChanged', { detail: { projection: newValue } }));
+        break;
+    }
+  }
+
   handleModelChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.models.pointSize':
@@ -1202,6 +1219,8 @@ export class ConfigChanges {
       this.handleSprites3DChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.camera')) {
       this.handleCameraChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.spatialView.')) {
+      this.handleSpatialViewChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.models.color')) {
       this.handleModelColorChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.models.')) {

@@ -104,6 +104,16 @@ class ViewHelper extends Object3D {
     this.size = size;
     const turnRate = 2.0; // turn rate in radians per second (slower for smoother animation)
 
+    // Allow the owning view to swap to a different camera/control pair at runtime
+    // (e.g. SpatialView toggling between ortho and perspective). Reassigning the
+    // captured function parameters keeps the render closure pointing at the new
+    // camera without needing to reconstruct the helper.
+    this.updateCameraAndControl = function (newCamera, newSpatialControl) {
+      camera = newCamera;
+      spatialControl = newSpatialControl;
+      this.spatialControl = newSpatialControl;
+    };
+
     this.render = function (renderer) {
 
       this.quaternion.copy(camera.quaternion).invert();
@@ -185,10 +195,10 @@ class ViewHelper extends Object3D {
     };
 
     this.prepareAnimationData = function (object) {
-      // Get current camera orientation from SpatialViewControl
+      // Get current camera orientation from the spatial control
       const currentOrientation = this.spatialControl?.getCameraOrientation();
       if (!currentOrientation) {
-        console.error('ViewHelper: SpatialViewControl not found on camera');
+        console.error('ViewHelper: spatial control not found on camera');
         return;
       }
 

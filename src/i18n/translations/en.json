@@ -41,6 +41,7 @@
         "plan": "Plan",
         "profile": "Profile",
         "3d": "3D",
+        "projectionToggle": "Toggle perspective / orthographic projection",
         "boundingBox": "Bounding box",
         "lineColor": "Cave lines color mode",
         "modelColor": "Model color mode",
@@ -203,7 +204,8 @@
         "sectionsLabel": "Sections label",
         "circleOpacity": "Bedding - tectonic circle opacity",
         "attributes": "Attributes",
-        "showAllAttributes": "Show all attributes"
+        "showAllAttributes": "Show all attributes",
+        "spatialProjection": "Spatial view projection"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"
@@ -216,7 +218,9 @@
         "up": "Up",
         "down": "Down",
         "left": "Left",
-        "right": "Right"
+        "right": "Right",
+        "orthographic": "Orthographic",
+        "perspective": "Perspective"
       }
     },
     "sidebar": {

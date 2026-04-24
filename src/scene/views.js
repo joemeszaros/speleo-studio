@@ -22,7 +22,7 @@ import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
 import { degreesToRads, formatDistance, radsToDegrees } from '../utils/utils.js';
-import { ProfileViewControl, PlanViewControl, SpatialViewControl } from './control.js';
+import { ProfileViewControl, PlanViewControl, SpatialOrthographicControl, SpatialPerspectiveControl } from './control.js';
 import { i18n } from '../i18n/i18n.js';
 
 class View {
@@ -296,6 +296,9 @@ class View {
       this.camera.left = this.camera.bottom * aspect;
       this.camera.right = this.camera.top * aspect;
       this.camera.width = Math.abs(this.camera.left) + Math.abs(this.camera.right); // left is a negative number
+      this.camera.updateProjectionMatrix();
+    } else if (this.camera.isPerspectiveCamera) {
+      this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
     }
 
@@ -571,11 +574,29 @@ class View {
     return camera;
   }
 
+  // Perspective counterpart used by SpatialView when the user chooses
+  // projection = 'perspective'. Near is small (0.05 m) so the camera can
+  // cross a chamber wall without clipping it; far is generous for caves.
+  static createPerspectiveCamera(aspect, fov = 60) {
+    const camera = new THREE.PerspectiveCamera(fov, aspect, 0.05, 100000);
+    camera.layers.enable(0);
+    camera.layers.enable(1);
+    camera.layers.enable(2);
+    camera.layers.disable(31);
+    // Custom width/height stubs so inherited ortho-centric code doesn't NaN when
+    // called in perspective mode (ratio sprites are hidden anyway).
+    camera.width = 1;
+    camera.height = 1;
+    return camera;
+  }
+
 }
 
 class SpatialView extends View {
 
   constructor(scene, domElement) {
+    // Pass the orthographic camera to super() — it is the default projection.
+    // The perspective camera is created just below and swapped in by setProjection().
     super('spatialView', View.createOrthoCamera(scene.width / scene.height), domElement, scene);
 
     this.overviewCamera = View.createOrthoCamera(1);
@@ -583,21 +604,46 @@ class SpatialView extends View {
     this.overviewCamera.layers.enable(2);
     this.overviewCamera.layers.enable(31);
 
-    this.control = new SpatialViewControl(this.camera, this.domElement);
+    // Both projections share the scene graph; only the main view camera and
+    // its control swap when the user toggles projection. Overview camera stays
+    // orthographic (bird's-eye map style is always parallel).
+    this.orthoCamera = this.camera;
+    this.perspectiveCamera = View.createPerspectiveCamera(scene.width / scene.height);
 
-    this.control.addEventListener('start', () => {
-      this.isInteracting = true;
-    });
-    this.control.addEventListener('end', () => {
-      this.onControlOperationEnd();
-    });
+    this.orthoControl = new SpatialOrthographicControl(this.orthoCamera, this.domElement);
+    this.perspectiveControl = new SpatialPerspectiveControl(this.perspectiveCamera, this.domElement);
 
-    this.control.addEventListener('orbitSet', (e) => {
-      this.onOrbitAdjustment(e);
-    });
-    this.control.addEventListener('orbitChange', (e) => {
-      this.onOrbitAdjustment(e);
-    });
+    // Honor the saved projection preference. SpatialView.setProjection() is
+    // also called again when the user changes it at runtime via config.
+    const savedProjection = scene.options?.scene?.spatialView?.projection;
+    if (savedProjection === 'perspective') {
+      this.projection = 'perspective';
+      this.camera = this.perspectiveCamera;
+      this.control = this.perspectiveControl;
+    } else {
+      this.projection = 'ortho';
+      this.control = this.orthoControl;
+    }
+
+    // Attach listeners to both controls; handlers guard on `this.control` so
+    // only events from the currently active control drive view updates.
+    // Listeners are tagged as internal so setProjection() can distinguish them
+    // from listeners attached by external code (headlight, attributes, etc.)
+    // when migrating those across a projection swap.
+    for (const c of [this.orthoControl, this.perspectiveControl]) {
+      const startHandler = () => { if (c === this.control) this.isInteracting = true; };
+      const endHandler = () => { if (c === this.control) this.onControlOperationEnd(); };
+      const orbitSetHandler = (e) => { if (c === this.control) this.onOrbitAdjustment(e); };
+      const orbitChangeHandler = (e) => { if (c === this.control) this.onOrbitAdjustment(e); };
+      startHandler._svInternal = true;
+      endHandler._svInternal = true;
+      orbitSetHandler._svInternal = true;
+      orbitChangeHandler._svInternal = true;
+      c.addEventListener('start', startHandler);
+      c.addEventListener('end', endHandler);
+      c.addEventListener('orbitSet', orbitSetHandler);
+      c.addEventListener('orbitChange', orbitChangeHandler);
+    }
 
     this.viewHelper = new ViewHelper(this.camera, this.domElement, this.control, {
       labelX : 'x',
@@ -628,8 +674,102 @@ class SpatialView extends View {
     this.animatedPreviously = false;
 
     this.enabled = false;
-    this.control.enabled = false;
+    this.orthoControl.enabled = false;
+    this.perspectiveControl.enabled = false;
     this.initiated = false;
+  }
+
+  /**
+   * Switch between orthographic and perspective projection. Camera pose
+   * (target, azimuth, clino, distance) is preserved across the swap — both
+   * controls share the SpatialControlBase state, so we just copy it over.
+   */
+  setProjection(mode) {
+    if (mode !== 'ortho' && mode !== 'perspective') {
+      throw new Error(`Unknown spatial projection: ${mode}`);
+    }
+    if (mode === this.projection) return;
+
+    const oldControl = this.control;
+    const wasEnabled = oldControl.enabled;
+    const target = oldControl.getTarget();
+    const { distance, azimuth, clino } = oldControl.getCameraOrientation();
+
+    oldControl.enabled = false;
+
+    const newControl = mode === 'perspective' ? this.perspectiveControl : this.orthoControl;
+    const newCamera = mode === 'perspective' ? this.perspectiveCamera : this.orthoCamera;
+
+    // Migrate listeners that external code attached to the old control (e.g.
+    // ModelScene's headlight, AttributesScene's draft rotations, RotationTool).
+    // Those callers captured `view.control` once and wouldn't otherwise see
+    // events from the new control. SpatialView's own listeners are already on
+    // both controls (tagged ._svInternal) so they are skipped here.
+    if (oldControl !== newControl && oldControl.listeners) {
+      for (const [eventType, listeners] of oldControl.listeners.entries()) {
+        const newListeners = newControl.listeners.get(eventType) ?? [];
+        const keepOnOld = [];
+        for (const l of listeners) {
+          if (l._svInternal) {
+            keepOnOld.push(l);
+          } else if (!newListeners.includes(l)) {
+            newListeners.push(l);
+          }
+        }
+        oldControl.listeners.set(eventType, keepOnOld);
+        newControl.listeners.set(eventType, newListeners);
+      }
+    }
+
+    // Preserve visual scale across the swap so the scene doesn't appear to
+    // zoom in or out when toggling projection. Ortho shows (camera.height/zoom)
+    // worth of world; perspective shows 2·tan(fov/2)·distance at pivot depth.
+    let transferDistance = distance;
+    let transferZoom = oldControl.zoom;
+    if (mode === 'perspective' && oldControl.camera.isOrthographicCamera) {
+      const visibleWorldHeight = oldControl.camera.height / (oldControl.zoom || 1);
+      const fovRad = (this.perspectiveCamera.fov * Math.PI) / 180;
+      transferDistance = visibleWorldHeight / (2 * Math.tan(fovRad / 2));
+      transferZoom = 1;
+    } else if (mode === 'ortho' && oldControl.camera.isPerspectiveCamera) {
+      const fovRad = (oldControl.camera.fov * Math.PI) / 180;
+      const visibleWorldHeight =
+        2 * Math.tan(fovRad / 2) * Math.max(Math.abs(oldControl.distance), 0.1);
+      transferZoom = this.orthoCamera.height / visibleWorldHeight;
+    }
+
+    this.camera = newCamera;
+    this.control = newControl;
+    this.projection = mode;
+
+    this.control.target.copy(target);
+    this.control.distance = transferDistance;
+    this.control.azimuth = azimuth;
+    this.control.clino = clino;
+    if (mode === 'ortho') {
+      this.control.setZoomLevel(transferZoom);
+    }
+
+    // Refresh aspect / frustum for the newly active camera before first render.
+    this.onResize(this.scene.width, this.scene.height);
+
+    this.control.updateCameraPosition();
+    this.control.enabled = wasEnabled;
+
+    // Ratio bar is orthography-only; compass stays useful in both modes.
+    const rulerVisible = this.scene.options.scene.sprites3D.ruler.show;
+    this.ratioIndicator.visible = mode === 'ortho' && rulerVisible;
+    this.ratioText.sprite.visible = mode === 'ortho' && rulerVisible;
+
+    // Re-point the in-scene view helper at the new camera/control.
+    if (this.viewHelper && typeof this.viewHelper.updateCameraAndControl === 'function') {
+      this.viewHelper.updateCameraAndControl(this.camera, this.control);
+    }
+
+    this.scene.points.setCameraTargetPosition(this.control.getTarget());
+    if (this.frustumFrame) this.updateFrustumFrame();
+    this.scene.updatePointCloudLOD();
+    this.renderView();
   }
 
   onOrbitAdjustment(e) {
@@ -648,6 +788,9 @@ class SpatialView extends View {
     } else if (e.type === 'zoom') {
       this.onZoomLevelChange(e.level);
       this.updateFrustumFrame();
+    } else if (e.type === 'dolly') {
+      // Perspective wheel-dolly: camera translates, frustum corners move too.
+      this.updateFrustumFrame();
     } else if (e.type === 'pan') {
       this.scene.points.setCameraTargetPosition(this.control.getTarget());
     }
@@ -664,7 +807,9 @@ class SpatialView extends View {
     this.#updateDipIndicator();
     this.scene.updatePointCloudLOD();
     this.renderView();
-    this.onZoomLevelChange(this.control.zoom);
+    if (this.projection === 'ortho') {
+      this.onZoomLevelChange(this.control.zoom);
+    }
   }
 
   onResize(width, height) {
@@ -697,8 +842,13 @@ class SpatialView extends View {
   adjustCamera(boundingBox, changeOrientation = true) {
     const settings = this.getViewSettings(boundingBox);
 
-    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
+    // Always keep the ortho frustum and overview ortho up-to-date so the user
+    // can toggle projection without needing to re-fit. Perspective camera only
+    // needs its aspect refreshed.
+    View.updateCameraFrustum(this.orthoCamera, settings.frustumSize, this.scene.width / this.scene.height);
     View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
+    this.perspectiveCamera.aspect = this.scene.width / this.scene.height;
+    this.perspectiveCamera.updateProjectionMatrix();
 
     this.control.setTarget(this.target);
     this.scene.points.setCameraTargetPosition(this.control.getTarget());
@@ -713,6 +863,68 @@ class SpatialView extends View {
 
     // Update overview camera to match
     this.setOverviewCameraTo(this.camera.position);
+  }
+
+  /**
+   * Override the inherited fitScreen — in perspective mode the ortho zoom-level
+   * formula is meaningless. Instead, compute a dolly distance that frames the
+   * bounding box within the current FOV.
+   */
+  fitScreen(boundingBox) {
+    if (this.projection !== 'perspective') {
+      return super.fitScreen(boundingBox);
+    }
+    if (boundingBox === undefined) return;
+
+    const center = boundingBox.getCenter(new THREE.Vector3());
+    this.target.copy(center);
+    this.control.setTarget(center);
+
+    const size = boundingBox.getSize(new THREE.Vector3());
+    const maxExtent = Math.max(size.x, size.y, size.z);
+    const fovRad = (this.camera.fov * Math.PI) / 180;
+    // Distance so the bounding sphere fits vertically, with a little padding.
+    const distance = (maxExtent / 2 / Math.tan(fovRad / 2)) * 1.4;
+    this.control.setDistance(distance);
+
+    this.updateOverviewCameraZoom(boundingBox);
+    if (this.frustumFrame) this.updateFrustumFrame();
+    this.renderView();
+  }
+
+  // Perspective zoom = dolly one step. Orthographic falls through to super.
+  zoomIn() {
+    if (this.projection !== 'perspective') return super.zoomIn();
+    this.#dollyBy(-1);
+  }
+
+  zoomOut() {
+    if (this.projection !== 'perspective') return super.zoomOut();
+    this.#dollyBy(+1);
+  }
+
+  zoomCameraTo(level) {
+    if (this.projection === 'perspective') return; // ortho-zoom-level has no perspective equivalent
+    super.zoomCameraTo(level);
+  }
+
+  onZoomLevelChange(level) {
+    if (this.projection === 'perspective') return; // scale-bar math is ortho-only
+    super.onZoomLevelChange(level);
+  }
+
+  #dollyBy(sign) {
+    // Mirror SpatialPerspectiveControl.onWheel's stepping so button-zoom feels
+    // identical to wheel-dolly.
+    const step = Math.min(Math.max(Math.abs(this.control.distance) * 0.2, 0.1), 100);
+    let newDistance = this.control.distance + sign * step;
+    if (this.control.distance * newDistance <= 0) {
+      newDistance = sign * 0.05;
+    }
+    this.control.setDistance(newDistance);
+    if (this.frustumFrame) this.updateFrustumFrame();
+    this.scene.updatePointCloudLOD();
+    this.renderView();
   }
 
   renderView() {
@@ -1001,6 +1213,11 @@ class SpatialView extends View {
     super.activate(boundingBox);
     this.dipIndicator.visible = this.scene.options.scene.sprites3D.dip.show;
     this.dipText.sprite.visible = this.scene.options.scene.sprites3D.dip.show;
+    if (this.projection === 'perspective') {
+      // Scale-bar is meaningless in perspective — keep it hidden regardless of the ruler toggle.
+      this.ratioIndicator.visible = false;
+      this.ratioText.sprite.visible = false;
+    }
     this.control.enabled = true;
     this.#updateRotationText();
     this.#updateDipIndicator();

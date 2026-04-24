@@ -418,11 +418,15 @@ class SceneInteraction {
   }
 
   onPointerMove(event) {
+    // Always track the latest mouse position. Click/dblclick handlers raycast
+    // against the ViewHelper and sprite camera using these coords; without this
+    // update they would stay at (0,0) whenever raycasting is disabled.
+    this.mouseCoordinates.x = event.clientX;
+    this.mouseCoordinates.y = event.clientY;
+
     if (this.raycastingEnabled === false || this.mouseOnEditor || this.scene.view.isInteracting) {
       return;
     }
-    this.mouseCoordinates.x = event.clientX;
-    this.mouseCoordinates.y = event.clientY;
 
     const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
     const intersectedStation = this.raycasting.getIntersectedStationMeta(this.mouseCoordinates, worldUnitsFor5Pixels);

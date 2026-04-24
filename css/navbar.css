@@ -64,6 +64,17 @@
   background-color: #04aa6d;
 }
 
+.topnavbar a[disabled],
+.topnavbar a.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.topnavbar a[disabled] img,
+.topnavbar a.disabled img {
+  pointer-events: none;
+}
+
 .mydropdown-content {
   display: none;
   position: absolute;

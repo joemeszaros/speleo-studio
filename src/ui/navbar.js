@@ -58,9 +58,21 @@ class NavigationBar {
     this.exportPanel = exportPanel;
     this.printPanel = printPanel;
     this.listeners = [];
+    // Icons with a dynamic `disabled` function are registered here so
+    // we can re-evaluate their state when relevant data changes.
+    this.dynamicIcons = [];
     this.#addNavbarClickListener();
-    document.addEventListener('currentProjectChanged', () => this.setFileMenuDisabled(false));
-    document.addEventListener('currentProjectDeleted', () => this.setFileMenuDisabled(true));
+    document.addEventListener('currentProjectChanged', () => {
+      this.setFileMenuDisabled(false);
+      this.#refreshDynamicIcons();
+    });
+    document.addEventListener('currentProjectDeleted', () => {
+      this.setFileMenuDisabled(true);
+      this.#refreshDynamicIcons();
+    });
+    document.addEventListener('modelsChanged', () => this.#refreshDynamicIcons());
+    document.addEventListener('modelDeleted', () => this.#refreshDynamicIcons());
+    document.addEventListener('spatialProjectionChanged', (e) => this.#updateProjectionIcon(e.detail.projection));
     document.addEventListener('keydown', (e) => this.onKeyDown(e));
 
     // Listen for language changes and refresh navbar
@@ -68,6 +80,27 @@ class NavigationBar {
       this.#buildNavbar(domElement);
     });
     this.#buildNavbar(domElement);
+  }
+
+  #updateProjectionIcon(projection) {
+    const img = document.querySelector('#projection-toggle img.dropbtn');
+    if (!img) return;
+    img.setAttribute('src', projection === 'perspective'
+      ? 'icons/camera_perspective.svg'
+      : 'icons/camera_ortho.svg');
+  }
+
+  #refreshDynamicIcons() {
+    this.dynamicIcons.forEach(({ element, disabledFn }) => {
+      const isDisabled = typeof disabledFn === 'function' ? disabledFn() : disabledFn;
+      if (isDisabled) {
+        element.setAttribute('disabled', '');
+        element.classList.add('disabled');
+      } else {
+        element.removeAttribute('disabled');
+        element.classList.remove('disabled');
+      }
+    });
   }
 
   onKeyDown(e) {
@@ -299,12 +332,29 @@ class NavigationBar {
         selected    : true,
         icon        : 'icons/3d.svg',
         click       : () => this.scene.changeView('spatial'),
-        shortkeys   : ['crtl⊕shift⊕3', 'crtl⊕shift⊕#'] // alternative to use key codes
+        shortkeys   : ['crtl⊕shift⊕3', 'crtl⊕shift⊕#']
+      },
+      {
+        // Projection-mode toggle. No "selected" state — the current mode is
+        // conveyed entirely by which icon is shown (ortho cube vs perspective
+        // cube), swapped via the spatialProjectionChanged event.
+        tooltip  : i18n.t('ui.navbar.tooltips.projectionToggle'),
+        id       : 'projection-toggle',
+        icon     : this.options.scene.spatialView?.projection === 'perspective'
+          ? 'icons/camera_perspective.svg'
+          : 'icons/camera_ortho.svg',
+        // Perspective is only useful when there is a 3D model to dolly into —
+        // for cave-only projects keep the button disabled.
+        disabled : () => this.db.getAllModelNames().length === 0,
+        click    : () => {
+          const current = this.options.scene.spatialView?.projection ?? 'ortho';
+          this.options.scene.spatialView.projection = current === 'perspective' ? 'ortho' : 'perspective';
+        }
       },
       {
         tooltip : i18n.t('ui.navbar.tooltips.boundingBox'),
         icon    : 'icons/bounding_box.svg',
-        click   : () => this.scene.speleo.toogleBoundingBox()
+        click   : () => this.scene.toggleBoundingBox()
       },
       {
         tooltip  : i18n.t('ui.navbar.tooltips.lineColor'),
@@ -392,6 +442,11 @@ class NavigationBar {
   }
 
   #buildNavbar(navbarHtmlElement) {
+
+    // Re-initialize shortkey + dynamic-icon registries so language-change
+    // rebuilds don't leak stale references into the old DOM.
+    this.listeners = [];
+    this.dynamicIcons = [];
 
     const addShortkeys = (shortkeys, clickEvent) => {
       shortkeys.forEach((shortkey) => {
@@ -497,7 +552,9 @@ class NavigationBar {
       elements = [],
       shortkeys,
       width = 20,
-      height = 20
+      height = 20,
+      disabled = false,
+      id = null
     ) => {
       const a = document.createElement('a');
       const c = document.createElement('div');
@@ -505,6 +562,9 @@ class NavigationBar {
       c.setAttribute('id', 'myDropdown');
       if (selectGroup) {
         a.setAttribute('selectGroup', selectGroup);
+      }
+      if (id) {
+        a.setAttribute('id', id);
       }
 
       c.style.left = '0px';
@@ -534,6 +594,9 @@ class NavigationBar {
       a.classList.add('dropbtn');
 
       const clickEvent = (event) => {
+
+        // Guard against clicks (and shortkeys) when the icon is disabled.
+        if (a.hasAttribute('disabled')) return;
 
         if (elements.length > 0) {
           c.classList.toggle('mydropdown-show');
@@ -600,6 +663,20 @@ class NavigationBar {
       if (selected === true) {
         a.classList.add('selected');
       }
+
+      // Apply disabled state and, when `disabled` is a function, register for
+      // re-evaluation on relevant data changes (currentProjectChanged,
+      // modelsChanged, etc.).
+      if (disabled !== undefined && disabled !== false) {
+        const isDisabled = typeof disabled === 'function' ? disabled() : disabled;
+        if (isDisabled) {
+          a.setAttribute('disabled', '');
+          a.classList.add('disabled');
+        }
+        if (typeof disabled === 'function') {
+          this.dynamicIcons.push({ element: a, disabledFn: disabled });
+        }
+      }
       return a;
     };
 
@@ -618,7 +695,9 @@ class NavigationBar {
             i.elements,
             i.shortkeys,
             i.width === undefined ? 20 : i.width,
-            i.height === undefined ? 20 : i.height
+            i.height === undefined ? 20 : i.height,
+            i.disabled,
+            i.id
           )
         );
       });

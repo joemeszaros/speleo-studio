@@ -193,6 +193,8 @@ export class ModelsTree {
       document.dispatchEvent(new CustomEvent('switchSidebarTab', { detail: { tab: 'models' } }));
     }
 
+    document.dispatchEvent(new CustomEvent('modelsChanged', { detail: { count: category.children.length } }));
+
     return modelNode;
   }
 
@@ -237,6 +239,7 @@ export class ModelsTree {
       }
 
       this.render();
+      document.dispatchEvent(new CustomEvent('modelsChanged', { detail: { count: category.children.length } }));
     }
   }
 
@@ -317,6 +320,7 @@ export class ModelsTree {
     // Re-render
     this.render();
     this.renderPropertiesPanel();
+    document.dispatchEvent(new CustomEvent('modelsChanged', { detail: { count: 0 } }));
   }
 
   /**
