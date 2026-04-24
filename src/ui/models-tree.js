@@ -1426,16 +1426,19 @@ export class ModelsTree {
           }
         }
 
-        // Preserve opacity setting
+        // Preserve opacity + delegate texture-brightness boost to ModelScene
+        // (Three.js material tweaks live alongside the other scene material methods).
         if (child.material) {
           if (Array.isArray(child.material)) {
             child.material.forEach((m) => {
               m.transparent = node.opacity < 1;
               m.opacity = node.opacity;
+              this.scene.models.boostTexturedMaterial(m);
             });
           } else {
             child.material.transparent = node.opacity < 1;
             child.material.opacity = node.opacity;
+            this.scene.models.boostTexturedMaterial(child.material);
           }
         }
       }

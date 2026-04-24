@@ -67,7 +67,6 @@ export class ModelScene {
       if (!view) return;
       const cam = view.camera;
       const target = view.control?.target;
-      console.log('Updating headlight in model scene');
       this.scene.headLight.position.copy(cam.position);
       if (target) {
         this.scene.headLight.target.position.copy(target);
@@ -264,6 +263,37 @@ export class ModelScene {
     else this.wireframeModels.delete(name);
 
     this.scene.view.renderView();
+  }
+
+  /**
+   * Photogrammetry textures (Metashape/RealityCapture) already have lighting
+   * baked in from the source photos. Rendering them through MeshPhongMaterial
+   * with only directional lights double-shades the already-shaded texture —
+   * faces whose normals point away from every directional light drop to the
+   * hemisphere-ground floor (~10% brightness), far darker than the same model
+   * in CloudCompare / Metashape / Blender's texture view.
+   *
+   * The fix: route a fraction of the diffuse texture through the emissive
+   * channel so it bypasses lighting entirely. Phong still contributes specular
+   * and the remaining diffuse fraction, so highlights/shadows still read as
+   * 3D depth cues — they just sit on top of a brighter floor.
+   *
+   * Only materials that actually have a diffuse map are touched; non-textured
+   * meshes (including the OBJ importer's default MeshPhongMaterial) are left
+   * alone so their hand-tuned shading is preserved. MTL-authored emissive
+   * (Ke / map_Ke) is respected and not overwritten.
+   *
+   * @param {THREE.Material} material - A single material (not an array)
+   */
+  boostTexturedMaterial(material) {
+    if (!material || !material.map) return;
+    if (!material.emissive) return; // not a Phong/Standard/Lambert material
+    if (material.emissiveMap) return;
+    if (material.emissive.r > 0 || material.emissive.g > 0 || material.emissive.b > 0) return;
+    material.emissive = new THREE.Color(0xffffff);
+    material.emissiveMap = material.map;
+    material.emissiveIntensity = 0.6;
+    material.needsUpdate = true;
   }
 
   /**

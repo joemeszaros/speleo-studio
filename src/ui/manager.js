@@ -631,6 +631,10 @@ class ProjectManager {
           const mtlText = await mtlAsset.data.text();
           await this.modelsTree.applyMTLToModel(modelNode, mtlText, textureMap);
         }
+        // Mirror the "Load textures" menu path: mark the model as textured so
+        // color modes (perModel / gradientByZ) skip it instead of tinting the
+        // texture via material.color.
+        this.scene.models.markAsTextured(model.name);
       }
     } catch (error) {
       console.error(`Failed to load assets for model ${model.name}:`, error);
