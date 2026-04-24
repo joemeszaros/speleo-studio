@@ -102,6 +102,7 @@
       "raycastingEnabled": "Pont kiválasztás engedélyezve",
       "raycastingDisabled": "Pont kiválasztás letiltva",
       "pointCloudPoint": "Pontfelhő pont ({x}, {y}, {z})",
+      "meshPoint": "Hálópont {name} ({x}, {y}, {z})",
       "coordinateSystem": "Koordináták",
       "noCoordinateSystemLoaded": "Nincs koordináta-rendszer",
       "privacyPolicy": "Adatvédelmi irányelvek",

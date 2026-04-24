@@ -171,4 +171,20 @@ export class Raycasting {
 
     return undefined;
   }
+
+  getIntersectedMeshMeta(mouseCoordinates) {
+    this.setPointer(this.getMousePosition(mouseCoordinates));
+    this.raycaster.layers.enableAll();
+    this.raycaster.setFromCamera(this.pointer, this.scene.view.camera);
+
+    let best;
+    for (const [name, entry] of this.scene.models.meshObjects) {
+      if (!entry.object3D.visible) continue;
+      const hits = this.raycaster.intersectObject(entry.object3D, true);
+      if (hits.length && (best === undefined || hits[0].distance < best.distance)) {
+        best = { distance: hits[0].distance, position: hits[0].point, name };
+      }
+    }
+    return best ? { position: best.position, type: 'mesh', name: best.name } : undefined;
+  }
 }

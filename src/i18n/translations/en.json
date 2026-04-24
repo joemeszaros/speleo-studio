@@ -102,6 +102,7 @@
       "raycastingEnabled": "Point selection enabled",
       "raycastingDisabled": "Point selection disabled",
       "pointCloudPoint": "Point cloud point ({x}, {y}, {z})",
+      "meshPoint": "Mesh point {name} ({x}, {y}, {z})",
       "coordinateSystem": "Coordinate System",
       "noCoordinateSystemLoaded": "No coordinate system",
       "privacyPolicy": "Privacy Policy",

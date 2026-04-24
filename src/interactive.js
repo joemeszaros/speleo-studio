@@ -84,8 +84,8 @@ class SceneInteraction {
           const rect = this.scene.getBoundingClientRect();
           if (this.selectedStation.type === 'station') {
             this.showStationDetailsPanel(this.selectedStation, event.clientX - rect.left, event.clientY - rect.top);
-          } else if (this.selectedStation.type === 'pointcloud') {
-            this.showPointCloudPointDetailsPanel(
+          } else if (this.selectedStation.type === 'pointcloud' || this.selectedStation.type === 'mesh') {
+            this.showSurfacePointDetailsPanel(
               this.selectedStation,
               event.clientX - rect.left,
               event.clientY - rect.top
@@ -394,6 +394,15 @@ class SceneInteraction {
           z : st.position.z.toFixed(2)
         })
       );
+    } else if (st.type === 'mesh') {
+      this.footer.showMessage(
+        i18n.t('ui.footer.meshPoint', {
+          name : st.name,
+          x    : st.position.x.toFixed(2),
+          y    : st.position.y.toFixed(2),
+          z    : st.position.z.toFixed(2)
+        })
+      );
     }
   }
 
@@ -475,10 +484,22 @@ class SceneInteraction {
     const worldUnitsFor5Pixels = this.scene.view.control.getWorldUnitsForPixels(5);
     const intersectedStation = this.raycasting.getIntersectedStationMeta(this.mouseCoordinates, worldUnitsFor5Pixels);
     const intersectsPointCloud = this.raycasting.getIntersectedPointCloudMeta(this.mouseCoordinates);
-    const hasIntersection = intersectedStation !== undefined || intersectsPointCloud !== undefined;
+    const intersectsMesh = this.raycasting.getIntersectedMeshMeta(this.mouseCoordinates);
+    const hasIntersection =
+      intersectedStation !== undefined || intersectsPointCloud !== undefined || intersectsMesh !== undefined;
 
     if (hasIntersection) {
-      const intersectedObject = intersectsPointCloud !== undefined ? intersectsPointCloud : intersectedStation;
+      let intersectedObject;
+      if (intersectedStation !== undefined) {
+        intersectedObject = intersectedStation;
+      } else {
+        const cameraPosition = this.scene.view.camera.position;
+        const surfaceCandidates = [intersectsPointCloud, intersectsMesh].filter((x) => x !== undefined);
+        surfaceCandidates.sort(
+          (a, b) => a.position.distanceToSquared(cameraPosition) - b.position.distanceToSquared(cameraPosition)
+        );
+        intersectedObject = surfaceCandidates[0];
+      }
 
       // Check if we're in distance measurement mode
       if (this.distanceMeasurementMode && (this.distanceFromStation || this.distanceToStation)) {
@@ -488,15 +509,18 @@ class SceneInteraction {
         }
       }
 
-      if (intersectedObject.type !== 'pointcloud' && intersectedObject === this.selectedStation) {
+      const isSurface = intersectedObject.type === 'pointcloud' || intersectedObject.type === 'mesh';
+      if (!isSurface && intersectedObject === this.selectedStation) {
         // clicked on the same sphere again
         this.#clearSelected();
       } else if (
-        intersectedObject.type === 'pointcloud' &&
-        intersectedObject === this.selectedStation &&
+        isSurface &&
+        this.selectedStation !== undefined &&
+        intersectedObject.type === this.selectedStation.type &&
+        intersectedObject.name === this.selectedStation.name &&
         intersectedObject.position.distanceTo(this.selectedPosition) < 0.2
       ) {
-        // clicked on the same point cloud point again
+        // clicked on the same surface point again
         this.#clearSelected();
       } else {
         // clicked on a different object
@@ -646,9 +670,10 @@ class SceneInteraction {
 
     const polar = toPolar(diffVector);
 
-    const fromDetails =
-      from.type === 'pointcloud' ? from.name : `${from.cave.name} → ${from.station.survey.name} → ${from.name}`;
-    const toDetails = to.type === 'pointcloud' ? to.name : `${to.cave.name} → ${to.station.survey.name} → ${to.name}`;
+    const detailsFor = (x) =>
+      x.type === 'station' ? `${x.cave.name} → ${x.station.survey.name} → ${x.name}` : x.name;
+    const fromDetails = detailsFor(from);
+    const toDetails = detailsFor(to);
     content.innerHTML = `
         ${i18n.t('common.from')}: ${fromDetails}<br>
         X: ${fp.x.toFixed(3)}<br>
@@ -679,11 +704,11 @@ class SceneInteraction {
 
   }
 
-  showPointCloudPointDetailsPanel(stationMeta, left, top) {
+  showSurfacePointDetailsPanel(stationMeta, left, top) {
     this.infoPanel.style.width = '350px';
     wm.makeFloatingPanel(
       this.infoPanel,
-      (contentElmnt) => this.buildPointCloudPointDetailsPanel(contentElmnt, stationMeta, left, top),
+      (contentElmnt) => this.buildSurfacePointDetailsPanel(contentElmnt, stationMeta, left, top),
       'ui.panels.pointCloudPointDetails.title',
       false,
       false,
@@ -698,7 +723,7 @@ class SceneInteraction {
     );
   }
 
-  buildPointCloudPointDetailsPanel(contentElmnt, pointMeta, left, top) {
+  buildSurfacePointDetailsPanel(contentElmnt, pointMeta, left, top) {
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
         ${i18n.t('ui.panels.pointCloudPointDetails.fileName')}: ${pointMeta.name}<br><br>
