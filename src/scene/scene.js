@@ -196,6 +196,28 @@ class MyScene {
     this.renderOverview(this.view.overviewCamera);
   }
 
+  toggleBoundingBox() {
+    this.options.scene.boundingBox.show = !this.options.scene.boundingBox.show;
+    this.refreshBoundingBox();
+  }
+
+  refreshBoundingBox() {
+    if (this.boundingBoxHelper !== undefined) {
+      this.removeObjectFromScene(this.boundingBoxHelper);
+      this.boundingBoxHelper.dispose();
+      this.boundingBoxHelper = undefined;
+    }
+    if (this.options.scene.boundingBox.show === true) {
+      const bb = this.computeBoundingBox();
+      if (bb !== undefined && !bb.isEmpty()) {
+        this.boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
+        this.boundingBoxHelper.layers.set(1);
+        this.addObjectToScene(this.boundingBoxHelper);
+      }
+    }
+    this.view.renderView();
+  }
+
   computeBoundingBox() {
     let boundingBox = this.speleo.computeBoundingBox();
 

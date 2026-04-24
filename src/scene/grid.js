@@ -35,6 +35,7 @@ class Grid {
   adjust(boundingBox) {
     this.adjustSize(boundingBox);
     this.adjustPosition(this.options.scene.grid.mode);
+    this.scene.refreshBoundingBox();
   }
 
   adjustSize(boundingBox) {

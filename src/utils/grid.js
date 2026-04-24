@@ -20,9 +20,13 @@ class GridHelper extends THREE.LineSegments {
 
   constructor(width = 100, height = 10, step = 10, material) {
 
+    // Frame is clipped to the exact bbox extent so it matches the bounding
+    // box helper. Inner lines sit on integer multiples of step centered on
+    // the origin; edge cells become slivers wherever the bbox isn't a
+    // multiple of step.
     const halfWidth = width / 2;
     const halfHeight = height / 2;
-    let divisions = height / step;
+    const eps = step * 1e-4;
 
     const vertices = [];
 
@@ -31,13 +35,14 @@ class GridHelper extends THREE.LineSegments {
     vertices.push(-halfWidth, -halfHeight, 0, -halfWidth, halfHeight, 0);
     vertices.push(halfWidth, -halfHeight, 0, halfWidth, halfHeight, 0);
 
-    for (let i = 0, k = -halfHeight; i <= divisions; i++, k += step) {
-      vertices.push(-halfWidth, k, 0, halfWidth, k, 0);
+    const firstY = Math.ceil((-halfHeight + eps) / step) * step;
+    for (let y = firstY; y < halfHeight - eps; y += step) {
+      vertices.push(-halfWidth, y, 0, halfWidth, y, 0);
     }
-    divisions = width / step;
 
-    for (let i = 0, k = -halfWidth; i <= divisions; i++, k += step) {
-      vertices.push(k, -halfHeight, 0, k, halfHeight, 0);
+    const firstX = Math.ceil((-halfWidth + eps) / step) * step;
+    for (let x = firstX; x < halfWidth - eps; x += step) {
+      vertices.push(x, -halfHeight, 0, x, halfHeight, 0);
     }
 
     const geometry = new THREE.BufferGeometry();

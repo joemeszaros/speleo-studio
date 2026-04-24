@@ -248,28 +248,6 @@ export class SpeleoScene {
 
   //#region bounding box
 
-  toogleBoundingBox() {
-    this.options.scene.boundingBox.show = !this.options.scene.boundingBox.show;
-
-    if (this.options.scene.boundingBox.show === true) {
-      const bb = this.computeBoundingBox();
-      if (bb !== undefined) {
-        const boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
-        this.boundingBoxHelper = boundingBoxHelper;
-        this.boundingBoxHelper.layers.set(1);
-        this.scene.addObjectToScene(boundingBoxHelper);
-      }
-    } else {
-      if (this.boundingBoxHelper !== undefined) {
-        this.scene.removeObjectFromScene(this.boundingBoxHelper);
-        this.boundingBoxHelper.dispose();
-        this.boundingBoxHelper = undefined;
-      }
-    }
-    this.scene.view.renderView();
-
-  }
-
   computeBoundingBox() {
     if (this.caveObjects.size > 0) {
       const bb = new THREE.Box3();
