@@ -176,6 +176,8 @@ export class ProjectPanel {
   hide() {
     this.isVisible = false;
     this.panel.style.display = 'none';
+    const projectSearch = this.panel.querySelector('#project-search');
+    if (projectSearch) projectSearch.value = '';
     // Cancel any pending Google Drive operations
     if (this.driveOperationsController) {
       this.driveOperationsController.abort();

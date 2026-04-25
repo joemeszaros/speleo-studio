@@ -85,7 +85,11 @@ export class ModelSheetEditor extends BaseEditor {
     const nameField = U.node`<div class="sheet-editor-field"></div>`;
     const nameLabel = U.node`<label class="sheet-editor-label" for="model-name">${i18n.t('common.name')}: </label>`;
     const nameInput = U.node`<input type="text" id="model-name" name="name" value="${this.modelNode.label}" required>`;
-    nameInput.oninput = () => {
+    nameInput.oninput = (e) => {
+      const sanitized = U.sanitizeName(e.target.value);
+      if (sanitized !== e.target.value) {
+        e.target.value = sanitized;
+      }
       this.hasChanged = true;
     };
     nameField.appendChild(nameLabel);

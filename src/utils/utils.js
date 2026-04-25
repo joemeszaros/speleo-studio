@@ -453,6 +453,15 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i];
 }
 
+/**
+ * Replace double quotes in a name with single quotes. Double quotes break HTML
+ * attribute selectors used by the explorer/models tree (`[data-node-id="..."]`)
+ * and unescaped SVG attributes (`data-name="..."`) emitted by the SVG export.
+ */
+function sanitizeName(value) {
+  return typeof value === 'string' ? value.replace(/"/g, "'") : value;
+}
+
 export {
   fromPolar,
   toPolar,
@@ -475,6 +484,7 @@ export {
   formatDateISO,
   formatDistance,
   formatBytes,
+  sanitizeName,
   fitString,
   falsy,
   toAscii,

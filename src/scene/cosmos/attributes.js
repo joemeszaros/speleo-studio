@@ -368,8 +368,12 @@ export class AttributesScene {
       } else if (attribute.name === 'draft' && attribute.direction) {
         this.showDraftFor(id, station, attribute, caveName, position, offset, render, onComplete);
       } else {
+        const config = {};
+        if (attribute.name === 'condition' && attribute.state >= 1 && attribute.state <= 5) {
+          config.iconPath = `icons/condition_${attribute.state}.svg`;
+        }
         // async funtion call
-        this.showIconFor(id, station, attribute, caveName, position, offset, {}, render).then(() => {
+        this.showIconFor(id, station, attribute, caveName, position, offset, config, render).then(() => {
           onComplete();
         });
       }
@@ -591,24 +595,30 @@ export class AttributesScene {
       const thickness = attribute.thickness || 0.1; // Default thickness if not specified
       const baseSize = this.options.scene.stationAttributes.iconScale;
 
-      // Create a canvas texture for the calcite raft rectangle
-      // Match SVG styling: orange fill (#f15a29) with white border
+      // Canvas width is fixed; height matches the world-space aspect ratio so the
+      // texture pixels map 1:1 to the rendered sprite — no squishing, stays crisp.
+      // Cap at 512 to avoid huge textures for very thick rafts.
+      const canvasWidth = 512;
+      const minCanvasHeight = 48;
+      const maxCanvasHeight = 512;
+      const rawCanvasHeight = Math.round(canvasWidth * thickness / baseSize);
+      const canvasHeight = Math.min(maxCanvasHeight, Math.max(minCanvasHeight, rawCanvasHeight));
+      const showLabel = rawCanvasHeight < minCanvasHeight;
+
       const canvas = document.createElement('canvas');
-      const textureSize = 256; // Use a fixed texture size for quality
-      canvas.width = textureSize;
-      canvas.height = textureSize;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
       const ctx = canvas.getContext('2d');
 
-      // Calculate aspect ratio (width/height) for the rectangle
-      const aspectRatio = baseSize / thickness;
-
-      // Draw rectangle with rounded corners (matching SVG rx="12")
-      const padding = 20; // Padding from edges
-      const rectWidth = textureSize - padding * 2;
-      const rectHeight = aspectRatio > 1 ? (textureSize - padding * 2) / aspectRatio : textureSize - padding * 2;
+      // Fixed pixel sizes — never scaled by canvas dimensions
+      const padding = 16;
+      const borderWidth = 4;
+      const lineWidth = 2;
+      const rectWidth = canvasWidth - padding * 2;
+      const rectHeight = canvasHeight - padding * 2;
       const rectX = padding;
-      const rectY = (textureSize - rectHeight) / 2; // Center vertically
-      const cornerRadius = 12;
+      const rectY = padding;
+      const cornerRadius = Math.min(12, Math.floor(Math.min(rectWidth, rectHeight) / 4));
 
       // Helper function to draw rounded rectangle
       const drawRoundedRect = (x, y, width, height, radius) => {
@@ -630,28 +640,43 @@ export class AttributesScene {
       drawRoundedRect(rectX, rectY, rectWidth, rectHeight, cornerRadius);
       ctx.fill();
 
-      // Stroke with white border
+      // White border — fixed 4px
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = borderWidth;
       drawRoundedRect(rectX, rectY, rectWidth, rectHeight, cornerRadius);
       ctx.stroke();
 
-      // Add horizontal lines to match SVG appearance (layered look)
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      const lineCount = 4;
-      const lineSpacing = rectHeight / (lineCount + 1);
-      for (let i = 1; i <= lineCount; i++) {
-        const lineY = rectY + lineSpacing * i;
-        ctx.beginPath();
-        ctx.moveTo(rectX + 10, lineY);
-        ctx.lineTo(rectX + rectWidth - 10, lineY);
-        ctx.stroke();
+      // Horizontal lines — always 4, fixed 2px width, only when there's room
+      const lineAreaHeight = rectHeight - cornerRadius * 2;
+      if (lineAreaHeight > 20) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = lineWidth;
+        const lineSpacing = rectHeight / 5;
+        for (let i = 1; i <= 4; i++) {
+          const lineY = rectY + lineSpacing * i;
+          ctx.beginPath();
+          ctx.moveTo(rectX + 10, lineY);
+          ctx.lineTo(rectX + rectWidth - 10, lineY);
+          ctx.stroke();
+        }
+      }
+
+      // For very thin rafts show the numeric thickness so the value stays legible
+      if (showLabel) {
+        const label = `${thickness}m`;
+        ctx.font = `bold 26px Arial, sans-serif`;
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, rectX + 8, canvasHeight / 2);
       }
 
       // Create texture from canvas
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
+      texture.format = THREE.RGBAFormat;
+      texture.generateMipmaps = false;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
       texture.needsUpdate = true;
 
       // Create sprite material

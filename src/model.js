@@ -15,7 +15,7 @@
  */
 
 import { CaveSection, CaveComponent } from './model/cave.js';
-import { fromPolar, toPolar, isFloatStr, randomAlphaNumbericString } from './utils/utils.js';
+import { fromPolar, toPolar, isFloatStr, randomAlphaNumbericString, sanitizeName } from './utils/utils.js';
 import { MigrationSupportV5, MigrationSupportV6 } from './attributes.js';
 import { blobToBase64, base64ToBlob } from './utils/compression.js';
 import { GeoData } from './model/geo.js';
@@ -594,7 +594,7 @@ class PointCloud {
    * @param {boolean} visible - The visibility property
    */
   constructor(name, points = [], center, hasVertexColors = false, visible = true, geoData = null) {
-    this.name = name;
+    this.name = sanitizeName(name);
     this.points = points;
     this.center = center;
     this.hasVertexColors = hasVertexColors;
@@ -618,7 +618,7 @@ class Mesh3D {
    */
   constructor(name, center, visible = true, opacity = 1.0, geoData = null) {
     this.id = Mesh3D.generateId();
-    this.name = name;
+    this.name = sanitizeName(name);
     this.center = center;
     this.visible = visible;
     this.opacity = opacity;
@@ -636,7 +636,7 @@ class ModelFile {
 
   constructor(filename, type, data) {
     this.id = ModelFile.generateId();
-    this.filename = filename;
+    this.filename = sanitizeName(filename);
     this.type = type;
     if (data instanceof Blob) {
       this.data = data;
@@ -682,6 +682,7 @@ class ModelFile {
   }
 
   static fromPure(pure) {
+    pure.filename = sanitizeName(pure.filename);
     return Object.assign(new ModelFile(), pure);
   }
 }
@@ -747,7 +748,7 @@ class ModelMetadata {
   constructor(modelFileId, name, geoData = null, embedded = false) {
     this.id = ModelMetadata.generateId();
     this.modelFileId = modelFileId;
-    this.name = name;
+    this.name = sanitizeName(name);
     this.geoData = geoData;
     this.embedded = embedded;
   }
@@ -765,6 +766,7 @@ class ModelMetadata {
   }
 
   static fromPure(pure) {
+    pure.name = sanitizeName(pure.name);
     const meta = Object.assign(new ModelMetadata(), pure);
     if (meta.geoData && !(meta.geoData instanceof GeoData)) {
       meta.geoData = GeoData.fromPure(meta.geoData);

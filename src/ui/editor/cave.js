@@ -171,10 +171,14 @@ class CaveEditor extends Editor {
       const input = U.node`<input type="${f.type}" id="${f.id}" name="${f.id}" value="${value}" ${f.required ? 'required' : ''}>`;
       input.oninput = (e) => {
         if (f.id === 'name') {
-          if (this.caveData.name !== e.target.value) {
+          const sanitized = U.sanitizeName(e.target.value);
+          if (sanitized !== e.target.value) {
+            e.target.value = sanitized;
+          }
+          if (this.caveData.name !== sanitized) {
             this.caveHasChanged = true;
           }
-          this.caveData.name = e.target.value;
+          this.caveData.name = sanitized;
         } else {
           if (this.caveData.metadata[f.id] === undefined) {
             this.metadataHasChanged = true;

@@ -94,6 +94,12 @@ export class SurveySheetEditor extends BaseEditor {
       let value = this.formData[f.id];
       const input = U.node`<input type="${f.type}" ${f.type === 'date' ? 'min="1900-01-01" max="' + U.formatDateISO(new Date()) + '"' : ''} id="${f.id}" name="${f.id}" value="${value ?? ''}" ${f.required ? 'required' : ''} ${f.step ? 'step="' + f.step + '"' : ''}>`;
       input.oninput = (e) => {
+        if (f.id === 'name') {
+          const sanitized = U.sanitizeName(e.target.value);
+          if (sanitized !== e.target.value) {
+            e.target.value = sanitized;
+          }
+        }
         if (this.formData[f.id] !== e.target.value) {
           this.surveyHasChanged = true;
           if (f.id === 'name') {

@@ -15,7 +15,7 @@
  */
 
 import { i18n } from './i18n/i18n.js';
-import { formatDistance } from './utils/utils.js';
+import { formatDistance, sanitizeName } from './utils/utils.js';
 
 class Database {
 
@@ -108,6 +108,7 @@ class Database {
   }
 
   renameCave(oldName, newName) {
+    newName = sanitizeName(newName);
     if (this.caves.has(newName)) {
       throw new Error(i18n.t('errors.db.caveAlreadyExists', { name: newName }));
     }
@@ -118,6 +119,7 @@ class Database {
   }
 
   renameSurvey(cave, oldName, newName) {
+    newName = sanitizeName(newName);
     const survey = this.getSurvey(cave.name, oldName);
     if (survey === undefined) {
       throw new Error(i18n.t('errors.db.surveyDoesNotExist', { name: oldName }));
@@ -172,6 +174,7 @@ class Database {
   }
 
   renameModel(oldName, newName) {
+    newName = sanitizeName(newName);
     if (this.hasModel(newName)) {
       throw new Error(i18n.t('errors.db.modelAlreadyExists', { name: newName }));
     }

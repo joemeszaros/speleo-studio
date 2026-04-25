@@ -15,7 +15,7 @@
  */
 
 import { Polar } from '../model.js';
-import { degreesToRads } from '../utils/utils.js';
+import { degreesToRads, sanitizeName } from '../utils/utils.js';
 
 /**
  * Enum for Shot types
@@ -303,7 +303,7 @@ class Survey {
     orphanShotIds = new Set(),
     duplicateShotIds = new Set()
   ) {
-    this.name = name;
+    this.name = sanitizeName(name);
     this.visible = visible;
     this.metadata = metadata;
     this.start = start;
@@ -431,6 +431,7 @@ class Survey {
   }
 
   static fromPure(pure) {
+    pure.name = sanitizeName(pure.name);
     pure.shots = pure.shots.map((s, index) => Object.assign(new Shot(index + 1), s));
     pure.metadata = pure.metadata !== undefined ? SurveyMetadata.fromPure(pure.metadata) : undefined;
     const survey = Object.assign(new Survey(), pure);

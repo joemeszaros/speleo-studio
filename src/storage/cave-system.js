@@ -16,6 +16,7 @@
 
 import { Cave } from '../model/cave.js';
 import { i18n } from '../i18n/i18n.js';
+import { sanitizeName } from '../utils/utils.js';
 
 export class CaveSystem {
   constructor(databaseManager, attributeDefs) {
@@ -76,7 +77,9 @@ export class CaveSystem {
       request.onsuccess = () => {
         const caveFields = request.result.map((data) => {
           const r = {};
-          fields.forEach((field) => (r[field] = data[field]));
+          fields.forEach((field) => {
+            r[field] = field === 'name' ? sanitizeName(data[field]) : data[field];
+          });
           return r;
         });
         resolve(caveFields);
@@ -93,7 +96,7 @@ export class CaveSystem {
       const request = this.dbManager.getReadOnlyStore(this.storeName).index('projectId').getAll(projectId);
 
       request.onsuccess = () => {
-        const caveNames = request.result.map((data) => data.name);
+        const caveNames = request.result.map((data) => sanitizeName(data.name));
         resolve(caveNames);
       };
 

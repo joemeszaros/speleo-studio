@@ -17,6 +17,7 @@
 import { Vector, SectionAttribute, ComponentAttribute, StationAttribute } from '../model.js';
 import { GeoData } from './geo.js';
 import { Survey, SurveyAlias, StationComment } from './survey.js';
+import { sanitizeName } from '../utils/utils.js';
 
 class CaveCycle {
 
@@ -304,7 +305,7 @@ class Cave {
   ) {
     this.id = Cave.generateId();
     this.revision = 1;
-    this.name = name;
+    this.name = sanitizeName(name);
     this.metadata = metadata;
     this.geoData = geoData;
     this.stations = stations;
@@ -469,6 +470,7 @@ class Cave {
     if (pure.revision === undefined) {
       pure.revision = 1;
     }
+    pure.name = sanitizeName(pure.name);
     pure.geoData = pure.geoData === undefined ? undefined : GeoData.fromPure(pure.geoData);
     pure.surveys = pure.surveys.map((s, index) => {
       const survey = Survey.fromPure(s);
