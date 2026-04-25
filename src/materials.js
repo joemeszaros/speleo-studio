@@ -74,6 +74,18 @@ class Materials {
         cameraTarget        : new THREE.MeshBasicMaterial({ color: this.config.camera.target.color })
       },
 
+      projection : {
+        line : new LineMaterial({
+          color           : 0x888888,
+          linewidth       : 1,
+          worldUnits      : false,
+          vertexColors    : false,
+          alphaToCoverage : false,
+          transparent     : true,
+          opacity         : 0.6,
+          depthWrite      : false
+        })
+      },
       distanceLine : new THREE.LineDashedMaterial({ color: 0xffffff, linewidth: 2, scale: 2, dashSize: 1, gapSize: 1 }),
       tectonicLine : new LineMaterial({
         color           : this.config.attributes.tectonic.lines.color,

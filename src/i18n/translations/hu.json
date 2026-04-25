@@ -63,6 +63,11 @@
         "gradientByZ": "Mélység szerint",
         "perModel": "Modellenként",
         "ownColor": "Saját szín"
+      },
+      "boundingBoxModes": {
+        "off": "Ki",
+        "box": "Határoló doboz",
+        "boxWithProjections": "Határoló doboz vetületekkel"
       }
     },
     "about": {

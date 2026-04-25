@@ -352,9 +352,21 @@ class NavigationBar {
         }
       },
       {
-        tooltip : i18n.t('ui.navbar.tooltips.boundingBox'),
-        icon    : 'icons/bounding_box.svg',
-        click   : () => this.scene.toggleBoundingBox()
+        id       : 'bounding-box-toggle',
+        tooltip  : i18n.t('ui.navbar.tooltips.boundingBox'),
+        icon     : 'icons/bounding_box.svg',
+        elements : [
+          { id: 'off', icon: 'icons/bounding_box_off.svg', title: i18n.t('ui.navbar.boundingBoxModes.off') },
+          { id: 'box', icon: 'icons/bounding_box.svg', title: i18n.t('ui.navbar.boundingBoxModes.box') },
+          { id: 'boxWithProjections', icon: 'icons/bounding_box_projections.svg', title: i18n.t('ui.navbar.boundingBoxModes.boxWithProjections') }
+        ].map((e) => ({
+          name     : e.title,
+          icon     : e.icon,
+          selected : this.options.scene.boundingBox.mode === e.id,
+          click    : () => {
+            this.options.scene.boundingBox.mode = e.id;
+          }
+        }))
       },
       {
         tooltip  : i18n.t('ui.navbar.tooltips.lineColor'),
@@ -575,6 +587,12 @@ class NavigationBar {
           const al = document.createElement('a');
           if (e.selected) {
             al.classList.add('selected');
+          }
+          if (e.icon) {
+            const iconImg = document.createElement('img');
+            iconImg.setAttribute('src', e.icon);
+            iconImg.setAttribute('alt', '');
+            al.appendChild(iconImg);
           }
           al.appendChild(document.createTextNode(shortKeyText(e.shortkeys, e.name)));
           al.onclick = () => {

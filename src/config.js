@@ -64,7 +64,7 @@ export const DEFAULT_OPTIONS = {
       }
     },
     boundingBox : {
-      show : false
+      mode : 'off' // 'off' | 'box' | 'boxWithProjections'
     },
     grid : {
       mode    : 'top',
@@ -472,6 +472,13 @@ export class ConfigManager {
 
     if (config.scene.spatialView === undefined || config.scene.spatialView.projection === undefined) {
       config.scene.spatialView = { projection: 'ortho' };
+    }
+
+    if (config.scene.boundingBox === undefined) {
+      config.scene.boundingBox = { mode: 'off' };
+    } else if (config.scene.boundingBox.mode === undefined) {
+      config.scene.boundingBox.mode = config.scene.boundingBox.show ? 'box' : 'off';
+      delete config.scene.boundingBox.show;
     }
   }
 
@@ -1132,6 +1139,12 @@ export class ConfigChanges {
     }
   }
 
+  handleBoundingBoxChanges(path, oldValue, newValue) {
+    if (path === 'scene.boundingBox.mode') {
+      this.scene.refreshBoundingBox();
+    }
+  }
+
   handleModelChanges(path, oldValue, newValue) {
     switch (path) {
       case 'scene.models.pointSize':
@@ -1213,6 +1226,8 @@ export class ConfigChanges {
       this.handleTectonicAttributeChanges(path, oldValue, newValue);
     } else if (path === 'scene.attributes.showOrHide') {
       this.handleAttributeVisibilityChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.boundingBox.')) {
+      this.handleBoundingBoxChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.grid.')) {
       this.handleGridChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.sprites3D.')) {

@@ -15,6 +15,8 @@
  */
 
 import * as THREE from 'three';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { Grid } from './grid.js';
 import { SpeleoScene } from './cosmos/speleo.js';
 import { StartPointScene } from './cosmos/start-point.js';
@@ -196,26 +198,123 @@ class MyScene {
     this.renderOverview(this.view.overviewCamera);
   }
 
-  toggleBoundingBox() {
-    this.options.scene.boundingBox.show = !this.options.scene.boundingBox.show;
-    this.refreshBoundingBox();
-  }
-
   refreshBoundingBox() {
     if (this.boundingBoxHelper !== undefined) {
       this.removeObjectFromScene(this.boundingBoxHelper);
       this.boundingBoxHelper.dispose();
       this.boundingBoxHelper = undefined;
     }
-    if (this.options.scene.boundingBox.show === true) {
-      const bb = this.computeBoundingBox();
-      if (bb !== undefined && !bb.isEmpty()) {
-        this.boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
-        this.boundingBoxHelper.layers.set(1);
-        this.addObjectToScene(this.boundingBoxHelper);
+    if (this.boundingBoxProjections !== undefined) {
+      this.removeObjectFromScene(this.boundingBoxProjections);
+      const disposables = this.boundingBoxProjections._disposables ?? [];
+      for (const d of disposables) d.dispose?.();
+      this.boundingBoxProjections = undefined;
+    }
+
+    const mode = this.options.scene.boundingBox.mode ?? 'off';
+    if (mode === 'off') {
+      this.view.renderView();
+      return;
+    }
+
+    const bb = this.computeBoundingBox();
+    if (bb === undefined || bb.isEmpty()) {
+      this.view.renderView();
+      return;
+    }
+
+    this.boundingBoxHelper = new THREE.Box3Helper(bb, 0xffffff);
+    this.boundingBoxHelper.layers.set(1);
+    this.addObjectToScene(this.boundingBoxHelper);
+
+    if (mode === 'boxWithProjections') {
+      this.boundingBoxProjections = this.#buildBoundingBoxProjections(bb);
+      if (this.boundingBoxProjections !== undefined) {
+        this.addObjectToScene(this.boundingBoxProjections);
       }
     }
+
     this.view.renderView();
+  }
+
+  /**
+   * Builds projections of cave lines onto 5 faces of the bounding box
+   * (bottom + 4 sides; top is skipped). Opposite side faces share the same
+   * projected geometry — we compute each projection once per flattening
+   * axis and mirror it via a cloned Object3D translated to the opposite
+   * face. Meshes and point clouds are not projected.
+   */
+  #buildBoundingBoxProjections(bb) {
+    const group = new THREE.Group();
+    group.name = 'bounding-box-projections';
+    group.layers.set(1);
+    const disposables = [];
+
+    const lineMat = this.mats.projection.line;
+
+    const dx = bb.max.x - bb.min.x;
+    const dy = bb.max.y - bb.min.y;
+
+    // For each source object we build three flattened geometries keyed by axis:
+    //   0 → x-flat at bb.min.x (mirrored to +x)
+    //   1 → y-flat at bb.min.y (mirrored to +y)
+    //   2 → z-flat at bb.min.z (bottom only)
+    const addLineProjections = (sourceLS) => {
+      const attr = sourceLS.geometry?.attributes?.instanceStart;
+      if (!attr || !attr.data) return;
+      const src = attr.data.array;
+      if (src.length === 0) return;
+
+      const build = (axisIdx, planeCoord) => {
+        const flat = new Float32Array(src.length);
+        flat.set(src);
+        for (let i = axisIdx; i < flat.length; i += 3) flat[i] = planeCoord;
+        const geom = new LineSegmentsGeometry();
+        geom.setPositions(flat);
+        disposables.push(geom);
+        const ls = new LineSegments2(geom, lineMat);
+        ls.computeLineDistances?.();
+        ls.layers.set(1);
+        return ls;
+      };
+
+      const xFlat = build(0, bb.min.x);
+      group.add(xFlat);
+      const xFlatMirror = new LineSegments2(xFlat.geometry, lineMat);
+      xFlatMirror.position.x = dx;
+      xFlatMirror.layers.set(1);
+      group.add(xFlatMirror);
+
+      const yFlat = build(1, bb.min.y);
+      group.add(yFlat);
+      const yFlatMirror = new LineSegments2(yFlat.geometry, lineMat);
+      yFlatMirror.position.y = dy;
+      yFlatMirror.layers.set(1);
+      group.add(yFlatMirror);
+
+      const zFlat = build(2, bb.min.z);
+      group.add(zFlat);
+    };
+
+    // Cave lines — walk caveObjects map; only project visible entries.
+    const caveObjects = this.speleo?.caveObjects;
+    if (caveObjects) {
+      caveObjects.forEach((sMap) => {
+        sMap.forEach((e) => {
+          if (e.centerLines?.visible) addLineProjections(e.centerLines);
+          if (e.splays?.visible) addLineProjections(e.splays);
+          if (e.auxiliaries?.visible) addLineProjections(e.auxiliaries);
+        });
+      });
+    }
+
+    if (group.children.length === 0) {
+      for (const d of disposables) d.dispose?.();
+      return undefined;
+    }
+
+    group._disposables = disposables;
+    return group;
   }
 
   computeBoundingBox() {

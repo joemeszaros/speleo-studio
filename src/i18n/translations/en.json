@@ -63,6 +63,11 @@
         "gradientByZ": "Gradient by Z",
         "perModel": "Per model",
         "ownColor": "Own color"
+      },
+      "boundingBoxModes": {
+        "off": "Off",
+        "box": "Bounding box",
+        "boxWithProjections": "Bounding box with projections"
       }
     },
     "about": {
