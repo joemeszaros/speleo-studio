@@ -173,9 +173,13 @@ export class ModelScene {
     this.#addObject3D(entry.object3D);
 
     // For meshes (especially OBJ groups), set layers on all children
+    const showCenterlines = this.scene.options?.scene?.centerLines?.segments?.show ?? true;
     entry.object3D.traverse((child) => {
       child.layers.set(2);
       child.frustumCulled = false;
+      // Apply the current centerline visibility setting to .lox centerline children
+      // so opening a .lox file while the toggle is off doesn't show the centerline.
+      if (child.userData.isLoxCenterline) child.visible = showCenterlines;
     });
 
     if (this.meshObjects.has(mesh.name)) {
@@ -220,6 +224,21 @@ export class ModelScene {
    */
   updatePointBudget(_budget) {
     this.scene.updatePointCloudLOD();
+    this.scene.view.renderView();
+  }
+
+  /**
+   * Set visibility of the .lox centerline children across all loaded mesh models.
+   * Called when the "show centerlines" setting changes so .lox centerlines
+   * stay in sync with the cave survey centerlines toggle.
+   * @param {boolean} visible
+   */
+  setLoxCenterlineVisibility(visible) {
+    for (const [, entry] of this.meshObjects) {
+      entry.object3D.traverse((child) => {
+        if (child.userData.isLoxCenterline) child.visible = visible;
+      });
+    }
     this.scene.view.renderView();
   }
 

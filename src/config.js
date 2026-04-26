@@ -758,6 +758,7 @@ export class ConfigChanges {
     switch (path) {
       case 'scene.centerLines.segments.show':
         this.scene.speleo.setObjectsVisibility('centerLines', newValue);
+        this.scene.models.setLoxCenterlineVisibility(newValue);
         break;
 
       case 'scene.centerLines.segments.color': {

@@ -43,14 +43,31 @@ class LoxImporter extends Importer {
   async importData(arrayBuffer, onModelLoad, name) {
     const { stations, shots, scraps } = this.#parseLox(arrayBuffer);
 
-    // Auto-center geometry to preserve Float32 precision (large UTM coordinates).
-    const center  = this.#computeCenter(stations, scraps);
-    // When a cave is already loaded the globalNormalizer has an origin; offset
-    // by that so this model lands in the same coordinate space.
-    const normOff = this.#getNormalizerOffset();
-    const ox = center[0] + normOff[0];
-    const oy = center[1] + normOff[1];
-    const oz = center[2] + normOff[2];
+    const center = this.#computeCenter(stations, scraps);
+
+    // Determine the XY/Z offsets to subtract from every coordinate.
+    //
+    // When a cave is already loaded we reuse its coordinate frame (subtract
+    // the same globalNormalizer origin) so the .lox model aligns spatially.
+    //
+    // When no cave is loaded we still need to center X and Y: the Slovenian GK
+    // (or UTM) projected coordinates are ~400 000 m / ~5 000 000 m, which would
+    // lose significant Float32 precision as vertex data.  Z (elevation, ~900-
+    // 1868 m for Migovec) is small enough that Float32 is fine without centering
+    // and, more importantly, keeping Z absolute lets the elevation indicator on
+    // the right side of the viewport display the real-world altitude instead of
+    // a cave-relative offset.
+    let ox, oy, oz;
+    if (globalNormalizer.isInitialized()) {
+      const o = globalNormalizer.globalOrigin;
+      ox = o.easting  !== undefined ? o.easting  : (o.y ?? 0);
+      oy = o.northing !== undefined ? o.northing : (o.x ?? 0);
+      oz = o.elevation ?? 0;
+    } else {
+      ox = center[0];
+      oy = center[1];
+      oz = 0;
+    }
 
     const group = new THREE.Group();
     group.name = name;
@@ -75,7 +92,11 @@ class LoxImporter extends Importer {
       const geom = this.#buildCenterlineGeometry(stations, shots, ox, oy, oz);
       if (geom) {
         const mat = new THREE.LineBasicMaterial({ color: 0xff5500 });
-        group.add(new THREE.LineSegments(geom, mat));
+        const centerlineObj = new THREE.LineSegments(geom, mat);
+        // Marked so ModelScene can toggle this child when the centerline
+        // visibility setting changes, without affecting other model children.
+        centerlineObj.userData.isLoxCenterline = true;
+        group.add(centerlineObj);
       }
     }
 
@@ -262,19 +283,6 @@ class LoxImporter extends Importer {
 
     if (!isFinite(minX)) return [0, 0, 0];
     return [(minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2];
-  }
-
-  // Returns the global coordinate origin so this model aligns with any cave
-  // already loaded in the scene. Returns [0,0,0] when no cave is loaded yet.
-  #getNormalizerOffset() {
-    if (!globalNormalizer.isInitialized()) return [0, 0, 0];
-    const o = globalNormalizer.globalOrigin;
-    if (!o) return [0, 0, 0];
-    return [
-      o.easting  !== undefined ? o.easting  : (o.y ?? 0),
-      o.northing !== undefined ? o.northing : (o.x ?? 0),
-      o.elevation ?? 0
-    ];
   }
 
   // Builds the cave wall geometry by concatenating all scrap meshes.
