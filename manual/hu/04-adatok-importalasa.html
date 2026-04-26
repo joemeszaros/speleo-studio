@@ -45,6 +45,7 @@
           <li><strong>JSON:</strong> Speleo Studio natív formátuma</li>
           <li><strong>Polygon (.cave):</strong> Polygon szoftver formátuma</li>
           <li><strong>TopoDroid (.csv):</strong> TopoDroid Android alkalmazás exportja</li>
+          <li><strong>Therion (.th):</strong> Therion barlangtérképező szoftver formátuma</li>
           <li><strong>PLY:</strong> 3D felszín modellek és pontfelhők</li>
           <li><strong>OBJ:</strong> 3D háromszöghálók textúra támogatással</li>
           <li><strong>LAS/LAZ:</strong> LiDAR pontfelhők (tömörített és tömörítetlen)</li>
@@ -58,7 +59,7 @@
           <h3>1. lépés: Importálás indítása</h3>
           <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő importálási opciót:</p>
           <ul>
-            <li><strong>"Barlang(ok) megnyitása":</strong> JSON és .cave fájlokhoz</li>
+            <li><strong>"Barlang(ok) megnyitása":</strong> JSON, .cave és Therion (.th) fájlokhoz</li>
             <li><strong>"Model megnyitása":</strong> PLY, OBJ, LAS és LAZ fájlokhoz</li>
           </ul>
         </div>
@@ -303,6 +304,106 @@
         >
       </div>
 
+      <h2>Therion (.th) formátum importálása</h2>
+
+      <div class="format-box">
+        <h4>Therion formátum</h4>
+        <p
+          >A Therion egy  nyílt forráskódú barlangtérképező szoftver. A Therion szöveges <code>.th</code> fájlokban tárolja a
+          felmérési adatokat (centreline), amelyek tartalmazzák a mérési sorokat, az állomásneveket, a koordináta
+          rendszert, a rögzített pontokat és a metaadatokat.</p
+        >
+        <h5>Amit a Speleo Studio importál:</h5>
+        <ul>
+          <li>Survey hierarchia és centreline adatok (mérési sorok, állomásnevek)</li>
+          <li>Tüske mérések (<code>flags splay</code> és <code>.</code> jelölés)</li>
+          <li>Koordináta rendszer: UTM, EOV (EPSG:23700), hosszúság-szélességi fokok</li>
+          <li>Rögzített pontok (<code>fix</code>) és a kapcsolódó georeferencia</li>
+          <li>Felmérés metaadatok: dátum, csapattagok, deklináció</li>
+          <li>Egységek: méter, láb, fok, grad, százalék</li>
+          <li>Kalibrálás: iránytű és dőlésmérő eltolás (<code>calibrate</code>)</li>
+          <li>Állomásmegjegyzések (<code>station</code> parancs)</li>
+          <li>Állomás név aliaszok (<code>equate</code>)</li>
+          <li>Hivatkozott fájlok (<code>input</code> direktíva)</li>
+        </ul>
+        <h5>Amit nem importál (első fázis):</h5>
+        <ul>
+          <li><code>.th2</code> rajzfájlok (2D vetületi rajzok)</li>
+          <li>LRUD keresztmetszetadatok</li>
+          <li><code>data cartesian</code> és <code>data diving</code> mérési típusok</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>Egyetlen Therion fájl importálása</h3>
+        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>2. Válassza ki a <code>.th</code> fájlt</p>
+        <p>3. Ha a fájl tartalmaz koordináta rendszert (<code>cs</code>) és rögzített pontot (<code>fix</code>),
+           a georeferencia automatikusan betöltődik; ellenkező esetben a koordináta rendszer kiválasztó párbeszédablak jelenik meg</p>
+        <p>4. A barlang megjelenik a felfedező panelben</p>
+      </div>
+
+      <h3>Többfájlos Therion projekt importálása</h3>
+      <p
+        >A Therion projektekben a főfájl (<code>input</code> direktívával hivatkozott) más <code>.th</code> fájlokat
+        is beolvas. Mivel a Speleo Studio böngészőben fut és nem fér hozzá a fájlrendszerhez, a hivatkozott fájlokat
+        a felhasználónak kell kiválasztani.</p
+      >
+
+      <div class="step">
+        <h3>Több fájlból álló projekt importálása</h3>
+        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>2. <strong>Válassza ki az összes <code>.th</code> fájlt egyszerre</strong> a projektmappából
+           (Ctrl+A vagy Shift+kattintás a fájl kiválasztóban)</p>
+        <p>3. A Speleo Studio automatikusan felismeri a gyökérfájlt és feloldja az <code>input</code> hivatkozásokat</p>
+        <p>4. Az összes felmérés egyetlen barlangként töltődik be</p>
+      </div>
+
+      <div class="info">
+        <p
+          >Ha egy <code>input</code> direktívával hivatkozott fájl nincs a kiválasztott fájlok között, a Speleo Studio
+          figyelmeztetést jelenít meg, de a rendelkezésre álló adatokat betölti. A <code>.th2</code> (rajz) és
+          <code>.thm</code> (morph) fájlokra vonatkozó hivatkozásokat a program nem jelzi hiányzóként.</p
+        >
+      </div>
+
+      <h3>Koordináta rendszerek Therionban</h3>
+      <p>A Therion a <code>cs</code> paranccsal határozza meg a koordináta rendszert a centreline blokkban:</p>
+      <div class="code-example">
+cs UTM34          # UTM 34. zóna, északi félgömb
+cs UTM zone 34 N  # ugyanaz, explicit jelöléssel
+cs EPSG:23700     # Magyar Egységes Vetületi Rendszer (EOV)
+cs long-lat       # WGS84 hosszúság/szélességi fokok</div>
+      <p>A <code>fix</code> paranccsal az állomás abszolút koordinátái adhatók meg:</p>
+      <div class="code-example">fix 0  650000 200000 350   # x (kelet), y (észak), z (tengerszint feletti magasság)</div>
+
+      <h3>Állomásmegjegyzések (<code>station</code> parancs)</h3>
+      <p
+        >A Therion <code>station</code> paranccsal megjegyzések rendelhetők az állomásokhoz a centreline blokkban:</p
+      >
+      <div class="code-example">
+station 5 "Szűkület után bal oldalon csepegő"
+station 12 "Elágazás - főág jobbra" continuation</div>
+      <p>A Speleo Studio a megjegyzéseket az alábbiak szerint kezeli:</p>
+      <ul>
+        <li><strong>Nem kezdőállomás, első megjegyzés:</strong> az adott állomástól induló mérési sorhoz kerül
+            (a felmérésszerkesztőben a sor megjegyzése)</li>
+        <li><strong>Nem kezdőállomás, ha nem indul mérési sor az állomástól:</strong> barlang szintű pont megjegyzésként tárolódik</li>
+        <li><strong>Kezdőállomás megjegyzése:</strong> mindig barlang szintű pont megjegyzésként tárolódik</li>
+        <li><strong>Második és további megjegyzések ugyanahhoz az állomáshoz:</strong> barlang szintű pont megjegyzésként tárolódnak</li>
+      </ul>
+
+      <div class="warning">
+        <h3>⚠️ Therion importálás megjegyzések</h3>
+        <ul>
+          <li>Az állomásnevekből a <code>@felmérés</code> utótag automatikusan eltávolításra kerül (pl.
+              <code>5@foag</code> → <code>5</code>), ahogy a TopoDroid importnál is</li>
+          <li>Ha a főfájl csak <code>input</code> direktívákat tartalmaz saját centreline blokk nélkül, a hiányzó
+              fájlokról egyértelmű hibaüzenet jelenik meg</li>
+          <li>Egy survey blokkon belüli több centreline blokk automatikusan összevonásra kerül</li>
+        </ul>
+      </div>
+
       <h2>3D modellek és pontfelhők importálása</h2>
 
       <div class="format-box">
@@ -431,7 +532,8 @@
         <h3>Tömeges importálás</h3>
         <p>A Speleo Studio támogatja több fájl egyszerre történő importálását:</p>
         <ul>
-          <li>Több JSON vagy .cave fájl kiválasztása</li>
+          <li>Több JSON vagy .cave fájl kiválasztása &mdash; minden fájlból külön barlang lesz</li>
+          <li>Therion (.th) esetén az összes kiválasztott <code>.th</code> fájl egyetlen barlanggá áll össze</li>
           <li>Automatikus feldolgozás sorrendben</li>
           <li>Hibás fájlok kihagyása</li>
         </ul>

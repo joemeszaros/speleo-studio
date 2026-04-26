@@ -462,6 +462,26 @@ function sanitizeName(value) {
   return typeof value === 'string' ? value.replace(/"/g, "'") : value;
 }
 
+// ─── Survey unit converters ───────────────────────────────────────────────────
+// All functions convert to the Speleo Studio internal unit (metres / degrees).
+
+function lengthToDegrees(value, unit) {
+  if (unit === 'feet') return value * 0.3048;
+  if (unit === 'yards') return value * 0.9144;
+  return value; // meters (default)
+}
+
+function angleToDegrees(value, unit) {
+  if (unit === 'grad' || unit === 'grads') return value * 0.9;
+  if (unit === 'minutes') return value / 60;
+  return value; // degrees (default)
+}
+
+function clinoToDegrees(value, unit) {
+  if (unit === 'percent') return Math.atan(value / 100) * (180 / Math.PI);
+  return angleToDegrees(value, unit);
+}
+
 export {
   fromPolar,
   toPolar,
@@ -494,5 +514,8 @@ export {
   roundToThreeDecimalPlaces,
   range,
   sequential,
-  waitForEvent
+  waitForEvent,
+  lengthToDegrees,
+  angleToDegrees,
+  clinoToDegrees
 };

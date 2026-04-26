@@ -9,8 +9,9 @@ vi.mock('../../src/i18n/i18n.js', () => ({
 }));
 
 vi.mock('../../src/ui/popups.js', () => ({
-  showErrorPanel : vi.fn(),
-  showInfoPanel  : vi.fn(),
+  showErrorPanel  : vi.fn(),
+  showWarningPanel: vi.fn(),
+  showInfoPanel   : vi.fn(),
 }));
 
 vi.mock('../../src/ui/coordinate-system-dialog.js', () => ({
@@ -672,6 +673,38 @@ endsurvey
       expect(cave.surveys[0].shots[0].azimuth).toBeCloseTo(95.0);
       expect(cave.surveys[0].shots[0].clino).toBeCloseTo(11.5);
     });
+
+    it('applies scale factor: corrected = (measured + offset) * scale', async () => {
+      const th = `
+survey cave
+  centreline
+    calibrate compass 2.0 0.5
+    calibrate clino 0.0 2.0
+    data normal from to length compass clino
+    1 2 10.0 90.0 10.0
+  endcentreline
+endsurvey
+`;
+      // compass: (90 + 2) * 0.5 = 46.0
+      // clino:   (10 + 0) * 2.0 = 20.0
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].shots[0].azimuth).toBeCloseTo(46.0);
+      expect(cave.surveys[0].shots[0].clino).toBeCloseTo(20.0);
+    });
+
+    it('defaults scale to 1.0 when not specified', async () => {
+      const th = `
+survey cave
+  centreline
+    calibrate compass 5.0
+    data normal from to length compass clino
+    1 2 10.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].shots[0].azimuth).toBeCloseTo(95.0);
+    });
   });
 
   describe('line continuation', () => {
@@ -689,6 +722,93 @@ endsurvey
       const shot = cave.surveys[0].shots[0];
       expect(shot.length).toBeCloseTo(7.5);
       expect(shot.azimuth).toBeCloseTo(270.0);
+    });
+  });
+
+  describe('station-names command', () => {
+    it('adds prefix and suffix to station names in shot rows', async () => {
+      const th = `
+survey cave
+  centreline
+    station-names p_ _s
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    2 3 3.0 180.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      const shots = cave.surveys[0].shots;
+      expect(shots[0].from).toBe('p_1_s');
+      expect(shots[0].to).toBe('p_2_s');
+      expect(shots[1].from).toBe('p_2_s');
+      expect(shots[1].to).toBe('p_3_s');
+    });
+
+    it('applies prefix only when suffix is -', async () => {
+      const th = `
+survey cave
+  centreline
+    station-names pre_ -
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].shots[0].from).toBe('pre_1');
+      expect(cave.surveys[0].shots[0].to).toBe('pre_2');
+    });
+
+    it('applies suffix only when prefix is -', async () => {
+      const th = `
+survey cave
+  centreline
+    station-names - _end
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].shots[0].from).toBe('1_end');
+      expect(cave.surveys[0].shots[0].to).toBe('2_end');
+    });
+
+    it('resets prefix/suffix with - -', async () => {
+      const th = `
+survey cave
+  centreline
+    station-names p_ _s
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    station-names - -
+    2 3 3.0 180.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      const shots = cave.surveys[0].shots;
+      expect(shots[0].from).toBe('p_1_s');
+      expect(shots[0].to).toBe('p_2_s');
+      expect(shots[1].from).toBe('2');
+      expect(shots[1].to).toBe('3');
+    });
+
+    it('applies prefix/suffix to fix station names', async () => {
+      const th = `
+survey cave
+  centreline
+    cs UTM34
+    station-names p_ _s
+    fix 0 650000 200000 350
+    data normal from to length compass clino
+    0 1 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.geoData.coordinates[0].name).toBe('p_0_s');
     });
   });
 
@@ -815,6 +935,223 @@ endsurvey
       const calls = showInfoPanel.mock.calls;
       const warnedAboutTh2 = calls.some(([msg]) => msg.includes('drawing.th2'));
       expect(warnedAboutTh2).toBe(false);
+    });
+  });
+
+  // ─── station command ──────────────────────────────────────────────────────────
+
+  describe('station command', () => {
+    it('assigns comment to shot.comment for a non-start station', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    2 3 3.0 180.0 0.0
+    station 2 "Junction point"
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      const shots = cave.surveys[0].shots;
+      // comment goes on the shot departing FROM station 2
+      const shot = shots.find((s) => s.from === '2');
+      expect(shot?.comment).toBe('Junction point');
+      expect(cave.stationComments).toHaveLength(0);
+    });
+
+    it('places start station comment in cave.stationComments', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    station 1 "Entrance"
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.stationComments).toHaveLength(1);
+      expect(cave.stationComments[0].name).toBe('1');
+      expect(cave.stationComments[0].comment).toBe('Entrance');
+      const shots = cave.surveys[0].shots;
+      expect(shots[0].comment).toBeUndefined();
+    });
+
+    it('places second comment for same station in cave.stationComments', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    2 3 3.0 180.0 0.0
+    station 2 "First comment"
+    station 2 "Second comment"
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      const shots = cave.surveys[0].shots;
+      // first comment → shot departing FROM station 2
+      const shot = shots.find((s) => s.from === '2');
+      expect(shot?.comment).toBe('First comment');
+      expect(cave.stationComments).toHaveLength(1);
+      expect(cave.stationComments[0].name).toBe('2');
+      expect(cave.stationComments[0].comment).toBe('Second comment');
+    });
+
+    it('places comment in cave.stationComments when no shot departs from that station', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    station 2 "Terminal point" continuation
+  endcentreline
+endsurvey
+`;
+      // station 2 is only a `to` station; no shot departs from it → falls back to cave.stationComments
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.stationComments).toHaveLength(1);
+      expect(cave.stationComments[0].name).toBe('2');
+      expect(cave.stationComments[0].comment).toBe('Terminal point');
+    });
+
+    it('places comment for station with no matching shot in cave.stationComments', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    station 99 "Orphan station"
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.stationComments).toHaveLength(1);
+      expect(cave.stationComments[0].name).toBe('99');
+      expect(cave.stationComments[0].comment).toBe('Orphan station');
+    });
+
+    it('handles multiple stations with comments', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    2 3 3.0 180.0 0.0
+    station 2 "Middle"
+    station 3 "End"
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      const shots = cave.surveys[0].shots;
+      // station 2 comment → shot departing from 2 (shot 2→3)
+      const shot2 = shots.find((s) => s.from === '2');
+      expect(shot2?.comment).toBe('Middle');
+      // station 3 has no departing shot → cave.stationComments
+      expect(cave.stationComments).toHaveLength(1);
+      expect(cave.stationComments[0].name).toBe('3');
+      expect(cave.stationComments[0].comment).toBe('End');
+    });
+  });
+
+  // ─── declination command ──────────────────────────────────────────────────────
+
+  describe('declination command', () => {
+    it('parses declination in degrees (no unit)', async () => {
+      const th = `
+survey cave
+  centreline
+    declination 3.5
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].metadata.declination).toBeCloseTo(3.5);
+    });
+
+    it('parses declination in degrees (explicit unit)', async () => {
+      const th = `
+survey cave
+  centreline
+    declination 3.5 degrees
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].metadata.declination).toBeCloseTo(3.5);
+    });
+
+    it('parses declination in grads', async () => {
+      const th = `
+survey cave
+  centreline
+    declination 4.0 grads
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].metadata.declination).toBeCloseTo(3.6);
+    });
+
+    it('parses declination in minutes', async () => {
+      const th = `
+survey cave
+  centreline
+    declination 210 minutes
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].metadata.declination).toBeCloseTo(3.5);
+    });
+
+    it('warns and skips centreline when declination appears after shots', async () => {
+      const { showWarningPanel } = await import('../../src/ui/popups.js');
+      vi.clearAllMocks();
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    declination 3.5
+  endcentreline
+endsurvey
+`;
+      await expect(makeImporter().getCave(textMap(['cave.th', th]))).rejects.toThrow();
+      const warned = showWarningPanel.mock.calls.some(([msg]) =>
+        msg.includes('errors.import.therionDeclinationAfterShots')
+      );
+      expect(warned).toBe(true);
+    });
+
+    it('does not warn when declination appears before shots', async () => {
+      const { showWarningPanel } = await import('../../src/ui/popups.js');
+      vi.clearAllMocks();
+      const th = `
+survey cave
+  centreline
+    declination 3.5
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      await makeImporter().getCave(textMap(['cave.th', th]));
+      const warned = showWarningPanel.mock.calls.some(([msg]) =>
+        msg.includes('errors.import.therionDeclinationAfterShots')
+      );
+      expect(warned).toBe(false);
     });
   });
 });

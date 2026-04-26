@@ -17,8 +17,8 @@
 import { Importer } from './importer-base.js';
 import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
-import { showInfoPanel } from '../ui/popups.js';
-import { Shot, ShotType, Survey, SurveyMetadata, SurveyTeam, SurveyTeamMember, SurveyAlias } from '../model/survey.js';
+import { showInfoPanel, showWarningPanel } from '../ui/popups.js';
+import { Shot, ShotType, Survey, SurveyMetadata, SurveyTeam, SurveyTeamMember, SurveyAlias, StationComment } from '../model/survey.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import {
   EOVCoordinateWithElevation,
@@ -30,7 +30,7 @@ import {
   UTMCoordinateSystem
 } from '../model/geo.js';
 import { Vector } from '../model.js';
-import { parseMyFloat } from '../utils/utils.js';
+import { parseMyFloat, lengthToDegrees, angleToDegrees, clinoToDegrees } from '../utils/utils.js';
 import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
 import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 import { CoordinateSystemDialog } from '../ui/coordinate-system-dialog.js';
@@ -362,12 +362,15 @@ class TherionImporter extends Importer {
       members     : [],
       declination : 0,
       units       : { length: 'meters', compass: 'degrees', clino: 'degrees' },
-      calibration : { compass: 0, clino: 0 },
+      calibration    : { compass: 0, compassScale: 1, clino: 0, clinoScale: 1 },
+      stationPrefix  : '',
+      stationSuffix  : '',
       cs          : context.globalCs,
       fixes       : [],
       equates     : [],
-      fmt         : null,
-      isSplay     : false
+      fmt             : null,
+      isSplay         : false,
+      stationComments : []
     };
 
     const shots = [];
@@ -377,7 +380,6 @@ class TherionImporter extends Importer {
     let pendingState = null;
 
     const IGNORE_KWS = new Set([
-      'station',
       'grade',
       'extend',
       'break',
@@ -415,7 +417,7 @@ class TherionImporter extends Importer {
       }
 
       if (kw === 'fix' && tokens.length >= 5) {
-        const stn = this.#stripStn(this.#qualifyStn(tokens[1], surveyPath));
+        const stn = this.#stripStn(this.#qualifyStn(this.#applyStnNames(tokens[1], state), surveyPath));
         const x = parseMyFloat(tokens[2]);
         const y = parseMyFloat(tokens[3]);
         const z = parseMyFloat(tokens[4]);
@@ -445,13 +447,20 @@ class TherionImporter extends Importer {
       }
 
       if (kw === 'declination') {
+        if (shots.length > 0) {
+          showWarningPanel(
+            i18n.t('errors.import.therionDeclinationAfterShots', { survey: displayName }),
+            8000
+          );
+          return null;
+        }
         if (tokens[1]?.toLowerCase() === 'auto') {
           state.declination = 0; // cannot replicate Therion's auto calculation
         } else {
           const val = parseMyFloat(tokens[1]);
           if (!isNaN(val)) {
             const unit = tokens[2]?.toLowerCase();
-            state.declination = unit === 'grad' || unit === 'grads' ? val * 0.9 : val;
+            state.declination = angleToDegrees(val, unit);
           }
         }
         continue;
@@ -464,10 +473,16 @@ class TherionImporter extends Importer {
 
       if (kw === 'calibrate' && tokens.length >= 3) {
         const field = tokens[1].toLowerCase();
-        const val = parseMyFloat(tokens[2]);
-        if (!isNaN(val)) {
-          if (field === 'compass' || field === 'bearing') state.calibration.compass = val;
-          else if (field === 'clino' || field === 'gradient') state.calibration.clino = val;
+        const offset = parseMyFloat(tokens[2]);
+        const scale = tokens[3] ? parseMyFloat(tokens[3]) : 1.0;
+        if (!isNaN(offset)) {
+          if (field === 'compass' || field === 'bearing') {
+            state.calibration.compass = offset;
+            state.calibration.compassScale = isNaN(scale) ? 1.0 : scale;
+          } else if (field === 'clino' || field === 'gradient') {
+            state.calibration.clino = offset;
+            state.calibration.clinoScale = isNaN(scale) ? 1.0 : scale;
+          }
         }
         continue;
       }
@@ -484,6 +499,19 @@ class TherionImporter extends Importer {
         continue;
       }
 
+      if (kw === 'station-names' && tokens.length >= 3) {
+        state.stationPrefix = tokens[1] === '-' ? '' : tokens[1];
+        state.stationSuffix = tokens[2] === '-' ? '' : tokens[2];
+        continue;
+      }
+
+      if (kw === 'station' && tokens.length >= 3) {
+        const stnName = this.#stripStn(this.#qualifyStn(this.#applyStnNames(tokens[1], state), surveyPath));
+        const comment = tokens[2];
+        state.stationComments.push({ station: stnName, comment });
+        continue;
+      }
+
       if (IGNORE_KWS.has(kw)) continue;
 
       // ── data rows ──
@@ -493,10 +521,12 @@ class TherionImporter extends Importer {
         if (!pendingLine1) {
           pendingLine1 = tokens;
           pendingState = {
-            fmt         : state.fmt,
-            units       : { ...state.units },
-            calibration : { ...state.calibration },
-            isSplay     : state.isSplay
+            fmt           : state.fmt,
+            units         : { ...state.units },
+            calibration   : { ...state.calibration },
+            isSplay       : state.isSplay,
+            stationPrefix : state.stationPrefix,
+            stationSuffix : state.stationSuffix
           };
         } else {
           stationPairs.push({ line1: pendingLine1, line2: tokens, state: pendingState });
@@ -531,10 +561,11 @@ class TherionImporter extends Importer {
       surveyPath,
       shots,
       metadata,
-      equates      : state.equates,
-      cs           : state.cs,
-      fixes        : state.fixes,
-      startStation : shots[0]?.from
+      equates         : state.equates,
+      cs              : state.cs,
+      fixes           : state.fixes,
+      startStation    : shots[0]?.from,
+      stationComments : state.stationComments
     };
   }
 
@@ -595,12 +626,12 @@ class TherionImporter extends Importer {
     const toRaw = get('to');
     const isPlaceholder = !toRaw || toRaw === '.' || toRaw === '-';
     const type = isPlaceholder || isSplay ? ShotType.SPLAY : ShotType.CENTER;
-    const from = this.#stripStn(this.#qualifyStn(fromRaw, surveyPath));
-    const to = type === ShotType.SPLAY ? undefined : this.#stripStn(this.#qualifyStn(toRaw, surveyPath));
+    const from = this.#stripStn(this.#qualifyStn(this.#applyStnNames(fromRaw, state), surveyPath));
+    const to = type === ShotType.SPLAY ? undefined : this.#stripStn(this.#qualifyStn(this.#applyStnNames(toRaw, state), surveyPath));
 
     const length = this.#parseLength(get('length'), units.length);
-    const compass = this.#parseCompass(get('compass'), units.compass) + calibration.compass;
-    const clino = this.#parseClino(get('clino'), units.clino) + calibration.clino;
+    const compass = (this.#parseCompass(get('compass'), units.compass) + calibration.compass) * calibration.compassScale;
+    const clino = (this.#parseClino(get('clino'), units.clino) + calibration.clino) * calibration.clinoScale;
 
     if (isNaN(length)) return null;
 
@@ -622,9 +653,9 @@ class TherionImporter extends Importer {
       const nextStnIdx = nextPair ? (fmt.station >= 0 ? fmt.station : 0) : -1;
       const toRaw = nextPair && nextStnIdx < nextPair.line1.length ? nextPair.line1[nextStnIdx] : null;
 
-      const from = this.#stripStn(this.#qualifyStn(fromRaw, surveyPath));
+      const from = this.#stripStn(this.#qualifyStn(this.#applyStnNames(fromRaw, state), surveyPath));
       const type = toRaw && !isSplay ? ShotType.CENTER : ShotType.SPLAY;
-      const to = type === ShotType.CENTER ? this.#stripStn(this.#qualifyStn(toRaw, surveyPath)) : undefined;
+      const to = type === ShotType.CENTER ? this.#stripStn(this.#qualifyStn(this.#applyStnNames(toRaw, state), surveyPath)) : undefined;
 
       // Shot values are in the second line (after newline column)
       const offset = fmt.newlineIdx + 1;
@@ -634,8 +665,8 @@ class TherionImporter extends Importer {
       };
 
       const length = this.#parseLength(getL2('length'), units.length);
-      const compass = this.#parseCompass(getL2('compass'), units.compass) + calibration.compass;
-      const clino = this.#parseClino(getL2('clino'), units.clino) + calibration.clino;
+      const compass = (this.#parseCompass(getL2('compass'), units.compass) + calibration.compass) * calibration.compassScale;
+      const clino = (this.#parseClino(getL2('clino'), units.clino) + calibration.clino) * calibration.clinoScale;
 
       if (isNaN(length)) continue;
       shots.push(new Shot(id++, type, from, to, length, compass, clino, undefined));
@@ -648,14 +679,14 @@ class TherionImporter extends Importer {
     if (!value) return NaN;
     const num = parseMyFloat(value);
     if (isNaN(num)) return NaN;
-    return unit === 'feet' ? num * 0.3048 : unit === 'yards' ? num * 0.9144 : num;
+    return lengthToDegrees(num, unit);
   }
 
   #parseCompass(value, unit) {
     if (!value || value === '-') return 0;
     const num = parseMyFloat(value);
     if (isNaN(num)) return 0;
-    return unit === 'grad' || unit === 'grads' ? num * 0.9 : unit === 'minutes' ? num / 60 : num;
+    return angleToDegrees(num, unit);
   }
 
   #parseClino(value, unit) {
@@ -665,11 +696,7 @@ class TherionImporter extends Importer {
     if (lower === 'down') return -90;
     const num = parseMyFloat(value);
     if (isNaN(num)) return 0;
-    return unit === 'percent'
-      ? Math.atan(num / 100) * (180 / Math.PI)
-      : unit === 'grad' || unit === 'grads'
-        ? num * 0.9
-        : num;
+    return clinoToDegrees(num, unit);
   }
 
   #parseDate(str) {
@@ -719,6 +746,14 @@ class TherionImporter extends Importer {
 
   // ─── Station name helpers ─────────────────────────────────────────────────────
 
+  /** Apply station-names prefix/suffix to a raw local station name. */
+  #applyStnNames(name, state) {
+    if (!name || name === '.' || name === '-') return name;
+    if (name.includes('@')) return name; // already qualified — don't modify
+    const { stationPrefix: p, stationSuffix: s } = state;
+    return p || s ? `${p}${name}${s}` : name;
+  }
+
   #qualifyStn(name, surveyPath) {
     if (!name || name === '.' || name === '-') return name;
     if (name.includes('@') || !surveyPath) return name;
@@ -764,9 +799,16 @@ class TherionImporter extends Importer {
         m.shots.push(...s.shots);
         m.equates.push(...s.equates);
         m.fixes.push(...s.fixes);
+        m.stationComments.push(...(s.stationComments ?? []));
         if (!m.cs && s.cs) m.cs = s.cs;
       } else {
-        mergedMap.set(s.surveyPath, { ...s, shots: [...s.shots], equates: [...s.equates], fixes: [...s.fixes] });
+        mergedMap.set(s.surveyPath, {
+          ...s,
+          shots           : [...s.shots],
+          equates         : [...s.equates],
+          fixes           : [...s.fixes],
+          stationComments : [...(s.stationComments ?? [])]
+        });
       }
     }
     const surveys = [...mergedMap.values()];
@@ -901,6 +943,30 @@ class TherionImporter extends Importer {
       surveyObjs.push(survey);
     }
 
+    // Distribute station comments: start station → cave level; others → shot.comment (first) or cave level (subsequent)
+    const caveStationComments = [];
+    const shotCommentAssigned = new Set();
+
+    for (let i = 0; i < ordered.length; i++) {
+      const s = ordered[i];
+      const surveyObj = surveyObjs[i];
+      for (const { station, comment } of (s.stationComments ?? [])) {
+        if (station === s.startStation) {
+          caveStationComments.push(new StationComment(station, comment));
+        } else if (!shotCommentAssigned.has(station)) {
+          const shot = surveyObj.shots.find((sh) => sh.from === station);
+          if (shot) {
+            shot.comment = comment;
+            shotCommentAssigned.add(station);
+          } else {
+            caveStationComments.push(new StationComment(station, comment));
+          }
+        } else {
+          caveStationComments.push(new StationComment(station, comment));
+        }
+      }
+    }
+
     // Cave name: outermost survey title → first ordered survey name → filename stem
     const rootBase = rootFilename.replace(/\.th$/i, '').split(/[\\/]/).pop();
     const caveName = context.caveTitle ?? rootBase;
@@ -915,7 +981,7 @@ class TherionImporter extends Importer {
       firstS.metadata.team?.name ?? ''
     );
 
-    return new Cave(caveName, caveMetadata, geoData, stations, surveyObjs, aliases);
+    return new Cave(caveName, caveMetadata, geoData, stations, surveyObjs, aliases, undefined, caveStationComments);
   }
 }
 
