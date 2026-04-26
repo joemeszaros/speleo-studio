@@ -24,6 +24,7 @@ import {
   TopodroidImporter,
   JsonImporter,
   TherionImporter,
+  LoxImporter,
   Importer
 } from './io/import.js';
 import { SceneInteraction } from './interactive.js';
@@ -242,7 +243,7 @@ class Main {
         console.warn(`No importer found for model type: ${modelFile.type}`);
         return;
       }
-      const binaryTypes = new Set(['ply', 'las', 'laz']);
+      const binaryTypes = new Set(['ply', 'las', 'laz', 'lox']);
       const importMethod = binaryTypes.has(modelFile.type) ? 'importData' : 'importText';
       const importData = binaryTypes.has(modelFile.type)
         ? await modelFile.data.arrayBuffer()
@@ -308,7 +309,8 @@ class Main {
       ply       : new PlyModelImporter(db, options, scene, this.projectManager),
       obj       : new ObjModelImporter(db, options, scene, this.projectManager),
       las       : new LasModelImporter(db, options, scene, this.projectManager),
-      laz       : new LasModelImporter(db, options, scene, this.projectManager)
+      laz       : new LasModelImporter(db, options, scene, this.projectManager),
+      lox       : new LoxImporter(db, options, scene, this.projectManager)
     };
 
     this.#setupEventListeners();
@@ -419,7 +421,7 @@ class Main {
   }
 
   #setupModelFileInputListener() {
-    const modelExtensions = new Set(['ply', 'obj', 'las', 'laz']);
+    const modelExtensions = new Set(['ply', 'obj', 'las', 'laz', 'lox']);
     const input = document.getElementById('modelInput');
 
     input.addEventListener('change', async (e) => {

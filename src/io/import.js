@@ -40,6 +40,7 @@ import { i18n } from '../i18n/i18n.js';
 import { PointCloudOctree } from '../utils/point-cloud-octree.js';
 import { Importer } from './importer-base.js';
 import { TherionImporter } from './therion-importer.js';
+import { LoxImporter } from './lox-importer.js';
 
 class PolygonImporter extends Importer {
 
@@ -1440,5 +1441,6 @@ export {
   ObjModelImporter,
   LasModelImporter,
   TherionImporter,
+  LoxImporter,
   Importer
 };
