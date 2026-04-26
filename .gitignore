@@ -2,3 +2,10 @@
 app.mjs
 node_modules/
 .DS_Store
+playwright-report/
+test-results/
+package/
+.claude/
+.env
+.mcp.json
+CLAUDE.md

@@ -1,0 +1,21 @@
+encoding utf-8
+
+# Sub-survey file included via 'input' from sample-therion.th
+# Tests: multi-file resolution, splay via flags
+
+survey sub -title "Sub Passage"
+
+  centreline
+    date 2024.06.15
+    team "Joe Speleo" surveyor
+
+    data normal from to length compass clino
+    1 2 5.20 180.0 -8.0
+    2 3 4.10 200.0 -3.0
+
+    flags splay
+    3 - 2.10 270.0 0.0
+    flags not splay
+  endcentreline
+
+endsurvey sub

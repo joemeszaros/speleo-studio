@@ -73,7 +73,7 @@ class NavigationBar {
     document.addEventListener('modelsChanged', () => this.#refreshDynamicIcons());
     document.addEventListener('modelDeleted', () => this.#refreshDynamicIcons());
     document.addEventListener('spatialProjectionChanged', (e) => this.#updateProjectionIcon(e.detail.projection));
-    document.addEventListener('keydown', (e) => this.onKeyDown(e));
+    document.addEventListener('keydown', (e) => this.onKeyDown(e), { capture: true });
 
     // Listen for language changes and refresh navbar
     document.addEventListener('languageChanged', () => {
@@ -85,9 +85,7 @@ class NavigationBar {
   #updateProjectionIcon(projection) {
     const img = document.querySelector('#projection-toggle img.dropbtn');
     if (!img) return;
-    img.setAttribute('src', projection === 'perspective'
-      ? 'icons/camera_perspective.svg'
-      : 'icons/camera_ortho.svg');
+    img.setAttribute('src', projection === 'perspective' ? 'icons/camera_perspective.svg' : 'icons/camera_ortho.svg');
   }
 
   #refreshDynamicIcons() {
@@ -107,7 +105,6 @@ class NavigationBar {
 
     const isEditable =
       e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target.isContentEditable;
-    if (isEditable) return; // ignore normal typing
 
     this.listeners.forEach((l) => {
       if (
@@ -115,8 +112,8 @@ class NavigationBar {
         ((e.ctrlKey && l.crtl) || !l.crtl) &&
         ((e.shiftKey && l.shift) || (!l.shift && !e.shiftKey))
       ) {
-        e.preventDefault();
-        l.action(e);
+        e.preventDefault(); // always prevent browser default for registered shortcuts
+        if (!isEditable) l.action(e);
       }
     });
   }
@@ -144,8 +141,10 @@ class NavigationBar {
           },
           {
             name  : i18n.t('ui.navbar.menu.file.open'),
-            click : function () {
-              document.getElementById('caveInput').click();
+            click : () => {
+              if (this.projectSystem.getCurrentProject()) {
+                document.getElementById('caveInput').click();
+              }
             },
             shortkeys : ['crtl⊕o']
           },
@@ -338,11 +337,12 @@ class NavigationBar {
         // Projection-mode toggle. No "selected" state — the current mode is
         // conveyed entirely by which icon is shown (ortho cube vs perspective
         // cube), swapped via the spatialProjectionChanged event.
-        tooltip  : i18n.t('ui.navbar.tooltips.projectionToggle'),
-        id       : 'projection-toggle',
-        icon     : this.options.scene.spatialView?.projection === 'perspective'
-          ? 'icons/camera_perspective.svg'
-          : 'icons/camera_ortho.svg',
+        tooltip : i18n.t('ui.navbar.tooltips.projectionToggle'),
+        id      : 'projection-toggle',
+        icon    :
+          this.options.scene.spatialView?.projection === 'perspective'
+            ? 'icons/camera_perspective.svg'
+            : 'icons/camera_ortho.svg',
         // Perspective is only useful when there is a 3D model to dolly into —
         // for cave-only projects keep the button disabled.
         disabled : () => this.db.getAllModelNames().length === 0,
@@ -358,7 +358,11 @@ class NavigationBar {
         elements : [
           { id: 'off', icon: 'icons/bounding_box_off.svg', title: i18n.t('ui.navbar.boundingBoxModes.off') },
           { id: 'box', icon: 'icons/bounding_box.svg', title: i18n.t('ui.navbar.boundingBoxModes.box') },
-          { id: 'boxWithProjections', icon: 'icons/bounding_box_projections.svg', title: i18n.t('ui.navbar.boundingBoxModes.boxWithProjections') }
+          {
+            id    : 'boxWithProjections',
+            icon  : 'icons/bounding_box_projections.svg',
+            title : i18n.t('ui.navbar.boundingBoxModes.boxWithProjections')
+          }
         ].map((e) => ({
           name     : e.title,
           icon     : e.icon,
@@ -390,8 +394,8 @@ class NavigationBar {
         icon     : 'icons/model_color.svg',
         elements : [
           { id: 'gradientByZ', title: i18n.t('ui.navbar.modelColorModes.gradientByZ') },
-          { id: 'perModel',    title: i18n.t('ui.navbar.modelColorModes.perModel') },
-          { id: 'ownColor',    title: i18n.t('ui.navbar.modelColorModes.ownColor') }
+          { id: 'perModel', title: i18n.t('ui.navbar.modelColorModes.perModel') },
+          { id: 'ownColor', title: i18n.t('ui.navbar.modelColorModes.ownColor') }
         ].map((e) => ({
           name     : e.title,
           selected : this.options.scene.models.color.mode === e.id,

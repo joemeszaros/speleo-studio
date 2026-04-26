@@ -23,6 +23,7 @@ import {
   PolygonImporter,
   TopodroidImporter,
   JsonImporter,
+  TherionImporter,
   Importer
 } from './io/import.js';
 import { SceneInteraction } from './interactive.js';
@@ -303,6 +304,7 @@ class Main {
       topodroid : new TopodroidImporter(db, options, scene, this.projectManager),
       polygon   : new PolygonImporter(db, options, scene, this.projectManager),
       json      : new JsonImporter(db, options, scene, this.projectManager, attributeDefs),
+      therion   : new TherionImporter(db, options, scene, this.projectManager),
       ply       : new PlyModelImporter(db, options, scene, this.projectManager),
       obj       : new ObjModelImporter(db, options, scene, this.projectManager),
       las       : new LasModelImporter(db, options, scene, this.projectManager),
@@ -339,17 +341,63 @@ class Main {
       this.settingsPanel,
       document.getElementById('configInput')
     );
+    this.#preventFileDrop();
+  }
+
+  #preventFileDrop() {
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop',     e => e.preventDefault());
   }
 
   #setupCaveFileInputListener() {
-    Importer.setupFileInputListener({
-      inputId : 'caveInput',
+    const input = document.getElementById('caveInput');
+    input.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
 
-      handlers : new Map([
-        ['cave', this.importers.polygon],
-        ['json', this.importers.json]
-      ]),
-      onLoad : async (cave) => await this.#tryAddCave(cave)
+      try {
+        // Batch all .th files together so input directives can be resolved across them
+        const therionFiles = files.filter(f => f.name.toLowerCase().endsWith('.th'));
+        const otherFiles   = files.filter(f => !f.name.toLowerCase().endsWith('.th'));
+
+        if (therionFiles.length > 0) {
+          try {
+            const filesMap = new Map(therionFiles.map(f => [f.name, f]));
+            await this.importers.therion.importFiles(filesMap, async (cave) => {
+              await this.#tryAddCave(cave);
+            });
+          } catch (error) {
+            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: therionFiles[0].name });
+            showErrorPanel(`${msgPrefix}: ${error.message}`);
+            console.error(msgPrefix, error);
+          }
+        }
+
+        const handlers = new Map([
+          ['cave', this.importers.polygon],
+          ['json', this.importers.json]
+        ]);
+
+        for (const file of otherFiles) {
+          try {
+            const ext     = file.name.toLowerCase().split('.').pop();
+            const handler = handlers.get(ext);
+            if (!handler) {
+              showErrorPanel(i18n.t('errors.import.unsupportedFileType', { extension: ext }));
+              continue;
+            }
+            await handler.importFile(file, file.name, async (cave) => {
+              await this.#tryAddCave(cave);
+            });
+          } catch (error) {
+            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
+            showErrorPanel(`${msgPrefix}: ${error.message}`);
+            console.error(msgPrefix, error);
+          }
+        }
+      } finally {
+        input.value = '';
+      }
     });
   }
 

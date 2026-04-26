@@ -1025,7 +1025,11 @@
       "importFailed": "Importálás sikertelen",
       "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
       "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott",
-      "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot."
+      "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot.",
+      "therionNoData": "Nem található felmérés adat a Therion fájlban",
+      "therionMissingInputFiles": "Ez a Therion fájl egy projektgyökér, amely maga nem tartalmaz felmérési adatokat. Jelöld ki az összes .th fájlt a projektkönyvtárból egyszerre.",
+      "therionUnresolvedInputs": "A Therion fájl olyan fájlokra hivatkozik, amelyek nem lettek kiválasztva: {files}. Jelöld ki az összes .th fájlt a projektkönyvtárból egyszerre.",
+      "therionUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Therion fájlban — add meg kézzel a koordinátákat"
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",

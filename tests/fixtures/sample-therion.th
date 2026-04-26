@@ -1,0 +1,27 @@
+encoding utf-8
+
+# Sample Therion cave file for unit tests
+# Tests: UTM fix, nested surveys, equate, splay shots, multi-file input
+
+survey sample -title "Sample Cave"
+
+  centreline
+    cs UTM34
+    fix 1 485000.0 5078000.0 1200.0
+
+    date 2024.06.15
+    team "Joe Speleo" surveyor "Jane Speleo" compass
+
+    declination 3.5 degrees
+
+    data normal from to length compass clino
+    1 2 12.50 135.0 -15.0
+    2 3  8.30  90.0  -5.0
+    2  .  3.50  45.0   0.0
+  endcentreline
+
+  input sample-therion-sub.th
+
+  equate 3@sample 1@sub
+
+endsurvey sample

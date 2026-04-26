@@ -1002,7 +1002,11 @@
       "importFailed": "Import failed",
       "unsupportedFileType": "Unsupported file type: {extension}",
       "longFormatNotSupported": "Only the simplified format is supported",
-      "pointCloudFileTooLarge": "{name} is {size} MB, which is above the {limit} MB limit for point cloud imports. Try splitting the file or exporting a subsampled version."
+      "pointCloudFileTooLarge": "{name} is {size} MB, which is above the {limit} MB limit for point cloud imports. Try splitting the file or exporting a subsampled version.",
+      "therionNoData": "No centreline data found in Therion file",
+      "therionMissingInputFiles": "This Therion file is a project root with no survey data of its own. Select all .th files from the project folder together.",
+      "therionUnresolvedInputs": "Therion file references files that were not selected: {files}. Select all .th files from the project folder together.",
+      "therionUnknownCs": "Unknown coordinate system '{cs}' in Therion file — please specify coordinates manually"
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",
