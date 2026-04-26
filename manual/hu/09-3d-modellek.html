@@ -47,6 +47,7 @@
           <li><strong>OBJ</strong> (Wavefront OBJ) &mdash; háromszöghálók textúra támogatással</li>
           <li><strong>LAS</strong> (ASPRS LAS 1.0&ndash;1.4) &mdash; LiDAR pontfelhők</li>
           <li><strong>LAZ</strong> (tömörített LAS) &mdash; tömörített LiDAR pontfelhők</li>
+          <li><strong>LOX</strong> (Therion .lox) &mdash; Therion barlangtérképező szoftver 3D exportja: barlangjárat-falak háromszöghálója és mérési centrális</li>
           <li><strong>MTL</strong> (Material Template Library) &mdash; anyag- és textúra definíciók OBJ fájlokhoz</li>
           <li><strong>JPG, PNG</strong> &mdash; textúra képfájlok</li>
         </ul>
@@ -74,7 +75,7 @@
       <div class="step">
         <h3>2. lépés: Fájlok kiválasztása</h3>
         <p>
-          A fájl tallózó ablakban válassza ki a modell fájlt (.ply, .obj, .las vagy .laz). Ha a modellhez textúra fájlok is
+          A fájl tallózó ablakban válassza ki a modell fájlt (.ply, .obj, .las, .laz vagy .lox). Ha a modellhez textúra fájlok is
           tartoznak (.mtl és képfájlok), azokat is kiválaszthatja egyszerre. A Speleo Studio automatikusan felismeri és
           alkalmazza a textúrákat.
         </p>
@@ -109,6 +110,33 @@
           Ha a modell koordinátái túl messze vannak a projektben lévő barlangoktól, a Speleo Studio figyelmeztetést
           jelenít meg és nem engedi megnyitni a modellt. Ez megakadályozza, hogy véletlenül rossz koordinátákkal
           nyissunk meg egy modellt és a nézetünk teljesen szétessen.
+        </p>
+      </div>
+
+      <h2>Therion .lox fájlok</h2>
+      <p>
+        A Therion barlangtérképező szoftver 3D nézete (<em>Loch</em>) <code>.lox</code> bináris formátumban exportálja a
+        barlangjáratok háromdimenziós modelljét. A Speleo Studio közvetlenül be tudja tölteni ezeket a fájlokat.
+      </p>
+      <p>
+        Egy <code>.lox</code> fájl általában két réteget tartalmaz, amelyek egyszerre jelennek meg:
+      </p>
+      <ul>
+        <li><strong>Barlangjárat-falak:</strong> a Therion által kiszámított háromszögelt felszíni háló (scrap mesh), amely a barlang falait, mennyezetét és padlóját ábrázolja</li>
+        <li><strong>Közép vonalak:</strong> a felmérési szakaszok vonalai narancssárgán</li>
+      </ul>
+
+
+      <div class="info">
+        <h3>Koordináták</h3>
+        <p>
+          A <code>.lox</code> fájlok Therion vetületi koordinátákat tartalmaznak (általában UTM). A modell importálásakor
+          megjelenő koordináta ablakban megadhatók a WGS84 koordináták a pontos pozícionáláshoz. Ha a koordináta ablakot
+          kihagyja, a modell a projekt középpontjára kerül.
+        </p>
+        <p>
+          Ha a projektben már be van töltve egy barlang, a <code>.lox</code> modell automatikusan ahhoz igazodik,
+          feltéve hogy koordinátái a meglévő barlangokhoz közel esnek.
         </p>
       </div>
 
