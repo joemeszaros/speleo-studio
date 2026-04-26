@@ -21,9 +21,15 @@ import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
-import { degreesToRads, formatDistance, radsToDegrees } from '../utils/utils.js';
-import { ProfileViewControl, PlanViewControl, SpatialOrthographicControl, SpatialPerspectiveControl } from './control.js';
+import { degreesToRads, formatDistance, formatElevation, radsToDegrees } from '../utils/utils.js';
+import {
+  ProfileViewControl,
+  PlanViewControl,
+  SpatialOrthographicControl,
+  SpatialPerspectiveControl
+} from './control.js';
 import { i18n } from '../i18n/i18n.js';
+import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 
 class View {
 
@@ -631,10 +637,18 @@ class SpatialView extends View {
     // from listeners attached by external code (headlight, attributes, etc.)
     // when migrating those across a projection swap.
     for (const c of [this.orthoControl, this.perspectiveControl]) {
-      const startHandler = () => { if (c === this.control) this.isInteracting = true; };
-      const endHandler = () => { if (c === this.control) this.onControlOperationEnd(); };
-      const orbitSetHandler = (e) => { if (c === this.control) this.onOrbitAdjustment(e); };
-      const orbitChangeHandler = (e) => { if (c === this.control) this.onOrbitAdjustment(e); };
+      const startHandler = () => {
+        if (c === this.control) this.isInteracting = true;
+      };
+      const endHandler = () => {
+        if (c === this.control) this.onControlOperationEnd();
+      };
+      const orbitSetHandler = (e) => {
+        if (c === this.control) this.onOrbitAdjustment(e);
+      };
+      const orbitChangeHandler = (e) => {
+        if (c === this.control) this.onOrbitAdjustment(e);
+      };
       startHandler._svInternal = true;
       endHandler._svInternal = true;
       orbitSetHandler._svInternal = true;
@@ -733,8 +747,7 @@ class SpatialView extends View {
       transferZoom = 1;
     } else if (mode === 'ortho' && oldControl.camera.isPerspectiveCamera) {
       const fovRad = (oldControl.camera.fov * Math.PI) / 180;
-      const visibleWorldHeight =
-        2 * Math.tan(fovRad / 2) * Math.max(Math.abs(oldControl.distance), 0.1);
+      const visibleWorldHeight = 2 * Math.tan(fovRad / 2) * Math.max(Math.abs(oldControl.distance), 0.1);
       transferZoom = this.orthoCamera.height / visibleWorldHeight;
     }
 
@@ -1528,16 +1541,17 @@ class ProfileView extends View {
     // Update text positions based on new ruler height
     this.#updateVerticalTextPositions();
 
-    // Get min and max Z coordinates from the scene's bounding box
+    // Get min and max Z coordinates from the scene's bounding box.
+    // Cave survey stations are stored relative to the normalizer origin, so we
+    // add the origin's elevation back to show real-world altitude.
+    const elevOffset = globalNormalizer.globalOrigin?.elevation ?? 0;
     const boundingBox = this.scene.computeBoundingBox();
     if (boundingBox) {
-      const minZ = boundingBox.min.z;
-      const maxZ = boundingBox.max.z;
-      this.verticalMaxZText.update(formatDistance(maxZ));
-      this.verticalMinZText.update(formatDistance(minZ));
+      this.verticalMaxZText.update(formatElevation(boundingBox.max.z + elevOffset));
+      this.verticalMinZText.update(formatElevation(boundingBox.min.z + elevOffset));
     } else {
       // Fallback to original behavior if no bounding box
-      this.verticalMaxZText.update(formatDistance(verticalIndicatorHeightInMeters));
+      this.verticalMaxZText.update(formatElevation(verticalIndicatorHeightInMeters));
       this.verticalMinZText.update('0');
     }
   }
@@ -1574,14 +1588,15 @@ class ProfileView extends View {
     ctx.font = '10px Arial';
     ctx.textAlign = 'left';
 
-    // Get min and max Z coordinates for labels
+    // Get min and max Z coordinates for labels (convert to absolute altitude).
+    const elevOffset = globalNormalizer.globalOrigin?.elevation ?? 0;
     const boundingBox = this.scene.computeBoundingBox();
     let minZ = 0;
     let maxZ = 100;
 
     if (boundingBox) {
-      minZ = boundingBox.min.z;
-      maxZ = boundingBox.max.z;
+      minZ = boundingBox.min.z + elevOffset;
+      maxZ = boundingBox.max.z + elevOffset;
     }
 
     // Add tick marks every 50px with Z coordinate labels

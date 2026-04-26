@@ -289,6 +289,10 @@ function getPolygonDate(value) {
   return addDays(epochStart, daysInt);
 }
 
+function formatElevation(elevationInMeters) {
+  return `${Math.round(elevationInMeters)} m`;
+}
+
 function formatDistance(distanceInMeters, decimals = 2) {
   if (distanceInMeters >= 1000) {
     const distanceInKm = distanceInMeters / 1000.0;
@@ -503,6 +507,7 @@ export {
   toPolygonDate,
   formatDateISO,
   formatDistance,
+  formatElevation,
   formatBytes,
   sanitizeName,
   fitString,
