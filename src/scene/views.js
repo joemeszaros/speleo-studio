@@ -257,7 +257,7 @@ class View {
     const rulerWidthInMeters = targetRulerDistance;
     const rulerWidthInPixels = (rulerWidthInMeters / worldWidthInMeters) * this.scene.width;
 
-    this.ratioIndicator.width = Math.max(50, Math.min(400, rulerWidthInPixels)); // between 50-400px
+    this.ratioIndicator.width = Math.max(50, Math.min(600, rulerWidthInPixels));
     this.ratioIndicator.scale.set(this.ratioIndicator.width, 15, 1);
 
     const ratioText = `${formatDistance(rulerWidthInMeters)} - M 1:${Math.round(this.ratio)}`;
@@ -1520,19 +1520,6 @@ class ProfileView extends View {
   }
 
   onResize(width, height) {
-    this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
-
-    if (this.verticalMaxZText && this.verticalMinZText) {
-      this.#updateVerticalTextPositions();
-    }
-
-    if (this.modelVerticalRuler) {
-      const modelX = this.scene.width / 2 - 60;
-      this.modelVerticalRuler.position.x = modelX;
-      if (this.modelVerticalMaxZText) this.modelVerticalMaxZText.sprite.position.x = modelX;
-      if (this.modelVerticalMinZText) this.modelVerticalMinZText.sprite.position.x = modelX;
-    }
-
     super.onResize(width, height);
   }
 
@@ -1608,17 +1595,21 @@ class ProfileView extends View {
       this.modelRulerIcon = null;
     }
 
-    // Height is always driven by the same ratio-snapped distance as the horizontal ruler
-    const targetRulerDistance = this.getTargetRulerDistance(this.ratio);
-    const heightInPx = (targetRulerDistance / worldHeightInMeters) * this.scene.height;
-    this.verticalRatioIndicatorHeight = Math.max(50, Math.min(600, heightInPx));
+    // Height mirrors the ratio indicator width (same real-world distance), but capped so both
+    // the top label (40 px gap from top edge) and the bottom label (20 px above rot. text at
+    // -height/2+120) fit simultaneously. Both satisfied iff H <= height - 220.
+    const maxElevH = Math.max(50, this.scene.height - 220);
+    this.verticalRatioIndicatorHeight = Math.min(this.ratioIndicator.width, maxElevH);
+
+    const rulerH = this.verticalRatioIndicatorHeight;
+    const rulerCenterY = Math.max(0, rulerH / 2 - this.scene.height / 2 + 160);
 
     const caveBBox  = haveCaves  ? this.scene.speleo.computeBoundingBox()  : null;
     const modelBBox = haveModels ? this.scene.computeModelsBoundingBox()   : null;
 
     // Update main (cave or models-only) indicator
     this.verticalRuler.scale.set(15, this.verticalRatioIndicatorHeight, 1);
-    this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
+    this.verticalRuler.position.set(this.scene.width / 2 - 30, rulerCenterY, 1);
     if (haveCaves && caveBBox) {
       this.verticalMaxZText.update(formatElevation(caveBBox.max.z + elevOffset));
       this.verticalMinZText.update(formatElevation(caveBBox.min.z + elevOffset));
@@ -1630,7 +1621,7 @@ class ProfileView extends View {
       this.verticalMinZText.update('0');
     }
 
-    this.#updateVerticalTextPositions();
+    this.#updateVerticalTextPositions(rulerCenterY);
 
     // Update model indicator position and labels (dual mode) — placed at the same
     // Y position as the cave indicator, shifted left enough so labels don't overlap.
@@ -1654,12 +1645,12 @@ class ProfileView extends View {
       const modelX = caveX - caveLabelHalfW - 5 - modelLabelHalfW;
 
       this.modelVerticalRuler.scale.set(15, h, 1);
-      this.modelVerticalRuler.position.set(modelX, 0, 1);
-      this.modelVerticalMaxZText.sprite.position.set(modelX, h / 2 + 20, 1);
-      this.modelVerticalMinZText.sprite.position.set(modelX, -h / 2 - 20, 1);
+      this.modelVerticalRuler.position.set(modelX, rulerCenterY, 1);
+      this.modelVerticalMaxZText.sprite.position.set(modelX, rulerCenterY + h / 2 + 20, 1);
+      this.modelVerticalMinZText.sprite.position.set(modelX, rulerCenterY - h / 2 - 20, 1);
 
-      if (this.caveRulerIcon) this.caveRulerIcon.sprite.position.set(caveX, h / 2 + 42, 1);
-      if (this.modelRulerIcon) this.modelRulerIcon.sprite.position.set(modelX, h / 2 + 42, 1);
+      if (this.caveRulerIcon) this.caveRulerIcon.sprite.position.set(caveX, rulerCenterY + h / 2 + 42, 1);
+      if (this.modelRulerIcon) this.modelRulerIcon.sprite.position.set(modelX, rulerCenterY + h / 2 + 42, 1);
     }
   }
 
@@ -1745,20 +1736,15 @@ class ProfileView extends View {
     );
   }
 
-  #updateVerticalTextPositions() {
-    // Update text positions based on current ruler height
-    const rulerY = 0; // ruler center Y position
+  #updateVerticalTextPositions(rulerCenterY = 0) {
     const rulerHeight = this.verticalRatioIndicatorHeight;
+    const x = this.scene.width / 2 - 30;
 
-    // Update max Z text position (top of ruler)
-    const maxYPosition = rulerY + rulerHeight / 2 + 20;
-    this.verticalMaxZText.sprite.position.y = maxYPosition;
-    this.verticalMaxZText.sprite.position.x = this.scene.width / 2 - 30;
+    this.verticalMaxZText.sprite.position.y = rulerCenterY + rulerHeight / 2 + 20;
+    this.verticalMaxZText.sprite.position.x = x;
 
-    // Update min Z text position (bottom of ruler)
-    const minYPosition = rulerY - rulerHeight / 2 - 20;
-    this.verticalMinZText.sprite.position.y = minYPosition;
-    this.verticalMinZText.sprite.position.x = this.scene.width / 2 - 30;
+    this.verticalMinZText.sprite.position.y = rulerCenterY - rulerHeight / 2 - 20;
+    this.verticalMinZText.sprite.position.x = x;
   }
 
   #updateRotationText() {
