@@ -317,6 +317,16 @@ class MyScene {
     return group;
   }
 
+  computeModelsBoundingBox() {
+    const group = this.models.get3DModelsGroup();
+    if (group.children.length === 0) return undefined;
+    const modelBox = new THREE.Box3();
+    for (const child of group.children) {
+      if (child.visible) modelBox.expandByObject(child);
+    }
+    return modelBox.isEmpty() ? undefined : modelBox;
+  }
+
   computeBoundingBox() {
     let boundingBox = this.speleo.computeBoundingBox();
 

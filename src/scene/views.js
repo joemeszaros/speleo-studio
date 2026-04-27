@@ -1426,6 +1426,12 @@ class ProfileView extends View {
     const verticalMinZTextSprite = this.verticalMinZText.getSprite();
     scene.sprites3DGroup.add(verticalMinZTextSprite);
 
+    this.modelVerticalRuler = null;
+    this.modelVerticalMaxZText = null;
+    this.modelVerticalMinZText = null;
+    this.caveRulerIcon = null;
+    this.modelRulerIcon = null;
+
     this.initiated = false;
     this.enabled = false;
 
@@ -1516,9 +1522,15 @@ class ProfileView extends View {
   onResize(width, height) {
     this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
 
-    // Update text positions if they exist
     if (this.verticalMaxZText && this.verticalMinZText) {
       this.#updateVerticalTextPositions();
+    }
+
+    if (this.modelVerticalRuler) {
+      const modelX = this.scene.width / 2 - 60;
+      this.modelVerticalRuler.position.x = modelX;
+      if (this.modelVerticalMaxZText) this.modelVerticalMaxZText.sprite.position.x = modelX;
+      if (this.modelVerticalMinZText) this.modelVerticalMinZText.sprite.position.x = modelX;
     }
 
     super.onResize(width, height);
@@ -1526,38 +1538,148 @@ class ProfileView extends View {
 
   onZoomLevelChange(level) {
     super.onZoomLevelChange(level);
-    this.#updateVerticalRuler(level);
+    this.#updateVerticalRulers(level);
   }
 
-  #updateVerticalRuler(level) {
+  #updateVerticalRulers(level) {
     const worldHeightInMeters = this.camera.height / level;
-    // Use the same target distance as horizontal ruler for consistency
-    const targetRulerDistance = this.getTargetRulerDistance(this.ratio);
-    const verticalIndicatorHeightInMeters = targetRulerDistance;
-    const verticalIndicatorHeightInPixels = (verticalIndicatorHeightInMeters / worldHeightInMeters) * this.scene.height;
-    this.verticalRatioIndicatorHeight = Math.max(50, Math.min(600, verticalIndicatorHeightInPixels));
-    this.verticalRuler.scale.set(15, this.verticalRatioIndicatorHeight, 1);
+    const pixelsPerMeter = this.scene.height / worldHeightInMeters;
+    const elevOffset = globalNormalizer.globalOrigin?.elevation ?? 0;
 
-    // Update text positions based on new ruler height
+    const haveCaves = this.scene.speleo.caveObjects.size > 0;
+    const haveModels = this.scene.models.get3DModelsGroup().children.length > 0;
+    const wantDual = haveCaves && haveModels;
+    const isDual = this.modelVerticalRuler !== null;
+
+    // Sync main ruler gradient (cave vs model colors)
+    const wantCaveGradient = haveCaves || !haveModels;
+    const mainIsCaveGradient = this.verticalRuler.userData.isCaveGradient ?? true;
+    if (mainIsCaveGradient !== wantCaveGradient) {
+      this.scene.sprites3DGroup.remove(this.verticalRuler);
+      this.verticalRuler.material.dispose();
+      const gradientColors = wantCaveGradient
+        ? this.scene.options.scene.caveLines.color.gradientColors
+        : this.scene.options.scene.models.color.gradientColors;
+      this.verticalRuler = this.#createVerticalRulerSprite(gradientColors, this.scene.width / 2 - 30);
+      this.verticalRuler.visible = this.scene.options.scene.sprites3D.ruler.show;
+      this.verticalRuler.userData.isCaveGradient = wantCaveGradient;
+      this.scene.sprites3DGroup.add(this.verticalRuler);
+    }
+
+    // Create model indicator when entering dual mode
+    if (wantDual && !isDual) {
+      const modelX = this.scene.width / 2 - 60;
+      const rulerVisible = this.scene.options.scene.sprites3D.ruler.show;
+      this.modelVerticalRuler = this.#createVerticalRulerSprite(
+        this.scene.options.scene.models.color.gradientColors, modelX
+      );
+      this.modelVerticalRuler.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalRuler);
+
+      this.modelVerticalMaxZText = this.#createVerticalZText('max', '0', modelX);
+      this.modelVerticalMaxZText.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalMaxZText.getSprite());
+
+      this.modelVerticalMinZText = this.#createVerticalZText('min', '0', modelX);
+      this.modelVerticalMinZText.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalMinZText.getSprite());
+
+      this.caveRulerIcon = this.#createRulerIcon('♎', this.scene.width / 2 - 30);
+      this.caveRulerIcon.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.caveRulerIcon.getSprite());
+
+      this.modelRulerIcon = this.#createRulerIcon('🌐', modelX);
+      this.modelRulerIcon.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelRulerIcon.getSprite());
+    }
+
+    // Destroy model indicator when leaving dual mode
+    if (!wantDual && isDual) {
+      this.diposeSprite(this.modelVerticalRuler, this.scene.sprites3DGroup);
+      this.diposeSprite(this.modelVerticalMaxZText.getSprite(), this.scene.sprites3DGroup);
+      this.diposeSprite(this.modelVerticalMinZText.getSprite(), this.scene.sprites3DGroup);
+      this.modelVerticalRuler = null;
+      this.modelVerticalMaxZText = null;
+      this.modelVerticalMinZText = null;
+
+      this.diposeSprite(this.caveRulerIcon.getSprite(), this.scene.sprites3DGroup);
+      this.diposeSprite(this.modelRulerIcon.getSprite(), this.scene.sprites3DGroup);
+      this.caveRulerIcon = null;
+      this.modelRulerIcon = null;
+    }
+
+    // Height is always driven by the same ratio-snapped distance as the horizontal ruler
+    const targetRulerDistance = this.getTargetRulerDistance(this.ratio);
+    const heightInPx = (targetRulerDistance / worldHeightInMeters) * this.scene.height;
+    this.verticalRatioIndicatorHeight = Math.max(50, Math.min(600, heightInPx));
+
+    const caveBBox  = haveCaves  ? this.scene.speleo.computeBoundingBox()  : null;
+    const modelBBox = haveModels ? this.scene.computeModelsBoundingBox()   : null;
+
+    // Update main (cave or models-only) indicator
+    this.verticalRuler.scale.set(15, this.verticalRatioIndicatorHeight, 1);
+    this.verticalRuler.position.set(this.scene.width / 2 - 30, 0, 1);
+    if (haveCaves && caveBBox) {
+      this.verticalMaxZText.update(formatElevation(caveBBox.max.z + elevOffset));
+      this.verticalMinZText.update(formatElevation(caveBBox.min.z + elevOffset));
+    } else if (haveModels && modelBBox) {
+      this.verticalMaxZText.update(formatElevation(modelBBox.max.z + elevOffset));
+      this.verticalMinZText.update(formatElevation(modelBBox.min.z + elevOffset));
+    } else {
+      this.verticalMaxZText.update(formatElevation(targetRulerDistance));
+      this.verticalMinZText.update('0');
+    }
+
     this.#updateVerticalTextPositions();
 
-    // Get min and max Z coordinates from the scene's bounding box.
-    // Cave survey stations are stored relative to the normalizer origin, so we
-    // add the origin's elevation back to show real-world altitude.
-    const elevOffset = globalNormalizer.globalOrigin?.elevation ?? 0;
-    const boundingBox = this.scene.computeBoundingBox();
-    if (boundingBox) {
-      this.verticalMaxZText.update(formatElevation(boundingBox.max.z + elevOffset));
-      this.verticalMinZText.update(formatElevation(boundingBox.min.z + elevOffset));
-    } else {
-      // Fallback to original behavior if no bounding box
-      this.verticalMaxZText.update(formatElevation(verticalIndicatorHeightInMeters));
-      this.verticalMinZText.update('0');
+    // Update model indicator position and labels (dual mode) — placed at the same
+    // Y position as the cave indicator, shifted left enough so labels don't overlap.
+    if (wantDual && this.modelVerticalRuler && modelBBox) {
+      const h = this.verticalRatioIndicatorHeight;
+
+      // Update model labels first so their rendered widths are available
+      this.modelVerticalMaxZText.update(formatElevation(modelBBox.max.z + elevOffset));
+      this.modelVerticalMinZText.update(formatElevation(modelBBox.min.z + elevOffset));
+
+      // Compute X so the widest model label clears the widest cave label by 5px
+      const caveX = this.scene.width / 2 - 30;
+      const caveLabelHalfW = Math.max(
+        this.verticalMaxZText.sprite.scale.x,
+        this.verticalMinZText.sprite.scale.x
+      ) / 2;
+      const modelLabelHalfW = Math.max(
+        this.modelVerticalMaxZText.sprite.scale.x,
+        this.modelVerticalMinZText.sprite.scale.x
+      ) / 2;
+      const modelX = caveX - caveLabelHalfW - 5 - modelLabelHalfW;
+
+      this.modelVerticalRuler.scale.set(15, h, 1);
+      this.modelVerticalRuler.position.set(modelX, 0, 1);
+      this.modelVerticalMaxZText.sprite.position.set(modelX, h / 2 + 20, 1);
+      this.modelVerticalMinZText.sprite.position.set(modelX, -h / 2 - 20, 1);
+
+      if (this.caveRulerIcon) this.caveRulerIcon.sprite.position.set(caveX, h / 2 + 42, 1);
+      if (this.modelRulerIcon) this.modelRulerIcon.sprite.position.set(modelX, h / 2 + 42, 1);
     }
   }
 
-  #createVerticalRuler() {
-    // Create a canvas to draw the vertical gradient ruler
+  #createRulerIcon(symbol, xPosition) {
+    const position = new THREE.Vector3(xPosition, this.verticalRatioIndicatorHeight / 2 + 42, 1);
+    return new TextSprite(
+      symbol,
+      position,
+      {
+        size        : 16,
+        family      : 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif',
+        color       : this.scene.options.scene.sprites3D.textColor,
+        strokeColor : this.scene.options.scene.sprites3D.textStroke
+      },
+      1.0,
+      `ruler icon`
+    );
+  }
+
+  #createVerticalRulerSprite(gradientColors, xPosition) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const width = 15;
@@ -1566,80 +1688,49 @@ class ProfileView extends View {
     canvas.width = width;
     canvas.height = height;
 
-    // Get gradient colors from config
-    const gradientColors = this.scene.options.scene.caveLines.color.gradientColors;
-
-    // Create vertical gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
-
-    // Sort colors by depth and add to gradient
     const sortedColors = [...gradientColors].sort((a, b) => a.depth - b.depth);
     sortedColors.forEach((colorData, index) => {
       const stop = index / (sortedColors.length - 1);
       gradient.addColorStop(stop, colorData.color);
     });
 
-    // Fill with gradient
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
-    // Add tick marks and labels
     ctx.fillStyle = '#ffffff';
-    ctx.font = '10px Arial';
-    ctx.textAlign = 'left';
-
-    // Get min and max Z coordinates for labels (convert to absolute altitude).
-    const elevOffset = globalNormalizer.globalOrigin?.elevation ?? 0;
-    const boundingBox = this.scene.computeBoundingBox();
-    let minZ = 0;
-    let maxZ = 100;
-
-    if (boundingBox) {
-      minZ = boundingBox.min.z + elevOffset;
-      maxZ = boundingBox.max.z + elevOffset;
-    }
-
-    // Add tick marks every 50px with Z coordinate labels
     for (let i = 0; i <= height; i += 50) {
-      const y = height - i; // Invert Y so 0 is at bottom
-      ctx.fillRect(0, y, width, 1);
-
-      // Calculate Z coordinate for this position
-      const zValue = minZ + (i / height) * (maxZ - minZ);
-      ctx.fillText(`${formatDistance(zValue)}`, width + 2, y + 3);
+      ctx.fillRect(0, height - i, width, 1);
     }
 
-    // Create texture from canvas
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
 
-    // Create sprite material and sprite
     const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
     const sprite = new THREE.Sprite(material);
-
-    // Initial position will be set in onResize
-    sprite.position.set(this.scene.width / 2 - 30, 0, 1);
+    sprite.position.set(xPosition, 0, 1);
     sprite.scale.set(width, height, 1);
     sprite.name = 'vertical ruler';
 
     return sprite;
-
   }
 
-  #createVerticalZText(type, text = '0') {
-    // Create vertical Z coordinate text positioned relative to the vertical ruler
-    // The ruler is positioned at (scene.width / 2 - 30, 0, 1) and has height = verticalRatioIndicatorHeight
-    const rulerX = this.scene.width / 2 - 30;
-    const rulerHeight = this.verticalRatioIndicatorHeight;
-    const rulerY = 0; // ruler center Y position
+  #createVerticalRuler() {
+    return this.#createVerticalRulerSprite(
+      this.scene.options.scene.caveLines.color.gradientColors,
+      this.scene.width / 2 - 30
+    );
+  }
 
-    // Position texts at the top and bottom of the ruler
+  #createVerticalZText(type, text = '0', xPosition = this.scene.width / 2 - 30) {
+    const rulerHeight = this.verticalRatioIndicatorHeight;
+    const rulerY = 0;
     const yPosition =
       type === 'max'
-        ? rulerY + rulerHeight / 2 + 20 // top of ruler + offset
-        : rulerY - rulerHeight / 2 - 20; // bottom of ruler - offset
+        ? rulerY + rulerHeight / 2 + 20
+        : rulerY - rulerHeight / 2 - 20;
 
-    const position = new THREE.Vector3(this.scene.width / 2 - 30, yPosition, 1);
+    const position = new THREE.Vector3(xPosition, yPosition, 1);
     return new TextSprite(
       text,
       position,
@@ -1682,26 +1773,61 @@ class ProfileView extends View {
   recreateAllTextSprites() {
     super.recreateAllTextSprites();
 
-    // Recreate max Z text
+    // Recreate cave max Z text
     let maxZLabel = this.verticalMaxZText.label;
     let maxZPrevVisible = this.verticalMaxZText.sprite.visible;
     this.diposeSprite(this.verticalMaxZText.getSprite(), this.scene.sprites3DGroup);
     this.verticalMaxZText = this.#createVerticalZText('max', maxZLabel);
     this.verticalMaxZText.sprite.visible = maxZPrevVisible;
-    const verticalMaxZTextSprite = this.verticalMaxZText.getSprite();
-    this.scene.sprites3DGroup.add(verticalMaxZTextSprite);
+    this.scene.sprites3DGroup.add(this.verticalMaxZText.getSprite());
 
-    // Recreate min Z text
+    // Recreate cave min Z text
     let minZLabel = this.verticalMinZText.label;
     let minZPrevVisible = this.verticalMinZText.sprite.visible;
     this.diposeSprite(this.verticalMinZText.getSprite(), this.scene.sprites3DGroup);
     this.verticalMinZText = this.#createVerticalZText('min', minZLabel);
     this.verticalMinZText.sprite.visible = minZPrevVisible;
-    const verticalMinZTextSprite = this.verticalMinZText.getSprite();
-    this.scene.sprites3DGroup.add(verticalMinZTextSprite);
+    this.scene.sprites3DGroup.add(this.verticalMinZText.getSprite());
+
+    // Recreate model text sprites if in dual mode
+    if (this.modelVerticalMaxZText) {
+      const modelX = this.scene.width / 2 - 60;
+      const modelMaxLabel = this.modelVerticalMaxZText.label;
+      const modelMaxVisible = this.modelVerticalMaxZText.sprite.visible;
+      this.diposeSprite(this.modelVerticalMaxZText.getSprite(), this.scene.sprites3DGroup);
+      this.modelVerticalMaxZText = this.#createVerticalZText('max', modelMaxLabel, modelX);
+      this.modelVerticalMaxZText.sprite.visible = modelMaxVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalMaxZText.getSprite());
+    }
+
+    if (this.modelVerticalMinZText) {
+      const modelX = this.scene.width / 2 - 60;
+      const modelMinLabel = this.modelVerticalMinZText.label;
+      const modelMinVisible = this.modelVerticalMinZText.sprite.visible;
+      this.diposeSprite(this.modelVerticalMinZText.getSprite(), this.scene.sprites3DGroup);
+      this.modelVerticalMinZText = this.#createVerticalZText('min', modelMinLabel, modelX);
+      this.modelVerticalMinZText.sprite.visible = modelMinVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalMinZText.getSprite());
+    }
+
+    if (this.caveRulerIcon) {
+      const visible = this.caveRulerIcon.sprite.visible;
+      this.diposeSprite(this.caveRulerIcon.getSprite(), this.scene.sprites3DGroup);
+      this.caveRulerIcon = this.#createRulerIcon('♎', this.scene.width / 2 - 30);
+      this.caveRulerIcon.sprite.visible = visible;
+      this.scene.sprites3DGroup.add(this.caveRulerIcon.getSprite());
+    }
+
+    if (this.modelRulerIcon) {
+      const visible = this.modelRulerIcon.sprite.visible;
+      this.diposeSprite(this.modelRulerIcon.getSprite(), this.scene.sprites3DGroup);
+      this.modelRulerIcon = this.#createRulerIcon('🌐', this.scene.width / 2 - 60);
+      this.modelRulerIcon.sprite.visible = visible;
+      this.scene.sprites3DGroup.add(this.modelRulerIcon.getSprite());
+    }
 
     this.#updateRotationText();
-    this.#updateVerticalRuler(this.control.zoom);
+    this.#updateVerticalRulers(this.control.zoom);
   }
 
   toggleSpriteVisibility(spriteType, visible) {
@@ -1712,6 +1838,11 @@ class ProfileView extends View {
         this.verticalRuler.visible = visible;
         this.verticalMaxZText.sprite.visible = visible;
         this.verticalMinZText.sprite.visible = visible;
+        if (this.modelVerticalRuler) this.modelVerticalRuler.visible = visible;
+        if (this.modelVerticalMaxZText) this.modelVerticalMaxZText.sprite.visible = visible;
+        if (this.modelVerticalMinZText) this.modelVerticalMinZText.sprite.visible = visible;
+        if (this.caveRulerIcon) this.caveRulerIcon.sprite.visible = visible;
+        if (this.modelRulerIcon) this.modelRulerIcon.sprite.visible = visible;
         break;
     }
   }
@@ -1745,18 +1876,78 @@ class ProfileView extends View {
     super.activate(boundingBox);
     this.control.enabled = true;
 
-    // Recreate vertical ruler with current bounding box data
+    const haveCaves = this.scene.speleo.caveObjects.size > 0;
+    const haveModels = this.scene.models.get3DModelsGroup().children.length > 0;
+    const wantCaveGradient = haveCaves || !haveModels;
+    const rulerVisible = this.scene.options.scene.sprites3D.ruler.show;
+
+    // Recreate main ruler with correct gradient colors
     if (this.verticalRuler) {
       this.scene.sprites3DGroup.remove(this.verticalRuler);
     }
-    this.verticalRuler = this.#createVerticalRuler();
-    this.verticalRuler.visible = this.scene.options.scene.sprites3D.ruler.show;
+    const mainGradientColors = wantCaveGradient
+      ? this.scene.options.scene.caveLines.color.gradientColors
+      : this.scene.options.scene.models.color.gradientColors;
+    this.verticalRuler = this.#createVerticalRulerSprite(mainGradientColors, this.scene.width / 2 - 30);
+    this.verticalRuler.visible = rulerVisible;
+    this.verticalRuler.userData.isCaveGradient = wantCaveGradient;
     this.scene.sprites3DGroup.add(this.verticalRuler);
 
-    // Update text positions and show both Z coordinate texts
-    this.#updateVerticalTextPositions();
-    this.verticalMaxZText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
-    this.verticalMinZText.sprite.visible = this.scene.options.scene.sprites3D.ruler.show;
+    // Dispose existing model indicator sprites and icons
+    if (this.modelVerticalRuler) {
+      this.diposeSprite(this.modelVerticalRuler, this.scene.sprites3DGroup);
+      this.modelVerticalRuler = null;
+    }
+    if (this.modelVerticalMaxZText) {
+      this.diposeSprite(this.modelVerticalMaxZText.getSprite(), this.scene.sprites3DGroup);
+      this.modelVerticalMaxZText = null;
+    }
+    if (this.modelVerticalMinZText) {
+      this.diposeSprite(this.modelVerticalMinZText.getSprite(), this.scene.sprites3DGroup);
+      this.modelVerticalMinZText = null;
+    }
+    if (this.caveRulerIcon) {
+      this.diposeSprite(this.caveRulerIcon.getSprite(), this.scene.sprites3DGroup);
+      this.caveRulerIcon = null;
+    }
+    if (this.modelRulerIcon) {
+      this.diposeSprite(this.modelRulerIcon.getSprite(), this.scene.sprites3DGroup);
+      this.modelRulerIcon = null;
+    }
+
+    // Create model indicator and icons when both caves and models are present
+    if (haveCaves && haveModels) {
+      const modelX = this.scene.width / 2 - 60;
+      this.modelVerticalRuler = this.#createVerticalRulerSprite(
+        this.scene.options.scene.models.color.gradientColors, modelX
+      );
+      this.modelVerticalRuler.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalRuler);
+
+      this.modelVerticalMaxZText = this.#createVerticalZText('max', '0', modelX);
+      this.modelVerticalMaxZText.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalMaxZText.getSprite());
+
+      this.modelVerticalMinZText = this.#createVerticalZText('min', '0', modelX);
+      this.modelVerticalMinZText.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelVerticalMinZText.getSprite());
+
+      this.caveRulerIcon = this.#createRulerIcon('♎', this.scene.width / 2 - 30);
+      this.caveRulerIcon.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.caveRulerIcon.getSprite());
+
+      this.modelRulerIcon = this.#createRulerIcon('🌐', modelX);
+      this.modelRulerIcon.sprite.visible = rulerVisible;
+      this.scene.sprites3DGroup.add(this.modelRulerIcon.getSprite());
+    }
+
+    this.verticalMaxZText.sprite.visible = rulerVisible;
+    this.verticalMinZText.sprite.visible = rulerVisible;
+
+    // Populate correct elevation values and positions for all indicators now
+    // that all sprites exist (super.activate ran #updateVerticalRulers before
+    // the model sprites were created, so we run it again here).
+    this.#updateVerticalRulers(this.control.zoom);
 
     this.compass.material.rotation = -this.control.angle + Math.PI;
     this.#updateRotationText();
@@ -1769,6 +1960,11 @@ class ProfileView extends View {
     this.verticalRuler.visible = false;
     this.verticalMaxZText.sprite.visible = false;
     this.verticalMinZText.sprite.visible = false;
+    if (this.modelVerticalRuler) this.modelVerticalRuler.visible = false;
+    if (this.modelVerticalMaxZText) this.modelVerticalMaxZText.sprite.visible = false;
+    if (this.modelVerticalMinZText) this.modelVerticalMinZText.sprite.visible = false;
+    if (this.caveRulerIcon) this.caveRulerIcon.sprite.visible = false;
+    if (this.modelRulerIcon) this.modelRulerIcon.sprite.visible = false;
   }
 }
 
