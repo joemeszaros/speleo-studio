@@ -14,9 +14,95 @@
  * limitations under the License.
  */
 
-// Imports Therion's binary .lox format: triangulated scrap wall mesh + survey centerline.
-// Format spec derived from therion/src/common-utils/lxFile.h + lxFile.cxx.
-// DEM surface chunks (type 5/6) and LRUD tube generation are out of scope.
+/*
+ * ── Therion .lox binary format ────────────────────────────────────────────────
+ *
+ * Source of truth: therion/src/common-utils/lxFile.h  +  lxFile.cxx
+ * (Therion open-source project, https://therion.speleo.sk)
+ *
+ * A .lox file is a sequence of self-describing chunks written until EOF.
+ * All multi-byte values are little-endian.
+ *
+ * COORDINATE SYSTEM
+ *   x = easting   (projected, e.g. Slovenian GK or UTM)
+ *   y = northing   (projected)
+ *   z = altitude   (metres above sea level)
+ *   Both Loch (Therion's own viewer) and this importer treat Z as the
+ *   vertical axis.  Easting/northing coordinates can be very large
+ *   (~400 000 m), so X and Y must be centred before storing as Float32.
+ *   Z is kept absolute so the elevation indicator displays real altitude.
+ *
+ * CHUNK LAYOUT
+ *   Each chunk starts with a 16-byte header:
+ *     offset  0  uint32  type      — chunk type (1–6, see below)
+ *     offset  4  uint32  recSize   — TOTAL bytes for all records combined
+ *     offset  8  uint32  recCount  — number of records
+ *     offset 12  uint32  dataSize  — bytes of auxiliary data after records
+ *   Immediately after the header:
+ *     recSize bytes  — records (recSize / recCount bytes each)
+ *     dataSize bytes — auxiliary data (strings, point arrays, …)
+ *
+ * CHUNK TYPES
+ *
+ *   Type 1 — SURVEY  (not used by this importer)
+ *     Record (24 bytes):
+ *       0: id              uint32
+ *       4: namePtr         2× uint32  (position + size into aux data)
+ *      12: parentId        uint32
+ *      16: titlePtr        2× uint32
+ *     Aux: null-terminated UTF-8 strings
+ *
+ *   Type 2 — STATION  (52 bytes/record)
+ *       0: id              uint32
+ *       4: surveyId        uint32
+ *       8: namePtr         2× uint32
+ *      16: commentPtr      2× uint32
+ *      24: flags           uint32  (bit 1=surface, 2=entrance, 4=fixed,
+ *                                    8=continuation, 16=hasWalls)
+ *      28: x               float64  easting
+ *      36: y               float64  northing
+ *      44: z               float64  altitude
+ *     Aux: name and comment strings (null-terminated UTF-8)
+ *
+ *   Type 3 — SHOT  (92 bytes/record)
+ *       0: from            uint32   station id
+ *       4: to              uint32   station id
+ *       8: fLRUD[4]        4× float64  left/right/up/down at FROM station
+ *      40: tLRUD[4]        4× float64  left/right/up/down at TO station
+ *      72: flags           uint32  (bit 1=surface, 2=duplicate, 4=notVisible,
+ *                                    8=notLRUD, 16=splay)
+ *      76: sectionType     uint32  (0=none, 1=oval, 2=square, 3=diamond,
+ *                                    4=tunnel)
+ *      80: surveyId        uint32
+ *      84: threshold       float64  (default 60.0)
+ *
+ *   Type 4 — SCRAP  (32 bytes/record)
+ *       0: id              uint32
+ *       4: surveyId        uint32
+ *       8: numPoints       uint32
+ *      12: pointsPtr       2× uint32  offset + size into aux data
+ *      20: num3Angles      uint32   triangle count
+ *      24: trianglesPtr    2× uint32  offset + size into aux data
+ *     Aux layout:
+ *       Points:    numPoints  × lxFile3Point  (3 × float64 = 24 bytes, XYZ)
+ *       Triangles: num3Angles × lxFile3Angle  (3 × uint32  = 12 bytes, vertex indices)
+ *     Notes:
+ *       • Therion does NOT guarantee consistent winding order between consecutive
+ *         triangles.  Two triangles sharing an edge in the SAME direction are
+ *         wound oppositely and would produce cancelling normals after vertex
+ *         merging.  This importer applies a winding-correction pass (fix_direction)
+ *         within each scrap after loading.
+ *       • Degenerate triangles (any two vertex indices equal) appear in some
+ *         files and are skipped.
+ *       • Vertices are NOT merged across scrap boundaries: adjacent scraps can
+ *         have opposite global winding orders, and cross-scrap merging would
+ *         re-introduce the cancelling-normal problem.
+ *
+ *   Type 5 — SURFACE DEM  (skipped)
+ *   Type 6 — SURFACE BMP  (skipped)
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 
 import { Importer } from './importer-base.js';
 import { Mesh3D, ModelFile, Vector } from '../model.js';
