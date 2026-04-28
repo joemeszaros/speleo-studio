@@ -1030,7 +1030,11 @@
       "therionMissingInputFiles": "Ez a Therion fájl egy projektgyökér, amely maga nem tartalmaz felmérési adatokat. Jelöld ki az összes .th fájlt a projektkönyvtárból egyszerre.",
       "therionUnresolvedInputs": "A Therion fájl olyan fájlokra hivatkozik, amelyek nem lettek kiválasztva: {files}. Jelöld ki az összes .th fájlt a projektkönyvtárból egyszerre.",
       "therionUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Therion fájlban — add meg kézzel a koordinátákat",
-      "therionDeclinationAfterShots": "Therion felmérés '{survey}': a 'declination' mérési sorok után szerepel. Ez a centreline szakasz kimaradt — helyezd a 'declination' sort a mérési sorok elé."
+      "therionDeclinationAfterShots": "Therion felmérés '{survey}': a 'declination' mérési sorok után szerepel. Ez a centreline szakasz kimaradt — helyezd a 'declination' sort a mérési sorok elé.",
+      "survexNoData": "Nem található felmérési adat a Survex fájlban",
+      "survexUnresolvedIncludes": "Ez a Survex fájl olyan *include fájlokra hivatkozik, amelyek nem lettek kiválasztva. Jelöld ki az összes .svx fájlt a projektkönyvtárból egyszerre.",
+      "survexUnresolvedInputs": "A Survex fájl olyan fájlokra hivatkozik, amelyek nem lettek kiválasztva: {files}. Jelöld ki az összes .svx fájlt a projektkönyvtárból egyszerre.",
+      "survexUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Survex fájlban — add meg kézzel a koordinátákat"
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",

@@ -24,6 +24,7 @@ import {
   TopodroidImporter,
   JsonImporter,
   TherionImporter,
+  SurvexImporter,
   LoxImporter,
   Importer
 } from './io/import.js';
@@ -306,6 +307,7 @@ class Main {
       polygon   : new PolygonImporter(db, options, scene, this.projectManager),
       json      : new JsonImporter(db, options, scene, this.projectManager, attributeDefs),
       therion   : new TherionImporter(db, options, scene, this.projectManager),
+      survex    : new SurvexImporter(db, options, scene, this.projectManager),
       ply       : new PlyModelImporter(db, options, scene, this.projectManager),
       obj       : new ObjModelImporter(db, options, scene, this.projectManager),
       las       : new LasModelImporter(db, options, scene, this.projectManager),
@@ -360,7 +362,12 @@ class Main {
       try {
         // Batch all .th files together so input directives can be resolved across them
         const therionFiles = files.filter(f => f.name.toLowerCase().endsWith('.th'));
-        const otherFiles   = files.filter(f => !f.name.toLowerCase().endsWith('.th'));
+        // Batch all .svx files together so *include directives can be resolved across them
+        const svxFiles     = files.filter(f => f.name.toLowerCase().endsWith('.svx'));
+        const otherFiles   = files.filter(f =>
+          !f.name.toLowerCase().endsWith('.th') &&
+          !f.name.toLowerCase().endsWith('.svx')
+        );
 
         if (therionFiles.length > 0) {
           try {
@@ -370,6 +377,19 @@ class Main {
             });
           } catch (error) {
             const msgPrefix = i18n.t('errors.import.importFileFailed', { name: therionFiles[0].name });
+            showErrorPanel(`${msgPrefix}: ${error.message}`);
+            console.error(msgPrefix, error);
+          }
+        }
+
+        if (svxFiles.length > 0) {
+          try {
+            const filesMap = new Map(svxFiles.map(f => [f.name, f]));
+            await this.importers.survex.importFiles(filesMap, async (cave) => {
+              await this.#tryAddCave(cave);
+            });
+          } catch (error) {
+            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: svxFiles[0].name });
             showErrorPanel(`${msgPrefix}: ${error.message}`);
             console.error(msgPrefix, error);
           }

@@ -470,9 +470,11 @@ function sanitizeName(value) {
 // All functions convert to the Speleo Studio internal unit (metres / degrees).
 
 function lengthToDegrees(value, unit) {
-  if (unit === 'feet') return value * 0.3048;
-  if (unit === 'yards') return value * 0.9144;
-  return value; // meters (default)
+  if (unit === 'feet' || unit === 'foot' || unit === 'ft') return value * 0.3048;
+  if (unit === 'yards' || unit === 'yard' || unit === 'yd' || unit === 'yds') return value * 0.9144;
+  if (unit === 'centimetres' || unit === 'centimeters' || unit === 'cm') return value * 0.01;
+  if (unit === 'inches' || unit === 'inch' || unit === 'in') return value * 0.0254;
+  return value; // metres (default)
 }
 
 function angleToDegrees(value, unit) {

@@ -1007,7 +1007,11 @@
       "therionMissingInputFiles": "This Therion file is a project root with no survey data of its own. Select all .th files from the project folder together.",
       "therionUnresolvedInputs": "Therion file references files that were not selected: {files}. Select all .th files from the project folder together.",
       "therionUnknownCs": "Unknown coordinate system '{cs}' in Therion file — please specify coordinates manually",
-      "therionDeclinationAfterShots": "Therion survey '{survey}': 'declination' appears after shot data. This centreline section was skipped — move 'declination' before any shot rows."
+      "therionDeclinationAfterShots": "Therion survey '{survey}': 'declination' appears after shot data. This centreline section was skipped — move 'declination' before any shot rows.",
+      "survexNoData": "No survey data found in Survex file",
+      "survexUnresolvedIncludes": "This Survex file references included files that were not selected. Select all .svx files from the project folder together.",
+      "survexUnresolvedInputs": "Survex file references files that were not selected: {files}. Select all .svx files from the project folder together.",
+      "survexUnknownCs": "Unknown coordinate system '{cs}' in Survex file — please specify coordinates manually"
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",
