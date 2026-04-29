@@ -16,8 +16,8 @@
 
 import { CaveComponent, CaveCycle, CaveSection } from './model/cave.js';
 import { Graph } from './utils/graph.js';
-import { randomAlphaNumbericString } from './utils/utils.js';
-import { ShotType } from './model/survey.js';
+import { randomAlphaNumbericString, convertLengthToMeters } from './utils/utils.js';
+import { ShotType, DEFAULT_UNITS } from './model/survey.js';
 
 class SectionHelper {
 
@@ -99,6 +99,7 @@ class SectionHelper {
     const g = new Graph();
     [...cave.stations.keys()].forEach((k) => g.addVertex(k));
     cave.surveys.forEach((s) => {
+      const lengthUnit = s.units?.length ?? DEFAULT_UNITS.length;
       s.validShots.forEach((sh) => {
         if (sh.type !== ShotType.CENTER) {
           return;
@@ -108,7 +109,7 @@ class SectionHelper {
         const toStationName = s.getToStationName(sh);
         const to = cave.stations.get(toStationName);
         if (from !== undefined && to !== undefined) {
-          g.addEdge(fromName, toStationName, sh.length);
+          g.addEdge(fromName, toStationName, convertLengthToMeters(sh.length, lengthUnit));
         }
       });
     });

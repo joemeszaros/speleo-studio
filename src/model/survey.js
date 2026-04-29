@@ -15,7 +15,9 @@
  */
 
 import { Polar } from '../model.js';
-import { degreesToRads, sanitizeName } from '../utils/utils.js';
+import { degreesToRads, sanitizeName, convertLengthToMeters } from '../utils/utils.js';
+
+const DEFAULT_UNITS = { length: 'meters', angle: 'degrees' };
 
 /**
  * Enum for Shot types
@@ -88,11 +90,15 @@ class Shot {
     return this.type === ShotType.AUXILIARY;
   }
 
-  isValid() {
-    return this.validate().length === 0;
+  isValid(units) {
+    return this.validate(undefined, units).length === 0;
   }
 
-  validate(i18n) {
+  validate(i18n, units) {
+    const angleUnit = units?.angle ?? DEFAULT_UNITS.angle;
+    const azimuthMax = angleUnit === 'grads' ? 400 : 360;
+    const clinoMax = angleUnit === 'grads' ? 100 : 90;
+
     const isValidFloat = (f) => {
       return typeof f === 'number' && f !== Infinity && !isNaN(f);
     };
@@ -124,12 +130,12 @@ class Shot {
       errors.push(t('validation.shot.invalidLength'));
     }
 
-    if (isValidFloat(this.clino) && (this.clino > 90 || this.clino < -90)) {
-      errors.push(t('validation.shot.invalidClino'));
+    if (isValidFloat(this.clino) && (this.clino > clinoMax || this.clino < -clinoMax)) {
+      errors.push(t('validation.shot.invalidClino', { max: clinoMax }));
     }
 
-    if (isValidFloat(this.azimuth) && (this.azimuth > 360 || this.clino < -360)) {
-      errors.push(t('validation.shot.invalidAzimuth'));
+    if (isValidFloat(this.azimuth) && (this.azimuth > azimuthMax || this.azimuth < -azimuthMax)) {
+      errors.push(t('validation.shot.invalidAzimuth', { max: azimuthMax }));
     }
 
     ['length', 'azimuth', 'clino'].forEach((f) => {
@@ -300,6 +306,7 @@ class Survey {
     metadata = undefined,
     start = undefined,
     shots = [],
+    units = undefined,
     orphanShotIds = new Set(),
     duplicateShotIds = new Set()
   ) {
@@ -310,6 +317,7 @@ class Survey {
     this.shots = shots;
     this.orphanShotIds = orphanShotIds;
     this.duplicateShotIds = duplicateShotIds;
+    this.units = units ?? { ...DEFAULT_UNITS };
     this.isolated = false;
     this.validShots = this.getValidShots();
     this.invalidShotIds = this.getInvalidShotIds();
@@ -344,11 +352,12 @@ class Survey {
   }
 
   getValidShots() {
-    return this.shots.filter((sh) => sh.isComplete() && sh.isValid());
+    //FIXME: it would be better to use units from config because error messages are not survey specific
+    return this.shots.filter((sh) => sh.isComplete() && sh.isValid(this.units));
   }
 
   getInvalidShotIds() {
-    return new Set(this.shots.filter((sh) => !sh.isComplete() || !sh.isValid()).map((sh) => sh.id));
+    return new Set(this.shots.filter((sh) => !sh.isComplete() || !sh.isValid(this.units)).map((sh) => sh.id));
   }
 
   getStats() {
@@ -361,6 +370,7 @@ class Survey {
 
     const stationNames = new Set();
 
+    const lengthUnit = this.units?.length ?? DEFAULT_UNITS.length;
     this.shots.forEach((shot) => {
       shots++;
 
@@ -371,17 +381,19 @@ class Survey {
         return;
       }
 
+      const lenM = convertLengthToMeters(shot.length, lengthUnit);
+
       if (this.orphanShotIds.has(shot.id)) {
-        orphanLength += shot.length;
+        orphanLength += lenM;
       }
       if (this.invalidShotIds.has(shot.id)) {
-        invalidLength += shot.length;
+        invalidLength += lenM;
       }
 
       if (shot.isAuxiliary()) {
-        auxiliaryLength += shot.length;
+        auxiliaryLength += lenM;
       } else if (shot.isCenter()) {
-        length += shot.length;
+        length += lenM;
       }
 
       if (shot.isSplay()) {
@@ -426,6 +438,7 @@ class Survey {
       name     : this.name,
       start    : this.start,
       metadata : this.metadata?.toExport(),
+      units    : { ...this.units },
       shots    : this.shots.map((s) => s.toExport())
     };
   }
@@ -434,6 +447,7 @@ class Survey {
     pure.name = sanitizeName(pure.name);
     pure.shots = pure.shots.map((s, index) => Object.assign(new Shot(index + 1), s));
     pure.metadata = pure.metadata !== undefined ? SurveyMetadata.fromPure(pure.metadata) : undefined;
+    pure.units = pure.units ?? { ...DEFAULT_UNITS };
     const survey = Object.assign(new Survey(), pure);
     survey.validShots = survey.getValidShots();
     survey.invalidShotIds = survey.getInvalidShotIds();
@@ -479,6 +493,7 @@ class SurveyAlias {
 }
 
 export {
+  DEFAULT_UNITS,
   ShotType,
   Shot,
   StationComment,

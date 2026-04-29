@@ -300,7 +300,7 @@ describe('SurvexImporter', () => {
   });
 
   describe('units', () => {
-    it('handles *units tape feet', async () => {
+    it('preserves *units tape feet on the survey and keeps shot length in feet', async () => {
       const svx = `
 *begin test
   *units tape feet
@@ -309,9 +309,52 @@ describe('SurvexImporter', () => {
 *end test
 `;
       const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
-      const shot = cave.surveys[0].shots[0];
-      // 32.808 feet ≈ 10.0 meters (within rounding)
-      expect(shot.length).toBeCloseTo(10.0, 0);
+      const survey = cave.surveys[0];
+      expect(survey.units).toEqual({ length: 'feet', angle: 'degrees' });
+      expect(survey.shots[0].length).toBeCloseTo(32.808, 3);
+    });
+
+    it('preserves *units compass grad and clino grad together', async () => {
+      const svx = `
+*begin test
+  *units compass grads
+  *units clino grads
+  *data normal from to tape compass clino
+  0 1 10 200 -22.222
+*end test
+`;
+      const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
+      const survey = cave.surveys[0];
+      expect(survey.units).toEqual({ length: 'meters', angle: 'grads' });
+      expect(survey.shots[0].azimuth).toBeCloseTo(200.0, 3);
+      expect(survey.shots[0].clino).toBeCloseTo(-22.222, 3);
+    });
+
+    it('defaults to meters/degrees when no *units directive is given', async () => {
+      const svx = `
+*begin test
+  *data normal from to tape compass clino
+  0 1 10 90 0
+*end test
+`;
+      const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
+      expect(cave.surveys[0].units).toEqual({ length: 'meters', angle: 'degrees' });
+    });
+
+    it('falls back to meters when length unit is unsupported (e.g., centimetres)', async () => {
+      const svx = `
+*begin test
+  *units tape centimetres
+  *data normal from to tape compass clino
+  0 1 1000 90 0
+*end test
+`;
+      const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
+      const survey = cave.surveys[0];
+      // cm isn't one of Speleo Studio's storage units, so the parser converts to metres
+      // and the survey is stamped as meters.
+      expect(survey.units.length).toBe('meters');
+      expect(survey.shots[0].length).toBeCloseTo(10, 3);
     });
   });
 
@@ -468,7 +511,7 @@ describe('SurvexImporter', () => {
       expect(shot.clino).toBeCloseTo(90, 1);
     });
 
-    it('converts dx/dy/dz from current length units', async () => {
+    it('cartesian dx/dy/dz: shot length round-trips back to the original feet value', async () => {
       const svx = `
 *begin test
   *units tape feet
@@ -477,10 +520,11 @@ describe('SurvexImporter', () => {
 *end test
 `;
       const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
-      const shot = cave.surveys[0].shots[0];
-      // 32.808 feet ≈ 10 metres North
-      expect(shot.length).toBeCloseTo(10, 0);
-      expect(shot.azimuth).toBeCloseTo(0, 1);
+      const survey = cave.surveys[0];
+      // Survey is stamped as feet, so the cartesian length comes back in feet, not metres.
+      expect(survey.units).toEqual({ length: 'feet', angle: 'degrees' });
+      expect(survey.shots[0].length).toBeCloseTo(32.808, 3);
+      expect(survey.shots[0].azimuth).toBeCloseTo(0, 1);
     });
 
     it('treats cartesian shots with - destination as splays', async () => {
@@ -599,7 +643,7 @@ describe('SurvexImporter', () => {
       expect(shot.length).toBeCloseTo(10, 1);
     });
 
-    it('converts calibration offset from tape units when no explicit unit given', async () => {
+    it('applies calibration offset using the current tape unit, then preserves the unit', async () => {
       const svx = `
 *begin test
   *units tape feet
@@ -609,9 +653,10 @@ describe('SurvexImporter', () => {
 *end test
 `;
       const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
-      const shot = cave.surveys[0].shots[0];
-      // (31.808 ft + 1 ft) * 0.3048 = 32.808 ft ≈ 10 m
-      expect(shot.length).toBeCloseTo(10, 0);
+      const survey = cave.surveys[0];
+      // Survey stays in feet; calibration adds 1 ft → 32.808 ft total length.
+      expect(survey.units).toEqual({ length: 'feet', angle: 'degrees' });
+      expect(survey.shots[0].length).toBeCloseTo(32.808, 3);
     });
 
     it('converts compass calibration offset from explicit unit', async () => {

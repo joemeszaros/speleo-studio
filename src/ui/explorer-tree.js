@@ -419,7 +419,8 @@ export class ExplorerTree {
               caveNode.data,
               undefined,
               document.getElementById('fixed-size-editor'),
-              this.declinationCache
+              this.declinationCache,
+              this.options
             )
           );
         }
@@ -592,8 +593,8 @@ export class ExplorerTree {
             surveyNode.parent.data,
             surveyNode.data,
             document.getElementById('fixed-size-editor'),
-            this.declinationCache
-
+            this.declinationCache,
+            this.options
           );
           this.editor.setupPanel();
           this.editor.show();

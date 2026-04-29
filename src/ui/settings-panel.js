@@ -16,6 +16,7 @@
 
 import { ConfigManager } from '../config.js';
 import { i18n } from '../i18n/i18n.js';
+import { DEFAULT_UNITS } from '../model/survey.js';
 
 export class SettingsPanel {
   constructor(container, options) {
@@ -493,38 +494,31 @@ export class SettingsPanel {
             this.options.scene.models.maxPoints = value * 1000000;
           }
         ),
-        this.createSubGroup(
-          i18n.t('ui.settingsPanel.groups.edl'),
-          [
-            this.createCheckbox(
-              i18n.t('ui.settingsPanel.labels.edlEnabled'),
-              this.options.scene.edl.enabled,
-              (value) => {
-                this.options.scene.edl.enabled = value;
-              }
-            ),
-            this.createRangeInput(
-              i18n.t('ui.settingsPanel.labels.edlStrength'),
-              this.options.scene.edl.strength,
-              0.1,
-              30.0,
-              0.1,
-              (value) => {
-                this.options.scene.edl.strength = value;
-              }
-            ),
-            this.createRangeInput(
-              i18n.t('ui.settingsPanel.labels.edlRadius'),
-              this.options.scene.edl.radius,
-              0.5,
-              6.0,
-              0.1,
-              (value) => {
-                this.options.scene.edl.radius = value;
-              }
-            )
-          ]
-        )
+        this.createSubGroup(i18n.t('ui.settingsPanel.groups.edl'), [
+          this.createCheckbox(i18n.t('ui.settingsPanel.labels.edlEnabled'), this.options.scene.edl.enabled, (value) => {
+            this.options.scene.edl.enabled = value;
+          }),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.edlStrength'),
+            this.options.scene.edl.strength,
+            0.1,
+            30.0,
+            0.1,
+            (value) => {
+              this.options.scene.edl.strength = value;
+            }
+          ),
+          this.createRangeInput(
+            i18n.t('ui.settingsPanel.labels.edlRadius'),
+            this.options.scene.edl.radius,
+            0.5,
+            6.0,
+            0.1,
+            (value) => {
+              this.options.scene.edl.radius = value;
+            }
+          )
+        ])
       ],
       true
     );
@@ -793,6 +787,38 @@ export class SettingsPanel {
 
     // Color Gradient Section (merged cave + model)
     this.createCombinedGradientSection();
+
+    // General Settings Section (collapsed by default)
+    this.createSection(
+      '⛯ ' + i18n.t('ui.settingsPanel.sections.generalSettings'),
+      [
+        this.createSelect(
+          i18n.t('ui.settingsPanel.labels.lengthUnit'),
+          [
+            { value: 'meters', text: i18n.t('ui.settingsPanel.units.meters') },
+            { value: 'feet', text: i18n.t('ui.settingsPanel.units.feet') },
+            { value: 'yards', text: i18n.t('ui.settingsPanel.units.yards') },
+            { value: 'inches', text: i18n.t('ui.settingsPanel.units.inches') }
+          ],
+          this.options.units?.length ?? DEFAULT_UNITS.length,
+          (value) => {
+            this.options.units.length = value;
+          }
+        ),
+        this.createSelect(
+          i18n.t('ui.settingsPanel.labels.angleUnit'),
+          [
+            { value: 'degrees', text: i18n.t('ui.settingsPanel.units.degrees') },
+            { value: 'grads', text: i18n.t('ui.settingsPanel.units.grads') }
+          ],
+          this.options.units?.angle ?? DEFAULT_UNITS.angle,
+          (value) => {
+            this.options.units.angle = value;
+          }
+        )
+      ],
+      true
+    );
   }
 
   createSection(title, items, collapsed = false, visibilityKey = null, onVisibilityChange = null) {
@@ -950,11 +976,16 @@ export class SettingsPanel {
     select.className = 'settings-input';
     select.onchange = (e) => onChange(e.target.value);
 
-    // Create option elements for each option
-    options.forEach((value) => {
+    // Create option elements for each option (accepts strings or {value, text} objects)
+    options.forEach((opt) => {
       const optionElement = document.createElement('option');
-      optionElement.value = value;
-      optionElement.textContent = value;
+      if (typeof opt === 'object' && opt !== null) {
+        optionElement.value = opt.value;
+        optionElement.textContent = opt.text;
+      } else {
+        optionElement.value = opt;
+        optionElement.textContent = opt;
+      }
       select.appendChild(optionElement);
     });
 

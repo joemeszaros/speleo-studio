@@ -15,15 +15,15 @@
  */
 
 import { SectionAttribute, ComponentAttribute, StationAttribute, Vector, Offset } from '../../model.js';
-import { ShotType } from '../../model/survey.js';
+import { ShotType, DEFAULT_UNITS } from '../../model/survey.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
 import { randomAlphaNumbericString } from '../../utils/utils.js';
+import * as U from '../../utils/utils.js';
 import { wm } from '../window.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
 import { Editor } from './base.js';
-import * as U from '../../utils/utils.js';
 
 class BaseAttributeEditor extends Editor {
 
@@ -694,7 +694,12 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         field            : 'distance',
         editor           : false,
         mutatorClipboard : this.baseTableFunctions.floatAccessor,
-        formatter        : this.baseTableFunctions.floatFormatter('0'),
+        formatter        : (cell) => {
+          const v = cell.getValue();
+          if (typeof v !== 'number' || isNaN(v)) return '0';
+          const u = this.options?.units?.length ?? DEFAULT_UNITS.length;
+          return `${U.convertLengthFromMeters(v, u).toFixed(2)} ${i18n.t(`ui.units.short.${u}`)}`;
+        },
         bottomCalc       : this.baseTableFunctions.sumDistance
       },
       {

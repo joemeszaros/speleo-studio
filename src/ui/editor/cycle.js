@@ -19,6 +19,7 @@ import { SectionHelper } from '../../section.js';
 import { wm } from '../window.js';
 import { Polar } from '../../model.js';
 import { CaveCycle } from '../../model/cave.js';
+import { DEFAULT_UNITS } from '../../model/survey.js';
 import { CycleUtil } from '../../utils/cycle.js';
 import { IconBar } from './iconbar.js';
 import { i18n } from '../../i18n/i18n.js';
@@ -119,9 +120,26 @@ class CyclePanel {
   }
 
   #getColumns() {
+    const getDUnits = () => this.options?.units ?? DEFAULT_UNITS;
+    const shortLengthLabel = (u) => i18n.t(`ui.units.short.${u}`);
+    const shortAngleLabel = (u) => i18n.t(`ui.units.short.${u}`);
 
     const sumErrorDistance = (_values, data) => {
-      return data.reduce((sum, v) => sum + (v.errorDistance || 0), 0).toFixed(2);
+      const sumM = data.reduce((sum, v) => sum + (v.errorDistance || 0), 0);
+      const u = getDUnits().length;
+      return `${U.convertLengthFromMeters(sumM, u).toFixed(2)} ${shortLengthLabel(u)}`;
+    };
+    const lengthFmt = (cell) => {
+      const v = cell.getValue();
+      if (typeof v !== 'number' || isNaN(v)) return '';
+      const u = getDUnits().length;
+      return `${U.convertLengthFromMeters(v, u).toFixed(3)} ${shortLengthLabel(u)}`;
+    };
+    const angleFmt = (cell) => {
+      const v = cell.getValue();
+      if (typeof v !== 'number' || isNaN(v)) return '';
+      const u = getDUnits().angle;
+      return `${U.convertAngleFromDegrees(v, u).toFixed(3)} ${shortAngleLabel(u)}`;
     };
     return [
       {
@@ -143,23 +161,23 @@ class CyclePanel {
       {
         title     : i18n.t('ui.editors.cycles.columns.distance'),
         field     : 'distance',
-        formatter : (cell) => cell.getValue().toFixed(3)
+        formatter : lengthFmt
       },
       {
         title      : i18n.t('ui.editors.cycles.columns.errorDistance'),
         field      : 'errorDistance',
-        formatter  : (cell) => cell.getValue().toFixed(3),
+        formatter  : lengthFmt,
         bottomCalc : sumErrorDistance
       },
       {
         title     : i18n.t('ui.editors.cycles.columns.errorAzimuth'),
         field     : 'errorAzimuth',
-        formatter : (cell) => cell.getValue().toFixed(3)
+        formatter : angleFmt
       },
       {
         title     : i18n.t('ui.editors.cycles.columns.errorClino'),
         field     : 'errorClino',
-        formatter : (cell) => cell.getValue().toFixed(3)
+        formatter : angleFmt
       },
       {
         title     : i18n.t('ui.editors.cycles.columns.errorPercentage'),
@@ -337,11 +355,13 @@ class CyclePanel {
         if (s.diff.length() > 0.1) {
           const from = this.cave.stations.get(s.shot.from);
           const fromPos = from.position;
+          const aziDeg = U.convertAngleToDegrees(s.shot.azimuth, s.survey?.units?.angle ?? DEFAULT_UNITS.angle);
+          const cliDeg = U.convertAngleToDegrees(s.shot.clino, s.survey?.units?.angle ?? DEFAULT_UNITS.angle);
           const toPos = from.position.add(
             new Polar(
               s.diff.length(),
-              U.degreesToRads(s.shot.azimuth + s.declination + s.convergence),
-              U.degreesToRads(s.shot.clino)
+              U.degreesToRads(aziDeg + s.declination + s.convergence),
+              U.degreesToRads(cliDeg)
             ).toVector()
           );
           if (fromPos !== undefined && toPos !== undefined) {

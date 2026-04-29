@@ -16,7 +16,7 @@
 
 import { Editor } from './base.js';
 import { wm } from '../window.js';
-import { Shot, ShotType } from '../../model/survey.js';
+import { Shot, ShotType, DEFAULT_UNITS } from '../../model/survey.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
@@ -138,7 +138,7 @@ export class SurveyEditor extends Editor {
         newRow.message = i18n.t('ui.editors.survey.message.missingFields', { fields: translatedFields.join(',') });
         rowsToUpdated.push(newRow);
       } else {
-        const shotErrors = shot.validate(i18n);
+        const shotErrors = shot.validate(i18n, this.options.units);
         validationErrors.push(...shotErrors);
         if (validationErrors.length > 0) {
           const status = 'invalid';
@@ -180,6 +180,14 @@ export class SurveyEditor extends Editor {
 
   closeEditor() {
     this.updateSurvey();
+    if (this._unitsChangedHandler) {
+      document.removeEventListener('unitsChanged', this._unitsChangedHandler);
+      this._unitsChangedHandler = undefined;
+    }
+    if (this._surveyUnitsChangedHandler) {
+      document.removeEventListener('surveyChanged', this._surveyUnitsChangedHandler);
+      this._surveyUnitsChangedHandler = undefined;
+    }
     super.closeEditor();
   }
 
@@ -525,15 +533,80 @@ export class SurveyEditor extends Editor {
       return data.length;
     };
 
-    const sumCenterLines = function (_values, data) {
-      var sumLength = 0;
+    // Survey storage units (fixed for the lifetime of the survey).
+    // Display units are read live from this.options.units so formatters
+    // pick up changes from settings without rebuilding the table.
+    const sUnits = this.survey.units ?? DEFAULT_UNITS;
+    const getDUnits = () => this.options.units ?? DEFAULT_UNITS;
+
+    // Show the value with at most `maxDecimals` digits but strip trailing zeros
+    // so 10 stays "10", 5.2 stays "5.2", 3.04800 becomes "3.048".
+    const trimNumber = (n, maxDecimals) => parseFloat(n.toFixed(maxDecimals)).toString();
+
+    const sumCenterLines = (_values, data) => {
+      let sumStored = 0;
       data.forEach((value) => {
         if (value !== undefined && value.length !== undefined) {
-          sumLength += value.type === ShotType.CENTER ? U.parseMyFloat(value.length) : 0;
+          sumStored += value.type === ShotType.CENTER ? U.parseMyFloat(value.length) : 0;
         }
       });
+      const dUnits = getDUnits();
+      return trimNumber(U.convertLength(sumStored, sUnits.length, dUnits.length), 2);
+    };
 
-      return sumLength.toFixed(2);
+    const lengthFormatter = (cell) => {
+      const v = cell.getValue();
+      if (v == null || typeof v !== 'number' || isNaN(v)) return v ?? '';
+      const d = getDUnits().length;
+      // No conversion → show the raw stored value (preserves user-entered precision)
+      if (d === sUnits.length) return v.toString();
+      return trimNumber(U.convertLength(v, sUnits.length, d), 3);
+    };
+    // mutatorEdit may be called repeatedly while the user is mid-type
+    // (e.g. via custom edit mode that writes one character at a time).
+    // Skip conversion for incomplete strings like "1.", "-", "" so the
+    // partial value can keep accumulating; only convert complete numbers.
+    const lengthMutatorEdit = (value) => {
+      if (typeof value === 'string' && !U.isFloatStr(value.trim())) return value;
+      const n = U.parseMyFloat(value);
+      if (n === undefined || isNaN(n)) return value;
+      const d = getDUnits().length;
+      if (d === sUnits.length) return n;
+      return U.convertLength(n, d, sUnits.length);
+    };
+    const angleFormatter = (cell) => {
+      const v = cell.getValue();
+      if (v == null || typeof v !== 'number' || isNaN(v)) return v ?? '';
+      const d = getDUnits().angle;
+      if (d === sUnits.angle) return v.toString();
+      return trimNumber(U.convertAngle(v, sUnits.angle, d), 3);
+    };
+    const angleMutatorEdit = (value) => {
+      if (typeof value === 'string' && !U.isFloatStr(value.trim())) return value;
+      const n = U.parseMyFloat(value);
+      if (n === undefined || isNaN(n)) return value;
+      const d = getDUnits().angle;
+      if (d === sUnits.angle) return n;
+      return U.convertAngle(n, d, sUnits.angle);
+    };
+
+    // Validators run on user input (display units). Build live validators
+    // that look up the current display unit each time.
+    const azimuthRangeValidator = {
+      type : (_cell, value) => {
+        const n = U.parseMyFloat(value);
+        if (n === undefined || isNaN(n)) return true; // float validator handles non-numbers
+        const max = getDUnits().angle === 'grads' ? 400 : 360;
+        return n >= -max && n <= max;
+      }
+    };
+    const clinoRangeValidator = {
+      type : (_cell, value) => {
+        const n = U.parseMyFloat(value);
+        if (n === undefined || isNaN(n)) return true;
+        const max = getDUnits().angle === 'grads' ? 100 : 90;
+        return n >= -max && n <= max;
+      }
     };
 
     const typeIcon = (cell) => {
@@ -600,27 +673,33 @@ export class SurveyEditor extends Editor {
       {
         title        : i18n.t('ui.editors.survey.columns.length'),
         field        : 'length',
-        editor       : true,
+        editor       : 'input',
         headerFilter : 'input',
         accessor     : this.baseTableFunctions.floatAccessor,
+        formatter    : lengthFormatter,
+        mutatorEdit  : lengthMutatorEdit,
         validator    : ['required', 'min:0', customValidator],
         bottomCalc   : sumCenterLines
       },
       {
         title        : i18n.t('ui.editors.survey.columns.azimuth'),
         field        : 'azimuth',
-        editor       : true,
+        editor       : 'input',
         headerFilter : 'input',
         accessor     : this.baseTableFunctions.floatAccessor,
-        validator    : ['required', 'min:-360', 'max:360', customValidator]
+        formatter    : angleFormatter,
+        mutatorEdit  : angleMutatorEdit,
+        validator    : ['required', customValidator, azimuthRangeValidator]
       },
       {
         title        : i18n.t('ui.editors.survey.columns.clino'),
         field        : 'clino',
-        editor       : true,
+        editor       : 'input',
         headerFilter : 'input',
         accessor     : this.baseTableFunctions.floatAccessor,
-        validator    : ['required', 'min:-90', 'max:90', customValidator]
+        formatter    : angleFormatter,
+        mutatorEdit  : angleMutatorEdit,
+        validator    : ['required', customValidator, clinoRangeValidator]
       }
     ];
     const xyz = [
@@ -800,6 +879,25 @@ export class SurveyEditor extends Editor {
 
     contentElmnt.appendChild(this.#buildToggleColumnMenu(columns));
 
+    // Refresh cell display + bottom calc when the user changes display units.
+    // Column titles will update on the next editor open.
+    this._unitsChangedHandler = () => {
+      if (this.table) {
+        this.table.redraw(true);
+      }
+    };
+    document.addEventListener('unitsChanged', this._unitsChangedHandler);
+
+    // When the survey's stored units change (via the survey sheet), the formatter,
+    // mutator and validator closures captured in the column definitions are stale.
+    // Rebuild the panel so they pick up the new survey.units.
+    this._surveyUnitsChangedHandler = (e) => {
+      if (e.detail?.survey === this.survey && e.detail?.reasons?.includes('units')) {
+        this.panel.innerHTML = '';
+        this.buildPanel(this.panel, () => this.closeEditor());
+      }
+    };
+    document.addEventListener('surveyChanged', this._surveyUnitsChangedHandler);
   }
 
   #emitSurveyDataUpdated() {

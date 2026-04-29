@@ -15,7 +15,7 @@
  */
 
 import * as U from './utils/utils.js';
-import { SurveyStation as ST, ShotWithSurvey } from './model/survey.js';
+import { SurveyStation as ST, ShotWithSurvey, DEFAULT_UNITS } from './model/survey.js';
 import { Vector, Color } from './model.js';
 import { ShotType } from './model/survey.js';
 import { CoordinateSystemType, StationCoordinates, WGS84Coordinate } from './model/geo.js';
@@ -144,10 +144,14 @@ class SurveyHelper {
         let fromStation = stations.get(sh.from);
         let toStation = stations.get(sh.to);
 
+        const lenM = U.convertLengthToMeters(sh.length, survey.units?.length ?? DEFAULT_UNITS.length);
+        const aziDeg = U.convertAngleToDegrees(sh.azimuth, survey.units?.angle ?? DEFAULT_UNITS.angle);
+        const cliDeg = U.convertAngleToDegrees(sh.clino, survey.units?.angle ?? DEFAULT_UNITS.angle);
+
         const polarVector = U.fromPolar(
-          sh.length,
-          U.degreesToRads(sh.azimuth + declination - convergence),
-          U.degreesToRads(sh.clino)
+          lenM,
+          U.degreesToRads(aziDeg + declination - convergence),
+          U.degreesToRads(cliDeg)
         );
 
         const newStation = (position, prevSt, diff) => {
@@ -339,13 +343,14 @@ class SurveyHelper {
       if (index === 0) {
         startStationName = s.start !== undefined ? s.start : s.shots[0].from;
       }
+      const lengthUnit = s.units?.length ?? DEFAULT_UNITS.length;
       s.validShots.forEach((sh) => {
         const fromName = s.getFromStationName(sh);
         const from = cave.stations.get(fromName);
         const toStationName = s.getToStationName(sh);
         const to = cave.stations.get(toStationName);
         if (from !== undefined && to !== undefined) {
-          g.addEdge(fromName, toStationName, sh.length);
+          g.addEdge(fromName, toStationName, U.convertLengthToMeters(sh.length, lengthUnit));
         }
       });
     });

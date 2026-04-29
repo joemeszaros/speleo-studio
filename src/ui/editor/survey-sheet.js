@@ -16,7 +16,9 @@
 
 import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor } from './base.js';
-import { SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument } from '../../model/survey.js';
+import {
+  SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument, DEFAULT_UNITS
+} from '../../model/survey.js';
 import { CoordinateSystemType } from '../../model/geo.js';
 import { WGS84Converter } from '../../utils/geo.js';
 import { showErrorPanel } from '../popups.js';
@@ -26,13 +28,14 @@ import { wm } from '../window.js';
 
 export class SurveySheetEditor extends BaseEditor {
 
-  constructor(db, cave, survey, panel, declinationCache) {
+  constructor(db, cave, survey, panel, declinationCache, options) {
     super(panel);
     this.panel = panel;
     this.db = db;
     this.cave = cave;
     this.survey = survey;
     this.declinationCache = declinationCache;
+    this.options = options;
     this.declinationOfficial = survey?.metadata?.declinationReal;
     document.addEventListener('languageChanged', () => this.setupPanel());
   }
@@ -56,6 +59,7 @@ export class SurveySheetEditor extends BaseEditor {
 
   buildForm(contentElmnt) {
 
+    const initialUnits = this.survey?.units ?? this.options?.units ?? DEFAULT_UNITS;
     this.formData = {
       name        : this.survey?.name || '',
       start       : this.survey?.start || '',
@@ -64,7 +68,9 @@ export class SurveySheetEditor extends BaseEditor {
       convergence : this.survey?.metadata?.convergence ?? '',
       team        : this.survey?.metadata?.team?.name || '',
       members     : (this.survey?.metadata?.team?.members || []).map((m) => ({ name: m.name, role: m.role })),
-      instruments : (this.survey?.metadata?.instruments || []).map((i) => ({ name: i.name, value: i.value }))
+      instruments : (this.survey?.metadata?.instruments || []).map((i) => ({ name: i.name, value: i.value })),
+      lengthUnit  : initialUnits.length,
+      angleUnit   : initialUnits.angle
     };
 
     const form = U.node`<form class="editor"></form>`;
@@ -88,6 +94,7 @@ export class SurveySheetEditor extends BaseEditor {
     this.surveyHasChanged = false;
     this.nameHasChanged = false;
     this.declinationOrStartChanged = false;
+    this.unitsHaveChanged = false;
 
     // Helper function to create form field
     const createField = (f, container) => {
@@ -125,6 +132,32 @@ export class SurveySheetEditor extends BaseEditor {
       const fieldContainer = U.node`<div class="sheet-editor-field"></div>`;
       fieldContainer.appendChild(label);
       fieldContainer.appendChild(input);
+      container.appendChild(fieldContainer);
+    };
+
+    const createSelectField = (f, container) => {
+      const select = document.createElement('select');
+      select.id = f.id;
+      select.name = f.id;
+      const currentValue = this.formData[f.id];
+      f.options.forEach((opt) => {
+        const o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.text;
+        if (opt.value === currentValue) o.selected = true;
+        select.appendChild(o);
+      });
+      select.onchange = (e) => {
+        if (this.formData[f.id] !== e.target.value) {
+          this.surveyHasChanged = true;
+          this.unitsHaveChanged = true;
+          this.formData[f.id] = e.target.value;
+        }
+      };
+      const label = U.node`<label class="sheet-editor-label" for="${f.id}">${f.label}: </label>`;
+      const fieldContainer = U.node`<div class="sheet-editor-field"></div>`;
+      fieldContainer.appendChild(label);
+      fieldContainer.appendChild(select);
       container.appendChild(fieldContainer);
     };
 
@@ -168,6 +201,32 @@ export class SurveySheetEditor extends BaseEditor {
         type     : 'number',
         step     : 'any',
         required : true
+      },
+      column2
+    );
+
+    createSelectField(
+      {
+        label   : i18n.t('ui.settingsPanel.labels.lengthUnit'),
+        id      : 'lengthUnit',
+        options : [
+          { value: 'meters', text: i18n.t('ui.settingsPanel.units.meters') },
+          { value: 'feet', text: i18n.t('ui.settingsPanel.units.feet') },
+          { value: 'yards', text: i18n.t('ui.settingsPanel.units.yards') },
+          { value: 'inches', text: i18n.t('ui.settingsPanel.units.inches') }
+        ]
+      },
+      column1
+    );
+
+    createSelectField(
+      {
+        label   : i18n.t('ui.settingsPanel.labels.angleUnit'),
+        id      : 'angleUnit',
+        options : [
+          { value: 'degrees', text: i18n.t('ui.settingsPanel.units.degrees') },
+          { value: 'grads', text: i18n.t('ui.settingsPanel.units.grads') }
+        ]
       },
       column2
     );
@@ -285,10 +344,15 @@ export class SurveySheetEditor extends BaseEditor {
         ) {
           metadata.convergence = this.getConvergence(this.cave.geoData);
         }
-        this.survey = new Survey(this.formData.name, true, metadata, start);
+        const newSurveyUnits = { length: this.formData.lengthUnit, angle: this.formData.angleUnit };
+        this.survey = new Survey(this.formData.name, true, metadata, start, [], newSurveyUnits, new Set(), new Set());
         this.#emitSurveyAdded();
       } else if (this.surveyHasChanged) {
 
+        if (this.unitsHaveChanged) {
+          this.#convertShotsToNewUnits(this.formData.lengthUnit, this.formData.angleUnit);
+          this.survey.units = { length: this.formData.lengthUnit, angle: this.formData.angleUnit };
+        }
         this.survey.metadata = metadata;
         this.survey.start = start;
         this.#emitSurveyChanged();
@@ -431,6 +495,9 @@ export class SurveySheetEditor extends BaseEditor {
 
     // Calculate Z stats from cave stations filtered by this survey
     const zStats = this.#calculateZStats();
+    const lengthUnit = this.options?.units?.length ?? DEFAULT_UNITS.length;
+    const lLabel = i18n.t(`ui.units.short.${lengthUnit}`);
+    const lengthFmt = (v) => `${U.convertLengthFromMeters(v, lengthUnit).toFixed(2)} ${lLabel}`;
 
     [
       {
@@ -438,14 +505,14 @@ export class SurveySheetEditor extends BaseEditor {
         label     : i18n.t('ui.editors.surveySheet.stats.length'),
         field     : 'length',
         bold      : true,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'vertical',
         label     : i18n.t('ui.editors.surveySheet.stats.vertical'),
         value     : zStats.vertical,
         bold      : true,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       { id: 'shots', label: i18n.t('ui.editors.surveySheet.stats.shots'), field: 'shots', formatter: (v) => v },
       {
@@ -460,32 +527,32 @@ export class SurveySheetEditor extends BaseEditor {
         id        : 'orphanLength',
         label     : i18n.t('ui.editors.surveySheet.stats.orphanLength'),
         field     : 'orphanLength',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'invalidLength',
         label     : i18n.t('ui.editors.surveySheet.stats.invalidLength'),
         field     : 'invalidLength',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'auxiliaryLength',
         label     : i18n.t('ui.editors.surveySheet.stats.auxiliaryLength'),
         field     : 'auxiliaryLength',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       { break: true },
       {
         id        : 'minZ',
         label     : i18n.t('ui.editors.surveySheet.stats.minZ'),
         value     : zStats.minZ,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'maxZ',
         label     : i18n.t('ui.editors.surveySheet.stats.maxZ'),
         value     : zStats.maxZ,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       }
 
     ].forEach((s) => {
@@ -538,10 +605,27 @@ export class SurveySheetEditor extends BaseEditor {
     };
   }
 
+  #convertShotsToNewUnits(newLengthUnit, newAngleUnit) {
+    const oldUnits = this.survey.units;
+    if (oldUnits.length === newLengthUnit && oldUnits.angle === newAngleUnit) return;
+    this.survey.shots.forEach((shot) => {
+      if (oldUnits.length !== newLengthUnit && shot.length != null) {
+        shot.length = U.convertLength(shot.length, oldUnits.length, newLengthUnit);
+      }
+      if (oldUnits.angle !== newAngleUnit) {
+        if (shot.azimuth != null) shot.azimuth = U.convertAngle(shot.azimuth, oldUnits.angle, newAngleUnit);
+        if (shot.clino != null) shot.clino = U.convertAngle(shot.clino, oldUnits.angle, newAngleUnit);
+      }
+    });
+  }
+
   #emitSurveyChanged() {
     const reasons = ['metadata'];
     if (this.declinationOrStartChanged) {
       reasons.push('declinationOrStart');
+    }
+    if (this.unitsHaveChanged) {
+      reasons.push('units');
     }
     const event = new CustomEvent('surveyChanged', {
       detail : {

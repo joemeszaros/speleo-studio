@@ -114,6 +114,16 @@
       "privacyPolicy": "Privacy Policy",
       "termsOfService": "Terms of Service"
     },
+    "units": {
+      "short": {
+        "meters": "m",
+        "feet": "ft",
+        "yards": "yd",
+        "inches": "in",
+        "degrees": "°",
+        "grads": "gon"
+      }
+    },
     "settingsPanel": {
       "buttons": {
         "download": "Download",
@@ -132,7 +142,16 @@
         "stationDetails": "Station details (in footer)",
         "sprites3D": "3D helpers",
         "print": "Print",
-        "attributes": "Attributes"
+        "attributes": "Attributes",
+        "generalSettings": "General Settings"
+      },
+      "units": {
+        "meters": "meters (m)",
+        "feet": "feet (ft)",
+        "yards": "yards (yd)",
+        "inches": "inches (in)",
+        "degrees": "degrees (°)",
+        "grads": "grads (gon)"
       },
       "groups": {
         "centerLines": "Center Lines",
@@ -210,7 +229,9 @@
         "circleOpacity": "Bedding - tectonic circle opacity",
         "attributes": "Attributes",
         "showAllAttributes": "Show all attributes",
-        "spatialProjection": "Spatial view projection"
+        "spatialProjection": "Spatial view projection",
+        "lengthUnit": "Length unit",
+        "angleUnit": "Angle unit"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"
@@ -1188,8 +1209,8 @@
       "invalidTo": "To ({to}, type={type}) is not a string or empty",
       "invalidFromTo": "From ({from}) and to ({to}) cannot be the same",
       "invalidLength": "Length must be greater than 0",
-      "invalidClino": "Clino should be between -90 and 90",
-      "invalidAzimuth": "Azimuth should be between -360 and 360",
+      "invalidClino": "Clino should be between -{max} and {max}",
+      "invalidAzimuth": "Azimuth should be between -{max} and {max}",
       "invalidDecimal": "({field}: {value}, type={type}) is not a valid decimal number"
     },
     "sectionAttribute": {

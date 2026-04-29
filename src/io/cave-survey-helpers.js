@@ -25,7 +25,7 @@
 
 import { SurveyHelper } from '../survey.js';
 import {
-  Shot, ShotType, Survey, SurveyMetadata, SurveyAlias, StationComment, SurveyTeamMember
+  Shot, ShotType, Survey, SurveyMetadata, SurveyAlias, StationComment, SurveyTeamMember, DEFAULT_UNITS
 } from '../model/survey.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import {
@@ -39,7 +39,8 @@ import {
 } from '../model/geo.js';
 import { Vector } from '../model.js';
 import {
-  parseMyFloat, lengthToDegrees, angleToDegrees, clinoToDegrees, roundToTwoDecimalPlaces
+  parseMyFloat, lengthToDegrees, angleToDegrees, clinoToDegrees, roundToTwoDecimalPlaces,
+  convertLengthFromMeters, convertAngleFromDegrees
 } from '../utils/utils.js';
 import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
 import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
@@ -253,7 +254,8 @@ export function applyCalibration(tokens, state, extraFields = {}) {
   if (tokens.length < 3) return;
   const field = tokens[1].toLowerCase();
   const rawOffset = tokens[2];
-  if (isNaN(parseMyFloat(rawOffset))) return;
+  const num = parseMyFloat(rawOffset);
+  if (isNaN(num)) return;
 
   // tokens[3] is either an explicit unit string or a numeric scale factor.
   const t3 = tokens[3];
@@ -262,14 +264,24 @@ export function applyCalibration(tokens, state, extraFields = {}) {
   const scaleRaw = hasUnit ? tokens[4] : t3;
   const scale    = scaleRaw !== undefined ? parseMyFloat(scaleRaw) : 1.0;
 
+  // The calibration offset is added directly to shot values during parseShotRow / flushStationPairs.
+  // Shot values are stored in `state.units.<field>`, so the offset must end up in that same unit.
+  // Pivot through metres / degrees to handle both native and non-native source units uniformly.
+
   if (field === 'length' || field === 'tape' || field === 'distance') {
-    state.calibration.length      = parseLength(rawOffset, unitStr ?? state.units.length);
+    const sourceUnit = unitStr ?? state.units.length;
+    const offsetMeters = lengthToDegrees(num, sourceUnit);
+    state.calibration.length      = convertLengthFromMeters(offsetMeters, mapToSpeleoStudioUnits(state.units).length);
     state.calibration.lengthScale = isNaN(scale) ? 1.0 : scale;
   } else if (field === 'compass' || field === 'bearing') {
-    state.calibration.compass      = parseCompass(rawOffset, unitStr ?? state.units.compass);
+    const sourceUnit = unitStr ?? state.units.compass;
+    const offsetDegrees = angleToDegrees(num, sourceUnit);
+    state.calibration.compass      = convertAngleFromDegrees(offsetDegrees, mapToSpeleoStudioUnits(state.units).angle);
     state.calibration.compassScale = isNaN(scale) ? 1.0 : scale;
   } else if (field === 'clino' || field === 'gradient' || field === 'inclination') {
-    state.calibration.clino      = parseClino(rawOffset, unitStr ?? state.units.clino);
+    const sourceUnit = unitStr ?? state.units.clino;
+    const offsetDegrees = clinoToDegrees(num, sourceUnit);
+    state.calibration.clino      = convertAngleFromDegrees(offsetDegrees, mapToSpeleoStudioUnits(state.units).angle);
     state.calibration.clinoScale = isNaN(scale) ? 1.0 : scale;
   } else if (field in extraFields) {
     extraFields[field](rawOffset, unitStr, state);
@@ -323,11 +335,55 @@ export function parseDataFormat(tokens) {
 }
 
 // ─── Value parsers ─────────────────────────────────────────────────────────────
+//
+// These return shot values in the unit Speleo Studio will store them in:
+//   • If the file's source unit is one Speleo Studio supports natively
+//     (metres, feet, yards, inches; degrees, grads), the value is returned **as-is**
+//     and `survey.units` is later stamped accordingly — no conversion is performed.
+//   • If the source unit is not natively supported (cm, minutes, percent), the
+//     value is converted to the closest Speleo Studio storage unit (metres for
+//     length; degrees for angle).
+
+const NATIVE_LENGTH_UNITS = new Set([
+  'meters', 'meter', 'metres', 'metre', 'm',
+  'feet', 'foot', 'ft',
+  'yards', 'yard', 'yd', 'yds',
+  'inches', 'inch', 'in'
+]);
+const NATIVE_ANGLE_UNITS = new Set([
+  'degrees', 'degree', 'deg',
+  'grads', 'grad', 'gon', 'gons'
+]);
+
+function isGradsUnit(unit) {
+  return unit === 'grads' || unit === 'grad' || unit === 'gon' || unit === 'gons';
+}
+
+// Given a length value freshly returned by parseLength (which is in `sourceUnit` if that
+// unit is native, else in metres), return the equivalent value in `targetUnit` (a Speleo
+// Studio storage unit: meters/feet/yards/inches).
+function lengthIntoTargetUnit(value, sourceUnit, targetUnit) {
+  const valueUnit = NATIVE_LENGTH_UNITS.has(sourceUnit) ? sourceUnit : 'meters';
+  if (valueUnit === targetUnit) return value;
+  // Convert through metres
+  const meters = lengthToDegrees(value, valueUnit);
+  return convertLengthFromMeters(meters, targetUnit);
+}
+
+// Same idea for an angle (`targetUnit` is 'degrees' or 'grads').
+function angleIntoTargetUnit(value, sourceUnit, targetUnit) {
+  const valueUnit = NATIVE_ANGLE_UNITS.has(sourceUnit) ? sourceUnit : 'degrees';
+  // Same family (both grads-aliases or both degrees-aliases) → no conversion
+  if (isGradsUnit(valueUnit) === isGradsUnit(targetUnit)) return value;
+  return isGradsUnit(valueUnit) ? value * 0.9 : value / 0.9;
+}
 
 export function parseLength(value, unit) {
   if (!value) return NaN;
   const num = parseMyFloat(value);
   if (isNaN(num)) return NaN;
+  if (unit === undefined || NATIVE_LENGTH_UNITS.has(unit)) return num;
+  // Non-native source (cm, etc.) — fall back to metres so the survey can be stamped as 'meters'.
   return lengthToDegrees(num, unit);
 }
 
@@ -335,16 +391,20 @@ export function parseCompass(value, unit) {
   if (!value || value === '-') return 0;
   const num = parseMyFloat(value);
   if (isNaN(num)) return 0;
+  if (unit === undefined || NATIVE_ANGLE_UNITS.has(unit)) return num;
+  // minutes → degrees
   return angleToDegrees(num, unit);
 }
 
 export function parseClino(value, unit) {
   if (!value) return 0;
   const lower = value.toLowerCase();
-  if (lower === 'up') return 90;
-  if (lower === 'down') return -90;
+  if (lower === 'up') return isGradsUnit(unit) ? 100 : 90;
+  if (lower === 'down') return isGradsUnit(unit) ? -100 : -90;
   const num = parseMyFloat(value);
   if (isNaN(num)) return 0;
+  if (unit === undefined || NATIVE_ANGLE_UNITS.has(unit)) return num;
+  // percent → degrees (via arctan), minutes → degrees
   return clinoToDegrees(num, unit);
 }
 
@@ -366,6 +426,35 @@ export function applyUnits(tokens, units) {
   if (field === 'length' || field === 'tape' || field === 'distance') units.length = unit;
   else if (field === 'compass' || field === 'bearing') units.compass = unit;
   else if (field === 'clino' || field === 'gradient' || field === 'inclination') units.clino = unit;
+}
+
+/**
+ * Map a parser units triplet (`{ length, compass, clino }`) to the simpler Speleo Studio
+ * survey units (`{ length, angle }`).
+ *
+ * - Length: feet/foot/ft → 'feet'; yards/yard/yd/yds → 'yards'; inches/inch/in → 'inches';
+ *   anything else (including cm and metres aliases) → 'meters'.
+ * - Angle: only preserved when both compass and clino are the same recognized unit.
+ *   `grad`/`grads`/`gon`/`gons` → 'grads'; otherwise 'degrees'.
+ */
+export function mapToSpeleoStudioUnits(parserUnits) {
+  const lengthMap = {
+    feet   : 'feet',  foot   : 'feet',  ft : 'feet',
+    yards  : 'yards', yard   : 'yards', yd : 'yards', yds : 'yards',
+    inches : 'inches', inch  : 'inches', in : 'inches',
+    meters : 'meters', meter : 'meters', metres : 'meters', metre : 'meters', m : 'meters'
+  };
+  const angleMap = {
+    degrees : 'degrees', degree : 'degrees', deg : 'degrees',
+    grads   : 'grads',   grad   : 'grads',   gon : 'grads', gons : 'grads'
+  };
+  const length = lengthMap[parserUnits?.length] ?? DEFAULT_UNITS.length;
+  const compassMapped = angleMap[parserUnits?.compass];
+  const clinoMapped = angleMap[parserUnits?.clino];
+  // Only preserve the angle unit if compass and clino agree — Speleo Studio surveys
+  // store one angle unit for both, so anything mixed falls back to degrees.
+  const angle = compassMapped && compassMapped === clinoMapped ? compassMapped : DEFAULT_UNITS.angle;
+  return { length, angle };
 }
 
 // ─── Coordinate system ────────────────────────────────────────────────────────
@@ -456,30 +545,43 @@ export function parseShotRow(tokens, state, surveyPath, shotId) {
     ? undefined
     : stripStn(qualifyStn(applyStnNames(toRaw, state), surveyPath));
 
+  // Survey storage unit — every shot in this survey ends up in this unit.
+  const target = mapToSpeleoStudioUnits(units);
+
   if (fmt.type === 'cartesian') {
     // Convert displacement vector (East, North, Up) to polar (length, azimuth, clino).
     // dx = East, dy = North, dz = Up — standard Survex cartesian convention.
-    const dx = parseLength(get('dx'), units.length);
-    const dy = parseLength(get('dy'), units.length);
-    const dz = parseLength(get('dz'), units.length);
+    // dx/dy/dz come back in `units.length` (or metres if non-native). Normalize to
+    // the survey's target length unit so sqrt and the resulting `len` are in target unit.
+    const dx = lengthIntoTargetUnit(parseLength(get('dx'), units.length), units.length, target.length);
+    const dy = lengthIntoTargetUnit(parseLength(get('dy'), units.length), units.length, target.length);
+    const dz = lengthIntoTargetUnit(parseLength(get('dz'), units.length), units.length, target.length);
     if (isNaN(dx) || isNaN(dy) || isNaN(dz)) return null;
     const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
     if (len === 0) return null;
-    // *cartesian magnetic rotates the data by the current declination so that
-    // it aligns with True North. Extra rotation from *cartesian is also applied.
+    // declination + atan2/asin output + cartesianExtraRot are all in degrees by construction.
     const northAdj = state.cartesianNorth === 'magnetic' ? (state.declination ?? 0) : 0;
     const extraRot = state.cartesianExtraRot ?? 0;
-    const az = ((Math.atan2(dx, dy) * (180 / Math.PI)) + northAdj + extraRot + 360) % 360;
-    const cl = Math.asin(dz / len) * (180 / Math.PI);
+    let az = ((Math.atan2(dx, dy) * (180 / Math.PI)) + northAdj + extraRot + 360) % 360;
+    let cl = Math.asin(dz / len) * (180 / Math.PI);
+    // If the survey stores angles in grads, convert the degree-result of atan2/asin to grads.
+    if (target.angle === 'grads') {
+      az = az / 0.9;
+      cl = cl / 0.9;
+    }
     return new Shot(shotId, type, from, to, len, az, cl, undefined);
   }
 
+  // Normal data row — parse each quantity, normalize to the survey's target unit, then apply calibration.
   const length =
-    (parseLength(get('length'), units.length) + calibration.length) * calibration.lengthScale;
+    (lengthIntoTargetUnit(parseLength(get('length'), units.length), units.length, target.length) +
+      calibration.length) * calibration.lengthScale;
   const compass =
-    (parseCompass(get('compass'), units.compass) + calibration.compass) * calibration.compassScale;
+    (angleIntoTargetUnit(parseCompass(get('compass'), units.compass), units.compass, target.angle) +
+      calibration.compass) * calibration.compassScale;
   const clino =
-    (parseClino(get('clino'), units.clino) + calibration.clino) * calibration.clinoScale;
+    (angleIntoTargetUnit(parseClino(get('clino'), units.clino), units.clino, target.angle) +
+      calibration.clino) * calibration.clinoScale;
 
   if (isNaN(length)) return null;
 
@@ -514,13 +616,16 @@ export function flushStationPairs(pairs, shots, startId, surveyPath) {
       return idx >= 0 && idx < line2.length ? line2[idx] : null;
     };
 
+    const target = mapToSpeleoStudioUnits(units);
     const length =
-      (parseLength(getL2('length'), units.length) + calibration.length) * calibration.lengthScale;
+      (lengthIntoTargetUnit(parseLength(getL2('length'), units.length), units.length, target.length) +
+        calibration.length) * calibration.lengthScale;
     const compass =
-      (parseCompass(getL2('compass'), units.compass) + calibration.compass) *
-      calibration.compassScale;
+      (angleIntoTargetUnit(parseCompass(getL2('compass'), units.compass), units.compass, target.angle) +
+        calibration.compass) * calibration.compassScale;
     const clino =
-      (parseClino(getL2('clino'), units.clino) + calibration.clino) * calibration.clinoScale;
+      (angleIntoTargetUnit(parseClino(getL2('clino'), units.clino), units.clino, target.angle) +
+        calibration.clino) * calibration.clinoScale;
 
     if (isNaN(length)) continue;
     shots.push(new Shot(id++, type, from, to, length, compass, clino, undefined));
@@ -672,12 +777,18 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
       s.metadata.team,
       []
     );
+
+    // Shots already store values in the survey's storage unit because parseLength /
+    // parseCompass / parseClino pass through values when the file's source unit is one
+    // Speleo Studio supports natively. We just need to stamp the survey with that unit.
+    const studioUnits = mapToSpeleoStudioUnits(s.units);
     const survey = new Survey(
       s.displayName,
       true,
       meta,
       i === 0 ? s.startStation : undefined,
-      s.shots
+      s.shots,
+      studioUnits
     );
 
     let startPos = i === 0 ? new Vector(0, 0, 0) : undefined;

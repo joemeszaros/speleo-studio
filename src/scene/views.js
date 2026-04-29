@@ -21,7 +21,14 @@ import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { TextSprite } from './textsprite.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { ViewHelper } from '../utils/viewhelper.js';
-import { degreesToRads, formatDistance, formatElevation, radsToDegrees } from '../utils/utils.js';
+import {
+  convertAngleFromDegrees,
+  convertLengthToMeters,
+  degreesToRads,
+  formatDistance,
+  formatElevation,
+  radsToDegrees
+} from '../utils/utils.js';
 import {
   ProfileViewControl,
   PlanViewControl,
@@ -30,6 +37,17 @@ import {
 } from './control.js';
 import { i18n } from '../i18n/i18n.js';
 import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
+import { DEFAULT_UNITS } from '../model/survey.js';
+
+// Per-unit map ratio → highlighted ruler length (in that unit). The values are
+// chosen so that across units the ruler ends up at a similar physical screen
+// size while always showing a "nice round" number in the user's display unit.
+const RATIO_TO_RULER_LENGTH = {
+  meters : { 5: 1,  10: 1,  25: 5,   50: 5,   100: 10,  200: 20,   500: 50,   1000: 100,  2000: 200,   5000: 500,   10000: 1000 },
+  feet   : { 5: 3,  10: 5,  25: 10,  50: 25,  100: 50,  200: 100,  500: 250,  1000: 500,  2000: 1000,  5000: 2500,  10000: 5000 },
+  yards  : { 5: 1,  10: 2,  25: 5,   50: 10,  100: 20,  200: 50,   500: 100,  1000: 200,  2000: 500,   5000: 1000,  10000: 2000 },
+  inches : { 5: 36, 10: 50, 25: 100, 50: 250, 100: 500, 200: 1000, 500: 2500, 1000: 5000, 2000: 10000, 5000: 25000, 10000: 50000 }
+};
 
 class View {
 
@@ -85,7 +103,27 @@ class View {
     );
     this.spriteCamera.position.z = 1;
 
+    this._unitsChangedHandler = () => {
+      if (this.control) {
+        this.onZoomLevelChange(this.control.zoom);
+      }
+      this.refreshAngleSprites();
+    };
+    document.addEventListener('unitsChanged', this._unitsChangedHandler);
   }
+
+  // Format an angle (in radians) using the user's configured angle unit and i18n label.
+  formatAngleLabel(angleRads, decimals = 1) {
+    const unit = this.scene.options?.units?.angle ?? DEFAULT_UNITS.angle;
+    const valueInDegrees = radsToDegrees(angleRads);
+    const valueInUnit = convertAngleFromDegrees(valueInDegrees, unit);
+    const unitLabel = i18n.t(`ui.units.short.${unit}`);
+    return `${valueInUnit.toFixed(decimals)}${unit === 'degrees' ? unitLabel : ' ' + unitLabel}`;
+  }
+
+  // Subclasses with rotation/dip indicators override this to refresh their angle labels
+  // when the user changes the angle display unit.
+  refreshAngleSprites() {}
 
   recreateAllTextSprites() {
 
@@ -252,33 +290,21 @@ class View {
     this.ratio = rawRatio;
 
     // Calculate dynamic ruler width based on the rounded ratio
-    // Target: ruler should represent a nice round distance (e.g., 1m, 5m, 10m, 50m, 100m)
-    const targetRulerDistance = this.getTargetRulerDistance(roundedRatio);
-    const rulerWidthInMeters = targetRulerDistance;
-    const rulerWidthInPixels = (rulerWidthInMeters / worldWidthInMeters) * this.scene.width;
+    // Target: ruler should represent a nice round distance in the user's display unit
+    const target = this.getTargetRulerDistance(roundedRatio);
+    const rulerWidthInPixels = (target.meters / worldWidthInMeters) * this.scene.width;
 
     this.ratioIndicator.width = Math.max(50, Math.min(600, rulerWidthInPixels));
     this.ratioIndicator.scale.set(this.ratioIndicator.width, 15, 1);
 
-    const ratioText = `${formatDistance(rulerWidthInMeters)} - M 1:${Math.round(this.ratio)}`;
+    const unitLabel = i18n.t(`ui.units.short.${target.unit}`);
+    const ratioText = `${target.display} ${unitLabel} - M 1:${Math.round(this.ratio)}`;
     this.ratioText.update(`${ratioText}`);
   }
 
   getTargetRulerDistance(ratio) {
-    // Map ratios to appropriate ruler distances
-    const ratioToDistance = {
-      5     : 1, // 1m for very detailed views
-      10    : 1, // 1m for very detailed views
-      25    : 5, // 5m for detailed views
-      50    : 5, // 5m for detailed views
-      100   : 10, // 10m for medium views
-      200   : 20, // 20m for medium views
-      500   : 50, // 50m for overview views
-      1000  : 100, // 100m for overview views
-      2000  : 200, // 200m for wide views
-      5000  : 500, // 500m for very wide views
-      10000 : 1000 // 1000m for extremely wide views
-    };
+    const unit = this.scene.options?.units?.length ?? DEFAULT_UNITS.length;
+    const ratioToDistance = RATIO_TO_RULER_LENGTH[unit] ?? RATIO_TO_RULER_LENGTH.meters;
 
     // Find the closest dedicated ratio
     let closest = View.DEDICATED_RATIOS[0];
@@ -292,7 +318,12 @@ class View {
       }
     }
 
-    return ratioToDistance[closest];
+    const display = ratioToDistance[closest];
+    return {
+      display,
+      unit,
+      meters: convertLengthToMeters(display, unit)
+    };
   }
 
   onResize(width, height) {
@@ -999,7 +1030,12 @@ class SpatialView extends View {
     // For spatial view, calculate azimuth from camera position and target
     let compassRotation = 2 * Math.PI - this.compass.material.rotation;
     if (compassRotation === 2 * Math.PI) compassRotation = 0;
-    this.rotationText.update(`N ${radsToDegrees(compassRotation).toFixed(1)}°`);
+    this.rotationText.update(`N ${this.formatAngleLabel(compassRotation)}`);
+  }
+
+  refreshAngleSprites() {
+    this.#updateRotationText();
+    this.#updateDipIndicator();
   }
 
   #createDipIndicator(size) {
@@ -1079,9 +1115,7 @@ class SpatialView extends View {
   }
 
   #updateDipIndicator() {
-    const dipDegrees = radsToDegrees(this.control.clino);
-    let rounded = Math.round(dipDegrees);
-    this.dipText.update(`${rounded}°`);
+    this.dipText.update(this.formatAngleLabel(this.control.clino, 0));
     this.#updateGyroscopeVisual(this.control.clino, true);
   }
 
@@ -1349,8 +1383,11 @@ class PlanView extends View {
   }
 
   #updateRotationText() {
-    const rotationDegrees = radsToDegrees(this.camera.rotation.z).toFixed(1);
-    this.rotationText.update(`N ${rotationDegrees}°`);
+    this.rotationText.update(`N ${this.formatAngleLabel(this.camera.rotation.z)}`);
+  }
+
+  refreshAngleSprites() {
+    this.#updateRotationText();
   }
 
   setCompassRotation() {
@@ -1617,7 +1654,11 @@ class ProfileView extends View {
       this.verticalMaxZText.update(formatElevation(modelBBox.max.z + elevOffset));
       this.verticalMinZText.update(formatElevation(modelBBox.min.z + elevOffset));
     } else {
-      this.verticalMaxZText.update(formatElevation(targetRulerDistance));
+      // No caves and no models: label the ruler with its world-space height,
+      // matching the horizontal ratio indicator's distance step.
+      const target = this.getTargetRulerDistance(this.ratio);
+      const unitLabel = i18n.t(`ui.units.short.${target.unit}`);
+      this.verticalMaxZText.update(`${target.display} ${unitLabel}`);
       this.verticalMinZText.update('0');
     }
 
@@ -1753,7 +1794,11 @@ class ProfileView extends View {
     let compassRotation = 2 * Math.PI - this.compass.material.rotation;
     if (compassRotation < 0) compassRotation += 2 * Math.PI;
     if (compassRotation === 2 * Math.PI) compassRotation = 0; // show 0 not 360
-    this.rotationText.update(`N ${radsToDegrees(compassRotation).toFixed(1)}°`);
+    this.rotationText.update(`N ${this.formatAngleLabel(compassRotation)}`);
+  }
+
+  refreshAngleSprites() {
+    this.#updateRotationText();
   }
 
   recreateAllTextSprites() {

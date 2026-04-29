@@ -488,6 +488,65 @@ function clinoToDegrees(value, unit) {
   return angleToDegrees(value, unit);
 }
 
+// ─── Display-side unit conversions ────────────────────────────────────────────
+// Used to convert between stored survey units and the user's display unit.
+
+function convertLengthFromMeters(meters, unit) {
+  switch (unit) {
+    case 'feet':
+      return meters / 0.3048;
+    case 'yards':
+      return meters / 0.9144;
+    case 'inches':
+      return meters / 0.0254;
+    default:
+      return meters; // 'meters'
+  }
+}
+
+function convertLengthToMeters(value, unit) {
+  switch (unit) {
+    case 'feet':
+      return value * 0.3048;
+    case 'yards':
+      return value * 0.9144;
+    case 'inches':
+      return value * 0.0254;
+    default:
+      return value; // 'meters'
+  }
+}
+
+function convertLength(value, fromUnit, toUnit) {
+  if (fromUnit === toUnit) return value;
+  return convertLengthFromMeters(convertLengthToMeters(value, fromUnit), toUnit);
+}
+
+function convertAngleToDegrees(value, unit) {
+  return unit === 'grads' ? value * 0.9 : value;
+}
+
+function convertAngleFromDegrees(degrees, unit) {
+  return unit === 'grads' ? degrees / 0.9 : degrees;
+}
+
+function convertAngle(value, fromUnit, toUnit) {
+  if (fromUnit === toUnit) return value;
+  return convertAngleFromDegrees(convertAngleToDegrees(value, fromUnit), toUnit);
+}
+
+function lengthUnitLabel(unit) {
+  return { meters: 'm', feet: 'ft', yards: 'yd', inches: 'in' }[unit] ?? 'm';
+}
+
+function angleUnitLabel(unit) {
+  return unit === 'grads' ? 'gon' : '°';
+}
+
+function unitsEqual(a, b) {
+  return a?.length === b?.length && a?.angle === b?.angle;
+}
+
 export {
   fromPolar,
   toPolar,
@@ -524,5 +583,14 @@ export {
   waitForEvent,
   lengthToDegrees,
   angleToDegrees,
-  clinoToDegrees
+  clinoToDegrees,
+  convertLengthFromMeters,
+  convertLengthToMeters,
+  convertLength,
+  convertAngleToDegrees,
+  convertAngleFromDegrees,
+  convertAngle,
+  lengthUnitLabel,
+  angleUnitLabel,
+  unitsEqual
 };

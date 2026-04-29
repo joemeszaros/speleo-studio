@@ -22,6 +22,7 @@ import { i18n } from './i18n/i18n.js';
 import { Raycasting } from './scene/raycasting.js';
 import { AttributesDefinitions } from './attributes.js';
 import { CoordinateSystemType } from './model/geo.js';
+import { DEFAULT_UNITS } from './model/survey.js';
 
 class SceneInteraction {
 
@@ -329,7 +330,10 @@ class SceneInteraction {
 
     // Shots in compact format
     if (config.shots) {
-      const shots = st.shots.map((shw) => `${shw.shot.from}→${shw.shot.to}(${shw.shot.length.toFixed(1)}m)`);
+      const shots = st.shots.map(
+        (shw) =>
+          `${shw.shot.from}→${shw.shot.to}(${shw.shot.length.toFixed(1)}${i18n.t(`ui.units.short.${shw.survey?.units?.length ?? DEFAULT_UNITS.length}`)})`
+      );
       if (shots.length > 0) {
         details.push(`${i18n.t('common.shots')}: ${shots.join(', ')}`);
       }
@@ -781,8 +785,10 @@ class SceneInteraction {
             ? r.shot.comment.substring(0, 40) + '...'
             : r.shot.comment
           : 'no comment';
+        const lLabel = i18n.t(`ui.units.short.${r.survey?.units?.length ?? DEFAULT_UNITS.length}`);
+        const aLabel = i18n.t(`ui.units.short.${r.survey?.units?.angle ?? DEFAULT_UNITS.angle}`);
         return `
-        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} m, ${r.shot.azimuth.toFixed(2)}°, ${r.shot.clino.toFixed(2)}°) - ${r.survey.name} - ${comment}`;
+        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} ${lLabel}, ${r.shot.azimuth.toFixed(2)}${aLabel}, ${r.shot.clino.toFixed(2)}${aLabel}) - ${r.survey.name} - ${comment}`;
       })
       .join('<br>');
 

@@ -16,8 +16,8 @@
 
 import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
-import { showErrorPanel, showInfoPanel } from '../ui/popups.js';
-import { Shot, ShotType } from '../model/survey.js';
+import { showInfoPanel } from '../ui/popups.js';
+import { Shot, ShotType, DEFAULT_UNITS } from '../model/survey.js';
 import { Vector, PointCloud, Mesh3D, ModelFile } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument } from '../model/survey.js';
@@ -267,7 +267,8 @@ class PolygonImporter extends Importer {
 
           // Only store start station for the first survey
           const surveyStart = surveyIndex === 0 ? fixPointName : undefined;
-          const survey = new Survey(surveyNameStr, true, metadata, surveyStart, shots);
+
+          const survey = new Survey(surveyNameStr, true, metadata, surveyStart, shots, DEFAULT_UNITS);
           SurveyHelper.calculateSurveyStations(
             survey,
             surveys,
@@ -521,6 +522,41 @@ class TopodroidImporter extends Importer {
     return new SurveyMetadata(surveyDate, declination, null, team, []);
   }
 
+  /**
+   * Parse a TopoDroid `# units: ...` line value into Speleo Studio survey units.
+   * Example inputs: "tape meter compass clino degree", "tape feet compass clino grad".
+   * Returns null when the input does not contain recognizable unit tokens.
+   */
+  #parseUnitsString(unitsStr) {
+    if (!unitsStr) return null;
+    const lengthMap = {
+      meter  : 'meters',
+      meters : 'meters',
+      metre  : 'meters',
+      metres : 'meters',
+      m      : 'meters',
+      foot   : 'feet',
+      feet   : 'feet',
+      ft     : 'feet'
+    };
+    const angleMap = {
+      degree  : 'degrees',
+      degrees : 'degrees',
+      deg     : 'degrees',
+      grad    : 'grads',
+      grads   : 'grads',
+      gon     : 'grads',
+      gons    : 'grads'
+    };
+    let length, angle;
+    for (const token of unitsStr.toLowerCase().split(/\s+/)) {
+      if (!length && lengthMap[token]) length = lengthMap[token];
+      if (!angle && angleMap[token]) angle = angleMap[token];
+    }
+    if (!length && !angle) return null;
+    return { length: length ?? DEFAULT_UNITS.length, angle: angle ?? DEFAULT_UNITS.angle };
+  }
+
   getSurvey(csvTextData) {
     const { shots, metadata } = this.#getShotsAndMetadata(csvTextData);
 
@@ -547,7 +583,11 @@ class TopodroidImporter extends Importer {
       const fixPointStation = new StationWithCoordinate(metadata.fixPointStation, fixPointCoordinate);
       fixPointGeoData = new GeoData(fixPointCoordinateSystem, [fixPointStation]);
     }
-    return { survey: new Survey(surveyName, true, surveyMetadata, startStation, shots), geoData: fixPointGeoData };
+    const surveyUnits = this.#parseUnitsString(metadata.units) ?? undefined;
+    return {
+      survey  : new Survey(surveyName, true, surveyMetadata, startStation, shots, surveyUnits, undefined, undefined),
+      geoData : fixPointGeoData
+    };
   }
 
   async importFile(file, name, onSurveyLoad) {
@@ -609,7 +649,9 @@ class PointCloudImporter extends Importer {
     // group.position = positionOffset (- globalOrigin if one exists), so that:
     //   rendered = group.position + local_vertex = (C - origin) + (P - C) = P - origin
     const po = msg.header.positionOffset || [0, 0, 0];
-    let groupX = po[0], groupY = po[1], groupZ = po[2];
+    let groupX = po[0],
+      groupY = po[1],
+      groupZ = po[2];
 
     if (globalNormalizer.isInitialized()) {
       const origin = globalNormalizer.globalOrigin;
@@ -644,7 +686,12 @@ class PointCloudImporter extends Importer {
         })
       );
       const cached = await this.manager.modelSystem.getOctreeCache(modelFileId);
-      if (!cached || cached.maxPoints !== opts.maxPoints || cached.cacheVersion !== PointCloudImporter.OCTREE_CACHE_VERSION) return false;
+      if (
+        !cached ||
+        cached.maxPoints !== opts.maxPoints ||
+        cached.cacheVersion !== PointCloudImporter.OCTREE_CACHE_VERSION
+      )
+        return false;
 
       console.log(
         `Octree: loading from cache (${cached.nodeCount} nodes, point budget: ${opts.pointBudget.toLocaleString()})`
@@ -1277,11 +1324,13 @@ class LasModelImporter extends PointCloudImporter {
       const isLaz = ext === 'laz';
       const limit = isLaz ? LasModelImporter.MAX_LAZ_BYTES : LasModelImporter.MAX_LAS_BYTES;
       if (file.size > limit) {
-        throw new Error(i18n.t('errors.import.pointCloudFileTooLarge', {
-          name  : name || file.name,
-          size  : (file.size / (1024 * 1024)).toFixed(0),
-          limit : (limit / (1024 * 1024)).toFixed(0)
-        }));
+        throw new Error(
+          i18n.t('errors.import.pointCloudFileTooLarge', {
+            name  : name || file.name,
+            size  : (file.size / (1024 * 1024)).toFixed(0),
+            limit : (limit / (1024 * 1024)).toFixed(0)
+          })
+        );
       }
     }
     await super.importFileAsArrayBuffer(file, name, onModelLoad);
@@ -1387,11 +1436,13 @@ class LasModelImporter extends PointCloudImporter {
             }
 
             if (msg.warning) {
-              showInfoPanel(i18n.t('ui.loading.partialLoad', {
-                name    : name,
-                loaded  : msg.displayedPoints.toLocaleString(),
-                total   : msg.totalPoints.toLocaleString()
-              }));
+              showInfoPanel(
+                i18n.t('ui.loading.partialLoad', {
+                  name   : name,
+                  loaded : msg.displayedPoints.toLocaleString(),
+                  total  : msg.totalPoints.toLocaleString()
+                })
+              );
               console.warn('LAS parse warning:', msg.warning);
             }
 

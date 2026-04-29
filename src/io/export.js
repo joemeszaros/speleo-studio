@@ -453,9 +453,9 @@ class Exporter {
     const addRulerAndRatio = () => {
       const ratio = scene.view.ratio;
       const roundedRatio = scene.view.roundToDedicatedRatio(ratio);
-      const targetRulerDistance = scene.view.getTargetRulerDistance(roundedRatio);
+      const target = scene.view.getTargetRulerDistance(roundedRatio);
       const worldWidthInMeters = scene.view.camera.width / scene.view.control.getZoomLevel();
-      const rulerWidthInPixels = (targetRulerDistance / worldWidthInMeters) * width;
+      const rulerWidthInPixels = (target.meters / worldWidthInMeters) * width;
       const rulerWidth = Math.max(50, Math.min(400, rulerWidthInPixels));
 
       // Position at bottom center
@@ -485,7 +485,8 @@ class Exporter {
 
       // Ratio text
       const ratioValue = `M 1:${Math.round(ratio)}`;
-      const ratioText = `${formatDistance(targetRulerDistance)} - ${ratioValue}`;
+      const unitLabel = i18n.t(`ui.units.short.${target.unit}`);
+      const ratioText = `${target.display} ${unitLabel} - ${ratioValue}`;
       const textY = rulerY - 15;
       const textX = rulerX + rulerWidth / 2;
       svgParts.push(

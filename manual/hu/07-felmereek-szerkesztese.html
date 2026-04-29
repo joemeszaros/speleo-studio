@@ -105,6 +105,15 @@
           <li><strong>Induló pont:</strong> A felmérés kezdőpontja</li>
           <li><strong>Dátum:</strong> Felmérés dátuma</li>
           <li><strong>Deklináció:</strong> Mágneses deklináció</li>
+          <li>
+            <strong>Hosszúság egysége:</strong> A felmérés tárolt hossz mértékegysége (méter, láb, yard, hüvelyk).
+            Megváltoztatáskor a felmérés <em>összes</em> mérésének hossz értéke átkonvertálódik az új egységre mentés
+            után.
+          </li>
+          <li>
+            <strong>Szög egysége:</strong> A felmérés tárolt szög mértékegysége (fok vagy grad). Megváltoztatáskor a
+            felmérés összes mérésének irány- és lejtésszöge átkonvertálódik az új egységre mentés után.
+          </li>
         </ul>
       </div>
 
@@ -146,6 +155,13 @@
         helyen. Ez a jelenség azért lép fel, mert a Föld görbült felszínén a hosszúsági körök (meridiánok) az Északi- és
         a Déli-sarknál összetartanak. Egy sík térképi vetületben azonban ezeket az összetartó meridiánokat egyenes,
         egymással párhuzamos vonalakként ábrázolják, ami szögeltérést hoz létre a földrajzi északhoz képest.
+      </div>
+      <div class="info">
+        A <strong>hosszúság</strong> és <strong>szög egysége</strong> mezők a felmérés saját, tárolt mértékegységét
+        határozzák meg, ami független az általános beállításokban kiválasztott megjelenítési egységtől. Ha mentéskor
+        bármelyik egységet megváltoztatod, a Speleo Studio a felmérés <em>összes mérésének</em> hossz, irányszög és
+        lejtésszög értékét átkonvertálja a új egységre. A 3D-s vizualizáció és a barlang szintű statisztikák ettől nem
+        változnak, mert a számítások a háttérben mindig méter / fok egységre konvertálva történnek.
       </div>
 
       <h2>Mérések szerkesztése</h2>
@@ -247,9 +263,25 @@
           >
           <li><strong>Ponttól:</strong> Mérés kezdőpontja</li>
           <li><strong>Pontig:</strong> Mérés végpontja, lehet üres</li>
-          <li><strong>Irány:</strong> Mérés iránya fokban, 0 és 360 között változhat</li>
-          <li><strong>Dőlés:</strong> Mérés dőlése fokban, -90 és 90 között változhat</li>
-          <li><strong>Hossz:</strong> Mérés hossza méterben. Nem lehet negatiív érték</li>
+          <li
+            ><strong>Irány:</strong> Mérés iránya az aktuális szög egységben (alapértelmezetten fok, 0–360); a Beállítások →
+            Általános beállítások panelen választható gradián (0–400) is.</li
+          >
+          <li
+            ><strong>Dőlés:</strong> Mérés dőlése az aktuális szög egységben (fokban -90 és 90 között, gradiánban -100 és
+            100 között).</li
+          >
+          <li
+            ><strong>Hossz:</strong> Mérés hossza az aktuális hosszúság egységben (alapértelmezetten méter; választható
+            láb, yard vagy hüvelyk a Beállítások panelen). Nem lehet negatív érték.</li
+          >
+          <li
+            ><strong>Megjegyzés a mértékegységekről:</strong> Az értékek mindig a felmérés saját egységében kerülnek
+            tárolásra, és csak akkor konvertálódnak megjelenítéshez / szerkesztéshez, ha az aktuális megjelenítési
+            egység eltér a felmérés egységétől. A Speleo Studio JSON exportja minden felmérés egységét eltárolja a
+            <code>units</code> mezőben. Részletek az
+            <a href="13-beallitasok.html#általános-beállítások-mértékegységek">Általános beállítások</a> szakaszban.</li
+          >
           <li><strong>Attribútumok:</strong> A mérés végpontját érintő attribútumok listája</li>
           <li><strong>Megjegyzés:</strong> Mérés szöveges megjegyzése, lehet üres</li>
           <li><strong>Számított mezők:</strong>A mérés adataiból kiszámított értékek, amelyek nem szerkeszthetők</li

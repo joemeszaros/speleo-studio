@@ -393,6 +393,7 @@ class TherionImporter extends Importer {
       surveyPath,
       shots,
       metadata,
+      units           : { ...state.units },
       equates         : state.equates,
       cs              : state.cs,
       fixes           : state.fixes,

@@ -206,8 +206,8 @@ endsurvey
     });
   });
 
-  describe('unit conversion', () => {
-    it('converts feet to metres', async () => {
+  describe('unit preservation', () => {
+    it('preserves feet length unit on the survey and keeps shot values in feet', async () => {
       const th = `
 survey cave
   centreline
@@ -218,10 +218,11 @@ survey cave
 endsurvey
 `;
       const cave = await makeImporter().getCave(textMap(['cave.th', th]));
-      expect(cave.surveys[0].shots[0].length).toBeCloseTo(10.0, 1);
+      expect(cave.surveys[0].units).toEqual({ length: 'feet', angle: 'degrees' });
+      expect(cave.surveys[0].shots[0].length).toBeCloseTo(32.808, 3);
     });
 
-    it('converts grads to degrees', async () => {
+    it('preserves grads angle unit when both compass and clino are grads', async () => {
       const th = `
 survey cave
   centreline
@@ -233,9 +234,43 @@ survey cave
 endsurvey
 `;
       const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      const survey = cave.surveys[0];
+      expect(survey.units).toEqual({ length: 'meters', angle: 'grads' });
+      const shot = survey.shots[0];
+      expect(shot.azimuth).toBeCloseTo(200.0, 3);
+      expect(shot.clino).toBeCloseTo(-22.222, 3);
+    });
+
+    it('defaults to meters/degrees when no units directive is given', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 10.0 90.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.surveys[0].units).toEqual({ length: 'meters', angle: 'degrees' });
+    });
+
+    it('falls back to degrees when only compass is grads (compass and clino disagree)', async () => {
+      // Speleo Studio survey units have a single angle entry — if compass and clino
+      // use different units we cannot preserve, so we fall back to degrees.
+      const th = `
+survey cave
+  centreline
+    units compass grads
+    data normal from to length compass clino
+    1 2 10.0 200.0 -20.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
       const shot = cave.surveys[0].shots[0];
-      expect(shot.azimuth).toBeCloseTo(180.0, 0);
-      expect(shot.clino).toBeCloseTo(-20.0, 0);
+      expect(cave.surveys[0].units).toEqual({ length: 'meters', angle: 'degrees' });
+      expect(shot.azimuth).toBeCloseTo(180.0, 1); // 200 grads → 180°
+      expect(shot.clino).toBeCloseTo(-20.0, 1);
     });
   });
 

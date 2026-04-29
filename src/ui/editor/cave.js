@@ -16,6 +16,7 @@
 
 import * as U from '../../utils/utils.js';
 import { CaveMetadata, Cave } from '../../model/cave.js';
+import { DEFAULT_UNITS } from '../../model/survey.js';
 import { wm } from '../window.js';
 import { showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
@@ -775,6 +776,9 @@ class CaveEditor extends Editor {
   #setupStats(contentElmnt) {
     const statFields = U.node`<div class="cave-stats"></div>`;
     const stats = this.cave?.getStats();
+    const lengthUnit = this.options?.units?.length ?? DEFAULT_UNITS.length;
+    const lLabel = i18n.t(`ui.units.short.${lengthUnit}`);
+    const lengthFmt = (v) => `${U.convertLengthFromMeters(v, lengthUnit).toFixed(2)} ${lLabel}`;
 
     [
       {
@@ -782,28 +786,28 @@ class CaveEditor extends Editor {
         label     : i18n.t('ui.editors.caveSheet.stats.length'),
         field     : 'length',
         bold      : true,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'depth',
         label     : i18n.t('ui.editors.caveSheet.stats.depth'),
         field     : 'depth',
         bold      : true,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'height',
         label     : i18n.t('ui.editors.caveSheet.stats.height'),
         field     : 'height',
         bold      : true,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'vertical',
         label     : i18n.t('ui.editors.caveSheet.stats.vertical'),
         field     : 'vertical',
         bold      : true,
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
 
       { break: true },
@@ -837,38 +841,38 @@ class CaveEditor extends Editor {
         id        : 'orphanLength',
         label     : i18n.t('ui.editors.caveSheet.stats.orphanLength'),
         field     : 'orphanLength',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'invalidLength',
         label     : i18n.t('ui.editors.caveSheet.stats.invalidLength'),
         field     : 'invalidLength',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'auxiliaryLength',
         label     : i18n.t('ui.editors.caveSheet.stats.auxiliaryLength'),
         field     : 'auxiliaryLength',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       { break: true },
       {
         id        : 'minZ',
         label     : i18n.t('ui.editors.caveSheet.stats.minZ'),
         field     : 'minZ',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'maxZ',
         label     : i18n.t('ui.editors.caveSheet.stats.maxZ'),
         field     : 'maxZ',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       },
       {
         id        : 'vertiicalWithSplays',
         label     : i18n.t('ui.editors.caveSheet.stats.verticalWithSplays'),
         field     : 'vertiicalWithSplays',
-        formatter : (v) => v.toFixed(2) + ' m'
+        formatter : lengthFmt
       }
     ].forEach((s) => {
       let node;

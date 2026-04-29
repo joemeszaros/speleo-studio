@@ -52,6 +52,7 @@
           <li><strong>ⓘ Pont részletek:</strong> Footer-ben megjelenő pont információk</li>
           <li><strong>🎯 3D segédek:</strong> Iránytű, vonalzó és egyéb segédeszközök</li>
           <li><strong>🌈 Szín átmenet:</strong> Színezési módok és átmenetek</li>
+          <li><strong>Általános beállítások:</strong> Megjelenítési mértékegységek (hosszúság, szög)</li>
         </ul>
       </div>
 
@@ -591,37 +592,126 @@
           <p>Válassza ki a mentési helyet és adja meg a fájlnevet.</p>
         </div>
 
-        <h3>Beállítások betöltése</h3>
-        <div class="step">
-          <h4>1. Beállítások betöltése</h4>
-          <p>Kattintson a "Betöltés" gombra a beállítások panelben egy korábban mentett beállítás fájl betöltéséhez.</p>
+      </div>
+
+      <h2>⛯ Általános beállítások (mértékegységek)</h2>
+
+      <div class="settings-box">
+        <p
+          >A Speleo Studio támogatja, hogy a felmérési adatokat a felhasználó által választott mértékegységben jelenítse
+          meg és exportálja. A megjelenítési egység nem változtatja meg a tárolt értékeket — minden felmérés a saját
+          eredeti egységében marad eltárolva (lásd <a href="07-felmereek-szerkesztese.html">Felmérés szerkesztése</a>),
+          a Speleo Studio csak akkor konvertál, ha a felmérés egysége és az aktuális megjelenítési egység eltér.</p
+        >
+
+        <div class="setting-item">
+          <h5>Hosszúság egysége</h5>
+          <p>Választható egységek:</p>
+          <ul>
+            <li>méter (alapértelmezett)</li>
+            <li> láb (ft)</li>
+            <li>yard (yd)</li>
+            <li>hüvelyk (in)</li>
+          </ul>
+          <p
+            >Ez a beállítás befolyásolja a hosszúság értékek megjelenítését a felmérés szerkesztőben, a barlang és
+            felmérés adatlapon, a kör (cycle) szerkesztőben, a legrövidebb út eszközben, a komponens / szakasz
+            attribútum táblákban, valamint a pont részletek panelen.</p
+          >
         </div>
 
-        <div class="step">
-          <h4>2. Fájl kiválasztása</h4>
-          <p>Válassza ki a korábban mentett beállítás JSON fájlt.</p>
+        <div class="setting-item">
+          <h5>Szög egysége</h5>
+          <p>Választható egységek:</p>
+          <ul>
+            <li>fok (°) <em>(alapértelmezett)</em></li>
+            <li>gradián (gon)</li>
+          </ul>
+          <p
+            >Ez a beállítás befolyásolja az irány és lejtésszög értékek megjelenítését a felmérés szerkesztőben és a
+            kör (cycle) hibajelentésekben.</p
+          >
         </div>
 
-        <div class="step">
-          <h4>3. Beállítások alkalmazása</h4>
-          <p>A beállítások automatikusan alkalmazásra kerülnek.</p>
+        <div class="info">
+          <h4>Tárolás vs. megjelenítés</h4>
+          <p
+            >Új barlangok / új felmérések létrehozásakor a Speleo Studio a felhasználó által kiválasztott aktuális
+            megjelenítési egységet használja a felmérés tárolt egységeként is. Ha a felhasználó megváltoztatja a
+            megjelenítési egységet, a már létező felmérések <strong>nem konvertálódnak át</strong> tartósan, a Speleo
+            Studio csak az aktuális nézetet alakítja át. Az eredeti adatok pontosan úgy maradnak, ahogyan azokat
+            megadta vagy importálta.</p
+          >
+          <p
+            >A különböző mértékegységű felmérésekből származó hosszúságok a barlang szintű statisztikákban (pl. teljes
+            hosszúság, mélység) belsőleg méterre konvertálódnak, így a barlang összesítések helyesek vegyes
+            mértékegységű projektek esetén is.</p
+          >
         </div>
 
-        <h3>Beállítások visszaállítása</h3>
-        <div class="step">
-          <h4>1. Visszaállítás megerősítése</h4>
-          <p>Kattintson a "Visszaállítás" gombra a beállítások panelben.</p>
+        <h3>Importálás és exportálás</h3>
+        <div class="setting-item">
+          <h5>Survex / Therion / TopoDroid importálás</h5>
+          <p
+            >Ezek a formátumok a fájlokon belül jelölik az alkalmazott egységeket (<code>*units</code> /
+            <code>units</code> direktívák). A Speleo Studio importáláskor azokat az értékeket méterre / fokra
+            konvertálja, és a létrejövő felmérést méter / fok egységekkel jelöli meg.</p
+          >
         </div>
 
-        <div class="step">
-          <h4>2. Megerősítés</h4>
-          <p>Erősítse meg a visszaállítást a párbeszédpanelben.</p>
+        <div class="setting-item">
+          <h5>Polygon (.cave) importálás / exportálás</h5>
+          <p
+            >A Polygon formátum mindig méter és fok egységeket vár. Ezeket a Speleo Studio nem változtatja, így a
+            <code>.cave</code> import / export viselkedése változatlan.</p
+          >
         </div>
 
-        <div class="warning">
-          <h3>⚠️ Visszaállítás figyelmeztetés</h3>
-          <p>A visszaállítás művelet nem vonható vissza és az összes egyéni beállítást törli.</p>
+        <div class="setting-item">
+          <h5>Speleo Studio JSON exportálás</h5>
+          <p
+            >A barlang JSON exportja minden felméréshez egy <code>units</code> mezőt is tartalmaz, és a
+            <code>length</code> / <code>azimuth</code> / <code>clino</code> mezőket az adott felmérés egységében (azaz
+            változtatás nélkül) írja ki. Ez teljes körű importálás-exportálás körfutást biztosít: ugyanaz a JSON újra
+            beolvasva pontosan ugyanazokat az értékeket adja vissza.</p
+          >
+          <p
+            >Régi (egységeket nem tartalmazó) JSON fájlok importálása esetén a Speleo Studio a hagyományos méter / fok
+            értelmezést használja.</p
+          >
         </div>
+      </div>
+
+      <h2>Beállítások betöltése</h2>
+      <div class="step">
+        <h4>1. Beállítások betöltése</h4>
+        <p>Kattintson a "Betöltés" gombra a beállítások panelben egy korábban mentett beállítás fájl betöltéséhez.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Fájl kiválasztása</h4>
+        <p>Válassza ki a korábban mentett beállítás JSON fájlt.</p>
+      </div>
+
+      <div class="step">
+        <h4>3. Beállítások alkalmazása</h4>
+        <p>A beállítások automatikusan alkalmazásra kerülnek.</p>
+      </div>
+
+      <h2>Beállítások visszaállítása</h2>
+      <div class="step">
+        <h4>1. Visszaállítás megerősítése</h4>
+        <p>Kattintson a "Visszaállítás" gombra a beállítások panelben.</p>
+      </div>
+
+      <div class="step">
+        <h4>2. Megerősítés</h4>
+        <p>Erősítse meg a visszaállítást a párbeszédpanelben.</p>
+      </div>
+
+      <div class="warning">
+        <h3>⚠️ Visszaállítás figyelmeztetés</h3>
+        <p>A visszaállítás művelet nem vonható vissza és az összes egyéni beállítást törli.</p>
       </div>
 
       <h2>Következő lépések</h2>

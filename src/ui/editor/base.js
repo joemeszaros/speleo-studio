@@ -18,6 +18,7 @@ import * as U from '../../utils/utils.js';
 import { AttributesDefinitions } from '../../attributes.js';
 import { SectionHelper } from '../../section.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
+import { DEFAULT_UNITS } from '../../model/survey.js';
 import { i18n } from '../../i18n/i18n.js';
 
 class BaseEditor {
@@ -214,7 +215,9 @@ class Editor extends BaseEditor {
   baseTableFunctions = {
 
     sumDistance : (_values, data) => {
-      return data.reduce((sum, v) => sum + (v.distance || 0), 0).toFixed(2);
+      const sumM = data.reduce((sum, v) => sum + (v.distance || 0), 0);
+      const u = this.options?.units?.length ?? DEFAULT_UNITS.length;
+      return `${U.convertLengthFromMeters(sumM, u).toFixed(2)} ${i18n.t(`ui.units.short.${u}`)}`;
     },
     statusIcon : (cell) => {
       const data = cell.getData();

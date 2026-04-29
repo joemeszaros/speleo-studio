@@ -16,8 +16,8 @@
 
 import { Vector, SectionAttribute, ComponentAttribute, StationAttribute } from '../model.js';
 import { GeoData } from './geo.js';
-import { Survey, SurveyAlias, StationComment } from './survey.js';
-import { sanitizeName } from '../utils/utils.js';
+import { Survey, SurveyAlias, StationComment, DEFAULT_UNITS } from './survey.js';
+import { sanitizeName, convertLengthToMeters } from '../utils/utils.js';
 
 class CaveCycle {
 
@@ -367,23 +367,26 @@ class Cave {
       if (survey.isolated === true) {
         isolated += 1;
       }
+      const lengthUnit = survey.units?.length ?? DEFAULT_UNITS.length;
       survey.shots.forEach((shot) => {
 
         if (shot.length === undefined || shot.length === null || shot.length.isNaN || typeof shot.length !== 'number') {
           return;
         }
 
+        const lenM = convertLengthToMeters(shot.length, lengthUnit);
+
         if (survey.orphanShotIds.has(shot.id)) {
-          orphanLength += shot.length;
+          orphanLength += lenM;
         }
         if (survey.invalidShotIds.has(shot.id)) {
-          invalidLength += shot.length;
+          invalidLength += lenM;
         }
 
         if (shot.isAuxiliary()) {
-          auxiliaryLength += shot.length;
+          auxiliaryLength += lenM;
         } else if (shot.isCenter()) {
-          length += shot.length;
+          length += lenM;
         }
 
         if (shot.isSplay()) {

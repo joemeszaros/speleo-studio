@@ -14,9 +14,30 @@
  * limitations under the License.
  */
 
-import { toPolar, degreesToRads, radsToDegrees } from './utils.js';
+import {
+  toPolar,
+  degreesToRads,
+  radsToDegrees,
+  convertLengthToMeters,
+  convertLengthFromMeters,
+  convertAngleToDegrees,
+  convertAngleFromDegrees
+} from './utils.js';
 import { Polar } from '../model.js';
 import { i18n } from '../i18n/i18n.js';
+import { DEFAULT_UNITS } from '../model/survey.js';
+
+const shotLenM = (shot, survey) =>
+  convertLengthToMeters(shot.length, survey?.units?.length ?? DEFAULT_UNITS.length);
+const shotAziDeg = (shot, survey) =>
+  convertAngleToDegrees(shot.azimuth, survey?.units?.angle ?? DEFAULT_UNITS.angle);
+const shotCliDeg = (shot, survey) =>
+  convertAngleToDegrees(shot.clino, survey?.units?.angle ?? DEFAULT_UNITS.angle);
+const writeShotMeters = (shot, survey, lenM, aziDeg, cliDeg) => {
+  shot.length = convertLengthFromMeters(lenM, survey?.units?.length ?? DEFAULT_UNITS.length);
+  shot.azimuth = convertAngleFromDegrees(aziDeg, survey?.units?.angle ?? DEFAULT_UNITS.angle);
+  shot.clino = convertAngleFromDegrees(cliDeg, survey?.units?.angle ?? DEFAULT_UNITS.angle);
+};
 
 export class CycleUtil {
 
@@ -60,11 +81,11 @@ export class CycleUtil {
    * @param {number} convergence - Convergence correction
    * @returns {Vector3} Vector representation of the shot
    */
-  static _createShotVector(shot, declination, convergence) {
+  static _createShotVector(shot, declination, convergence, survey) {
     return new Polar(
-      shot.length,
-      degreesToRads(shot.azimuth + declination - convergence),
-      degreesToRads(shot.clino)
+      shotLenM(shot, survey),
+      degreesToRads(shotAziDeg(shot, survey) + declination - convergence),
+      degreesToRads(shotCliDeg(shot, survey))
     ).toVector();
   }
 
@@ -108,16 +129,16 @@ export class CycleUtil {
       const to = path[i + 1];
       const fromStation = stations.get(from);
 
-      const { shot } = this._findShotBetweenStations(fromStation, from, to);
+      const { shot, survey } = this._findShotBetweenStations(fromStation, from, to);
 
-      const v = this._createShotVector(shot, 0, 0);
+      const v = this._createShotVector(shot, 0, 0, survey);
 
       if (shot.from === from) {
         calculatedPosition = calculatedPosition.add(v);
       } else if (shot.from === to) {
         calculatedPosition = calculatedPosition.sub(v);
       }
-      totalLength += shot.length;
+      totalLength += shotLenM(shot, survey);
     }
 
     const closureError = startPosition.sub(calculatedPosition);
@@ -154,10 +175,11 @@ export class CycleUtil {
       const from = path[i];
       const to = path[i + 1];
       const fromStation = stations.get(from);
-      const { shot } = this._findShotBetweenStations(fromStation, from, to);
-      const errorProportion = shot.length / totalLength;
+      const { shot, survey } = this._findShotBetweenStations(fromStation, from, to);
+      const lenM = shotLenM(shot, survey);
+      const errorProportion = lenM / totalLength;
       const correction = closureError.mul(errorProportion).toVector();
-      const shotVector = this._createShotVector(shot, 0, 0);
+      const shotVector = this._createShotVector(shot, 0, 0, survey);
       let newShotPolar;
       if (shot.from === from) {
         const newShotVector = shotVector.add(correction);
@@ -166,9 +188,13 @@ export class CycleUtil {
         const newShotVector = shotVector.sub(correction);
         newShotPolar = newShotVector.toPolar();
       }
-      shot.length = newShotPolar.distance;
-      shot.azimuth = radsToDegrees(newShotPolar.azimuth);
-      shot.clino = radsToDegrees(newShotPolar.clino);
+      writeShotMeters(
+        shot,
+        survey,
+        newShotPolar.distance,
+        radsToDegrees(newShotPolar.azimuth),
+        radsToDegrees(newShotPolar.clino)
+      );
     }
     return true;
   }
@@ -187,7 +213,7 @@ export class CycleUtil {
       const { shot, survey } = this._findShotBetweenStations(fromStation, from, to);
       const { declination, convergence } = this._getSurveyMetadata(survey);
 
-      const shotVector = this._createShotVector(shot, declination, convergence);
+      const shotVector = this._createShotVector(shot, declination, convergence, survey);
 
       let diff, newShotPolar;
       if (shot.from === from) {
@@ -198,6 +224,7 @@ export class CycleUtil {
         newShotPolar = shotVector.sub(diff).toPolar();
       }
 
+      // newShot stored in meters/degrees so the writeback path can convert per-survey
       const newShot = {
         length  : newShotPolar.distance,
         azimuth : radsToDegrees(newShotPolar.azimuth) + declination - convergence,
@@ -207,6 +234,7 @@ export class CycleUtil {
       if (diff.length() > 0.01) {
         result.push({
           shot,
+          survey,
           diff,
           newShot,
           declination,
@@ -222,9 +250,7 @@ export class CycleUtil {
     let adjustedShots = false;
 
     shotsToAdjust.forEach((s) => {
-      s.shot.length = s.newShot.length;
-      s.shot.azimuth = s.newShot.azimuth;
-      s.shot.clino = s.newShot.clino;
+      writeShotMeters(s.shot, s.survey, s.newShot.length, s.newShot.azimuth, s.newShot.clino);
       adjustedShots = true;
     });
 

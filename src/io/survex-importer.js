@@ -67,7 +67,6 @@ import {
   stripStn,
   assembleCave,
   parseTeam,
-  parseCompass,
 } from './cave-survey-helpers.js';
 
 const SURVEX_OPTS = {
@@ -244,6 +243,7 @@ class SurvexImporter extends Importer {
             surveyPath      : top.surveyPath,
             shots           : top.shots,
             metadata,
+            units           : { ...top.state.units },
             equates         : top.state.equates,
             cs              : top.state.cs,
             fixes           : top.state.fixes,
@@ -304,9 +304,15 @@ class SurvexImporter extends Importer {
 
       // ── *calibrate ─────────────────────────────────────────────────────────
       // *calibrate declination is the pre-2.0 Survex way to set magnetic declination.
+      // Declination is always stored in degrees (regardless of survey angle unit), so we
+      // convert here explicitly rather than going through parseCompass (which preserves
+      // the source unit for natively-supported angle units like grads).
       if (kw === 'calibrate') {
         applyCalibration(tokens, state, {
-          declination: (raw, unit, s) => { s.declination = parseCompass(raw, unit ?? 'degrees'); }
+          declination : (raw, unit, s) => {
+            const num = parseMyFloat(raw);
+            if (!isNaN(num)) s.declination = angleToDegrees(num, unit ?? 'degrees');
+          }
         });
         continue;
       }

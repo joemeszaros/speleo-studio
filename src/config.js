@@ -15,7 +15,7 @@
  */
 
 import * as THREE from 'three';
-import { ShotType } from './model/survey.js';
+import { ShotType, DEFAULT_UNITS } from './model/survey.js';
 import { showErrorPanel, showSuccessPanel } from './ui/popups.js';
 import { i18n } from './i18n/i18n.js';
 
@@ -241,7 +241,8 @@ export const DEFAULT_OPTIONS = {
   },
   import : {
     cavesMaxDistance : 10000
-  }
+  },
+  units : { ...DEFAULT_UNITS } // length: 'meters' | 'feet' | 'yards' | 'inches'; angle: 'degrees' | 'grads'
 };
 
 /**
@@ -479,6 +480,13 @@ export class ConfigManager {
     } else if (config.scene.boundingBox.mode === undefined) {
       config.scene.boundingBox.mode = config.scene.boundingBox.show ? 'box' : 'off';
       delete config.scene.boundingBox.show;
+    }
+
+    if (config.units === undefined) {
+      config.units = { ...DEFAULT_UNITS };
+    } else {
+      if (config.units.length === undefined) config.units.length = DEFAULT_UNITS.length;
+      if (config.units.angle === undefined) config.units.angle = DEFAULT_UNITS.angle;
     }
   }
 
@@ -1245,6 +1253,8 @@ export class ConfigChanges {
       this.handleEdlChanges(path, oldValue, newValue);
     } else if (path.startsWith('interactive.')) {
       // do nothing, persisted via auto-save
+    } else if (path.startsWith('units.')) {
+      document.dispatchEvent(new CustomEvent('unitsChanged'));
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('ui.stationDetails.')) {

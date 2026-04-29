@@ -114,6 +114,16 @@
       "privacyPolicy": "Adatvédelmi irányelvek",
       "termsOfService": "Felhasználási feltételek"
     },
+    "units": {
+      "short": {
+        "meters": "m",
+        "feet": "láb",
+        "yards": "yard",
+        "inches": "hüvelyk",
+        "degrees": "°",
+        "grads": "gon"
+      }
+    },
     "settingsPanel": {
       "buttons": {
         "download": "Letöltés",
@@ -132,7 +142,16 @@
         "stationDetails": "Pont részletek (láblécben)",
         "sprites3D": "3D segédek",
         "print": "Nyomtatás",
-        "attributes": "Attribútumok"
+        "attributes": "Attribútumok",
+        "generalSettings": "Általános beállítások"
+      },
+      "units": {
+        "meters": "méter (m)",
+        "feet": "láb (ft)",
+        "yards": "yard (yd)",
+        "inches": "hüvelyk (in)",
+        "degrees": "fok (°)",
+        "grads": "gradián (gon)"
       },
       "groups": {
         "centerLines": "Középvonalak",
@@ -210,7 +229,9 @@
         "circleOpacity": "Dőlés - Tektonikus kör átlátszóság",
         "attributes": "Attribútumok",
         "showAllAttributes": "Összes attribútum megjelenítése",
-        "spatialProjection": "Térbeli nézet vetítése"
+        "spatialProjection": "Térbeli nézet vetítése",
+        "lengthUnit": "Hosszúság egysége",
+        "angleUnit": "Szög egysége"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"
@@ -1211,8 +1232,8 @@
       "invalidTo": "Pontig ({to}, típus={type}) érvénytelen szöveg vagy üres",
       "invalidFromTo": "Ponttól ({from}) és pontig ({to}) nem lehet ugyanaz",
       "invalidLength": "Hossznak 0-nál nagyobbnak kell lennie",
-      "invalidClino": "Dőlés -90 és 90 között kell legyen",
-      "invalidAzimuth": "Irány -360 és 360 között kell legyen",
+      "invalidClino": "Dőlés -{max} és {max} között kell legyen",
+      "invalidAzimuth": "Irány -{max} és {max} között kell legyen",
       "invalidDecimal": "({field}: {value}, típus={type}) érvénytelen decimális szám"
     },
     "sectionAttribute": {

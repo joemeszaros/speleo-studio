@@ -15,8 +15,9 @@
  */
 
 import { wm } from '../window.js';
-import { node } from '../../utils/utils.js';
+import { node, convertLengthToMeters, convertAngleToDegrees } from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
+import { DEFAULT_UNITS } from '../../model/survey.js';
 
 export class RoseDiagramTool {
 
@@ -60,6 +61,8 @@ export class RoseDiagramTool {
       // Skip isolated surveys
       if (survey.isolated === true) return;
 
+      const lengthUnit = survey.units?.length ?? DEFAULT_UNITS.length;
+      const angleUnit = survey.units?.angle ?? DEFAULT_UNITS.angle;
       survey.validShots.forEach((shot) => {
         if (
           shot.isCenter() &&
@@ -73,8 +76,8 @@ export class RoseDiagramTool {
           shot.length > 0
         ) {
           shots.push({
-            azimuth : shot.azimuth,
-            length  : shot.length
+            azimuth : convertAngleToDegrees(shot.azimuth, angleUnit),
+            length  : convertLengthToMeters(shot.length, lengthUnit)
           });
         }
       });
