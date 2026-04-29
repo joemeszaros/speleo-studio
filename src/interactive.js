@@ -17,7 +17,9 @@
 import * as THREE from 'three';
 import { wm } from './ui/window.js';
 import { showErrorPanel } from './ui/popups.js';
-import { get3DCoordsStr, node, radsToDegrees, toPolar } from './utils/utils.js';
+import {
+  get3DCoordsStr, node, radsToDegrees, toPolar, convertLengthFromMeters, convertAngleFromDegrees
+} from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
 import { Raycasting } from './scene/raycasting.js';
 import { AttributesDefinitions } from './attributes.js';
@@ -682,24 +684,36 @@ class SceneInteraction {
       x.type === 'station' ? `${x.cave.name} → ${x.station.survey.name} → ${x.name}` : x.name;
     const fromDetails = detailsFor(from);
     const toDetails = detailsFor(to);
+
+    // Scene positions and diffs are stored internally in metres / degrees — convert
+    // to the user's display unit and append the localized unit label.
+    const lengthUnit = this.options?.units?.length ?? DEFAULT_UNITS.length;
+    const angleUnit = this.options?.units?.angle ?? DEFAULT_UNITS.angle;
+    const lLabel = i18n.t(`ui.units.short.${lengthUnit}`);
+    const aLabel = i18n.t(`ui.units.short.${angleUnit}`);
+    const fmtL = (m) => `${convertLengthFromMeters(m, lengthUnit).toFixed(3)} ${lLabel}`;
+    const aSep = angleUnit === 'degrees' ? '' : ' ';
+    const fmtA = (deg) => `${convertAngleFromDegrees(deg, angleUnit).toFixed(3)}${aSep}${aLabel}`;
+
+    const horizontal = Math.sqrt(diffVector.x * diffVector.x + diffVector.y * diffVector.y);
     content.innerHTML = `
         ${i18n.t('common.from')}: ${fromDetails}<br>
-        X: ${fp.x.toFixed(3)}<br>
-        Y: ${fp.y.toFixed(3)}<br>
-        Z: ${fp.z.toFixed(3)}<br>
+        X: ${fmtL(fp.x)}<br>
+        Y: ${fmtL(fp.y)}<br>
+        Z: ${fmtL(fp.z)}<br>
         <br>
         ${i18n.t('common.to')}: ${toDetails}<br>
-        X: ${tp.x.toFixed(3)}<br>
-        Y: ${tp.y.toFixed(3)}<br>
-        Z: ${tp.z.toFixed(3)}<br>
+        X: ${fmtL(tp.x)}<br>
+        Y: ${fmtL(tp.y)}<br>
+        Z: ${fmtL(tp.z)}<br>
         <br>
-        ${i18n.t('ui.panels.distance.x')}: ${diffVector.x.toFixed(3)}<br>
-        ${i18n.t('ui.panels.distance.y')}: ${diffVector.y.toFixed(3)}<br>
-        ${i18n.t('ui.panels.distance.z')}: ${diffVector.z.toFixed(3)}<br>
-        ${i18n.t('ui.panels.distance.spatial')}: ${polar.distance.toFixed(3)}<br>
-        ${i18n.t('ui.panels.distance.azimuth')}: ${radsToDegrees(polar.azimuth).toFixed(3)}°<br>
-        ${i18n.t('ui.panels.distance.clino')}: ${radsToDegrees(polar.clino).toFixed(3)}°<br>
-        ${i18n.t('ui.panels.distance.horizontal')}: ${Math.sqrt(diffVector.x * diffVector.x + diffVector.y * diffVector.y).toFixed(3)}<br>
+        ${i18n.t('ui.panels.distance.x')}: ${fmtL(diffVector.x)}<br>
+        ${i18n.t('ui.panels.distance.y')}: ${fmtL(diffVector.y)}<br>
+        ${i18n.t('ui.panels.distance.z')}: ${fmtL(diffVector.z)}<br>
+        ${i18n.t('ui.panels.distance.spatial')}: ${fmtL(polar.distance)}<br>
+        ${i18n.t('ui.panels.distance.azimuth')}: ${fmtA(radsToDegrees(polar.azimuth))}<br>
+        ${i18n.t('ui.panels.distance.clino')}: ${fmtA(radsToDegrees(polar.clino))}<br>
+        ${i18n.t('ui.panels.distance.horizontal')}: ${fmtL(horizontal)}<br>
         <br>
         `;
     contentElmnt.appendChild(content);
