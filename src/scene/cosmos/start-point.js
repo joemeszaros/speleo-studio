@@ -99,13 +99,16 @@ export class StartPointScene {
   }
 
   updateStartingPointRadius(radius) {
+    this.updateAllStartPointSizes(radius);
+  }
+
+  updateAllStartPointSizes(radius) {
+    const r = radius ?? this.options.scene.startPoints.radius ?? 1;
+    const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
     this.startPointObjects.forEach((obj) => {
-      // Create new geometry with new radius
-      const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
-      const newGeometry = new THREE.SphereGeometry(radius * _8_px, 8, 8);
+      const newGeometry = new THREE.SphereGeometry(r * _8_px, 8, 8);
       obj.mesh.geometry.dispose();
       obj.mesh.geometry = newGeometry;
-      // Update stored geometry reference
       obj.geometry = newGeometry;
     });
   }

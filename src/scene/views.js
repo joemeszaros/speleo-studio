@@ -276,6 +276,7 @@ class View {
 
   onZoomLevelChange(level) {
     this.updateRationSprites(level);
+    this.scene.startPoint.updateAllStartPointSizes();
     document.dispatchEvent(new CustomEvent('zoomLevelChanged', { detail: { level } }));
   }
 
