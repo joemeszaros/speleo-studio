@@ -590,6 +590,41 @@ export class SurveyEditor extends Editor {
       return U.convertAngle(n, d, sUnits.angle);
     };
 
+    // Custom editor that pre-converts the stored value to display units so
+    // the input opens with the value the user expects to see (e.g. meters
+    // when the survey stores feet).  mutatorEdit then converts back on commit.
+    const makeConvertingEditor = (getDisplayStr) => (cell, onRendered, success, cancel) => {
+      const input = document.createElement('input');
+      input.setAttribute('type', 'text');
+      const stored = cell.getValue();
+      input.value = (typeof stored === 'number' && !isNaN(stored))
+        ? getDisplayStr(stored)
+        : (stored ?? '');
+      input.style.cssText = 'width:100%;height:100%;box-sizing:border-box;padding:0;border:none;background:transparent;color:inherit;font-size:inherit;';
+      onRendered(() => { input.focus(); input.select(); });
+      let committed = false;
+      const commit = () => {
+        if (!committed) { committed = true; success(input.value); }
+      };
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === 'Tab') { e.stopPropagation(); commit(); }
+        else if (e.key === 'Escape') { cancel(); }
+      });
+      input.addEventListener('blur', commit);
+      return input;
+    };
+
+    const lengthEditor = makeConvertingEditor((stored) => {
+      const d = getDUnits().length;
+      if (d === sUnits.length) return stored.toString();
+      return trimNumber(U.convertLength(stored, sUnits.length, d), 3);
+    });
+    const angleEditor = makeConvertingEditor((stored) => {
+      const d = getDUnits().angle;
+      if (d === sUnits.angle) return stored.toString();
+      return trimNumber(U.convertAngle(stored, sUnits.angle, d), 3);
+    });
+
     // Validators run on user input (display units). Build live validators
     // that look up the current display unit each time.
     const azimuthRangeValidator = {
@@ -673,7 +708,7 @@ export class SurveyEditor extends Editor {
       {
         title        : i18n.t('ui.editors.survey.columns.length'),
         field        : 'length',
-        editor       : 'input',
+        editor       : lengthEditor,
         headerFilter : 'input',
         accessor     : this.baseTableFunctions.floatAccessor,
         formatter    : lengthFormatter,
@@ -684,7 +719,7 @@ export class SurveyEditor extends Editor {
       {
         title        : i18n.t('ui.editors.survey.columns.azimuth'),
         field        : 'azimuth',
-        editor       : 'input',
+        editor       : angleEditor,
         headerFilter : 'input',
         accessor     : this.baseTableFunctions.floatAccessor,
         formatter    : angleFormatter,
@@ -694,7 +729,7 @@ export class SurveyEditor extends Editor {
       {
         title        : i18n.t('ui.editors.survey.columns.clino'),
         field        : 'clino',
-        editor       : 'input',
+        editor       : angleEditor,
         headerFilter : 'input',
         accessor     : this.baseTableFunctions.floatAccessor,
         formatter    : angleFormatter,
