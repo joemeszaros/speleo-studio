@@ -17,6 +17,7 @@
 import { ConfigManager } from '../config.js';
 import { i18n } from '../i18n/i18n.js';
 import { DEFAULT_UNITS } from '../model/survey.js';
+import { createFloatInput } from './component/input.js';
 
 export class SettingsPanel {
   constructor(container, options) {
@@ -28,6 +29,11 @@ export class SettingsPanel {
     document.addEventListener('languageChanged', () => {
       this.render();
     });
+
+    // Reformat owned float-input widgets when the decimal separator setting changes.
+    document.addEventListener('decimalSeparatorChanged', () => {
+      this._floatInputs?.forEach((w) => w.reformat());
+    });
   }
 
   init() {
@@ -36,6 +42,7 @@ export class SettingsPanel {
 
   render() {
     this.container.innerHTML = '';
+    this._floatInputs = [];
 
     // Configuration Management Buttons
     this.container.appendChild(
@@ -800,9 +807,9 @@ export class SettingsPanel {
             { value: 'yards', text: i18n.t('ui.settingsPanel.units.yards') },
             { value: 'inches', text: i18n.t('ui.settingsPanel.units.inches') }
           ],
-          this.options.units?.length ?? DEFAULT_UNITS.length,
+          this.options.format?.units?.length ?? DEFAULT_UNITS.length,
           (value) => {
-            this.options.units.length = value;
+            this.options.format.units.length = value;
           }
         ),
         this.createSelect(
@@ -811,9 +818,20 @@ export class SettingsPanel {
             { value: 'degrees', text: i18n.t('ui.settingsPanel.units.degrees') },
             { value: 'grads', text: i18n.t('ui.settingsPanel.units.grads') }
           ],
-          this.options.units?.angle ?? DEFAULT_UNITS.angle,
+          this.options.format?.units?.angle ?? DEFAULT_UNITS.angle,
           (value) => {
-            this.options.units.angle = value;
+            this.options.format.units.angle = value;
+          }
+        ),
+        this.createSelect(
+          i18n.t('ui.settingsPanel.labels.decimalSeparator'),
+          [
+            { value: '.', text: i18n.t('ui.settingsPanel.units.dot') },
+            { value: ',', text: i18n.t('ui.settingsPanel.units.comma') }
+          ],
+          this.options.format?.decimalSeparator ?? '.',
+          (value) => {
+            this.options.format.decimalSeparator = value;
           }
         )
       ],
@@ -1061,7 +1079,17 @@ export class SettingsPanel {
     const rangeContainer = document.createElement('div');
     rangeContainer.className = 'settings-range-container';
 
-    const valueDisplay = document.createElement('input');
+    const valueDisplay = createFloatInput({
+      value    : value,
+      min      : min,
+      max      : max,
+      step     : step,
+      decimals : 1
+    });
+    valueDisplay.classList.add('settings-range-value');
+    valueDisplay.style.width = '70px';
+    this._floatInputs.push(valueDisplay);
+
     const input = document.createElement('input');
     input.type = 'range';
     input.className = 'settings-range';
@@ -1071,33 +1099,19 @@ export class SettingsPanel {
     input.value = value;
     input.oninput = (e) => {
       const newValue = parseFloat(e.target.value);
-      valueDisplay.value = newValue.toFixed(1);
+      valueDisplay.floatValue = newValue;
     };
     input.onchange = (e) => {
       const newValue = parseFloat(e.target.value);
       onChange(newValue);
-      valueDisplay.value = newValue.toFixed(1);
+      valueDisplay.floatValue = newValue;
     };
 
-    valueDisplay.onchange = (e) => {
-      const newValue = parseFloat(e.target.value);
-      if (!isNaN(newValue) && newValue >= min && newValue <= max) {
-        onChange(newValue);
-        input.value = newValue;
-      } else {
-        // Reset to current value if invalid input
-        valueDisplay.value = value.toFixed(1);
-      }
-    };
-
-    valueDisplay.type = 'number';
-    valueDisplay.className = 'settings-range-value';
-    valueDisplay.value = value.toFixed(1);
-    valueDisplay.min = min;
-    valueDisplay.max = max;
-    valueDisplay.step = step;
-    valueDisplay.style.width = '60px';
-    valueDisplay.style.textAlign = 'center';
+    valueDisplay.addEventListener('change', () => {
+      const newValue = valueDisplay.floatValue;
+      onChange(newValue);
+      input.value = newValue;
+    });
 
     rangeContainer.appendChild(input);
     rangeContainer.appendChild(valueDisplay);

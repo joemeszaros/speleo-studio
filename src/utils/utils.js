@@ -15,6 +15,7 @@
  */
 
 import { Vector, Polar } from '../model.js';
+import { parseMyFloat, formatFloat, formatFree } from '../ui/component/input.js';
 
 /**
  * Converts polar coordinates (distance, azimuth, clino) to Cartesian coordinates (x,y,z)
@@ -221,16 +222,6 @@ function detectPlatform(userAgent = navigator.userAgent) {
   return 'desktop';
 }
 
-function parseMyFloat(strOrNum) {
-  if (typeof strOrNum === 'number') {
-    return parseFloat(strOrNum);
-  } else if (typeof strOrNum === 'string') {
-    return parseFloat(strOrNum.replace(',', '.'));
-  } else {
-    return parseFloat(strOrNum);
-  }
-}
-
 const floatPattern = /^[+-]?\d+([.,]\d+)?$/;
 
 function isFloatStr(value) {
@@ -238,7 +229,7 @@ function isFloatStr(value) {
 }
 
 function get3DCoordsStr(vector, fields = ['x', 'y', 'z'], decimals = 3) {
-  const s = fields.map((n) => vector[n].toFixed(decimals)).join(', ');
+  const s = fields.map((n) => formatFloat(vector[n], decimals)).join(', ');
   return `(${s})`;
 }
 
@@ -296,9 +287,9 @@ function formatElevation(elevationInMeters) {
 function formatDistance(distanceInMeters, decimals = 2) {
   if (distanceInMeters >= 1000) {
     const distanceInKm = distanceInMeters / 1000.0;
-    return `${distanceInKm.toFixed(decimals)} km`;
+    return `${formatFloat(distanceInKm, decimals)} km`;
   } else if (distanceInMeters < 15) {
-    return `${distanceInMeters.toFixed(1)} m`;
+    return `${formatFloat(distanceInMeters, 1)} m`;
   } else {
     return `${Math.round(distanceInMeters)} m`;
 
@@ -454,7 +445,7 @@ function formatBytes(bytes) {
   const units = ['B', 'KB', 'MB', 'GB'];
   const k = 1024;
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i];
+  return formatFree(parseFloat((bytes / Math.pow(k, i)).toFixed(2))) + ' ' + units[i];
 }
 
 /**
@@ -557,6 +548,8 @@ export {
   detectBrowser,
   detectPlatform,
   parseMyFloat,
+  formatFloat,
+  formatFree,
   isFloatStr,
   interpolate,
   get3DCoordsStr,

@@ -25,6 +25,7 @@ import { showErrorPanel } from '../popups.js';
 import { i18n } from '../../i18n/i18n.js';
 import * as U from '../../utils/utils.js';
 import { wm } from '../window.js';
+import { createFloatInput } from '../component/input.js';
 
 export class SurveySheetEditor extends BaseEditor {
 
@@ -59,7 +60,7 @@ export class SurveySheetEditor extends BaseEditor {
 
   buildForm(contentElmnt) {
 
-    const initialUnits = this.survey?.units ?? this.options?.units ?? DEFAULT_UNITS;
+    const initialUnits = this.survey?.units ?? this.options?.format?.units ?? DEFAULT_UNITS;
     this.formData = {
       name        : this.survey?.name || '',
       start       : this.survey?.start || '',
@@ -194,16 +195,37 @@ export class SurveySheetEditor extends BaseEditor {
       );
     }
 
-    createField(
-      {
-        label    : i18n.t('ui.editors.surveySheet.fields.declination'),
-        id       : 'declination',
-        type     : 'number',
-        step     : 'any',
-        required : true
-      },
-      column2
-    );
+    // Declination: use the float-input widget so the value uses the configured
+    // decimal separator and the user can clear the field (declination is optional).
+    {
+      const id = 'declination';
+      const stored = this.formData[id];
+      const hasValue = stored !== '' && stored !== undefined && stored !== null;
+      const parsed = hasValue ? parseFloat(stored) : undefined;
+      const wrapper = createFloatInput({
+        value    : Number.isFinite(parsed) ? parsed : undefined,
+        step     : 0,         // no snapping — preserve any precision the user types
+        decimals : null,      // free precision display
+        nullable : true       // backspace / delete clears the value
+      });
+      wrapper.id = id;
+      const inner = wrapper.querySelector('input');
+      inner.name = id;
+      wrapper.addEventListener('change', () => {
+        const v = wrapper.floatValue;
+        const newValue = v === undefined || v === null ? '' : String(v);
+        if (this.formData[id] !== newValue) {
+          this.surveyHasChanged = true;
+          this.declinationOrStartChanged = true;
+          this.formData[id] = newValue;
+        }
+      });
+      const label = U.node`<label class="sheet-editor-label" for="${id}">${i18n.t('ui.editors.surveySheet.fields.declination')}: </label>`;
+      const fieldContainer = U.node`<div class="sheet-editor-field"></div>`;
+      fieldContainer.appendChild(label);
+      fieldContainer.appendChild(wrapper);
+      column2.appendChild(fieldContainer);
+    }
 
     createSelectField(
       {
@@ -267,7 +289,7 @@ export class SurveySheetEditor extends BaseEditor {
 
     const convergence = this.survey?.metadata?.convergence ?? this.getConvergence(this.cave.geoData);
     form.appendChild(
-      U.node`<p>${i18n.t('ui.editors.surveySheet.fields.convergence')}: ${convergence?.toFixed(3) || i18n.t('ui.editors.surveySheet.errors.notAvailable')}</p>`
+      U.node`<p>${i18n.t('ui.editors.surveySheet.fields.convergence')}: ${convergence !== undefined ? U.formatFloat(convergence, 3) : i18n.t('ui.editors.surveySheet.errors.notAvailable')}</p>`
     );
     this.declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
     form.appendChild(this.declinationText);
@@ -386,14 +408,14 @@ export class SurveySheetEditor extends BaseEditor {
         Declination.getDeclination(this.declinationCache, wgsCoord.latitude, wgsCoord.longitude, date).then(
           (declination) => {
             this.declinationOfficial = declination;
-            this.declinationText.textContent = `${declinationPrefix} ${declination.toFixed(3)}`;
+            this.declinationText.textContent = `${declinationPrefix} ${U.formatFloat(declination, 3)}`;
           }
         );
       } else {
         this.declinationText.textContent = `${declinationPrefix} ${i18n.t('ui.editors.surveySheet.errors.noWgs84Coordinates')}`;
       }
     } else {
-      this.declinationText.textContent = `${declinationPrefix} ${this.declinationOfficial.toFixed(3)}`;
+      this.declinationText.textContent = `${declinationPrefix} ${U.formatFloat(this.declinationOfficial, 3)}`;
     }
   }
 
@@ -495,9 +517,9 @@ export class SurveySheetEditor extends BaseEditor {
 
     // Calculate Z stats from cave stations filtered by this survey
     const zStats = this.#calculateZStats();
-    const lengthUnit = this.options?.units?.length ?? DEFAULT_UNITS.length;
+    const lengthUnit = this.options?.format?.units?.length ?? DEFAULT_UNITS.length;
     const lLabel = i18n.t(`ui.units.short.${lengthUnit}`);
-    const lengthFmt = (v) => `${U.convertLengthFromMeters(v, lengthUnit).toFixed(2)} ${lLabel}`;
+    const lengthFmt = (v) => `${U.formatFloat(U.convertLengthFromMeters(v, lengthUnit), 2)} ${lLabel}`;
 
     [
       {

@@ -15,7 +15,7 @@
  */
 
 import { i18n } from '../i18n/i18n.js';
-import { parseMyFloat } from '../utils/utils.js';
+import { parseMyFloat, formatFloat } from '../utils/utils.js';
 
 /**
  * Dialog for entering WGS84 coordinates (lat, lon, elevation) for a 3D model.
@@ -53,7 +53,7 @@ export class ModelCoordinateDialog {
     const firstPointHtml = firstPointCoords
       ? `<div class="info-box" style="margin-bottom: 12px; padding: 8px; background: var(--bg-secondary, #2a2a2a); border-radius: 4px; font-size: 0.85em;">
            <span style="opacity: 0.7">${i18n.t('ui.dialogs.modelCoordinate.firstPoint')}:</span>
-           X=${firstPointCoords[0].toFixed(3)}, Y=${firstPointCoords[1].toFixed(3)}, Z=${firstPointCoords[2].toFixed(3)}
+           X=${formatFloat(firstPointCoords[0], 3)}, Y=${formatFloat(firstPointCoords[1], 3)}, Z=${formatFloat(firstPointCoords[2], 3)}
          </div>`
       : '';
 

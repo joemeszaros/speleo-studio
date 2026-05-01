@@ -151,7 +151,9 @@
         "yards": "yard (yd)",
         "inches": "hüvelyk (in)",
         "degrees": "fok (°)",
-        "grads": "gradián (gon)"
+        "grads": "gradián (gon)",
+        "dot": "pont (.)",
+        "comma": "vessző (,)"
       },
       "groups": {
         "centerLines": "Középvonalak",
@@ -231,7 +233,8 @@
         "showAllAttributes": "Összes attribútum megjelenítése",
         "spatialProjection": "Térbeli nézet vetítése",
         "lengthUnit": "Hosszúság egysége",
-        "angleUnit": "Szög egysége"
+        "angleUnit": "Szög egysége",
+        "decimalSeparator": "Tizedes elválasztó"
       },
       "confirm": {
         "resetConfig": "Biztosan visszaállítod a beállításokat?"
@@ -355,7 +358,8 @@
         },
         "tooltip": "Keresési mód: {mode}"
       },
-      "noCaves": "Nincsenek barlangok betöltve"
+      "noCaves": "Nincsenek barlangok betöltve",
+      "newCave": "Új barlang"
     },
     "panels": {
       "projectManager": {

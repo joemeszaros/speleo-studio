@@ -242,7 +242,10 @@ export const DEFAULT_OPTIONS = {
   import : {
     cavesMaxDistance : 10000
   },
-  units : { ...DEFAULT_UNITS } // length: 'meters' | 'feet' | 'yards' | 'inches'; angle: 'degrees' | 'grads'
+  format : {
+    units            : { ...DEFAULT_UNITS }, // length: 'meters' | 'feet' | 'yards' | 'inches'; angle: 'degrees' | 'grads'
+    decimalSeparator : '.' // '.' | ','
+  }
 };
 
 /**
@@ -482,11 +485,21 @@ export class ConfigManager {
       delete config.scene.boundingBox.show;
     }
 
-    if (config.units === undefined) {
-      config.units = { ...DEFAULT_UNITS };
+    if (config.format === undefined) {
+      // Migrate older configs that had `units` at the top level into the new format section.
+      config.format = {
+        units            : config.units ?? { ...DEFAULT_UNITS },
+        decimalSeparator : '.'
+      };
+      delete config.units;
     } else {
-      if (config.units.length === undefined) config.units.length = DEFAULT_UNITS.length;
-      if (config.units.angle === undefined) config.units.angle = DEFAULT_UNITS.angle;
+      if (config.format.units === undefined) {
+        config.format.units = { ...DEFAULT_UNITS };
+      } else {
+        if (config.format.units.length === undefined) config.format.units.length = DEFAULT_UNITS.length;
+        if (config.format.units.angle === undefined) config.format.units.angle = DEFAULT_UNITS.angle;
+      }
+      if (config.format.decimalSeparator === undefined) config.format.decimalSeparator = '.';
     }
   }
 
@@ -1253,8 +1266,10 @@ export class ConfigChanges {
       this.handleEdlChanges(path, oldValue, newValue);
     } else if (path.startsWith('interactive.')) {
       // do nothing, persisted via auto-save
-    } else if (path.startsWith('units.')) {
+    } else if (path.startsWith('format.units.')) {
       document.dispatchEvent(new CustomEvent('unitsChanged'));
+    } else if (path === 'format.decimalSeparator') {
+      document.dispatchEvent(new CustomEvent('decimalSeparatorChanged'));
     } else if (path.startsWith('ui.sidebar.')) {
       // do nothing, no action on sidebar changes
     } else if (path.startsWith('ui.stationDetails.')) {

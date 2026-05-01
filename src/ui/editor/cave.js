@@ -776,9 +776,9 @@ class CaveEditor extends Editor {
   #setupStats(contentElmnt) {
     const statFields = U.node`<div class="cave-stats"></div>`;
     const stats = this.cave?.getStats();
-    const lengthUnit = this.options?.units?.length ?? DEFAULT_UNITS.length;
+    const lengthUnit = this.options?.format?.units?.length ?? DEFAULT_UNITS.length;
     const lLabel = i18n.t(`ui.units.short.${lengthUnit}`);
-    const lengthFmt = (v) => `${U.convertLengthFromMeters(v, lengthUnit).toFixed(2)} ${lLabel}`;
+    const lengthFmt = (v) => `${U.formatFloat(U.convertLengthFromMeters(v, lengthUnit), 2)} ${lLabel}`;
 
     [
       {

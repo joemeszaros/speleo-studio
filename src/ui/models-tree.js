@@ -17,6 +17,7 @@
 import { i18n } from '../i18n/i18n.js';
 import { degreesToRads, parseMyFloat, radsToDegrees, formatBytes } from '../utils/utils.js';
 import * as U from '../utils/utils.js';
+import { createFloatInput } from './component/input.js';
 import { TextureFile } from '../model.js';
 import { ModelSheetEditor } from './editor/model-sheet.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
@@ -60,6 +61,9 @@ export class ModelsTree {
     document.addEventListener('languageChanged', () => {
       this.render();
       this.renderPropertiesPanel();
+    });
+    document.addEventListener('decimalSeparatorChanged', () => {
+      this._floatInputs?.forEach((w) => w.reformat());
     });
     document.addEventListener('click', (e) => this.handleOutsideClick(e));
 
@@ -585,6 +589,7 @@ export class ModelsTree {
    */
   renderPropertiesPanel() {
     this.propertiesContainer.innerHTML = '';
+    this._floatInputs = []; // wrappers we'll reformat on decimalSeparatorChanged
 
     const panel = document.createElement('div');
     panel.className = 'models-properties-panel';
@@ -685,20 +690,21 @@ export class ModelsTree {
       axisLabel.textContent = axis.toUpperCase() + (suffix ? suffix : '');
       inputGroup.appendChild(axisLabel);
 
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.className = 'models-properties-input';
-      input.step = property === 'scale' ? '0.1' : '1';
-      input.value = this.selectedNode.transform[property][axis].toFixed(2);
+      const input = createFloatInput({
+        value    : this.selectedNode.transform[property][axis],
+        step     : property === 'scale' ? 0.1 : 1,
+        decimals : 2
+      });
+      input.classList.add('models-properties-input');
 
-      input.onchange = (e) => {
-        this.updateTransform(property, axis, e.target.value);
-      };
+      input.addEventListener('change', () => {
+        this.updateTransform(property, axis, input.floatValue);
+      });
+      input.addEventListener('input', () => {
+        this.updateTransform(property, axis, input.floatValue);
+      });
 
-      input.oninput = (e) => {
-        this.updateTransform(property, axis, e.target.value);
-      };
-
+      this._floatInputs.push(input);
       inputGroup.appendChild(input);
       inputs.appendChild(inputGroup);
     });
@@ -730,35 +736,33 @@ export class ModelsTree {
     slider.step = '0.05';
     slider.value = this.selectedNode.opacity;
 
-    const valueDisplay = document.createElement('input');
-    valueDisplay.type = 'number';
-    valueDisplay.className = 'models-properties-slider-value';
-    valueDisplay.min = '0';
-    valueDisplay.max = '1';
-    valueDisplay.step = '0.05';
-    valueDisplay.value = this.selectedNode.opacity.toFixed(2);
+    const valueDisplay = createFloatInput({
+      value    : this.selectedNode.opacity,
+      min      : 0,
+      max      : 1,
+      step     : 0.05,
+      decimals : 2
+    });
+    valueDisplay.classList.add('models-properties-slider-value');
+    this._floatInputs.push(valueDisplay);
 
     slider.oninput = (e) => {
       const val = parseFloat(e.target.value);
-      valueDisplay.value = val.toFixed(2);
+      valueDisplay.floatValue = val;
       this.updateOpacity(val);
     };
 
     slider.onchange = (e) => {
       const val = parseFloat(e.target.value);
-      valueDisplay.value = val.toFixed(2);
+      valueDisplay.floatValue = val;
       this.updateOpacity(val);
     };
 
-    valueDisplay.onchange = (e) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val) && val >= 0 && val <= 1) {
-        slider.value = val;
-        this.updateOpacity(val);
-      } else {
-        valueDisplay.value = this.selectedNode.opacity.toFixed(2);
-      }
-    };
+    valueDisplay.addEventListener('change', () => {
+      const val = valueDisplay.floatValue;
+      slider.value = val;
+      this.updateOpacity(val);
+    });
 
     sliderContainer.appendChild(slider);
     sliderContainer.appendChild(valueDisplay);
@@ -838,7 +842,7 @@ export class ModelsTree {
       new THREE.Vector3(t.scale.x, t.scale.y, t.scale.z)
     );
     const e = matrix.elements; // column-major
-    const fmt = (v) => (Math.abs(v) < 1e-10 ? '0' : v.toFixed(6).replace(/\.?0+$/, ''));
+    const fmt = (v) => (Math.abs(v) < 1e-10 ? '0' : U.formatFloat(v, 6).replace(/[.,]?0+$/, ''));
     const currentMatrix = [
       [fmt(e[0]), fmt(e[4]), fmt(e[8]), fmt(e[12])].join('\t'),
       [fmt(e[1]), fmt(e[5]), fmt(e[9]), fmt(e[13])].join('\t'),

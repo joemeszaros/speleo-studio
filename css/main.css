@@ -815,7 +815,11 @@ body {
   position: absolute;
   z-index: 1001;
   color: azure;
-  background: rgb(40, 40, 40);
+  background: #3a3a3a;
+  border: 1px solid #5a5a5a;
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+  padding: 6px;
   display: none;
 }
 
@@ -1985,3 +1989,130 @@ body {
 .google-drive-sync-status .loading {
   color: #04aa6d;
 }
+
+/* ── createFloatInput widget (src/ui/component/input.js) ───────────────────── */
+.fi-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #555;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgb(40, 40, 40);
+  box-sizing: border-box;
+  min-width: 0; /* allow the wrapper to shrink inside flex containers */
+}
+.fi-wrap:focus-within {
+  outline: 1px solid #04aa6d;
+  border-color: #04aa6d;
+}
+.fi-wrap input {
+  border: none;
+  outline: none;
+  padding: 4px 6px;
+  font-size: 1em;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  color: azure;
+  box-sizing: border-box;
+}
+.fi-spin {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #555;
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  transition: width 0.1s;
+}
+.fi-wrap:focus-within .fi-spin {
+  width: 16px;
+}
+.fi-spin button {
+  flex: 1;
+  border: none;
+  background: #444;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.fi-spin button:hover  { background: #555; }
+.fi-spin button:active { background: #666; }
+.fi-spin .fi-up { border-bottom: 1px solid #555; }
+.fi-up::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-bottom: 4px solid #ccc;
+}
+.fi-dn::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid #ccc;
+}
+
+/* Survey-sheet style: float input renders with only a bottom border to match
+   the other inputs in the editor form. */
+.sheet-editor-field .fi-wrap {
+  border: none;
+  border-bottom: 1px solid #555;
+  border-radius: 0;
+  background: transparent;
+  width: 50%;
+}
+.sheet-editor-field .fi-wrap:focus-within {
+  outline: none;
+  border-color: #04aa6d;
+}
+
+/* Attribute-editor style: float input renders with only a bottom border to match
+   the other inline attribute inputs. */
+.tabulator .tabulator-cell .attributes-editor .fi-wrap {
+  border: none;
+  border-bottom: 1px solid #555;
+  border-radius: 0;
+  background: rgb(40, 40, 40);
+}
+.tabulator .tabulator-cell .attributes-editor .fi-wrap:focus-within {
+  outline: none;
+  border-bottom-color: #04aa6d;
+}
+.tabulator .tabulator-cell .attributes-editor .fi-wrap input {
+  text-align: center;
+}
+
+/* Models-tree style: float-input wrapper inherits .models-properties-input class for
+   visual consistency with the original native number inputs, but the inner input
+   already has its own padding from .fi-wrap input — strip the duplicated padding. */
+.fi-wrap.models-properties-input {
+  padding: 0;
+  background: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 4px;
+}
+.fi-wrap.models-properties-input:focus-within {
+  border-color: #04aa6d;
+  box-shadow: 0 0 0 2px rgba(4, 170, 109, 0.2);
+}
+.fi-wrap.models-properties-slider-value {
+  padding: 0;
+  background: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 4px;
+}
+
+/* Allow the input-group flex items to shrink below their content's natural size,
+   so X / Y / Z fit even in a narrow sidebar. */
+.models-properties-input-group { min-width: 0; }
+.models-properties-inputs       { min-width: 0; }

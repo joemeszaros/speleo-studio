@@ -15,7 +15,7 @@
  */
 
 import { wm } from '../window.js';
-import { node, degreesToRads, fromPolar } from '../../utils/utils.js';
+import { node, degreesToRads, fromPolar, formatFloat } from '../../utils/utils.js';
 import { StrikeDipCalculator } from '../../utils/geo.js';
 import { Vector } from '../../model.js';
 
@@ -116,10 +116,10 @@ export class DipStrikeCalculatorTool {
       try {
         const result = StrikeDipCalculator.calculateStrikeDip(this.points[0], this.points[1], this.points[2]);
         this.errorSection.style.display = 'none';
-        this.resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
-        this.resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
+        this.resultSection.querySelector('#strike-result').textContent = `${formatFloat(result.strike, 2)}°`;
+        this.resultSection.querySelector('#dip-result').textContent = `${formatFloat(result.dip, 2)}°`;
         this.resultSection.querySelector('#normal-vector-result').textContent =
-          `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
+          `(${formatFloat(result.normal.x, 3)}, ${formatFloat(result.normal.y, 3)}, ${formatFloat(result.normal.z, 3)})`;
 
         this.resultSection.style.display = 'block';
       } catch (error) {
@@ -157,10 +157,10 @@ export class DipStrikeCalculatorTool {
           convertedPoints[2]
         );
         this.errorSection.style.display = 'none';
-        this.resultSection.querySelector('#strike-result').textContent = `${result.strike.toFixed(2)}°`;
-        this.resultSection.querySelector('#dip-result').textContent = `${result.dip.toFixed(2)}°`;
+        this.resultSection.querySelector('#strike-result').textContent = `${formatFloat(result.strike, 2)}°`;
+        this.resultSection.querySelector('#dip-result').textContent = `${formatFloat(result.dip, 2)}°`;
         this.resultSection.querySelector('#normal-vector-result').textContent =
-          `(${result.normal.x.toFixed(3)}, ${result.normal.y.toFixed(3)}, ${result.normal.z.toFixed(3)})`;
+          `(${formatFloat(result.normal.x, 3)}, ${formatFloat(result.normal.y, 3)}, ${formatFloat(result.normal.z, 3)})`;
 
         this.resultSection.style.display = 'block';
       } catch (error) {

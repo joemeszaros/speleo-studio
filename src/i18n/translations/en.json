@@ -151,7 +151,9 @@
         "yards": "yards (yd)",
         "inches": "inches (in)",
         "degrees": "degrees (°)",
-        "grads": "grads (gon)"
+        "grads": "grads (gon)",
+        "dot": "dot (.)",
+        "comma": "comma (,)"
       },
       "groups": {
         "centerLines": "Center Lines",
@@ -231,7 +233,8 @@
         "showAllAttributes": "Show all attributes",
         "spatialProjection": "Spatial view projection",
         "lengthUnit": "Length unit",
-        "angleUnit": "Angle unit"
+        "angleUnit": "Angle unit",
+        "decimalSeparator": "Decimal separator"
       },
       "confirm": {
         "resetConfig": "Are you sure you want to reset the configuration?"
@@ -355,7 +358,8 @@
         },
         "tooltip": "Search mode: {mode}"
       },
-      "noCaves": "No caves loaded"
+      "noCaves": "No caves loaded",
+      "newCave": "New cave"
     },
     "panels": {
       "projectManager": {

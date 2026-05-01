@@ -52,7 +52,10 @@
           <li><strong>ⓘ Pont részletek:</strong> Footer-ben megjelenő pont információk</li>
           <li><strong>🎯 3D segédek:</strong> Iránytű, vonalzó és egyéb segédeszközök</li>
           <li><strong>🌈 Szín átmenet:</strong> Színezési módok és átmenetek</li>
-          <li><strong>Általános beállítások:</strong> Megjelenítési mértékegységek (hosszúság, szög)</li>
+          <li
+            ><strong>Általános beállítások:</strong> Megjelenítési mértékegységek (hosszúság, szög) és tizedes
+            elválasztó</li
+          >
         </ul>
       </div>
 
@@ -594,7 +597,7 @@
 
       </div>
 
-      <h2>⛯ Általános beállítások (mértékegységek)</h2>
+      <h2>⛯ Általános beállítások (mértékegységek és tizedes elválasztó)</h2>
 
       <div class="settings-box">
         <p
@@ -630,6 +633,40 @@
           <p
             >Ez a beállítás befolyásolja az irány és lejtésszög értékek megjelenítését a felmérés szerkesztőben és a
             kör (cycle) hibajelentésekben.</p
+          >
+        </div>
+
+        <div class="setting-item">
+          <h5>Tizedes elválasztó</h5>
+          <p>Választható elválasztók:</p>
+          <ul>
+            <li>pont (.) <em>(alapértelmezett)</em></li>
+            <li>vessző (,)</li>
+          </ul>
+          <p
+            >Ez a beállítás határozza meg, hogyan jelennek meg és kerülnek beolvasásra a tizedes számok az alkalmazás
+            felhasználói felületén. Hatással van többek között a következő helyekre:</p
+          >
+          <ul>
+            <li>felmérés szerkesztő (cellák megjelenítése és szerkesztése)</li>
+            <li>barlang és felmérés adatlapok (statisztikák, deklináció, konvergencia)</li>
+            <li>kör (cycle) szerkesztő (távolságok, szögek, hibaszázalék)</li>
+            <li>attribútum szerkesztő (lebegőpontos paraméter mezők, hosszösszeg)</li>
+            <li>állomás részletek panel és pont közötti távolság panel</li>
+            <li>3D nézet feliratai (irány, lejtés), valamint a státuszsor zoom kijelzése</li>
+            <li>Dőlés és irány számtó (Dip &amp; Strike), legrövidebb út és rózsadiagram eszközök</li>
+            <li>beállítások panel csúszka értékkijelzői és 3D modellek tulajdonságai (pozíció, forgatás, méret, átlátszóság)</li>
+          </ul>
+          <p
+            >A tizedes elválasztó <strong>nem változtatja</strong> a programozott formátumokat: a JSON / Polygon
+            (<code>.cave</code>) projekt exportok és a PDF kimenetek mindig pontot használnak. A WGS84 koordináta
+            dialógus DD/DMS mezői szintén mindig pontot várnak (a parser kompatibilitása érdekében).</p
+          >
+          <p
+            >A számbeviteli mezők a választott elválasztótól függetlenül elfogadnak pontot és vesszőt is — például a
+            <em>12,5</em> és a <em>12.5</em> egyaránt érvényes bemenet, csak a megjelenítés követi a beállítást. A
+            számbeviteli mezőknél a fókuszálás után megjelenő fel/le nyilakkal vagy az <em>Up</em> / <em>Down</em>
+            billentyűkkel léptethető az érték (a léptetés mértékét a mező határozza meg).</p
           >
         </div>
 

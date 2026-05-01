@@ -18,7 +18,7 @@ import * as THREE from 'three';
 import { wm } from './ui/window.js';
 import { showErrorPanel } from './ui/popups.js';
 import {
-  get3DCoordsStr, node, radsToDegrees, toPolar, convertLengthFromMeters, convertAngleFromDegrees
+  get3DCoordsStr, node, radsToDegrees, toPolar, convertLengthFromMeters, convertAngleFromDegrees, formatFloat
 } from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
 import { Raycasting } from './scene/raycasting.js';
@@ -274,13 +274,13 @@ class SceneInteraction {
     // Individual coordinates
     const coords = [];
     if (config.xCoordinate) {
-      coords.push(`X: ${st.position.x.toFixed(2)}`);
+      coords.push(`X: ${formatFloat(st.position.x, 2)}`);
     }
     if (config.yCoordinate) {
-      coords.push(`Y: ${st.position.y.toFixed(2)}`);
+      coords.push(`Y: ${formatFloat(st.position.y, 2)}`);
     }
     if (config.zCoordinate) {
-      coords.push(`Z: ${st.position.z.toFixed(2)}`);
+      coords.push(`Z: ${formatFloat(st.position.z, 2)}`);
     }
     if (coords.length > 0) {
       details.push('(' + coords.join(', ') + ')');
@@ -290,13 +290,13 @@ class SceneInteraction {
     if (st.coordinates && st.coordinates.projected && st.coordinates.projected.type === CoordinateSystemType.EOV) {
       const eovCoords = [];
       if (config.eovY) {
-        eovCoords.push(`EOV Y: ${st.coordinates.projected.y.toFixed(2)}`);
+        eovCoords.push(`EOV Y: ${formatFloat(st.coordinates.projected.y, 2)}`);
       }
       if (config.eovX) {
-        eovCoords.push(`EOV X: ${st.coordinates.projected.x.toFixed(2)}`);
+        eovCoords.push(`EOV X: ${formatFloat(st.coordinates.projected.x, 2)}`);
       }
       if (config.elevation) {
-        eovCoords.push(`Elev: ${st.coordinates.projected.elevation.toFixed(2)}`);
+        eovCoords.push(`Elev: ${formatFloat(st.coordinates.projected.elevation, 2)}`);
       }
       if (eovCoords.length > 0) {
         details.push('(' + eovCoords.join(', ') + ')');
@@ -307,13 +307,13 @@ class SceneInteraction {
     if (st.coordinates && st.coordinates.projected && st.coordinates.projected.type === CoordinateSystemType.UTM) {
       const utmCoords = [];
       if (config.utmEasting) {
-        utmCoords.push(`UTM E: ${st.coordinates.projected.easting.toFixed(2)}`);
+        utmCoords.push(`UTM E: ${formatFloat(st.coordinates.projected.easting, 2)}`);
       }
       if (config.utmNorthing) {
-        utmCoords.push(`UTM N: ${st.coordinates.projected.northing.toFixed(2)}`);
+        utmCoords.push(`UTM N: ${formatFloat(st.coordinates.projected.northing, 2)}`);
       }
       if (config.elevation) {
-        utmCoords.push(`Elev: ${st.coordinates.projected.elevation.toFixed(2)}`);
+        utmCoords.push(`Elev: ${formatFloat(st.coordinates.projected.elevation, 2)}`);
       }
       if (utmCoords.length > 0) {
         details.push('(' + utmCoords.join(', ') + ')');
@@ -327,14 +327,14 @@ class SceneInteraction {
 
     // Position (x,y,z)
     if (config.position) {
-      details.push(`(${st.position.x.toFixed(2)}, ${st.position.y.toFixed(2)}, ${st.position.z.toFixed(2)})`);
+      details.push(`(${formatFloat(st.position.x, 2)}, ${formatFloat(st.position.y, 2)}, ${formatFloat(st.position.z, 2)})`);
     }
 
     // Shots in compact format
     if (config.shots) {
       const shots = st.shots.map(
         (shw) =>
-          `${shw.shot.from}→${shw.shot.to}(${shw.shot.length.toFixed(1)}${i18n.t(`ui.units.short.${shw.survey?.units?.length ?? DEFAULT_UNITS.length}`)})`
+          `${shw.shot.from}→${shw.shot.to}(${formatFloat(shw.shot.length, 1)}${i18n.t(`ui.units.short.${shw.survey?.units?.length ?? DEFAULT_UNITS.length}`)})`
       );
       if (shots.length > 0) {
         details.push(`${i18n.t('common.shots')}: ${shots.join(', ')}`);
@@ -395,18 +395,18 @@ class SceneInteraction {
     } else if (st.type === 'pointcloud') {
       this.footer.showMessage(
         i18n.t('ui.footer.pointCloudPoint', {
-          x : st.position.x.toFixed(2),
-          y : st.position.y.toFixed(2),
-          z : st.position.z.toFixed(2)
+          x : formatFloat(st.position.x, 2),
+          y : formatFloat(st.position.y, 2),
+          z : formatFloat(st.position.z, 2)
         })
       );
     } else if (st.type === 'mesh') {
       this.footer.showMessage(
         i18n.t('ui.footer.meshPoint', {
           name : st.name,
-          x    : st.position.x.toFixed(2),
-          y    : st.position.y.toFixed(2),
-          z    : st.position.z.toFixed(2)
+          x    : formatFloat(st.position.x, 2),
+          y    : formatFloat(st.position.y, 2),
+          z    : formatFloat(st.position.z, 2)
         })
       );
     }
@@ -687,13 +687,13 @@ class SceneInteraction {
 
     // Scene positions and diffs are stored internally in metres / degrees — convert
     // to the user's display unit and append the localized unit label.
-    const lengthUnit = this.options?.units?.length ?? DEFAULT_UNITS.length;
-    const angleUnit = this.options?.units?.angle ?? DEFAULT_UNITS.angle;
+    const lengthUnit = this.options?.format?.units?.length ?? DEFAULT_UNITS.length;
+    const angleUnit = this.options?.format?.units?.angle ?? DEFAULT_UNITS.angle;
     const lLabel = i18n.t(`ui.units.short.${lengthUnit}`);
     const aLabel = i18n.t(`ui.units.short.${angleUnit}`);
-    const fmtL = (m) => `${convertLengthFromMeters(m, lengthUnit).toFixed(3)} ${lLabel}`;
+    const fmtL = (m) => `${formatFloat(convertLengthFromMeters(m, lengthUnit), 3)} ${lLabel}`;
     const aSep = angleUnit === 'degrees' ? '' : ' ';
-    const fmtA = (deg) => `${convertAngleFromDegrees(deg, angleUnit).toFixed(3)}${aSep}${aLabel}`;
+    const fmtA = (deg) => `${formatFloat(convertAngleFromDegrees(deg, angleUnit), 3)}${aSep}${aLabel}`;
 
     const horizontal = Math.sqrt(diffVector.x * diffVector.x + diffVector.y * diffVector.y);
     content.innerHTML = `
@@ -749,9 +749,9 @@ class SceneInteraction {
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
         ${i18n.t('ui.panels.pointCloudPointDetails.fileName')}: ${pointMeta.name}<br><br>
-        X: ${pointMeta.position.x.toFixed(3)}<br>
-        Y: ${pointMeta.position.y.toFixed(3)}<br>
-        Z: ${pointMeta.position.z.toFixed(3)}<br>`;
+        X: ${formatFloat(pointMeta.position.x, 3)}<br>
+        Y: ${formatFloat(pointMeta.position.y, 3)}<br>
+        Z: ${formatFloat(pointMeta.position.z, 3)}<br>`;
     contentElmnt.appendChild(content);
     const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
     this.infoPanel.style.left = adjustedPosition.left + 'px';
@@ -802,7 +802,7 @@ class SceneInteraction {
         const lLabel = i18n.t(`ui.units.short.${r.survey?.units?.length ?? DEFAULT_UNITS.length}`);
         const aLabel = i18n.t(`ui.units.short.${r.survey?.units?.angle ?? DEFAULT_UNITS.angle}`);
         return `
-        ${r.shot.from} -> ${r.shot.to} (${r.shot.length.toFixed(2)} ${lLabel}, ${r.shot.azimuth.toFixed(2)}${aLabel}, ${r.shot.clino.toFixed(2)}${aLabel}) - ${r.survey.name} - ${comment}`;
+        ${r.shot.from} -> ${r.shot.to} (${formatFloat(r.shot.length, 2)} ${lLabel}, ${formatFloat(r.shot.azimuth, 2)}${aLabel}, ${formatFloat(r.shot.clino, 2)}${aLabel}) - ${r.survey.name} - ${comment}`;
       })
       .join('<br>');
 
@@ -831,9 +831,9 @@ class SceneInteraction {
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
         ${i18n.t('common.name')}: ${stationMeta.name}<br><br>
-        X: ${stationMeta.position.x.toFixed(3)}<br>
-        Y: ${stationMeta.position.y.toFixed(3)}<br>
-        Z: ${stationMeta.position.z.toFixed(3)}<br>
+        X: ${formatFloat(stationMeta.position.x, 3)}<br>
+        Y: ${formatFloat(stationMeta.position.y, 3)}<br>
+        Z: ${formatFloat(stationMeta.position.z, 3)}<br>
         ${i18n.t('common.type')}: ${i18n.t(`params.shotType.${stationMeta.station.type}`)}<br>
         ${i18n.t('common.survey')}: ${stationMeta.station.survey.name}<br>
         ${i18n.t('common.cave')}: ${stationMeta.cave.name}<br>

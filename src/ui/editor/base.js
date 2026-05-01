@@ -216,8 +216,8 @@ class Editor extends BaseEditor {
 
     sumDistance : (_values, data) => {
       const sumM = data.reduce((sum, v) => sum + (v.distance || 0), 0);
-      const u = this.options?.units?.length ?? DEFAULT_UNITS.length;
-      return `${U.convertLengthFromMeters(sumM, u).toFixed(2)} ${i18n.t(`ui.units.short.${u}`)}`;
+      const u = this.options?.format?.units?.length ?? DEFAULT_UNITS.length;
+      return `${U.formatFloat(U.convertLengthFromMeters(sumM, u), 2)} ${i18n.t(`ui.units.short.${u}`)}`;
     },
     statusIcon : (cell) => {
       const data = cell.getData();
@@ -278,7 +278,7 @@ class Editor extends BaseEditor {
       return (cell) => {
         const value = cell.getValue();
         if (value !== undefined && typeof value === 'number') {
-          return value.toFixed(decimals);
+          return U.formatFloat(value, decimals);
         } else {
           return defaultValue;
         }

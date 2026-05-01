@@ -24,6 +24,7 @@ import { wm } from '../window.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
 import { Editor } from './base.js';
+import { createFloatInput } from '../component/input.js';
 
 class BaseAttributeEditor extends Editor {
 
@@ -32,6 +33,11 @@ class BaseAttributeEditor extends Editor {
     this.db = db;
     this.options = options;
     this.attributeDefs = attributeDefs;
+    this._floatInputs = []; // float-input wrappers; reformatted on decimalSeparatorChanged
+    document.addEventListener('decimalSeparatorChanged', () => {
+      this._floatInputs = this._floatInputs.filter((w) => document.contains(w));
+      this._floatInputs.forEach((w) => w.reformat());
+    });
   }
 
   getValidationUpdates(data) {
@@ -449,11 +455,36 @@ class BaseAttributeEditor extends Editor {
       } else {
         inputType = 'search';
       }
-      const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
-      const param = U.node`<input placeholder="${i18n.t(`attributes.params.${paramName}`)}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
-      param.onchange = (e) => {
+      let param;
+      // Float params use the createFloatInput widget so the displayed value respects
+      // the configured decimal separator. The wrapper's `change` event still goes through
+      // the same validation flow as a regular text input.
+      if (paramDef.type === 'float') {
+        param = createFloatInput({
+          value       : typeof value === 'number' ? value : undefined,
+          min         : hasRange ? paramDef.range[0] : undefined,
+          max         : hasRange ? paramDef.range[paramDef.range.length - 1] : undefined,
+          decimals    : null, // free precision — user can type as many decimals as they like
+          showSpinner : false, // attribute editor inputs are inline; no spinner
+          placeholder : i18n.t(`attributes.params.${paramName}`)
+        });
+        param.classList.add(...classes);
+        param.id = `${paramName}-${index}`;
+        // No datalist for float params: the range becomes min/max clamping on the widget.
+        this._floatInputs.push(param);
+      } else {
+        const list = datalist === undefined ? '' : `list="paramValues-${paramName}-${index}"`;
+        param = U.node`<input placeholder="${i18n.t(`attributes.params.${paramName}`)}" type="${inputType}" ${list} class="${classes.join(' ')}" id="${paramName}-${index}" value="${value}">`;
+      }
+
+      const handleChange = () => {
         this.attributesModified = true;
-        let newValue = e.target.value === '' ? undefined : e.target.value;
+        // For createFloatInput, the displayed string is on the inner input; for native inputs,
+        // it's directly on the element.
+        const rawValue = paramDef.type === 'float'
+          ? param.querySelector('input').value
+          : param.value;
+        let newValue = rawValue === '' ? undefined : rawValue;
         if (hasValues) {
           newValue = paramDef.values.find((n) => i18n.t(`attributes.values.${n}`) === newValue);
         } else if (paramDef.type === 'boolean') {
@@ -483,11 +514,18 @@ class BaseAttributeEditor extends Editor {
 
         }
       };
+
+      if (paramDef.type === 'float') {
+        param.addEventListener('change', handleChange);
+      } else {
+        param.onchange = handleChange;
+      }
+
       if (paramIndex !== 0) {
         attributeNode.appendChild(document.createTextNode(','));
       }
       attributeNode.appendChild(param);
-      if (datalist !== undefined) {
+      if (datalist !== undefined && paramDef.type !== 'float') {
         attributeNode.appendChild(datalist);
       }
 
@@ -627,7 +665,7 @@ class BaseAttributeEditor extends Editor {
           sumLength += value.attribute.length;
         }
       });
-      return sumLength.toFixed(2);
+      return U.formatFloat(sumLength, 2);
     }
   };
 
@@ -697,8 +735,8 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
         formatter        : (cell) => {
           const v = cell.getValue();
           if (typeof v !== 'number' || isNaN(v)) return '0';
-          const u = this.options?.units?.length ?? DEFAULT_UNITS.length;
-          return `${U.convertLengthFromMeters(v, u).toFixed(2)} ${i18n.t(`ui.units.short.${u}`)}`;
+          const u = this.options?.format?.units?.length ?? DEFAULT_UNITS.length;
+          return `${U.formatFloat(U.convertLengthFromMeters(v, u), 2)} ${i18n.t(`ui.units.short.${u}`)}`;
         },
         bottomCalc       : this.baseTableFunctions.sumDistance
       },

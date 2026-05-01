@@ -161,7 +161,7 @@
       "name": "co2",
       "params": {
         "value": {
-          "type": "int",
+          "type": "float",
           "required": true,
           "validators": {
             "min": 0.0,

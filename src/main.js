@@ -61,6 +61,7 @@ import { UTMConverter, WGS84Converter } from './utils/geo.js';
 import { globalNormalizer } from './utils/global-coordinate-normalizer.js';
 import { PrintUtils } from './utils/print.js';
 import { node } from './utils/utils.js';
+import { setDecimalSeparator } from './ui/component/input.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { RevisionStore } from './storage/revision.js';
 
@@ -80,6 +81,12 @@ class Main {
       ConfigManager.fillWithNewDefaults(loadedOptions);
       const observer = new ObjectObserver();
       const options = observer.watchObject(loadedOptions);
+
+      // Apply the configured decimal separator and keep it in sync with config changes.
+      setDecimalSeparator(options.format?.decimalSeparator ?? '.');
+      document.addEventListener('decimalSeparatorChanged', () => {
+        setDecimalSeparator(options.format?.decimalSeparator ?? '.');
+      });
 
       this.#loadAttributes()
         .then((attributeDefintions) => {
@@ -190,7 +197,8 @@ class Main {
       attributeDefs,
       this.declinationCache,
       document.getElementById('explorer-tree'),
-      document.getElementById('explorer-context-menu')
+      document.getElementById('explorer-context-menu'),
+      this.projectSystem
     );
 
     // Initialize settings panel in sidebar
@@ -238,6 +246,10 @@ class Main {
       this.modelSystem,
       this.modelsTree
     );
+    document.addEventListener('newCaveRequested', () => {
+      if (this.projectSystem.getCurrentProject() === null) return;
+      this.projectManager.addNewCave();
+    });
     this.projectManager.setModelLoader(async (modelFile, onModelParsed) => {
       const importer = this.importers[modelFile.type];
       if (!importer) {

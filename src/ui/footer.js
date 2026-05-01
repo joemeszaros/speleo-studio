@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { node } from '../utils/utils.js';
+import { node, formatFloat } from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
 
 class Footer {
@@ -80,7 +80,7 @@ class Footer {
   }
 
   updateZoomLevel(level) {
-    this.zoomInfoContainer.innerHTML = `🔍&nbsp;<span class="meta-value">${level.toFixed(1)}</span>`;
+    this.zoomInfoContainer.innerHTML = `🔍&nbsp;<span class="meta-value">${formatFloat(level, 1)}</span>`;
   }
 
   updateProjectInfo(project) {

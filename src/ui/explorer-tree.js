@@ -23,7 +23,17 @@ import { StationCommentsEditor } from './editor/station-comments.js';
 import { i18n } from '../i18n/i18n.js';
 
 export class ExplorerTree {
-  constructor(db, options, scene, interaction, attributeDefs, declinationCache, container, contextMenuElement) {
+  constructor(
+    db,
+    options,
+    scene,
+    interaction,
+    attributeDefs,
+    declinationCache,
+    container,
+    contextMenuElement,
+    projectSystem
+  ) {
     this.db = db;
     this.options = options;
     this.scene = scene;
@@ -32,6 +42,7 @@ export class ExplorerTree {
     this.declinationCache = declinationCache;
     this.container = container;
     this.contextMenu = contextMenuElement;
+    this.projectSystem = projectSystem;
     this.nodes = new Map();
     this.selectedNode = null;
     this.expandedNodes = new Set();
@@ -46,6 +57,8 @@ export class ExplorerTree {
 
     document.addEventListener('languageChanged', () => this.render());
     document.addEventListener('click', this.hideContextMenuOnClickOutside.bind(this));
+    document.addEventListener('currentProjectChanged', () => this.#updateAddCaveButtonState());
+    document.addEventListener('currentProjectDeleted', () => this.#updateAddCaveButtonState());
     this.container.addEventListener('scroll', () => this.hideContextMenu());
     this.renderFilterInput();
     this.render();
@@ -410,7 +423,7 @@ export class ExplorerTree {
         }
       },
       {
-        icon    : '❇️',
+        icon    : '<span class="context-menu-plus">+</span>',
         title   : i18n.t('ui.explorer.menu.newSurvey'),
         onclick : () => {
           editorSetup(
@@ -569,20 +582,7 @@ export class ExplorerTree {
       {
         icon    : '📝',
         title   : i18n.t('ui.explorer.menu.openSurveyEditor'),
-        onclick : () => {
-          this.editor = new SurveyEditor(
-            this.options,
-            surveyNode.parent.data,
-            surveyNode.data,
-            this.scene,
-            this.interaction,
-            document.getElementById('resizable-editor'),
-            undefined, // unsaved changes
-            this.attributeDefs
-          );
-          this.editor.setupPanel();
-          this.editor.show();
-        }
+        onclick : () => this.#openSurveyEditor(surveyNode)
       },
       {
         icon    : '🔠',
@@ -817,9 +817,44 @@ export class ExplorerTree {
       this.render();
     });
 
+    const addCaveButton = document.createElement('button');
+    addCaveButton.className = 'explorer-add-cave-btn';
+    addCaveButton.innerHTML = '+';
+    addCaveButton.title = i18n.t('ui.explorer.newCave');
+    addCaveButton.onclick = () => {
+      if (addCaveButton.disabled) return;
+      document.dispatchEvent(new CustomEvent('newCaveRequested'));
+    };
+    this.addCaveButton = addCaveButton;
+
     this.filterInputContainer.appendChild(modeSelector);
     this.filterInputContainer.appendChild(filterInput);
+    this.filterInputContainer.appendChild(addCaveButton);
     this.container.appendChild(this.filterInputContainer);
+
+    this.#updateAddCaveButtonState();
+  }
+
+  #openSurveyEditor(surveyNode) {
+    this.editor = new SurveyEditor(
+      this.options,
+      surveyNode.parent.data,
+      surveyNode.data,
+      this.scene,
+      this.interaction,
+      document.getElementById('resizable-editor'),
+      undefined,
+      this.attributeDefs
+    );
+    this.editor.setupPanel();
+    this.editor.show();
+  }
+
+  #updateAddCaveButtonState() {
+    if (!this.addCaveButton) return;
+    const hasProject = this.projectSystem?.getCurrentProject() != null;
+    this.addCaveButton.disabled = !hasProject;
+    this.addCaveButton.classList.toggle('disabled', !hasProject);
   }
 
   updateFilterInputUI() {
@@ -1169,6 +1204,15 @@ export class ExplorerTree {
       this.hideContextMenu();
       this.selectNode(node.id);
     };
+
+    if (node.type === 'survey') {
+      nodeElement.ondblclick = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.hideContextMenu();
+        this.#openSurveyEditor(node);
+      };
+    }
 
     // Right-click to show context menu
     nodeElement.oncontextmenu = (e) => {

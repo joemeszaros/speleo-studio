@@ -372,6 +372,42 @@
   transform: scale(0.95);
 }
 
+.explorer-add-cave-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: #04aa6d;
+  border: 1px solid #04aa6d;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.explorer-add-cave-btn:hover:not(.disabled) {
+  background: #058a5b;
+  border-color: #058a5b;
+  transform: scale(1.05);
+}
+
+.explorer-add-cave-btn:active:not(.disabled) {
+  transform: scale(0.95);
+}
+
+.explorer-add-cave-btn.disabled {
+  background: #444;
+  border-color: #555;
+  color: #888;
+  cursor: not-allowed;
+}
+
 .explorer-tree-node {
   display: flex;
   align-items: center;
@@ -525,6 +561,20 @@
 .context-menu-option:hover {
   background: #404040;
   transform: scale(1.1);
+}
+
+.context-menu-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #04aa6d;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .explorer-tree-visibility .eye-strikethrough {

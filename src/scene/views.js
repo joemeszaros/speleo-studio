@@ -27,6 +27,7 @@ import {
   degreesToRads,
   formatDistance,
   formatElevation,
+  formatFloat,
   radsToDegrees
 } from '../utils/utils.js';
 import {
@@ -110,15 +111,16 @@ class View {
       this.refreshAngleSprites();
     };
     document.addEventListener('unitsChanged', this._unitsChangedHandler);
+    document.addEventListener('decimalSeparatorChanged', this._unitsChangedHandler);
   }
 
   // Format an angle (in radians) using the user's configured angle unit and i18n label.
   formatAngleLabel(angleRads, decimals = 1) {
-    const unit = this.scene.options?.units?.angle ?? DEFAULT_UNITS.angle;
+    const unit = this.scene.options?.format?.units?.angle ?? DEFAULT_UNITS.angle;
     const valueInDegrees = radsToDegrees(angleRads);
     const valueInUnit = convertAngleFromDegrees(valueInDegrees, unit);
     const unitLabel = i18n.t(`ui.units.short.${unit}`);
-    return `${valueInUnit.toFixed(decimals)}${unit === 'degrees' ? unitLabel : ' ' + unitLabel}`;
+    return `${formatFloat(valueInUnit, decimals)}${unit === 'degrees' ? unitLabel : ' ' + unitLabel}`;
   }
 
   // Subclasses with rotation/dip indicators override this to refresh their angle labels
@@ -304,7 +306,7 @@ class View {
   }
 
   getTargetRulerDistance(ratio) {
-    const unit = this.scene.options?.units?.length ?? DEFAULT_UNITS.length;
+    const unit = this.scene.options?.format?.units?.length ?? DEFAULT_UNITS.length;
     const ratioToDistance = RATIO_TO_RULER_LENGTH[unit] ?? RATIO_TO_RULER_LENGTH.meters;
 
     // Find the closest dedicated ratio
@@ -1236,7 +1238,7 @@ class SpatialView extends View {
 
   setCompassRotation() {
     const currentAzimuth = 2 * Math.PI - (this.control.azimuth + Math.PI);
-    const currentRotation = radsToDegrees(currentAzimuth).toFixed(1);
+    const currentRotation = formatFloat(radsToDegrees(currentAzimuth), 1);
     const rotationRaw = prompt(i18n.t('errors.views.enterRotationValue'), currentRotation);
     if (rotationRaw === null) return;
 
@@ -1392,7 +1394,7 @@ class PlanView extends View {
   }
 
   setCompassRotation() {
-    const currentRotation = ((this.camera.rotation.z * 180) / Math.PI).toFixed(1);
+    const currentRotation = formatFloat((this.camera.rotation.z * 180) / Math.PI, 1);
     const rotationRaw = prompt(i18n.t('errors.views.enterRotationValue'), currentRotation);
     if (rotationRaw === null) return;
 
@@ -1880,7 +1882,7 @@ class ProfileView extends View {
   }
 
   setCompassRotation() {
-    const currentRotation = ((this.control.angle * 180) / Math.PI).toFixed(1);
+    const currentRotation = formatFloat((this.control.angle * 180) / Math.PI, 1);
     const rotationRaw = prompt(i18n.t('errors.views.enterRotationValue'), currentRotation);
     if (rotationRaw === null) return;
 

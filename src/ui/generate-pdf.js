@@ -15,7 +15,7 @@
  */
 
 import { wm } from './window.js';
-import { node } from '../utils/utils.js';
+import { node, formatFloat } from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
 import { showErrorPanel } from './popups.js';
 import { generatePDF } from '../io/pdf.js';
@@ -1589,7 +1589,7 @@ class PDFPrintDialog {
     ctx.fillText('N', labelX, labelY);
 
     // Draw rotation angle in degrees
-    const angleDegrees = ((this.rotationAngle * 180) / Math.PI).toFixed(1);
+    const angleDegrees = formatFloat((this.rotationAngle * 180) / Math.PI, 1);
     ctx.font = '10px Arial';
     ctx.fillStyle = '#666666';
     ctx.fillText(`${angleDegrees}°`, centerX, centerY + radius + 22);

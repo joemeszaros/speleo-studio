@@ -184,7 +184,7 @@ export class SpeleoScene {
       surveyEntries.forEach((surveyObject, surveyName) => {
         cave.stations.forEach((station, stationName) => {
           if (station.survey.name === surveyName && station.type !== ShotType.SPLAY) {
-            const stationLabel = mode === 'name' ? stationName : station.position.z.toFixed(2);
+            const stationLabel = mode === 'name' ? stationName : U.formatFloat(station.position.z, 2);
             this.addStationLabel(stationLabel, stationName, station.position, surveyObject.stationLabels);
           }
         });
@@ -237,7 +237,7 @@ export class SpeleoScene {
 
         // Recreate labels with current configuration
         labelData.forEach((data) => {
-          const stationLabel = mode === 'name' ? data.stationName : data.position.z.toFixed(2);
+          const stationLabel = mode === 'name' ? data.stationName : U.formatFloat(data.position.z, 2);
           this.addStationLabel(stationLabel, data.stationName, data.position, surveyObject.stationLabels);
         });
 
@@ -390,7 +390,7 @@ export class SpeleoScene {
 
     for (const [stationName, station] of cave.stations) {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
-      const stationLabel = stationNameMode === 'name' ? stationName : station.position.z.toFixed(2);
+      const stationLabel = stationNameMode === 'name' ? stationName : U.formatFloat(station.position.z, 2);
       if (
         (station.type === ShotType.CENTER || station.type === ShotType.AUXILIARY) &&
         this.options.scene.stationLabels.show

@@ -15,7 +15,7 @@
  */
 
 import { wm } from '../window.js';
-import { node, convertLengthToMeters, convertAngleToDegrees } from '../../utils/utils.js';
+import { node, convertLengthToMeters, convertAngleToDegrees, formatFloat } from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { DEFAULT_UNITS } from '../../model/survey.js';
 
@@ -187,7 +187,7 @@ export class RoseDiagramTool {
       label.setAttribute('fill', '#666688');
       label.setAttribute('font-size', '9');
       label.setAttribute('font-family', 'sans-serif');
-      label.textContent = `${lengthValue.toFixed(0)}m`;
+      label.textContent = `${formatFloat(lengthValue, 0)}m`;
       svg.appendChild(label);
     }
 
@@ -261,10 +261,10 @@ export class RoseDiagramTool {
         path.setAttribute('stroke-opacity', '1');
 
         // Add tooltip
-        const lengthValue = value.toFixed(2);
-        const direction = `${startAngle.toFixed(0)}°-${endAngle.toFixed(0)}°`;
+        const lengthValue = formatFloat(value, 2);
+        const direction = `${formatFloat(startAngle, 0)}°-${formatFloat(endAngle, 0)}°`;
         const pct = (value / totalLength) * 100;
-        path.innerHTML = `<title>${direction}: ${lengthValue}m (${pct.toFixed(0)}%)</title>`;
+        path.innerHTML = `<title>${direction}: ${lengthValue}m (${formatFloat(pct, 0)}%)</title>`;
 
         svg.appendChild(path);
       }

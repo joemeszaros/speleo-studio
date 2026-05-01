@@ -120,26 +120,26 @@ class CyclePanel {
   }
 
   #getColumns() {
-    const getDUnits = () => this.options?.units ?? DEFAULT_UNITS;
+    const getDUnits = () => this.options?.format?.units ?? DEFAULT_UNITS;
     const shortLengthLabel = (u) => i18n.t(`ui.units.short.${u}`);
     const shortAngleLabel = (u) => i18n.t(`ui.units.short.${u}`);
 
     const sumErrorDistance = (_values, data) => {
       const sumM = data.reduce((sum, v) => sum + (v.errorDistance || 0), 0);
       const u = getDUnits().length;
-      return `${U.convertLengthFromMeters(sumM, u).toFixed(2)} ${shortLengthLabel(u)}`;
+      return `${U.formatFloat(U.convertLengthFromMeters(sumM, u), 2)} ${shortLengthLabel(u)}`;
     };
     const lengthFmt = (cell) => {
       const v = cell.getValue();
       if (typeof v !== 'number' || isNaN(v)) return '';
       const u = getDUnits().length;
-      return `${U.convertLengthFromMeters(v, u).toFixed(3)} ${shortLengthLabel(u)}`;
+      return `${U.formatFloat(U.convertLengthFromMeters(v, u), 3)} ${shortLengthLabel(u)}`;
     };
     const angleFmt = (cell) => {
       const v = cell.getValue();
       if (typeof v !== 'number' || isNaN(v)) return '';
       const u = getDUnits().angle;
-      return `${U.convertAngleFromDegrees(v, u).toFixed(3)} ${shortAngleLabel(u)}`;
+      return `${U.formatFloat(U.convertAngleFromDegrees(v, u), 3)} ${shortAngleLabel(u)}`;
     };
     return [
       {
@@ -182,7 +182,7 @@ class CyclePanel {
       {
         title     : i18n.t('ui.editors.cycles.columns.errorPercentage'),
         field     : 'errorPercentage',
-        formatter : (cell) => cell.getValue().toFixed(2) + ' %',
+        formatter : (cell) => U.formatFloat(cell.getValue(), 2) + ' %',
         sorter    : 'number'
       },
       {

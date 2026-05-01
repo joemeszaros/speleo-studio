@@ -94,6 +94,14 @@ export class SurveyEditor extends Editor {
 
   updateShots() {
     this.survey.updateShots(this.getNewShots());
+    if (this.cave.surveys.length === 1 && this.survey.start === undefined && this.survey.shots.length > 0) {
+      const validShots = this.survey.validShots ?? [];
+      if (validShots.length === 0) {
+        this.survey.start = this.survey.shots[0].from;
+      } else {
+        this.survey.start = validShots[0].from;
+      }
+    }
   }
 
   getNewShots() {
@@ -138,7 +146,7 @@ export class SurveyEditor extends Editor {
         newRow.message = i18n.t('ui.editors.survey.message.missingFields', { fields: translatedFields.join(',') });
         rowsToUpdated.push(newRow);
       } else {
-        const shotErrors = shot.validate(i18n, this.options.units);
+        const shotErrors = shot.validate(i18n, this.options.format.units);
         validationErrors.push(...shotErrors);
         if (validationErrors.length > 0) {
           const status = 'invalid';
@@ -182,6 +190,7 @@ export class SurveyEditor extends Editor {
     this.updateSurvey();
     if (this._unitsChangedHandler) {
       document.removeEventListener('unitsChanged', this._unitsChangedHandler);
+      document.removeEventListener('decimalSeparatorChanged', this._unitsChangedHandler);
       this._unitsChangedHandler = undefined;
     }
     if (this._surveyUnitsChangedHandler) {
@@ -534,14 +543,15 @@ export class SurveyEditor extends Editor {
     };
 
     // Survey storage units (fixed for the lifetime of the survey).
-    // Display units are read live from this.options.units so formatters
+    // Display units are read live from this.options.format.units so formatters
     // pick up changes from settings without rebuilding the table.
     const sUnits = this.survey.units ?? DEFAULT_UNITS;
-    const getDUnits = () => this.options.units ?? DEFAULT_UNITS;
+    const getDUnits = () => this.options.format.units ?? DEFAULT_UNITS;
 
     // Show the value with at most `maxDecimals` digits but strip trailing zeros
-    // so 10 stays "10", 5.2 stays "5.2", 3.04800 becomes "3.048".
-    const trimNumber = (n, maxDecimals) => parseFloat(n.toFixed(maxDecimals)).toString();
+    // so 10 stays "10", 5.2 stays "5.2", 3.04800 becomes "3.048". Honors the
+    // configured decimal separator.
+    const trimNumber = (n, maxDecimals) => U.formatFree(parseFloat(n.toFixed(maxDecimals)));
 
     const sumCenterLines = (_values, data) => {
       let sumStored = 0;
@@ -559,7 +569,7 @@ export class SurveyEditor extends Editor {
       if (v == null || typeof v !== 'number' || isNaN(v)) return v ?? '';
       const d = getDUnits().length;
       // No conversion → show the raw stored value (preserves user-entered precision)
-      if (d === sUnits.length) return v.toString();
+      if (d === sUnits.length) return U.formatFree(v);
       return trimNumber(U.convertLength(v, sUnits.length, d), 3);
     };
     // mutatorEdit may be called repeatedly while the user is mid-type
@@ -578,7 +588,7 @@ export class SurveyEditor extends Editor {
       const v = cell.getValue();
       if (v == null || typeof v !== 'number' || isNaN(v)) return v ?? '';
       const d = getDUnits().angle;
-      if (d === sUnits.angle) return v.toString();
+      if (d === sUnits.angle) return U.formatFree(v);
       return trimNumber(U.convertAngle(v, sUnits.angle, d), 3);
     };
     const angleMutatorEdit = (value) => {
@@ -597,18 +607,27 @@ export class SurveyEditor extends Editor {
       const input = document.createElement('input');
       input.setAttribute('type', 'text');
       const stored = cell.getValue();
-      input.value = (typeof stored === 'number' && !isNaN(stored))
-        ? getDisplayStr(stored)
-        : (stored ?? '');
-      input.style.cssText = 'width:100%;height:100%;box-sizing:border-box;padding:0;border:none;background:transparent;color:inherit;font-size:inherit;';
-      onRendered(() => { input.focus(); input.select(); });
+      input.value = typeof stored === 'number' && !isNaN(stored) ? getDisplayStr(stored) : (stored ?? '');
+      input.style.cssText =
+        'width:100%;height:100%;box-sizing:border-box;padding:0;border:none;background:transparent;color:inherit;font-size:inherit;';
+      onRendered(() => {
+        input.focus();
+        input.select();
+      });
       let committed = false;
       const commit = () => {
-        if (!committed) { committed = true; success(input.value); }
+        if (!committed) {
+          committed = true;
+          success(input.value);
+        }
       };
       input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === 'Tab') { e.stopPropagation(); commit(); }
-        else if (e.key === 'Escape') { cancel(); }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+          e.stopPropagation();
+          commit();
+        } else if (e.key === 'Escape') {
+          cancel();
+        }
       });
       input.addEventListener('blur', commit);
       return input;
@@ -616,12 +635,12 @@ export class SurveyEditor extends Editor {
 
     const lengthEditor = makeConvertingEditor((stored) => {
       const d = getDUnits().length;
-      if (d === sUnits.length) return stored.toString();
+      if (d === sUnits.length) return U.formatFree(stored);
       return trimNumber(U.convertLength(stored, sUnits.length, d), 3);
     });
     const angleEditor = makeConvertingEditor((stored) => {
       const d = getDUnits().angle;
-      if (d === sUnits.angle) return stored.toString();
+      if (d === sUnits.angle) return U.formatFree(stored);
       return trimNumber(U.convertAngle(stored, sUnits.angle, d), 3);
     });
 
@@ -922,6 +941,7 @@ export class SurveyEditor extends Editor {
       }
     };
     document.addEventListener('unitsChanged', this._unitsChangedHandler);
+    document.addEventListener('decimalSeparatorChanged', this._unitsChangedHandler);
 
     // When the survey's stored units change (via the survey sheet), the formatter,
     // mutator and validator closures captured in the column definitions are stale.

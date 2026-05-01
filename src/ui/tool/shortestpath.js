@@ -15,7 +15,7 @@
  */
 
 import { wm } from '../window.js';
-import { node, convertLengthFromMeters } from '../../utils/utils.js';
+import { node, convertLengthFromMeters, formatFloat } from '../../utils/utils.js';
 import { SectionHelper } from '../../section.js';
 import { i18n } from '../../i18n/i18n.js';
 import { ShotType, DEFAULT_UNITS } from '../../model/survey.js';
@@ -83,9 +83,9 @@ export class ShortestPathTool {
               this.options.scene.sections.color,
               caveName
             );
-            const lengthUnit = this.options?.units?.length ?? DEFAULT_UNITS.length;
+            const lengthUnit = this.options?.format?.units?.length ?? DEFAULT_UNITS.length;
             const displayDistance = convertLengthFromMeters(section.distance, lengthUnit);
-            label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.from')}: ${from} ${i18n.t('ui.panels.shortestPath.to')}: ${to} ${i18n.t('ui.panels.shortestPath.length')}: ${displayDistance.toFixed(2)} ${i18n.t(`ui.units.short.${lengthUnit}`)}</div>`;
+            label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.from')}: ${from} ${i18n.t('ui.panels.shortestPath.to')}: ${to} ${i18n.t('ui.panels.shortestPath.length')}: ${formatFloat(displayDistance, 2)} ${i18n.t(`ui.units.short.${lengthUnit}`)}</div>`;
           } else {
             label = node`<div id="shortest-path-label">${i18n.t('ui.panels.shortestPath.cannotFindPath', { from, to })}</div>`;
           }
