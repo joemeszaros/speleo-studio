@@ -75,10 +75,13 @@ class ProjectManager {
     document.addEventListener('modelFileSettingsSaved', (e) => {
       const { modelFileId, projectId } = e.detail;
       clearTimeout(this._modelSyncTimers.get(modelFileId));
-      this._modelSyncTimers.set(modelFileId, setTimeout(() => {
-        this._modelSyncTimers.delete(modelFileId);
-        this.#autoSyncModelSettings(modelFileId, projectId);
-      }, 2000));
+      this._modelSyncTimers.set(
+        modelFileId,
+        setTimeout(() => {
+          this._modelSyncTimers.delete(modelFileId);
+          this.#autoSyncModelSettings(modelFileId, projectId);
+        }, 2000)
+      );
     });
     document.addEventListener('caveAdded', (e) => this.onCaveAdded(e));
     document.addEventListener('caveChanged', (e) => this.onCaveChanged(e));
@@ -558,7 +561,10 @@ class ProjectManager {
       // LAS/LAZ octree point clouds have colors pre-computed; PLY needs gradient here
       let colorGradients = null;
       if (!model.hasVertexColors && !model.hasOctree) {
-        colorGradients = PointCloudHelper.getColorGradientsMultiColor(model.points, this.options.scene.models.color.gradientColors);
+        colorGradients = PointCloudHelper.getColorGradientsMultiColor(
+          model.points,
+          this.options.scene.models.color.gradientColors
+        );
       }
       entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
       this.scene.models.addPointCloud(model, entry);
@@ -704,7 +710,10 @@ class ProjectManager {
       rev.originApp = localApp;
       rev.originRevision = rev.revision;
       await this.revisionStore.saveRevision(rev);
-      await this.#updateDriveProjectModelRevision(project, modelFileId, { metadataRevision: rev.revision, metadataApp: localApp });
+      await this.#updateDriveProjectModelRevision(project, modelFileId, {
+        metadataRevision : rev.revision,
+        metadataApp      : localApp
+      });
     } catch (err) {
       console.error('Auto-sync model metadata failed:', err);
     }
@@ -727,20 +736,33 @@ class ProjectManager {
       rev.originApp = localApp;
       rev.originRevision = rev.revision;
       await this.revisionStore.saveRevision(rev);
-      await this.#updateDriveProjectModelRevision(project, modelFileId, { settingsRevision: rev.revision, settingsApp: localApp });
+      await this.#updateDriveProjectModelRevision(project, modelFileId, {
+        settingsRevision : rev.revision,
+        settingsApp      : localApp
+      });
     } catch (err) {
       console.error('Auto-sync model settings failed:', err);
     }
   }
 
-  async #updateDriveProjectModelRevision(project, modelFileId, { metadataRevision, metadataApp, settingsRevision, settingsApp } = {}) {
+  async #updateDriveProjectModelRevision(
+    project,
+    modelFileId,
+    { metadataRevision, metadataApp, settingsRevision, settingsApp } = {}
+  ) {
     const result = await this.googleDriveSync.fetchProject({ id: project.id });
     if (!result) return;
     const driveProject = result.project;
     const model = driveProject.models.find((m) => m.id === modelFileId);
     if (!model) return;
-    if (metadataRevision !== undefined) { model.metadataRevision = metadataRevision; model.metadataApp = metadataApp; }
-    if (settingsRevision !== undefined) { model.settingsRevision = settingsRevision; model.settingsApp = settingsApp; }
+    if (metadataRevision !== undefined) {
+      model.metadataRevision = metadataRevision;
+      model.metadataApp = metadataApp;
+    }
+    if (settingsRevision !== undefined) {
+      model.settingsRevision = settingsRevision;
+      model.settingsApp = settingsApp;
+    }
     await this.googleDriveSync.uploadProject(driveProject, false);
   }
 
@@ -1011,9 +1033,9 @@ class ProjectManager {
   addCave(cave) {
     this.db.addCave(cave);
 
-    const allShots = cave.surveys.flatMap((s) => s.shots);
+    const allValidShots = cave.surveys.flatMap((s) => s.validShots);
 
-    if (cave.surveys.length > 0 && allShots.length > 0) {
+    if (cave.surveys.length > 0 && allValidShots.length > 0) {
 
       // this is the first cave in the project
       if (this.db.getAllCaveNames().length === 1) {
