@@ -132,7 +132,7 @@ export class SpeleoScene {
         Good for: hundreds to a few thousand labels with culling.
     look at addLabel for a 4th option where ShapeGeometry is used to create the text mesh
    */
-  addStationLabel(stationLabel, stationName, position, targetGroup) {
+  addStationLabel(stationName, position, coordinates, targetGroup) {
     const labelConfig = this.options.scene.stationLabels;
     const labelPosition = position.clone();
 
@@ -157,6 +157,8 @@ export class SpeleoScene {
       font.strokeColor = labelConfig.strokeColor;
     }
 
+    const stationLabel = this.getStationLabel(stationName, position, coordinates);
+
     const textSprite = new TextSprite(
       stationLabel,
       labelPosition,
@@ -170,7 +172,8 @@ export class SpeleoScene {
       label           : stationLabel,
       textSprite,
       stationName,
-      stationPosition : position.clone()
+      stationPosition : position.clone(),
+      coordinates
     };
     sprite.layers.set(1);
 
@@ -178,18 +181,28 @@ export class SpeleoScene {
   }
 
   addStationLabels() {
-    const mode = this.options.scene.stationLabels.mode;
     this.caveObjects.forEach((surveyEntries, caveName) => {
       const cave = this.db.getCave(caveName);
       surveyEntries.forEach((surveyObject, surveyName) => {
         cave.stations.forEach((station, stationName) => {
           if (station.survey.name === surveyName && station.type !== ShotType.SPLAY) {
-            const stationLabel = mode === 'name' ? stationName : U.formatFloat(station.position.z, 2);
-            this.addStationLabel(stationLabel, stationName, station.position, surveyObject.stationLabels);
+            this.addStationLabel(stationName, station.position, station.coordinates, surveyObject.stationLabels);
           }
         });
       });
     });
+  }
+
+  getStationLabel(stationName, position, coordinates) {
+    const mode = this.options.scene.stationLabels.mode;
+
+    if (mode === 'name') {
+      return stationName;
+    } else if (mode === 'depth') {
+      return U.formatFloat(position.z, 2);
+    } else {
+      return U.formatFloat(coordinates?.projected?.getElevation() ?? '-', 2);
+    }
   }
 
   getStationsLabelCount() {
@@ -206,7 +219,6 @@ export class SpeleoScene {
 
   recreateAllStationLabels() {
     if (!this.options.scene.stationLabels.show) return;
-    const mode = this.options.scene.stationLabels.mode;
 
     this.caveObjects.forEach((caveObject) => {
       caveObject.forEach((surveyObject) => {
@@ -217,7 +229,8 @@ export class SpeleoScene {
           if (label.userData) {
             labelData.push({
               stationName : label.userData.stationName,
-              position    : label.userData.stationPosition.clone()
+              position    : label.userData.stationPosition.clone(),
+              coordinates  : label.userData.coordinates
             });
           }
         });
@@ -237,8 +250,7 @@ export class SpeleoScene {
 
         // Recreate labels with current configuration
         labelData.forEach((data) => {
-          const stationLabel = mode === 'name' ? data.stationName : U.formatFloat(data.position.z, 2);
-          this.addStationLabel(stationLabel, data.stationName, data.position, surveyObject.stationLabels);
+          this.addStationLabel(data.stationName, data.position, data.coordinates, surveyObject.stationLabels);
         });
 
       });
@@ -390,13 +402,12 @@ export class SpeleoScene {
 
     for (const [stationName, station] of cave.stations) {
       if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
-      const stationLabel = stationNameMode === 'name' ? stationName : U.formatFloat(station.position.z, 2);
       if (
         (station.type === ShotType.CENTER || station.type === ShotType.AUXILIARY) &&
         this.options.scene.stationLabels.show
       ) {
         // adding sprites for a cave with 3k stations is roughly 25 MB, let's try to save memory by not adding them if they are not visible
-        this.addStationLabel(stationLabel, stationName, station.position, stationLabelsGroup);
+        this.addStationLabel(stationName, station.position, station.coordinates, stationLabelsGroup);
       }
     }
     stationLabelsGroup.visible = visibility && this.options.scene.stationLabels.show;

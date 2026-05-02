@@ -244,6 +244,7 @@
         "landscape": "Fekvő",
         "name": "Név",
         "depth": "Z koordináta",
+        "elevation": "Magasság",
         "up": "Fent",
         "down": "Lent",
         "left": "Balra",

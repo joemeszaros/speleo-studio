@@ -277,13 +277,19 @@ export class SettingsPanel {
       [
         this.createSelect(
           i18n.t('ui.settingsPanel.labels.labelMode'),
-          [i18n.t('ui.settingsPanel.options.name'), i18n.t('ui.settingsPanel.options.depth')],
+          [
+            i18n.t('ui.settingsPanel.options.name'),
+            i18n.t('ui.settingsPanel.options.depth'),
+            i18n.t('ui.settingsPanel.options.elevation')
+          ],
           i18n.t(`ui.settingsPanel.options.${this.options.scene.stationLabels.mode}`),
           (value) => {
             if (value === i18n.t('ui.settingsPanel.options.name')) {
               this.options.scene.stationLabels.mode = 'name';
-            } else {
+            } else if (value === i18n.t('ui.settingsPanel.options.depth')) {
               this.options.scene.stationLabels.mode = 'depth';
+            } else {
+              this.options.scene.stationLabels.mode = 'elevation';
             }
           }
         ),

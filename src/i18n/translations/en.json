@@ -244,6 +244,7 @@
         "landscape": "Landscape",
         "name": "Name",
         "depth": "Depth",
+        "elevation": "Elevation",
         "up": "Up",
         "down": "Down",
         "left": "Left",

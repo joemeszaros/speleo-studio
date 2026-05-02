@@ -61,6 +61,10 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
     this.type = CoordinateSystemType.EOV;
   }
 
+  getElevation() {
+    return this.elevation;
+  }
+
   toVector() {
     return new Vector(this.y, this.x, this.elevation);
   }
@@ -152,6 +156,10 @@ class UTMCoordinateWithElevation extends UTMCoordinate {
     super(easting, northing);
     this.elevation = elevation;
     this.type = CoordinateSystemType.UTM;
+  }
+
+  getElevation() {
+    return this.elevation;
   }
 
   addVector(v) {

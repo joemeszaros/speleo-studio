@@ -146,7 +146,7 @@ export const DEFAULT_OPTIONS = {
       }
     },
     stationLabels : {
-      mode            : 'name', // or depth
+      mode            : 'name', // or depth, elevation
       show            : false,
       color           : '#ffffff',
       size            : 20,
