@@ -57,6 +57,7 @@ import {
   flattenFile,
   parseDataFormat,
   parseShotRow,
+  parsePassageRow,
   flushStationPairs,
   parseDate,
   applyUnits,
@@ -181,7 +182,8 @@ class SurvexImporter extends Importer {
       equates       : [],
       fmt           : parent ? parent.fmt : null,   // inherit active data format
       isSplay       : parent?.isSplay ?? false,
-      stationComments : []
+      stationComments   : [],
+      stationDimensions : []
     });
 
     // Each stack entry: {name, surveyPath, state, shots, shotId, stationPairs, pendingLine1, pendingState}
@@ -230,7 +232,7 @@ class SurvexImporter extends Importer {
           flushStationPairs(top.stationPairs, top.shots, top.shotId, top.surveyPath);
         }
 
-        if (top.shots.length > 0 || top.state.fixes.length > 0) {
+        if (top.shots.length > 0 || top.state.fixes.length > 0 || top.state.stationDimensions.length > 0) {
           const metadata = new SurveyMetadata(
             top.state.date ?? new Date(),
             top.state.declination,
@@ -239,16 +241,17 @@ class SurvexImporter extends Importer {
             []
           );
           context.surveys.push({
-            displayName     : top.name,
-            surveyPath      : top.surveyPath,
-            shots           : top.shots,
+            displayName       : top.name,
+            surveyPath        : top.surveyPath,
+            shots             : top.shots,
             metadata,
-            units           : { ...top.state.units },
-            equates         : top.state.equates,
-            cs              : top.state.cs,
-            fixes           : top.state.fixes,
-            startStation    : top.shots[0]?.from,
-            stationComments : top.state.stationComments
+            units             : { ...top.state.units },
+            equates           : top.state.equates,
+            cs                : top.state.cs,
+            fixes             : top.state.fixes,
+            startStation      : top.shots[0]?.from,
+            stationComments   : top.state.stationComments,
+            stationDimensions : top.state.stationDimensions
           });
         }
         continue;
@@ -386,6 +389,11 @@ class SurvexImporter extends Importer {
       // A line is a data row when a format has been declared and the first token
       // is not a command (commands were already stripped of their '*' and matched above).
       if (!state.fmt) continue;
+
+      if (state.fmt.type === 'passage') {
+        parsePassageRow(tokens, state, top.surveyPath);
+        continue;
+      }
 
       if (state.fmt.hasNewline) {
         // Interleaved format: station name on one line, measurements on the next

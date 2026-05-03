@@ -46,6 +46,7 @@
           <li><strong>Polygon (.cave):</strong> Polygon szoftver formátuma</li>
           <li><strong>TopoDroid (.csv):</strong> TopoDroid Android alkalmazás exportja</li>
           <li><strong>Therion (.th):</strong> Therion barlangtérképező szoftver formátuma</li>
+          <li><strong>Survex (.svx):</strong> Survex barlangfelmérő szoftver formátuma</li>
           <li><strong>PLY:</strong> 3D felszín modellek és pontfelhők</li>
           <li><strong>OBJ:</strong> 3D háromszöghálók textúra támogatással</li>
           <li><strong>LAS/LAZ:</strong> LiDAR pontfelhők (tömörített és tömörítetlen)</li>
@@ -59,7 +60,7 @@
           <h3>1. lépés: Importálás indítása</h3>
           <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő importálási opciót:</p>
           <ul>
-            <li><strong>"Barlang(ok) megnyitása":</strong> JSON, .cave és Therion (.th) fájlokhoz</li>
+            <li><strong>"Barlang(ok) megnyitása":</strong> JSON, .cave, Therion (.th) és Survex (.svx) fájlokhoz</li>
             <li><strong>"Model megnyitása":</strong> PLY, OBJ, LAS és LAZ fájlokhoz</li>
           </ul>
         </div>
@@ -346,11 +347,12 @@
           <li>Állomásmegjegyzések (<code>station</code> parancs)</li>
           <li>Állomás név aliaszok (<code>equate</code>)</li>
           <li>Hivatkozott fájlok (<code>input</code> direktíva)</li>
+          <li>Pont méretek (LRUD): <code>data normal</code> sorokba ágyazott
+              <code>left right up down</code> oszlopok és önálló <code>data dimensions</code> blokkok</li>
         </ul>
         <h5>Amit nem importál (első fázis):</h5>
         <ul>
           <li><code>.th2</code> rajzfájlok (2D vetületi rajzok)</li>
-          <li>LRUD keresztmetszetadatok</li>
           <li><code>data cartesian</code> és <code>data diving</code> mérési típusok</li>
         </ul>
       </div>
@@ -426,6 +428,9 @@ station 12 "Elágazás - főág jobbra" continuation</div>
       </div>
 
       <h3>Pont méretek (LRUD) Therionban</h3>
+      <p>A Therion két különböző módon kezeli a pont méreteket, és a Speleo Studio mindkettőt importálja:</p>
+
+      <h4>1. Soron belüli LRUD (<code>data normal</code>)</h4>
       <p
         >A <code>data normal</code> direktívában megadott <code>left right up down</code> oszlopok a felmérési pont
         környezetében a járat keresztmetszetét adják meg. A Speleo Studio ezeket az értékeket az adott pont
@@ -435,7 +440,144 @@ station 12 "Elágazás - főág jobbra" continuation</div>
       <div class="code-example">data normal from to length compass clino left right up down
 1 2  10.0 135.0 -15.0  1.2 1.5 2.0 0.5
 2 3   8.0  90.0   0.0  0.8 0.9 2.5 1.0</div>
-      <p>Az importált értékeket a barlang menüjében a "Pont méretek (LRUD) szerkesztése" pont alatt módosíthatja.</p>
+
+      <h4>2. Önálló <code>data dimensions</code> blokkok</h4>
+      <p
+        >A <code>data dimensions</code> direktíva <i>állomásonként</i> ad meg LRUD értékeket, függetlenül a mérési
+        soroktól. Az oszlopok mértékegysége a megelőző <code>units</code> direktívával állítható be (ahol a
+        Therion egy sorban felsorolt mennyiségekhez egyetlen mértékegységet rendel).</p
+      >
+      <div class="code-example">units left right up down meter
+data dimensions station left right up down
+0 0.17 0.35 3.00 4.00
+1 0.07 0.36 0.35 0.29</div>
+      <p>Ha mindkét forrás ad méretet ugyanahhoz az állomáshoz, a <code>data dimensions</code> érték
+         nyer (mert az az explicit, állomáshoz rendelt forrás).</p>
+      <p
+        >A <code>0</code>, negatív és <code>-</code> sentinel értékeket a Speleo Studio hiányzónak tekinti és
+        kihagyja. Az importált értékeket a barlang menüjében a "Pont méretek (LRUD) szerkesztése" pont alatt
+        módosíthatja.</p
+      >
+
+      <h2>Survex (.svx) formátum importálása</h2>
+
+      <div class="format-box">
+        <h4>Survex formátum</h4>
+        <p
+          >A <a href="https://survex.com/">Survex</a> egy nyílt forráskódú barlangfelmérő szoftver. A
+          <code>.svx</code> szöveges fájlokban tárolja a felmérési adatokat. A felmérések hierarchikus
+          <code>*begin</code>/<code>*end</code> blokkokba szerveződnek, és a Speleo Studio a Therionhoz hasonlóan
+          ezeket a fájlokat is importálni tudja.</p
+        >
+        <h5>Amit a Speleo Studio importál:</h5>
+        <ul>
+          <li>Survey hierarchia (<code>*begin</code>/<code>*end</code> blokkok) és mérési sorok</li>
+          <li>Tüske mérések (<code>*flags splay</code>, <code>*alias station - ..</code>, <code>.</code> / <code>-</code> jelölés)</li>
+          <li>Mérési formátumok: <code>*data normal</code>, <code>*data passage</code>, <code>*data cartesian</code></li>
+          <li>Koordináta rendszer: UTM (pl. <code>UTM34N</code>, <code>UTM zone 34 N</code>), EPSG kódok
+              (<code>EPSG:32634</code>, <code>EPSG:23700</code> = EOV), hosszúság-szélességi fokok (<code>long-lat</code> / <code>lat-long</code>)</li>
+          <li>Rögzített pontok (<code>*fix</code>) és a kapcsolódó georeferencia</li>
+          <li>Felmérés metaadatok: dátum (<code>*date</code>), csapattagok (<code>*team</code>), deklináció
+              (<code>*declination</code> és <code>*calibrate declination</code>)</li>
+          <li>Egységek (<code>*units</code>): méter, láb, yard, hüvelyk, fok, grad, perc, százalék, cm</li>
+          <li>Kalibrálás (<code>*calibrate</code>): hosszúság, iránytű és dőlésmérő eltolás és skálázás</li>
+          <li>Cartesian észak típus (<code>*cartesian true</code> / <code>grid</code> / <code>magnetic</code>) extra forgatással</li>
+          <li>Állomásnév előtag/utótag (<code>*prefix</code> / <code>*suffix</code>) és állomás aliaszok (<code>*equate</code>)</li>
+          <li>Hivatkozott fájlok (<code>*include</code> direktíva)</li>
+          <li>Pont méretek (LRUD): <code>*data normal</code> sorokba ágyazott
+              <code>left right up down</code> oszlopok és önálló <code>*data passage</code> blokkok</li>
+        </ul>
+        <h5>Amit nem importál:</h5>
+        <ul>
+          <li>Állomásmegjegyzések (a Survex formátum nem tartalmaz külön állomásmegjegyzés direktívát)</li>
+          <li>Ritkán használt direktívák (pl. <code>*sd</code>, <code>*instrument</code>, <code>*solve</code>,
+              <code>*walls</code>, <code>*nosurvey</code>) &mdash; ezeket a parser figyelmen kívül hagyja</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>Egyetlen Survex fájl importálása</h3>
+        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>2. Válassza ki a <code>.svx</code> fájlt</p>
+        <p>3. Ha a fájl tartalmaz koordináta rendszert (<code>*cs</code>) és rögzített pontot (<code>*fix</code>),
+           a georeferencia automatikusan betöltődik; ellenkező esetben a koordináta rendszer kiválasztó párbeszédablak jelenik meg</p>
+        <p>4. A barlang megjelenik a felfedező panelben</p>
+      </div>
+
+      <h3>Többfájlos Survex projekt importálása</h3>
+      <p
+        >A Survex projektekben a főfájl <code>*include</code> direktívával hivatkozhat más <code>.svx</code> fájlokra.
+        Mivel a Speleo Studio böngészőben fut és nem fér hozzá a fájlrendszerhez, a hivatkozott fájlokat a
+        felhasználónak kell kiválasztani &mdash; ugyanúgy, mint a Therion esetében.</p
+      >
+
+      <div class="step">
+        <h3>Több fájlból álló projekt importálása</h3>
+        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>2. <strong>Válassza ki az összes <code>.svx</code> fájlt egyszerre</strong> a projektmappából
+           (Ctrl+A vagy Shift+kattintás a fájl kiválasztóban)</p>
+        <p>3. A Speleo Studio automatikusan felismeri a gyökérfájlt és feloldja az <code>*include</code> hivatkozásokat</p>
+        <p>4. Az összes felmérés egyetlen barlangként töltődik be</p>
+      </div>
+
+      <div class="info">
+        <p
+          >Ha egy <code>*include</code> direktívával hivatkozott fájl nincs a kiválasztott fájlok között, a Speleo
+          Studio figyelmeztetést jelenít meg, de a rendelkezésre álló adatokat betölti.</p
+        >
+      </div>
+
+      <h3>Koordináta rendszerek Survexben</h3>
+      <p>A Survex a <code>*cs</code> paranccsal határozza meg a koordináta rendszert:</p>
+      <div class="code-example">
+*cs UTM34          ; UTM 34. zóna, északi félgömb
+*cs UTM zone 34 N  ; ugyanaz, explicit jelöléssel
+*cs EPSG:32634     ; UTM 34N EPSG kóddal
+*cs EPSG:23700     ; Magyar Egységes Vetületi Rendszer (EOV)
+*cs long-lat       ; WGS84 hosszúság/szélességi fokok</div>
+      <p>A <code>*fix</code> paranccsal az állomás abszolút koordinátái adhatók meg:</p>
+      <div class="code-example">*fix 0  650000 200000 350   ; x (kelet), y (észak), z (tengerszint feletti magasság)</div>
+
+      <h3>Pont méretek (LRUD) Survexben</h3>
+      <p>A Survex két különböző módon kezeli a pont méreteket, és a Speleo Studio mindkettőt importálja:</p>
+
+      <h4>1. Soron belüli LRUD (<code>*data normal</code>)</h4>
+      <p
+        >A <code>*data normal</code> direktívában megadott <code>left right up down</code> oszlopok az adott mérési sor
+        <i>kezdőállomására</i> (a mérés <code>from</code> állomására) képződnek le.</p
+      >
+      <div class="code-example">*data normal from to tape compass clino left right up down
+1 2  10.0 135.0 -15.0  1.2 1.4 2.1 0.4
+2 3   8.0  90.0   0.0  0.6 0.7 2.3 0.9</div>
+
+      <h4>2. Önálló <code>*data passage</code> blokkok</h4>
+      <p
+        >A <code>*data passage</code> direktíva <i>állomásonként</i> ad meg LRUD értékeket, függetlenül a mérési
+        soroktól. Ez az ajánlott forma, ha utólag mérik fel a járat keresztmetszeteit (a Survex specifikációja
+        szerint a hivatkozott állomásnak a felmérésben szerepelnie kell).</p
+      >
+      <div class="code-example">*data passage station left right up down
+1   4.0 4.0 40.0  0.5
+5   4.0 4.0 20.0 30.0
+6   1.0 1.0  1.0  1.0</div>
+      <p>Ha mindkét forrás ad méretet ugyanahhoz az állomáshoz, a <code>*data passage</code> érték
+         nyer (mert az az explicit, állomáshoz rendelt forrás).</p>
+      <p
+        >A <code>0</code>, negatív és <code>-</code> sentinel értékeket a Speleo Studio hiányzónak tekinti és
+        kihagyja. Az importált értékek a barlang menüjében a "Pont méretek (LRUD) szerkesztése" pont alatt
+        módosíthatók.</p
+      >
+
+      <div class="warning">
+        <h3>⚠️ Survex importálás megjegyzések</h3>
+        <ul>
+          <li>Az állomásnevekből a <code>@felmérés</code> utótag automatikusan eltávolításra kerül (pl.
+              <code>5@foag</code> → <code>5</code>), ahogy a Therion és TopoDroid importnál is</li>
+          <li>A <code>*data cartesian</code> formátumot a Speleo Studio polár (hossz / iránytű / dőlésszög)
+              értékekre konvertálja az importálás során</li>
+          <li>A megjegyzéseket (<code>;</code> után) a parser figyelmen kívül hagyja</li>
+        </ul>
+      </div>
 
       <h2>3D modellek és pontfelhők importálása</h2>
 
@@ -567,6 +709,7 @@ station 12 "Elágazás - főág jobbra" continuation</div>
         <ul>
           <li>Több JSON vagy .cave fájl kiválasztása &mdash; minden fájlból külön barlang lesz</li>
           <li>Therion (.th) esetén az összes kiválasztott <code>.th</code> fájl egyetlen barlanggá áll össze</li>
+          <li>Survex (.svx) esetén az összes kiválasztott <code>.svx</code> fájl egyetlen barlanggá áll össze</li>
           <li>Automatikus feldolgozás sorrendben</li>
           <li>Hibás fájlok kihagyása</li>
         </ul>

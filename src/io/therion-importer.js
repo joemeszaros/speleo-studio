@@ -28,6 +28,7 @@ import {
   flattenFile,
   parseDataFormat,
   parseShotRow,
+  parsePassageRow,
   flushStationPairs,
   parseDate,
   applyUnits,
@@ -228,9 +229,10 @@ class TherionImporter extends Importer {
       cs          : context.globalCs,
       fixes       : [],
       equates     : [],
-      fmt             : null,
-      isSplay         : false,
-      stationComments : []
+      fmt               : null,
+      isSplay           : false,
+      stationComments   : [],
+      stationDimensions : []
     };
 
     const shots = [];
@@ -349,6 +351,12 @@ class TherionImporter extends Importer {
       // ── data rows ──
       if (!state.fmt) continue;
 
+      // `data dimensions station left right up down` — per-station LRUD (Therion equivalent of Survex *data passage)
+      if (state.fmt.type === 'dimensions') {
+        parsePassageRow(tokens, state, surveyPath);
+        continue;
+      }
+
       if (state.fmt.hasNewline) {
         if (!pendingLine1) {
           pendingLine1 = tokens;
@@ -378,7 +386,7 @@ class TherionImporter extends Importer {
       flushStationPairs(stationPairs, shots, shotId, surveyPath);
     }
 
-    if (shots.length === 0 && state.fixes.length === 0) return null;
+    if (shots.length === 0 && state.fixes.length === 0 && state.stationDimensions.length === 0) return null;
 
     const metadata = new SurveyMetadata(
       state.date ?? new Date(),
@@ -393,12 +401,13 @@ class TherionImporter extends Importer {
       surveyPath,
       shots,
       metadata,
-      units           : { ...state.units },
-      equates         : state.equates,
-      cs              : state.cs,
-      fixes           : state.fixes,
-      startStation    : shots[0]?.from,
-      stationComments : state.stationComments
+      units             : { ...state.units },
+      equates           : state.equates,
+      cs                : state.cs,
+      fixes             : state.fixes,
+      startStation      : shots[0]?.from,
+      stationComments   : state.stationComments,
+      stationDimensions : state.stationDimensions
     };
   }
 }

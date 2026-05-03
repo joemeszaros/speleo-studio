@@ -417,15 +417,27 @@ export function parseDate(str) {
   return new Date(parseInt(parts[0]), 0, 1);
 }
 
-/** Mutates `units` in place according to a `units <quantity> <unit>` token list. */
+/**
+ * Mutates `units` in place according to a `units <quantity>... [factor] <unit>` token list.
+ * Supports the multi-quantity form (`*units left right up down feet`) and per-column LRUD
+ * overrides (`*units left feet`), which sit alongside the survey-wide `length` unit and are
+ * consumed by `extractLrud`. Numeric factor tokens (Survex `*units tape 0.3048 meters`) are
+ * skipped — we don't apply scale factors here.
+ */
 export function applyUnits(tokens, units) {
   if (tokens.length < 3) return;
-  const field = tokens[1].toLowerCase();
-  const unit = tokens[2].toLowerCase();
-  // Accept both Therion and Survex quantity aliases
-  if (field === 'length' || field === 'tape' || field === 'distance') units.length = unit;
-  else if (field === 'compass' || field === 'bearing') units.compass = unit;
-  else if (field === 'clino' || field === 'gradient' || field === 'inclination') units.clino = unit;
+  const unit = tokens[tokens.length - 1].toLowerCase();
+  for (let i = 1; i < tokens.length - 1; i++) {
+    if (!isNaN(parseMyFloat(tokens[i]))) continue; // skip numeric factor
+    const field = tokens[i].toLowerCase();
+    // Accept both Therion and Survex quantity aliases
+    if (field === 'length' || field === 'tape' || field === 'distance') units.length = unit;
+    else if (field === 'compass' || field === 'bearing') units.compass = unit;
+    else if (field === 'clino' || field === 'gradient' || field === 'inclination') units.clino = unit;
+    else if (field === 'left' || field === 'right' || field === 'up' || field === 'down') {
+      units[field] = unit;
+    }
+  }
 }
 
 /**
@@ -529,13 +541,14 @@ export function addAliases(eqTokens, currentPath, allPaths, aliases) {
 
 // Extracts L/R/U/D values from a tokens array using the format's column indices.
 // Each value is parsed through parseLength (so source-unit aliases work) and
-// normalised to the survey's storage length unit. Values that are NaN, zero,
-// or negative (e.g. Therion's `-` missing sentinel or `-1.0`, or files that
-// pad missing dimensions with `0`) are treated as missing and dropped.
-// Returns an object like { left, right, up, down } with only the valid keys
-// present, or null if no LRUD field is present in the format or all values
-// are missing.
-function extractLrud(getter, fmt, sourceUnit, targetUnit) {
+// normalised to the survey's storage length unit. Per-column unit overrides
+// from `*units left feet` etc. are honoured via `units[f] ?? units.length`.
+// Values that are NaN, zero, or negative (e.g. Therion's `-` missing sentinel
+// or `-1.0`, or files that pad missing dimensions with `0`) are treated as
+// missing and dropped. Returns an object like { left, right, up, down } with
+// only the valid keys present, or null if no LRUD field is present in the
+// format or all values are missing.
+function extractLrud(getter, fmt, units, targetUnit) {
   const haveAnyIdx = ['left', 'right', 'up', 'down'].some((f) => fmt[f] >= 0);
   if (!haveAnyIdx) return null;
   const out = {};
@@ -543,6 +556,7 @@ function extractLrud(getter, fmt, sourceUnit, targetUnit) {
     if (fmt[f] < 0) return;
     const raw = getter(f);
     if (raw === null || raw === undefined || raw === '' || raw === '-') return;
+    const sourceUnit = units[f] ?? units.length;
     const parsed = parseLength(raw, sourceUnit);
     if (isNaN(parsed) || parsed <= 0) return;
     out[f] = lengthIntoTargetUnit(parsed, sourceUnit, targetUnit);
@@ -609,9 +623,32 @@ export function parseShotRow(tokens, state, surveyPath, shotId) {
   if (isNaN(length)) return null;
 
   const shot = new Shot(shotId, type, from, to, length, compass, clino, undefined);
-  const lrud = extractLrud(get, fmt, units.length, target.length);
+  const lrud = extractLrud(get, fmt, units, target.length);
   if (lrud) shot._lrud = lrud;
   return shot;
+}
+
+/**
+ * Parses one row of a `*data passage` block (Survex) — per-station LRUD data.
+ * Format example: `*data passage station left right up down`.
+ * Pushes `{station, left?, right?, up?, down?}` into `state.stationDimensions`
+ * with only the valid (positive, non-missing) values present.
+ */
+export function parsePassageRow(tokens, state, surveyPath) {
+  const { fmt, units } = state;
+  const stnIdx = fmt.station >= 0 ? fmt.station : 0;
+  const stnRaw = stnIdx < tokens.length ? tokens[stnIdx] : null;
+  if (!stnRaw || stnRaw === '-' || stnRaw === '.') return;
+  const stn = stripStn(qualifyStn(applyStnNames(stnRaw, state), surveyPath));
+
+  const target = mapToSpeleoStudioUnits(units);
+  const get = (field) => {
+    const idx = fmt[field];
+    return idx >= 0 && idx < tokens.length ? tokens[idx] : null;
+  };
+  const lrud = extractLrud(get, fmt, units, target.length);
+  if (!lrud) return;
+  state.stationDimensions.push({ station: stn, ...lrud });
 }
 
 export function flushStationPairs(pairs, shots, startId, surveyPath) {
@@ -665,7 +702,7 @@ export function flushStationPairs(pairs, shots, startId, surveyPath) {
 
     if (isNaN(length)) continue;
     const shot = new Shot(id++, type, from, to, length, compass, clino, undefined);
-    const lrud = extractLrud(getLrudField, fmt, units.length, target.length);
+    const lrud = extractLrud(getLrudField, fmt, units, target.length);
     if (lrud) shot._lrud = lrud;
     shots.push(shot);
   }
@@ -691,14 +728,16 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
       m.equates.push(...s.equates);
       m.fixes.push(...s.fixes);
       m.stationComments.push(...(s.stationComments ?? []));
+      m.stationDimensions.push(...(s.stationDimensions ?? []));
       if (!m.cs && s.cs) m.cs = s.cs;
     } else {
       mergedMap.set(s.surveyPath, {
         ...s,
-        shots           : [...s.shots],
-        equates         : [...s.equates],
-        fixes           : [...s.fixes],
-        stationComments : [...(s.stationComments ?? [])]
+        shots             : [...s.shots],
+        equates           : [...s.equates],
+        fixes             : [...s.fixes],
+        stationComments   : [...(s.stationComments ?? [])],
+        stationDimensions : [...(s.stationDimensions ?? [])]
       });
     }
   }
@@ -875,9 +914,17 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
     }
   }
 
-  // Aggregate per-shot LRUD into station-level dimensions (first-write-wins on the shot's `from`).
-  // The `_lrud` property is non-persistent — strip it after consuming.
+  // Aggregate station-level LRUD (first-write-wins per station). Passage-derived
+  // entries (Survex `*data passage`) are processed first so they take precedence
+  // over shot-derived `_lrud` for the same station — `*data passage` is the
+  // explicit per-station source. The `_lrud` property is non-persistent —
+  // strip it after consuming.
   const dimsByStation = new Map();
+  for (const s of ordered) {
+    for (const { station, ...lrud } of (s.stationDimensions ?? [])) {
+      if (!dimsByStation.has(station)) dimsByStation.set(station, lrud);
+    }
+  }
   for (const surveyObj of surveyObjs) {
     for (const shot of surveyObj.shots) {
       if (!shot._lrud) continue;
