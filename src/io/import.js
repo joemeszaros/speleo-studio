@@ -20,7 +20,7 @@ import { showInfoPanel } from '../ui/popups.js';
 import { Shot, ShotType, DEFAULT_UNITS } from '../model/survey.js';
 import { Vector, PointCloud, Mesh3D, ModelFile } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
-import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument } from '../model/survey.js';
+import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument, StationDimension } from '../model/survey.js';
 import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
 import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 import {
@@ -56,16 +56,18 @@ class PolygonImporter extends Importer {
     var i = 0;
 
     const shots = [];
+    const lruds = [];
     do {
       it = iterator.next();
       const parts = it.value[1].split(/\t/).map((p) => p.trim());
       if (parts.length > 10) {
         // splays are not supported by polygon format
+        const fromStation = parts[0];
         shots.push(
           new Shot(
             i++,
             parts[1] === '' || parts[1] === '-' ? ShotType.SPLAY : ShotType.CENTER,
-            parts[0],
+            fromStation,
             parts[1] === '' ? undefined : parts[1],
             U.parseMyFloat(parts[2]),
             U.parseMyFloat(parts[3]),
@@ -73,10 +75,24 @@ class PolygonImporter extends Importer {
             parts[10] === '' ? undefined : parts[10]
           )
         );
+        // Polygon LRUD columns: Left=6, Right=7, Up=8, Down=9 (in metres).
+        // Drop NaN / zero / negative entries (Polygon files often pad missing
+        // dimensions with 0) and rows where all four are missing.
+        const lrud = {};
+        ['left', 'right', 'up', 'down'].forEach((field, idx) => {
+          const raw = parts[6 + idx];
+          if (raw === undefined || raw === '') return;
+          const v = U.parseMyFloat(raw);
+          if (isNaN(v) || v <= 0) return;
+          lrud[field] = v;
+        });
+        if (Object.keys(lrud).length > 0) {
+          lruds.push({ from: fromStation, ...lrud });
+        }
       }
     } while (!it.done && it.value[1] != '');
 
-    return shots;
+    return { shots, lruds };
   };
 
   getNextLineValue(iterator, start, processor = (x) => x, validator = (x) => x.length > 0) {
@@ -133,6 +149,7 @@ class PolygonImporter extends Importer {
       let geoData, fixPointName, convergence;
       const surveys = [];
       const stations = new Map();
+      const aggregatedLruds = new Map(); // first-write-wins by `from` station
       var surveyName;
       var surveyIndex = 0;
       let coordinateSystem;
@@ -185,7 +202,10 @@ class PolygonImporter extends Importer {
           let posLine = lineIterator.next();
           U.iterateUntil(lineIterator, (v) => v !== 'Survey data');
           lineIterator.next(); //From To ...
-          const shots = this.#getShotsFromPolygon(lineIterator);
+          const { shots, lruds } = this.#getShotsFromPolygon(lineIterator);
+          for (const l of lruds) {
+            if (!aggregatedLruds.has(l.from)) aggregatedLruds.set(l.from, l);
+          }
           let startCoordinate, startPosition;
           if (surveyIndex == 0) {
             let parts = posLine.value[1].split(/\t|\s/);
@@ -284,7 +304,10 @@ class PolygonImporter extends Importer {
         }
       } while (surveyName !== undefined);
 
-      return new Cave(projectName, metadata, geoData, stations, surveys);
+      const stationDimensions = [...aggregatedLruds.values()].map(
+        (l) => new StationDimension(l.from, l.left, l.right, l.up, l.down)
+      );
+      return new Cave(projectName, metadata, geoData, stations, surveys, [], undefined, [], stationDimensions);
     }
   }
 

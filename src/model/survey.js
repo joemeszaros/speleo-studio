@@ -59,6 +59,80 @@ class StationComment {
   }
 }
 
+class StationDimension {
+
+  static LRUD_FIELDS = ['left', 'right', 'up', 'down'];
+
+  constructor(name, left, right, up, down) {
+    this.name = name;
+    this.left = left;
+    this.right = right;
+    this.up = up;
+    this.down = down;
+  }
+
+  getEmptyFields() {
+    const empty = [];
+    if (this.name === undefined || this.name === null || this.name === '') {
+      empty.push('name');
+    }
+    const allMissing = StationDimension.LRUD_FIELDS.every(
+      (f) => StationDimension.isMissingValue(this[f])
+    );
+    if (allMissing) empty.push('values');
+    return empty;
+  }
+
+  // True when a raw field value (number, string, undefined, null, or NaN) carries
+  // no usable LRUD measurement.
+  static isMissingValue(value) {
+    return (
+      value === undefined ||
+      value === null ||
+      value === '' ||
+      (typeof value === 'number' && isNaN(value))
+    );
+  }
+
+  // Validates a single raw L/R/U/D field value (string or number) and returns
+  // a problem code, or null if the value is valid (or missing, which is allowed).
+  // Codes: 'notNumeric' | 'negative'.
+  static validateValue(value) {
+    if (StationDimension.isMissingValue(value)) return null;
+    const num = typeof value === 'number' ? value : parseFloat(value);
+    if (isNaN(num)) return 'notNumeric';
+    if (num < 0) return 'negative';
+    return null;
+  }
+
+  // Returns structured validation errors for this StationDimension's L/R/U/D values:
+  // an array of { type, field } objects. Callers (editors / importers) format the
+  // user-facing message themselves so this class doesn't depend on a particular
+  // i18n key set.
+  validate() {
+    const errors = [];
+    StationDimension.LRUD_FIELDS.forEach((f) => {
+      const code = StationDimension.validateValue(this[f]);
+      if (code) errors.push({ type: code, field: f });
+    });
+    return errors;
+  }
+
+  toExport() {
+    const out = { name: this.name };
+    StationDimension.LRUD_FIELDS.forEach((f) => {
+      if (this[f] !== undefined && this[f] !== null && !(typeof this[f] === 'number' && isNaN(this[f]))) {
+        out[f] = this[f];
+      }
+    });
+    return out;
+  }
+
+  static fromPure(pure) {
+    return Object.assign(new StationDimension(), pure);
+  }
+}
+
 class Shot {
   static export_fields = ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'comment'];
 
@@ -497,6 +571,7 @@ export {
   ShotType,
   Shot,
   StationComment,
+  StationDimension,
   SurveyStation,
   ShotWithSurvey,
   SurveyTeamMember,

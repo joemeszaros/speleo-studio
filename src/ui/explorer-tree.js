@@ -20,6 +20,7 @@ import { CaveEditor } from './editor/cave.js';
 import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEditor } from './editor/attributes.js';
 import { CyclePanel } from './editor/cycle.js';
 import { StationCommentsEditor } from './editor/station-comments.js';
+import { StationDimensionsEditor } from './editor/station-dimensions.js';
 import { i18n } from '../i18n/i18n.js';
 
 export class ExplorerTree {
@@ -500,6 +501,19 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.editStationComments'),
         onclick : () => {
           this.editor = new StationCommentsEditor(
+            this.options,
+            caveNode.data,
+            document.getElementById('resizable-editor')
+          );
+          this.editor.setupPanel();
+          this.editor.show();
+        }
+      },
+      {
+        icon    : '<img src="icons/lrud.svg" alt="LRUD" style="width: 18px; height: 18px;">',
+        title   : i18n.t('ui.explorer.menu.editStationDimensions'),
+        onclick : () => {
+          this.editor = new StationDimensionsEditor(
             this.options,
             caveNode.data,
             document.getElementById('resizable-editor')

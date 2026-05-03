@@ -60,6 +60,17 @@
             <li><strong>📍 Pont attribútumok:</strong> Pont attribútumok szerkesztése</li>
             <li><strong>🔀 Szakasz attribútumok:</strong> Szakasz attribútumok szerkesztése</li>
             <li><strong>🧩 Komponens attribútumok:</strong> Komponens attribútumok szerkesztése</li>
+            <li
+              ><strong
+                ><img
+                  src="../../icons/lrud.svg"
+                  alt="LRUD"
+                  style="width: 18px; height: 18px; vertical-align: middle"
+                />
+                Pont méretek (LRUD):</strong
+              >
+              Pont méretek (Bal/Jobb/Fel/Le) szerkesztése</li
+            >
             <li><strong>🔄 Hurkok:</strong> Hurkok keresése, megjelenítése és hibák eliminálása</li>
             <li><strong>🎨 Szín</strong> Barlang színének változtatása</li>
             <li
@@ -364,6 +375,66 @@
         <h4>2. Fájl mentése</h4>
         <p>Válassza ki a mentési helyet és adja meg a fájlnevet.</p>
       </div>
+
+      <h2>Pont méretek (LRUD) szerkesztése</h2>
+      <p>
+        A pont méretek (LRUD - Left/Right/Up/Down, vagyis Bal/Jobb/Fel/Le) egy adott felmérési pont környezetében a
+        járat keresztmetszetét adják meg: a ponttól mért távolságot balra, jobbra, felfelé és lefelé a járat faláig.
+        A Therion (.th), Survex (.svx) és Polygon (.cave) formátumok importálásakor a Speleo Studio automatikusan
+        kiolvassa ezeket az értékeket, és a barlanghoz rendeli.
+      </p>
+      <div class="warning">
+        <p
+          >A pont méretek nem jelennek meg a felmérés szerkesztőben. A pont részleteinél (a 3D jelenetben a pontra
+          kattintva) megjeleníthetőek, ha a beállításokban engedélyezi a "Pont méretek (LRUD)" opciót, lásd
+          <a href="13-beallitasok.html">Beállítások</a>.</p
+        >
+      </div>
+
+      <h3>Szerkesztő ablak áttekintése</h3>
+      <p
+        >A barlang menüjében a pont méretek szerkesztés ikonjára (négyirányú nyíl) kattintva megnyílik a szerkesztő
+        ablak a pont méretek táblázatos megjelenítésével.</p
+      >
+      <p>A szerkesztő felépítése a pont megjegyzéseknél leírtakhoz hasonló, az alábbi oszlopokkal:</p>
+      <ul>
+        <li><strong>Státusz:</strong> Sor érvényessége (zöld pipa = rendben, narancs = hibás vagy hiányos)</li>
+        <li><strong>Pont:</strong> A felmérési pont neve (a barlangban létező pontok közül választható)</li>
+        <li><strong>Bal (Left):</strong> Távolság a ponttól balra a járat faláig</li>
+        <li><strong>Jobb (Right):</strong> Távolság a ponttól jobbra a járat faláig</li>
+        <li><strong>Fel (Up):</strong> Távolság a ponttól felfelé a járat mennyezetéig</li>
+        <li><strong>Le (Down):</strong> Távolság a ponttól lefelé a járat aljáig</li>
+      </ul>
+
+      <div class="step">
+        <h3>Pont méret felvétele</h3>
+        <p>1. Kattintson a barlang nevére a Felfedezőben, majd a pont méretek ikonjára az ikon sávon</p>
+        <p>2. A megjelenő szerkesztőben vegyen fel új sort a <i>Sor hozzáadása a végéhez</i> gombra kattintva</p>
+        <p>3. Az új sorban adja meg a pont nevét (a létező pontok listájából választható)</p>
+        <p>4. Töltse ki a Bal / Jobb / Fel / Le oszlopok közül legalább egyiket. A nem ismert értékeket hagyja üresen.</p>
+        <p>5. Kattintson a <i>Méretek frissítése</i> gombra a táblázat feletti ikon sorban</p>
+      </div>
+
+      <h3>Pont méretek validálása és frissítése</h3>
+      <p
+        >A frissítés vagy validálás során a Speleo Studio a következő szabályokat ellenőrzi:</p
+      >
+      <div class="editor-box">
+        <h4>Validálási szabályok</h4>
+        <ul>
+          <li><strong>Pont:</strong> Nem lehet üres, és léteznie kell a barlangban</li>
+          <li><strong>Értékek:</strong> Legalább egy LRUD érték (Bal / Jobb / Fel / Le) megadása szükséges</li>
+          <li><strong>Számformátum:</strong> A megadott értékeknek érvényes számoknak kell lenniük</li>
+          <li><strong>Negatív szám:</strong> Az értékek nem lehetnek negatívak</li>
+          <li><strong>Duplikáció:</strong> Egy ponthoz csak egy sor tartozhat</li>
+        </ul>
+      </div>
+
+      <h3>Pont méretek exportálása</h3>
+      <p>
+        A pont méretek a barlang exportálásakor (projekt JSON fájl) automatikusan elmentődnek. Egy különálló CSV
+        exportra is van lehetőség a szerkesztő ikon sávjában az <i>Exportálás CSV-be</i> gombra kattintva.
+      </p>
 
       <h2>Hurkok kezelése</h2>
 

@@ -204,6 +204,7 @@
         "utmEasting": "UTM keleti",
         "utmNorthing": "UTM északi",
         "comments": "Megjegyzések",
+        "dimensions": "Méretek (LRUD)",
         "type": "Típus",
         "position": "Pozíció (X,Y,Z)",
         "shots": "Mérések listája",
@@ -338,7 +339,8 @@
         "setCaveColor": "Barlang színének beállítása",
         "clearCaveColor": "Barlang színének törlése",
         "openSurveyEditor": "Felmérés szerkesztése",
-        "editStationComments": "Pont megjegyzések szerkesztése"
+        "editStationComments": "Pont megjegyzések szerkesztése",
+        "editStationDimensions": "Pont méretek szerkesztése (LRUD)"
       },
       "confirm": {
         "deleteCave": "Biztosan törölni akarod ezt a barlangot? Ez a művelet nem vonható vissza.",
@@ -565,6 +567,7 @@
         "eovCoordinates": "EOV koordináták",
         "utmCoordinates": "UTM koordináták",
         "wgs84Coordinates": "WGS84 koordináták",
+        "dimensions": "Méretek (LRUD)",
         "notAvailable": "Nem elérhető"
       },
       "distance": {
@@ -722,6 +725,8 @@
           "stationAttributes": "Pont attribútumok",
           "sectionAttributes": "Szakasz attribútumok",
           "componentAttributes": "Komponens attribútumok",
+          "stationComments": "Pont megjegyzések",
+          "stationDimensions": "Pont méretek (LRUD)",
           "length": "Hossz",
           "orphanLength": "Hossz (árva)",
           "invalidLength": "Hossz (hibás)",
@@ -841,6 +846,29 @@
           "missingFields": "Sor hiányzó mezői: {fields}",
           "duplicateStationComment": "A(z) {station} pont megjegyzése már létezik",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}"
+        }
+      },
+      "stationDimensions": {
+        "title": "Pont méretek (LRUD): {name}",
+        "station": "Pont",
+        "buttons": {
+          "validate": "Validálás",
+          "update": "Méretek frissítése"
+        },
+        "columns": {
+          "name": "Név",
+          "values": "L/J/F/L értékek",
+          "left": "Bal",
+          "right": "Jobb",
+          "up": "Fel",
+          "down": "Le"
+        },
+        "message": {
+          "missingFields": "Sor hiányzó mezői: {fields}",
+          "duplicateStationDimension": "A(z) {station} pont méretei már léteznek",
+          "stationNotFound": "A(z) {station} pont nem létezik a barlangban",
+          "negativeValue": "{field} nem lehet negatív",
+          "notNumeric": "{field} értéknek számnak kell lennie"
         }
       },
       "base": {

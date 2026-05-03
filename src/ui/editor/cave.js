@@ -836,6 +836,18 @@ class CaveEditor extends Editor {
         field     : 'componentAttributes',
         formatter : (v) => v
       },
+      {
+        id        : 'stationComments',
+        label     : i18n.t('ui.editors.caveSheet.stats.stationComments'),
+        field     : 'stationComments',
+        formatter : (v) => v
+      },
+      {
+        id        : 'stationDimensions',
+        label     : i18n.t('ui.editors.caveSheet.stats.stationDimensions'),
+        field     : 'stationDimensions',
+        formatter : (v) => v
+      },
       { break: true },
       {
         id        : 'orphanLength',

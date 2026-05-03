@@ -25,7 +25,7 @@
 
 import { SurveyHelper } from '../survey.js';
 import {
-  Shot, ShotType, Survey, SurveyMetadata, SurveyAlias, StationComment, SurveyTeamMember, DEFAULT_UNITS
+  Shot, ShotType, Survey, SurveyMetadata, SurveyAlias, StationComment, StationDimension, SurveyTeamMember, DEFAULT_UNITS
 } from '../model/survey.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import {
@@ -527,6 +527,29 @@ export function addAliases(eqTokens, currentPath, allPaths, aliases) {
 
 // ─── Shot parsing ─────────────────────────────────────────────────────────────
 
+// Extracts L/R/U/D values from a tokens array using the format's column indices.
+// Each value is parsed through parseLength (so source-unit aliases work) and
+// normalised to the survey's storage length unit. Values that are NaN, zero,
+// or negative (e.g. Therion's `-` missing sentinel or `-1.0`, or files that
+// pad missing dimensions with `0`) are treated as missing and dropped.
+// Returns an object like { left, right, up, down } with only the valid keys
+// present, or null if no LRUD field is present in the format or all values
+// are missing.
+function extractLrud(getter, fmt, sourceUnit, targetUnit) {
+  const haveAnyIdx = ['left', 'right', 'up', 'down'].some((f) => fmt[f] >= 0);
+  if (!haveAnyIdx) return null;
+  const out = {};
+  ['left', 'right', 'up', 'down'].forEach((f) => {
+    if (fmt[f] < 0) return;
+    const raw = getter(f);
+    if (raw === null || raw === undefined || raw === '' || raw === '-') return;
+    const parsed = parseLength(raw, sourceUnit);
+    if (isNaN(parsed) || parsed <= 0) return;
+    out[f] = lengthIntoTargetUnit(parsed, sourceUnit, targetUnit);
+  });
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 export function parseShotRow(tokens, state, surveyPath, shotId) {
   const { fmt, units, calibration, isSplay } = state;
   const get = (field) => {
@@ -585,7 +608,10 @@ export function parseShotRow(tokens, state, surveyPath, shotId) {
 
   if (isNaN(length)) return null;
 
-  return new Shot(shotId, type, from, to, length, compass, clino, undefined);
+  const shot = new Shot(shotId, type, from, to, length, compass, clino, undefined);
+  const lrud = extractLrud(get, fmt, units.length, target.length);
+  if (lrud) shot._lrud = lrud;
+  return shot;
 }
 
 export function flushStationPairs(pairs, shots, startId, surveyPath) {
@@ -611,9 +637,19 @@ export function flushStationPairs(pairs, shots, startId, surveyPath) {
         : undefined;
 
     const offset = fmt.newlineIdx + 1;
+    const getL1 = (field) => {
+      const idx = fmt[field];
+      return idx >= 0 && idx < line1.length ? line1[idx] : null;
+    };
     const getL2 = (field) => {
       const idx = fmt[field] - offset;
       return idx >= 0 && idx < line2.length ? line2[idx] : null;
+    };
+    // LRUD columns can sit on either physical line — pick whichever line owns the index.
+    const getLrudField = (field) => {
+      const idx = fmt[field];
+      if (idx < 0) return null;
+      return idx < offset ? getL1(field) : getL2(field);
     };
 
     const target = mapToSpeleoStudioUnits(units);
@@ -628,7 +664,10 @@ export function flushStationPairs(pairs, shots, startId, surveyPath) {
         calibration.clino) * calibration.clinoScale;
 
     if (isNaN(length)) continue;
-    shots.push(new Shot(id++, type, from, to, length, compass, clino, undefined));
+    const shot = new Shot(id++, type, from, to, length, compass, clino, undefined);
+    const lrud = extractLrud(getLrudField, fmt, units.length, target.length);
+    if (lrud) shot._lrud = lrud;
+    shots.push(shot);
   }
 }
 
@@ -836,6 +875,22 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
     }
   }
 
+  // Aggregate per-shot LRUD into station-level dimensions (first-write-wins on the shot's `from`).
+  // The `_lrud` property is non-persistent — strip it after consuming.
+  const dimsByStation = new Map();
+  for (const surveyObj of surveyObjs) {
+    for (const shot of surveyObj.shots) {
+      if (!shot._lrud) continue;
+      if (!dimsByStation.has(shot.from)) {
+        dimsByStation.set(shot.from, shot._lrud);
+      }
+      delete shot._lrud;
+    }
+  }
+  const caveStationDimensions = [...dimsByStation.entries()].map(
+    ([name, l]) => new StationDimension(name, l.left, l.right, l.up, l.down)
+  );
+
   // Cave name: title from the file, or the filename stem as fallback
   const rootBase = rootFilename.replace(/\.[^.]+$/, '').split(/[\\/]/).pop();
   const caveName = context.caveTitle ?? rootBase;
@@ -851,6 +906,14 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
   );
 
   return new Cave(
-    caveName, caveMetadata, geoData, stations, surveyObjs, aliases, undefined, caveStationComments
+    caveName,
+    caveMetadata,
+    geoData,
+    stations,
+    surveyObjs,
+    aliases,
+    undefined,
+    caveStationComments,
+    caveStationDimensions
   );
 }

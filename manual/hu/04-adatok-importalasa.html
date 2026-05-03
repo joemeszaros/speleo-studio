@@ -180,6 +180,16 @@
         </ul>
       </div>
 
+      <div class="info">
+        <h3>Pont méretek (LRUD)</h3>
+        <p
+          >Ha a Polygon fájl Bal / Jobb / Fel / Le (Left/Right/Up/Down) értékeket tartalmaz a felméréseknél, ezeket a
+          Speleo Studio kiolvassa, és a barlang pont méretei közé veszi fel. A pont méretek a barlang menüjében a "Pont
+          méretek (LRUD) szerkesztése" pont alatt érhetők el. Részletek a <a href="06-barlang-szerkesztese.html">Barlang
+          szerkesztése</a> fejezetben.</p
+        >
+      </div>
+
       <h2>TopoDroid (.csv) formátum importálása</h2>
 
       <div class="format-box">
@@ -414,6 +424,18 @@ station 12 "Elágazás - főág jobbra" continuation</div>
           <li>Egy survey blokkon belüli több centreline blokk automatikusan összevonásra kerül</li>
         </ul>
       </div>
+
+      <h3>Pont méretek (LRUD) Therionban</h3>
+      <p
+        >A <code>data normal</code> direktívában megadott <code>left right up down</code> oszlopok a felmérési pont
+        környezetében a járat keresztmetszetét adják meg. A Speleo Studio ezeket az értékeket az adott pont
+        <i>kezdőállomására</i> (a mérés <code>from</code> állomására) képezi le, és a barlang pont méretei közé
+        veszi fel.</p
+      >
+      <div class="code-example">data normal from to length compass clino left right up down
+1 2  10.0 135.0 -15.0  1.2 1.5 2.0 0.5
+2 3   8.0  90.0   0.0  0.8 0.9 2.5 1.0</div>
+      <p>Az importált értékeket a barlang menüjében a "Pont méretek (LRUD) szerkesztése" pont alatt módosíthatja.</p>
 
       <h2>3D modellek és pontfelhők importálása</h2>
 

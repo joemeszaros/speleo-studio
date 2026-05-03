@@ -365,6 +365,17 @@ class SceneInteraction {
       }
     }
 
+    // LRUD passage dimensions
+    if (config.dimensions) {
+      const sd = (stationMeta.cave.stationDimensions ?? []).find((d) => d.name === stationMeta.name);
+      if (sd) {
+        const lengthUnit = st.survey?.units?.length ?? DEFAULT_UNITS.length;
+        const u = i18n.t('ui.units.short.' + lengthUnit);
+        const fmt = (v) => (v === undefined || v === null || isNaN(v) ? '-' : formatFloat(v, 2));
+        details.push(`LRUD: ${fmt(sd.left)}/${fmt(sd.right)}/${fmt(sd.up)}/${fmt(sd.down)} ${u}`);
+      }
+    }
+
     // If no details are configured, fall back to basic name
     if (details.length === 0) {
       return stationMeta.name;
@@ -792,6 +803,21 @@ class SceneInteraction {
     if (comments.length > 0) {
       commentsString = `${i18n.t('common.comments')}:<br>${comments.join('<br>')}<br>`;
     }
+
+    let dimensionsString = '';
+    const dim = (stationMeta.cave.stationDimensions ?? []).find((d) => d.name === stationMeta.name);
+    if (dim) {
+      const lengthUnit = stationMeta.station.survey?.units?.length ?? DEFAULT_UNITS.length;
+      const u = i18n.t('ui.units.short.' + lengthUnit);
+      const fmt = (v) => (v === undefined || v === null || isNaN(v) ? '-' : formatFloat(v, 2));
+      dimensionsString =
+        `${i18n.t('ui.panels.stationDetails.dimensions')}: ` +
+        `${fmt(dim.left)} / ${fmt(dim.right)} / ${fmt(dim.up)} / ${fmt(dim.down)} ${u} ` +
+        `(${i18n.t('ui.editors.stationDimensions.columns.left')} / ` +
+        `${i18n.t('ui.editors.stationDimensions.columns.right')} / ` +
+        `${i18n.t('ui.editors.stationDimensions.columns.up')} / ` +
+        `${i18n.t('ui.editors.stationDimensions.columns.down')})<br>`;
+    }
     const shotDetails = shots
       .map((r) => {
         const comment = r.shot.comment
@@ -841,6 +867,7 @@ class SceneInteraction {
         ${projectedCoordinates}
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br><br>
         ${commentsString}
+        ${dimensionsString}
         ${attributesString}
         `;
     contentElmnt.appendChild(content);

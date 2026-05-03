@@ -99,6 +99,7 @@ class ProjectManager {
     document.addEventListener('componentAttributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('stationAttributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('surveyCommentsChanged', (e) => this.onSurveyCommentsChanged(e));
+    document.addEventListener('stationDimensionsChanged', (e) => this.onStationDimensionsChanged(e));
   }
 
   async saveCave(cave) {
@@ -189,6 +190,11 @@ class ProjectManager {
   };
 
   async onSurveyCommentsChanged(e) {
+    const cave = e.detail.cave;
+    await this.saveCave(cave);
+  }
+
+  async onStationDimensionsChanged(e) {
     const cave = e.detail.cave;
     await this.saveCave(cave);
   }

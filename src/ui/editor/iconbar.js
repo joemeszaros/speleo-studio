@@ -245,6 +245,31 @@ export class IconBar {
     ];
   }
 
+  // Station dimensions editor-specific buttons
+  static getStationDimensionsButtons(validateDimensions, updateDimensions, cancelDimensions) {
+    return [
+      { separator: true },
+      {
+        id      : 'validate-dimensions',
+        tooltip : i18n.t('ui.editors.stationDimensions.buttons.validate'),
+        icon    : 'icons/validate.svg',
+        click   : () => validateDimensions()
+      },
+      {
+        id      : 'update-dimensions',
+        tooltip : i18n.t('ui.editors.stationDimensions.buttons.update'),
+        icon    : 'icons/update.svg',
+        click   : () => updateDimensions()
+      },
+      {
+        id      : 'cancel-dimensions',
+        tooltip : i18n.t('ui.editors.base.buttons.cancel'),
+        icon    : 'icons/cancel.svg',
+        click   : () => cancelDimensions()
+      }
+    ];
+  }
+
   // Station comments editor-specific buttons
   static getStationCommentsButtons(validateComments, updateComments, cancelComments) {
     return [

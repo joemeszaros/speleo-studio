@@ -212,6 +212,11 @@ export const DEFAULT_OPTIONS = {
         height       : 300,
         width        : 500,
         columnWidths : {}
+      },
+      stationDimensions : {
+        height       : 320,
+        width        : 700,
+        columnWidths : {}
       }
     },
     sidebar : {
@@ -236,6 +241,7 @@ export const DEFAULT_OPTIONS = {
       position    : false, // x,y,z coordinates
       shots       : false, // list of shots in compact format
       comments    : false, // list of comments in compact format
+      dimensions  : false, // LRUD passage dimensions for the station
       attributes  : false // list of attributes in compact format
     }
   },
@@ -500,6 +506,10 @@ export class ConfigManager {
         if (config.format.units.angle === undefined) config.format.units.angle = DEFAULT_UNITS.angle;
       }
       if (config.format.decimalSeparator === undefined) config.format.decimalSeparator = '.';
+    }
+
+    if (config.ui.stationDetails.dimensions === undefined) {
+      config.ui.stationDetails.dimensions = false;
     }
   }
 

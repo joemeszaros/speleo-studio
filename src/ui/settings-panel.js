@@ -723,6 +723,13 @@ export class SettingsPanel {
             }
           ),
           this.createCheckbox(
+            i18n.t('ui.settingsPanel.labels.dimensions'),
+            this.options.ui.stationDetails.dimensions,
+            (value) => {
+              this.options.ui.stationDetails.dimensions = value;
+            }
+          ),
+          this.createCheckbox(
             i18n.t('ui.settingsPanel.labels.attributes'),
             this.options.ui.stationDetails.attributes,
             (value) => {

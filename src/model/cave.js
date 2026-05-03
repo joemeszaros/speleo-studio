@@ -16,7 +16,7 @@
 
 import { Vector, SectionAttribute, ComponentAttribute, StationAttribute } from '../model.js';
 import { GeoData } from './geo.js';
-import { Survey, SurveyAlias, StationComment, DEFAULT_UNITS } from './survey.js';
+import { Survey, SurveyAlias, StationComment, StationDimension, DEFAULT_UNITS } from './survey.js';
 import { sanitizeName, convertLengthToMeters } from '../utils/utils.js';
 
 class CaveCycle {
@@ -290,6 +290,7 @@ class Cave {
    * @param {SurveyAlias[]} - Mapping of connection point between surveys
    * @param {CaveAttributes} attributes - The attributes of the cave (sections and components)
    * @param {StationComment[]} stationComments - Comments for stations in this cave
+   * @param {StationDimension[]} stationDimensions - LRUD passage dimensions for stations in this cave
    * @param {boolean} visible - The visibility property of a cave
    */
   constructor(
@@ -301,6 +302,7 @@ class Cave {
     aliases = [],
     attributes = new CaveAttributes(),
     stationComments = [],
+    stationDimensions = [],
     visible = true
   ) {
     this.id = Cave.generateId();
@@ -313,6 +315,7 @@ class Cave {
     this.aliases = aliases;
     this.attributes = attributes;
     this.stationComments = stationComments;
+    this.stationDimensions = stationDimensions;
     this.visible = visible;
     this.version = 1;
   }
@@ -430,6 +433,8 @@ class Cave {
       stationAttributes   : this.attributes.stationAttributes.length,
       sectionAttributes   : this.attributes.sectionAttributes.length,
       componentAttributes : this.attributes.componentAttributes.length,
+      stationComments     : this.stationComments.length,
+      stationDimensions   : this.stationDimensions.length,
       surveys             : surveys,
       isolated            : isolated,
       splays              : splays,
@@ -448,16 +453,17 @@ class Cave {
 
   toExport() {
     return {
-      id              : this.id,
-      version         : this.version,
-      revision        : this.revision,
-      name            : this.name,
-      metadata        : this?.metadata?.toExport(),
-      geoData         : this?.geoData?.toExport(),
-      aliases         : this.aliases.map((a) => a.toExport()),
-      attributes      : this.attributes.toExport(),
-      stationComments : this.stationComments.map((sc) => sc.toExport()),
-      surveys         : this.surveys.map((s) => s.toExport())
+      id                : this.id,
+      version           : this.version,
+      revision          : this.revision,
+      name              : this.name,
+      metadata          : this?.metadata?.toExport(),
+      geoData           : this?.geoData?.toExport(),
+      aliases           : this.aliases.map((a) => a.toExport()),
+      attributes        : this.attributes.toExport(),
+      stationComments   : this.stationComments.map((sc) => sc.toExport()),
+      stationDimensions : this.stationDimensions.map((sd) => sd.toExport()),
+      surveys           : this.surveys.map((s) => s.toExport())
     };
   }
 
@@ -489,6 +495,10 @@ class Cave {
     pure.attributes = CaveAttributes.fromPure(pure.attributes, attributeDefs);
     pure.stationComments =
       pure.stationComments !== undefined ? pure.stationComments.map((sc) => StationComment.fromPure(sc)) : [];
+    pure.stationDimensions =
+      pure.stationDimensions !== undefined
+        ? pure.stationDimensions.map((sd) => StationDimension.fromPure(sd))
+        : [];
 
     const cave = Object.assign(new Cave(), pure);
     return cave;

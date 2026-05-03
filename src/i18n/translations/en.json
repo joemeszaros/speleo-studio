@@ -204,6 +204,7 @@
         "utmEasting": "UTM easting",
         "utmNorthing": "UTM northing",
         "comments": "Comments",
+        "dimensions": "Dimensions (LRUD)",
         "type": "Type",
         "position": "Position (X,Y,Z)",
         "shots": "Shots list",
@@ -338,7 +339,8 @@
         "setSurveyColor": "Set survey color",
         "clearSurveyColor": "Clear survey color",
         "openSurveyEditor": "Open survey editor",
-        "editStationComments": "Edit station comments"
+        "editStationComments": "Edit station comments",
+        "editStationDimensions": "Edit station dimensions (LRUD)"
       },
       "confirm": {
         "deleteCave": "Do you want to delete cave '{name}'?",
@@ -513,6 +515,7 @@
         "eovCoordinates": "EOV coordinates",
         "utmCoordinates": "UTM coordinates",
         "wgs84Coordinates": "WGS84 coordinates",
+        "dimensions": "Dimensions (LRUD)",
         "notAvailable": "Not available"
       },
       "distance": {
@@ -719,6 +722,8 @@
           "stationAttributes": "Station attributes",
           "sectionAttributes": "Section attributes",
           "componentAttributes": "Component attributes",
+          "stationComments": "Station comments",
+          "stationDimensions": "Station dimensions (LRUD)",
           "length": "Length",
           "orphanLength": "Length (orphan)",
           "invalidLength": "Length (invalid)",
@@ -831,6 +836,29 @@
         "message": {
           "missingFields": "Row has missing fields: {fields}",
           "duplicateStationComment": "Station comment for station {station} already exists"
+        }
+      },
+      "stationDimensions": {
+        "title": "Station Dimensions (LRUD): {name}",
+        "station": "Station",
+        "buttons": {
+          "validate": "Validate",
+          "update": "Update"
+        },
+        "columns": {
+          "name": "Name",
+          "values": "L/R/U/D values",
+          "left": "Left",
+          "right": "Right",
+          "up": "Up",
+          "down": "Down"
+        },
+        "message": {
+          "missingFields": "Row has missing fields: {fields}",
+          "duplicateStationDimension": "Station dimensions for station {station} already exist",
+          "stationNotFound": "Station {station} does not exist in the cave",
+          "negativeValue": "{field} must be non-negative",
+          "notNumeric": "{field} must be a number"
         }
       },
       "base": {
