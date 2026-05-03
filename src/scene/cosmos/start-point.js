@@ -113,6 +113,18 @@ export class StartPointScene {
     });
   }
 
+  // Throttled variant for high-frequency callers (wheel zoom / dolly). Runs
+  // every 3rd call and schedules a trailing-edge flush 80 ms after the last
+  // call so the sphere settles correctly when scrolling stops mid-counter.
+  updateAllStartPointSizesThrottled(radius) {
+    this._tick = (this._tick ?? 0) + 1;
+    if (this._tick % 3 === 0) {
+      this.updateAllStartPointSizes(radius);
+    }
+    clearTimeout(this._settleTimer);
+    this._settleTimer = setTimeout(() => this.updateAllStartPointSizes(radius), 80);
+  }
+
   updateStartingPointVisibility(caveName, caveVisible) {
     const startPointObj = this.startPointObjects.get(caveName);
     if (startPointObj) {
