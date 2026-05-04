@@ -358,6 +358,7 @@ export class ModelsTree {
       this.scene.models.setModelVisibility(node.object3D, node.visible);
     }
 
+    this.scene.view.refreshElevationIndicators?.();
     this.render();
     this._scheduleSave(node);
   }

@@ -1571,13 +1571,21 @@ class ProfileView extends View {
     this.#updateVerticalRulers(level);
   }
 
+  refreshElevationIndicators() {
+    this.#updateVerticalRulers(this.control.zoom);
+    this.renderView();
+  }
+
   #updateVerticalRulers(level) {
     const worldHeightInMeters = this.camera.height / level;
     const pixelsPerMeter = this.scene.height / worldHeightInMeters;
     const elevOffset = globalNormalizer.globalOrigin?.elevation ?? 0;
 
-    const haveCaves = this.scene.speleo.caveObjects.size > 0;
-    const haveModels = this.scene.models.get3DModelsGroup().children.length > 0;
+    const _rawCaveBBox = this.scene.speleo.caveObjects.size > 0 ? this.scene.speleo.computeBoundingBox() : null;
+    const caveBBox = _rawCaveBBox && !_rawCaveBBox.isEmpty() ? _rawCaveBBox : null;
+    const haveCaves = caveBBox !== null;
+    const modelBBox = this.scene.computeModelsBoundingBox() ?? null;
+    const haveModels = modelBBox !== null;
     const wantDual = haveCaves && haveModels;
     const isDual = this.modelVerticalRuler !== null;
 
@@ -1647,9 +1655,6 @@ class ProfileView extends View {
     const rulerH = this.verticalRatioIndicatorHeight;
     const rulerCenterY = Math.max(0, rulerH / 2 - this.scene.height / 2 + 160);
 
-    const caveBBox  = haveCaves  ? this.scene.speleo.computeBoundingBox()  : null;
-    const modelBBox = haveModels ? this.scene.computeModelsBoundingBox()   : null;
-
     // Update main (cave or models-only) indicator
     this.verticalRuler.scale.set(15, this.verticalRatioIndicatorHeight, 1);
     this.verticalRuler.position.set(this.scene.width / 2 - 30, rulerCenterY, 1);
@@ -1659,14 +1664,14 @@ class ProfileView extends View {
     } else if (haveModels && modelBBox) {
       this.verticalMaxZText.update(formatElevation(modelBBox.max.z + elevOffset));
       this.verticalMinZText.update(formatElevation(modelBBox.min.z + elevOffset));
-    } else {
-      // No caves and no models: label the ruler with its world-space height,
-      // matching the horizontal ratio indicator's distance step.
-      const target = this.getTargetRulerDistance(this.ratio);
-      const unitLabel = i18n.t(`ui.units.short.${target.unit}`);
-      this.verticalMaxZText.update(`${target.display} ${unitLabel}`);
-      this.verticalMinZText.update('0');
     }
+
+    // Hide the entire main indicator when there's no visible content
+    const rulerSettingOn = this.scene.options.scene.sprites3D.ruler.show;
+    const showMainRuler = (haveCaves || haveModels) && rulerSettingOn;
+    this.verticalRuler.visible = showMainRuler;
+    this.verticalMaxZText.sprite.visible = showMainRuler;
+    this.verticalMinZText.sprite.visible = showMainRuler;
 
     this.#updateVerticalTextPositions(rulerCenterY);
 
@@ -1913,8 +1918,9 @@ class ProfileView extends View {
     super.activate(boundingBox);
     this.control.enabled = true;
 
-    const haveCaves = this.scene.speleo.caveObjects.size > 0;
-    const haveModels = this.scene.models.get3DModelsGroup().children.length > 0;
+    const _rawCaveBBox = this.scene.speleo.caveObjects.size > 0 ? this.scene.speleo.computeBoundingBox() : null;
+    const haveCaves = Boolean(_rawCaveBBox && !_rawCaveBBox.isEmpty());
+    const haveModels = this.scene.computeModelsBoundingBox() != null;
     const wantCaveGradient = haveCaves || !haveModels;
     const rulerVisible = this.scene.options.scene.sprites3D.ruler.show;
 

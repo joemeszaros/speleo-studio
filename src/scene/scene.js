@@ -322,7 +322,14 @@ class MyScene {
     if (group.children.length === 0) return undefined;
     const modelBox = new THREE.Box3();
     for (const child of group.children) {
-      if (child.visible) modelBox.expandByObject(child);
+      if (!child.visible) continue;
+      const octree = child.userData.octree;
+      if (octree) {
+        const bbox = octree.getBoundingBox();
+        if (bbox) modelBox.union(bbox);
+      } else {
+        modelBox.expandByObject(child);
+      }
     }
     return modelBox.isEmpty() ? undefined : modelBox;
   }

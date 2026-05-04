@@ -48,6 +48,7 @@ export class PointCloudOctree {
     this._bboxSize = new THREE.Vector3();
     this._bboxCenter = new THREE.Vector3();
     this._prevVisible = new Set(); // nodes visible last frame — used for cheap hide-only-changed
+    this.group.userData.octree = this;
 
     // Build node map from serialized data
     for (const nodeData of nodesData) {
@@ -324,6 +325,18 @@ export class PointCloudOctree {
         geometry.setAttribute('color', new THREE.BufferAttribute(node.nativeColors, 3, true));
       }
     }
+  }
+
+  getBoundingBox() {
+    const root = this.nodes.get(0);
+    if (!root) return null;
+    const b = root.data.bbox;
+    const bbox = new THREE.Box3(
+      new THREE.Vector3(b.min[0], b.min[1], b.min[2]),
+      new THREE.Vector3(b.max[0], b.max[1], b.max[2])
+    );
+    this.group.updateMatrixWorld();
+    return bbox.applyMatrix4(this.group.matrixWorld);
   }
 
   /**
