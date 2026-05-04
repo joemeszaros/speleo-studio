@@ -507,6 +507,16 @@ export class SettingsPanel {
             this.options.scene.models.maxPoints = value * 1000000;
           }
         ),
+        this.createNumberInput(
+          i18n.t('ui.settingsPanel.labels.dtmMaxCells'),
+          this.options.scene.models.dtmMaxCells / 1000000,
+          0.1,
+          50,
+          0.1,
+          (value) => {
+            this.options.scene.models.dtmMaxCells = value * 1000000;
+          }
+        ),
         this.createSubGroup(i18n.t('ui.settingsPanel.groups.edl'), [
           this.createCheckbox(i18n.t('ui.settingsPanel.labels.edlEnabled'), this.options.scene.edl.enabled, (value) => {
             this.options.scene.edl.enabled = value;

@@ -28,6 +28,7 @@ import {
   LoxImporter,
   Importer
 } from './io/import.js';
+import { AscDTMImporter } from './io/dtm-importer.js';
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
@@ -56,6 +57,7 @@ import { LoadingOverlay } from './ui/loading-overlay.js';
 import { PointCloudHelper } from './utils/models.js';
 import { PointCloud, Mesh3D, ModelFile, ModelMetadata } from './model.js';
 import { ModelCoordinateDialog } from './ui/model-coordinate-dialog.js';
+import { AscRenderModeDialog } from './ui/asc-render-mode-dialog.js';
 import { GeoData, UTMCoordinateWithElevation, UTMCoordinateSystem, EOVCoordinateWithElevation, EOVCoordinateSystem, StationWithCoordinate, CoordinateSystemType } from './model/geo.js';
 import { UTMConverter, WGS84Converter } from './utils/geo.js';
 import { globalNormalizer } from './utils/global-coordinate-normalizer.js';
@@ -322,6 +324,7 @@ class Main {
       survex    : new SurvexImporter(db, options, scene, this.projectManager),
       ply       : new PlyModelImporter(db, options, scene, this.projectManager),
       obj       : new ObjModelImporter(db, options, scene, this.projectManager),
+      asc       : new AscDTMImporter(db, options, scene, this.projectManager),
       las       : new LasModelImporter(db, options, scene, this.projectManager),
       laz       : new LasModelImporter(db, options, scene, this.projectManager),
       lox       : new LoxImporter(db, options, scene, this.projectManager)
@@ -453,7 +456,7 @@ class Main {
   }
 
   #setupModelFileInputListener() {
-    const modelExtensions = new Set(['ply', 'obj', 'las', 'laz', 'lox']);
+    const modelExtensions = new Set(['ply', 'obj', 'asc', 'las', 'laz', 'lox']);
     const input = document.getElementById('modelInput');
 
     input.addEventListener('change', async (e) => {
@@ -477,6 +480,18 @@ class Main {
 
         const hasAssets = assetFiles.length > 0;
 
+        // ASC files need an extra dialog (mesh vs point cloud) before parsing.
+        // Ask once per batch — applies to all .asc files in this import.
+        let ascRenderMode = null;
+        const hasAsc = modelFiles.some((f) => f.name.toLowerCase().endsWith('.asc'));
+        if (hasAsc) {
+          ascRenderMode = await new AscRenderModeDialog().show();
+          if (ascRenderMode === null) {
+            // Skip ASC files entirely if the user cancelled
+            modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !f.name.toLowerCase().endsWith('.asc')));
+          }
+        }
+
         // Parse model files first to extract embedded coordinates
         const parsedModels = [];
         this.loadingOverlay.beginBatch(modelFiles.length);
@@ -490,9 +505,10 @@ class Main {
             }
 
             try {
+              const importOpts = ext === 'asc' ? { renderMode: ascRenderMode } : undefined;
               await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
                 parsedModels.push({ model, object3D, modelFile });
-              });
+              }, importOpts);
             } catch (error) {
               const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
               showErrorPanel(`${msgPrefix}: ${error.message}`);

@@ -632,7 +632,7 @@ class Mesh3D {
 
 class ModelFile {
 
-  static TEXT_TYPES = new Set(['obj', 'mtl', 'txt']);
+  static TEXT_TYPES = new Set(['obj', 'mtl', 'txt', 'asc']);
 
   constructor(filename, type, data) {
     this.id = ModelFile.generateId();

@@ -435,6 +435,9 @@ export class ConfigManager {
     if (config.scene.models.sseThreshold === undefined) {
       config.scene.models.sseThreshold = 1.5;
     }
+    if (config.scene.models.dtmMaxCells === undefined) {
+      config.scene.models.dtmMaxCells = 4000000;
+    }
 
     if (config.scene.edl === undefined) {
       config.scene.edl = {

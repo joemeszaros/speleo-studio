@@ -224,6 +224,7 @@
         "pointCloudColorEnd": "Point cloud color (bottom)",
         "pointBudget": "Max point count (millions)",
         "maxPoints": "Max loaded points (millions)",
+        "dtmMaxCells": "DTM max cells (millions)",
         "edlEnabled": "Enable EDL shading",
         "edlStrength": "EDL strength",
         "edlRadius": "EDL radius (px)",
@@ -313,6 +314,11 @@
         "message": "Set WGS84 coordinates for this 3D model. This allows the model to be positioned correctly relative to caves. You can skip this step if the model uses local coordinates.",
         "wgs84Coordinates": "WGS84 Coordinates",
         "firstPoint": "First point in file"
+      },
+      "ascRenderMode": {
+        "message": "How would you like to render this DTM (Digital Terrain Model)?",
+        "mesh": "Triangle mesh",
+        "pointCloud": "Point cloud"
       }
     },
     "welcome": {
@@ -1055,6 +1061,7 @@
       "importFileFailed": "Import of {name} failed",
       "importFailed": "Import failed",
       "unsupportedFileType": "Unsupported file type: {extension}",
+      "ascDecimated": "{name}: DTM downsampled from {fromCols}×{fromRows} to {toCols}×{toRows} cells for performance",
       "longFormatNotSupported": "Only the simplified format is supported",
       "pointCloudFileTooLarge": "{name} is {size} MB, which is above the {limit} MB limit for point cloud imports. Try splitting the file or exporting a subsampled version.",
       "therionNoData": "No centreline data found in Therion file",

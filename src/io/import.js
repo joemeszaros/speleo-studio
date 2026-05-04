@@ -20,7 +20,14 @@ import { showInfoPanel } from '../ui/popups.js';
 import { Shot, ShotType, DEFAULT_UNITS } from '../model/survey.js';
 import { Vector, PointCloud, Mesh3D, ModelFile } from '../model.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
-import { SurveyMetadata, Survey, SurveyTeamMember, SurveyTeam, SurveyInstrument, StationDimension } from '../model/survey.js';
+import {
+  SurveyMetadata,
+  Survey,
+  SurveyTeamMember,
+  SurveyTeam,
+  SurveyInstrument,
+  StationDimension
+} from '../model/survey.js';
 import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
 import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 import {
@@ -1514,6 +1521,7 @@ export {
   JsonImporter,
   PlyModelImporter,
   ObjModelImporter,
+  PointCloudImporter,
   LasModelImporter,
   TherionImporter,
   SurvexImporter,

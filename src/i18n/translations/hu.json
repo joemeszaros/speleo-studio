@@ -224,6 +224,7 @@
         "pointCloudColorEnd": "Pontfelhő szín (alsó)",
         "pointBudget": "Max. pontszám (millió)",
         "maxPoints": "Max. betöltött pontok (millió)",
+        "dtmMaxCells": "DTM max. cellák száma (millió)",
         "edlEnabled": "EDL árnyalás engedélyezése",
         "edlStrength": "EDL erősség",
         "edlRadius": "EDL sugár (px)",
@@ -313,6 +314,11 @@
         "message": "Adja meg a WGS84 koordinátákat ehhez a 3D modellhez. Ez lehetővé teszi a modell helyes pozicionálását a barlangokhoz képest. Kihagyhatja ezt a lépést, ha a modell helyi koordinátákat használ.",
         "wgs84Coordinates": "WGS84 koordináták",
         "firstPoint": "Első pont a fájlban"
+      },
+      "ascRenderMode": {
+        "message": "Hogyan szeretnéd megjeleníteni ezt a domborzati modellt (DTM)?",
+        "mesh": "Háromszög háló",
+        "pointCloud": "Pontfelhő"
       }
     },
     "welcome": {
@@ -1078,6 +1084,7 @@
       "importFileFailed": "A {name} fájl importálása sikertelen",
       "importFailed": "Importálás sikertelen",
       "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
+      "ascDecimated": "{name}: a DTM ritkítva {fromCols}×{fromRows} cellából {toCols}×{toRows} cellára a teljesítmény érdekében",
       "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott",
       "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot.",
       "therionNoData": "Nem található felmérés adat a Therion fájlban",
