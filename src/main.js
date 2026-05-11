@@ -28,7 +28,7 @@ import {
   LoxImporter,
   Importer
 } from './io/import.js';
-import { AscDTMImporter } from './io/dtm-importer.js';
+import { AscDTMImporter, HgtDTMImporter } from './io/dtm-importer.js';
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
@@ -258,7 +258,7 @@ class Main {
         console.warn(`No importer found for model type: ${modelFile.type}`);
         return;
       }
-      const binaryTypes = new Set(['ply', 'las', 'laz', 'lox']);
+      const binaryTypes = new Set(['ply', 'las', 'laz', 'lox', 'hgt']);
       const importMethod = binaryTypes.has(modelFile.type) ? 'importData' : 'importText';
       const importData = binaryTypes.has(modelFile.type)
         ? await modelFile.data.arrayBuffer()
@@ -325,6 +325,7 @@ class Main {
       ply       : new PlyModelImporter(db, options, scene, this.projectManager),
       obj       : new ObjModelImporter(db, options, scene, this.projectManager),
       asc       : new AscDTMImporter(db, options, scene, this.projectManager),
+      hgt       : new HgtDTMImporter(db, options, scene, this.projectManager),
       las       : new LasModelImporter(db, options, scene, this.projectManager),
       laz       : new LasModelImporter(db, options, scene, this.projectManager),
       lox       : new LoxImporter(db, options, scene, this.projectManager)
@@ -456,7 +457,7 @@ class Main {
   }
 
   #setupModelFileInputListener() {
-    const modelExtensions = new Set(['ply', 'obj', 'asc', 'las', 'laz', 'lox']);
+    const modelExtensions = new Set(['ply', 'obj', 'asc', 'hgt', 'las', 'laz', 'lox']);
     const input = document.getElementById('modelInput');
 
     input.addEventListener('change', async (e) => {
@@ -480,15 +481,17 @@ class Main {
 
         const hasAssets = assetFiles.length > 0;
 
-        // ASC files need an extra dialog (mesh vs point cloud) before parsing.
-        // Ask once per batch — applies to all .asc files in this import.
-        let ascRenderMode = null;
-        const hasAsc = modelFiles.some((f) => f.name.toLowerCase().endsWith('.asc'));
-        if (hasAsc) {
-          ascRenderMode = await new AscRenderModeDialog().show();
-          if (ascRenderMode === null) {
-            // Skip ASC files entirely if the user cancelled
-            modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !f.name.toLowerCase().endsWith('.asc')));
+        // DTM files (.asc, .hgt) need an extra dialog (mesh vs point cloud)
+        // before parsing. Ask once per batch — applies to all DTM files.
+        const dtmExts = new Set(['asc', 'hgt']);
+        const isDtm = (f) => dtmExts.has(f.name.toLowerCase().split('.').pop());
+        let dtmRenderMode = null;
+        const hasDtm = modelFiles.some(isDtm);
+        if (hasDtm) {
+          dtmRenderMode = await new AscRenderModeDialog().show();
+          if (dtmRenderMode === null) {
+            // Skip DTM files entirely if the user cancelled
+            modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !isDtm(f)));
           }
         }
 
@@ -505,7 +508,7 @@ class Main {
             }
 
             try {
-              const importOpts = ext === 'asc' ? { renderMode: ascRenderMode } : undefined;
+              const importOpts = dtmExts.has(ext) ? { renderMode: dtmRenderMode } : undefined;
               await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
                 parsedModels.push({ model, object3D, modelFile });
               }, importOpts);
@@ -520,21 +523,31 @@ class Main {
           this.loadingOverlay.endBatch();
         }
 
-        // Show coordinate dialog with embedded coordinates pre-filled (if found)
-        const firstModel = parsedModels[0]?.model;
-        const embeddedCoords = firstModel?.embeddedCoords || null;
-        const firstPointCoords = firstModel?.firstPointCoords || null;
-        const modelCoordDialog = new ModelCoordinateDialog();
-        const wgs84Coords = await modelCoordDialog.show(
-          modelFiles[0]?.name || '',
-          embeddedCoords,
-          firstPointCoords
-        );
+        // Resolve per-model embeddedCoords (e.g. HGT filename, OBJ comment
+        // headers) to geoData first — each model gets its own anchor.
+        for (const pm of parsedModels) {
+          if (pm.model.embeddedCoords && !pm.model.geoData) {
+            pm.model.geoData = this.#createGeoDataFromWGS84(pm.model.embeddedCoords);
+          }
+        }
 
-        // Convert WGS84 to GeoData if coordinates were provided
-        let geoData = null;
-        if (wgs84Coords) {
-          geoData = this.#createGeoDataFromWGS84(wgs84Coords);
+        // Show the shared WGS84 dialog only for models that still lack
+        // geoData (typical for ASC / bare PLY / OBJ without comments).
+        const needsCoords = parsedModels.filter((pm) => !pm.model.geoData);
+        let sharedGeoData = null;
+        if (needsCoords.length > 0) {
+          const firstNeeding = needsCoords[0].model;
+          const embeddedCoords = firstNeeding?.embeddedCoords || null;
+          const firstPointCoords = firstNeeding?.firstPointCoords || null;
+          const modelCoordDialog = new ModelCoordinateDialog();
+          const wgs84Coords = await modelCoordDialog.show(
+            modelFiles[0]?.name || '',
+            embeddedCoords,
+            firstPointCoords
+          );
+          if (wgs84Coords) {
+            sharedGeoData = this.#createGeoDataFromWGS84(wgs84Coords);
+          }
         }
 
         // Add parsed models to the scene
@@ -543,8 +556,9 @@ class Main {
           // Hide model until textures are applied to prevent visual pop-in
           if (hasAssets) object3D.visible = false;
 
-          // Set geoData on the model if coordinates were provided
-          if (geoData) model.geoData = geoData;
+          // Apply shared dialog result only to models that didn't already
+          // have geoData from their own embeddedCoords.
+          if (!model.geoData && sharedGeoData) model.geoData = sharedGeoData;
 
           await this.#tryAddModel(model, object3D, modelFile);
 
