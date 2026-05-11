@@ -319,6 +319,11 @@
         "message": "Hogyan szeretnéd megjeleníteni ezt a domborzati modellt (DTM)?",
         "mesh": "Háromszög háló",
         "pointCloud": "Pontfelhő"
+      },
+      "xyzKind": {
+        "message": "Ez az XYZ fájl egy domborzati modell (szabályos rács) vagy egy pontfelhő (szórt pontok)?",
+        "dtm": "Domborzati modell (szabályos rács)",
+        "pointCloud": "Pontfelhő (szórt)"
       }
     },
     "welcome": {
@@ -1085,6 +1090,7 @@
       "importFailed": "Importálás sikertelen",
       "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
       "ascDecimated": "{name}: a DTM ritkítva {fromCols}×{fromRows} cellából {toCols}×{toRows} cellára a teljesítmény érdekében",
+      "xyzNotAGrid": "A(z) {name} XYZ fájl nem tűnik szabályos rácsnak; próbáld pontfelhőként importálni.",
       "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott",
       "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot.",
       "therionNoData": "Nem található felmérés adat a Therion fájlban",

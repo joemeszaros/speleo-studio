@@ -319,6 +319,11 @@
         "message": "How would you like to render this DTM (Digital Terrain Model)?",
         "mesh": "Triangle mesh",
         "pointCloud": "Point cloud"
+      },
+      "xyzKind": {
+        "message": "Is this XYZ file a Digital Terrain Model (regular grid) or a scattered point cloud?",
+        "dtm": "DTM (regular grid)",
+        "pointCloud": "Point cloud (scattered)"
       }
     },
     "welcome": {
@@ -1062,6 +1067,7 @@
       "importFailed": "Import failed",
       "unsupportedFileType": "Unsupported file type: {extension}",
       "ascDecimated": "{name}: DTM downsampled from {fromCols}×{fromRows} to {toCols}×{toRows} cells for performance",
+      "xyzNotAGrid": "XYZ file {name} does not appear to be a regular grid; re-import as 'Point cloud' instead.",
       "longFormatNotSupported": "Only the simplified format is supported",
       "pointCloudFileTooLarge": "{name} is {size} MB, which is above the {limit} MB limit for point cloud imports. Try splitting the file or exporting a subsampled version.",
       "therionNoData": "No centreline data found in Therion file",

@@ -29,6 +29,8 @@ import {
   Importer
 } from './io/import.js';
 import { AscDTMImporter, HgtDTMImporter } from './io/dtm-importer.js';
+import { XyzImporter } from './io/xyz-importer.js';
+import { XyzKindDialog } from './ui/xyz-kind-dialog.js';
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
@@ -326,6 +328,7 @@ class Main {
       obj       : new ObjModelImporter(db, options, scene, this.projectManager),
       asc       : new AscDTMImporter(db, options, scene, this.projectManager),
       hgt       : new HgtDTMImporter(db, options, scene, this.projectManager),
+      xyz       : new XyzImporter(db, options, scene, this.projectManager),
       las       : new LasModelImporter(db, options, scene, this.projectManager),
       laz       : new LasModelImporter(db, options, scene, this.projectManager),
       lox       : new LoxImporter(db, options, scene, this.projectManager)
@@ -457,7 +460,7 @@ class Main {
   }
 
   #setupModelFileInputListener() {
-    const modelExtensions = new Set(['ply', 'obj', 'asc', 'hgt', 'las', 'laz', 'lox']);
+    const modelExtensions = new Set(['ply', 'obj', 'asc', 'hgt', 'xyz', 'las', 'laz', 'lox']);
     const input = document.getElementById('modelInput');
 
     input.addEventListener('change', async (e) => {
@@ -481,17 +484,40 @@ class Main {
 
         const hasAssets = assetFiles.length > 0;
 
-        // DTM files (.asc, .hgt) need an extra dialog (mesh vs point cloud)
-        // before parsing. Ask once per batch — applies to all DTM files.
-        const dtmExts = new Set(['asc', 'hgt']);
-        const isDtm = (f) => dtmExts.has(f.name.toLowerCase().split('.').pop());
+        // XYZ files: ask the user whether the file is a DTM (regular grid)
+        // or a scattered point cloud. The format itself doesn't say.
+        const isXyz = (f) => f.name.toLowerCase().endsWith('.xyz');
+        let xyzKind = null;
+        const hasXyz = modelFiles.some(isXyz);
+        if (hasXyz) {
+          xyzKind = await new XyzKindDialog().show();
+          if (xyzKind === null) {
+            // Skip XYZ files if cancelled
+            modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !isXyz(f)));
+          }
+        }
+
+        // DTM files (.asc, .hgt, and .xyz when xyzKind==='dtm') need an extra
+        // dialog (mesh vs point cloud). Asked once per batch. The render-mode
+        // dialog is skipped for pure scattered-XYZ batches (no mesh option).
+        const innateDtmExts = new Set(['asc', 'hgt']);
+        const isInnateDtm = (f) => innateDtmExts.has(f.name.toLowerCase().split('.').pop());
+        const dtmRequiresRenderMode = (f) => {
+          const ext = f.name.toLowerCase().split('.').pop();
+          if (innateDtmExts.has(ext)) return true;
+          if (ext === 'xyz' && xyzKind === 'dtm') return true;
+          return false;
+        };
         let dtmRenderMode = null;
-        const hasDtm = modelFiles.some(isDtm);
-        if (hasDtm) {
+        const hasDtmRenderMode = modelFiles.some(dtmRequiresRenderMode);
+        if (hasDtmRenderMode) {
           dtmRenderMode = await new AscRenderModeDialog().show();
           if (dtmRenderMode === null) {
-            // Skip DTM files entirely if the user cancelled
-            modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !isDtm(f)));
+            // Skip DTM-rendered files if cancelled (innate DTMs + dtm-mode XYZ)
+            modelFiles.splice(
+              0, modelFiles.length,
+              ...modelFiles.filter((f) => !dtmRequiresRenderMode(f))
+            );
           }
         }
 
@@ -508,7 +534,12 @@ class Main {
             }
 
             try {
-              const importOpts = dtmExts.has(ext) ? { renderMode: dtmRenderMode } : undefined;
+              let importOpts;
+              if (ext === 'xyz') {
+                importOpts = { xyzKind, renderMode: dtmRenderMode };
+              } else if (innateDtmExts.has(ext)) {
+                importOpts = { renderMode: dtmRenderMode };
+              }
               await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
                 parsedModels.push({ model, object3D, modelFile });
               }, importOpts);
