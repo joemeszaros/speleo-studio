@@ -577,15 +577,14 @@ class View {
     camera.top = halfHeight;
     camera.bottom = -halfHeight;
 
-    if (near === null) {
-      near = 0;
-    }
+    // Defaults are tuned for small (cave-scale) scenes. Callers that know the
+    // scene's full bbox should pass explicit near/far that encompass any
+    // possible rotation of the geometry — otherwise rotating a wide DTM
+    // clips against the depth planes.
+    if (near === null) near = -1000;
+    if (far === null) far = frustumSize * 10;
 
-    if (far === null) {
-      far = frustumSize * 10; // 10x the frustum size for good depth range
-    }
-
-    camera.near = -1000;
+    camera.near = near;
     camera.far = far;
 
     // Update custom properties
@@ -593,6 +592,18 @@ class View {
     camera.height = frustumSize;
 
     camera.updateProjectionMatrix();
+  }
+
+  /**
+   * Compute ortho near/far that fully enclose `boundingBox` regardless of
+   * camera orientation. Used by `adjustCamera` and `fitScreen` so a wide
+   * model (e.g. a 54 km DTM) doesn't get clipped when rotated.
+   */
+  static cameraDepthRangeFor(boundingBox) {
+    const size = boundingBox.getSize(new THREE.Vector3());
+    const diag = Math.sqrt(size.x * size.x + size.y * size.y + size.z * size.z);
+    const halfDepth = (diag / 2) * 1.4 + 1000; // padding for grid overlay etc.
+    return { near: -halfDepth, far: halfDepth };
   }
 
   static createOrthoCamera(aspect, frustrum = 100) {
@@ -891,12 +902,13 @@ class SpatialView extends View {
 
   adjustCamera(boundingBox, changeOrientation = true) {
     const settings = this.getViewSettings(boundingBox);
+    const depth = boundingBox ? View.cameraDepthRangeFor(boundingBox) : { near: null, far: null };
 
     // Always keep the ortho frustum and overview ortho up-to-date so the user
     // can toggle projection without needing to re-fit. Perspective camera only
     // needs its aspect refreshed.
-    View.updateCameraFrustum(this.orthoCamera, settings.frustumSize, this.scene.width / this.scene.height);
-    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
+    View.updateCameraFrustum(this.orthoCamera, settings.frustumSize, this.scene.width / this.scene.height, depth.near, depth.far);
+    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1, depth.near, depth.far);
     this.perspectiveCamera.aspect = this.scene.width / this.scene.height;
     this.perspectiveCamera.updateProjectionMatrix();
 
@@ -921,10 +933,17 @@ class SpatialView extends View {
    * bounding box within the current FOV.
    */
   fitScreen(boundingBox) {
+    if (boundingBox === undefined) return;
+
+    // Re-update the orthographic camera frustums to encompass the new bbox,
+    // so a wide model (e.g. a 54 km DTM) doesn't get clipped when rotated.
+    // adjustCamera also updates target/orientation/position, which fitScreen
+    // sets again below — the duplication is intentional and cheap.
+    this.adjustCamera(boundingBox, false);
+
     if (this.projection !== 'perspective') {
       return super.fitScreen(boundingBox);
     }
-    if (boundingBox === undefined) return;
 
     const center = boundingBox.getCenter(new THREE.Vector3());
     this.target.copy(center);
@@ -1374,9 +1393,10 @@ class PlanView extends View {
 
   adjustCamera(boundingBox) {
     const settings = this.getViewSettings(boundingBox);
+    const depth = boundingBox ? View.cameraDepthRangeFor(boundingBox) : { near: null, far: null };
 
-    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
-    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
+    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height, depth.near, depth.far);
+    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1, depth.near, depth.far);
 
     this.control.setTarget(this.target);
     this.control.setHeight(settings.distance);
@@ -1552,8 +1572,9 @@ class ProfileView extends View {
 
   adjustCamera(boundingBox) {
     const settings = this.getViewSettings(boundingBox);
-    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height);
-    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1);
+    const depth = boundingBox ? View.cameraDepthRangeFor(boundingBox) : { near: null, far: null };
+    View.updateCameraFrustum(this.camera, settings.frustumSize, this.scene.width / this.scene.height, depth.near, depth.far);
+    View.updateCameraFrustum(this.overviewCamera, settings.frustumSize, 1, depth.near, depth.far);
 
     this.control.setTarget(this.target);
     this.control.setRadius(settings.distance);
