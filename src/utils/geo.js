@@ -592,4 +592,23 @@ class UTMConverter {
 
 }
 
-export { Declination, EOVToWGS84Transformer, MeridianConvergence, StrikeDipCalculator, UTMConverter, WGS84Converter };
+/**
+ * Spherical Web Mercator (EPSG:3857) — used by web map tiles (Google, Bing,
+ * OpenStreetMap, satellite imagery) and many cloud GeoTIFFs. Treats the
+ * Earth as a sphere of radius 6378137 m.
+ */
+class WebMercatorConverter {
+  static R = 6378137;
+
+  /** Convert Web Mercator (x, y) in metres to WGS84 (latitude, longitude) in degrees. */
+  static toLatLon(x, y) {
+    const longitude = (x / WebMercatorConverter.R) * (180 / Math.PI);
+    const latitude  = (2 * Math.atan(Math.exp(y / WebMercatorConverter.R)) - Math.PI / 2) * (180 / Math.PI);
+    return { latitude, longitude };
+  }
+}
+
+export {
+  Declination, EOVToWGS84Transformer, MeridianConvergence,
+  StrikeDipCalculator, UTMConverter, WGS84Converter, WebMercatorConverter
+};

@@ -578,6 +578,10 @@ class ProjectManager {
       this.db.addMesh(model);
       entry = this.scene.models.getMeshObject(object3D);
       this.scene.models.addMesh(model, entry);
+      // Register orthophoto texture metadata so drape (auto or manual) can find it.
+      if (model.modelKind === 'orthophoto' && model.orthoMetadata) {
+        this.scene.models.registerOrthoMetadata(model.name, model.orthoMetadata);
+      }
     }
 
     // Load saved settings (transform, opacity, visibility)
@@ -600,11 +604,19 @@ class ProjectManager {
       console.warn('Failed to load model metadata:', err);
     }
 
-    // Position model from geoData coordinates (before user transforms are applied)
+    // Position model from geoData coordinates (before user transforms are applied).
+    // Model-only projects (DTM + orthophoto, no caves) initialize the global
+    // normalizer from the first georeferenced model so subsequent models are
+    // placed relative to a stable origin — otherwise they all stack at world (0,0).
     const coordinate = model.geoData?.coordinates?.[0]?.coordinate;
-    if (coordinate && globalNormalizer.isInitialized()) {
-      const normalizedPos = globalNormalizer.getNormalizedVector(coordinate);
-      entry.object3D.position.set(normalizedPos.x, normalizedPos.y, normalizedPos.z);
+    if (coordinate) {
+      if (!globalNormalizer.isInitialized()) {
+        globalNormalizer.initializeGlobalOrigin(coordinate);
+      }
+      if (globalNormalizer.isInitialized()) {
+        const normalizedPos = globalNormalizer.getNormalizedVector(coordinate);
+        entry.object3D.position.set(normalizedPos.x, normalizedPos.y, normalizedPos.z);
+      }
     }
 
     // Add to models tree (applies saved transform/opacity)
@@ -625,11 +637,74 @@ class ProjectManager {
     // Apply current color mode after model and textures are loaded
     await this.scene.models.updateModelColorMode(this.options.scene.models.color.mode);
 
-    // Reveal the model with final transform and textures applied
+    // Auto-drape orchestration (same as main.js's #tryAddModel flow):
+    //  - new orthophoto: prefer its saved drape target, otherwise auto-pick
+    //    the first DTM whose XY bbox overlaps the photo.
+    //  - new DTM: late-arrival case — drape any orthophoto whose saved
+    //    drape target matches this DTM.
+    const savedDrapedOnto = savedSettings?.drapedOnto;
+    if (savedDrapedOnto && model.modelKind === 'orthophoto') {
+      // Restore the relationship on the model so the orchestration can read it
+      model.drapedOnto = savedDrapedOnto;
+    }
+    let drapeChanged = false;
+    if (model.modelKind === 'orthophoto') {
+      let target = null;
+      if (model.drapedOnto && this.scene.models.meshObjects.has(model.drapedOnto)) {
+        target = model.drapedOnto;
+      } else {
+        target = this.#findDrapeTarget(model.name);
+      }
+      if (target && this.scene.models.drapeOrthophoto(model.name, target)) {
+        model.drapedOnto = target;
+        drapeChanged = true;
+      }
+    } else if (model.modelKind === 'dtm' && this.modelsTree) {
+      const category = this.modelsTree.categories.get('3d-models');
+      for (const node of category?.children ?? []) {
+        const m = node.data;
+        if (m?.modelKind !== 'orthophoto' || m === model) continue;
+        if (m.drapedOnto !== model.name) continue;
+        const orthoEntry = this.scene.models.meshObjects.get(node.label);
+        if (orthoEntry?.userData?.drapedOnto) continue;
+        if (this.scene.models.drapeOrthophoto(node.label, model.name)) {
+          drapeChanged = true;
+        }
+      }
+    }
+    if (drapeChanged && this.modelsTree) this.modelsTree.render();
+
+    // Reveal the model with final transform and textures applied. A draped
+    // orthophoto's own flat plane stays hidden — the drape overlay on the
+    // DTM carries the visual now.
     const finalVisible = savedSettings?.visible ?? true;
     if (entry) {
-      entry.object3D.visible = finalVisible;
+      const isDrapedOrtho = model.modelKind === 'orthophoto' && model.drapedOnto;
+      entry.object3D.visible = isDrapedOrtho ? false : finalVisible;
     }
+  }
+
+  /**
+   * Find a DTM mesh whose world XY bbox overlaps a given orthophoto's
+   * world XY bbox. Returns the DTM model's name, or null.
+   * Mirrors Main.#findDrapeTarget so both code paths use the same heuristic.
+   */
+  #findDrapeTarget(orthoName) {
+    const orthoEntry = this.scene.models.meshObjects.get(orthoName);
+    if (!orthoEntry) return null;
+    const orthoBox = new THREE.Box3().setFromObject(orthoEntry.object3D);
+    if (orthoBox.isEmpty()) return null;
+    for (const [name, entry] of this.scene.models.meshObjects) {
+      if (name === orthoName) continue;
+      const dtmModel = this.db.getMesh(name);
+      if (dtmModel?.modelKind !== 'dtm') continue;
+      const dtmBox = new THREE.Box3().setFromObject(entry.object3D);
+      if (dtmBox.isEmpty()) continue;
+      const overlapX = dtmBox.max.x > orthoBox.min.x && dtmBox.min.x < orthoBox.max.x;
+      const overlapY = dtmBox.max.y > orthoBox.min.y && dtmBox.min.y < orthoBox.max.y;
+      if (overlapX && overlapY) return name;
+    }
+    return null;
   }
 
   async loadModelAssets(model, modelFile) {
@@ -1207,6 +1282,13 @@ class ProjectManager {
    * @returns {string|null} Warning message or null
    */
   checkModelDistance(model) {
+    // Raster overlays (DTMs / orthophotos) are explicit georeferenced
+    // imports and their reference point is a corner of a potentially huge
+    // tile — point-to-point distance to a single cave is meaningless.
+    // The user knows they're attaching imagery / elevation to the scene;
+    // trust them. Auto-drape handles compatibility separately.
+    if (model.modelKind === 'dtm' || model.modelKind === 'orthophoto') return null;
+
     const modelCoord = model.geoData?.coordinates?.[0]?.coordinate;
     if (!modelCoord) return null;
 

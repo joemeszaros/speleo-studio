@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as THREE from 'three';
 import { Database } from './db.js';
 import { MyScene, SceneOverview } from './scene/scene.js';
 import {
@@ -30,6 +31,7 @@ import {
 } from './io/import.js';
 import { AscDTMImporter, HgtDTMImporter } from './io/dtm-importer.js';
 import { XyzImporter } from './io/xyz-importer.js';
+import { GeoTiffImporter } from './io/geotiff-importer.js';
 import { XyzKindDialog } from './ui/xyz-kind-dialog.js';
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
@@ -260,7 +262,7 @@ class Main {
         console.warn(`No importer found for model type: ${modelFile.type}`);
         return;
       }
-      const binaryTypes = new Set(['ply', 'las', 'laz', 'lox', 'hgt']);
+      const binaryTypes = new Set(['ply', 'las', 'laz', 'lox', 'hgt', 'tif', 'tiff']);
       const importMethod = binaryTypes.has(modelFile.type) ? 'importData' : 'importText';
       const importData = binaryTypes.has(modelFile.type)
         ? await modelFile.data.arrayBuffer()
@@ -329,10 +331,12 @@ class Main {
       asc       : new AscDTMImporter(db, options, scene, this.projectManager),
       hgt       : new HgtDTMImporter(db, options, scene, this.projectManager),
       xyz       : new XyzImporter(db, options, scene, this.projectManager),
+      tif       : new GeoTiffImporter(db, options, scene, this.projectManager),
       las       : new LasModelImporter(db, options, scene, this.projectManager),
       laz       : new LasModelImporter(db, options, scene, this.projectManager),
       lox       : new LoxImporter(db, options, scene, this.projectManager)
     };
+    this.importers.tiff = this.importers.tif;
 
     this.#setupEventListeners();
 
@@ -460,7 +464,7 @@ class Main {
   }
 
   #setupModelFileInputListener() {
-    const modelExtensions = new Set(['ply', 'obj', 'asc', 'hgt', 'xyz', 'las', 'laz', 'lox']);
+    const modelExtensions = new Set(['ply', 'obj', 'asc', 'hgt', 'xyz', 'tif', 'tiff', 'las', 'laz', 'lox']);
     const input = document.getElementById('modelInput');
 
     input.addEventListener('change', async (e) => {
@@ -500,7 +504,7 @@ class Main {
         // DTM files (.asc, .hgt, and .xyz when xyzKind==='dtm') need an extra
         // dialog (mesh vs point cloud). Asked once per batch. The render-mode
         // dialog is skipped for pure scattered-XYZ batches (no mesh option).
-        const innateDtmExts = new Set(['asc', 'hgt']);
+        const innateDtmExts = new Set(['asc', 'hgt', 'tif', 'tiff']);
         const isInnateDtm = (f) => innateDtmExts.has(f.name.toLowerCase().split('.').pop());
         const dtmRequiresRenderMode = (f) => {
           const ext = f.name.toLowerCase().split('.').pop();
@@ -644,6 +648,10 @@ class Main {
       this.db.addMesh(model);
       entry = this.scene.models.getMeshObject(object3D);
       this.scene.models.addMesh(model, entry);
+      // Register orthophoto texture metadata so drape can find it later
+      if (model.modelKind === 'orthophoto' && model.orthoMetadata) {
+        this.scene.models.registerOrthoMetadata(model.name, model.orthoMetadata);
+      }
     }
 
     // Position model using geoData coordinates
@@ -673,6 +681,42 @@ class Main {
     // Apply current color mode to the newly added model
     await this.scene.models.updateModelColorMode(this.options.scene.models.color.mode);
 
+    // Drape orchestration:
+    //  - new orthophoto: prefer its saved drape target (project reload),
+    //    otherwise auto-pick the first overlapping DTM in the scene.
+    //  - new DTM: late-arrival case — drape any orthophoto whose saved
+    //    drape target matches this DTM and isn't yet draped.
+    let drapeChanged = false;
+    if (model.modelKind === 'orthophoto') {
+      let target = null;
+      if (model.drapedOnto && this.scene.models.meshObjects.has(model.drapedOnto)) {
+        target = model.drapedOnto;
+      } else {
+        target = this.#findDrapeTarget(model.name);
+      }
+      if (target) {
+        if (this.scene.models.drapeOrthophoto(model.name, target)) {
+          model.drapedOnto = target;
+          drapeChanged = true;
+        }
+      }
+    } else if (model.modelKind === 'dtm' && this.modelsTree) {
+      const category = this.modelsTree.categories.get('3d-models');
+      for (const node of category?.children ?? []) {
+        const m = node.data;
+        if (m?.modelKind !== 'orthophoto') continue;
+        if (m === model) continue;
+        if (m.drapedOnto !== model.name) continue;
+        const orthoEntry = this.scene.models.meshObjects.get(node.label);
+        if (orthoEntry?.userData?.drapedOnto) continue;
+        if (this.scene.models.drapeOrthophoto(node.label, model.name)) {
+          drapeChanged = true;
+        }
+      }
+    }
+    // Re-render the tree so the drape badge / icon updates pick up the change.
+    if (drapeChanged && this.modelsTree) this.modelsTree.render();
+
     const boundingBox = this.scene.computeBoundingBox();
     if (boundingBox) {
       this.scene.grid.adjust(boundingBox);
@@ -681,12 +725,44 @@ class Main {
   }
 
   /**
-   * Position a model's object3D based on its geoData coordinates using the global normalizer.
-   * If no geoData, the model stays at (0,0,0) which is the cave fixpoint position.
+   * Find a DTM mesh whose world XY bbox overlaps the given orthophoto's
+   * world XY bbox. Returns the DTM model's name, or null if no match.
+   */
+  #findDrapeTarget(orthoName) {
+    const orthoEntry = this.scene.models.meshObjects.get(orthoName);
+    if (!orthoEntry) return null;
+    const orthoBox = new THREE.Box3().setFromObject(orthoEntry.object3D);
+    if (orthoBox.isEmpty()) return null;
+
+    for (const [name, entry] of this.scene.models.meshObjects) {
+      if (name === orthoName) continue;
+      const dtmModel = this.db.getMesh(name);
+      if (dtmModel?.modelKind !== 'dtm') continue;
+      const dtmBox = new THREE.Box3().setFromObject(entry.object3D);
+      if (dtmBox.isEmpty()) continue;
+      // 2D XY overlap test
+      const overlapX = dtmBox.max.x > orthoBox.min.x && dtmBox.min.x < orthoBox.max.x;
+      const overlapY = dtmBox.max.y > orthoBox.min.y && dtmBox.min.y < orthoBox.max.y;
+      if (overlapX && overlapY) return name;
+    }
+    return null;
+  }
+
+  /**
+   * Position a model's object3D based on its geoData coordinates using the
+   * global normalizer. If no geoData, the model stays at (0,0,0) which is
+   * the cave fixpoint position. For model-only projects (DTM + orthophoto,
+   * no caves), the first georeferenced model bootstraps the normalizer
+   * so subsequent models land at their true relative offset.
    */
   #positionModelFromGeoData(model, object3D) {
     const coordinate = model.geoData?.coordinates?.[0]?.coordinate;
-    if (!coordinate || !globalNormalizer.isInitialized()) return;
+    if (!coordinate) return;
+
+    if (!globalNormalizer.isInitialized()) {
+      globalNormalizer.initializeGlobalOrigin(coordinate);
+    }
+    if (!globalNormalizer.isInitialized()) return;
 
     const normalizedPos = globalNormalizer.getNormalizedVector(coordinate);
     object3D.position.set(normalizedPos.x, normalizedPos.y, normalizedPos.z);

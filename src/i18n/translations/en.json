@@ -306,7 +306,12 @@
         "setColor": "Set color",
         "clearColor": "Clear color",
         "wireframe": "Show as wireframe",
-        "solid": "Show as solid"
+        "solid": "Show as solid",
+        "drapeOnto": "Drape onto {name}",
+        "undrape": "Undrape"
+      },
+      "drape": {
+        "drapedOnto": "Draped onto {name}"
       }
     },
     "dialogs": {
@@ -1068,6 +1073,7 @@
       "unsupportedFileType": "Unsupported file type: {extension}",
       "ascDecimated": "{name}: DTM downsampled from {fromCols}×{fromRows} to {toCols}×{toRows} cells for performance",
       "xyzNotAGrid": "XYZ file {name} does not appear to be a regular grid; re-import as 'Point cloud' instead.",
+      "orthophotoDownsampled": "{name}: orthophoto downsampled from {fromCols}×{fromRows} to {toCols}×{toRows} for performance",
       "longFormatNotSupported": "Only the simplified format is supported",
       "pointCloudFileTooLarge": "{name} is {size} MB, which is above the {limit} MB limit for point cloud imports. Try splitting the file or exporting a subsampled version.",
       "therionNoData": "No centreline data found in Therion file",

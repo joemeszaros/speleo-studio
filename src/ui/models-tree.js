@@ -145,6 +145,12 @@ export class ModelsTree {
       modelNode.visible = savedSettings.visible ?? true;
       modelNode.color = savedSettings.color ?? null;
       modelNode.wireframe = savedSettings.wireframe ?? false;
+      // Restore a saved drape relationship — the actual drape is applied
+      // by main.js's #tryAddModel once both the orthophoto and its target
+      // DTM are loaded (which can happen in either order on project reload).
+      if (savedSettings.drapedOnto && model) {
+        model.drapedOnto = savedSettings.drapedOnto;
+      }
 
       // Apply to Three.js object
       const t = savedSettings.transform;
@@ -354,7 +360,13 @@ export class ModelsTree {
 
     node.visible = !node.visible;
 
-    if (node.object3D) {
+    // When an orthophoto is draped, its own flat plane is already hidden —
+    // the visible thing is the drape overlay on the DTM mesh. Toggling the
+    // photo's eye must hide/show the overlay, not the (already-hidden)
+    // plane. When it's not draped, the plane is what the user sees.
+    if (node.data?.modelKind === 'orthophoto' && node.data?.drapedOnto) {
+      this.scene.models.setOrthophotoOverlayVisibility(node.label, node.visible);
+    } else if (node.object3D) {
       this.scene.models.setModelVisibility(node.object3D, node.visible);
     }
 
@@ -457,16 +469,19 @@ export class ModelsTree {
 
         this.modelSystem
           .saveModelFileSettings(node.modelFileId, currentProject.id, {
-            transform : node.transform,
-            opacity   : node.opacity,
-            visible   : node.visible,
-            color     : node.color ?? null,
-            wireframe : node.wireframe ?? false
+            transform  : node.transform,
+            opacity    : node.opacity,
+            visible    : node.visible,
+            color      : node.color ?? null,
+            wireframe  : node.wireframe ?? false,
+            drapedOnto : node.data?.drapedOnto ?? null
           }).then(() => {
             this.projectSystem.saveProject(currentProject);
-            document.dispatchEvent(new CustomEvent('modelFileSettingsSaved', {
-              detail: { modelFileId: node.modelFileId, projectId: currentProject.id }
-            }));
+            document.dispatchEvent(
+              new CustomEvent('modelFileSettingsSaved', {
+                detail : { modelFileId: node.modelFileId, projectId: currentProject.id }
+              })
+            );
           })
           .catch((err) => console.error('Failed to persist model properties:', err));
       }, 500)
@@ -505,15 +520,19 @@ export class ModelsTree {
     nodeElement.className = `models-tree-node ${node.selected ? 'selected' : ''}`;
     nodeElement.setAttribute('data-node-id', node.id);
 
-    // Model icon
+    // Model icon — orthophoto/DTM/point-cloud/generic mesh each get a distinct emoji
     const icon = document.createElement('span');
     icon.className = 'models-tree-node-icon';
-    if (node.data instanceof PointCloud) {
+    if (node.data?.modelKind === 'orthophoto') {
+      icon.textContent = '📷';
+    } else if (node.data?.modelKind === 'dtm') {
+      icon.textContent = '🏔';
+    } else if (node.data instanceof PointCloud) {
       icon.textContent = '☁️';
     } else {
       icon.textContent = '🗿';
     }
-    
+
     nodeElement.appendChild(icon);
 
     // Label
@@ -524,6 +543,15 @@ export class ModelsTree {
       label.style.color = node.color;
     }
     nodeElement.appendChild(label);
+
+    // Drape badge — orthophoto draped onto a DTM shows "⬇️ <dtmName>" inline
+    if (node.data?.modelKind === 'orthophoto' && node.data?.drapedOnto) {
+      const drape = document.createElement('span');
+      drape.className = 'models-tree-drape-badge';
+      drape.textContent = `⬇️ ${node.data.drapedOnto}`;
+      drape.title = i18n.t('ui.models.drape.drapedOnto', { name: node.data.drapedOnto });
+      nodeElement.appendChild(drape);
+    }
 
     // Embedded indicator
     if (node.embedded) {
@@ -1114,7 +1142,107 @@ export class ModelsTree {
       });
     }
 
+    // Orthophoto-only: drape onto a DTM / undrape the current target.
+    if (node.data?.modelKind === 'orthophoto') {
+      this.#addDrapeMenuItems(node, items);
+    }
+
     this.renderContextMenu(node, items);
+  }
+
+  /**
+   * Inject "Drape onto…" and (when applicable) "Undrape" items into the
+   * orthophoto context menu, listing every DTM mesh currently in the scene.
+   * DTMs that don't overlap the photo are listed but disabled — the user
+   * can still see them, just can't pick them.
+   */
+  #addDrapeMenuItems(node, items) {
+    if (!this.scene?.models) return;
+    const orthoName = node.label;
+    const orthoEntry = this.scene.models.meshObjects.get(orthoName);
+    if (!orthoEntry) return;
+
+    // Already draped? Offer Undrape first.
+    if (node.data?.drapedOnto) {
+      items.splice(items.length - 1, 0, {
+        icon    : '⬆️',
+        title   : i18n.t('ui.models.menu.undrape'),
+        onclick : () => {
+          this.hideContextMenu();
+          this.scene.models.undrape(node.data.drapedOnto);
+          node.data.drapedOnto = null;
+          this._scheduleSave(node);
+          this.render();
+        }
+      });
+    }
+
+    // Build a list of candidate DTMs. Disable items that don't overlap the photo's bbox.
+    const candidates = [];
+    const orthoBox = orthoEntry.object3D?.geometry?.boundingBox;
+    const orthoPos = orthoEntry.object3D?.position;
+    for (const [name, entry] of this.scene.models.meshObjects) {
+      if (name === orthoName) continue;
+      const dtmModel = this.db?.getMesh(name);
+      if (dtmModel?.modelKind !== 'dtm') continue;
+      const overlaps = this.#overlapsXY(orthoBox, orthoPos, entry.object3D);
+      candidates.push({ name, overlaps });
+    }
+
+    if (candidates.length === 0) return; // no DTMs → no submenu
+
+    // For simplicity in v1 we render a flat list of "Drape onto: <name>" items,
+    // disabled when the DTM doesn't overlap. A nested submenu can come later.
+    for (const cand of candidates) {
+      if (node.data?.drapedOnto === cand.name) continue; // already draped here
+      items.splice(items.length - 1, 0, {
+        icon     : '⬇️',
+        title    : i18n.t('ui.models.menu.drapeOnto', { name: cand.name }) + (cand.overlaps ? '' : ' ⚠'),
+        disabled : !cand.overlaps,
+        onclick  : () => {
+          this.hideContextMenu();
+          if (!cand.overlaps) return;
+          // If already draped on a different DTM, undrape first.
+          if (node.data?.drapedOnto && node.data.drapedOnto !== cand.name) {
+            this.scene.models.undrape(node.data.drapedOnto);
+          }
+          if (this.scene.models.drapeOrthophoto(orthoName, cand.name)) {
+            node.data.drapedOnto = cand.name;
+            this._scheduleSave(node);
+            this.render();
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * 2D XY overlap test between an orthophoto (geometry bbox + world position)
+   * and a candidate DTM (object3D). Uses Three.Box3.setFromObject for the DTM.
+   */
+  #overlapsXY(orthoBox, orthoPos, dtmObject3D) {
+    if (!orthoBox || !orthoPos || !dtmObject3D) return false;
+    const orthoMin = { x: orthoBox.min.x + orthoPos.x, y: orthoBox.min.y + orthoPos.y };
+    const orthoMax = { x: orthoBox.max.x + orthoPos.x, y: orthoBox.max.y + orthoPos.y };
+    // Walk the DTM's world bbox manually — avoid importing THREE here.
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    dtmObject3D.traverse((child) => {
+      if (!child.isMesh || !child.geometry?.boundingBox) return;
+      const bb = child.geometry.boundingBox;
+      const px = child.position.x + dtmObject3D.position.x;
+      const py = child.position.y + dtmObject3D.position.y;
+      const lo = { x: bb.min.x + px, y: bb.min.y + py };
+      const hi = { x: bb.max.x + px, y: bb.max.y + py };
+      if (lo.x < minX) minX = lo.x;
+      if (lo.y < minY) minY = lo.y;
+      if (hi.x > maxX) maxX = hi.x;
+      if (hi.y > maxY) maxY = hi.y;
+    });
+    if (!isFinite(minX)) return false;
+    return maxX > orthoMin.x && minX < orthoMax.x && maxY > orthoMin.y && minY < orthoMax.y;
   }
 
   /**
@@ -1127,11 +1255,16 @@ export class ModelsTree {
 
     items.forEach((option) => {
       const optionElement = document.createElement('div');
-      optionElement.className = 'context-menu-option';
+      optionElement.className = 'context-menu-option' + (option.disabled ? ' disabled' : '');
       optionElement.innerHTML = option.icon;
       optionElement.title = option.title;
+      if (option.disabled) {
+        optionElement.style.opacity = '0.4';
+        optionElement.style.cursor = 'not-allowed';
+      }
       optionElement.onclick = (e) => {
         e.stopPropagation();
+        if (option.disabled) return;
         option.onclick();
       };
       this.contextMenu.appendChild(optionElement);

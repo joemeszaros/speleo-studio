@@ -236,6 +236,10 @@ class Database {
     // Check models
     this.getAllModels().forEach((model) => {
       if (model.name === skipName) return;
+      // Raster overlays (DTMs / orthophotos) carry a corner reference point
+      // but their actual footprint can span tens of km — skip the
+      // point-to-point distance check or it falsely rejects
+      if (model.modelKind === 'dtm' || model.modelKind === 'orthophoto') return;
       const modelCoord = model.geoData?.coordinates?.[0]?.coordinate;
       if (!modelCoord) return;
       const distance = coordinate.distanceTo(modelCoord);

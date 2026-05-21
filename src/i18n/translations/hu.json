@@ -306,7 +306,12 @@
         "setColor": "Szín beállítása",
         "clearColor": "Szín törlése",
         "wireframe": "Drótvázas megjelenítés",
-        "solid": "Tömör megjelenítés"
+        "solid": "Tömör megjelenítés",
+        "drapeOnto": "Ráhúzás erre: {name}",
+        "undrape": "Ráhúzás megszüntetése"
+      },
+      "drape": {
+        "drapedOnto": "Erre ráhúzva: {name}"
       }
     },
     "dialogs": {
@@ -1091,6 +1096,7 @@
       "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
       "ascDecimated": "{name}: a DTM ritkítva {fromCols}×{fromRows} cellából {toCols}×{toRows} cellára a teljesítmény érdekében",
       "xyzNotAGrid": "A(z) {name} XYZ fájl nem tűnik szabályos rácsnak; próbáld pontfelhőként importálni.",
+      "orthophotoDownsampled": "{name}: ortofotó ritkítva {fromCols}×{fromRows} pixelről {toCols}×{toRows} pixelre a teljesítmény érdekében",
       "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott",
       "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot.",
       "therionNoData": "Nem található felmérés adat a Therion fájlban",

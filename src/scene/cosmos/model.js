@@ -258,6 +258,25 @@ export class ModelScene {
   }
 
   /**
+   * Toggle the drape-overlay mesh associated with an orthophoto. When the
+   * photo is draped on a DTM the overlay is what's actually rendered;
+   * the photo's own flat plane stays hidden. The plane's visibility tracks
+   * the eye toggle separately for the un-draped case — kept in sync so an
+   * un-drape later restores the right state.
+   */
+  setOrthophotoOverlayVisibility(orthoName, visible) {
+    for (const [, dtmEntry] of this.meshObjects) {
+      if (dtmEntry.userData?.drapedBy !== orthoName) continue;
+      dtmEntry.object3D.traverse((child) => {
+        if (child.userData?.isDrapeOverlay === orthoName) {
+          child.visible = visible;
+        }
+      });
+    }
+    this.scene.view.renderView();
+  }
+
+  /**
    * Toggle wireframe rendering on a mesh model. No-op for point clouds
    * and textured meshes. Orthogonal to color mode — only touches material.wireframe.
    * @param {string} name - The model name
@@ -384,6 +403,281 @@ export class ModelScene {
    */
   markAsTextured(name) {
     this.texturedModels.add(name);
+  }
+
+  unmarkAsTextured(name) {
+    this.texturedModels.delete(name);
+  }
+
+  /**
+   * Drape an orthophoto onto a DTM mesh. Computes per-vertex UVs on the DTM
+   * geometry from each vertex's world (X, Y) position vs the orthophoto's
+   * world bbox. The DTM's original material is **kept** — we add a sibling
+   * mesh (sharing the same geometry) with a photo material that discards
+   * fragments outside the photo's UV range. Net effect: the DTM keeps its
+   * gradient / per-model color everywhere; the photo appears on top only
+   * where its bbox actually covers the terrain.
+   *
+   * This is more correct than the naïve "swap material" approach, which
+   * stretches a tiny photo across a huge DTM tile via UV clamping and ends
+   * up averaging to the photo's edge color across the whole surface.
+   *
+   * @param {string} orthoName    Name of an orthophoto model already added via addMesh
+   * @param {string} dtmName      Name of a DTM model already added via addMesh
+   */
+  drapeOrthophoto(orthoName, dtmName) {
+    const orthoEntry = this.meshObjects.get(orthoName);
+    const dtmEntry   = this.meshObjects.get(dtmName);
+    if (!orthoEntry || !dtmEntry) {
+      console.warn(`drapeOrthophoto: missing entry — ortho=${orthoName} dtm=${dtmName}`);
+      return false;
+    }
+
+    const meta = orthoEntry.object3D.userData?.orthoMetadata
+              ?? orthoEntry.userData?.orthoMetadata;
+    const orthoMeta = meta || this.#orthoMetadataFor(orthoName);
+    if (!orthoMeta?.texture) {
+      console.warn(`drapeOrthophoto: orthophoto ${orthoName} has no texture metadata`);
+      return false;
+    }
+
+    const orthoOrigin = {
+      x: orthoEntry.object3D.position.x,
+      y: orthoEntry.object3D.position.y
+    };
+    const orthoSize = {
+      width : orthoMeta.widthMeters,
+      height: orthoMeta.heightMeters
+    };
+
+    // For every DTM child mesh with a position attribute, compute UVs and
+    // add a sibling overlay mesh that carries the photo material.
+    //
+    // Each overlay gets a SHELL BufferGeometry: it shares the DTM's
+    // position/normal/index BufferAttributes (no duplication of the heavy
+    // arrays) but owns its own `uv` attribute. That way multiple
+    // orthophotos can be draped onto the same DTM at once — each overlay
+    // samples its texture with its own per-photo UV mapping, and removing
+    // one overlay doesn't disturb the others.
+    dtmEntry.object3D.traverse((child) => {
+      if (!child.isMesh || !child.geometry?.attributes?.position) return;
+      if (child.userData.isDrapeOverlay) return; // skip overlays from previous drapes
+      const dtmWorldOffset = {
+        x: dtmEntry.object3D.position.x,
+        y: dtmEntry.object3D.position.y
+      };
+      const positions = child.geometry.attributes.position;
+      const uvs = ModelScene.computeDrapeUVs(positions, dtmWorldOffset, orthoOrigin, orthoSize);
+
+      const overlayGeom = new THREE.BufferGeometry();
+      overlayGeom.setAttribute('position', child.geometry.attributes.position);
+      if (child.geometry.attributes.normal) {
+        overlayGeom.setAttribute('normal', child.geometry.attributes.normal);
+      }
+      if (child.geometry.index) overlayGeom.setIndex(child.geometry.index);
+      overlayGeom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+      // Reuse the DTM's bounding volumes — they're identical since
+      // positions are shared.
+      overlayGeom.boundingBox    = child.geometry.boundingBox;
+      overlayGeom.boundingSphere = child.geometry.boundingSphere;
+
+      const photoMat = ModelScene.#createPhotoOverlayMaterial(orthoMeta.texture, !!orthoMeta.hasAlpha);
+
+      const overlay = new THREE.Mesh(overlayGeom, photoMat);
+      overlay.userData.isDrapeOverlay = orthoName;
+      overlay.layers.mask = child.layers.mask;
+      overlay.frustumCulled = false;
+      overlay.renderOrder = (child.renderOrder || 0) + 1;
+      photoMat.polygonOffset = true;
+      photoMat.polygonOffsetFactor = -1;
+      photoMat.polygonOffsetUnits = -1;
+
+      child.add(overlay);
+    });
+
+    // Hide the orthophoto's own flat-plane geometry; the overlay carries it now.
+    orthoEntry.object3D.visible = false;
+
+    if (!dtmEntry.userData) dtmEntry.userData = {};
+    if (!orthoEntry.userData) orthoEntry.userData = {};
+    dtmEntry.userData.drapedBy   = orthoName;
+    orthoEntry.userData.drapedOnto = dtmName;
+
+    this.scene.view.renderView();
+    return true;
+  }
+
+  /**
+   * Build a MeshBasicMaterial that samples the texture but discards fragments
+   * where the UV is outside [0,1] — so a small orthophoto on a huge DTM tile
+   * only paints its actual footprint, instead of clamping to the edge color
+   * across the rest of the surface.
+   */
+  static #createPhotoOverlayMaterial(texture, hasAlpha) {
+    const mat = new THREE.MeshBasicMaterial({
+      map         : texture,
+      side        : THREE.DoubleSide,
+      transparent : true,
+      depthWrite  : false
+    });
+    // Inject a UV-range discard into the standard fragment shader.
+    mat.onBeforeCompile = (shader) => {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec2 drapeUv = vMapUv;
+          if (drapeUv.x < 0.0 || drapeUv.x > 1.0 || drapeUv.y < 0.0 || drapeUv.y > 1.0) discard;
+          vec4 sampledDiffuseColor = texture2D( map, drapeUv );
+          diffuseColor *= sampledDiffuseColor;
+        #endif
+        `
+      );
+    };
+    // Three.js caches compiled shaders by a key that ignores onBeforeCompile by
+    // default — set a custom key so each overlay gets its own compiled shader.
+    mat.customProgramCacheKey = () => `dtm-photo-overlay-${hasAlpha ? 'rgba' : 'rgb'}`;
+    return mat;
+  }
+
+  /**
+   * Reverse a drape: remove the photo-overlay sibling meshes and re-show
+   * the orthophoto's own flat plane.
+   */
+  undrape(dtmName) {
+    const dtmEntry = this.meshObjects.get(dtmName);
+    if (!dtmEntry) return false;
+    const orthoName = dtmEntry.userData?.drapedBy;
+
+    // Collect overlays first (don't remove during traversal).
+    const overlays = [];
+    dtmEntry.object3D.traverse((child) => {
+      if (child.userData?.isDrapeOverlay) overlays.push(child);
+    });
+    for (const overlay of overlays) {
+      overlay.parent?.remove(overlay);
+      overlay.material?.dispose();
+      // The overlay's geometry is a SHELL — it shares position/index with
+      // the DTM, so we must NOT dispose its attribute buffers. Only the
+      // owned uv attribute can be safely dropped. BufferGeometry.dispose()
+      // would free shared buffers too aggressively here, so we skip it.
+    }
+
+    if (dtmEntry.userData) delete dtmEntry.userData.drapedBy;
+    // Also clear the data wrapper so a saved-settings save doesn't persist
+    // a stale drape relationship after the orthophoto is deleted.
+    const dtmModel = this.scene.db.getMesh(dtmName);
+    if (dtmModel) delete dtmModel.drapedBy;
+
+    if (orthoName) {
+      const orthoEntry = this.meshObjects.get(orthoName);
+      if (orthoEntry) {
+        orthoEntry.object3D.visible = true;
+        if (orthoEntry.userData) delete orthoEntry.userData.drapedOnto;
+        // Lift the photo plane above the DTM's terrain so it doesn't get
+        // buried — at sea level the photo at z=0 would be clipped by every
+        // DTM vertex with elevation > 0. We use the max world-Z of the DTM
+        // mesh in the photo's world XY bbox + 10 m clearance.
+        const liftZ = this.#computePhotoLiftZ(orthoEntry, dtmEntry);
+        if (Number.isFinite(liftZ)) {
+          orthoEntry.object3D.position.z = liftZ;
+        }
+      }
+      const orthoModel = this.scene.db.getMesh(orthoName);
+      if (orthoModel) delete orthoModel.drapedOnto;
+    }
+
+    this.scene.view.renderView();
+    return true;
+  }
+
+  /**
+   * Find the maximum Z within the photo's world XY footprint among the
+   * DTM's vertices, plus a small clearance. Used to lift an undraped
+   * orthophoto plane above the terrain so it doesn't get clipped.
+   * Returns NaN when no DTM vertex falls inside the photo's footprint
+   * (the photo is outside the DTM's coverage area).
+   */
+  #computePhotoLiftZ(orthoEntry, dtmEntry) {
+    const meta = this.orthoMetadataByName?.get(
+      [...this.meshObjects.entries()].find(([, e]) => e === orthoEntry)?.[0]
+    );
+    if (!meta) return NaN;
+    const orthoMinX = orthoEntry.object3D.position.x;
+    const orthoMinY = orthoEntry.object3D.position.y;
+    const orthoMaxX = orthoMinX + meta.widthMeters;
+    const orthoMaxY = orthoMinY + meta.heightMeters;
+    const dtmOffsetX = dtmEntry.object3D.position.x;
+    const dtmOffsetY = dtmEntry.object3D.position.y;
+    let maxZ = -Infinity;
+    dtmEntry.object3D.traverse((child) => {
+      const pos = child.geometry?.attributes?.position;
+      if (!pos) return;
+      for (let i = 0; i < pos.count; i++) {
+        const wx = pos.getX(i) + dtmOffsetX;
+        const wy = pos.getY(i) + dtmOffsetY;
+        if (wx < orthoMinX || wx > orthoMaxX || wy < orthoMinY || wy > orthoMaxY) continue;
+        const z = pos.getZ(i);
+        if (z > maxZ) maxZ = z;
+      }
+    });
+    if (!Number.isFinite(maxZ)) return NaN;
+    return maxZ + 10;
+  }
+
+  /**
+   * Pure UV computation — given a DTM geometry's local positions, the world
+   * offset that places the DTM, the orthophoto's world origin (lower-left)
+   * and width/height in metres, return a Float32Array of (u, v) per vertex.
+   *
+   * UVs are **not clamped** — vertices outside the photo's footprint get
+   * UV values outside [0, 1] (e.g. negative or > 1). The photo overlay's
+   * fragment shader uses that to discard fragments outside the photo's
+   * actual coverage. Pre-clamping at vertex level would silently squash
+   * out-of-range UVs to the edge so the shader saw in-range values and
+   * sampled the photo's edge color across the whole DTM tile (the "grey
+   * surface" bug).
+   *
+   * @param {THREE.BufferAttribute|{count:number, getX:Function, getY:Function}} positions
+   * @param {{x:number, y:number}} dtmWorldOffset
+   * @param {{x:number, y:number}} orthoWorldOrigin    lower-left of the photo in world coords
+   * @param {{width:number, height:number}} orthoSize in metres
+   * @returns {Float32Array}
+   */
+  static computeDrapeUVs(positions, dtmWorldOffset, orthoWorldOrigin, orthoSize) {
+    const count = positions.count;
+    const uvs = new Float32Array(count * 2);
+    const invW = 1 / orthoSize.width;
+    const invH = 1 / orthoSize.height;
+    for (let i = 0; i < count; i++) {
+      const worldX = positions.getX(i) + dtmWorldOffset.x;
+      const worldY = positions.getY(i) + dtmWorldOffset.y;
+      uvs[i * 2]     = (worldX - orthoWorldOrigin.x) * invW;
+      uvs[i * 2 + 1] = (worldY - orthoWorldOrigin.y) * invH;
+    }
+    return uvs;
+  }
+
+  /**
+   * Look up the orthoMetadata for a given orthophoto model. Set by
+   * `addOrthophoto` below — separate from the Mesh3D wrapper so the
+   * model lifecycle (delete/re-create) doesn't strand it.
+   */
+  #orthoMetadataFor(name) {
+    return this.orthoMetadataByName?.get(name);
+  }
+
+  /**
+   * Called by main.js right after addMesh for an orthophoto model — caches
+   * the texture + bbox info so drape can find them by name.
+   */
+  registerOrthoMetadata(name, metadata) {
+    if (!this.orthoMetadataByName) this.orthoMetadataByName = new Map();
+    this.orthoMetadataByName.set(name, metadata);
+  }
+
+  unregisterOrthoMetadata(name) {
+    this.orthoMetadataByName?.delete(name);
   }
 
   /**
@@ -658,6 +952,23 @@ export class ModelScene {
       pointCloud.octree.dispose();
       this.pointCloudOctrees = this.pointCloudOctrees.filter(o => o !== pointCloud.octree);
     }
+
+    // If this is an orthophoto draped onto a DTM, undrape first so the DTM's
+    // original material is restored and the overlay mesh is removed from the
+    // scene. Without this the photo's texture would keep painting the DTM
+    // even after the photo model is deleted.
+    if (entry.userData?.drapedOnto) {
+      this.undrape(entry.userData.drapedOnto);
+    }
+    // If this is a DTM that's currently being draped, undrape so the overlay
+    // is removed and the orthophoto's flat plane is restored.
+    if (entry.userData?.drapedBy) {
+      this.undrape(name);
+    }
+
+    // Drop any cached orthophoto metadata (texture stays alive via Three's
+    // texture-cache until JS finalization; that's fine).
+    this.unregisterOrthoMetadata?.(name);
 
     this.#disposeObject3D(entry.object3D);
     this.object3DGroup.remove(entry.object3D);

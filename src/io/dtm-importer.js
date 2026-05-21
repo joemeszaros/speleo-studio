@@ -19,6 +19,15 @@ import { Vector, PointCloud, Mesh3D, ModelFile } from '../model.js';
 import { showWarningPanel } from '../ui/popups.js';
 import { i18n } from '../i18n/i18n.js';
 import { PointCloudImporter } from './import.js';
+import {
+  CoordinateSystemType,
+  GeoData,
+  StationWithCoordinate,
+  UTMCoordinateSystem,
+  UTMCoordinateWithElevation,
+  EOVCoordinateWithElevation
+} from '../model/geo.js';
+import { UTMConverter, EOVToWGS84Transformer } from '../utils/geo.js';
 
 /**
  * Shared base class for Digital Terrain Model importers.
@@ -53,7 +62,7 @@ export class DTMImporterBase extends PointCloudImporter {
    * differ.
    */
   static buildVertexLayout(grid) {
-    const { ncols, nrows, elevations } = grid;
+    const { ncols, nrows, elevations, worldFrame } = grid;
     const cellsizeX = grid.cellsizeX ?? grid.cellsize;
     const cellsizeY = grid.cellsizeY ?? grid.cellsize;
     const total = ncols * nrows;
@@ -68,17 +77,48 @@ export class DTMImporterBase extends PointCloudImporter {
     const positions = new Float32Array(validCount * 3);
     let minZ = Infinity;
     let maxZ = -Infinity;
-    for (let row = 0; row < nrows; row++) {
-      for (let col = 0; col < ncols; col++) {
-        const i = row * ncols + col;
-        const vi = vertexIndex[i];
-        if (vi < 0) continue;
-        const z = elevations[i];
-        positions[vi * 3] = col * cellsizeX;
-        positions[vi * 3 + 1] = (nrows - 1 - row) * cellsizeY;
-        positions[vi * 3 + 2] = z;
-        if (z < minZ) minZ = z;
-        if (z > maxZ) maxZ = z;
+    // Pass 1: collect raw (worldX, worldY) per valid vertex to find the
+    // local origin (min) — then subtract so positions stay small floats.
+    if (worldFrame) {
+      let minX = Infinity, minY = Infinity;
+      for (let row = 0; row < nrows; row++) {
+        for (let col = 0; col < ncols; col++) {
+          const i = row * ncols + col;
+          if (vertexIndex[i] < 0) continue;
+          const wx = worldFrame.worldX[i];
+          const wy = worldFrame.worldY[i];
+          if (wx < minX) minX = wx;
+          if (wy < minY) minY = wy;
+        }
+      }
+      grid.worldOriginX = minX;
+      grid.worldOriginY = minY;
+      for (let row = 0; row < nrows; row++) {
+        for (let col = 0; col < ncols; col++) {
+          const i = row * ncols + col;
+          const vi = vertexIndex[i];
+          if (vi < 0) continue;
+          const z = elevations[i];
+          positions[vi * 3]     = worldFrame.worldX[i] - minX;
+          positions[vi * 3 + 1] = worldFrame.worldY[i] - minY;
+          positions[vi * 3 + 2] = z;
+          if (z < minZ) minZ = z;
+          if (z > maxZ) maxZ = z;
+        }
+      }
+    } else {
+      for (let row = 0; row < nrows; row++) {
+        for (let col = 0; col < ncols; col++) {
+          const i = row * ncols + col;
+          const vi = vertexIndex[i];
+          if (vi < 0) continue;
+          const z = elevations[i];
+          positions[vi * 3] = col * cellsizeX;
+          positions[vi * 3 + 1] = (nrows - 1 - row) * cellsizeY;
+          positions[vi * 3 + 2] = z;
+          if (z < minZ) minZ = z;
+          if (z > maxZ) maxZ = z;
+        }
       }
     }
     if (!isFinite(minZ)) {
@@ -176,6 +216,7 @@ export class DTMImporterBase extends PointCloudImporter {
     const center = geometry.boundingBox.getCenter(new THREE.Vector3());
     const mesh = new Mesh3D(name, new Vector(center.x, center.y, center.z));
     mesh.firstPointCoords = [header.xllcorner, header.yllcorner, layout.minZ];
+    mesh.modelKind = 'dtm';
 
     await onModelLoad(mesh, meshObject, modelFile);
   }
@@ -217,6 +258,7 @@ export class DTMImporterBase extends PointCloudImporter {
     const pointsObject = new THREE.Points(geometry, material);
     const pointCloud = new PointCloud(name, points, center, false);
     pointCloud.firstPointCoords = [header.xllcorner, header.yllcorner, layout.minZ];
+    pointCloud.modelKind = 'dtm';
 
     await onModelLoad(pointCloud, pointsObject, modelFile);
   }
@@ -272,6 +314,7 @@ export class DTMImporterBase extends PointCloudImporter {
               pointSize
             });
             result.pointCloud.firstPointCoords = [header.xllcorner, header.yllcorner, layout.minZ];
+            result.pointCloud.modelKind = 'dtm';
             await onModelLoad(result.pointCloud, result.octree.group, modelFile);
             this.saveOctreeToCache(modelFileId || modelFile.id, msg, maxPoints);
             resolve();
@@ -622,19 +665,33 @@ export class HgtDTMImporter extends DTMImporterBase {
     const maxCells = opts.maxCells ?? this.options?.scene?.models?.dtmMaxCells ?? 4_000_000;
     const stride = DTMImporterBase.computeStride(dim, dim, maxCells);
 
+    // Stride used as a sampling step in (lat, lon). Each output cell maps to
+    // a source cell at (round(nc*stride), round(nr*stride)). For local-metre
+    // cellsize we just multiply by the same stride.
+    const cellsizeYDeg = 1 / (dim - 1);
+    const cellsizeXDeg = 1 / (dim - 1);
     const latCenter = tile.latMin + 0.5;
-    const cellsizeY = HgtDTMImporter.METERS_PER_DEG / (dim - 1);
-    const cellsizeX = HgtDTMImporter.METERS_PER_DEG * Math.cos((latCenter * Math.PI) / 180) / (dim - 1);
 
     const grid = HgtDTMImporter.readGrid(arrayBuffer, dim, stride);
-    grid.cellsizeX = cellsizeX * stride;
-    grid.cellsizeY = cellsizeY * stride;
+    // Vertex positions are computed by UTM-projecting each (lat, lon) cell
+    // corner. The grid object's cellsizeX/Y are only used by the legacy
+    // flat-grid `buildVertexLayout` path — pre-compute them per-cell anyway
+    // so that path still works for non-georeferenced consumers.
+    grid.cellsizeX = HgtDTMImporter.METERS_PER_DEG * Math.cos((latCenter * Math.PI) / 180) / (dim - 1) * stride;
+    grid.cellsizeY = HgtDTMImporter.METERS_PER_DEG / (dim - 1) * stride;
+
+    // Pre-compute per-output-vertex world positions via WGS84 → UTM so the
+    // DTM mesh shares the orthophoto's UTM frame exactly. Otherwise a 1°
+    // tile is a trapezoid in UTM and a flat-grid mesh ends up ~600 m off
+    // from any orthophoto placed by Mercator → WGS84 → UTM.
+    const projectCS = opts.projectCS ?? this.#detectProjectCS(tile);
+    grid.worldFrame = HgtDTMImporter.#buildUTMWorldFrame(
+      tile, dim, stride, grid.ncols, grid.nrows, projectCS
+    );
 
     const header = {
       ncols     : grid.ncols,
       nrows     : grid.nrows,
-      // surfaced as firstPointCoords [longitude, latitude, minZ] in the dialog —
-      // the model's embeddedCoords carries the geographic anchor.
       xllcorner : tile.lonMin,
       yllcorner : tile.latMin,
       origNcols : dim,
@@ -643,19 +700,113 @@ export class HgtDTMImporter extends DTMImporterBase {
 
     const modelFile = new ModelFile(name, 'hgt', sourceBlob ?? arrayBuffer);
 
-    // Inject embeddedCoords (SW corner of the tile) so main.js can resolve
-    // per-model geoData and skip the WGS84 dialog when the whole batch is
-    // self-georeferenced.
     const wrapped = async (model, obj, mf) => {
-      model.embeddedCoords = {
-        latitude  : tile.latMin,
-        longitude : tile.lonMin,
-        elevation : 0
-      };
+      // If we built the mesh in UTM/EOV (project CS detected), the mesh's
+      // local (0,0) corresponds to a known projected coordinate — set that
+      // as the model's geoData so per-vertex world coordinates line up with
+      // any other georeferenced model (e.g. an orthophoto). Otherwise fall
+      // back to embeddedCoords (the SW WGS84 corner) and let main.js handle
+      // conversion if a CS becomes available later.
+      if (grid.worldOriginX !== undefined && grid.worldOriginY !== undefined && projectCS) {
+        model.geoData = HgtDTMImporter.#buildGeoDataAt(
+          projectCS, grid.worldOriginX, grid.worldOriginY
+        );
+      } else {
+        model.embeddedCoords = {
+          latitude  : tile.latMin,
+          longitude : tile.lonMin,
+          elevation : 0
+        };
+      }
       await onModelLoad(model, obj, mf);
     };
 
     await this.dispatchToScene(grid, header, name, modelFile, modelFileId, opts, wrapped);
+  }
+
+  /**
+   * Construct a `GeoData` with a single station at world coordinate
+   * `(worldX, worldY)` in the given projected CS.
+   * worldX = east-axis (UTM easting / EOV y), worldY = north-axis (UTM northing / EOV x).
+   */
+  static #buildGeoDataAt(cs, worldX, worldY) {
+    if (cs.type === CoordinateSystemType.UTM) {
+      const coord = new UTMCoordinateWithElevation(worldX, worldY, 0);
+      return new GeoData(cs, [new StationWithCoordinate('origin', coord)]);
+    }
+    if (cs.type === CoordinateSystemType.EOV) {
+      const coord = new EOVCoordinateWithElevation(worldX, worldY, 0);
+      return new GeoData(cs, [new StationWithCoordinate('origin', coord)]);
+    }
+    throw new Error(`Unsupported CS for HGT geoData: ${cs.type}`);
+  }
+
+  /**
+   * Sniff the project's existing CS so we can build the HGT mesh in that
+   * same projection. Returns null when nothing is loaded yet — the caller
+   * falls back to flat-grid metres in that case.
+   */
+  #detectProjectCS(tile) {
+    const caves = this.db?.getAllCaves?.() ?? [];
+    for (const cave of caves) {
+      const cs = cave.geoData?.coordinateSystem;
+      if (cs) return cs;
+    }
+    const models = this.db?.getAllModels?.() ?? [];
+    for (const m of models) {
+      const cs = m.geoData?.coordinateSystem;
+      if (cs) return cs;
+    }
+    // No CS in the project yet — pick a sensible UTM zone from the tile's
+    // longitude so the HGT is built in a real projection. Any subsequent
+    // model with embeddedCoords ends up in the same zone via main.js.
+    if (tile) {
+      const lonCenter = tile.lonMin + 0.5;
+      const latCenter = tile.latMin + 0.5;
+      const zoneNum = Math.floor((lonCenter + 180) / 6) + 1;
+      const northern = latCenter >= 0;
+      return new UTMCoordinateSystem(zoneNum, northern);
+    }
+    return null;
+  }
+
+  /**
+   * Build a per-vertex world-coordinate frame by projecting each cell from
+   * WGS84 (lat, lon) into the project's CS (UTM or EOV). Returns
+   * `{ worldX: Float32Array, worldY: Float32Array }` of length ncols*nrows,
+   * each entry the world XY of the corresponding (row, col) vertex.
+   * Row 0 = north. Coordinates are absolute (not relative to SW corner) —
+   * `dispatchToScene` shifts them to local space when building positions.
+   */
+  static #buildUTMWorldFrame(tile, dim, stride, ncols, nrows, projectCS) {
+    if (!projectCS) return null;
+    const worldX = new Float32Array(ncols * nrows);
+    const worldY = new Float32Array(ncols * nrows);
+    const step = 1 / (dim - 1);
+    for (let nr = 0; nr < nrows; nr++) {
+      const srcRow = stride <= 1 ? nr : Math.min(dim - 1, Math.round(nr * stride));
+      const lat = tile.latMin + (dim - 1 - srcRow) * step;
+      for (let nc = 0; nc < ncols; nc++) {
+        const srcCol = stride <= 1 ? nc : Math.min(dim - 1, Math.round(nc * stride));
+        const lon = tile.lonMin + srcCol * step;
+        const { y, x } = HgtDTMImporter.#wgs84ToProject(lat, lon, projectCS);
+        worldX[nr * ncols + nc] = y; // east axis
+        worldY[nr * ncols + nc] = x; // north axis
+      }
+    }
+    return { worldX, worldY };
+  }
+
+  static #wgs84ToProject(lat, lon, cs) {
+    if (cs.type === CoordinateSystemType.UTM) {
+      const r = UTMConverter.fromLatLon(lat, lon, cs.zoneNum, cs.northern);
+      return { y: r.easting, x: r.northing };
+    }
+    if (cs.type === CoordinateSystemType.EOV) {
+      const [yEov, xEov] = EOVToWGS84Transformer.wgs84TOeov(lat, lon);
+      return { y: yEov, x: xEov };
+    }
+    throw new Error(`Unsupported CS type for HGT world frame: ${cs.type}`);
   }
 
   static detectDim(byteLength) {
