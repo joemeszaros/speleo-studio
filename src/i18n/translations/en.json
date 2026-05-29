@@ -1084,7 +1084,11 @@
       "survexNoData": "No survey data found in Survex file",
       "survexUnresolvedIncludes": "This Survex file references included files that were not selected. Select all .svx files from the project folder together.",
       "survexUnresolvedInputs": "Survex file references files that were not selected: {files}. Select all .svx files from the project folder together.",
-      "survexUnknownCs": "Unknown coordinate system '{cs}' in Survex file — please specify coordinates manually"
+      "survexUnknownCs": "Unknown coordinate system '{cs}' in Survex file — please specify coordinates manually",
+      "survex3dNoData": "No cave data found in Survex .3d file",
+      "survex3dBadMagic": "Not a Survex .3d file (header signature missing)",
+      "survex3dUnsupportedVersion": "Unsupported Survex .3d version: {version}",
+      "survex3dUnknownCs": "Unknown coordinate system '{cs}' in Survex .3d file — cave shown without georeferencing"
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",

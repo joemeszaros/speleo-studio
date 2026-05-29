@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { Polar } from '../model.js';
+import { Polar, Vector } from '../model.js';
+import { StationCoordinates } from './geo.js';
 import { degreesToRads, sanitizeName, convertLengthToMeters } from '../utils/utils.js';
 
 const DEFAULT_UNITS = { length: 'meters', angle: 'degrees' };
@@ -76,9 +77,7 @@ class StationDimension {
     if (this.name === undefined || this.name === null || this.name === '') {
       empty.push('name');
     }
-    const allMissing = StationDimension.LRUD_FIELDS.every(
-      (f) => StationDimension.isMissingValue(this[f])
-    );
+    const allMissing = StationDimension.LRUD_FIELDS.every((f) => StationDimension.isMissingValue(this[f]));
     if (allMissing) empty.push('values');
     return empty;
   }
@@ -86,12 +85,7 @@ class StationDimension {
   // True when a raw field value (number, string, undefined, null, or NaN) carries
   // no usable LRUD measurement.
   static isMissingValue(value) {
-    return (
-      value === undefined ||
-      value === null ||
-      value === '' ||
-      (typeof value === 'number' && isNaN(value))
-    );
+    return value === undefined || value === null || value === '' || (typeof value === 'number' && isNaN(value));
   }
 
   // Validates a single raw L/R/U/D field value (string or number) and returns
@@ -276,6 +270,44 @@ class SurveyStation {
 
   isAuxiliary() {
     return this.type === ShotType.AUXILIARY;
+  }
+
+  // Stations are normally rebuilt from shots and never persisted. Read-only caves
+  // (e.g. imported from Survex .3d) are the exception: their absolute positions are
+  // the source of truth, so we serialize them directly. The `survey` back-reference
+  // is stored as the survey name and re-linked on load; `shots` (edit-time loop
+  // closure only) is left empty.
+  toExport() {
+    const exported = {
+      type     : this.type,
+      position : this.position?.toExport(),
+      survey   : this.survey?.name
+    };
+    // `coordinates.local` is intentionally not persisted — it equals `position` for
+    // these caves and is reconstructed on load. Only emit `coordinates` when it
+    // carries georeferencing (projected / wgs); for non-georeferenced caves it's
+    // dropped entirely to keep large station maps compact.
+    const coords = this.coordinates;
+    if (coords !== undefined && (coords.projected !== undefined || coords.wgs !== undefined)) {
+      exported.coordinates = coords.toExport();
+    }
+    return exported;
+  }
+
+  static fromPure(pure, surveysByName) {
+    const position = pure.position !== undefined ? Vector.fromPure(pure.position) : undefined;
+    let coordinates = StationCoordinates.fromPure(pure.coordinates);
+    // Reconstruct the (un-persisted) local coordinate from the position. They are the
+    // same for a cave that owns the global origin; the station-details panel reads it.
+    if (position !== undefined) {
+      if (coordinates === undefined) {
+        coordinates = new StationCoordinates(position.clone(), undefined, undefined);
+      } else if (coordinates.local === undefined) {
+        coordinates.local = position.clone();
+      }
+    }
+    const survey = surveysByName !== undefined ? surveysByName.get(pure.survey) : undefined;
+    return new SurveyStation(pure.type, position, coordinates, survey, []);
   }
 }
 

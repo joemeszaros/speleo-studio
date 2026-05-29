@@ -16,7 +16,7 @@
 
 import { Vector, SectionAttribute, ComponentAttribute, StationAttribute } from '../model.js';
 import { GeoData } from './geo.js';
-import { Survey, SurveyAlias, StationComment, StationDimension, DEFAULT_UNITS } from './survey.js';
+import { Survey, SurveyAlias, SurveyStation, StationComment, StationDimension, DEFAULT_UNITS } from './survey.js';
 import { sanitizeName, convertLengthToMeters } from '../utils/utils.js';
 
 class CaveCycle {
@@ -292,6 +292,8 @@ class Cave {
    * @param {StationComment[]} stationComments - Comments for stations in this cave
    * @param {StationDimension[]} stationDimensions - LRUD passage dimensions for stations in this cave
    * @param {boolean} visible - The visibility property of a cave
+   * @param {boolean} readOnly - When true the cave is visualization-only: its station positions are
+   *        the source of truth (not rebuilt from shots) and editing is locked. Used for Survex .3d imports.
    */
   constructor(
     name,
@@ -303,7 +305,8 @@ class Cave {
     attributes = new CaveAttributes(),
     stationComments = [],
     stationDimensions = [],
-    visible = true
+    visible = true,
+    readOnly = false
   ) {
     this.id = Cave.generateId();
     this.revision = 1;
@@ -317,6 +320,7 @@ class Cave {
     this.stationComments = stationComments;
     this.stationDimensions = stationDimensions;
     this.visible = visible;
+    this.readOnly = readOnly;
     this.version = 1;
   }
 
@@ -452,7 +456,7 @@ class Cave {
   }
 
   toExport() {
-    return {
+    const exported = {
       id                : this.id,
       version           : this.version,
       revision          : this.revision,
@@ -465,6 +469,16 @@ class Cave {
       stationDimensions : this.stationDimensions.map((sd) => sd.toExport()),
       surveys           : this.surveys.map((s) => s.toExport())
     };
+
+    // Read-only caves can't rebuild station positions from shots (the .3d centerline
+    // has disconnected components), so persist the station map directly. Normal caves
+    // keep omitting it — they reconstruct on load.
+    if (this.readOnly) {
+      exported.readOnly = true;
+      exported.stations = [...this.stations.entries()].map(([name, st]) => [name, st.toExport()]);
+    }
+
+    return exported;
   }
 
   static fromPure(pure, attributeDefs) {
@@ -496,9 +510,18 @@ class Cave {
     pure.stationComments =
       pure.stationComments !== undefined ? pure.stationComments.map((sc) => StationComment.fromPure(sc)) : [];
     pure.stationDimensions =
-      pure.stationDimensions !== undefined
-        ? pure.stationDimensions.map((sd) => StationDimension.fromPure(sd))
-        : [];
+      pure.stationDimensions !== undefined ? pure.stationDimensions.map((sd) => StationDimension.fromPure(sd)) : [];
+
+    // Read-only caves persist their station map; rebuild it here and re-link each
+    // station's `survey` back-reference by name. Normal caves leave stations empty
+    // (they are reconstructed from shots by recalculateCave).
+    pure.readOnly = pure.readOnly === true;
+    if (pure.readOnly && Array.isArray(pure.stations)) {
+      const surveysByName = new Map(pure.surveys.map((s) => [s.name, s]));
+      pure.stations = new Map(pure.stations.map(([name, st]) => [name, SurveyStation.fromPure(st, surveysByName)]));
+    } else {
+      pure.stations = new Map();
+    }
 
     const cave = Object.assign(new Cave(), pure);
     return cave;

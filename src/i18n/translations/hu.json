@@ -1107,7 +1107,11 @@
       "survexNoData": "Nem található felmérési adat a Survex fájlban",
       "survexUnresolvedIncludes": "Ez a Survex fájl olyan *include fájlokra hivatkozik, amelyek nem lettek kiválasztva. Jelöld ki az összes .svx fájlt a projektkönyvtárból egyszerre.",
       "survexUnresolvedInputs": "A Survex fájl olyan fájlokra hivatkozik, amelyek nem lettek kiválasztva: {files}. Jelöld ki az összes .svx fájlt a projektkönyvtárból egyszerre.",
-      "survexUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Survex fájlban — add meg kézzel a koordinátákat"
+      "survexUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Survex fájlban — add meg kézzel a koordinátákat",
+      "survex3dNoData": "Nem található barlangadat a Survex .3d fájlban",
+      "survex3dBadMagic": "Ez nem egy Survex .3d fájl (hiányzó fejléc-aláírás)",
+      "survex3dUnsupportedVersion": "Nem támogatott Survex .3d verzió: {version}",
+      "survex3dUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Survex .3d fájlban — a barlang georeferencia nélkül jelenik meg"
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",

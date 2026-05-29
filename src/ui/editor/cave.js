@@ -105,6 +105,15 @@ class CaveEditor extends Editor {
     this.#setupEditor(contentElmnt);
     this.#setupStats(contentElmnt);
     this.#renderRevision(contentElmnt);
+
+    // Read-only caves (Survex .3d) open the sheet as a viewer: stats stay visible but
+    // every form control is disabled (including Save/Convert GPS). The window's close
+    // button lives in the panel chrome, outside contentElmnt, so it stays usable.
+    if (this.readOnly) {
+      contentElmnt.querySelectorAll('input, select, textarea, button').forEach((el) => {
+        el.disabled = true;
+      });
+    }
   }
 
   #setupEditor(contentElmnt) {
@@ -510,22 +519,28 @@ class CaveEditor extends Editor {
           // Check caves
           this.db.getAllCaves().forEach((c) => {
             if (c === this.cave) return; // skip self
-            if (c.geoData?.coordinateSystem !== undefined &&
-                !c.geoData.coordinateSystem.isEqual(this.caveData.coordinateSystem)) {
+            if (
+              c.geoData?.coordinateSystem !== undefined &&
+              !c.geoData.coordinateSystem.isEqual(this.caveData.coordinateSystem)
+            ) {
               mismatchNames.push(c.name);
             }
           });
           // Check models
           this.db.getAllModels().forEach((m) => {
-            if (m.geoData?.coordinateSystem !== undefined &&
-                !m.geoData.coordinateSystem.isEqual(this.caveData.coordinateSystem)) {
+            if (
+              m.geoData?.coordinateSystem !== undefined &&
+              !m.geoData.coordinateSystem.isEqual(this.caveData.coordinateSystem)
+            ) {
               mismatchNames.push(m.name);
             }
           });
         }
 
         if (mismatchNames.length > 0) {
-          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.coordinateSystemMismatch', { caves: mismatchNames.join(', ') }));
+          showErrorPanel(
+            i18n.t('ui.editors.caveSheet.errors.coordinateSystemMismatch', { caves: mismatchNames.join(', ') })
+          );
           return;
         }
 

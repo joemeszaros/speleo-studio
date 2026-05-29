@@ -48,6 +48,7 @@ import { PointCloudOctree } from '../utils/point-cloud-octree.js';
 import { Importer } from './importer-base.js';
 import { TherionImporter } from './therion-importer.js';
 import { SurvexImporter } from './survex-importer.js';
+import { Survex3dImporter } from './survex3d-importer.js';
 import { LoxImporter } from './lox-importer.js';
 
 class PolygonImporter extends Importer {
@@ -653,10 +654,15 @@ class JsonImporter extends Importer {
     const parsedCave = JSON.parse(json);
     const cave = Cave.fromPure(parsedCave, this.attributeDefs);
 
-    [...cave.surveys.entries()]
-      .forEach(([index, es]) =>
-        SurveyHelper.recalculateSurvey(index, es, cave.surveys, cave.stations, cave.aliases, cave.geoData)
-      );
+    // Read-only caves restore their station positions directly from the serialized
+    // data (Cave.fromPure) — don't rebuild from shots, the .3d centerline has
+    // disconnected components that won't chain.
+    if (!cave.readOnly) {
+      [...cave.surveys.entries()]
+        .forEach(([index, es]) =>
+          SurveyHelper.recalculateSurvey(index, es, cave.surveys, cave.stations, cave.aliases, cave.geoData)
+        );
+    }
 
     return cave;
   }
@@ -1525,6 +1531,7 @@ export {
   LasModelImporter,
   TherionImporter,
   SurvexImporter,
+  Survex3dImporter,
   LoxImporter,
   Importer
 };

@@ -304,6 +304,25 @@ class StationCoordinates {
     this.projected = projected;
     this.wgs = wgs;
   }
+
+  toExport() {
+    // `local` is deliberately omitted — for persisted (read-only) caves it equals the
+    // station's `position`, so SurveyStation.fromPure reconstructs it from there.
+    return {
+      projected : this.projected?.toExport(),
+      wgs       : this.wgs ? { lat: this.wgs.lat, lon: this.wgs.lon } : undefined
+    };
+  }
+
+  static fromPure(pure) {
+    if (pure === undefined || pure === null) return undefined;
+    // `local` is normally absent (reconstructed by SurveyStation.fromPure); still read
+    // it if an older export carried it.
+    const local = pure.local !== undefined ? Vector.fromPure(pure.local) : undefined;
+    const projected = pure.projected !== undefined ? deserializeCoordinate(pure.projected) : undefined;
+    const wgs = pure.wgs !== undefined ? new WGS84Coordinate(pure.wgs.lat, pure.wgs.lon) : undefined;
+    return new StationCoordinates(local, projected, wgs);
+  }
 }
 
 const CoordinateSystemType = Object.freeze({

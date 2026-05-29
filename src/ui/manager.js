@@ -307,7 +307,11 @@ class ProjectManager {
     const caves = await this.caveSystem.getCavesByProjectId(project.id);
 
     caves.forEach((cave) => {
-      this.recalculateCave(cave);
+      if (cave.readOnly) {
+        this.#prepareReadOnlyCave(cave);
+      } else {
+        this.recalculateCave(cave);
+      }
       this.calculateFragmentAttributes(cave);
       this.addCave(cave);
     });
@@ -896,6 +900,34 @@ class ProjectManager {
         });
       }
     }
+  }
+
+  // Prepare a read-only cave (e.g. Survex .3d) for rendering against the *current*
+  // global origin. Its stations were restored verbatim by Cave.fromPure, so there is
+  // nothing to recalculate from shots. But for a georeferenced cave the render
+  // `position` is a normalized offset relative to whatever origin existed when the cave
+  // was imported — which may differ now (different load order, or the cave that seeded
+  // the origin was deleted). The absolute `coordinates.projected` is the source of
+  // truth, so we seed the origin (if still unset) and re-derive `position` from it.
+  // Non-georeferenced caves (no recognized CRS) have no projected coordinate; their
+  // stored positions are relative to the cave's own origin and stay as-is.
+  #prepareReadOnlyCave(cave) {
+    const coordinate = cave.geoData?.coordinates?.[0]?.coordinate;
+    if (coordinate === undefined) return;
+
+    if (!globalNormalizer.isInitialized()) {
+      globalNormalizer.initializeGlobalOrigin(coordinate);
+    }
+
+    cave.stations.forEach((station) => {
+      const projected = station.coordinates?.projected;
+      if (projected !== undefined) {
+        station.position = projected.toNormalizedVector();
+        if (station.coordinates !== undefined) {
+          station.coordinates.local = station.position.clone();
+        }
+      }
+    });
   }
 
   recalculateCave(cave) {

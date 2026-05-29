@@ -17,7 +17,12 @@
 import { Declination, MeridianConvergence } from '../../utils/geo.js';
 import { BaseEditor } from './base.js';
 import {
-  SurveyMetadata, Survey, SurveyTeam, SurveyTeamMember, SurveyInstrument, DEFAULT_UNITS
+  SurveyMetadata,
+  Survey,
+  SurveyTeam,
+  SurveyTeamMember,
+  SurveyInstrument,
+  DEFAULT_UNITS
 } from '../../model/survey.js';
 import { CoordinateSystemType } from '../../model/geo.js';
 import { WGS84Converter } from '../../utils/geo.js';
@@ -204,9 +209,9 @@ export class SurveySheetEditor extends BaseEditor {
       const parsed = hasValue ? parseFloat(stored) : undefined;
       const wrapper = createFloatInput({
         value    : Number.isFinite(parsed) ? parsed : undefined,
-        step     : 0,         // no snapping — preserve any precision the user types
-        decimals : null,      // free precision display
-        nullable : true       // backspace / delete clears the value
+        step     : 0, // no snapping — preserve any precision the user types
+        decimals : null, // free precision display
+        nullable : true // backspace / delete clears the value
       });
       wrapper.id = id;
       const inner = wrapper.querySelector('input');
@@ -384,6 +389,15 @@ export class SurveySheetEditor extends BaseEditor {
     };
     contentElmnt.appendChild(form);
 
+    // Read-only caves (Survex .3d): show the survey sheet as a viewer. Disable every
+    // control except Cancel (the only way to close from inside the form), and hide
+    // Save so editing is clearly unavailable.
+    if (this.cave?.readOnly === true) {
+      form.querySelectorAll('input, select, textarea, button').forEach((el) => {
+        if (el !== cancelBtn) el.disabled = true;
+      });
+      saveBtn.style.display = 'none';
+    }
   }
 
   updateDeclinationText(force = false) {

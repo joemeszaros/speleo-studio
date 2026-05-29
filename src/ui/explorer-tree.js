@@ -408,8 +408,11 @@ export class ExplorerTree {
       editor.show();
     };
 
+    const readOnly = caveNode.data.readOnly === true;
+
     const items = [
       {
+        id      : 'editCaveData',
         icon    : '🔠',
         title   : i18n.t('ui.explorer.menu.editCaveData'),
         onclick : () => {
@@ -425,6 +428,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'newSurvey',
         icon    : '<span class="context-menu-plus">+</span>',
         title   : i18n.t('ui.explorer.menu.newSurvey'),
         onclick : () => {
@@ -441,6 +445,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'importSurvey',
         icon    : '<img src="icons/topodroid.png" alt="TopoDroid" style="width: 20px; height: 20px;">',
         title   : i18n.t('ui.explorer.menu.importSurvey'),
         onclick : () => {
@@ -450,6 +455,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'editStationAttributes',
         icon    : '📍',
         title   : i18n.t('ui.explorer.menu.editStationAttributes'),
         onclick : () => {
@@ -466,6 +472,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'editSectionAttributes',
         icon    : '🔀',
         title   : i18n.t('ui.explorer.menu.editSectionAttributes'),
         onclick : () => {
@@ -482,6 +489,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'editComponentAttributes',
         icon    : '🧩',
         title   : i18n.t('ui.explorer.menu.editComponentAttributes'),
         onclick : () => {
@@ -498,6 +506,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'editStationComments',
         icon    : '💬',
         title   : i18n.t('ui.explorer.menu.editStationComments'),
         onclick : () => {
@@ -511,6 +520,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'editStationDimensions',
         icon    : '<img src="icons/lrud.svg" alt="LRUD" style="width: 18px; height: 18px;">',
         title   : i18n.t('ui.explorer.menu.editStationDimensions'),
         onclick : () => {
@@ -524,6 +534,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'cycles',
         icon    : '🔄',
         title   : i18n.t('ui.explorer.menu.cycles'),
         onclick : () => {
@@ -533,6 +544,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'setCaveColor',
         icon    : '🎨',
         title   : i18n.t('ui.explorer.menu.setCaveColor'),
         onclick : () => {
@@ -556,6 +568,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'clearCaveColor',
         icon    : '<span style="text-decoration: line-through; text-decoration-color: red; text-decoration-thickness: 2px; transform: rotate(45deg); display: inline-block;">🎨</span>',
         title   : i18n.t('ui.explorer.menu.clearCaveColor'),
         onclick : () => {
@@ -570,6 +583,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'deleteCave',
         icon    : '🗑️',
         title   : i18n.t('ui.explorer.menu.deleteCave'),
         onclick : () => {
@@ -589,17 +603,26 @@ export class ExplorerTree {
         }
       }
     ];
-    this.showContextMenu(caveNode, items);
+
+    // Read-only caves (Survex .3d) are visualization-only: keep only the non-editing
+    // actions (view cave sheet, set/clear color, delete cave). Editing actions —
+    // new/import survey, attribute editors, comments, dimensions, cycles — are omitted.
+    const readOnlyAllowed = new Set(['editCaveData', 'setCaveColor', 'clearCaveColor', 'deleteCave']);
+    const caveItems = readOnly ? items.filter((i) => readOnlyAllowed.has(i.id)) : items;
+    this.showContextMenu(caveNode, caveItems);
   }
 
   showSurveyContextMenu(surveyNode) {
+    const readOnly = surveyNode.parent?.data?.readOnly === true;
     const items = [
       {
+        id      : 'openSurveyEditor',
         icon    : '📝',
         title   : i18n.t('ui.explorer.menu.openSurveyEditor'),
         onclick : () => this.#openSurveyEditor(surveyNode)
       },
       {
+        id      : 'editSurveySheet',
         icon    : '🔠',
         title   : i18n.t('ui.explorer.menu.editSurveySheet'),
         onclick : () => {
@@ -616,6 +639,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'importSurvey',
         icon    : '<img src="icons/topodroid.png" alt="TopoDroid" style="width: 20px; height: 20px;">',
         title   : i18n.t('ui.explorer.menu.importSurvey'),
         onclick : () => {
@@ -628,6 +652,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'setSurveyColor',
         icon    : '🎨',
         title   : i18n.t('ui.explorer.menu.setSurveyColor'),
         onclick : () => {
@@ -651,6 +676,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'clearSurveyColor',
         icon    : '<span style="text-decoration: line-through; text-decoration-color: red; text-decoration-thickness: 2px; transform: rotate(45deg); display: inline-block;">🎨</span>',
         title   : i18n.t('ui.explorer.menu.clearSurveyColor'),
         onclick : () => {
@@ -666,6 +692,7 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'deleteSurvey',
         icon    : '🗑️',
         title   : i18n.t('ui.explorer.menu.deleteSurvey'),
         onclick : () => {
@@ -684,7 +711,14 @@ export class ExplorerTree {
       }
 
     ];
-    this.showContextMenu(surveyNode, items);
+
+    // Surveys of a read-only cave (Survex .3d) are visualization-only: keep the
+    // survey sheet (metadata viewer) and color, but drop the survey editor (shot
+    // grid), import-survey and delete-survey. Only delete-cave is offered, on the
+    // cave node.
+    const readOnlyAllowed = new Set(['editSurveySheet', 'setSurveyColor', 'clearSurveyColor']);
+    const surveyItems = readOnly ? items.filter((i) => readOnlyAllowed.has(i.id)) : items;
+    this.showContextMenu(surveyNode, surveyItems);
   }
 
   showContextMenu(node, items) {
@@ -1017,7 +1051,9 @@ export class ExplorerTree {
 
     // Survey status badges
     if (node.children && node.children.length > 0) {
-      let valid = 0, warning = 0, isolated = 0;
+      let valid = 0,
+        warning = 0,
+        isolated = 0;
       for (const child of node.children) {
         const s = child.data;
         if (s.isolated === true) {
@@ -1220,7 +1256,9 @@ export class ExplorerTree {
       this.selectNode(node.id);
     };
 
-    if (node.type === 'survey') {
+    // Double-click opens the survey editor (shot grid). Read-only caves (Survex .3d)
+    // are visualization-only — the editor stays locked, use the survey sheet instead.
+    if (node.type === 'survey' && node.parent?.data?.readOnly !== true) {
       nodeElement.ondblclick = (e) => {
         e.stopPropagation();
         e.preventDefault();

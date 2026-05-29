@@ -212,6 +212,12 @@ class Editor extends BaseEditor {
     this.attributeDefs = attributeDefs;
   }
 
+  // Visualization-only caves (Survex .3d) open their editors in view mode: no cell
+  // editing, no add/delete/save actions. Editors derive this from the cave itself.
+  get readOnly() {
+    return this.cave?.readOnly === true;
+  }
+
   baseTableFunctions = {
 
     sumDistance : (_values, data) => {

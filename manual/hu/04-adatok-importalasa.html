@@ -46,7 +46,7 @@
           <li><strong>Polygon (.cave):</strong> Polygon szoftver formátuma</li>
           <li><strong>TopoDroid (.csv):</strong> TopoDroid Android alkalmazás exportja</li>
           <li><strong>Therion (.th):</strong> Therion barlangtérképező szoftver formátuma</li>
-          <li><strong>Survex (.svx):</strong> Survex barlangfelmérő szoftver formátuma</li>
+          <li><strong>Survex (.svx, .3d):</strong> Survex barlangfelmérő szoftver szöveges (forrás) és bináris formátuma</li>
           <li><strong>PLY:</strong> 3D felszín modellek és pontfelhők</li>
           <li><strong>OBJ:</strong> 3D háromszöghálók textúra támogatással</li>
           <li><strong>LAS/LAZ:</strong> LiDAR pontfelhők (tömörített és tömörítetlen)</li>
@@ -60,7 +60,7 @@
           <h3>1. lépés: Importálás indítása</h3>
           <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő importálási opciót:</p>
           <ul>
-            <li><strong>"Barlang(ok) megnyitása":</strong> JSON, .cave, Therion (.th) és Survex (.svx) fájlokhoz</li>
+            <li><strong>"Barlang(ok) megnyitása":</strong> JSON, .cave, Therion (.th), Survex (.svx) és Survex (.3d) fájlokhoz</li>
             <li><strong>"Model megnyitása":</strong> PLY, OBJ, LAS és LAZ fájlokhoz</li>
           </ul>
         </div>
@@ -459,7 +459,7 @@ data dimensions station left right up down
         módosíthatja.</p
       >
 
-      <h2>Survex (.svx) formátum importálása</h2>
+      <h2>Survex (.svx és .3d) formátumok importálása</h2>
 
       <div class="format-box">
         <h4>Survex formátum</h4>
@@ -577,6 +577,71 @@ data dimensions station left right up down
               értékekre konvertálja az importálás során</li>
           <li>A megjegyzéseket (<code>;</code> után) a parser figyelmen kívül hagyja</li>
         </ul>
+      </div>
+
+      <h3>Survex bináris (.3d) fájlok importálása</h3>
+      <p
+        >A Survex a forrás <code>.svx</code> fájlokból egy bináris <code>.3d</code> kimeneti fájlt készít, amely
+        a már megoldott (poligon-számítás után kapott) abszolút állomáskoordinátákat tartalmazza. Mivel a geometria
+        már kész &mdash; és egyetlen <code>.3d</code> fájl több, fizikailag össze nem függő rendszert is tartalmazhat
+        &mdash;, a Speleo Studio a <code>.3d</code> fájlokat <strong>csak megjelenítésre (csak olvasható)</strong>
+        barlangként importálja: az állomáspozíciókat közvetlenül a fájlból veszi át, nem számolja újra a mérésekből.
+        Az adatokból &mdash; a hossz / azimut / dőlésszög visszaszámolásával &mdash; felmérések és középvonal is
+        készül, hogy a felmérés-fa, a megjelenítés és az adatlapok működjenek.</p
+      >
+      <h5>Támogatott verziók:</h5>
+      <ul>
+        <li><code>v3</code> – <code>v7</code> (régebbi Survex kimenetek)</li>
+        <li><code>v8</code> (Survex ≥ 1.4 alapértelmezett kimenete)</li>
+      </ul>
+      <h5>Amit a <code>.3d</code> importál:</h5>
+      <ul>
+        <li>Közép (cave) és tüske (splay) vonalak</li>
+        <li>Állomásnevek és pozíciók</li>
+        <li>Kereszt-felmérés <code>*equate</code>-ek (közös koordináta) &mdash; <code>SurveyAlias</code>-ként
+            jelennek meg</li>
+        <li>Koordináta rendszer a fejlécből, ha felismerhető (<code>EPSG:32601&ndash;32760</code> UTM,
+            <code>EPSG:23700</code> EOV, <code>+proj=utm</code> PROJ4 forma)</li>
+        <li>Cím a fejlécből &mdash; a barlang neve ebből származik; az egyes felmérések neve a felmérés-útvonalakból</li>
+        <li>XSECT (keresztmetszet) rekordok &mdash; ezek a forrás <code>.svx</code> <code>*data passage</code>
+            blokkjából keletkeznek; a Speleo Studio a barlang pont méretei (LRUD) közé veszi fel őket</li>
+      </ul>
+      <h5>Amit nem importál:</h5>
+      <ul>
+        <li>Felszíni és duplikált vonalak (a <code>*flags surface</code> / <code>duplicate</code>-el jelölt mérések)
+            &mdash; ezeket a parser kihagyja, mert nem részei a barlang középvonalának</li>
+        <li>Hibarekordok (closure error) és dátum bélyegek &mdash; átugorva</li>
+        <li>A nagyon régi <code>Bv0.01</code> formátum (2002 előtti Survex kimenetek) nem támogatott</li>
+      </ul>
+
+      <div class="step">
+        <h3>Egyetlen .3d fájl importálása</h3>
+        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>2. Válassza ki a <code>.3d</code> fájlt</p>
+        <p>3. Ha a fájl tartalmaz felismert koordináta rendszert, a barlang automatikusan georeferenciát kap;
+            ismeretlen koordináta rendszer esetén a barlang georeferencia nélkül, csak megjelenítésre töltődik be</p>
+        <p>4. A barlang csak olvasható barlangként jelenik meg a felfedező panelben</p>
+      </div>
+
+      <div class="info">
+        <h3>Csak olvasható (megjelenítés célú) barlangok</h3>
+        <p
+          >A <code>.3d</code> fájlból importált barlang <strong>csak olvasható</strong>: a benne lévő geometria a
+          Survex számításának az eredménye, így a szerkesztése nincs értelme. A felugró kontext menü ezért csak a
+          megjelenítéshez kapcsolódó műveleteket kínálja fel:</p
+        >
+        <ul>
+          <li><strong>Engedélyezett:</strong> láthatóság ki/be kapcsolása, barlang színének beállítása/törlése,
+              a barlang és a felmérés adatlapjának megtekintése (csak olvasható módban), képernyőre illesztés</li>
+          <li><strong>Letiltott:</strong> felmérés-szerkesztő (mérési táblázat), új/importált felmérés,
+              attribútum-szerkesztők, állomásmegjegyzések és -méretek, hurkok &mdash; ezek a menüből is hiányoznak</li>
+        </ul>
+        <p
+          >A barlang minden <strong>felmérés</strong>-útvonalból (a <code>.3d</code>-ben szereplő felmérés-hierarchia
+          szerint) külön felmérést kap. Az állomásnevek a legrövidebb, még egyértelmű utótagra rövidülnek (pl.
+          a <code>system_migovec.&hellip;.mona_tip.6</code> névből <code>6</code>, ütközés esetén <code>mona_tip.6</code>
+          lesz), így a hosszú, teljes hierarchikus nevek helyett a megszokott rövid állomásazonosítók jelennek meg.</p
+        >
       </div>
 
       <h2>3D modellek és pontfelhők importálása</h2>

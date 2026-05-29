@@ -26,6 +26,7 @@ import {
   JsonImporter,
   TherionImporter,
   SurvexImporter,
+  Survex3dImporter,
   LoxImporter,
   Importer
 } from './io/import.js';
@@ -326,6 +327,7 @@ class Main {
       json      : new JsonImporter(db, options, scene, this.projectManager, attributeDefs),
       therion   : new TherionImporter(db, options, scene, this.projectManager),
       survex    : new SurvexImporter(db, options, scene, this.projectManager),
+      survex3d  : new Survex3dImporter(db, options, scene, this.projectManager),
       ply       : new PlyModelImporter(db, options, scene, this.projectManager),
       obj       : new ObjModelImporter(db, options, scene, this.projectManager),
       asc       : new AscDTMImporter(db, options, scene, this.projectManager),
@@ -420,7 +422,8 @@ class Main {
 
         const handlers = new Map([
           ['cave', this.importers.polygon],
-          ['json', this.importers.json]
+          ['json', this.importers.json],
+          ['3d',   this.importers.survex3d]
         ]);
 
         for (const file of otherFiles) {
