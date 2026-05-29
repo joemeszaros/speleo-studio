@@ -1,5 +1,6 @@
 {
-  "revision": 43,
+  "version": 1,
+  "revision": 71,
   "name": "Laci-zsomboly-official",
   "metadata": {
     "country": "Hungary",
@@ -119,11 +120,30 @@
   ],
   "attributes": {
     "sectionAttributes": [],
-    "componentAttributes": [],
+    "componentAttributes": [
+      {
+        "id": "svfogs",
+        "component": {
+          "start": "0",
+          "termination": [
+            "Pa7"
+          ]
+        },
+        "attribute": {
+          "id": 6,
+          "name": "label",
+          "value": "felmeres"
+        },
+        "format": "${name}",
+        "color": "#00ff2a",
+        "visible": false
+      }
+    ],
     "stationAttributes": [],
-    "schemaVersion": 5
+    "schemaVersion": 6
   },
   "stationComments": [],
+  "stationDimensions": [],
   "surveys": [
     {
       "name": "Laci-zsomboly",
@@ -136,6 +156,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -8257,68 +8281,38 @@
         {
           "type": "center",
           "from": "58",
-          "to": "62",
-          "length": 2.76,
-          "azimuth": 78.8,
-          "clino": 22.3,
-          "comment": "homokos felfelé jobb fal"
-        },
-        {
-          "type": "splay",
-          "from": "62",
-          "length": 1.06,
-          "azimuth": 283.7,
-          "clino": -2.1,
-          "comment": ""
-        },
-        {
-          "type": "splay",
-          "from": "62",
-          "length": 1.52,
-          "azimuth": 318.3,
-          "clino": 16,
-          "comment": ""
-        },
-        {
-          "type": "splay",
-          "from": "62",
-          "length": 3.78,
-          "azimuth": 352.9,
-          "clino": 43.4,
-          "comment": ""
-        },
-        {
-          "type": "splay",
-          "from": "62",
-          "length": 0.19,
-          "azimuth": 9.2,
-          "clino": 56.6,
-          "comment": ""
-        },
-        {
-          "type": "splay",
-          "from": "62",
-          "length": 0.63,
-          "azimuth": 115.2,
-          "clino": -45.2,
-          "comment": ""
-        },
-        {
-          "type": "splay",
-          "from": "62",
-          "length": 0.31,
-          "azimuth": 20.5,
-          "clino": -64.9,
-          "comment": ""
+          "to": "hk1",
+          "length": 2.91,
+          "azimuth": 88.8,
+          "clino": 31,
+          "comment": "Homokos felfele, jobb fal"
         },
         {
           "type": "center",
-          "from": "62",
-          "to": "63",
-          "length": 3.82,
-          "azimuth": 353.9,
-          "clino": 43.4,
-          "comment": "belövés vp"
+          "from": "hk1",
+          "to": "hk2",
+          "length": 3.27,
+          "azimuth": 343.8,
+          "clino": 40.5,
+          "comment": "Vesztett pont a  homokos lejtő tetején"
+        },
+        {
+          "type": "center",
+          "from": "hk2",
+          "to": "hk3",
+          "length": 1.64,
+          "azimuth": 115.8,
+          "clino": 39.1,
+          "comment": "Kurto aljan vesztett pont"
+        },
+        {
+          "type": "center",
+          "from": "hk3",
+          "to": "hk4",
+          "length": 7.56,
+          "azimuth": 179.2,
+          "clino": 88.8,
+          "comment": "Kurto tetejere felloves"
         },
         {
           "type": "center",
@@ -9007,7 +9001,6 @@
     },
     {
       "name": "Laci_Fogadalom",
-      "start": "18",
       "metadata": {
         "date": 1647644400000,
         "declination": 5.37,
@@ -9017,6 +9010,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -15528,7 +15525,6 @@
     },
     {
       "name": "Laci-zsomboly_Paludárium",
-      "start": "21",
       "metadata": {
         "date": 1663192800000,
         "declination": 5.47,
@@ -15538,6 +15534,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -16927,7 +16927,6 @@
     },
     {
       "name": "Padulárium_felső",
-      "start": "Padf1",
       "metadata": {
         "date": 1667948400000,
         "declination": 5.5,
@@ -16937,6 +16936,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -23704,7 +23707,6 @@
     },
     {
       "name": "Tejfel_kürtő",
-      "start": "PaduTF0",
       "metadata": {
         "date": 1678489200000,
         "declination": null,
@@ -23714,6 +23716,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -24140,7 +24146,6 @@
     },
     {
       "name": "Padulárium_-_Pàrazàró_àg",
-      "start": "PP0",
       "metadata": {
         "date": 1667865600000,
         "declination": 5.399,
@@ -24149,6 +24154,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -25263,7 +25272,6 @@
     },
     {
       "name": "Kandis-kürtő",
-      "start": "PK0",
       "metadata": {
         "date": 1678489200000,
         "declination": null,
@@ -25273,6 +25281,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -25761,7 +25773,6 @@
     },
     {
       "name": "Lapidárium",
-      "start": "Lapi0",
       "metadata": {
         "date": 1677542400000,
         "declination": 5.432,
@@ -25770,6 +25781,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -35247,7 +35262,6 @@
     },
     {
       "name": "Plöm_plöm",
-      "start": "Plm0",
       "metadata": {
         "date": 1680566400000,
         "declination": 5.442,
@@ -35256,6 +35270,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -42294,7 +42312,6 @@
     },
     {
       "name": "Mindenszentek-ág",
-      "start": "MSz0",
       "metadata": {
         "date": 1699315200000,
         "declination": 5.506,
@@ -42303,6 +42320,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -52059,8 +52080,9 @@
           "comment": ""
         },
         {
-          "type": "splay",
+          "type": "center",
           "from": "MSz50",
+          "to": "MSz51",
           "length": 1.95,
           "azimuth": 97.2,
           "clino": -10.8,
@@ -56842,7 +56864,6 @@
     },
     {
       "name": "Neptun-kürtő",
-      "start": "U0",
       "metadata": {
         "date": 1726610400000,
         "declination": 4.8,
@@ -56852,6 +56873,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -58905,7 +58930,6 @@
     },
     {
       "name": "Octopus",
-      "start": "Octp0",
       "metadata": {
         "date": 1724191200000,
         "declination": 5.37,
@@ -58915,6 +58939,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -71496,7 +71524,6 @@
     },
     {
       "name": "Paszuly-kürtő",
-      "start": "MO0",
       "metadata": {
         "date": 1712620800000,
         "declination": 5.551,
@@ -71505,6 +71532,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -78933,7 +78964,6 @@
     },
     {
       "name": "Winter-wonderland",
-      "start": "ww0",
       "metadata": {
         "date": 1727820000000,
         "declination": 5.35,
@@ -78943,6 +78973,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -80164,7 +80198,6 @@
     },
     {
       "name": "WW-Belso",
-      "start": "wb2",
       "metadata": {
         "date": 1729029600000,
         "declination": 5.35,
@@ -80174,6 +80207,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -80860,7 +80897,6 @@
     },
     {
       "name": "Laci-zsomboly_MM",
-      "start": "34",
       "metadata": {
         "date": 1651615200000,
         "declination": 5.42,
@@ -80870,6 +80906,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -81073,7 +81113,6 @@
     },
     {
       "name": "Ingókő-kürtő",
-      "start": "Pr0",
       "metadata": {
         "date": 1734476400000,
         "declination": 5.37,
@@ -81083,6 +81122,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -85397,7 +85440,6 @@
     },
     {
       "name": "Laci-zsomboly_Óvóhely",
-      "start": "34m13",
       "metadata": {
         "date": 1652652000000,
         "declination": 5.42,
@@ -85407,6 +85449,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -87198,7 +87244,6 @@
     },
     {
       "name": "Zacsis-eleje",
-      "start": "34z0",
       "metadata": {
         "date": 1734649200000,
         "declination": 5.4,
@@ -87208,6 +87253,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -87340,7 +87389,6 @@
     },
     {
       "name": "Laci-zsomboly_Frodó",
-      "start": "34z14",
       "metadata": {
         "date": 1662681600000,
         "declination": 5.381,
@@ -87349,6 +87397,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -93345,7 +93397,6 @@
     },
     {
       "name": "Laci-zsomboly_Felhő2",
-      "start": "F56",
       "metadata": {
         "date": 1668898800000,
         "declination": 5.5,
@@ -93355,6 +93406,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -95113,7 +95168,6 @@
     },
     {
       "name": "Reményhal-kürtő",
-      "start": "RH0",
       "metadata": {
         "date": 1736636400000,
         "declination": 5.37,
@@ -95123,6 +95177,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -96232,7 +96290,6 @@
     },
     {
       "name": "trAverzió",
-      "start": "Tr0",
       "metadata": {
         "date": 1736636400000,
         "declination": 5.38,
@@ -96242,6 +96299,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -97712,7 +97773,6 @@
     },
     {
       "name": "KétVégén",
-      "start": "KV0",
       "metadata": {
         "date": 1744149600000,
         "declination": 5.4,
@@ -97722,6 +97782,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -99160,7 +99224,6 @@
     },
     {
       "name": "Sáros-tető",
-      "start": "ST0",
       "metadata": {
         "date": 1744149600000,
         "declination": 5,
@@ -99170,6 +99233,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -100268,7 +100335,6 @@
     },
     {
       "name": "Tükörtojás",
-      "start": "Tuk0",
       "metadata": {
         "date": 1747778400000,
         "declination": 5.1,
@@ -100278,6 +100344,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -101192,7 +101262,6 @@
     },
     {
       "name": "Felhõ-ág_kutyaol",
-      "start": "FF0",
       "metadata": {
         "date": 1670284800000,
         "declination": 5.407,
@@ -101201,6 +101270,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -102212,7 +102285,6 @@
     },
     {
       "name": "Laci-zsomboly_nemPiri_művek",
-      "start": "F61",
       "metadata": {
         "date": 1668898800000,
         "declination": 5.5,
@@ -102222,6 +102294,10 @@
           "members": []
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -102294,7 +102370,6 @@
     },
     {
       "name": "Paludárium Buzogányos-kürtő",
-      "start": "Padf3-a",
       "metadata": {
         "date": 1669248000000,
         "declination": 5.399,
@@ -102309,6 +102384,10 @@
           ]
         },
         "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
       },
       "shots": [
         {
@@ -102358,6 +102437,2139 @@
           "length": 0.16,
           "azimuth": 171.4,
           "clino": 65.3
+        }
+      ]
+    },
+    {
+      "name": "Szaloncukor-kürtő",
+      "metadata": {
+        "date": 1766707200000,
+        "declination": 5.72,
+        "team": {
+          "name": "Lacinemzsomboly TEAM",
+          "members": [
+            {
+              "name": "Bíró Anna",
+              "role": "figuráns"
+            },
+            {
+              "name": "Mészáros József",
+              "role": "mérés"
+            }
+          ]
+        },
+        "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
+      },
+      "shots": [
+        {
+          "type": "center",
+          "from": "MSz0",
+          "to": "Szck3",
+          "length": 2.15,
+          "azimuth": 26.8,
+          "clino": 1.4,
+          "comment": "vesztett pont egy kisebb kőröl, ami rálát az első nittre"
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 0.49,
+          "azimuth": 274.2,
+          "clino": 21.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 1.38,
+          "azimuth": 244.2,
+          "clino": 29.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 4.22,
+          "azimuth": 333.9,
+          "clino": 40.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 6.09,
+          "azimuth": 14,
+          "clino": 40,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 4.45,
+          "azimuth": 338,
+          "clino": 68.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 4.32,
+          "azimuth": 19,
+          "clino": 59.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 7.04,
+          "azimuth": 2.6,
+          "clino": 67.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 4.43,
+          "azimuth": 305.7,
+          "clino": 84.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 3.37,
+          "azimuth": 121.6,
+          "clino": 80.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 6.69,
+          "azimuth": 195.2,
+          "clino": 68.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 3.51,
+          "azimuth": 172.5,
+          "clino": 50.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 6.48,
+          "azimuth": 189.2,
+          "clino": 34.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 3.53,
+          "azimuth": 176.4,
+          "clino": 19.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 3.89,
+          "azimuth": 190.1,
+          "clino": 10.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 6.1,
+          "azimuth": 184.9,
+          "clino": 1.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 3.68,
+          "azimuth": 168,
+          "clino": -3.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 1.51,
+          "azimuth": 79.7,
+          "clino": 24.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck3",
+          "length": 2.08,
+          "azimuth": 50.3,
+          "clino": 39.1,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "Szck3",
+          "to": "Szck4",
+          "length": 7.32,
+          "azimuth": 197.3,
+          "clino": 76.7,
+          "comment": "első nitt mellett jobbra"
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.21,
+          "azimuth": 9.3,
+          "clino": -2.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 1.35,
+          "azimuth": 35.3,
+          "clino": -3.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 0.53,
+          "azimuth": 83.8,
+          "clino": 9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 1.18,
+          "azimuth": 139.4,
+          "clino": 2.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 1.73,
+          "azimuth": 167.3,
+          "clino": 15.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 0.14,
+          "azimuth": 271.6,
+          "clino": 20,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 3.24,
+          "azimuth": 4.8,
+          "clino": 75.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.76,
+          "azimuth": 9.8,
+          "clino": 55.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.22,
+          "azimuth": 352.8,
+          "clino": 30.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.85,
+          "azimuth": 23.7,
+          "clino": -28.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.1,
+          "azimuth": 0.5,
+          "clino": -44.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 3.21,
+          "azimuth": 45.8,
+          "clino": -52.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 5.93,
+          "azimuth": 31.6,
+          "clino": -56.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.48,
+          "azimuth": 1.6,
+          "clino": -59.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 7.48,
+          "azimuth": 11.6,
+          "clino": -72.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 7.59,
+          "azimuth": 17.9,
+          "clino": -60.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 7.61,
+          "azimuth": 12.5,
+          "clino": -44.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 7.64,
+          "azimuth": 12.5,
+          "clino": -36.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 3.06,
+          "azimuth": 162,
+          "clino": 81.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 3.3,
+          "azimuth": 194.8,
+          "clino": 65,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.98,
+          "azimuth": 172.3,
+          "clino": 50,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 2.55,
+          "azimuth": 179,
+          "clino": 30.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 4.35,
+          "azimuth": 186.9,
+          "clino": 52.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "Szck4",
+          "length": 3.48,
+          "azimuth": 185.5,
+          "clino": 62.7,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "Szck4",
+          "to": "Szck5",
+          "length": 4.33,
+          "azimuth": 182.5,
+          "clino": 56.9,
+          "comment": "dupla kikötés alatt, kicsit előtte"
+        }
+      ]
+    },
+    {
+      "name": "Cheguevara",
+      "metadata": {
+        "date": 1740441600000,
+        "declination": 5.644,
+        "team": {
+          "name": "Laci nem Zsomboly",
+          "members": []
+        },
+        "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
+      },
+      "shots": [
+        {
+          "type": "center",
+          "from": "35",
+          "to": "che1",
+          "length": 1.49,
+          "azimuth": 74.8,
+          "clino": -2.7,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "che1",
+          "to": "che2",
+          "length": 1.97,
+          "azimuth": 121.9,
+          "clino": -3.9,
+          "comment": "szűkület végén kiálló orr jobbra"
+        },
+        {
+          "type": "center",
+          "from": "che2",
+          "to": "che3",
+          "length": 2.5,
+          "azimuth": 92.2,
+          "clino": 8.8,
+          "comment": "felmaszas előtt balra térd magasságban "
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 0.77,
+          "azimuth": 162.5,
+          "clino": 15.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.16,
+          "azimuth": 141.5,
+          "clino": 15.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.36,
+          "azimuth": 128.3,
+          "clino": 8.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.38,
+          "azimuth": 120.4,
+          "clino": 10.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.25,
+          "azimuth": 113.1,
+          "clino": 9.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 2.1,
+          "azimuth": 108.4,
+          "clino": 14.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 2.5,
+          "azimuth": 95.5,
+          "clino": 18.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 2.27,
+          "azimuth": 90,
+          "clino": 9.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.9,
+          "azimuth": 85.4,
+          "clino": 8.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.8,
+          "azimuth": 83,
+          "clino": 6.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.37,
+          "azimuth": 79.2,
+          "clino": 6.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 0.71,
+          "azimuth": 68.2,
+          "clino": 6.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 0.52,
+          "azimuth": 44.9,
+          "clino": 8.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 0.59,
+          "azimuth": 50.5,
+          "clino": 10.3,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "che3",
+          "to": "che4",
+          "length": 1.76,
+          "azimuth": 118.8,
+          "clino": 40.8,
+          "comment": "felmaszas után plafon"
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.68,
+          "azimuth": 310.3,
+          "clino": -44.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 2.35,
+          "azimuth": 298.9,
+          "clino": -42,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 0.93,
+          "azimuth": 286.2,
+          "clino": -38.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 0.69,
+          "azimuth": 269,
+          "clino": -23.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 0.55,
+          "azimuth": 340.9,
+          "clino": -40,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.3,
+          "azimuth": 54.2,
+          "clino": -4.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 2.13,
+          "azimuth": 64.1,
+          "clino": -2.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 2.07,
+          "azimuth": 68.2,
+          "clino": -1.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 2.16,
+          "azimuth": 70,
+          "clino": -0.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.94,
+          "azimuth": 77,
+          "clino": 1.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.74,
+          "azimuth": 83.7,
+          "clino": 0.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.78,
+          "azimuth": 91.4,
+          "clino": 4.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.72,
+          "azimuth": 92.2,
+          "clino": 4.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.67,
+          "azimuth": 107.7,
+          "clino": 10.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.42,
+          "azimuth": 112.5,
+          "clino": 14,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 0.63,
+          "azimuth": 268.2,
+          "clino": -14.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 0.77,
+          "azimuth": 245.6,
+          "clino": -8.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 0.99,
+          "azimuth": 217.4,
+          "clino": -1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 1.62,
+          "azimuth": 203.9,
+          "clino": 6.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 2.52,
+          "azimuth": 198.4,
+          "clino": 13,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che4",
+          "length": 2.67,
+          "azimuth": 195.5,
+          "clino": 12.5,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "che4",
+          "to": "che5",
+          "length": 1.92,
+          "azimuth": 199.7,
+          "clino": 10.5,
+          "comment": "kürtő előtt jobbra falon"
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 1.26,
+          "azimuth": 87.1,
+          "clino": 10.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 1.52,
+          "azimuth": 77.3,
+          "clino": 6.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 2.16,
+          "azimuth": 65.7,
+          "clino": 3.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 2.45,
+          "azimuth": 58.2,
+          "clino": 0.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 2.5,
+          "azimuth": 51.8,
+          "clino": -2.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 0.74,
+          "azimuth": 3.4,
+          "clino": -12.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 0.25,
+          "azimuth": 354.3,
+          "clino": -15.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 0.34,
+          "azimuth": 228.8,
+          "clino": 7.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 0.5,
+          "azimuth": 199.9,
+          "clino": 18.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 0.72,
+          "azimuth": 162.4,
+          "clino": 37.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 1.2,
+          "azimuth": 158.9,
+          "clino": 36,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 1.14,
+          "azimuth": 101,
+          "clino": 16.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che5",
+          "length": 1.26,
+          "azimuth": 104.9,
+          "clino": 23.4,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "che5",
+          "to": "che6",
+          "length": 1.32,
+          "azimuth": 141.3,
+          "clino": 44.1,
+          "comment": "\"sütőben szembe kő"
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.51,
+          "azimuth": 331.7,
+          "clino": -35,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.49,
+          "azimuth": 358.4,
+          "clino": -28.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.51,
+          "azimuth": 24.8,
+          "clino": -5.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1,
+          "azimuth": 41.6,
+          "clino": -4.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1,
+          "azimuth": 56.3,
+          "clino": -2.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.47,
+          "azimuth": 76.4,
+          "clino": -3.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.69,
+          "azimuth": 92.2,
+          "clino": 1.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.26,
+          "azimuth": 274.6,
+          "clino": 6.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.79,
+          "azimuth": 3.8,
+          "clino": 52.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.26,
+          "azimuth": 36.6,
+          "clino": 50.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.3,
+          "azimuth": 48.3,
+          "clino": 46.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.21,
+          "azimuth": 55.6,
+          "clino": 37.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1,
+          "azimuth": 49.8,
+          "clino": 25.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.94,
+          "azimuth": 40.1,
+          "clino": 12.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.33,
+          "azimuth": 105.2,
+          "clino": 71.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.39,
+          "azimuth": 75.8,
+          "clino": 66.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.41,
+          "azimuth": 64.9,
+          "clino": 59,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.06,
+          "azimuth": 86.7,
+          "clino": 56.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.76,
+          "azimuth": 92.3,
+          "clino": 41.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.64,
+          "azimuth": 90.3,
+          "clino": 22.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 0.95,
+          "azimuth": 70.3,
+          "clino": 20.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che6",
+          "length": 1.11,
+          "azimuth": 68.9,
+          "clino": 40.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 0.48,
+          "azimuth": 193.5,
+          "clino": 6.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.13,
+          "azimuth": 147.8,
+          "clino": 4.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.36,
+          "azimuth": 120.4,
+          "clino": 12.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 2.13,
+          "azimuth": 106.6,
+          "clino": 13.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 2.42,
+          "azimuth": 100.4,
+          "clino": 14,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 2.4,
+          "azimuth": 86.1,
+          "clino": 16.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.81,
+          "azimuth": 79.5,
+          "clino": 21.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.17,
+          "azimuth": 71.4,
+          "clino": 25.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 0.47,
+          "azimuth": 30.3,
+          "clino": 0.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 0.57,
+          "azimuth": 3.1,
+          "clino": 15.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "che3",
+          "length": 1.24,
+          "azimuth": 312.7,
+          "clino": -0.1,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "Elosztó alatt",
+      "metadata": {
+        "date": 1757376000000,
+        "declination": 5.696,
+        "team": {
+          "name": "Lacinemzsomboly TEAM",
+          "members": [
+            {
+              "name": "Jáger Attila",
+              "role": "figuráns"
+            },
+            {
+              "name": "Németh László",
+              "role": "figuráns"
+            },
+            {
+              "name": "Mészáros József",
+              "role": "mérés"
+            }
+          ]
+        },
+        "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
+      },
+      "shots": [
+        {
+          "type": "center",
+          "from": "8",
+          "to": "8.1",
+          "length": 5.15,
+          "azimuth": 98.5,
+          "clino": -62.9,
+          "comment": "\"Régi y alatt több méterrel"
+        },
+        {
+          "type": "center",
+          "from": "8.1",
+          "to": "8.2",
+          "length": 4.97,
+          "azimuth": 203.5,
+          "clino": 13,
+          "comment": "elosztóba bemászva egy átlépés után a kövön "
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 4.94,
+          "azimuth": 26.3,
+          "clino": -10.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.94,
+          "azimuth": 40.8,
+          "clino": -10.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 2.85,
+          "azimuth": 63.5,
+          "clino": -7.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 2.94,
+          "azimuth": 88.5,
+          "clino": 4.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.13,
+          "azimuth": 113.4,
+          "clino": 14.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.08,
+          "azimuth": 141.8,
+          "clino": 18.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.1,
+          "azimuth": 166.4,
+          "clino": 20.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.86,
+          "azimuth": 186.6,
+          "clino": 23.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.63,
+          "azimuth": 212.4,
+          "clino": 22.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.36,
+          "azimuth": 223.1,
+          "clino": 19.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 4.68,
+          "azimuth": 241.4,
+          "clino": 15.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.67,
+          "azimuth": 253.1,
+          "clino": 7.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 2.8,
+          "azimuth": 259.8,
+          "clino": 4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 2.86,
+          "azimuth": 284.1,
+          "clino": -10.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 4.78,
+          "azimuth": 302.1,
+          "clino": -16.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 2.64,
+          "azimuth": 316.8,
+          "clino": -15.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 5.1,
+          "azimuth": 331.8,
+          "clino": -13,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 2.87,
+          "azimuth": 344.6,
+          "clino": -11.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2",
+          "length": 3.55,
+          "azimuth": 357,
+          "clino": -0.3,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "8.2",
+          "to": "8.3",
+          "length": 3.39,
+          "azimuth": 201.4,
+          "clino": 26.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 3.17,
+          "azimuth": 325.8,
+          "clino": -19,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 3.36,
+          "azimuth": 312.4,
+          "clino": -12.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 0.92,
+          "azimuth": 293.6,
+          "clino": -6.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 0.67,
+          "azimuth": 249,
+          "clino": 10.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 0.91,
+          "azimuth": 138.1,
+          "clino": 17.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 0.41,
+          "azimuth": 107,
+          "clino": -2.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 1.04,
+          "azimuth": 95.3,
+          "clino": -5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.3",
+          "length": 1.8,
+          "azimuth": 83.6,
+          "clino": -10.3,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "8.3",
+          "to": "8.5",
+          "length": 0.87,
+          "azimuth": 254.7,
+          "clino": 27.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 0.69,
+          "azimuth": 307.5,
+          "clino": 21.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 0.96,
+          "azimuth": 289.3,
+          "clino": 25.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 1.39,
+          "azimuth": 278,
+          "clino": 27.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 1.62,
+          "azimuth": 271.8,
+          "clino": 27.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 1.6,
+          "azimuth": 265.1,
+          "clino": 28.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 1.25,
+          "azimuth": 257.7,
+          "clino": 29.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 0.91,
+          "azimuth": 250.9,
+          "clino": 30.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 0.85,
+          "azimuth": 243.7,
+          "clino": 32.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 0.49,
+          "azimuth": 234.7,
+          "clino": 26.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 0.39,
+          "azimuth": 283,
+          "clino": -18,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.5",
+          "length": 3.09,
+          "azimuth": 283.6,
+          "clino": -17.4,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "8.2",
+          "to": "8.2.1",
+          "length": 3,
+          "azimuth": 283.5,
+          "clino": -17.6,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "8.2.1",
+          "to": "8.2.2",
+          "length": 1.09,
+          "azimuth": 186.2,
+          "clino": -36.6,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "8.2.2",
+          "to": "8.2.3",
+          "length": 1.76,
+          "azimuth": 233.8,
+          "clino": -18.1,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "8.2.3",
+          "to": "8.2.4",
+          "length": 2.99,
+          "azimuth": 213.4,
+          "clino": 16.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 0.7,
+          "azimuth": 129.3,
+          "clino": 40.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 0.8,
+          "azimuth": 166.8,
+          "clino": 9.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 1.05,
+          "azimuth": 179.2,
+          "clino": 12.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 1.59,
+          "azimuth": 195.2,
+          "clino": 14,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 2.17,
+          "azimuth": 203.9,
+          "clino": 12.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 2.35,
+          "azimuth": 206.6,
+          "clino": 12.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 0.66,
+          "azimuth": 226.1,
+          "clino": -0.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 1.37,
+          "azimuth": 220.9,
+          "clino": 2.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 1.52,
+          "azimuth": 215.6,
+          "clino": 6.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 0.17,
+          "azimuth": 270.2,
+          "clino": 11,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 0.2,
+          "azimuth": 9.9,
+          "clino": 2.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.3",
+          "length": 0.75,
+          "azimuth": 37.3,
+          "clino": -7.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 0.75,
+          "azimuth": 21.9,
+          "clino": 2.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 0.6,
+          "azimuth": 356.1,
+          "clino": 4.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 0.4,
+          "azimuth": 317.9,
+          "clino": 16.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 0.44,
+          "azimuth": 258.4,
+          "clino": 27.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 1.25,
+          "azimuth": 222.7,
+          "clino": 22.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 2.36,
+          "azimuth": 206.2,
+          "clino": 39.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 2.59,
+          "azimuth": 202.7,
+          "clino": 37.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 2.74,
+          "azimuth": 214.5,
+          "clino": 39.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 1.82,
+          "azimuth": 202,
+          "clino": 33.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 1.16,
+          "azimuth": 160.5,
+          "clino": 51.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 2.19,
+          "azimuth": 91.8,
+          "clino": 45.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 3.65,
+          "azimuth": 83.8,
+          "clino": 42.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 3.37,
+          "azimuth": 78.1,
+          "clino": 41.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 2.06,
+          "azimuth": 71.8,
+          "clino": 37,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 1.48,
+          "azimuth": 62.3,
+          "clino": 23.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 1.13,
+          "azimuth": 71.4,
+          "clino": 20,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 0.58,
+          "azimuth": 55.7,
+          "clino": 5.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "8.2.4",
+          "length": 1.06,
+          "azimuth": 166.1,
+          "clino": 40.6,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "8.2.4",
+          "to": "8.2.5",
+          "length": 2.1,
+          "azimuth": 207.9,
+          "clino": 37.5,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "Gésa-Kandalló-bontas",
+      "metadata": {
+        "date": 1768950000000,
+        "declination": 5.72,
+        "convergence": null,
+        "team": {
+          "name": "SzaboZ,",
+          "members": []
+        },
+        "instruments": []
+      },
+      "units": {
+        "length": "meters",
+        "angle": "degrees"
+      },
+      "shots": [
+        {
+          "type": "center",
+          "from": "MSz65",
+          "to": "GKB1",
+          "length": 1.67,
+          "azimuth": 313.3,
+          "clino": -10.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 2.85,
+          "azimuth": 250.6,
+          "clino": -24.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 2.32,
+          "azimuth": 269.2,
+          "clino": -27.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 2.12,
+          "azimuth": 267.8,
+          "clino": -10.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 0.99,
+          "azimuth": 285.2,
+          "clino": -46.7,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 0.44,
+          "azimuth": 353.5,
+          "clino": -6.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 2.43,
+          "azimuth": 253.9,
+          "clino": -29.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 1.3,
+          "azimuth": 88.5,
+          "clino": 45,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 0.7,
+          "azimuth": 94.1,
+          "clino": -20.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB1",
+          "length": 0.94,
+          "azimuth": 132.1,
+          "clino": -49.3,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "GKB1",
+          "to": "GKB2",
+          "length": 2.42,
+          "azimuth": 259.6,
+          "clino": -12.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.12,
+          "azimuth": 264.8,
+          "clino": -19.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.37,
+          "azimuth": 254.9,
+          "clino": -25.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.44,
+          "azimuth": 236.8,
+          "clino": -35.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.06,
+          "azimuth": 212.1,
+          "clino": -26.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 0.87,
+          "azimuth": 198,
+          "clino": -19.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.22,
+          "azimuth": 219.6,
+          "clino": -1.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.36,
+          "azimuth": 259.7,
+          "clino": -4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.05,
+          "azimuth": 63.9,
+          "clino": 17,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 0.72,
+          "azimuth": 49.1,
+          "clino": 2.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.07,
+          "azimuth": 49.7,
+          "clino": -11.8,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 0.71,
+          "azimuth": 112.9,
+          "clino": -10.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 1.21,
+          "azimuth": 86.4,
+          "clino": -20.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 0.64,
+          "azimuth": 155.7,
+          "clino": -81.3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 0.71,
+          "azimuth": 19.1,
+          "clino": -58.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 0.68,
+          "azimuth": 143.6,
+          "clino": -41.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 2.72,
+          "azimuth": 79.1,
+          "clino": 8.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB2",
+          "length": 2.99,
+          "azimuth": 75.5,
+          "clino": 18.9,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "GKB2",
+          "to": "GKB3",
+          "length": 2.19,
+          "azimuth": 237.8,
+          "clino": -7.6,
+          "comment": ""
+        },
+        {
+          "type": "center",
+          "from": "GKB3",
+          "to": "GKB4",
+          "length": 1.57,
+          "azimuth": 225,
+          "clino": -5.9,
+          "comment": "vesztett"
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 0.73,
+          "azimuth": 32.3,
+          "clino": 7.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 1.67,
+          "azimuth": 49.4,
+          "clino": 3,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 0.49,
+          "azimuth": 63.1,
+          "clino": 32.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 0.54,
+          "azimuth": 98.6,
+          "clino": 21.4,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 1.04,
+          "azimuth": 85.8,
+          "clino": 25.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 0.45,
+          "azimuth": 61.5,
+          "clino": 59.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 0.38,
+          "azimuth": 30.2,
+          "clino": -53.1,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 1.24,
+          "azimuth": 301.7,
+          "clino": 29.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 1.84,
+          "azimuth": 298.1,
+          "clino": 28.9,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 1.97,
+          "azimuth": 296.8,
+          "clino": 25.6,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 1.77,
+          "azimuth": 300,
+          "clino": 32.2,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 0.83,
+          "azimuth": 305.9,
+          "clino": 31.5,
+          "comment": ""
+        },
+        {
+          "type": "splay",
+          "from": "GKB4",
+          "length": 0.98,
+          "azimuth": 295.3,
+          "clino": 32.9,
+          "comment": ""
         }
       ]
     }
