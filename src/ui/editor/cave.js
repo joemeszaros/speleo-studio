@@ -35,10 +35,16 @@ import { i18n } from '../../i18n/i18n.js';
 import { WGS84Dialog } from '../wgs84-dialog.js';
 
 class CaveEditor extends Editor {
-  constructor(db, options, cave, scene, panel) {
+  /**
+   * @param {Cave} [parentCave] - When set (and `cave` is undefined), the editor creates a new
+   *        sub-cave nested under this parent instead of a new top-level cave. Sub-caves inherit
+   *        geoData from the root cave, so the coordinate-system section is hidden in this mode.
+   */
+  constructor(db, options, cave, scene, panel, parentCave = undefined) {
     super(panel, scene, cave, undefined); // no attributes thus attributeDefs is undefined
     this.db = db;
     this.options = options;
+    this.parentCave = parentCave;
     this.graph = undefined; // sort of a lazy val
     document.addEventListener('languageChanged', () => this.setupPanel());
   }
@@ -91,7 +97,10 @@ class CaveEditor extends Editor {
       (contentElmnt) => this.build(contentElmnt),
       () =>
         i18n.t('ui.editors.caveSheet.title', {
-          name : this.cave?.name === undefined ? i18n.t('ui.editors.caveSheet.titleNew') : this.cave.name
+          name :
+            this.cave?.name === undefined
+              ? i18n.t(this.parentCave !== undefined ? 'ui.editors.caveSheet.titleNewSubCave' : 'ui.editors.caveSheet.titleNew')
+              : this.cave.name
         }),
       true,
       false,
@@ -308,6 +317,11 @@ class CaveEditor extends Editor {
     coordsDiv.appendChild(coordSystemDiv);
     coordsDiv.appendChild(utmZoneDiv);
     coordsDiv.appendChild(this.coordsList);
+    // Sub-caves inherit geoData from the root cave; they never own a coordinate system, so
+    // the whole coordinate section is hidden when creating one.
+    if (this.parentCave !== undefined) {
+      coordsDiv.style.display = 'none';
+    }
     form.appendChild(coordsDiv);
 
     // Handle coordinate system change
@@ -461,6 +475,17 @@ class CaveEditor extends Editor {
           return;
         }
 
+        // For a new sub-cave the name must also be unique within the parent cave's subtree
+        // (station keys are qualified by the cave-name chain, so reused names would collide).
+        if (this.cave === undefined && this.parentCave !== undefined) {
+          const existingNames = new Set();
+          this.parentCave.walk((c) => existingNames.add(c.name));
+          if (existingNames.has(this.caveData.name)) {
+            showErrorPanel(i18n.t('ui.editors.caveSheet.messages.caveNameAlreadyExists', { name: this.caveData.name }));
+            return;
+          }
+        }
+
         const caveMetadata = new CaveMetadata(
           this.caveData.metadata.country,
           this.caveData.metadata.region,
@@ -579,7 +604,16 @@ class CaveEditor extends Editor {
           return;
         }
 
-        if (this.cave === undefined) {
+        if (this.cave === undefined && this.parentCave !== undefined) {
+          // New sub-cave: nest it under the parent. It owns no geoData (inherited from the root).
+          // Emitting caveChanged with a structural reason makes the manager resolve the root cave,
+          // recompute the network, reload the scene and rebuild the explorer subtree, then persist.
+          this.cave = new Cave(this.caveData.name, caveMetadata, undefined);
+          this.cave.aliases = aliases;
+          this.parentCave.children.push(this.cave);
+          this.#emitCaveChanged(['structure']);
+
+        } else if (this.cave === undefined) {
           this.cave = new Cave(this.caveData.name, caveMetadata, geoData);
           this.cave.aliases = aliases;
           this.#emitCaveAdded();

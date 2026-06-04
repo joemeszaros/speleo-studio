@@ -567,20 +567,6 @@
   transform: scale(1.1);
 }
 
-.context-menu-plus {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: #04aa6d;
-  color: #ffffff;
-  border-radius: 4px;
-  font-size: 18px;
-  font-weight: bold;
-  line-height: 1;
-}
-
 .explorer-tree-visibility .eye-strikethrough {
   position: relative;
   display: inline-block;

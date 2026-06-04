@@ -345,6 +345,7 @@
         "editComponentAttributes": "Komponens attribútumok",
         "editStationAttributes": "Pont attribútumok",
         "newSurvey": "Új felmérés",
+        "newSubCave": "Új albarlang",
         "importSurvey": "Felmérés importálása",
         "cycles": "Hurkok",
         "editSurveySheet": "Adatlap szerkesztése",
@@ -731,6 +732,7 @@
       "caveSheet": {
         "title": "Barlang adatlap: {name}",
         "titleNew": "Új barlang",
+        "titleNewSubCave": "Új albarlang",
         "fields": {
           "name": "Barlang neve",
           "settlement": "Település",

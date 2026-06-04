@@ -117,14 +117,14 @@ export class ExplorerTree {
     const id = idOverride ?? cave.id;
     const node = {
       id,
-      type        : 'cave',
-      label       : cave.name,
-      data        : cave,
+      type     : 'cave',
+      label    : cave.name,
+      data     : cave,
       rootCaveName,
       parent,
-      children    : [],
-      visible     : cave.visible !== false,
-      expanded    : this.expandedNodes.has(id)
+      children : [],
+      visible  : cave.visible !== false,
+      expanded : this.expandedNodes.has(id)
     };
     for (const child of cave.children) {
       node.children.push(this.#buildCaveNode(child, rootCaveName, node));
@@ -174,22 +174,6 @@ export class ExplorerTree {
     currentNodes.forEach((node) => {
       this.nodes.set(node.id, node);
     });
-  }
-
-  addSurvey(cave, survey) {
-    const caveNode = this.nodes.get(cave.name);
-    if (!caveNode) return null;
-
-    const surveyNode = this.#buildSurveyNode(survey, cave.name, caveNode);
-    caveNode.children.push(surveyNode);
-
-    // Reapply filter if active
-    if (this.filterText) {
-      this.applyFilter();
-    }
-
-    this.render();
-    return surveyNode;
   }
 
   removeCave(caveName) {
@@ -471,7 +455,7 @@ export class ExplorerTree {
       },
       {
         id      : 'newSurvey',
-        icon    : '<span class="context-menu-plus">+</span>',
+        icon    : '📝',
         title   : i18n.t('ui.explorer.menu.newSurvey'),
         onclick : () => {
           editorSetup(
@@ -482,6 +466,23 @@ export class ExplorerTree {
               document.getElementById('fixed-size-editor'),
               this.declinationCache,
               this.options
+            )
+          );
+        }
+      },
+      {
+        id      : 'newSubCave',
+        icon    : '♎',
+        title   : i18n.t('ui.explorer.menu.newSubCave'),
+        onclick : () => {
+          editorSetup(
+            new CaveEditor(
+              this.db,
+              this.options,
+              undefined,
+              this.scene,
+              document.getElementById('fixed-size-editor'),
+              caveNode.data
             )
           );
         }
@@ -608,7 +609,9 @@ export class ExplorerTree {
             // Persist the color (saveCave resolves the root, so a sub-cave color is stored in its
             // top-level cave record). 'color' is a cosmetic reason → saved without a recompute.
             document.dispatchEvent(
-              new CustomEvent('caveChanged', { detail: { cave: caveNode.data, reasons: ['color'], source: 'explorer' } })
+              new CustomEvent('caveChanged', {
+                detail : { cave: caveNode.data, reasons: ['color'], source: 'explorer' }
+              })
             );
           });
 
@@ -1618,9 +1621,7 @@ export class ExplorerTree {
     }
 
     this.render();
-    document.dispatchEvent(
-      new CustomEvent('surveyReordered', { detail: { cave: parentCave } })
-    );
+    document.dispatchEvent(new CustomEvent('surveyReordered', { detail: { cave: parentCave } }));
   }
 
   /**

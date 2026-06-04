@@ -188,7 +188,7 @@ class ProjectManager {
   async onSurveyAdded(e) {
     const cave = e.detail.cave;
     const newSurvey = e.detail.survey;
-    this.addSurvey(cave.name, newSurvey);
+    this.addSurvey(cave, newSurvey);
     await this.saveCave(cave);
   }
 
@@ -1132,16 +1132,20 @@ class ProjectManager {
 
   }
 
-  addSurvey(caveName, survey) {
-    const cave = this.db.getCave(caveName);
+  addSurvey(cave, survey) {
+    // `cave` is the actual cave object (it may be a nested sub-cave, which is not in db.caves by
+    // name). Operate on it directly; the root cave is resolved by reloadCave/updateCave for the
+    // recompute, scene reload and explorer rebuild.
     // Clear start station for non-first surveys
     if (cave.surveys.length > 0) {
       survey.start = undefined;
     }
     cave.surveys.push(survey);
-    this.explorer.addSurvey(cave, survey);
     if (survey.shots.length > 0) {
       this.reloadCave(cave);
+    } else {
+      // No geometry to recompute yet — just rebuild the (sub-)cave's subtree in the explorer.
+      this.explorer.updateCave(this.#rootCaveOf(cave));
     }
   }
 

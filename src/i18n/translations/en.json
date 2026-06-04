@@ -345,6 +345,7 @@
         "editComponentAttributes": "Edit component attributes",
         "editStationAttributes": "Edit station attributes",
         "newSurvey": "New survey",
+        "newSubCave": "New sub-cave",
         "importSurvey": "Import survey",
         "cycles": "Cycles",
         "setCaveColor": "Set cave color",
@@ -728,6 +729,7 @@
       "caveSheet": {
         "title": "Cave sheet editor: {name}",
         "titleNew": "New cave",
+        "titleNewSubCave": "New sub-cave",
         "fields": {
           "name": "Name",
           "settlement": "Settlement",

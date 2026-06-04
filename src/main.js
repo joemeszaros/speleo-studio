@@ -973,7 +973,7 @@ class Main {
       return;
     }
     const cave = this.db.getCave(caveName);
-    this.projectManager.addSurvey(caveName, survey);
+    this.projectManager.addSurvey(cave, survey);
     await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
   }
 
