@@ -667,6 +667,61 @@ class SceneInteraction {
     contentElmnt.appendChild(container);
   }
 
+  showDistanceColorPanel() {
+    wm.makeFloatingPanel(
+      this.toolPanel,
+      (e) => this.buildDistanceColorPanel(e),
+      'ui.panels.distanceColor.title',
+      false,
+      false,
+      {}
+    );
+  }
+
+  buildDistanceColorPanel(contentElmnt) {
+    // Same datalist disambiguation as the locate panel: bare station names are shown when unique,
+    // otherwise the owning cave → … → survey path is appended; the exact internal key is kept in
+    // `station=` (and the owning cave in `cave=`) so the chosen start station is unambiguous.
+    // Splay endpoints are excluded — they are not part of the distance traversal network.
+    const stNames = this.db.getAllStationNameDetails().filter((x) => !x.splay);
+    const counts = new Map();
+    for (const x of stNames) counts.set(x.name, (counts.get(x.name) ?? 0) + 1);
+    const optionValue = (x) => (x.path && counts.get(x.name) > 1 ? `${x.name} — ${x.path}` : x.name);
+    const options = stNames
+      .map(
+        (x) =>
+          `<option cave="${x.cave}" station="${x.key}" station-name="${x.name.replace(/"/g, '&quot;')}" value="${optionValue(x).replace(/"/g, '&quot;')}">`
+      )
+      .join('');
+
+    const container = node`<div id="container-distance-color">
+        <label for="distancestartstation">${i18n.t('ui.panels.distanceColor.startStation')}: <input type="search" list="distance-stations" id="distancestartstation"/></label>
+        <datalist id="distance-stations">${options}</datalist>
+        <button id="distance-color-button">${i18n.t('ui.panels.distanceColor.apply')}</button>
+      </div>`;
+    const input = container.querySelector('#distancestartstation');
+
+    container.querySelector('#distance-color-button').onclick = () => {
+      const typed = input.value.trim();
+      const opts = [...container.querySelectorAll('#distance-stations option')];
+      const selectedOption =
+        opts.find((o) => o.value === typed) || opts.find((o) => o.getAttribute('station-name') === typed);
+      if (!selectedOption) {
+        showErrorPanel(i18n.t('ui.panels.locateStation.notFound', { name: typed }));
+        return;
+      }
+      const caveName = selectedOption.getAttribute('cave');
+      const stationKey = selectedOption.getAttribute('station');
+      // Remember the chosen origin, then recolor. We recolor explicitly (rather than toggling the
+      // config mode) so re-picking a station while already in distance mode still takes effect.
+      this.scene.speleo.colorModeHelper.distanceStartStation = { cave: caveName, station: stationKey };
+      this.scene.speleo.changeCenterLineColorMode('gradientByDistance');
+      this.toolPanel.style.display = 'none';
+    };
+
+    contentElmnt.appendChild(container);
+  }
+
   locateStation(caveName, stationName) {
 
     const cave = this.db.getCave(caveName);

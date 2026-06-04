@@ -67,6 +67,7 @@ class Database {
   //   cave – the TOP-level cave name (the db key);
   //   path – the full breadcrumb of cave→…→survey names that own the station, so stations are
   //          distinguishable and searchable by sub-cave / survey name (e.g. "rural").
+  //   splay – true when the station is a splay endpoint (callers may filter these out).
   getAllStationNameDetails() {
     const stNames = [];
     for (const c of this.caves.values()) {
@@ -77,9 +78,10 @@ class Database {
         const namePath = survey ? c.getSurveyNamePath(survey) : [c.name];
         stNames.push({
           key,
-          name : bareStationName(key),
-          cave : c.name,
-          path : namePath.join(' / ')
+          name  : bareStationName(key),
+          cave  : c.name,
+          path  : namePath.join(' / '),
+          splay : station.isSplay?.() ?? false
         });
       }
     }

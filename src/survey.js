@@ -568,12 +568,16 @@ class SurveyHelper {
 
   }
 
-  static getColorGradientsForCaves(caves, lOptions) {
+  // `startStation` (optional) is a user-chosen distance origin as { cave, station } where station
+  // is the survey-qualified station key. It only applies to its own cave; the other caves keep
+  // their default (first-survey) start.
+  static getColorGradientsForCaves(caves, lOptions, startStation) {
     if (lOptions.color.mode === 'gradientByZ') {
       return SurveyHelper.getColorGradientsByDepthForCaves(caves, lOptions);
     } else if (lOptions.color.mode === 'gradientByDistance') {
       const m = [...caves.entries()].map(([caveName, cave]) => {
-        const colors = SurveyHelper.getColorGradientsByDistance(cave, lOptions);
+        const start = startStation?.cave === caveName ? startStation.station : undefined;
+        const colors = SurveyHelper.getColorGradientsByDistance(cave, lOptions, start);
         return [caveName, colors];
       });
       return new Map(m);
@@ -582,18 +586,20 @@ class SurveyHelper {
     }
   }
 
-  static getColorGradients(cave, lOptions) {
+  static getColorGradients(cave, lOptions, startStation) {
     if (lOptions.color.mode === 'gradientByZ') {
       const colorGradientsCaves = SurveyHelper.getColorGradientsByDepthForCaves([cave], lOptions);
       return colorGradientsCaves.get(cave.name);
     } else if (lOptions.color.mode === 'gradientByDistance') {
-      return SurveyHelper.getColorGradientsByDistance(cave, lOptions);
+      return SurveyHelper.getColorGradientsByDistance(cave, lOptions, startStation);
     } else {
       return new Map();
     }
   }
 
-  static getColorGradientsByDistance(cave, clOptions) {
+  // `startStation` (optional) is the survey-qualified key of a user-chosen distance origin. When
+  // omitted or unresolvable it falls back to the first survey's start.
+  static getColorGradientsByDistance(cave, clOptions, startStation) {
     const stations = cave.getAllStations();
     const surveys = cave.getAllSurveys();
     const aliases = cave.getAllAliases();
@@ -636,6 +642,15 @@ class SurveyHelper {
         g.addEdge(fromKey, toKey, 0);
       }
     });
+
+    // A user-chosen start station wins over the default first-survey start, as long as it resolves
+    // to a placed station in this cave's connected network.
+    if (startStation !== undefined) {
+      const overrideKey = resolveKey(startStation);
+      if (overrideKey !== undefined && g.adjacencyList.has(overrideKey)) {
+        startStationName = overrideKey;
+      }
+    }
 
     // The first survey's start can be unplaced (isolated survey) → not a graph vertex; traverse()
     // would then dereference undefined. Fall back to any placed station (the gradient is relative,

@@ -26,6 +26,9 @@ export class ColorModeHelper {
     this.caveObjects = caveObjects;
     this.mats = materials.materials;
     this.materias = materials;
+    // User-chosen start station for 'gradientByDistance' mode: { cave, station } (survey-qualified
+    // station key). Transient (not persisted) — reset implicitly whenever the user picks a new one.
+    this.distanceStartStation = undefined;
   }
 
   setColorMode(mode, trigger) {
@@ -68,7 +71,11 @@ export class ColorModeHelper {
     switch (mode) {
       case 'gradientByZ':
       case 'gradientByDistance': {
-        const colors = SurveyHelper.getColorGradientsForCaves(this.db.getCavesMap(), this.options.scene.caveLines);
+        const colors = SurveyHelper.getColorGradientsForCaves(
+          this.db.getCavesMap(),
+          this.options.scene.caveLines,
+          this.distanceStartStation
+        );
         this.caveObjects.forEach((surveyEntrires, cName) => {
           surveyEntrires.forEach((e, sName) => {
             const sColor = this.db.getSurveyById(cName, sName)?.color;

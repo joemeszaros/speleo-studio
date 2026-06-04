@@ -605,6 +605,11 @@
         "locate": "Keresése",
         "notFound": "Nem található '{name}' nevű pont"
       },
+      "distanceColor": {
+        "title": "Távolságszínezés kezdőpontja",
+        "startStation": "Kezdőpont",
+        "apply": "Alkalmaz"
+      },
       "export": {
         "title": "Barlang(ok) exportálása",
         "format": "Formátum",

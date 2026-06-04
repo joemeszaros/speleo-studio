@@ -553,6 +553,11 @@
         "locate": "Locate point",
         "notFound": "No station named '{name}' was found"
       },
+      "distanceColor": {
+        "title": "Distance color start station",
+        "startStation": "Start station",
+        "apply": "Apply"
+      },
       "export": {
         "title": "Export cave(s)",
         "format": "Format",

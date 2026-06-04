@@ -392,6 +392,11 @@ class NavigationBar {
           selected : this.options.scene.caveLines.color.mode === e.id,
           click    : () => {
             this.options.scene.caveLines.color.mode = e.id;
+            // Distance mode needs an origin station — let the user pick the start station the
+            // gradient is measured from.
+            if (e.id === 'gradientByDistance') {
+              this.interactive.showDistanceColorPanel();
+            }
           }
         }))
       },
