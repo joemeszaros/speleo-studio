@@ -21,6 +21,7 @@ import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEdito
 import { CyclePanel } from './editor/cycle.js';
 import { StationCommentsEditor } from './editor/station-comments.js';
 import { StationDimensionsEditor } from './editor/station-dimensions.js';
+import { SurveyAliasesEditor } from './editor/survey-aliases.js';
 import { ExportWindow } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
 
@@ -568,6 +569,20 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.editStationDimensions'),
         onclick : () => {
           this.editor = new StationDimensionsEditor(
+            this.options,
+            caveNode.data,
+            document.getElementById('resizable-editor')
+          );
+          this.editor.setupPanel();
+          this.editor.show();
+        }
+      },
+      {
+        id      : 'editSurveyAliases',
+        icon    : '🎭',
+        title   : i18n.t('ui.explorer.menu.editSurveyAliases'),
+        onclick : () => {
+          this.editor = new SurveyAliasesEditor(
             this.options,
             caveNode.data,
             document.getElementById('resizable-editor')

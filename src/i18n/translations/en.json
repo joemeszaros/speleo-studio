@@ -358,7 +358,8 @@
         "clearSurveyColor": "Clear survey color",
         "openSurveyEditor": "Open survey editor",
         "editStationComments": "Edit station comments",
-        "editStationDimensions": "Edit station dimensions (LRUD)"
+        "editStationDimensions": "Edit station dimensions (LRUD)",
+        "editSurveyAliases": "Edit survey aliases"
       },
       "confirm": {
         "deleteCave": "Do you want to delete cave '{name}'?",
@@ -746,7 +747,6 @@
           "southern": "Southern",
           "utmEasting": "Easting",
           "utmNorthing": "Northing",
-          "surveyAliases": "Survey aliases",
           "stationName": "Station name",
           "eovy": "Y coordinate",
           "eovx": "X coordinate",
@@ -785,8 +785,6 @@
         "errors": {
           "invalidCoordinates": "Invalid coordinates",
           "emptyStationName": "Station {name} is empty",
-          "aliasFromToSame": "Alias from and to cannot be the same: {from} -> {to}",
-          "invalidAliases": "Invalid aliases",
           "missingCoordinates": "Missing coordinates for the selected coordinate system",
           "coordinateSystemMismatch": "Coordinate system of caves {caves} does not match the selected coordinate system",
           "coordinatesTooFar": "The coordinates are too far from existing caves/models: {entities}",
@@ -795,7 +793,6 @@
         },
         "warnings": {},
         "buttons": {
-          "addAlias": "Add alias",
           "addCoordinate": "Add coordinate",
           "convertGPS": "Convert GPS"
         }
@@ -875,6 +872,22 @@
         "message": {
           "missingFields": "Row has missing fields: {fields}",
           "duplicateStationComment": "Station comment for station {station} already exists"
+        }
+      },
+      "surveyAliases": {
+        "title": "Survey Aliases: {name}",
+        "buttons": {
+          "validate": "Validate",
+          "update": "Update"
+        },
+        "columns": {
+          "from": "From",
+          "to": "To"
+        },
+        "message": {
+          "missingFields": "Row has missing fields: {fields}",
+          "fromToSame": "Alias from and to cannot be the same: {from} -> {to}",
+          "duplicateAlias": "Alias {from} -> {to} already exists"
         }
       },
       "stationDimensions": {

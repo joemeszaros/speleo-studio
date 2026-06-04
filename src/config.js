@@ -220,6 +220,11 @@ export const DEFAULT_OPTIONS = {
         height       : 320,
         width        : 700,
         columnWidths : {}
+      },
+      surveyAliases : {
+        height       : 300,
+        width        : 500,
+        columnWidths : {}
       }
     },
     sidebar : {
@@ -529,6 +534,10 @@ export class ConfigManager {
 
     if (config.ui.stationDetails.dimensions === undefined) {
       config.ui.stationDetails.dimensions = false;
+    }
+
+    if (config.ui.editor.surveyAliases === undefined) {
+      config.ui.editor.surveyAliases = { height: 300, width: 500, columnWidths: {} };
     }
   }
 

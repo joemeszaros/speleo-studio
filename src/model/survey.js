@@ -612,6 +612,17 @@ class SurveyAlias {
     this.to = to;
   }
 
+  getEmptyFields() {
+    const empty = [];
+    if (this.from === undefined || this.from === null || this.from === '') {
+      empty.push('from');
+    }
+    if (this.to === undefined || this.to === null || this.to === '') {
+      empty.push('to');
+    }
+    return empty;
+  }
+
   contains(n) {
     return this.from === n || this.to === n;
   }

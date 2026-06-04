@@ -515,15 +515,13 @@ test.describe('Cave Editor', () => {
     await page.locator('#wgs84-cancel').click();
   });
 
-  test('cave editor shows aliases section', async ({ page }) => {
+  test('survey aliases have their own editor in the cave context menu', async ({ page }) => {
     await rightClickCave(page, 'Test Cave');
-    await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
+    await page.locator('#explorer-context-menu .context-menu-option[title*="survey aliases"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('#resizable-editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
-
-    const aliasesSection = editor.locator('.aliases-section');
-    await expect(aliasesSection).toBeVisible();
+    await expect(editor.locator('#survey-aliases-table')).toBeVisible();
   });
 
   test('cave editor shows correct date from fixture', async ({ page }) => {

@@ -296,6 +296,31 @@ export class IconBar {
     ];
   }
 
+  // Survey aliases editor-specific buttons
+  static getSurveyAliasesButtons(validateAliases, updateAliases, cancelAliases) {
+    return [
+      { separator: true },
+      {
+        id      : 'validate-aliases',
+        tooltip : i18n.t('ui.editors.surveyAliases.buttons.validate'),
+        icon    : 'icons/validate.svg',
+        click   : () => validateAliases()
+      },
+      {
+        id      : 'update-aliases',
+        tooltip : i18n.t('ui.editors.surveyAliases.buttons.update'),
+        icon    : 'icons/update.svg',
+        click   : () => updateAliases()
+      },
+      {
+        id      : 'cancel-aliases',
+        tooltip : i18n.t('ui.editors.base.buttons.cancel'),
+        icon    : 'icons/cancel.svg',
+        click   : () => cancelAliases()
+      }
+    ];
+  }
+
   // Cycle-specific buttons
   static getCycleButtons(showAllCycles, hideAllCycles, showAllDeviatingShots, hideAllDeviatingShots) {
     return [

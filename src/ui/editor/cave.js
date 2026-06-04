@@ -30,7 +30,6 @@ import {
   StationWithCoordinate,
   CoordinateSystemType
 } from '../../model/geo.js';
-import { SurveyAlias, ShotType } from '../../model/survey.js';
 import { i18n } from '../../i18n/i18n.js';
 import { WGS84Dialog } from '../wgs84-dialog.js';
 
@@ -159,13 +158,6 @@ class CaveEditor extends Editor {
             };
           }
 
-        }) ?? [],
-      aliases:
-        this.cave?.aliases?.map((a) => {
-          return {
-            from : a.from,
-            to   : a.to
-          };
         }) ?? []
 
     };
@@ -433,24 +425,6 @@ class CaveEditor extends Editor {
       this.renderCoords();
     }
 
-    const getStationOptions = () => {
-      if (this.cave === undefined) {
-        return '';
-      }
-      const stationNames = this.db.getStationNames(this.caveData.name, (s) => s.type !== ShotType.SPLAY);
-      return stationNames
-        .map((name) => `<option station="${name}" value="${name}">`)
-        .join('');
-    };
-
-    this.aliasesDiv = U.node`<div class="aliases-section"><b>${i18n.t('ui.editors.caveSheet.fields.surveyAliases')}:</b><br/><br/></div>`;
-    this.aliasesList = U.node`<div class="aliases-list" style="display: block;"></div>`;
-    const dataList = U.node`<datalist id="station-names">${getStationOptions()}</datalist>`;
-    this.aliasesDiv.appendChild(this.aliasesList);
-    this.aliasesDiv.appendChild(dataList);
-    form.appendChild(this.aliasesDiv);
-    this.renderAliases();
-
     const saveBtn = U.node`<button type="submit">${i18n.t('common.save')}</button>`;
     const cancelBtn = U.node`<button type="button">${i18n.t('common.cancel')}</button>`;
     cancelBtn.onclick = (e) => {
@@ -582,23 +556,6 @@ class CaveEditor extends Editor {
           }
         }
 
-        const aliases = this.caveData.aliases.map((a) => new SurveyAlias(a.from, a.to));
-
-        errors = [];
-        aliases.forEach((a) => {
-
-          if (a.from === a.to && a.from !== undefined && a.from !== '') {
-            errors.push(i18n.t('ui.editors.caveSheet.errors.aliasFromToSame', { from: a.from, to: a.to }));
-          }
-
-        });
-
-        if (errors.length > 0) {
-          errors = [...new Set(errors)];
-          showErrorPanel(i18n.t('ui.editors.caveSheet.errors.invalidAliases') + '<br>' + errors.join('<br>'));
-          return;
-        }
-
         if (this.caveData?.coordinateSystem !== undefined && (this.caveData?.coordinates?.length ?? 0) === 0) {
           showErrorPanel(i18n.t('ui.editors.caveSheet.errors.missingCoordinates'));
           return;
@@ -609,13 +566,11 @@ class CaveEditor extends Editor {
           // Emitting caveChanged with a structural reason makes the manager resolve the root cave,
           // recompute the network, reload the scene and rebuild the explorer subtree, then persist.
           this.cave = new Cave(this.caveData.name, caveMetadata, undefined);
-          this.cave.aliases = aliases;
           this.parentCave.children.push(this.cave);
           this.#emitCaveChanged(['structure']);
 
         } else if (this.cave === undefined) {
           this.cave = new Cave(this.caveData.name, caveMetadata, geoData);
-          this.cave.aliases = aliases;
           this.#emitCaveAdded();
 
         } else {
@@ -624,11 +579,6 @@ class CaveEditor extends Editor {
             this.db.renameCave(oldName, this.caveData.name);
             this.#emitCaveRenamed(oldName, this.cave);
           }
-
-          const aliasesHasChanged =
-            this.cave.aliases.length !== aliases.length || this.cave.aliases.some((a, i) => !a.isEqual(aliases[i]));
-
-          this.cave.aliases = aliases;
 
           const oldGeoData = this.cave.geoData;
           this.cave.metadata = caveMetadata;
@@ -641,14 +591,10 @@ class CaveEditor extends Editor {
             this.#emitCoordinateSystemChanged(geoData?.coordinateSystem);
           }
           // deleting an eov coordinate will change the survey data
-          // an alias can change survey data
-          if (this.metadataHasChanged || aliasesHasChanged || !geoDataIsEqual) {
+          if (this.metadataHasChanged || !geoDataIsEqual) {
             const reasons = [];
             if (this.metadataHasChanged) {
               reasons.push('metadata');
-            }
-            if (aliasesHasChanged) {
-              reasons.push('alias');
             }
             if (!geoDataIsEqual) {
               reasons.push('geodata');
@@ -663,63 +609,6 @@ class CaveEditor extends Editor {
 
     };
     contentElmnt.appendChild(form);
-  }
-
-  renderAliases() {
-    this.aliasesList.innerHTML = '';
-
-    // Create a grid container with 3 columns
-    const gridContainer = U.node`<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px;"></div>`;
-
-    this.caveData.aliases.forEach((item, idx) => {
-      const aliasItem = U.node`<div style="display: flex; gap: 8px; align-items: center;"></div>`;
-
-      const fromInput = U.node`<input required placeholder="From" type="search" list="station-names" value="${item.from || ''}" style="width: 40px; flex: 1;"/>`;
-      fromInput.onchange = (e) => {
-        if (this.caveData.aliases[idx].from !== e.target.value) {
-          this.caveHasChanged = true;
-        }
-        this.caveData.aliases[idx].from = e.target.value;
-      };
-
-      const toInput = U.node`<input required placeholder="To" type="search" list="station-names" value="${item.to || ''}" style="width: 40px; flex: 1;"/>`;
-      toInput.onchange = (e) => {
-        if (this.caveData.aliases[idx].to !== e.target.value) {
-          this.caveHasChanged = true;
-        }
-        this.caveData.aliases[idx].to = e.target.value;
-      };
-
-      const removeBtn = U.node`<button type="button" style="background: none; border: none; cursor: pointer; font-size: 18px; color: #666; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" title="${i18n.t('common.remove')}">×</button>`;
-      removeBtn.onclick = (e) => {
-        e.preventDefault();
-        this.caveData.aliases.splice(idx, 1);
-        this.renderAliases();
-        this.caveHasChanged = true;
-      };
-      removeBtn.onmouseenter = () => {
-        removeBtn.style.color = '#d32f2f';
-      };
-      removeBtn.onmouseleave = () => {
-        removeBtn.style.color = '#666';
-      };
-
-      aliasItem.appendChild(fromInput);
-      aliasItem.appendChild(toInput);
-      aliasItem.appendChild(removeBtn);
-      gridContainer.appendChild(aliasItem);
-    });
-
-    this.aliasesList.appendChild(gridContainer);
-
-    const addBtn = U.node`<button type="button">${i18n.t('ui.editors.caveSheet.buttons.addAlias')}</button>`;
-    addBtn.onclick = (e) => {
-      e.preventDefault();
-      this.caveData.aliases.push({ from: '', to: '' });
-      this.renderAliases();
-      this.caveHasChanged = true;
-    };
-    this.aliasesList.appendChild(addBtn);
   }
 
   renderCoords() {

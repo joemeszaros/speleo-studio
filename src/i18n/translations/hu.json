@@ -358,7 +358,8 @@
         "clearCaveColor": "Barlang színének törlése",
         "openSurveyEditor": "Felmérés szerkesztése",
         "editStationComments": "Pont megjegyzések szerkesztése",
-        "editStationDimensions": "Pont méretek szerkesztése (LRUD)"
+        "editStationDimensions": "Pont méretek szerkesztése (LRUD)",
+        "editSurveyAliases": "Felmérés aliasok szerkesztése"
       },
       "confirm": {
         "deleteCave": "Biztosan törölni akarod ezt a barlangot? Ez a művelet nem vonható vissza.",
@@ -749,7 +750,6 @@
           "southern": "Déli",
           "utmEasting": "Keleti koordináta",
           "utmNorthing": "Északi koordináta",
-          "surveyAliases": "Felmérés aliasok",
           "stationName": "Pont neve",
           "eovy": "Y koordináta",
           "eovx": "X koordináta",
@@ -788,8 +788,6 @@
         "errors": {
           "invalidCoordinates": "Érvénytelen koordináták",
           "emptyStationName": "A(z) {name} pont nincs megadva",
-          "aliasFromToSame": "Az alias kezdő és végpontja nem lehet ugyanaz: {from} -> {to}",
-          "invalidAliases": "Érvénytelen aliasok",
           "missingCoordinates": "Nincsenek koordináták a kiválasztott koordináta-rendszerhez",
           "coordinateSystemMismatch": "A(z) {caves} barlang(ok) koordináta-rendszere nem egyezik a kiválasztott koordináta-rendszerrel",
           "coordinatesTooFar": "A koordináták túl messze vannak a meglévő barlangoktól/modellektől: {entities}",
@@ -798,7 +796,6 @@
         },
         "warnings": {},
         "buttons": {
-          "addAlias": "Alias hozzáadása",
           "addCoordinate": "Koordináta hozzáadása",
           "convertGPS": "GPS konvertálás"
         }
@@ -885,6 +882,22 @@
           "missingFields": "Sor hiányzó mezői: {fields}",
           "duplicateStationComment": "A(z) {station} pont megjegyzése már létezik",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}"
+        }
+      },
+      "surveyAliases": {
+        "title": "Felmérés aliasok: {name}",
+        "buttons": {
+          "validate": "Validálás",
+          "update": "Aliasok frissítése"
+        },
+        "columns": {
+          "from": "Kezdőpont",
+          "to": "Végpont"
+        },
+        "message": {
+          "missingFields": "Sor hiányzó mezői: {fields}",
+          "fromToSame": "Az alias kezdő és végpontja nem lehet ugyanaz: {from} -> {to}",
+          "duplicateAlias": "A(z) {from} -> {to} alias már létezik"
         }
       },
       "stationDimensions": {
