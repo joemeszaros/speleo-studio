@@ -21,6 +21,7 @@ import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEdito
 import { CyclePanel } from './editor/cycle.js';
 import { StationCommentsEditor } from './editor/station-comments.js';
 import { StationDimensionsEditor } from './editor/station-dimensions.js';
+import { ExportWindow } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
 
 export class ExplorerTree {
@@ -632,6 +633,19 @@ export class ExplorerTree {
         }
       },
       {
+        id      : 'exportCave',
+        icon    : '📤',
+        title   : i18n.t('ui.explorer.menu.exportCave'),
+        onclick : () => {
+          new ExportWindow(
+            [caveNode.data],
+            this.projectSystem.getCurrentProject(),
+            this.scene,
+            document.getElementById('export-panel')
+          ).show();
+        }
+      },
+      {
         id      : 'deleteCave',
         icon    : '🗑️',
         title   : i18n.t('ui.explorer.menu.deleteCave'),
@@ -656,7 +670,7 @@ export class ExplorerTree {
     // Read-only caves (Survex .3d) are visualization-only: keep only the non-editing
     // actions (view cave sheet, set/clear color, delete cave). Editing actions —
     // new/import survey, attribute editors, comments, dimensions, cycles — are omitted.
-    const readOnlyAllowed = new Set(['editCaveData', 'setCaveColor', 'clearCaveColor', 'deleteCave']);
+    const readOnlyAllowed = new Set(['editCaveData', 'setCaveColor', 'clearCaveColor', 'exportCave', 'deleteCave']);
     const caveItems = readOnly ? items.filter((i) => readOnlyAllowed.has(i.id)) : items;
     this.showContextMenu(caveNode, caveItems);
   }

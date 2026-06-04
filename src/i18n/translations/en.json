@@ -350,6 +350,7 @@
         "setCaveColor": "Set cave color",
         "clearCaveColor": "Clear cave color",
         "editSurveySheet": "Edit survey sheet",
+        "exportCave": "Export cave",
         "deleteCave": "Delete cave",
         "deleteSurvey": "Delete survey",
         "setSurveyColor": "Set survey color",
