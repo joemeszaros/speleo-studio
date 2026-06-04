@@ -61,6 +61,11 @@
           <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő importálási opciót:</p>
           <ul>
             <li><strong>"Barlang(ok) megnyitása":</strong> JSON, .cave, Therion (.th), Survex (.svx) és Survex (.3d) fájlokhoz</li>
+            <li
+              ><strong>"Barlangmappa megnyitása":</strong> egy teljes mappa rekurzív importálása. Hasznos több mappára
+              tagolt Therion/Survex projekteknél (pl. egy rendszer, amelynek az <code>input</code>/<code>*include</code>
+              hivatkozásai különböző almappákban lévő fájlokra mutatnak).</li
+            >
             <li><strong>"Model megnyitása":</strong> PLY, OBJ, LAS és LAZ fájlokhoz</li>
           </ul>
         </div>
@@ -115,6 +120,23 @@
             között.</li
           >
         </ul>
+      </div>
+
+      <h2>Többszintű Therion / Survex struktúrák</h2>
+
+      <div class="format-box">
+        <p
+          >A Therion és a Survex egyetlen, tetszőlegesen mélyen egymásba ágyazható <code>survey</code> /
+          <code>*begin</code> fogalmat használ: a magasabb szintek tipikusan karsztterületeket vagy barlangrendszereket,
+          a mélyebb szintek pedig járatokat jelölnek. A Speleo Studio ezt a hierarchiát megőrzi: a <strong>barlang</strong>
+          immár tartalmazhat <strong>al-barlangokat</strong> (gyermek barlangokat) és <strong>felméréseket</strong> is. A
+          felmérés mindig levélelem (csak mérési adatokat tartalmaz), barlangot nem.</p
+        >
+        <p
+          >Egy összekapcsolt rendszer (amelynek tagjait <code>equate</code> kapcsolja össze) <strong>egyetlen
+          barlangként</strong> töltődik be, a belső tagolás pedig a felfedező fában al-barlangokként jelenik meg,
+          tetszőleges mélységig kinyitható és elrejthető. Az <code>equate</code> kapcsolatok így megmaradnak.</p
+        >
       </div>
 
       <h2>JSON formátum importálása</h2>

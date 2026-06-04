@@ -287,6 +287,11 @@ class Cave {
    * @param {CaveMetadata} metadata - Additional information about the cave, like the settlement
    * @param {Map<string, SurveyStation>} stations - The merged map of all survey stations
    * @param {Survey[]} surveys - The surveys associated to a cave
+   * @param {Cave[]} children - Nested sub-caves. Therion/Survex nest surveys arbitrarily deep; the
+   *        whole connected network is stored as one root Cave, and the nesting is preserved as a tree
+   *        of child Caves. A Survey is always a leaf (shot data) and can never contain a Cave.
+   *        `geoData` lives on the root cave only; `aliases`/`stations`/`stationComments`/
+   *        `stationDimensions`/`attributes` are owned per cave at the level they were declared.
    * @param {SurveyAlias[]} - Mapping of connection point between surveys
    * @param {CaveAttributes} attributes - The attributes of the cave (sections and components)
    * @param {StationComment[]} stationComments - Comments for stations in this cave
@@ -301,6 +306,7 @@ class Cave {
     geoData,
     stations = new Map(),
     surveys = [],
+    children = [],
     aliases = [],
     attributes = new CaveAttributes(),
     stationComments = [],
@@ -315,6 +321,7 @@ class Cave {
     this.geoData = geoData;
     this.stations = stations;
     this.surveys = surveys;
+    this.children = children;
     this.aliases = aliases;
     this.attributes = attributes;
     this.stationComments = stationComments;
@@ -326,6 +333,128 @@ class Cave {
 
   static generateId() {
     return 'cave_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+  }
+
+  // ─── Tree traversal / aggregation ──────────────────────────────────────────────
+  // A Cave may contain child Caves (Therion/Survex nesting). The helpers below let
+  // callers treat the whole subtree uniformly. For a flat cave (no children) they
+  // degrade to the cave's own data, so existing 2-level behavior is unchanged.
+
+  /**
+   * Depth-first walk over this cave and all descendant caves.
+   * @param {(cave: Cave, path: string[]) => void} cb - called for each cave with the
+   *        array of cave names from the root to that cave (inclusive).
+   */
+  walk(cb, path = [this.name]) {
+    cb(this, path);
+    for (const child of this.children) {
+      child.walk(cb, [...path, child.name]);
+    }
+  }
+
+  /** True when this cave nests sub-caves. */
+  hasChildren() {
+    return this.children.length > 0;
+  }
+
+  /** All Survey objects across this cave and its descendants. */
+  getAllSurveys() {
+    if (!this.hasChildren()) return this.surveys;
+    const result = [];
+    this.walk((cave) => result.push(...cave.surveys));
+    return result;
+  }
+
+  /**
+   * All surveys across the subtree with their unique full path (cave-name chain plus
+   * survey name, joined by '/'). Used as a stable identity for scene keys and tree nodes.
+   * @returns {{ survey: Survey, cave: Cave, path: string }[]}
+   */
+  getAllSurveysWithPath() {
+    const result = [];
+    this.walk((cave, path) => {
+      for (const s of cave.surveys) {
+        result.push({ survey: s, cave, path: [...path, s.name].join('/') });
+      }
+    });
+    return result;
+  }
+
+  /**
+   * Returns the chain of names from this cave down to (and including) the given survey:
+   * [topCave, ...subCaves, survey]. Used for breadcrumbs (cave → … → survey). Returns just
+   * the survey name if it is not found in the subtree.
+   */
+  getSurveyNamePath(survey) {
+    let found = null;
+    this.walk((cave, path) => {
+      if (!found && cave.surveys.includes(survey)) found = [...path, survey.name];
+    });
+    return found ?? [survey.name];
+  }
+
+  /**
+   * The chain of cave nodes from this cave down to the one that DIRECTLY owns `survey`
+   * (inclusive), or an empty array if the survey is not in this subtree. Used for per-cave
+   * coloring: the nearest ancestor with a color wins, so a sub-cave color overrides the top
+   * cave's and an uncolored sub-cave inherits the color from above.
+   */
+  getCaveChain(survey) {
+    let result = [];
+    const recurse = (cave, acc) => {
+      if (result.length > 0) return;
+      const next = [...acc, cave];
+      if (cave.surveys.includes(survey)) {
+        result = next;
+        return;
+      }
+      cave.children.forEach((child) => recurse(child, next));
+    };
+    recurse(this, []);
+    return result;
+  }
+
+  /** Merged Map of every station across the subtree (station names are globally unique). */
+  getAllStations() {
+    if (!this.hasChildren()) return this.stations;
+    const merged = new Map();
+    this.walk((cave) => {
+      for (const [name, st] of cave.stations) merged.set(name, st);
+    });
+    return merged;
+  }
+
+  /** All aliases (equate connections) across the subtree. */
+  getAllAliases() {
+    if (!this.hasChildren()) return this.aliases;
+    const result = [];
+    this.walk((cave) => result.push(...cave.aliases));
+    return result;
+  }
+
+  /**
+   * Find a cave node by its path (array of names, or '/'-joined string). The first
+   * segment must match this cave's name. Returns undefined if not found.
+   */
+  findCaveByPath(path) {
+    const parts = Array.isArray(path) ? path : String(path).split('/');
+    if (parts.length === 0 || parts[0] !== this.name) return undefined;
+    let node = this;
+    for (let i = 1; i < parts.length; i++) {
+      node = node.children.find((c) => c.name === parts[i]);
+      if (!node) return undefined;
+    }
+    return node;
+  }
+
+  /** Find a leaf Survey by its full path (the path produced by getAllSurveysWithPath). */
+  findSurveyByPath(path) {
+    const parts = Array.isArray(path) ? path : String(path).split('/');
+    if (parts.length < 2) return undefined;
+    const cave = this.findCaveByPath(parts.slice(0, -1));
+    if (!cave) return undefined;
+    const surveyName = parts[parts.length - 1];
+    return cave.surveys.find((s) => s.name === surveyName);
   }
 
   validate() {
@@ -346,17 +475,23 @@ class Cave {
   }
 
   getFirstStationName() {
-    if (this.surveys.length === 0) {
+    const surveys = this.getAllSurveys();
+    if (surveys.length === 0) {
       return undefined;
     }
-    return this.surveys[0].start;
+    return surveys[0].start;
   }
 
   getFirstStation() {
-    if (this.surveys.length === 0) {
+    const surveys = this.getAllSurveys();
+    if (surveys.length === 0) {
       return undefined;
     }
-    return this.stations.get(this.surveys[0].start);
+    // Station map keys are survey-qualified (`name@surveyPath`) for multi-level caves; qualify the
+    // start name with its owning survey (no-op for single-survey/legacy caves). Without this the
+    // lookup misses on nested systems and depth/height collapse to 0.
+    const first = surveys[0];
+    return this.getAllStations().get(first.qualify(first.start));
   }
 
   getStats() {
@@ -368,7 +503,7 @@ class Cave {
     var surveys = 0;
     var splays = 0;
 
-    this.surveys.forEach((survey) => {
+    this.getAllSurveys().forEach((survey) => {
       surveys += 1;
 
       if (survey.isolated === true) {
@@ -402,7 +537,22 @@ class Cave {
 
       });
     });
-    const stations = [...this.stations.values()];
+    const stations = [...this.getAllStations().values()];
+
+    // Attribute / comment / dimension counts aggregate across the whole subtree
+    // (each cave node owns its own).
+    var stationAttributes = 0, sectionAttributes = 0, componentAttributes = 0;
+    var stationComments = 0, stationDimensions = 0;
+    var subCaves = 0;
+    this.walk((c) => {
+      if (c !== this) subCaves += 1; // every descendant cave (self excluded)
+      stationAttributes += c.attributes.stationAttributes.length;
+      sectionAttributes += c.attributes.sectionAttributes.length;
+      componentAttributes += c.attributes.componentAttributes.length;
+      stationComments += c.stationComments.length;
+      stationDimensions += c.stationDimensions.length;
+    });
+
     var minZ = undefined,
       maxZ = undefined,
       minZSplay = undefined,
@@ -434,11 +584,12 @@ class Cave {
 
     return {
       stations            : stations.filter((ss) => ss.isCenter()).length,
-      stationAttributes   : this.attributes.stationAttributes.length,
-      sectionAttributes   : this.attributes.sectionAttributes.length,
-      componentAttributes : this.attributes.componentAttributes.length,
-      stationComments     : this.stationComments.length,
-      stationDimensions   : this.stationDimensions.length,
+      stationAttributes   : stationAttributes,
+      sectionAttributes   : sectionAttributes,
+      componentAttributes : componentAttributes,
+      stationComments     : stationComments,
+      stationDimensions   : stationDimensions,
+      subCaves            : subCaves,
       surveys             : surveys,
       isolated            : isolated,
       splays              : splays,
@@ -469,6 +620,25 @@ class Cave {
       stationDimensions : this.stationDimensions.map((sd) => sd.toExport()),
       surveys           : this.surveys.map((s) => s.toExport())
     };
+
+    // Nested sub-caves (Therion/Survex hierarchy). Omitted entirely for flat caves so
+    // existing 2-level exports are byte-for-byte unchanged.
+    if (this.hasChildren()) {
+      exported.children = this.children.map((c) => c.toExport());
+    }
+
+    // User-assigned cave color (used by the 'percave' color mode, incl. per sub-cave). Persisted
+    // so it survives reload; omitted when unset to keep exports clean. Restored via fromPure's
+    // Object.assign(new Cave(), pure).
+    if (this.color !== undefined) {
+      exported.color = this.color;
+    }
+
+    // Source provenance (where the cave came from), kept so a future Therion/Survex
+    // exporter can reconstruct the file/folder layout. Optional, unused by features.
+    if (this.source !== undefined) {
+      exported.source = { ...this.source };
+    }
 
     // Read-only caves can't rebuild station positions from shots (the .3d centerline
     // has disconnected components), so persist the station map directly. Normal caves
@@ -511,6 +681,11 @@ class Cave {
       pure.stationComments !== undefined ? pure.stationComments.map((sc) => StationComment.fromPure(sc)) : [];
     pure.stationDimensions =
       pure.stationDimensions !== undefined ? pure.stationDimensions.map((sd) => StationDimension.fromPure(sd)) : [];
+
+    // Recurse into nested sub-caves. Absent for flat caves (-> empty children array).
+    pure.children = Array.isArray(pure.children)
+      ? pure.children.map((c) => Cave.fromPure(c, attributeDefs))
+      : [];
 
     // Read-only caves persist their station map; rebuild it here and re-link each
     // station's `survey` back-reference by name. Normal caves leave stations empty

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { toAscii, textToIso88592Bytes, toPolygonDate, node, formatDistance } from '../utils/utils.js';
+import { toAscii, textToIso88592Bytes, toPolygonDate, node, formatDistance, bareStationName } from '../utils/utils.js';
 import { showErrorPanel } from '../ui/popups.js';
 import { wm } from '../ui/window.js';
 import { i18n } from '../i18n/i18n.js';
@@ -65,11 +65,19 @@ class Exporter {
     lines.push('ENTITIES');
 
     caves.values().forEach((cave) => {
-      cave.surveys.forEach((survey) => {
+      const stations = cave.getAllStations();
+      cave.getAllSurveys().forEach((survey) => {
         survey.shots.forEach((shot) => {
 
-          const fromSt = cave.stations.get(shot.from);
-          const toSt = cave.stations.get(shot.to);
+          // Station map keys are survey-qualified for multi-survey caves; qualify the lookup
+          // (no-op for single-survey/legacy caves). Skip shots whose endpoints aren't placed
+          // (orphans, or splays whose `to` is a generated name) to avoid reading .position
+          // of undefined.
+          const fromSt = stations.get(survey.qualify(survey.getFromStationName(shot)));
+          const toSt = stations.get(survey.qualify(survey.getToStationName(shot)));
+          if (fromSt === undefined || toSt === undefined) {
+            return;
+          }
 
           lines.push('  0');
           lines.push('LINE');
@@ -91,8 +99,13 @@ class Exporter {
           lines.push(toSt.position.z);
 
         });
+      });
 
-        cave.stations.forEach((st, name) => {
+      // Station labels + markers are emitted ONCE per cave. `stations` is the whole network's
+      // station map (cave.getAllStations()), so iterating it inside the per-survey loop above
+      // re-emitted every station once per survey — O(surveys × stations), which blew the `lines`
+      // array up (RangeError: Invalid array length) on large systems like Migovec.
+      stations.forEach((st, name) => {
           lines.push('  0');
           lines.push('TEXT');
           lines.push('  5'); // hande id, sort of object identifier
@@ -108,7 +121,7 @@ class Exporter {
           lines.push('  40'); // height
           lines.push('0.5');
           lines.push('  1'); // text
-          lines.push(toAscii(name));
+          lines.push(toAscii(bareStationName(name)));
 
           lines.push('  0');
           lines.push('CIRCLE');
@@ -124,7 +137,6 @@ class Exporter {
           lines.push(st.position.z);
           lines.push('  40');
           lines.push('0.2');
-        });
       });
     });
 
@@ -260,7 +272,12 @@ class Exporter {
       svgParts.push('</g>');
     };
 
-    const getLayerName = (name) => toAscii(name); //name.replace(/[^a-zA-Z0-9]/g, '_');
+    // Layer id: ASCII-only and stripped of XML-special characters (< > & " ') so it is a
+    // valid SVG attribute value. Cave/survey names may contain raw Therion title markup like
+    // `<lang:en>…` or `<br>`, which would otherwise produce malformed XML.
+    const getLayerName = (name) => toAscii(name).replace(/[<>&"']/g, '_');
+    // data-name / text content keeps the original (human-readable) name but XML-escaped.
+    const esc = (s) => Exporter.escapeXml(s);
 
     // Get station sphere radius and color (for center line stations)
     const centerLineSpheresConfig = scene.options.scene.centerLines?.spheres;
@@ -289,20 +306,22 @@ class Exporter {
       if (!cave.visible) return;
 
       const caveLayerId = getLayerName(`${i18n.t('common.cave')}-${cave.name}`);
-      svgParts.push(`<g id="${caveLayerId}" data-name="${cave.name}">`);
+      svgParts.push(`<g id="${caveLayerId}" data-name="${esc(cave.name)}">`);
 
       // Get the cave object from caveObjects
       const caveObject = scene.speleo.caveObjects.get(cave.name);
       if (!caveObject) {
         return;
       }
+      const svgStations = cave.getAllStations();
 
       // Calculate distance from camera for each survey and sort by distance (farthest first)
       const surveysWithDistance = [];
-      cave.surveys.forEach((survey) => {
+      cave.getAllSurveys().forEach((survey) => {
         if (!survey.visible) return;
 
-        const surveyObject = caveObject.get(survey.name);
+        // Scene survey objects are keyed by the survey's unique id.
+        const surveyObject = caveObject.get(survey.id);
         if (!surveyObject) {
           return;
         }
@@ -331,7 +350,7 @@ class Exporter {
         if (!hasPosition) {
           const firstStationName = survey.start || (survey.shots.length > 0 ? survey.shots[0].from : null);
           if (firstStationName) {
-            const firstStation = cave.stations.get(firstStationName);
+            const firstStation = svgStations.get(firstStationName);
             if (firstStation) {
               surveyPosition.copy(firstStation.position);
               hasPosition = true;
@@ -357,7 +376,7 @@ class Exporter {
       surveysWithDistance.forEach(({ survey, surveyObject }) => {
 
         const surveyLayerId = getLayerName(`${i18n.t('common.survey')}-${survey.name}`);
-        svgParts.push(`<g id="${surveyLayerId}" data-name="${survey.name}">`);
+        svgParts.push(`<g id="${surveyLayerId}" data-name="${esc(survey.name)}">`);
 
         // Center lines layer - iterate through geometry positions
         if (
@@ -389,8 +408,8 @@ class Exporter {
         if (scene.options.scene.centerLines?.spheres?.show) {
           const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.centerStations'));
           svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
-          cave.stations.forEach((station) => {
-            if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
+          svgStations.forEach((station) => {
+            if (station.survey === survey && station.type !== ShotType.SPLAY) {
               // Check if station is visible in camera frustum
               if (!isPointInFrustum(station.position)) {
                 return;
@@ -408,8 +427,8 @@ class Exporter {
         if (showStationNames) {
           const layerName = getLayerName(i18n.t('ui.settingsPanel.groups.stationLabels'));
           svgParts.push(`<g id="${layerName}" data-name="${layerName}">`);
-          cave.stations.forEach((station, stationName) => {
-            if (station.survey.name === survey.name && station.type !== ShotType.SPLAY) {
+          svgStations.forEach((station, stationName) => {
+            if (station.survey === survey && station.type !== ShotType.SPLAY) {
               // Check if station is visible in camera frustum
               if (!isPointInFrustum(station.position)) {
                 return;
@@ -418,7 +437,7 @@ class Exporter {
               const fontSize = 12;
               const offsetX = stationRadius * 10 + 5;
               svgParts.push(
-                `<text x="${pos2D.x + offsetX}" y="${pos2D.y}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#000000">${stationName}</text>`
+                `<text x="${pos2D.x + offsetX}" y="${pos2D.y}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#000000">${esc(bareStationName(stationName))}</text>`
               );
             }
           });
@@ -431,7 +450,7 @@ class Exporter {
       // Start point layer for the cave
       const firstStationName = cave.getFirstStationName();
       if (firstStationName) {
-        const firstStation = cave.stations.get(firstStationName);
+        const firstStation = svgStations.get(firstStationName);
         if (firstStation) {
           // Check if start point is visible in camera frustum
           if (isPointInFrustum(firstStation.position)) {
@@ -558,7 +577,7 @@ class Exporter {
         );
         currentY += lineHeight;
         svgParts.push(
-          `<text x="${panelX + padding}" y="${currentY}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#000000">${value}</text>`
+          `<text x="${panelX + padding}" y="${currentY}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#000000">${esc(value)}</text>`
         );
         currentY += lineHeight + itemSpacing;
       };
@@ -610,8 +629,9 @@ class Exporter {
     lines.push('');
     lines.push('*** Surveys ***');
 
-    const aliasesMap = new Map(cave.aliases.map((a) => [a.to, a.from]));
-    cave.surveys.forEach((survey) => {
+    const aliasesMap = new Map(cave.getAllAliases().map((a) => [a.to, a.from]));
+    const polygonStations = cave.getAllStations();
+    cave.getAllSurveys().forEach((survey) => {
       lines.push(`Survey name: ${survey.name}`);
       lines.push(`Survey team: ${survey?.metadata?.team?.name ?? ''}`);
       for (let i = 0; i < 5; i++) {
@@ -627,7 +647,8 @@ class Exporter {
         lines.push(`${survey?.metadata?.instruments[i]?.name ?? ''}	${survey?.metadata?.instruments[i]?.value ?? ''}`);
       }
       lines.push(`Fix point: ${survey?.start ?? ''}`);
-      const startSt = cave.stations.get(survey.start);
+      // Station map keys are survey-qualified for multi-survey caves; qualify the lookup.
+      const startSt = polygonStations.get(survey.qualify(survey.start));
       lines.push(`${startSt?.position?.x ?? 0}	${startSt?.position?.y ?? 0}	${startSt?.position?.z ?? 0}	0	0	0	0`);
       lines.push('Survey data');
       lines.push('From	To	Length	Azimuth	Vertical	Label	Left	Right	Up	Down	Note');
@@ -738,7 +759,8 @@ class Exporter {
       }
 
       // Calculate WGS84 coordinates for all stations
-      cave.stations.forEach((station, stationName) => {
+      const kmlStations = cave.getAllStations();
+      kmlStations.forEach((station, stationName) => {
         // Calculate the projected coordinate by adding station position to reference
         const projectedCoord = refCoord.coordinate.addVector(station.position);
 
@@ -778,7 +800,7 @@ class Exporter {
       lines.push('    <Folder>');
       lines.push(`      <name>${i18n.t('common.surveys')}</name>`);
 
-      cave.surveys.forEach((survey) => {
+      cave.getAllSurveys().forEach((survey) => {
         lines.push('      <Folder>');
         lines.push(`        <name>${this.escapeXml(survey.name)}</name>`);
 
@@ -794,8 +816,8 @@ class Exporter {
           lines.push('          <MultiGeometry>');
 
           centerShots.forEach((shot) => {
-            const fromCoord = stationCoords.get(survey.getFromStationName(shot));
-            const toCoord = stationCoords.get(survey.getToStationName(shot));
+            const fromCoord = stationCoords.get(survey.qualify(survey.getFromStationName(shot)));
+            const toCoord = stationCoords.get(survey.qualify(survey.getToStationName(shot)));
 
             if (fromCoord && toCoord) {
               lines.push('            <LineString>');
@@ -820,8 +842,8 @@ class Exporter {
           lines.push('          <MultiGeometry>');
 
           splayShots.forEach((shot) => {
-            const fromCoord = stationCoords.get(survey.getFromStationName(shot));
-            const toCoord = stationCoords.get(survey.getToStationName(shot));
+            const fromCoord = stationCoords.get(survey.qualify(survey.getFromStationName(shot)));
+            const toCoord = stationCoords.get(survey.qualify(survey.getToStationName(shot)));
 
             if (fromCoord && toCoord) {
               lines.push('            <LineString>');
@@ -851,12 +873,12 @@ class Exporter {
       lines.push('      <visibility>0</visibility>');
 
       stationCoords.forEach((coord, stationName) => {
-        const station = cave.stations.get(stationName);
+        const station = kmlStations.get(stationName);
         // Skip splay stations in the stations folder
         if (station && station.type === ShotType.SPLAY) return;
 
         lines.push('      <Placemark>');
-        lines.push(`        <name>${this.escapeXml(stationName)}</name>`);
+        lines.push(`        <name>${this.escapeXml(bareStationName(stationName))}</name>`);
         lines.push('        <styleUrl>#stationStyle</styleUrl>');
         lines.push('        <Point>');
         lines.push('          <altitudeMode>absolute</altitudeMode>');

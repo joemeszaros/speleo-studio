@@ -79,7 +79,7 @@ describe('SurvexImporter', () => {
       expect(shots[1].type).toBe('center');
     });
 
-    it('uses the outermost *begin name as the cave title', async () => {
+    it('uses the outermost *begin name as the cave title (folded to lower case by default)', async () => {
       const svx = `
 *begin Belladonna
   *data normal from to tape compass clino
@@ -87,7 +87,8 @@ describe('SurvexImporter', () => {
 *end Belladonna
 `;
       const cave = await makeImporter().getCave(textMap(['Belladonna.svx', svx]));
-      expect(cave.name).toBe('Belladonna');
+      // Survex is case-insensitive: names are folded to lower case unless *case says otherwise.
+      expect(cave.name).toBe('belladonna');
     });
 
     it('falls back to filename stem when no *begin name is set', async () => {
@@ -225,7 +226,7 @@ describe('SurvexImporter', () => {
 
     it('produces one survey with correct shot counts', async () => {
       const cave = await makeImporter().getCave(textMap(['Belladonna.svx', belladonna]));
-      expect(cave.name).toBe('Belladonna');
+      expect(cave.name).toBe('belladonna'); // case-insensitive: folded to lower case
       expect(cave.surveys).toHaveLength(1);
 
       const shots = cave.surveys[0].shots;
@@ -296,6 +297,120 @@ describe('SurvexImporter', () => {
 `;
       const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
       expect(cave.aliases.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('*case (case folding of names)', () => {
+    // By default Survex is case-insensitive: cavern folds every name to lower case. We verify
+    // the default and each *case mode. Case folding is what makes references that differ in case
+    // (e.g. a `*fix MAIN.1` against a `*begin Main`, ubiquitous in real multi-author data)
+    // resolve to the same name; here we prove the folding on the survey + station names directly.
+    const caveSvx = (caseLine = '') => `
+${caseLine}
+*begin Cave
+  *data normal from to tape compass clino
+  AA BB 10 0 0
+*end Cave
+`;
+
+    it('folds survey and station names to lower case by default (no *case)', async () => {
+      const cave = await makeImporter().getCave(textMap(['t.svx', caveSvx()]));
+      expect(cave.name).toBe('cave');
+      expect(cave.stations.has('aa')).toBe(true);
+      expect(cave.stations.has('bb')).toBe(true);
+      expect(cave.stations.has('AA')).toBe(false); // not a case-sensitive duplicate
+    });
+
+    it('*case preserve keeps the original case (AA and aa would be distinct)', async () => {
+      const cave = await makeImporter().getCave(textMap(['t.svx', caveSvx('*case preserve')]));
+      expect(cave.name).toBe('Cave'); // preserved
+      expect(cave.stations.has('AA')).toBe(true);
+      expect(cave.stations.has('aa')).toBe(false);
+    });
+
+    it('*case toupper folds names to upper case', async () => {
+      const cave = await makeImporter().getCave(textMap(['t.svx', caveSvx('*case toupper')]));
+      expect(cave.name).toBe('CAVE');
+      expect(cave.stations.has('AA')).toBe(true);
+      expect(cave.stations.has('BB')).toBe(true);
+    });
+
+    it('*case is inherited by nested *begin blocks', async () => {
+      const svx = `
+*case toupper
+*begin outer
+  *data normal from to tape compass clino
+  aa bb 10 0 0
+  *begin inner
+    *data normal from to tape compass clino
+    cc dd 5 0 0
+  *end inner
+*end outer
+`;
+      const cave = await makeImporter().getCave(textMap(['t.svx', svx]));
+      // Both block names fold to upper case under the inherited mode.
+      const names = cave.getAllSurveys().map((s) => s.name);
+      expect(names).toContain('OUTER');
+      expect(names).toContain('INNER');
+    });
+  });
+
+  describe('cross-survey references (dotted addressing)', () => {
+    // Survex addresses stations across surveys with dotted paths: the LAST component is the
+    // station, the rest is the (outermost-first) survey path. These are converted to the internal
+    // `station@path` form so *equate / *fix actually resolve. Before that conversion the refs
+    // resolved to phantom keys and the surveys stayed disconnected.
+
+    it('a dotted *equate connects two sibling surveys into one network', async () => {
+      // The `sys` block has NO centreline of its own — it only groups a + b and owns the equate.
+      // (A grouping block is never emitted as a survey, so its equate must still be preserved.)
+      const svx = `
+*begin sys
+  *begin a
+    *data normal from to tape compass clino
+    1 2 10 0 0
+    2 3 10 0 0
+  *end a
+  *begin b
+    *data normal from to tape compass clino
+    1 2 10 90 0
+  *end b
+  *equate a.3 b.1
+*end sys
+`;
+      const cave = await makeImporter().getCave(textMap(['t.svx', svx]));
+      const surveys = cave.getAllSurveys();
+      expect(surveys).toHaveLength(2);
+      // Both surveys placed and connected — the equate linked a.3 ≡ b.1.
+      expect(surveys.every((s) => s.isolated === false)).toBe(true);
+      // 3 stations in a + 2 in b, minus the shared equated station = 4 distinct.
+      expect(cave.getAllStations().size).toBe(4);
+      expect(cave.getAllStations().has('3@sys.a')).toBe(true);
+    });
+
+    it('a top-level (out-of-block) dotted *fix anchors a deep sub-survey station', async () => {
+      // The fix sits after *end sys, addressed by its absolute path — exactly how a master file
+      // anchors a whole system. It must seed the solver at the given coordinates.
+      const svx = `
+*cs UTM33N
+*begin sys
+  *begin a
+    *data normal from to tape compass clino
+    1 2 10 0 0
+  *end a
+  *begin b
+    *data normal from to tape compass clino
+    1 2 10 90 0
+  *end b
+  *equate a.2 b.1
+*end sys
+*fix sys.a.1 400000 5100000 1000
+`;
+      const cave = await makeImporter().getCave(textMap(['t.svx', svx]));
+      expect(cave.getAllSurveys().every((s) => s.isolated === false)).toBe(true);
+      const anchor = cave.getAllStations().get('1@sys.a');
+      expect(anchor).toBeTruthy();
+      expect([anchor.position.x, anchor.position.y, anchor.position.z]).toEqual([400000, 5100000, 1000]);
     });
   });
 

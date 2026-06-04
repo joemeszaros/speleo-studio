@@ -17,6 +17,7 @@
 import { PDFDocument, mmToPt, ptToMm, createPDF } from '../utils/pdf-utils.js';
 import { ShotType } from '../model/survey.js';
 import { i18n } from '../i18n/i18n.js';
+import { bareStationName } from '../utils/utils.js';
 
 // Re-export pdf-utils functions
 export { PDFDocument, mmToPt, ptToMm, createPDF };
@@ -120,11 +121,11 @@ export async function generatePDF(config) {
   if (stationLabelsVisible) {
     caves.forEach((cave) => {
       if (!cave.stations) return;
-      cave.stations.forEach((station, stationName) => {
+      cave.getAllStations().forEach((station, stationName) => {
         if (station.type === ShotType.SPLAY) return;
         if (!station.position) return;
         if (stationLabelSettings?.mode === 'name') {
-          allText += stationName;
+          allText += bareStationName(stationName); // labels show the bare name; subset its glyphs
         }
       });
     });
@@ -369,11 +370,11 @@ export async function generatePDF(config) {
       const caveObject = scene.speleo.caveObjects.get(cave.name);
       if (!caveObject) return;
 
-      // Process each visible survey
-      cave.surveys.forEach((survey) => {
+      // Process each visible survey (scene objects are keyed by the survey's unique id)
+      cave.getAllSurveys().forEach((survey) => {
         if (!survey.visible) return;
 
-        const surveyObject = caveObject.get(survey.name);
+        const surveyObject = caveObject.get(survey.id);
         if (!surveyObject) return;
 
         // Export center lines if visible in scene
@@ -411,7 +412,7 @@ export async function generatePDF(config) {
 
       caves.forEach((cave) => {
         if (!cave.stations) return;
-        cave.stations.forEach((station, stationName) => {
+        cave.getAllStations().forEach((station, stationName) => {
           // Skip splay stations or stations without valid position
           if (station.type === ShotType.SPLAY || station.survey.visible === false) return;
           if (!station.position || typeof station.position.x !== 'number') return;
@@ -425,8 +426,8 @@ export async function generatePDF(config) {
 
           // Check if station is within page margins
           if (isPointInPage(pdfCoords.x, pdfCoords.y)) {
-            // Get label text based on mode
-            const labelText = stationLabelSettings?.mode === 'depth' ? station.position.z.toFixed(2) : stationName;
+            // Get label text based on mode (bare station name, not the survey-qualified key)
+            const labelText = stationLabelSettings?.mode === 'depth' ? station.position.z.toFixed(2) : bareStationName(stationName);
             pdfPage.drawText(labelText, pdfCoords.x, pdfCoords.y);
           }
         });

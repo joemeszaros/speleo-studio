@@ -103,6 +103,10 @@ class NavigationBar {
 
   onKeyDown(e) {
 
+    // Some keydown events carry no `key` (IME composition, autofill, programmatic events).
+    // Guard against it so the global shortcut handler never throws.
+    if (typeof e.key !== 'string') return;
+
     const isEditable =
       e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target.isContentEditable;
 
@@ -147,6 +151,14 @@ class NavigationBar {
               }
             },
             shortkeys : ['crtl⊕o']
+          },
+          {
+            name  : i18n.t('ui.navbar.menu.file.openFolder'),
+            click : () => {
+              if (this.projectSystem.getCurrentProject()) {
+                document.getElementById('caveDirInput').click();
+              }
+            }
           },
           {
             name  : i18n.t('ui.navbar.menu.file.export'),

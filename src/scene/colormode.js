@@ -71,7 +71,7 @@ export class ColorModeHelper {
         const colors = SurveyHelper.getColorGradientsForCaves(this.db.getCavesMap(), this.options.scene.caveLines);
         this.caveObjects.forEach((surveyEntrires, cName) => {
           surveyEntrires.forEach((e, sName) => {
-            const sColor = this.db.getSurvey(cName, sName).color;
+            const sColor = this.db.getSurveyById(cName, sName)?.color;
             if (sColor !== undefined) {
               e['centerLines'].material = this.materias.getOrAddSurvey(cName, sName, sColor, 'center', clConfig);
               e['splays'].material = this.materias.getOrAddSurvey(cName, sName, sColor, 'splay', splayConfig);
@@ -95,7 +95,7 @@ export class ColorModeHelper {
 
         this.caveObjects.forEach((surveyEntrires, cName) => {
 
-          const caveColor = this.db.getCave(cName).color;
+          const cave = this.db.getCave(cName);
 
           surveyEntrires.forEach((e, sName) => {
 
@@ -103,27 +103,39 @@ export class ColorModeHelper {
             e['splays'].geometry.setColors([]);
             e['auxiliaries'].geometry.setColors([]);
 
-            const sColor = this.db.getSurvey(cName, sName).color;
+            const survey = this.db.getSurveyById(cName, sName);
+            const sColor = survey?.color;
+
+            // For per-cave coloring the color comes from the (sub-)cave that owns this survey, not
+            // just the top-level cave — a multi-level system (e.g. Migovec) has sub-cave colors set
+            // on the nested Cave nodes. Pick the nearest colored ancestor in the survey's cave
+            // chain so a sub-cave color applies (and overrides the top cave); previously only the
+            // top cave's color was read, so sub-cave colors were ignored and lines fell back to the
+            // default (red) material. Keyed by the owning cave's name to match the explorer's
+            // per-cave color trigger.
+            const colorCave =
+              mode === 'percave' && survey
+                ? [...cave.getCaveChain(survey)].reverse().find((c) => c.color !== undefined)
+                : undefined;
 
             if (sColor !== undefined) {
               e['centerLines'].material = this.materias.getOrAddSurvey(cName, sName, sColor, 'center', clConfig);
               e['splays'].material = this.materias.getOrAddSurvey(cName, sName, sColor, 'splay', splayConfig);
               e['auxiliaries'].material = this.materias.getOrAddSurvey(cName, sName, sColor, 'auxiliary', auxConfig);
+            } else if (mode === 'percave' && colorCave !== undefined) {
+              e['centerLines'].material = this.materias.getOrAddCave(colorCave.name, colorCave.color, 'center', clConfig);
+              e['splays'].material = this.materias.getOrAddCave(colorCave.name, colorCave.color, 'splay', splayConfig);
+              e['auxiliaries'].material = this.materias.getOrAddCave(colorCave.name, colorCave.color, 'auxiliary', auxConfig);
+            } else if (mode === 'persurvey') {
+              // no survey color
+              e['centerLines'].material = this.mats.segments.fallback;
+              e['splays'].material = this.mats.segments.fallback;
+              e['auxiliaries'].material = this.mats.segments.fallback;
             } else {
-              if (mode === 'global' || (mode === 'percave' && caveColor === undefined)) {
-                e['centerLines'].material = this.mats.segments.centerLine;
-                e['splays'].material = this.mats.segments.splay;
-                e['auxiliaries'].material = this.mats.segments.auxiliary;
-              } else if (mode === 'percave' && caveColor !== undefined) {
-                e['centerLines'].material = this.materias.getOrAddCave(cName, caveColor, 'center', clConfig);
-                e['splays'].material = this.materias.getOrAddCave(cName, caveColor, 'splay', splayConfig);
-                e['auxiliaries'].material = this.materias.getOrAddCave(cName, caveColor, 'auxiliary', auxConfig);
-              } else if (mode === 'persurvey') {
-                // no survey color
-                e['centerLines'].material = this.mats.segments.fallback;
-                e['splays'].material = this.mats.segments.fallback;
-                e['auxiliaries'].material = this.mats.segments.fallback;
-              }
+              // 'global', or 'percave' with no color anywhere in the chain → default materials
+              e['centerLines'].material = this.mats.segments.centerLine;
+              e['splays'].material = this.mats.segments.splay;
+              e['auxiliaries'].material = this.mats.segments.auxiliary;
             }
 
           });

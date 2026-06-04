@@ -457,6 +457,16 @@ function sanitizeName(value) {
   return typeof value === 'string' ? value.replace(/"/g, "'") : value;
 }
 
+// Internal station map keys are survey-qualified (`name@surveyPath`) for multi-survey
+// caves so reused station numbers stay distinct. This returns the bare, user-facing
+// station name by dropping the `@surveyPath` suffix. Station names never contain '@'
+// themselves, so splitting on the first '@' is safe. Bare names pass through unchanged.
+function bareStationName(name) {
+  if (typeof name !== 'string') return name;
+  const at = name.indexOf('@');
+  return at === -1 ? name : name.slice(0, at);
+}
+
 // ─── Survey unit converters ───────────────────────────────────────────────────
 // All functions convert to the Speleo Studio internal unit (metres / degrees).
 
@@ -564,6 +574,7 @@ export {
   formatElevation,
   formatBytes,
   sanitizeName,
+  bareStationName,
   fitString,
   falsy,
   toAscii,

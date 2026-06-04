@@ -1,0 +1,15 @@
+survey area -title "Karst Area"
+  survey alpha
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 0.0 0.0
+      2 3 4.0 90.0 0.0
+    endcentreline
+  endsurvey alpha
+  survey beta
+    centreline
+      data normal from to length compass clino
+      1 2 6.0 45.0 0.0
+    endcentreline
+  endsurvey beta
+endsurvey area

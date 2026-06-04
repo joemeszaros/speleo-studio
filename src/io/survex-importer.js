@@ -68,6 +68,7 @@ import {
   stripStn,
   assembleCave,
   parseTeam,
+  applyCase,
 } from './cave-survey-helpers.js';
 
 const SURVEX_OPTS = {
@@ -76,7 +77,23 @@ const SURVEX_OPTS = {
   includeKeyword : 'include',
   countPattern   : /^\s*\*include\b/gim,
   skipExtensions : [],
+  defaultExt     : '.svx', // Survex `*include` allows omitting the .svx extension
 };
+
+// Convert a Survex dotted station reference (`survey.sub.STATION`) used in *equate / *fix into
+// the internal `STATION@survey.path` form the solver and resolveRef understand. In Survex the
+// LAST dotted component is the station and the preceding components are the survey path
+// (OUTERMOST-first), relative to the *begin block the reference is written in — resolveRef then
+// matches that path tail, preferring one inside the declaring block (currentPath). A bare name
+// (no dot) and the splay markers `.`/`-` pass through unchanged (resolveRef qualifies a bare
+// name to its declaring survey). Names are assumed already case-folded by the caller.
+function survexRefToInternal(ref) {
+  if (!ref || ref === '.' || ref === '-' || ref.includes('@')) return ref;
+  const parts = ref.split('.');
+  const station = parts.pop();
+  if (parts.length === 0) return ref; // bare station — local to the declaring survey
+  return `${station}@${parts.join('.')}`; // e.g. `m18.silos.8` → `8@m18.silos`
+}
 
 class SurvexImporter extends Importer {
 
@@ -94,8 +111,10 @@ class SurvexImporter extends Importer {
       const encoding = await detectEncoding(file);
       textMap.set(name, await readFileAsText(file, encoding));
     }
-    const cave = await this.getCave(textMap);
-    if (cave) await onCaveLoad(cave);
+    const caves = await this.getCaves(textMap);
+    for (const cave of caves) {
+      if (cave) await onCaveLoad(cave);
+    }
   }
 
   /** Single-file entry point – wraps into a one-entry map. */
@@ -103,10 +122,18 @@ class SurvexImporter extends Importer {
     await this.importFiles(new Map([[file.name, file]]), onCaveLoad);
   }
 
-  /** Public for testing: textMap is Map<filename, string>. Returns a Cave. */
-  async getCave(textMap) {
+  /**
+   * Returns all caves found in the file. A connected system is one cave (with sub-caves);
+   * a file that just groups several unconnected caves yields one cave per independent cave.
+   */
+  async getCaves(textMap) {
     const rootName = this.#findRootFile(textMap);
     return await this.#parseSurvex(rootName, textMap);
+  }
+
+  /** Public for testing: returns the first (or only) cave. */
+  async getCave(textMap) {
+    return (await this.getCaves(textMap))[0];
   }
 
   // ─── Root file detection / tokenizer / include expansion ─────────────────────
@@ -123,9 +150,12 @@ class SurvexImporter extends Importer {
     const context = {
       surveyStack     : [],   // stack of active *begin blocks
       surveys         : [],   // completed survey objects
-      topLevelEquates : [],   // equates outside any *begin block (rare)
+      topLevelEquates : [],   // ALL equates, tagged with their declaring block path (see below)
+      topLevelFixes   : [],   // *fix declared outside any *begin block (e.g. a master file's anchor)
       globalCs        : null,
-      caveTitle       : null
+      globalCase      : 'tolower', // Survex default: names folded to lower case (case-insensitive)
+      caveTitle       : null,
+      titles          : new Map() // surveyPath -> block title (for naming cave nodes)
     };
 
     this.#parseBlocks(lines, context);
@@ -146,12 +176,17 @@ class SurvexImporter extends Importer {
       );
     }
 
-    return await assembleCave(
+    const caves = await assembleCave(
       context,
       rootFilename,
       this.coordinateSystemDialog,
       'errors.import.survexUnknownCs'
     );
+    // Source provenance for a future Survex exporter (unused by current features).
+    for (const cave of caves) {
+      cave.source = { format: 'survex', file: rootFilename, title: cave.name };
+    }
+    return caves;
   }
 
   // ─── Block parser ─────────────────────────────────────────────────────────────
@@ -177,6 +212,8 @@ class SurvexImporter extends Importer {
       calibration   : parent ? { ...parent.calibration } : { length: 0, lengthScale: 1, compass: 0, compassScale: 1, clino: 0, clinoScale: 1 },
       stationPrefix : parent?.stationPrefix ?? '',
       stationSuffix : parent?.stationSuffix ?? '',
+      // *case is block-scoped and inherited by nested blocks, like units/calibrate.
+      caseMode      : parent?.caseMode ?? context.globalCase,
       cs            : parent?.cs ?? context.globalCs,
       fixes         : [],
       equates       : [],
@@ -192,7 +229,7 @@ class SurvexImporter extends Importer {
     const IGNORE_KWS = new Set([
       'cs',       // catches malformed *cs with no argument (valid *cs handled above)
       'entrance', 'title', 'copyright', 'ref', 'sd', 'instrument',
-      'solve', 'case', 'require', 'truncate', 'infer',
+      'solve', 'require', 'truncate', 'infer',
       'export', 'passage', 'endpassage', 'walls', 'endwalls', 'nosurvey',
     ]);
 
@@ -202,11 +239,14 @@ class SurvexImporter extends Importer {
 
       // ── *begin / *end ──────────────────────────────────────────────────────
       if (kw === 'begin') {
-        const name = tokens[1] ?? 'unnamed';
         const parentEntry = stack.at(-1);
+        const parentState = parentEntry?.state ?? null;
+        // The survey name is written in the enclosing scope, so fold its case with the parent's
+        // *case mode (top-level default `tolower`). This keeps surveyPath segments consistent
+        // with the (also folded) station names and equate/fix references that target them.
+        const name = applyCase(tokens[1] ?? 'unnamed', parentState?.caseMode ?? context.globalCase);
         const parentPath = parentEntry?.surveyPath ?? '';
         const surveyPath = parentPath ? `${parentPath}.${name}` : name;
-        const parentState = parentEntry?.state ?? null;
 
         if (!context.caveTitle) context.caveTitle = name;
 
@@ -261,14 +301,18 @@ class SurvexImporter extends Importer {
       const top = stack.at(-1);
 
       if (kw === 'equate' && tokens.length >= 3) {
-        if (top) {
-          top.state.equates.push(tokens.slice(1));
-        } else {
-          context.topLevelEquates.push({
-            tokens     : tokens.slice(1),
-            surveyPath : ''
-          });
-        }
+        // Fold case (so `system.m2.izent1` matches a `*begin IZENT1`), then convert each dotted
+        // ref to the internal `STN@path` form. We tag every equate with its declaring block path
+        // and collect them centrally rather than on the block's survey: a grouping block (one that
+        // only *includes/*begins others, with no shot data of its own — e.g. sysmig's
+        // `*begin system`) is never emitted as a survey, so equates stored on it would otherwise
+        // be lost, severing the connections that make the system ONE cave.
+        const caseMode = top?.state.caseMode ?? context.globalCase;
+        const eqTokens = tokens.slice(1).map((t) => survexRefToInternal(applyCase(t, caseMode)));
+        context.topLevelEquates.push({
+          tokens     : eqTokens,
+          surveyPath : top?.surveyPath ?? ''
+        });
         continue;
       }
 
@@ -279,6 +323,31 @@ class SurvexImporter extends Importer {
           if (top) top.state.cs = cs;
           else context.globalCs = cs;
         }
+        continue;
+      }
+
+      // ── *case preserve|toupper|tolower ──────────────────────────────────────
+      // Controls case folding of subsequent names. Block-scoped (set on the active block's
+      // state); a top-level *case changes the default inherited by later blocks.
+      if (kw === 'case') {
+        const mode = tokens[1]?.toLowerCase();
+        if (mode === 'preserve' || mode === 'toupper' || mode === 'tolower') {
+          if (top) top.state.caseMode = mode;
+          else context.globalCase = mode;
+        }
+        continue;
+      }
+
+      // ── top-level *fix (declared outside any *begin) ────────────────────────
+      // A master file commonly anchors the whole system with one fix using an absolute dotted
+      // path (e.g. `*fix system.m2.izent1.16 ...`). It has no enclosing block, so capture it
+      // centrally; assembleCave resolves the ref to the real station key and attaches it.
+      if (kw === 'fix' && !top && tokens.length >= 5) {
+        const ref = survexRefToInternal(applyCase(tokens[1], context.globalCase));
+        const x = parseMyFloat(tokens[2]);
+        const y = parseMyFloat(tokens[3]);
+        const z = parseMyFloat(tokens[4]);
+        if (!isNaN(x) && !isNaN(y) && !isNaN(z)) context.topLevelFixes.push({ station: ref, ref, x, y, z });
         continue;
       }
 
@@ -336,10 +405,14 @@ class SurvexImporter extends Importer {
       // ── *fix ───────────────────────────────────────────────────────────────
       if (kw === 'fix' && tokens.length >= 5) {
         const stn = stripStn(qualifyStn(applyStnNames(tokens[1], state), top.surveyPath));
+        // Keep a resolvable reference so assembleCave can map a fix targeting a deep sub-survey
+        // station to its qualified solver key. Survex dotted refs (`sub.5`) are converted to the
+        // internal `5@sub` form first (no-op for a bare station).
+        const ref = survexRefToInternal(applyStnNames(tokens[1], state));
         const x = parseMyFloat(tokens[2]);
         const y = parseMyFloat(tokens[3]);
         const z = parseMyFloat(tokens[4]);
-        if (!isNaN(x) && !isNaN(y) && !isNaN(z)) state.fixes.push({ station: stn, x, y, z });
+        if (!isNaN(x) && !isNaN(y) && !isNaN(z)) state.fixes.push({ station: stn, ref, x, y, z });
         continue;
       }
 

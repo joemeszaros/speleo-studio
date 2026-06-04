@@ -209,9 +209,15 @@ class StationCommentsEditor extends BaseEditor {
       return `${cnt}`;
     };
 
-    const nonSplayStationNames = [...this.cave.stations.entries()]
-      .filter(([_, s]) => s.type != ShotType.SPLAY)
-      .map(([name, _]) => name);
+    // Comments are keyed by the bare station name; map keys are survey-qualified for
+    // multi-survey caves, so strip the qualifier and de-duplicate.
+    const nonSplayStationNames = [
+      ...new Set(
+        [...this.cave.getAllStations().entries()]
+          .filter(([_, s]) => s.type != ShotType.SPLAY)
+          .map(([name, _]) => U.bareStationName(name))
+      )
+    ];
 
     return [
       {

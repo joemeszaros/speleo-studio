@@ -151,14 +151,14 @@ class StationDimensionsEditor extends BaseEditor {
   getValidationUpdates(data) {
     const rowsToUpdated = [];
     const existingStationIds = new Set();
-    const stationNames = new Set([...this.cave.stations.keys()]);
+    const stationNames = new Set([...this.cave.getAllStations().keys()].map((k) => U.bareStationName(k)));
 
     const errorMessages = {
       notNumeric : (field) =>
         i18n.t('ui.editors.stationDimensions.message.notNumeric', {
           field : i18n.t('ui.editors.stationDimensions.columns.' + field)
         }),
-      negative : (field) =>
+      negative: (field) =>
         i18n.t('ui.editors.stationDimensions.message.negativeValue', {
           field : i18n.t('ui.editors.stationDimensions.columns.' + field)
         })
@@ -230,9 +230,13 @@ class StationDimensionsEditor extends BaseEditor {
       return `${cnt}`;
     };
 
-    const nonSplayStationNames = [...this.cave.stations.entries()]
-      .filter(([_, s]) => s.type != ShotType.SPLAY)
-      .map(([name, _]) => name);
+    const nonSplayStationNames = [
+      ...new Set(
+        [...this.cave.getAllStations().entries()]
+          .filter(([_, s]) => s.type != ShotType.SPLAY)
+          .map(([name, _]) => U.bareStationName(name))
+      )
+    ];
 
     const lrudTitle = (key) => i18n.t('ui.editors.stationDimensions.columns.' + key);
 

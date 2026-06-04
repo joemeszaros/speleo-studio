@@ -313,6 +313,153 @@ endsurvey outer
       expect(cave.surveys[0].name).toBe('Inner Passage');
     });
 
+    it('builds a nested Cave tree from multi-level surveys', async () => {
+      const th = `
+survey sys -title "System"
+  survey caveA
+    survey passage1
+      centreline
+        data normal from to length compass clino
+        10 11 5.0 0.0 0.0
+        11 12 4.0 90.0 0.0
+      endcentreline
+    endsurvey passage1
+    survey passage2
+      centreline
+        data normal from to length compass clino
+        20 21 6.0 90.0 0.0
+      endcentreline
+    endsurvey passage2
+  endsurvey caveA
+  survey caveB
+    centreline
+      data normal from to length compass clino
+      30 31 7.0 180.0 0.0
+    endcentreline
+  endsurvey caveB
+  equate 31@caveB 10@passage1
+  equate 12@passage1 20@passage2
+endsurvey sys
+`;
+      const cave = await makeImporter().getCave(textMap(['sys.th', th]));
+      // Root keeps the file-level title and holds caveB (a leaf survey) + caveA (a sub-cave)
+      expect(cave.name).toBe('System');
+      expect(cave.children).toHaveLength(1);
+      expect(cave.children[0].name).toBe('caveA');
+      // caveB is a leaf survey directly under the root
+      expect(cave.surveys.map((s) => s.name)).toContain('caveB');
+      // caveA contains the two passage surveys (named by their leaf segment)
+      const caveA = cave.children[0];
+      expect(caveA.surveys.map((s) => s.name).sort()).toEqual(['passage1', 'passage2']);
+      // getAllSurveys aggregates the whole subtree
+      expect(cave.getAllSurveys()).toHaveLength(3);
+      // stations are distributed per cave; the merged map spans the network
+      expect(cave.getAllStations().size).toBeGreaterThan(0);
+      expect(caveA.stations.size).toBeGreaterThan(0);
+    });
+
+    it('connects equate-linked sub-surveys that reuse the same station numbers', async () => {
+      // Three sub-surveys each numbered from 1 (as real Therion surveys are), joined by
+      // equates. The qualified-name solver must keep the reused numbers distinct AND place
+      // every survey via the equate cascade — no collisions, no orphans, no isolation.
+      const th = `
+survey sys -title "Reuse"
+  survey alpha
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 0.0 0.0
+      2 3 5.0 0.0 0.0
+    endcentreline
+  endsurvey alpha
+  survey beta
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 90.0 0.0
+      2 3 5.0 90.0 0.0
+    endcentreline
+  endsurvey beta
+  survey gamma
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 180.0 0.0
+    endcentreline
+  endsurvey gamma
+  equate 3@alpha 1@beta
+  equate 3@beta 1@gamma
+endsurvey sys
+`;
+      const cave = await makeImporter().getCave(textMap(['sys.th', th]));
+      const surveys = cave.getAllSurveys();
+      expect(surveys).toHaveLength(3);
+      // Every survey is placed (connected through the equate chain).
+      expect(surveys.filter((s) => s.isolated)).toHaveLength(0);
+      expect(surveys.reduce((n, s) => n + s.orphanShotIds.size, 0)).toBe(0);
+      // Reused station number "2" is NOT collapsed across surveys — each is a distinct
+      // qualified key (the bug that previously merged all surveys onto ~one point).
+      const keys = [...cave.getAllStations().keys()];
+      expect(keys).toEqual(expect.arrayContaining(['2@sys.alpha', '2@sys.beta', '2@sys.gamma']));
+      // No double-counting: one station object per physical point.
+      const objs = new Set([...cave.getAllStations().values()]);
+      expect(objs.size).toBe(cave.getAllStations().size);
+    });
+
+    it('seeds a connected survey from each of multiple fixes in one cave', async () => {
+      // One connected cave (the two sub-surveys are joined by an equate) with TWO fixes in
+      // a shared CS. Both fixes must land in geoData and seed placement — the multi-fix path
+      // that previously only kept the first fix (leaving most of the network unseeded).
+      const th = `
+survey region -title "Region"
+  cs UTM33N
+  survey caveX
+    centreline
+      fix 1 400000 5000000 1000
+      data normal from to length compass clino
+      1 2 10.0 0.0 0.0
+    endcentreline
+  endsurvey caveX
+  survey caveY
+    centreline
+      fix 1 400500 5000000 1000
+      data normal from to length compass clino
+      1 2 10.0 90.0 0.0
+    endcentreline
+  endsurvey caveY
+  equate 2@caveX 2@caveY
+endsurvey region
+`;
+      const cave = await makeImporter().getCave(textMap(['region.th', th]));
+      // Equates make it one connected cave; both fixes are captured and everything placed.
+      expect(cave.getAllSurveys().filter((s) => s.isolated)).toHaveLength(0);
+      expect(cave.geoData?.coordinates?.length).toBe(2);
+    });
+
+    it('splits a pure grouping of independent caves (no equates) into separate caves', async () => {
+      // Same as above but WITHOUT the connecting equate: `region` only groups two
+      // unconnected caves, so they import as separate top-level caves.
+      const th = `
+survey region -title "Region"
+  cs UTM33N
+  survey caveX
+    centreline
+      fix 1 400000 5000000 1000
+      data normal from to length compass clino
+      1 2 10.0 0.0 0.0
+    endcentreline
+  endsurvey caveX
+  survey caveY
+    centreline
+      fix 1 400500 5000000 1000
+      data normal from to length compass clino
+      1 2 10.0 90.0 0.0
+    endcentreline
+  endsurvey caveY
+endsurvey region
+`;
+      const caves = await makeImporter().getCaves(textMap(['region.th', th]));
+      expect(caves.map((c) => c.name).sort()).toEqual(['caveX', 'caveY']);
+      caves.forEach((c) => expect(c.getAllSurveys().filter((s) => s.isolated)).toHaveLength(0));
+    });
+
     it('creates SurveyAlias from equate', async () => {
       const th = `
 survey cave
@@ -333,8 +480,11 @@ endsurvey cave
       const cave = await makeImporter().getCave(textMap(['cave.th', th]));
       expect(cave.surveys).toHaveLength(2);
       expect(cave.aliases).toHaveLength(1);
-      expect(cave.aliases[0].from).toBe('3');
-      expect(cave.aliases[0].to).toBe('1');
+      // This cave has multiple surveys, so station names are survey-qualified internally
+      // (`station@surveyPath`) to keep reused numbers distinct. The equate resolves to the
+      // fully-qualified endpoints.
+      expect(cave.aliases[0].from).toBe('3@cave');
+      expect(cave.aliases[0].to).toBe('1@cave.branch');
     });
   });
 
@@ -399,6 +549,25 @@ endsurvey
       expect(cave.surveys[0].shots.length).toBeGreaterThan(0);
     });
 
+    it('resolves relative input paths across folders (directory import)', async () => {
+      // textMap keyed by relative paths, as a directory pick produces. The root inputs
+      // sub-files in a sibling folder; one omits the .th extension.
+      const root = `
+survey sys -title "Sys"
+  input ./caves/a.th
+  input ./caves/b
+endsurvey
+`;
+      const a = 'survey a\n centreline\n  data normal from to length compass clino\n  1 2 5 0 0\n endcentreline\nendsurvey';
+      const b = 'survey b\n centreline\n  data normal from to length compass clino\n  1 2 5 90 0\n endcentreline\nendsurvey';
+      // `sys` only groups two unconnected caves (no equates), so they import as two
+      // separate top-level caves — and the cross-folder relative includes must resolve.
+      const caves = await makeImporter().getCaves(
+        textMap(['proj/sys.th', root], ['proj/caves/a.th', a], ['proj/caves/b.th', b])
+      );
+      expect(caves.map((c) => c.name).sort()).toEqual(['a', 'b']);
+    });
+
     it('root file detection picks file with most input lines', async () => {
       const root = `
 survey cave
@@ -422,10 +591,60 @@ survey branch2
   endcentreline
 endsurvey
 `;
-      const cave = await makeImporter().getCave(
+      // `cave` only groups two unconnected branches, so they import as two separate caves.
+      const caves = await makeImporter().getCaves(
         textMap(['root.th', root], ['branch1.th', branch], ['branch2.th', branch2])
       );
-      expect(cave.surveys).toHaveLength(2);
+      expect(caves.map((c) => c.name).sort()).toEqual(['branch1', 'branch2']);
+    });
+
+    it('picks the correct root when two files share a basename in different folders', async () => {
+      // Real-world case (System Migovec ubend): the root `ubend/ubend.th` inputs
+      // `2000/ubend/ubend.th` — both basename `ubend.th`. Basename-only exclusion wrongly
+      // dropped the real root; full-path resolution must keep it so the tree is parsed.
+      const root = `
+survey ubend -title "U-bend"
+  input "2000/ubend/ubend.th"
+endsurvey
+`;
+      const inner = `
+survey ubend_inner
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 0.0 0.0
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(
+        textMap(['ubend/ubend.th', root], ['ubend/2000/ubend/ubend.th', inner])
+      );
+      expect(cave.name).toBe('U-bend');
+      expect(cave.getAllSurveys().length).toBe(1);
+      expect(cave.getAllSurveys()[0].shots.length).toBe(1);
+    });
+  });
+
+  describe('default data format', () => {
+    it('parses centreline shots with no explicit "data" command (Therion default)', async () => {
+      // Older Therion surveys omit the `data` command and rely on the default
+      // `data normal from to length compass clino`. Such shots must still parse.
+      const th = `
+survey cave
+  centreline
+    units length meters
+    1 2 3.90 328 -7
+    2 3 1.58 335 -1
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      const shots = cave.surveys[0].shots;
+      expect(shots).toHaveLength(2);
+      expect(shots[0].from).toBe('1');
+      expect(shots[0].to).toBe('2');
+      expect(shots[0].length).toBeCloseTo(3.90);
+      expect(shots[0].azimuth).toBeCloseTo(328);
+      expect(shots[0].clino).toBeCloseTo(-7);
     });
   });
 

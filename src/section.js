@@ -18,16 +18,19 @@ import { CaveComponent, CaveCycle, CaveSection } from './model/cave.js';
 import { Graph } from './utils/graph.js';
 import { randomAlphaNumbericString, convertLengthToMeters } from './utils/utils.js';
 import { ShotType, DEFAULT_UNITS } from './model/survey.js';
+import { SurveyHelper } from './survey.js';
 
 class SectionHelper {
 
   static getSection(graph, from, to) {
     const path = graph.findShortestPath(from, to);
-    if (path !== undefined) {
-      return new CaveSection(from, to, path.path, path.distance === 'Infinity' ? 0 : path.distance);
-    } else {
+    // No connecting route → there is no section. Return undefined instead of fabricating a 0 m
+    // section (findShortestPath reports an unreachable target as a distance of 'Infinity'); the
+    // callers already treat undefined as "no path / cannot build section".
+    if (path === undefined || path.distance === 'Infinity') {
       return undefined;
     }
+    return new CaveSection(from, to, path.path, path.distance);
   }
 
   static getComponent(graph, start, termination) {
@@ -41,6 +44,7 @@ class SectionHelper {
 
   static getSectionSegments(section, stations) {
     const segments = [];
+    if (section === undefined) return segments; // no path → no segments (getSection may return undefined)
     for (let index = 0; index < section.path.length - 1; index++) {
       const from = section.path[index];
       const to = section.path[index + 1];
@@ -57,6 +61,7 @@ class SectionHelper {
 
   static getComponentSegments(component, stations) {
     const segments = [];
+    if (component === undefined) return segments; // parity with getSectionSegments
     component.path.forEach((p) => {
       const fromSt = stations.get(p.from);
       const toSt = stations.get(p.to);
@@ -97,21 +102,53 @@ class SectionHelper {
   static getGraph(cave) {
 
     const g = new Graph();
-    [...cave.stations.keys()].forEach((k) => g.addVertex(k));
-    cave.surveys.forEach((s) => {
+    const stations = cave.getAllStations();
+    [...stations.keys()].forEach((k) => g.addVertex(k));
+    const aliases = cave.getAllAliases();
+
+    // An equated junction is one physical station shared under several names, but the map stores
+    // it under a SINGLE representative key (the other names are not keys of their own). To build a
+    // graph whose connectivity matches the solved network we must map every station reference to
+    // that representative key. `keyByStation` reverses the map (station object → its key); a name
+    // that isn't itself a key is resolved through the equate group via SurveyHelper.findAliasedStation.
+    const keyByStation = new Map();
+    for (const [k, v] of stations) if (!keyByStation.has(v)) keyByStation.set(v, k);
+    const resolveKey = (name) => {
+      if (stations.has(name)) return name;
+      const st = SurveyHelper.findAliasedStation(name, aliases, stations);
+      return st !== undefined ? keyByStation.get(st) : undefined;
+    };
+
+    cave.getAllSurveys().forEach((s) => {
       const lengthUnit = s.units?.length ?? DEFAULT_UNITS.length;
       s.validShots.forEach((sh) => {
         if (sh.type !== ShotType.CENTER) {
           return;
         }
-        const fromName = s.getFromStationName(sh);
-        const from = cave.stations.get(fromName);
-        const toStationName = s.getToStationName(sh);
-        const to = cave.stations.get(toStationName);
-        if (from !== undefined && to !== undefined) {
-          g.addEdge(fromName, toStationName, convertLengthToMeters(sh.length, lengthUnit));
+        // Resolve each endpoint to the representative key it is stored under. qualify() is a no-op
+        // for single-survey/legacy caves; resolveKey additionally follows equates, so a shot whose
+        // endpoint is an equated (merged) station still produces an edge instead of being dropped —
+        // otherwise much of a multi-survey network fragments into disconnected components.
+        const fromKey = resolveKey(s.qualify(s.getFromStationName(sh)));
+        const toKey = resolveKey(s.qualify(s.getToStationName(sh)));
+        if (fromKey !== undefined && toKey !== undefined) {
+          g.addEdge(fromKey, toKey, convertLengthToMeters(sh.length, lengthUnit));
         }
       });
+    });
+
+    // Zero-length edges for equates that link two DISTINCT placed stations. A connected system
+    // often fixes one entrance per sub-cave, so each sub-cave is positioned independently and the
+    // cross-sub-cave equate drives NO shot placement — the loop above then adds no bridging edge.
+    // Without this such systems fragment and shortest-path / section queries between sub-caves
+    // wrongly report "no path". (Equates whose endpoints resolve to the same key are already one
+    // vertex, so they are skipped.)
+    aliases.forEach((a) => {
+      const fromKey = resolveKey(a.from);
+      const toKey = resolveKey(a.to);
+      if (fromKey !== undefined && toKey !== undefined && fromKey !== toKey) {
+        g.addEdge(fromKey, toKey, 0);
+      }
     });
     return g;
   }

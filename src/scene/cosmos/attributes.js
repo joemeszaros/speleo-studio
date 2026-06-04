@@ -290,7 +290,7 @@ export class AttributesScene {
       const sa = cave.attributes.sectionAttributes.find((sa) => sa.id === id);
       if (sa !== undefined) {
         const section = SectionHelper.getSection(graph, sa.section.from, sa.section.to);
-        const segments = SectionHelper.getSectionSegments(section, cave.stations);
+        const segments = SectionHelper.getSectionSegments(section, cave.getAllStations());
         const oldSegments = this.sectionAttributes.get(id).segments;
         if (!U.arraysEqual(segments, oldSegments)) {
           this.disposeSectionAttribute(id);
@@ -310,7 +310,7 @@ export class AttributesScene {
       const ca = cave.attributes.componentAttributes.find((ca) => ca.id === id);
       if (ca !== undefined) {
         const component = SectionHelper.getComponent(graph, ca.component.start, ca.component.termination);
-        const segments = SectionHelper.getComponentSegments(component, cave.stations);
+        const segments = SectionHelper.getComponentSegments(component, cave.getAllStations());
         const oldSegments = this.sectionAttributes.get(id).segments;
         if (!U.arraysEqual(segments, oldSegments)) {
           this.disposeSectionAttribute(id);
@@ -335,7 +335,7 @@ export class AttributesScene {
       return;
     }
     const caveName = cave.name;
-    const stations = cave.stations;
+    const stations = cave.getAllStations();
     [...this.stationAttributes]
       .filter(([, entry]) => entry.caveName === caveName)
       .forEach(([id, entry]) => {
@@ -725,14 +725,14 @@ export class AttributesScene {
 
       // Get the cave to access stations
       const cave = this.scene.db.getCave(caveName);
-      if (!cave || !cave.stations) {
+      if (!cave || !cave.getAllStations()) {
         console.warn(`Cave ${caveName} or stations not found for draft attribute ${id}`);
         onComplete();
         return;
       }
 
       // Get the direction station
-      const directionStation = cave.stations.get(directionStationName);
+      const directionStation = cave.getAllStations().get(directionStationName);
       if (!directionStation) {
         console.warn(`Direction station ${directionStationName} not found for draft attribute ${id}`);
         onComplete();
@@ -1560,8 +1560,8 @@ export class AttributesScene {
       const promises = [];
       cave.attributes.stationAttributes.forEach((sa) => {
         if (sa.visible !== visible) {
-          if (visible === true && cave.stations.has(sa.name)) {
-            const station = cave.stations.get(sa.name);
+          if (visible === true && cave.getAllStations().has(sa.name)) {
+            const station = cave.getAllStations().get(sa.name);
             promises.push(
               new Promise((resolve) => {
                 this.showStationAttribute(sa.id, station, sa.attribute, cave.name, sa.position, sa.offset, false, () =>
@@ -1582,7 +1582,7 @@ export class AttributesScene {
           if (visible === true) {
             this.showFragmentAttribute(
               sa.id,
-              SectionHelper.getSectionSegments(sa.section, cave.stations),
+              SectionHelper.getSectionSegments(sa.section, cave.getAllStations()),
               sa.attribute,
               sa.format,
               sa.color,
@@ -1604,7 +1604,7 @@ export class AttributesScene {
           if (visible === true) {
             this.showFragmentAttribute(
               ca.id,
-              SectionHelper.getComponentSegments(ca.component, cave.stations),
+              SectionHelper.getComponentSegments(ca.component, cave.getAllStations()),
               ca.attribute,
               ca.format,
               ca.color,

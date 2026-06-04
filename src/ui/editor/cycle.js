@@ -101,7 +101,7 @@ class CyclePanel {
     const g = SectionHelper.getGraph(this.cave);
     return SectionHelper.getCycles(g).map((c) => {
 
-      const loopError = CycleUtil.calculateCycleError([...c.path, c.path[0]], this.cave.stations);
+      const loopError = CycleUtil.calculateCycleError([...c.path, c.path[0]], this.cave.getAllStations());
 
       return {
         id              : c.id,
@@ -189,7 +189,8 @@ class CyclePanel {
         title        : i18n.t('ui.editors.cycles.columns.path'),
         field        : 'path',
         headerFilter : 'input',
-        formatter    : (cell) => U.fitString(cell.getValue().join(','), 100)
+        // The stored path is survey-qualified station keys; show the bare names to the user.
+        formatter    : (cell) => U.fitString((cell.getValue() ?? []).map(U.bareStationName).join(','), 100)
       }
 
     ];
@@ -273,7 +274,7 @@ class CyclePanel {
   propagateLoopClosureError(data) {
     const loopError = data.error;
     const path = [...data.path, data.path[0]];
-    const stations = this.cave.stations;
+    const stations = this.cave.getAllStations();
     if (CycleUtil.propagateError(path, stations, loopError.error, loopError.totalLength)) {
       //TODO: we don't know which surveys are affected, so we just recalculate the cave
       // and only recalculates surveys after the affected survey
@@ -283,7 +284,7 @@ class CyclePanel {
 
   adjustLoopDeviationShots(data) {
     const path = [...data.path, data.path[0]];
-    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.stations);
+    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.getAllStations());
     if (deviationShots.length > 0 && CycleUtil.adjustShots(deviationShots)) {
       this.#emitCaveChanged();
     }
@@ -331,7 +332,7 @@ class CyclePanel {
     this.scene.segments.showSegmentsTube(
       data.id,
       `cycle-${data.id}`,
-      SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.stations),
+      SectionHelper.getCycleSegments(new CaveCycle(data.id, data.path, data.distance), this.cave.getAllStations()),
       data.color,
       this.cave.name
     );
@@ -348,12 +349,15 @@ class CyclePanel {
   }
 
   showDeviatingShots(path, id) {
-    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.stations);
+    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.getAllStations());
     if (deviationShots.length > 0) {
       const segments = [];
       deviationShots.forEach((s) => {
         if (s.diff.length() > 0.1) {
-          const from = this.cave.stations.get(s.shot.from);
+          // Station map keys are survey-qualified for multi-survey caves; qualify the shot's from
+          // name (no-op for single-survey/legacy caves) or the lookup misses and throws.
+          const from = this.cave.getAllStations().get(s.survey.qualify(s.survey.getFromStationName(s.shot)));
+          if (from === undefined) return;
           const fromPos = from.position;
           const aziDeg = U.convertAngleToDegrees(s.shot.azimuth, s.survey?.units?.angle ?? DEFAULT_UNITS.angle);
           const cliDeg = U.convertAngleToDegrees(s.shot.clino, s.survey?.units?.angle ?? DEFAULT_UNITS.angle);

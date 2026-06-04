@@ -69,13 +69,14 @@ export class ShortestPathTool {
         this.scene.segments.disposeSegmentsTube(segmentsId);
         const cave = this.db.getCave(caveName);
         const g = SectionHelper.getGraph(cave);
+        const stations = cave.getAllStations();
         let label;
         const from = fromL.childNodes[1].value;
         const to = toL.childNodes[1].value;
-        if (cave.stations.has(from) && cave.stations.has(to)) {
+        if (stations.has(from) && stations.has(to)) {
           const section = SectionHelper.getSection(g, from, to);
           if (section !== undefined) {
-            const segments = SectionHelper.getSectionSegments(section, cave.stations);
+            const segments = SectionHelper.getSectionSegments(section, stations);
             this.scene.segments.showSegmentsTube(
               segmentsId,
               `shortest-path-${from}-${to}-${segmentsId}`,

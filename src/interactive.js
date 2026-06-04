@@ -18,7 +18,14 @@ import * as THREE from 'three';
 import { wm } from './ui/window.js';
 import { showErrorPanel } from './ui/popups.js';
 import {
-  get3DCoordsStr, node, radsToDegrees, toPolar, convertLengthFromMeters, convertAngleFromDegrees, formatFloat
+  get3DCoordsStr,
+  node,
+  radsToDegrees,
+  toPolar,
+  convertLengthFromMeters,
+  convertAngleFromDegrees,
+  formatFloat,
+  bareStationName
 } from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
 import { Raycasting } from './scene/raycasting.js';
@@ -214,20 +221,25 @@ class SceneInteraction {
     return this.getPointedStationDetails(st);
   }
 
-  getAttributesForStation(cave, stationName) {
+  // `stationKey` is the SURVEY-QUALIFIED station key (`12@survey.path`) — attributes store and
+  // their section/component paths reference that qualified key, so matching the bare name misses
+  // for multi-survey caves. Attributes are owned per cave node (a cross-sub-cave section lives on
+  // the container), so scan the whole subtree; qualified keys are globally unique, so there are
+  // no false matches across sub-caves.
+  getAttributesForStation(cave, stationKey) {
     const attributes = [];
-    // Get station attributes
-    if (cave.attributes) {
+    cave.walk((c) => {
+      if (!c.attributes) return;
 
-      cave.attributes.stationAttributes.forEach((sa) => {
-        if (sa?.name === stationName && sa.attribute && sa.visible) {
+      c.attributes.stationAttributes.forEach((sa) => {
+        if (sa?.name === stationKey && sa.attribute && sa.visible) {
           attributes.push({ emoji: '📍', attribute: sa.attribute });
         }
       });
 
-      cave.attributes.componentAttributes.forEach((ca) => {
+      c.attributes.componentAttributes.forEach((ca) => {
         if (
-          ca?.component?.path?.some((p) => p.from === stationName || p.to === stationName) &&
+          ca?.component?.path?.some((p) => p.from === stationKey || p.to === stationKey) &&
           ca.attribute &&
           ca.visible
         ) {
@@ -235,14 +247,25 @@ class SceneInteraction {
         }
       });
 
-      cave.attributes.sectionAttributes.forEach((sa) => {
-        if (sa?.section?.path?.includes(stationName) && sa.attribute && sa.visible) {
+      c.attributes.sectionAttributes.forEach((sa) => {
+        if (sa?.section?.path?.includes(stationKey) && sa.attribute && sa.visible) {
           attributes.push({ emoji: '🔀', attribute: sa.attribute });
         }
       });
-    }
+    });
 
     return attributes;
+  }
+
+  // Resolves the qualified station key and the cave node that directly owns the station's survey.
+  // Comments/dimensions are bare-keyed per cave node, so scoping to the owner node prevents a
+  // comment on one sub-cave's station "1" from showing on every other sub-cave's "1".
+  #stationContext(stationMeta) {
+    const survey = stationMeta.station?.survey;
+    const key = stationMeta.key ?? (survey ? survey.qualify(stationMeta.name) : stationMeta.name);
+    const chain = survey ? stationMeta.cave.getCaveChain(survey) : [];
+    const ownerCave = chain.length > 0 ? chain[chain.length - 1] : stationMeta.cave;
+    return { key, ownerCave };
   }
 
   getPointedStationDetails(stationMeta) {
@@ -255,13 +278,20 @@ class SceneInteraction {
     const hasSurveyName = config.surveyName && st.survey !== undefined;
     const hasStationName = config.stationName;
 
+    // The full breadcrumb runs top cave → (sub-caves …) → survey, so a survey nested under
+    // sub-caves shows its real location (e.g. System Migovec → Vrtnarija Vilinska →
+    // Vrtnarija → rural_underground), not just topCave → survey. getSurveyNamePath includes
+    // the survey name as its last element; the cave-chain is everything before it.
+    const namePath = stationMeta.cave.getSurveyNamePath(st.survey);
+    const caveChain = namePath.slice(0, -1);
+
     // Use arrow format for cave -> survey -> station if all three are enabled
     if (hasCaveName && hasSurveyName && hasStationName) {
-      details.push(`${stationMeta.cave.name} → ${st.survey.name} → ${stationMeta.name}`);
+      details.push(`${caveChain.join(' → ')} → ${st.survey.name} → ${stationMeta.name}`);
     } else {
       // Use individual names with pipe separators
       if (hasCaveName) {
-        details.push(stationMeta.cave.name);
+        details.push(caveChain.join(' → '));
       }
       if (hasSurveyName) {
         details.push(st.survey.name);
@@ -327,7 +357,9 @@ class SceneInteraction {
 
     // Position (x,y,z)
     if (config.position) {
-      details.push(`(${formatFloat(st.position.x, 2)}, ${formatFloat(st.position.y, 2)}, ${formatFloat(st.position.z, 2)})`);
+      details.push(
+        `(${formatFloat(st.position.x, 2)}, ${formatFloat(st.position.y, 2)}, ${formatFloat(st.position.z, 2)})`
+      );
     }
 
     // Shots in compact format
@@ -341,8 +373,16 @@ class SceneInteraction {
       }
     }
 
+    // Qualified key (for attribute matching) + owning cave node (for bare comment/dimension
+    // matching). Computed once, only when one of these sections is shown — this runs on every
+    // hover and #stationContext walks the cave tree.
+    let stationKey, ownerCave;
+    if (config.attributes || config.comments || config.dimensions) {
+      ({ key: stationKey, ownerCave } = this.#stationContext(stationMeta));
+    }
+
     if (config.attributes) {
-      const attributes = this.getAttributesForStation(stationMeta.cave, stationMeta.name);
+      const attributes = this.getAttributesForStation(stationMeta.cave, stationKey);
       if (attributes.length > 0) {
         const s = attributes
           .map((a) => `${a.emoji} ${AttributesDefinitions.getAttributesAsString([a.attribute], i18n, ',', 20)}`)
@@ -358,7 +398,9 @@ class SceneInteraction {
         .filter((shw) => shw.shot.to === stationMeta.name)
         .map((shw) => shw.shot.comment)
         .filter((c) => c !== undefined && c !== '');
-      const stationComments = stationMeta.cave.stationComments ?? [];
+      // Station comments are bare-keyed per cave node; scope to the OWNING node so a comment on
+      // one sub-cave's "1" doesn't show on every other sub-cave's "1".
+      const stationComments = ownerCave.stationComments ?? [];
       comments.push(...stationComments.filter((sc) => sc.name === stationMeta.name).map((sc) => sc.comment));
       if (comments.length > 0) {
         details.push(`${i18n.t('common.comments')}: ${comments.join(', ')}`);
@@ -367,7 +409,7 @@ class SceneInteraction {
 
     // LRUD passage dimensions
     if (config.dimensions) {
-      const sd = (stationMeta.cave.stationDimensions ?? []).find((d) => d.name === stationMeta.name);
+      const sd = (ownerCave.stationDimensions ?? []).find((d) => d.name === stationMeta.name);
       if (sd) {
         const lengthUnit = st.survey?.units?.length ?? DEFAULT_UNITS.length;
         const u = i18n.t('ui.units.short.' + lengthUnit);
@@ -579,11 +621,21 @@ class SceneInteraction {
   }
 
   buildLocateStationPanel(contentElmnt) {
-    const stNames = this.db.getAllStationNames();
-    const multipleCaves = this.db.getAllCaveNames().length > 1;
-    const optionValue = (x) => (multipleCaves ? `${x.name} (${x.cave})` : x.name);
+    const stNames = this.db.getAllStationNameDetails();
+    // A datalist collapses options with the same `value`, so each option's value must be
+    // unique. In a simple project (one cave, one survey) bare names are already unique, so we
+    // show just the station name (typing "A2" works). When the same bare name repeats across
+    // surveys/sub-caves we append the full owning path (top cave → … → survey) to
+    // disambiguate AND to let the user filter by any cave/survey term (e.g. "rural"). The
+    // exact internal key is kept in `station=` for an unambiguous locate.
+    const counts = new Map();
+    for (const x of stNames) counts.set(x.name, (counts.get(x.name) ?? 0) + 1);
+    const optionValue = (x) => (x.path && counts.get(x.name) > 1 ? `${x.name} — ${x.path}` : x.name);
     const options = stNames
-      .map((x) => `<option cave="${x.cave}" station="${x.name}" value="${optionValue(x)}">`)
+      .map(
+        (x) =>
+          `<option cave="${x.cave}" station="${x.key}" station-name="${x.name.replace(/"/g, '&quot;')}" value="${optionValue(x).replace(/"/g, '&quot;')}">`
+      )
       .join('');
 
     const container = node`<div id="container-locate-station">
@@ -594,7 +646,17 @@ class SceneInteraction {
     const input = container.querySelector('#pointtolocate');
 
     container.querySelector('#locate-button').onclick = () => {
-      const selectedOption = container.querySelector(`#stations option[value='${input.value}']`);
+      const typed = input.value.trim();
+      // Prefer an exact option-value match (full "name — path" label or a unique bare name).
+      // Fall back to the first option whose bare station name equals the typed text, so a user
+      // who just types the station name (e.g. "A2") still locates it.
+      const opts = [...container.querySelectorAll('#stations option')];
+      const selectedOption =
+        opts.find((o) => o.value === typed) || opts.find((o) => o.getAttribute('station-name') === typed);
+      if (!selectedOption) {
+        showErrorPanel(i18n.t('ui.panels.locateStation.notFound', { name: typed }));
+        return;
+      }
       const caveName = selectedOption.getAttribute('cave');
       const stationName = selectedOption.getAttribute('station');
       this.locateStation(caveName, stationName);
@@ -610,9 +672,11 @@ class SceneInteraction {
     const cave = this.db.getCave(caveName);
     let stationMeta;
 
-    for (const [name, station] of cave.stations) {
-      if (station.survey.visible && stationName === name) {
-        stationMeta = { name, station, position: station.position, cave: cave, type: 'station' };
+    for (const [name, station] of cave.getAllStations()) {
+      // Map keys are survey-qualified for multi-survey caves; the requested name is bare,
+      // so compare against the bare form (first visible match wins).
+      if (station.survey.visible && (stationName === name || stationName === bareStationName(name))) {
+        stationMeta = { name: bareStationName(name), station, position: station.position, cave: cave, type: 'station' };
         break;
       }
     }
@@ -691,8 +755,7 @@ class SceneInteraction {
 
     const polar = toPolar(diffVector);
 
-    const detailsFor = (x) =>
-      x.type === 'station' ? `${x.cave.name} → ${x.station.survey.name} → ${x.name}` : x.name;
+    const detailsFor = (x) => (x.type === 'station' ? `${x.cave.name} → ${x.station.survey.name} → ${x.name}` : x.name);
     const fromDetails = detailsFor(from);
     const toDetails = detailsFor(to);
 
@@ -792,20 +855,31 @@ class SceneInteraction {
 
   buildStationDetailsPanel(contentElmnt, stationMeta, left, top) {
 
-    // do not use stationMeta.survey.shots here, because it contains all shots, not only the ones that are valid and connected
-    const shots = stationMeta.cave.surveys.flatMap((st) =>
+    // Shots touching this station. `stationMeta.name` is the bare station name, which is only
+    // unique WITHIN one survey, so scope the search to the station's owning survey (the
+    // station knows it). This avoids matching same-numbered stations in sibling surveys of a
+    // multi-survey cave. We compare against bare shot.from / getToStationName.
+    const ownerSurvey = stationMeta.station.survey;
+    const shots = (ownerSurvey ? [ownerSurvey] : stationMeta.cave.getAllSurveys()).flatMap((st) =>
       st.shots
-        .filter((sh) => (sh.isCenter() && sh.from === stationMeta.name) || sh.to === stationMeta.name)
+        .filter((sh) => (sh.isCenter() && sh.from === stationMeta.name) || st.getToStationName(sh) === stationMeta.name)
         .map((sh) => ({ survey: st, shot: sh }))
     );
-    const comments = stationMeta.cave.stationComments.filter((c) => c.name === stationMeta.name).map((c) => c.comment);
+    // Qualified key (attributes) + owning cave node (bare comments/dimensions). Scoping comments
+    // to the owner node stops a comment on one sub-cave's "1" appearing on every other "1".
+    const { key: stationKey, ownerCave } = this.#stationContext(stationMeta);
+
+    // Station comments are bare-keyed; take them from the station's owning cave node only.
+    const comments = (ownerCave.stationComments ?? [])
+      .filter((cc) => cc.name === stationMeta.name)
+      .map((cc) => cc.comment);
     let commentsString = '';
     if (comments.length > 0) {
       commentsString = `${i18n.t('common.comments')}:<br>${comments.join('<br>')}<br>`;
     }
 
     let dimensionsString = '';
-    const dim = (stationMeta.cave.stationDimensions ?? []).find((d) => d.name === stationMeta.name);
+    const dim = (ownerCave.stationDimensions ?? []).find((d) => d.name === stationMeta.name);
     if (dim) {
       const lengthUnit = stationMeta.station.survey?.units?.length ?? DEFAULT_UNITS.length;
       const u = i18n.t('ui.units.short.' + lengthUnit);
@@ -832,7 +906,7 @@ class SceneInteraction {
       })
       .join('<br>');
 
-    const attributes = this.getAttributesForStation(stationMeta.cave, stationMeta.name);
+    const attributes = this.getAttributesForStation(stationMeta.cave, stationKey);
     let attributesString = '';
     if (attributes.length > 0) {
       attributesString = attributes
@@ -854,6 +928,12 @@ class SceneInteraction {
       }
     }
 
+    // Full cave chain (top cave → sub-caves …) that owns this station — a station in a nested
+    // sub-cave belongs to several caves, so list them all rather than just the top-level cave.
+    // getSurveyNamePath returns [topCave, …subCaves…, surveyName]; drop the survey name.
+    const caveChain = stationMeta.cave.getSurveyNamePath(stationMeta.station.survey).slice(0, -1);
+    const caveLabel = i18n.t(caveChain.length > 1 ? 'common.caves' : 'common.cave');
+
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
         ${i18n.t('common.name')}: ${stationMeta.name}<br><br>
@@ -862,7 +942,7 @@ class SceneInteraction {
         Z: ${formatFloat(stationMeta.position.z, 3)}<br>
         ${i18n.t('common.type')}: ${i18n.t(`params.shotType.${stationMeta.station.type}`)}<br>
         ${i18n.t('common.survey')}: ${stationMeta.station.survey.name}<br>
-        ${i18n.t('common.cave')}: ${stationMeta.cave.name}<br>
+        ${caveLabel}: ${caveChain.join(' → ')}<br>
         ${i18n.t('ui.panels.stationDetails.localCoordinates')}: ${get3DCoordsStr(stationMeta.station.coordinates.local)}<br>
         ${projectedCoordinates}
         <br>${i18n.t('common.shots')}:<br>${shotDetails}<br><br>

@@ -16,6 +16,7 @@
 
 import * as THREE from 'three';
 import { ShotType } from '../model/survey.js';
+import { bareStationName } from '../utils/utils.js';
 
 export class Raycasting {
 
@@ -72,7 +73,7 @@ export class Raycasting {
     const caves = this.scene.db.getAllCaves();
     const visibleStations = [];
     caves.forEach((c) => {
-      for (const [name, station] of c.stations) {
+      for (const [name, station] of c.getAllStations()) {
         if (station.survey.visible) {
           switch (station.type) {
             case ShotType.CENTER:
@@ -89,7 +90,11 @@ export class Raycasting {
               throw new Error(`Invalid shot type: ${station.type}`);
 
           }
-          visibleStations.push({ name, station, position: station.position, cave: c, type: 'station' });
+          // Map keys are survey-qualified for multi-survey caves (`12@survey.path`); expose BOTH
+          // the bare station name (for the hover label, the panel title and bare shot/comment/
+          // dimension lookups) AND the exact qualified map key (for attribute lookups, which store
+          // the qualified key, so reused station numbers stay distinct across sub-caves).
+          visibleStations.push({ name: bareStationName(name), key: name, station, position: station.position, cave: c, type: 'station' });
         }
       }
     });

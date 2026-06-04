@@ -1,0 +1,25 @@
+survey sys -title "Nested System"
+  survey caveA
+    survey passage1
+      centreline
+        data normal from to length compass clino
+        10 11 5.0 0.0 0.0
+        11 12 4.0 90.0 0.0
+      endcentreline
+    endsurvey passage1
+    survey passage2
+      centreline
+        data normal from to length compass clino
+        20 21 6.0 45.0 0.0
+      endcentreline
+    endsurvey passage2
+  endsurvey caveA
+  survey caveB
+    centreline
+      data normal from to length compass clino
+      30 31 7.0 180.0 0.0
+    endcentreline
+  endsurvey caveB
+  equate 31@caveB 10@passage1
+  equate 12@passage1 20@passage2
+endsurvey sys

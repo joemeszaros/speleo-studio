@@ -610,7 +610,7 @@ export class SurveySheetEditor extends BaseEditor {
     let maxZ = undefined;
 
     if (this.cave?.stations) {
-      this.cave.stations.forEach((station) => {
+      this.cave.getAllStations().forEach((station) => {
         // Only include stations from this survey
         if (station.survey?.name !== this.survey.name) {
           return;

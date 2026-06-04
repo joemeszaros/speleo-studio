@@ -6,6 +6,7 @@
           "name": "File",
           "new": "New cave",
           "open": "Open cave(s)",
+          "openFolder": "Open cave folder…",
           "export": "Export cave(s)",
           "openModel": "Open model",
           "print": "Print",
@@ -550,7 +551,8 @@
       },
       "locateStation": {
         "title": "Locate station",
-        "locate": "Locate point"
+        "locate": "Locate point",
+        "notFound": "No station named '{name}' was found"
       },
       "export": {
         "title": "Export cave(s)",
@@ -734,6 +736,7 @@
           "splays": "Splays",
           "stations": "Stations",
           "surveys": "Surveys",
+          "subCaves": "Sub caves",
           "isolated": "Isolated surveys",
           "stationAttributes": "Station attributes",
           "sectionAttributes": "Section attributes",
@@ -1076,6 +1079,7 @@
       "orthophotoDownsampled": "{name}: orthophoto downsampled from {fromCols}×{fromRows} to {toCols}×{toRows} for performance",
       "longFormatNotSupported": "Only the simplified format is supported",
       "pointCloudFileTooLarge": "{name} is {size} MB, which is above the {limit} MB limit for point cloud imports. Try splitting the file or exporting a subsampled version.",
+      "surveyAtPathFailed": "Failed to process survey '{path}':",
       "therionNoData": "No centreline data found in Therion file",
       "therionMissingInputFiles": "This Therion file is a project root with no survey data of its own. Select all .th files from the project folder together.",
       "therionUnresolvedInputs": "Therion file references files that were not selected: {files}. Select all .th files from the project folder together.",
@@ -1134,7 +1138,7 @@
     },
     "survey": {
       "atLeastTwoGradientColorsRequired": "At least 2 gradient colors are required",
-      "conflictingShot": "Conflicting shot ({from} -> {to})!",
+      "conflictingShot": "Conflicting station '{station}' in survey '{survey}' (shot {from} -> {to}) — the same station name is used by two different points; rename one of them.",
       "undefinedSegmentType": "Undefined segment type {type}"
     },
     "storage": {

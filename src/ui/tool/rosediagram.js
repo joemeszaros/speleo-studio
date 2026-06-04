@@ -57,7 +57,7 @@ export class RoseDiagramTool {
     if (!cave) return [];
 
     const shots = [];
-    cave.surveys.forEach((survey) => {
+    cave.getAllSurveys().forEach((survey) => {
       // Skip isolated surveys
       if (survey.isolated === true) return;
 

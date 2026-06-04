@@ -315,7 +315,7 @@ class PolygonImporter extends Importer {
       const stationDimensions = [...aggregatedLruds.values()].map(
         (l) => new StationDimension(l.from, l.left, l.right, l.up, l.down)
       );
-      return new Cave(projectName, metadata, geoData, stations, surveys, [], undefined, [], stationDimensions);
+      return new Cave(projectName, metadata, geoData, stations, surveys, [], [], undefined, [], stationDimensions);
     }
   }
 
@@ -658,10 +658,9 @@ class JsonImporter extends Importer {
     // data (Cave.fromPure) — don't rebuild from shots, the .3d centerline has
     // disconnected components that won't chain.
     if (!cave.readOnly) {
-      [...cave.surveys.entries()]
-        .forEach(([index, es]) =>
-          SurveyHelper.recalculateSurvey(index, es, cave.surveys, cave.stations, cave.aliases, cave.geoData)
-        );
+      // Order-independent fixpoint solve over the whole network, then distribute the
+      // resulting stations into each cave node's own map.
+      SurveyHelper.recalculateCave(cave);
     }
 
     return cave;

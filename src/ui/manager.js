@@ -103,6 +103,9 @@ class ProjectManager {
   }
 
   async saveCave(cave) {
+    // Persistence stores one record per top-level cave (children nested inside), so always
+    // save the root even when an editor hands us a sub-cave.
+    cave = this.#rootCaveOf(cave);
     cave.revision++;
     await this.projectSystem.saveCaveInProject(this.projectSystem.getCurrentProject().id, cave);
 
@@ -158,8 +161,10 @@ class ProjectManager {
     const reasons = e.detail.reasons;
     const source = e.detail.source;
 
-    // we do not need to reload the cave if only the metadata has changed
-    if (reasons.length > 1 || (reasons.length === 1 && reasons[0] !== 'metadata')) {
+    // Cosmetic changes (metadata, cave/survey color) don't affect station geometry, so skip the
+    // expensive reloadCave; only a structural change (shots, coordinates, …) needs a recompute.
+    const cosmeticReasons = new Set(['metadata', 'color']);
+    if (reasons.some((r) => !cosmeticReasons.has(r))) {
       await this.reloadCave(cave);
     }
 
@@ -170,9 +175,14 @@ class ProjectManager {
   }
 
   async onSurveyReordered(e) {
-    const cave = e.detail.cave;
-    await this.reloadCave(cave);
-    await this.saveCave(cave);
+    // Reordering surveys changes only their order in the list — not any station position or
+    // geometry. Fixed caves solve from their fixes (order-independent), and un-georeferenced
+    // caves are anchored at a deterministically-chosen origin survey (see calculateCaveStations),
+    // so the solved positions stay valid regardless of order. The expensive recompute + full
+    // scene rebuild (reloadCave) is therefore unnecessary; running it on a large cave froze the
+    // UI for ~15s. We only persist the new order.
+    const root = this.#rootCaveOf(e.detail.cave);
+    await this.saveCave(root);
   }
 
   async onSurveyAdded(e) {
@@ -210,6 +220,10 @@ class ProjectManager {
     const projectId = this.projectSystem.getCurrentProject().id;
     await this.editorStateSystem.saveState(projectId, data, {
       surveyName : surveyName,
+      // surveyPath uniquely identifies a survey within a multi-level cave (names repeat across
+      // sub-caves); persisted so the editor reopens the RIGHT survey on reload. Undefined for
+      // flat/legacy caves, where surveyName alone is unambiguous.
+      surveyPath : e.detail.survey.surveyPath,
       caveName   : caveName
     });
   }
@@ -227,8 +241,10 @@ class ProjectManager {
     const reasons = e.detail.reasons;
     const cave = e.detail.cave;
 
-    // we do not need to reload the cave if only the metadata has changed
-    if (reasons.length > 1 || (reasons.length === 1 && reasons[0] !== 'metadata')) {
+    // Cosmetic changes (metadata, cave/survey color) don't affect station geometry, so skip the
+    // expensive reloadCave; only a structural change (shots, coordinates, …) needs a recompute.
+    const cosmeticReasons = new Set(['metadata', 'color']);
+    if (reasons.some((r) => !cosmeticReasons.has(r))) {
       await this.reloadCave(cave);
     }
     await this.saveCave(cave);
@@ -242,8 +258,10 @@ class ProjectManager {
   async onSurveyDeleted(e) {
     const caveName = e.detail.cave;
     const surveyName = e.detail.survey;
-    this.scene.speleo.disposeSurvey(caveName, surveyName);
-    this.scene.speleo.deleteSurvey(caveName, surveyName);
+    // Scene objects are keyed by survey id, not name; clear all of this cave's objects
+    // and let reloadOnScene re-add the survivors (avoids leaving a ghost of the deleted one).
+    this.scene.speleo.disposeCave(caveName);
+    this.scene.speleo.deleteCave(caveName);
     const cave = this.db.getCave(caveName);
     this.recalculateCave(cave);
     this.reloadOnScene(cave);
@@ -272,12 +290,13 @@ class ProjectManager {
   }
 
   async onSurveyRenamed(e) {
-    const oldName = e.detail.oldName;
     const survey = e.detail.survey;
     const newName = survey.name;
     const cave = e.detail.cave;
-    this.scene.speleo.renameSurvey(oldName, newName, cave.name);
-    this.explorer.renameSurvey(oldName, newName, cave.name);
+    // Scene objects are keyed by the survey's stable id, so a rename needs no scene-key
+    // change (only the explorer label updates). Object/material names are cosmetic and
+    // refresh on the next reload.
+    this.explorer.renameSurvey(survey, newName);
     await this.saveCave(cave);
   }
 
@@ -344,7 +363,12 @@ class ProjectManager {
     const editorState = await this.editorStateSystem.loadState(project.id);
     if (editorState !== undefined && !skipLocalChanges) {
       const cave = this.db.getCave(editorState.metadata.caveName);
-      const survey = cave.surveys.find((s) => s.name === editorState.metadata.surveyName);
+      // Prefer the unique surveyPath (names repeat across sub-caves in a multi-level cave); fall
+      // back to a name match for states saved before surveyPath was stored and for flat caves.
+      const survey =
+        (editorState.metadata.surveyPath !== undefined
+          ? cave.getAllSurveys().find((s) => s.surveyPath === editorState.metadata.surveyPath)
+          : undefined) ?? cave.getAllSurveys().find((s) => s.name === editorState.metadata.surveyName);
       this.editor = new SurveyEditor(
         this.options,
         cave,
@@ -851,17 +875,35 @@ class ProjectManager {
     await this.googleDriveSync.uploadProject(driveProject, false);
   }
 
+  // Resolve the top-level (root) cave that owns a given cave node. Editors operate on
+  // sub-cave nodes, but persistence, recalculation and scene rendering work on the root
+  // (the whole connected network is one stored cave). Flat caves resolve to themselves.
+  #rootCaveOf(cave) {
+    if (!cave) return cave;
+    if (this.db.caves.has(cave.name) && this.db.getCave(cave.name) === cave) return cave;
+    for (const root of this.db.caves.values()) {
+      let match = null;
+      root.walk((c) => {
+        if (c === cave) match = root;
+      });
+      if (match) return match;
+    }
+    return cave;
+  }
+
   async reloadCave(cave) {
-    this.recalculateCave(cave);
-    this.reloadOnScene(cave);
+    const root = this.#rootCaveOf(cave);
+    this.recalculateCave(root);
+    this.reloadOnScene(root);
     this.scene.view.renderView();
-    this.explorer.updateCave(cave);
+    this.explorer.updateCave(root);
   }
 
   calculateFragmentAttributes(cave) {
     if (cave.attributes.sectionAttributes.length > 0 || cave.attributes.componentAttributes.length > 0) {
 
       const g = SectionHelper.getGraph(cave);
+      const stations = cave.getAllStations();
 
       if (cave.attributes.sectionAttributes.length > 0) {
         cave.attributes.sectionAttributes.forEach((sa) => {
@@ -870,7 +912,7 @@ class ProjectManager {
           if (from === undefined || to === undefined) {
             return;
           }
-          if (!cave.stations.has(from) || !cave.stations.has(to)) {
+          if (!stations.has(from) || !stations.has(to)) {
             return;
           }
           const cs = SectionHelper.getSection(g, from, to);
@@ -887,7 +929,7 @@ class ProjectManager {
           if (ca.component.start === undefined) {
             return;
           }
-          if (!cave.stations.has(ca.component.start) || ca.component.termination.some((t) => !cave.stations.has(t))) {
+          if (!stations.has(ca.component.start) || ca.component.termination.some((t) => !stations.has(t))) {
             return;
           }
           const cs = SectionHelper.getComponent(g, ca.component.start, ca.component.termination);
@@ -919,7 +961,7 @@ class ProjectManager {
       globalNormalizer.initializeGlobalOrigin(coordinate);
     }
 
-    cave.stations.forEach((station) => {
+    cave.getAllStations().forEach((station) => {
       const projected = station.coordinates?.projected;
       if (projected !== undefined) {
         station.position = projected.toNormalizedVector();
@@ -931,42 +973,45 @@ class ProjectManager {
   }
 
   recalculateCave(cave) {
-    let caveStations = new Map();
-    cave.stations = caveStations;
-    cave.surveys.entries().forEach(([index, es]) => {
-      SurveyHelper.recalculateSurvey(index, es, cave.surveys, caveStations, cave.aliases, cave.geoData);
-      this.#emitSurveyRecalculated(cave, es);
-    });
-    cave.stations = caveStations;
+    // The position solve + distribution into each cave node's station map lives in SurveyHelper
+    // (shared with import so load and edit agree); here we just run it and fire the UI
+    // notifications. Events are emitted after distribution so listeners see the fresh stations.
+    SurveyHelper.recalculateCave(cave);
+    cave.getAllSurveys().forEach((es) => this.#emitSurveyRecalculated(cave, es));
     this.#emitCaveRecalculated(cave);
     //TODO: should recalculate section attributes
   }
 
   reloadOnScene(cave) {
-    const caveStations = cave.stations;
-
-    if (caveStations.size < 2) {
+    // Use the whole-cave merged station map (not each node's own): a leg can reference an
+    // equate-connected endpoint that lives in another sub-cave node, and getSegments must be
+    // able to resolve it — otherwise cross-sub-cave legs vanish from the scene after reload.
+    const renderStations = cave.getAllStations();
+    if (renderStations.size < 2) {
       return;
     }
 
-    cave.surveys.forEach((es) => {
-      this.scene.speleo.disposeSurvey(cave.name, es.name);
-      this.scene.speleo.deleteSurvey(cave.name, es.name);
+    for (const { survey: es, cave: owner } of cave.getAllSurveysWithPath()) {
+      this.scene.speleo.disposeSurvey(cave.name, es.id);
+      this.scene.speleo.deleteSurvey(cave.name, es.id);
 
-      const [clSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(es, caveStations);
+      const [clSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(es, renderStations);
       if (clSegments.length !== 0) {
         const _3dObjects = this.scene.speleo.getSurveyObjects(
           es,
-          cave,
+          owner,
           clSegments,
           splaySegments,
           auxiliarySegments,
           cave.visible && es.visible
         );
-        this.scene.speleo.addSurvey(cave.name, es.name, _3dObjects);
-        this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
+        this.scene.speleo.addSurvey(cave.name, es.id, _3dObjects);
       }
-    });
+    }
+    // Apply colors ONCE after all surveys are (re)added. setColorMode recomputes gradients
+    // across every survey of every cave, so calling it inside the loop made reload O(n²) —
+    // ~17s for a 463-survey cave. Once is enough.
+    this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
 
     // Update starting point position after recalculation
     this.scene.startPoint.addOrUpdateStartingPoint(cave);
@@ -1146,27 +1191,34 @@ class ProjectManager {
   addCave(cave) {
     this.db.addCave(cave);
 
-    const allValidShots = cave.surveys.flatMap((s) => s.validShots);
+    const allStations = cave.getAllStations();
+    const allValidShots = cave.getAllSurveys().flatMap((s) => s.validShots);
 
-    if (cave.surveys.length > 0 && allValidShots.length > 0) {
+    if (cave.getAllSurveys().length > 0 && allValidShots.length > 0) {
 
       // this is the first cave in the project
       if (this.db.getAllCaveNames().length === 1) {
         this.#emitCoordinateSystemChange(cave?.geoData?.coordinateSystem);
       }
 
-      cave.surveys.forEach((s) => {
-        const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, cave.stations);
+      // Render every survey across the nested tree; scene objects are keyed by the
+      // survey's unique id (names are not unique across the tree), grouped under the
+      // top cave's name. `owner` is the cave node that holds the survey's stations.
+      // Segments use the whole-cave merged map so equate-connected partner stations
+      // (which live in another sub-cave node) resolve.
+      const renderStations = cave.getAllStations();
+      for (const { survey: s, cave: owner } of cave.getAllSurveysWithPath()) {
+        const [centerLineSegments, splaySegments, auxiliarySegments] = SurveyHelper.getSegments(s, renderStations);
         const _3dobjects = this.scene.speleo.getSurveyObjects(
           s,
-          cave,
+          owner,
           centerLineSegments,
           splaySegments,
           auxiliarySegments,
-          true
+          cave.visible && s.visible
         );
-        this.scene.speleo.addSurvey(cave.name, s.name, _3dobjects);
-      });
+        this.scene.speleo.addSurvey(cave.name, s.id, _3dobjects);
+      }
 
       this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
 
@@ -1178,7 +1230,7 @@ class ProjectManager {
           sa.section.path.length > 0 &&
           sa.attribute?.isValid() === true
         ) {
-          const segments = SectionHelper.getSectionSegments(sa.section, cave.stations);
+          const segments = SectionHelper.getSectionSegments(sa.section, allStations);
           this.scene.attributes.showFragmentAttribute(
             sa.id,
             segments,
@@ -1202,7 +1254,7 @@ class ProjectManager {
           ca.component.path.length > 0 &&
           ca.attribute?.isValid() === true
         ) {
-          const segments = SectionHelper.getComponentSegments(ca.component, cave.stations);
+          const segments = SectionHelper.getComponentSegments(ca.component, allStations);
           this.scene.attributes.showFragmentAttribute(
             ca.id,
             segments,
@@ -1221,13 +1273,13 @@ class ProjectManager {
       });
       const promises = [];
       cave.attributes.stationAttributes.forEach((sa) => {
-        if (sa.visible && cave.stations.has(sa.name) && sa.attribute?.isValid() === true) {
+        if (sa.visible && allStations.has(sa.name) && sa.attribute?.isValid() === true) {
           shouldRender = true;
           promises.push(
             new Promise((resolve) => {
               this.scene.attributes.showStationAttribute(
                 sa.id,
-                cave.stations.get(sa.name),
+                allStations.get(sa.name),
                 sa.attribute,
                 cave.name,
                 sa.position,
@@ -1280,10 +1332,8 @@ class ProjectManager {
       }
     }
 
+    // addCave builds the whole nested tree (child caves + surveys) recursively.
     this.explorer.addCave(cave);
-    cave.surveys.forEach((s) => {
-      this.explorer.addSurvey(cave, s);
-    });
 
   }
 

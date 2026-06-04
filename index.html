@@ -44,6 +44,8 @@ limitations under the License.
   <body>
     <div class="file-upload">
       <input type="file" id="caveInput" accept=".cave,.json,.th,.svx,.3d" multiple style="display: none" />
+      <!-- recursive directory import for multi-folder Therion/Survex projects -->
+      <input type="file" id="caveDirInput" webkitdirectory directory multiple style="display: none" />
       <input type="file" id="surveyInput" accept=".csv" multiple style="display: none" />
       <!-- used in explorer tree to add a survey to a survey-->
       <input type="file" id="surveyInputPartial" accept=".csv" multiple style="display: none" />

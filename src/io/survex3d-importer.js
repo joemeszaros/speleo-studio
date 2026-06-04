@@ -312,7 +312,7 @@ class Survex3dImporter extends Importer {
     }
 
     // visible = true, readOnly = true: .3d caves are visualization-only.
-    return new Cave(caveName, caveMeta, geoData, stations, surveys, aliases, undefined, [], dims, true, true);
+    return new Cave(caveName, caveMeta, geoData, stations, surveys, [], aliases, undefined, [], dims, true, true);
   }
 }
 

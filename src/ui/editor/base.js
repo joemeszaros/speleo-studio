@@ -309,11 +309,11 @@ class Editor extends BaseEditor {
               data.start === undefined
                 ? SectionHelper.getSectionSegments(
                     new CaveSection(data.from, data.to, data.path, data.distance),
-                    this.cave.stations
+                    this.cave.getAllStations()
                   )
                 : SectionHelper.getComponentSegments(
                     new CaveComponent(data.start, data.termination, data.path, data.distance),
-                    this.cave.stations
+                    this.cave.getAllStations()
                   ),
               data.attribute,
               data.format,

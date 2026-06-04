@@ -15,7 +15,7 @@
  */
 
 import { i18n } from './i18n/i18n.js';
-import { formatDistance, sanitizeName } from './utils/utils.js';
+import { formatDistance, sanitizeName, bareStationName } from './utils/utils.js';
 
 class Database {
 
@@ -41,7 +41,7 @@ class Database {
    * @returns {Array[Survey]} Surveys of all caves
    */
   getAllSurveys() {
-    return this.caves.values().flatMap((c) => c.surveys);
+    return [...this.caves.values()].flatMap((c) => c.getAllSurveys());
   }
 
   getCavesMap() {
@@ -54,29 +54,36 @@ class Database {
 
   getStationNames(caveName, filter = () => true) {
     const cave = this.caves.get(caveName);
-    if (!cave.stations) return [];
-    return [...cave.stations]
+    if (!cave) return [];
+    return [...cave.getAllStations()]
       .filter(([_, value]) => filter(value))
       .map(([key]) => key);
   }
 
-  getAllStationNames() {
-    const stNames = [
-      ...this.caves.values().flatMap((c) =>
-        [...c.stations.keys()].map((st) => {
-          return { name: st, cave: c.name };
-        })
-      )
-    ];
-    return stNames.sort((a, b) => {
-      if (a.name < b.name) {
-        return -1;
+  // Lists every station for the locate panel. Each entry has:
+  //   key  – the internal station-map key (survey-qualified for multi-survey caves), used to
+  //          locate the exact point;
+  //   name – the bare station name to display;
+  //   cave – the TOP-level cave name (the db key);
+  //   path – the full breadcrumb of cave→…→survey names that own the station, so stations are
+  //          distinguishable and searchable by sub-cave / survey name (e.g. "rural").
+  getAllStationNameDetails() {
+    const stNames = [];
+    for (const c of this.caves.values()) {
+      for (const [key, station] of c.getAllStations()) {
+        const survey = station.survey;
+        // Full chain topCave → …sub-caves… → survey (getSurveyNamePath already includes the
+        // survey name as its last element).
+        const namePath = survey ? c.getSurveyNamePath(survey) : [c.name];
+        stNames.push({
+          key,
+          name : bareStationName(key),
+          cave : c.name,
+          path : namePath.join(' / ')
+        });
       }
-      if (a.name > b.name) {
-        return 1;
-      }
-      return 0;
-    });
+    }
+    return stNames.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   }
 
   getAllCaveNames() {
@@ -85,10 +92,24 @@ class Database {
 
   getSurvey(caveName, surveyName) {
     if (this.caves.has(caveName)) {
-      return this.caves.get(caveName).surveys.find((s) => s.name === surveyName);
+      // Search the whole nested tree; names are unique within a parent, so the first
+      // match is the intended one for top-level callers (editors operate per cave node).
+      return this.caves
+        .get(caveName)
+        .getAllSurveys()
+        .find((s) => s.name === surveyName);
     } else {
       return undefined;
     }
+  }
+
+  // Resolve a survey by its stable unique id (scene/colormode key it by id since survey
+  // names are not unique across the nested tree).
+  getSurveyById(caveName, surveyId) {
+    return this.caves
+      .get(caveName)
+      ?.getAllSurveys()
+      .find((s) => s.id === surveyId);
   }
 
   addCave(cave) {
@@ -120,11 +141,15 @@ class Database {
 
   renameSurvey(cave, oldName, newName) {
     newName = sanitizeName(newName);
-    const survey = this.getSurvey(cave.name, oldName);
+    // Operate on the passed cave object directly: `cave` may be a nested SUB-cave, and the
+    // `caves` map is keyed only by top-level cave names, so a name lookup (getSurvey by cave.name)
+    // would miss and wrongly throw "survey does not exist" when renaming a survey in a sub-cave.
+    const surveys = cave.getAllSurveys();
+    const survey = surveys.find((s) => s.name === oldName);
     if (survey === undefined) {
       throw new Error(i18n.t('errors.db.surveyDoesNotExist', { name: oldName }));
     }
-    if (this.getSurvey(cave.name, newName) !== undefined) {
+    if (surveys.some((s) => s !== survey && s.name === newName)) {
       throw new Error(i18n.t('errors.db.surveyAlreadyExists', { name: newName }));
     }
     survey.name = newName;
@@ -263,18 +288,17 @@ class Database {
     this.meshes.clear();
   }
 
-  reorderSurvey(caveName, surveyName, newIndex) {
-    if (this.caves.has(caveName)) {
-      const cave = this.caves.get(caveName);
-      const surveyIndex = cave.surveys.findIndex((s) => s.name === surveyName);
-
-      if (surveyIndex !== -1 && newIndex >= 0 && newIndex < cave.surveys.length) {
-        // Remove the survey from its current position
-        const [survey] = cave.surveys.splice(surveyIndex, 1);
-        // Insert it at the new position
-        cave.surveys.splice(newIndex, 0, survey);
-        return true;
-      }
+  // Reorders a survey within its OWNING cave node's surveys array. `ownerCave` is the cave
+  // (possibly a nested sub-cave) that directly contains the survey, and `survey` is the
+  // Survey object itself — matched by identity, since survey names are not unique across a
+  // nested tree.
+  reorderSurvey(ownerCave, survey, newIndex) {
+    if (!ownerCave || !survey) return false;
+    const surveyIndex = ownerCave.surveys.indexOf(survey);
+    if (surveyIndex !== -1 && newIndex >= 0 && newIndex < ownerCave.surveys.length) {
+      ownerCave.surveys.splice(surveyIndex, 1);
+      ownerCave.surveys.splice(newIndex, 0, survey);
+      return true;
     }
     return false;
   }

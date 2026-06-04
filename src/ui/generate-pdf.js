@@ -212,10 +212,10 @@ class PDFPrintDialog {
       const caveObject = this.scene.speleo.caveObjects.get(cave.name);
       if (!caveObject) return;
 
-      cave.surveys.forEach((survey) => {
+      cave.getAllSurveys().forEach((survey) => {
         if (!survey.visible) return;
 
-        const surveyObject = caveObject.get(survey.name);
+        const surveyObject = caveObject.get(survey.id);
         if (!surveyObject) return;
 
         if (surveyObject.centerLines?.visible) {
@@ -466,10 +466,10 @@ class PDFPrintDialog {
       const caveObject = this.scene.speleo.caveObjects.get(cave.name);
       if (!caveObject) return;
 
-      cave.surveys.forEach((survey) => {
+      cave.getAllSurveys().forEach((survey) => {
         if (!survey.visible) return;
 
-        const surveyObject = caveObject.get(survey.name);
+        const surveyObject = caveObject.get(survey.id);
         if (!surveyObject) return;
 
         // Process centerlines if visible in scene
@@ -1479,10 +1479,10 @@ class PDFPrintDialog {
       const caveObject = this.scene.speleo.caveObjects.get(cave.name);
       if (!caveObject) return;
 
-      cave.surveys.forEach((survey) => {
+      cave.getAllSurveys().forEach((survey) => {
         if (!survey.visible) return;
 
-        const surveyObject = caveObject.get(survey.name);
+        const surveyObject = caveObject.get(survey.id);
         if (!surveyObject) return;
 
         // Draw center lines if visible in scene

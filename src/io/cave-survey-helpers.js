@@ -25,7 +25,15 @@
 
 import { SurveyHelper } from '../survey.js';
 import {
-  Shot, ShotType, Survey, SurveyMetadata, SurveyAlias, StationComment, StationDimension, SurveyTeamMember, DEFAULT_UNITS
+  Shot,
+  ShotType,
+  Survey,
+  SurveyMetadata,
+  SurveyAlias,
+  StationComment,
+  StationDimension,
+  SurveyTeamMember,
+  DEFAULT_UNITS
 } from '../model/survey.js';
 import { Cave, CaveMetadata } from '../model/cave.js';
 import {
@@ -37,10 +45,15 @@ import {
   CoordinateSystemType,
   UTMCoordinateSystem
 } from '../model/geo.js';
-import { Vector } from '../model.js';
 import {
-  parseMyFloat, lengthToDegrees, angleToDegrees, clinoToDegrees, roundToTwoDecimalPlaces,
-  convertLengthFromMeters, convertAngleFromDegrees
+  parseMyFloat,
+  lengthToDegrees,
+  angleToDegrees,
+  clinoToDegrees,
+  roundToTwoDecimalPlaces,
+  convertLengthFromMeters,
+  convertAngleFromDegrees,
+  sanitizeName
 } from '../utils/utils.js';
 import { MeridianConvergence, UTMConverter } from '../utils/geo.js';
 import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
@@ -138,24 +151,47 @@ export function tokenizeLine(line, opts) {
 }
 
 export function findRootFile(textMap, opts) {
-  const { includeKeyword, countPattern } = opts;
+  const { includeKeyword, countPattern, defaultExt } = opts;
   if (textMap.size === 1) return [...textMap.keys()][0];
 
-  const referenced = new Set();
-  for (const text of textMap.values()) {
+  // Mark every file that is referenced by some `input`/`*include`. Resolve each include to
+  // its ACTUAL textMap key (directory-aware, same as flattenFile) so that when two files
+  // share a basename in different folders (e.g. ubend/ubend.th vs ubend/2000/ubend/ubend.th)
+  // only the truly-referenced one is excluded — not every file with that name. Basename is
+  // only used as a last-resort fallback when the path can't be resolved to a key.
+  const referencedKeys = new Set();
+  const referencedBasenames = new Set();
+  const unresolvedBasenames = new Set();
+
+  for (const [fromKey, text] of textMap) {
+    const slash = Math.max(fromKey.lastIndexOf('/'), fromKey.lastIndexOf('\\'));
+    const dir = slash >= 0 ? fromKey.slice(0, slash) : '';
     for (const line of text.split(/\r?\n/)) {
       const tokens = tokenizeLine(line, opts);
       if (tokens.length >= 2 && tokens[0].toLowerCase() === includeKeyword) {
-        const path = tokens[1];
-        referenced.add(path);
-        referenced.add(path.split(/[\\/]/).pop());
+        const inc = tokens[1];
+        const basename = inc.split(/[\\/]/).pop();
+        referencedBasenames.add(basename);
+        // Candidate keys to resolve this include against (exact, dir-relative, +ext).
+        const cands = [inc, normalizeRelativePath(dir, inc)];
+        if (defaultExt && !inc.toLowerCase().endsWith(defaultExt)) {
+          cands.push(inc + defaultExt, normalizeRelativePath(dir, inc + defaultExt));
+        }
+        const resolved = cands.find((c) => textMap.has(c));
+        if (resolved) referencedKeys.add(resolved);
+        else unresolvedBasenames.add(basename);
       }
     }
   }
 
+  // A file is a root candidate if its full key was never referenced. When an include
+  // couldn't be resolved to a key (e.g. flat multi-file selection keyed by basename), fall
+  // back to excluding by basename so those still work.
   const candidates = [...textMap.keys()].filter((name) => {
+    if (referencedKeys.has(name)) return false;
     const base = name.split(/[\\/]/).pop();
-    return !referenced.has(name) && !referenced.has(base);
+    if (unresolvedBasenames.has(base)) return false;
+    return true;
   });
 
   const ranked = (candidates.length > 0 ? candidates : [...textMap.keys()]).sort((a, b) => {
@@ -166,10 +202,27 @@ export function findRootFile(textMap, opts) {
   return ranked[0];
 }
 
+// Resolves an include path against the including file's directory, collapsing
+// '.' and '..' segments. Returns a forward-slash relative path (textMap keys use '/').
+export function normalizeRelativePath(dir, p) {
+  const combined = (dir ? dir.split(/[\\/]/) : []).concat((p ?? '').split(/[\\/]/));
+  const out = [];
+  for (const seg of combined) {
+    if (seg === '' || seg === '.') continue;
+    if (seg === '..') out.pop();
+    else out.push(seg);
+  }
+  return out.join('/');
+}
+
 export function flattenFile(filename, textMap, visited, unresolved, opts) {
-  const { includeKeyword, skipExtensions = [] } = opts;
+  const { includeKeyword, skipExtensions = [], defaultExt } = opts;
   if (visited.has(filename)) return [];
   visited.add(filename);
+
+  // Directory of the including file (for resolving relative include paths across folders).
+  const slash = Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\'));
+  const dir = slash >= 0 ? filename.slice(0, slash) : '';
 
   const text = textMap.get(filename);
   if (text === undefined) {
@@ -195,12 +248,21 @@ export function flattenFile(filename, textMap, visited, unresolved, opts) {
       const basename = includePath.split(/[\\/]/).pop();
       let resolved = null;
 
-      if (textMap.has(includePath)) {
-        resolved = includePath;
-      } else {
+      // Try, in order: exact key, path resolved relative to the including file's directory,
+      // both again with the format's default extension appended.
+      const candidates = [includePath, normalizeRelativePath(dir, includePath)];
+      if (defaultExt && !includePath.toLowerCase().endsWith(defaultExt)) {
+        candidates.push(includePath + defaultExt, normalizeRelativePath(dir, includePath + defaultExt));
+      }
+      resolved = candidates.find((c) => textMap.has(c)) ?? null;
+
+      if (!resolved) {
+        // Basename fallback (handles flat multi-file selection where keys are basenames).
+        const lcBase = basename.toLowerCase();
+        const lcBaseExt = defaultExt ? lcBase + defaultExt : null;
         for (const key of textMap.keys()) {
-          const keyBase = key.split(/[\\/]/).pop();
-          if (keyBase === basename || keyBase.toLowerCase() === basename.toLowerCase()) {
+          const keyBase = key.split(/[\\/]/).pop().toLowerCase();
+          if (keyBase === lcBase || keyBase === lcBaseExt) {
             resolved = key;
             break;
           }
@@ -260,9 +322,9 @@ export function applyCalibration(tokens, state, extraFields = {}) {
   // tokens[3] is either an explicit unit string or a numeric scale factor.
   const t3 = tokens[3];
   const hasUnit = t3 !== undefined && isNaN(parseMyFloat(t3));
-  const unitStr  = hasUnit ? t3.toLowerCase() : undefined;
+  const unitStr = hasUnit ? t3.toLowerCase() : undefined;
   const scaleRaw = hasUnit ? tokens[4] : t3;
-  const scale    = scaleRaw !== undefined ? parseMyFloat(scaleRaw) : 1.0;
+  const scale = scaleRaw !== undefined ? parseMyFloat(scaleRaw) : 1.0;
 
   // The calibration offset is added directly to shot values during parseShotRow / flushStationPairs.
   // Shot values are stored in `state.units.<field>`, so the offset must end up in that same unit.
@@ -271,17 +333,17 @@ export function applyCalibration(tokens, state, extraFields = {}) {
   if (field === 'length' || field === 'tape' || field === 'distance') {
     const sourceUnit = unitStr ?? state.units.length;
     const offsetMeters = lengthToDegrees(num, sourceUnit);
-    state.calibration.length      = convertLengthFromMeters(offsetMeters, mapToSpeleoStudioUnits(state.units).length);
+    state.calibration.length = convertLengthFromMeters(offsetMeters, mapToSpeleoStudioUnits(state.units).length);
     state.calibration.lengthScale = isNaN(scale) ? 1.0 : scale;
   } else if (field === 'compass' || field === 'bearing') {
     const sourceUnit = unitStr ?? state.units.compass;
     const offsetDegrees = angleToDegrees(num, sourceUnit);
-    state.calibration.compass      = convertAngleFromDegrees(offsetDegrees, mapToSpeleoStudioUnits(state.units).angle);
+    state.calibration.compass = convertAngleFromDegrees(offsetDegrees, mapToSpeleoStudioUnits(state.units).angle);
     state.calibration.compassScale = isNaN(scale) ? 1.0 : scale;
   } else if (field === 'clino' || field === 'gradient' || field === 'inclination') {
     const sourceUnit = unitStr ?? state.units.clino;
     const offsetDegrees = clinoToDegrees(num, sourceUnit);
-    state.calibration.clino      = convertAngleFromDegrees(offsetDegrees, mapToSpeleoStudioUnits(state.units).angle);
+    state.calibration.clino = convertAngleFromDegrees(offsetDegrees, mapToSpeleoStudioUnits(state.units).angle);
     state.calibration.clinoScale = isNaN(scale) ? 1.0 : scale;
   } else if (field in extraFields) {
     extraFields[field](rawOffset, unitStr, state);
@@ -322,7 +384,7 @@ export function parseDataFormat(tokens) {
     down       : -1,
     dx         : -1,
     dy         : -1,
-    dz         : -1,
+    dz         : -1
   };
 
   columns.forEach((col, idx) => {
@@ -350,10 +412,7 @@ const NATIVE_LENGTH_UNITS = new Set([
   'yards', 'yard', 'yd', 'yds',
   'inches', 'inch', 'in'
 ]);
-const NATIVE_ANGLE_UNITS = new Set([
-  'degrees', 'degree', 'deg',
-  'grads', 'grad', 'gon', 'gons'
-]);
+const NATIVE_ANGLE_UNITS = new Set(['degrees', 'degree', 'deg', 'grads', 'grad', 'gon', 'gons']);
 
 function isGradsUnit(unit) {
   return unit === 'grads' || unit === 'grad' || unit === 'gon' || unit === 'gons';
@@ -451,14 +510,30 @@ export function applyUnits(tokens, units) {
  */
 export function mapToSpeleoStudioUnits(parserUnits) {
   const lengthMap = {
-    feet   : 'feet',  foot   : 'feet',  ft : 'feet',
-    yards  : 'yards', yard   : 'yards', yd : 'yards', yds : 'yards',
-    inches : 'inches', inch  : 'inches', in : 'inches',
-    meters : 'meters', meter : 'meters', metres : 'meters', metre : 'meters', m : 'meters'
+    feet   : 'feet',
+    foot   : 'feet',
+    ft     : 'feet',
+    yards  : 'yards',
+    yard   : 'yards',
+    yd     : 'yards',
+    yds    : 'yards',
+    inches : 'inches',
+    inch   : 'inches',
+    in     : 'inches',
+    meters : 'meters',
+    meter  : 'meters',
+    metres : 'meters',
+    metre  : 'meters',
+    m      : 'meters'
   };
   const angleMap = {
-    degrees : 'degrees', degree : 'degrees', deg : 'degrees',
-    grads   : 'grads',   grad   : 'grads',   gon : 'grads', gons : 'grads'
+    degrees : 'degrees',
+    degree  : 'degrees',
+    deg     : 'degrees',
+    grads   : 'grads',
+    grad    : 'grads',
+    gon     : 'grads',
+    gons    : 'grads'
   };
   const length = lengthMap[parserUnits?.length] ?? DEFAULT_UNITS.length;
   const compassMapped = angleMap[parserUnits?.compass];
@@ -498,11 +573,24 @@ export function parseCs(tokens) {
 
 // ─── Station name helpers ─────────────────────────────────────────────────────
 
+// Survex station/survey names are case-insensitive by default: cavern forces every name to
+// lower case (manual `*case` command — default `tolower`). `*case toupper`/`tolower` force a
+// case; `*case preserve` keeps it as-is (so `2a` and `2A` differ). We honour this by folding
+// the case of names as they are captured. `mode === undefined` means "no case folding" — that
+// is the Therion path (Therion names ARE case-sensitive), so this helper is a no-op there.
+export function applyCase(name, mode) {
+  if (!name || mode === undefined || mode === 'preserve') return name;
+  if (mode === 'toupper') return name.toUpperCase();
+  return name.toLowerCase(); // 'tolower' — the Survex default
+}
+
 export function applyStnNames(name, state) {
   if (!name || name === '.' || name === '-') return name;
   if (name.includes('@')) return name;
   const { stationPrefix: p, stationSuffix: s } = state;
-  return p || s ? `${p}${name}${s}` : name;
+  const combined = p || s ? `${p}${name}${s}` : name;
+  // Fold case per the active Survex *case mode (no-op for Therion, where caseMode is undefined).
+  return applyCase(combined, state.caseMode);
 }
 
 export function qualifyStn(name, surveyPath) {
@@ -516,21 +604,44 @@ export function stripStn(name) {
   return name.split('@')[0];
 }
 
+// Resolves a (possibly partial) Therion/Survex station reference from an `equate` to a
+// fully-qualified `station@surveyPath` name, where surveyPath is our internal,
+// OUTERMOST-first path (e.g. `system_migovec.m2m16m18.M18.gallery`).
+//
+// Therion `@`-addressing is INNERMOST-first and relative to the scope where the equate is
+// declared: `6@gallery.M18.m2m16m18` means station 6 in survey `gallery`, which is in
+// `M18`, which is in `m2m16m18`. So we reverse the partial to get an outermost-first
+// suffix (`m2m16m18.M18.gallery`) and match it against the tail of a known surveyPath,
+// preferring a path inside the equate's declaring scope (`currentPath`).
 export function resolveRef(ref, currentPath, allPaths) {
   if (!ref.includes('@')) {
+    // A bare station number is local to the survey the equate is declared in.
     return currentPath ? `${ref}@${currentPath}` : ref;
   }
   const at = ref.lastIndexOf('@');
   const stn = ref.slice(0, at);
   const partial = ref.slice(at + 1);
-  const match = allPaths.find((p) => p === partial || p.endsWith(`.${partial}`));
+  const tryMatch = (suffix) => {
+    const candidates = allPaths.filter((p) => p === suffix || p.endsWith(`.${suffix}`));
+    return candidates.find((p) => currentPath && (p === currentPath || p.startsWith(`${currentPath}.`))) ??
+      candidates[0];
+  };
+  // Therion addresses INNERMOST-first, so reverse the partial to outermost-first and match — this
+  // stays the primary path (Therion behaviour unchanged). Survex addresses OUTERMOST-first, so its
+  // (already converted) refs match the partial as-is; fall back to that only when the reversed
+  // form found nothing, keeping the two formats unambiguous.
+  const reversed = partial.split('.').reverse().join('.');
+  const match = tryMatch(reversed) ?? tryMatch(partial);
   return match ? `${stn}@${match}` : ref;
 }
 
 // ─── Equate → alias resolution ────────────────────────────────────────────────
 
 export function addAliases(eqTokens, currentPath, allPaths, aliases) {
-  const resolved = eqTokens.map((t) => stripStn(resolveRef(t, currentPath, allPaths)));
+  // Keep the fully-qualified names (`station@surveyPath`). They must stay qualified so the
+  // position solver can link the exact equated stations across surveys — stripping them to
+  // bare numbers (the old behavior) collapsed every survey's `1,2,3…` onto each other.
+  const resolved = eqTokens.map((t) => resolveRef(t, currentPath, allPaths));
   for (let i = 0; i + 1 < resolved.length; i++) {
     const a = new SurveyAlias(resolved[i], resolved[i + 1]);
     if (!aliases.some((e) => e.isEqual(a))) aliases.push(a);
@@ -578,9 +689,7 @@ export function parseShotRow(tokens, state, surveyPath, shotId) {
   const isPlaceholder = !toRaw || toRaw === '.' || toRaw === '-';
   const type = isPlaceholder || isSplay ? ShotType.SPLAY : ShotType.CENTER;
   const from = stripStn(qualifyStn(applyStnNames(fromRaw, state), surveyPath));
-  const to = type === ShotType.SPLAY
-    ? undefined
-    : stripStn(qualifyStn(applyStnNames(toRaw, state), surveyPath));
+  const to = type === ShotType.SPLAY ? undefined : stripStn(qualifyStn(applyStnNames(toRaw, state), surveyPath));
 
   // Survey storage unit — every shot in this survey ends up in this unit.
   const target = mapToSpeleoStudioUnits(units);
@@ -599,7 +708,7 @@ export function parseShotRow(tokens, state, surveyPath, shotId) {
     // declination + atan2/asin output + cartesianExtraRot are all in degrees by construction.
     const northAdj = state.cartesianNorth === 'magnetic' ? (state.declination ?? 0) : 0;
     const extraRot = state.cartesianExtraRot ?? 0;
-    let az = ((Math.atan2(dx, dy) * (180 / Math.PI)) + northAdj + extraRot + 360) % 360;
+    let az = (Math.atan2(dx, dy) * (180 / Math.PI) + northAdj + extraRot + 360) % 360;
     let cl = Math.asin(dz / len) * (180 / Math.PI);
     // If the survey stores angles in grads, convert the degree-result of atan2/asin to grads.
     if (target.angle === 'grads') {
@@ -611,14 +720,15 @@ export function parseShotRow(tokens, state, surveyPath, shotId) {
 
   // Normal data row — parse each quantity, normalize to the survey's target unit, then apply calibration.
   const length =
-    (lengthIntoTargetUnit(parseLength(get('length'), units.length), units.length, target.length) +
-      calibration.length) * calibration.lengthScale;
+    (lengthIntoTargetUnit(parseLength(get('length'), units.length), units.length, target.length) + calibration.length) *
+    calibration.lengthScale;
   const compass =
     (angleIntoTargetUnit(parseCompass(get('compass'), units.compass), units.compass, target.angle) +
-      calibration.compass) * calibration.compassScale;
+      calibration.compass) *
+    calibration.compassScale;
   const clino =
-    (angleIntoTargetUnit(parseClino(get('clino'), units.clino), units.clino, target.angle) +
-      calibration.clino) * calibration.clinoScale;
+    (angleIntoTargetUnit(parseClino(get('clino'), units.clino), units.clino, target.angle) + calibration.clino) *
+    calibration.clinoScale;
 
   if (isNaN(length)) return null;
 
@@ -663,15 +773,11 @@ export function flushStationPairs(pairs, shots, startId, surveyPath) {
 
     const nextPair = pairs[i + 1];
     const nextStnIdx = nextPair ? (fmt.station >= 0 ? fmt.station : 0) : -1;
-    const toRaw =
-      nextPair && nextStnIdx < nextPair.line1.length ? nextPair.line1[nextStnIdx] : null;
+    const toRaw = nextPair && nextStnIdx < nextPair.line1.length ? nextPair.line1[nextStnIdx] : null;
 
     const from = stripStn(qualifyStn(applyStnNames(fromRaw, state), surveyPath));
     const type = toRaw && !isSplay ? ShotType.CENTER : ShotType.SPLAY;
-    const to =
-      type === ShotType.CENTER
-        ? stripStn(qualifyStn(applyStnNames(toRaw, state), surveyPath))
-        : undefined;
+    const to = type === ShotType.CENTER ? stripStn(qualifyStn(applyStnNames(toRaw, state), surveyPath)) : undefined;
 
     const offset = fmt.newlineIdx + 1;
     const getL1 = (field) => {
@@ -692,13 +798,15 @@ export function flushStationPairs(pairs, shots, startId, surveyPath) {
     const target = mapToSpeleoStudioUnits(units);
     const length =
       (lengthIntoTargetUnit(parseLength(getL2('length'), units.length), units.length, target.length) +
-        calibration.length) * calibration.lengthScale;
+        calibration.length) *
+      calibration.lengthScale;
     const compass =
       (angleIntoTargetUnit(parseCompass(getL2('compass'), units.compass), units.compass, target.angle) +
-        calibration.compass) * calibration.compassScale;
+        calibration.compass) *
+      calibration.compassScale;
     const clino =
-      (angleIntoTargetUnit(parseClino(getL2('clino'), units.clino), units.clino, target.angle) +
-        calibration.clino) * calibration.clinoScale;
+      (angleIntoTargetUnit(parseClino(getL2('clino'), units.clino), units.clino, target.angle) + calibration.clino) *
+      calibration.clinoScale;
 
     if (isNaN(length)) continue;
     const shot = new Shot(id++, type, from, to, length, compass, clino, undefined);
@@ -745,32 +853,220 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
   const { topLevelEquates } = context;
   const allPaths = surveys.map((s) => s.surveyPath);
 
-  // Resolve all equates → SurveyAlias[]
+  // Resolve all equates → SurveyAlias[]. We keep the declaring survey path alongside
+  // each alias so it can later be stored on the cave node where it was declared
+  // (aliases are owned per cave); `aliases` stays the flat list used for position calc.
   const aliases = [];
+  const aliasOwners = []; // { alias, ownerPath }
+  const collectAliases = (eqTokens, ownerPath) => {
+    const tmp = [];
+    addAliases(eqTokens, ownerPath, allPaths, tmp);
+    for (const a of tmp) {
+      aliases.push(a);
+      aliasOwners.push({ alias: a, ownerPath });
+    }
+  };
   for (const s of surveys) {
     for (const eqTokens of s.equates) {
-      addAliases(eqTokens, s.surveyPath, allPaths, aliases);
+      collectAliases(eqTokens, s.surveyPath);
     }
   }
   for (const { tokens, surveyPath } of topLevelEquates) {
-    addAliases(tokens, surveyPath, allPaths, aliases);
+    collectAliases(tokens, surveyPath);
   }
 
-  // Find fix + known CS → GeoData
-  let geoData = null;
-  let coordinateSys = null;
-  let convergence = null;
-  let fixSurveyIdx = -1;
+  // Resolve each fix's station to the SAME qualified key the solver will use. A fix often
+  // targets a deep sub-survey station (`fix 35@prima1.primadona...` declared at the system
+  // root); resolveRef turns that raw ref into `35@<full.survey.path>` so the seed actually
+  // matches a real station. A bare ref (single-survey/legacy cave) qualifies to its own
+  // survey path, which equals the bare name when that survey has no path.
+  // Only meaningful for multi-survey caves: a single-survey cave keeps bare station keys
+  // (surveyPath is dropped later), so its fix must stay bare too.
+  if (surveys.length > 1) {
+    for (const s of surveys) {
+      for (const fix of s.fixes ?? []) {
+        if (fix.ref !== undefined) {
+          const resolved = resolveRef(fix.ref, s.surveyPath, allPaths);
+          // Adopt the qualified form only when it resolves to a real survey path.
+          if (resolved.includes('@')) fix.station = resolved;
+        }
+      }
+    }
+  }
 
-  for (let i = 0; i < surveys.length; i++) {
-    const s = surveys[i];
-    if (!s.fixes.length || !s.cs || s.cs.type === 'unknown') continue;
+  // The coordinate system may be declared once at a grouping root (e.g. plateau's
+  // centreline `cs`) and inherited by the independent caves below it.
+  const globalCsEntry = surveys.find((s) => s.cs && s.cs.type !== 'unknown');
+  const globalCs = globalCsEntry ? globalCsEntry.cs : null;
+  const globalRawCs = surveys.map((s) => s.cs).find((cs) => cs && cs.raw)?.raw;
 
-    const fix = s.fixes[0];
-    const cs = s.cs;
-    let coordinate = null;
-    let csObj = null;
+  // ─── Build the nested Cave tree (positions computed later, per connected cave) ──
+  //
+  // Therion/Survex nest surveys arbitrarily deep (surveyPath is the dot-separated,
+  // outermost-first path). A survey block that contains sub-surveys becomes a Cave; a
+  // leaf block (centreline shots) becomes a Survey owned by its parent Cave. Whether the
+  // whole file is ONE cave or several is decided after the tree is built (see splitting).
 
+  const splitPath = (p) => (p === '' || p == null ? [] : p.split('.'));
+  const rootBase = rootFilename
+    .replace(/\.[^.]+$/, '')
+    .split(/[\\/]/)
+    .pop();
+  const rootTitle = context.caveTitle ?? rootBase;
+  const titleFor = (path, fallback) => (context.titles && context.titles.get(path)) || fallback;
+
+  const isContainer = new Set();
+  for (const s of surveys) {
+    const segs = splitPath(s.surveyPath);
+    for (let d = 1; d < segs.length; d++) isContainer.add(segs.slice(0, d).join('.'));
+  }
+
+  const syntheticRoot = new Cave(rootTitle);
+  const caveByPath = new Map();
+  const ensureCave = (segs) => {
+    if (segs.length === 0) return syntheticRoot;
+    let parent = syntheticRoot,
+      path = '',
+      node = syntheticRoot;
+    for (let d = 0; d < segs.length; d++) {
+      path = d === 0 ? segs[0] : `${path}.${segs[d]}`;
+      if (caveByPath.has(path)) {
+        node = caveByPath.get(path);
+      } else {
+        node = new Cave(segs[d]);
+        caveByPath.set(path, node);
+        parent.children.push(node);
+      }
+      parent = node;
+    }
+    return node;
+  };
+  const nodeForPath = (path) => {
+    const segs = splitPath(path);
+    if (segs.length === 0) return syntheticRoot;
+    if (isContainer.has(path)) return ensureCave(segs);
+    return ensureCave(segs.slice(0, -1));
+  };
+
+  // Build Survey objects (no positions yet) and attach fixes/cs to their cave nodes.
+  const surveyEntry = new Map(); // Survey -> source entry (for start station / comments / dims)
+  const surveyByPath = new Map(); // surveyPath -> Survey (leaf blocks, for alias ownership)
+  for (const s of surveys) {
+    const segs = splitPath(s.surveyPath);
+    // A block that itself contains sub-blocks owns the node at its own path; its centreline
+    // is that cave's OWN survey. A leaf block is a survey of its parent cave.
+    const isOwnCentreline = segs.length === 0 || isContainer.has(s.surveyPath);
+    const owner = nodeForPath(s.surveyPath);
+    if (s.fixes && s.fixes.length) (owner._fixes ??= []).push(...s.fixes);
+    if (s.cs && s.cs.type !== 'unknown' && !owner._cs) owner._cs = s.cs;
+    if (s.cs && s.cs.raw && !owner._rawCs) owner._rawCs = s.cs.raw;
+    if (s.shots.length > 0) {
+      let name = s.displayName;
+      if (segs.length > 1 && s.displayName === s.surveyPath) name = sanitizeName(segs[segs.length - 1]);
+      // Re-index shot ids to be unique within the (possibly merged from multiple
+      // centrelines) survey — splay/auxiliary station names derive from shot.id.
+      s.shots.forEach((sh, i) => {
+        sh.id = i + 1;
+      });
+      const meta = new SurveyMetadata(s.metadata.date, s.metadata.declination, null, s.metadata.team, []);
+      const survey = new Survey(name, true, meta, undefined, s.shots, mapToSpeleoStudioUnits(s.units));
+      // Record the survey's path so the position solver can qualify its station names and
+      // avoid collisions with the same numbers reused in sibling surveys. (qualify() is a
+      // no-op when surveyPath is empty, so single-survey files keep bare keys.)
+      survey.surveyPath = s.surveyPath || undefined;
+      owner.surveys.push(survey);
+      if (isOwnCentreline) owner._hasOwnCentreline = true;
+      surveyEntry.set(survey, s);
+      surveyByPath.set(s.surveyPath, survey);
+    }
+  }
+
+  // Survex top-level fixes (declared outside any *begin — e.g. a master file's single anchor
+  // `*fix system.m2.izent1.16 ...`) are owned by no survey. Resolve each ref to its station's
+  // full survey path and attach the fix to that path's cave node, so the per-cave solver below
+  // seeds from it. Therion never sets topLevelFixes, so this is a no-op there.
+  for (const fix of context.topLevelFixes ?? []) {
+    const resolved = resolveRef(fix.ref, '', allPaths);
+    if (!resolved.includes('@')) continue;
+    const fixPath = resolved.slice(resolved.indexOf('@') + 1);
+    // Only attach when the resolved path actually exists (a real survey, or a container of one).
+    // resolveRef returns the ref unchanged when it can't match, so without this an unresolvable
+    // master fix (e.g. referencing a survey that wasn't imported) would make nodeForPath()
+    // fabricate phantom cave nodes for a path no survey owns.
+    const known = allPaths.some((p) => p === fixPath || p.startsWith(`${fixPath}.`));
+    if (!known) continue;
+    fix.station = resolved;
+    (nodeForPath(fixPath)._fixes ??= []).push(fix);
+  }
+
+  // Prefer the block's title for cave node names (keep the segment as fallback).
+  for (const [path, node] of caveByPath) node.name = titleFor(path, node.name);
+
+  // Assign aliases to the cave node where the equate was declared.
+  const ownerCaveForPath = (dotPath) => {
+    const segs = splitPath(dotPath);
+    for (let d = segs.length; d >= 1; d--) {
+      const p = segs.slice(0, d).join('.');
+      if (caveByPath.has(p)) return caveByPath.get(p);
+    }
+    return syntheticRoot;
+  };
+  for (const { alias, ownerPath } of aliasOwners) {
+    // Equates declared inside a leaf survey block belong to that survey (they connect its
+    // own stations) — keep them off the grouping parent so a plain grouping isn't mistaken
+    // for a connected cave. Container-level equates (which connect child caves) stay on the
+    // cave node.
+    const leafSurvey = !isContainer.has(ownerPath) && surveyByPath.get(ownerPath);
+    if (leafSurvey) {
+      (leafSurvey._aliases ??= []).push(alias);
+    } else {
+      ownerCaveForPath(ownerPath).aliases.push(alias);
+    }
+  }
+
+  // ─── Split pure-grouping nodes into separate top-level caves ───────────────────
+  //
+  // A connected cave is stored as ONE cave (with sub-caves). But a Therion file that just
+  // `input`s several *unconnected* caves (e.g. a whole karst plateau) is only an
+  // organizational grouping — its members are independent caves that reuse station
+  // numbers, so they must NOT share a station map. A node is a "pure grouping" when it has
+  // no centreline of its own AND owns no equates (which would connect its children) AND has
+  // child caves; its children become separate top-level caves (recursively). Everything
+  // else (own shots, owns equates, or a leaf cave) is one cave.
+  const caveRoots = [];
+  const collectRoots = (node) => {
+    // Transparent wrapper: a node with no data of its own and a single child — descend
+    // (e.g. the synthetic root, or a file's outer survey that just wraps one cave).
+    if (node.surveys.length === 0 && node.aliases.length === 0 && node.children.length === 1) {
+      collectRoots(node.children[0]);
+      return;
+    }
+    // Grouping: a node with no centreline of its own (it just `input`s/`*begin`s others)
+    // and no equates connecting its members, yet several independent members (leaf surveys
+    // and/or child caves). Each member becomes its own top-level cave — a node WITH its own
+    // centreline is a real cave and keeps its sub-surveys/sub-caves together.
+    const memberCount = node.surveys.length + node.children.length;
+    if (!node._hasOwnCentreline && node.aliases.length === 0 && memberCount > 1) {
+      node.children.forEach(collectRoots);
+      for (const survey of node.surveys) {
+        const wrapped = new Cave(survey.name);
+        wrapped.surveys.push(survey);
+        if (survey._aliases) wrapped.aliases.push(...survey._aliases);
+        caveRoots.push(wrapped);
+      }
+      return;
+    }
+    caveRoots.push(node);
+  };
+  collectRoots(syntheticRoot);
+
+  // ─── Compute each cave independently (own station map + own geoData) ───────────
+  // Builds a projected coordinate for a single fix under a known coordinate system.
+  // Returns { coordinate, csObj, convergence } or null when the CS is unrecognized.
+  const buildCoordinate = (fix, cs) => {
+    let coordinate = null,
+      csObj = null,
+      convergence = null;
     if (cs.type === 'utm') {
       coordinate = new UTMCoordinateWithElevation(fix.x, fix.y, fix.z);
       csObj = new UTMCoordinateSystem(cs.zone, cs.northern);
@@ -778,9 +1074,7 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
       coordinate = new EOVCoordinateWithElevation(fix.x, fix.y, fix.z);
       csObj = new EOVCoordinateSystem();
     } else if (cs.type === 'longlat') {
-      const utmR = cs.latFirst
-        ? UTMConverter.fromLatLon(fix.x, fix.y)
-        : UTMConverter.fromLatLon(fix.y, fix.x);
+      const utmR = cs.latFirst ? UTMConverter.fromLatLon(fix.x, fix.y) : UTMConverter.fromLatLon(fix.y, fix.x);
       coordinate = new UTMCoordinateWithElevation(
         roundToTwoDecimalPlaces(utmR.easting),
         roundToTwoDecimalPlaces(utmR.northing),
@@ -788,179 +1082,202 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
       );
       csObj = new UTMCoordinateSystem(utmR.zoneNum, utmR.zoneLetter >= 'N');
     }
-
-    if (coordinate && csObj) {
-      if (!globalNormalizer.isInitialized()) globalNormalizer.initializeGlobalOrigin(coordinate);
-      if (cs.type === 'utm' || cs.type === 'longlat') {
-        convergence = MeridianConvergence.getUTMConvergence(
-          coordinate.easting,
-          coordinate.northing,
-          csObj.zoneNum,
-          csObj.northern
-        );
-      }
-      geoData = new GeoData(csObj, [new StationWithCoordinate(fix.station, coordinate)]);
-      coordinateSys = csObj;
-      fixSurveyIdx = i;
-      break;
+    if (!coordinate || !csObj) return null;
+    if (!globalNormalizer.isInitialized()) globalNormalizer.initializeGlobalOrigin(coordinate);
+    if (cs.type === 'utm' || cs.type === 'longlat') {
+      convergence = MeridianConvergence.getUTMConvergence(
+        coordinate.easting,
+        coordinate.northing,
+        csObj.zoneNum,
+        csObj.northern
+      );
     }
-  }
+    return { coordinate, csObj, convergence };
+  };
 
-  // Unknown / missing CS: show coordinate system dialog if a fix point exists
-  if (!geoData) {
-    const withFix = surveys.find((s) => s.fixes.length > 0);
-    if (withFix) {
-      const { x, y, z } = withFix.fixes[0];
-      if (withFix.cs?.raw) {
-        showInfoPanel(i18n.t(unknownCsKey, { cs: withFix.cs.raw }), 5000);
-      }
+  // Resolve an unknown coordinate system via the dialog once and reuse the answer for
+  // every independent cave in the same import (e.g. one EPSG the app doesn't recognize).
+  // Returns the chosen CoordinateSystem (or null if cancelled); per-fix coordinates are
+  // built by the caller via buildCoordinate so multiple fixes share one CS.
+  const dialogCache = new Map(); // rawCs -> coordinateSystem | null
+  const resolveUnknownCs = async (fix, rawCs, displayName) => {
+    const key = rawCs ?? '';
+    if (!dialogCache.has(key)) {
+      if (rawCs) showInfoPanel(i18n.t(unknownCsKey, { cs: rawCs }), 5000);
       try {
-        const result = await coordinateSystemDialog.show(withFix.displayName, [x, y, z]);
-        coordinateSys = result.coordinateSystem;
-        if (coordinateSys) {
-          const [c1, c2, c3] = result.coordinates;
-          let coord;
-          if (coordinateSys.type === CoordinateSystemType.EOV) {
-            coord = new EOVCoordinateWithElevation(c1, c2, c3);
-          } else {
-            coord = new UTMCoordinateWithElevation(c1, c2, c3);
-          }
-          if (!globalNormalizer.isInitialized()) globalNormalizer.initializeGlobalOrigin(coord);
-          geoData = new GeoData(
-            coordinateSys,
-            [new StationWithCoordinate(withFix.fixes[0].station, coord)]
-          );
-          fixSurveyIdx = surveys.indexOf(withFix);
-        }
+        const result = await coordinateSystemDialog.show(displayName, [fix.x, fix.y, fix.z]);
+        dialogCache.set(key, result?.coordinateSystem ?? null);
       } catch (_) {
-        /* user cancelled dialog */
+        dialogCache.set(key, null);
       }
     }
-  }
+    return dialogCache.get(key);
+  };
 
-  // Put the fix survey first so calculateSurveyStations gets a proper start position
-  const ordered = [...surveys];
-  if (fixSurveyIdx > 0) ordered.unshift(ordered.splice(fixSurveyIdx, 1)[0]);
+  const computeCaveRoot = async (caveRoot) => {
+    const subNodes = [];
+    caveRoot.walk((c) => subNodes.push(c));
+    const subAliases = [];
+    caveRoot.walk((c) => subAliases.push(...c.aliases));
 
-  // Build Survey objects and calculate 3D station positions
-  const stations = new Map();
-  const surveyObjs = [];
-
-  for (let i = 0; i < ordered.length; i++) {
-    const s = ordered[i];
-    const meta = new SurveyMetadata(
-      s.metadata.date,
-      s.metadata.declination,
-      convergence ?? null,
-      s.metadata.team,
-      []
-    );
-
-    // Shots already store values in the survey's storage unit because parseLength /
-    // parseCompass / parseClino pass through values when the file's source unit is one
-    // Speleo Studio supports natively. We just need to stamp the survey with that unit.
-    const studioUnits = mapToSpeleoStudioUnits(s.units);
-    const survey = new Survey(
-      s.displayName,
-      true,
-      meta,
-      i === 0 ? s.startStation : undefined,
-      s.shots,
-      studioUnits
-    );
-
-    let startPos = i === 0 ? new Vector(0, 0, 0) : undefined;
-    let startCoord = undefined;
-
-    if (i === 0 && geoData?.coordinates?.length > 0) {
-      startCoord = geoData.coordinates[0].coordinate;
-      startPos = startCoord.toNormalizedVector();
+    // Station-name collisions only happen when several surveys are solved into one shared
+    // map (a connected cave with sub-surveys, each numbered from 1). A cave with a single
+    // survey can't collide, so we drop its surveyPath and keep BARE station keys — that
+    // way the vast majority of caves (and all their display/edit/export consumers) behave
+    // exactly as before. Only genuinely multi-survey connected caves use qualified keys.
+    const allSurveysInCave = caveRoot.getAllSurveys();
+    if (allSurveysInCave.length <= 1) {
+      allSurveysInCave.forEach((s) => {
+        s.surveyPath = undefined;
+      });
+    }
+    // Include equates owned by leaf surveys (not promoted to a cave node).
+    for (const survey of caveRoot.getAllSurveys()) {
+      if (survey._aliases) subAliases.push(...survey._aliases);
     }
 
-    SurveyHelper.calculateSurveyStations(
-      survey,
-      surveyObjs,
-      stations,
-      aliases,
-      i === 0 ? s.startStation : undefined,
-      startPos,
-      startCoord,
-      coordinateSys
-    );
-    surveyObjs.push(survey);
-  }
+    // Collect ALL fixed stations in this cave's subtree, each with the CS that applies to
+    // it (its own, else inherited from a grouping ancestor / file-level `cs`). A connected
+    // system like Migovec fixes one entrance PER sub-cave, and those sub-caves are anchored
+    // independently in the shared coordinate space — not all reachable through equates — so
+    // every fix must seed the solver, not just the first.
+    // The same fix can be reachable from both a cave node's `_fixes` and a survey source
+    // entry's `fixes` (a leaf block is both), so dedupe by station + coordinates to avoid
+    // duplicate geoData coordinates.
+    const fixEntries = []; // { fix, cs, raw }
+    const seenFix = new Set();
+    const addFix = (fix, cs, raw) => {
+      const k = `${fix.station}|${fix.x}|${fix.y}|${fix.z}`;
+      if (seenFix.has(k)) return;
+      seenFix.add(k);
+      fixEntries.push({ fix, cs, raw });
+    };
+    caveRoot.walk((c) => {
+      for (const fix of c._fixes ?? []) addFix(fix, c._cs ?? globalCs, c._rawCs ?? globalRawCs);
+    });
+    for (const survey of caveRoot.getAllSurveys()) {
+      const e = surveyEntry.get(survey);
+      for (const fix of e?.fixes ?? []) {
+        addFix(fix, e.cs && e.cs.type !== 'unknown' ? e.cs : globalCs, e.cs?.raw ?? globalRawCs);
+      }
+    }
 
-  // Distribute station comments: start station → cave level; others → shot.comment (first use)
-  const caveStationComments = [];
-  const shotCommentAssigned = new Set();
-
-  for (let i = 0; i < ordered.length; i++) {
-    const s = ordered[i];
-    const surveyObj = surveyObjs[i];
-    for (const { station, comment } of (s.stationComments ?? [])) {
-      if (station === s.startStation) {
-        caveStationComments.push(new StationComment(station, comment));
-      } else if (!shotCommentAssigned.has(station)) {
-        const shot = surveyObj.shots.find((sh) => sh.from === station);
-        if (shot) {
-          shot.comment = comment;
-          shotCommentAssigned.add(station);
-        } else {
-          caveStationComments.push(new StationComment(station, comment));
+    // Resolve a single coordinate system for the whole cave: the first recognized parsed CS,
+    // else ask the user once (an unknown EPSG). All fixes are then projected under it.
+    let coordinateSys = null,
+      convergence = null;
+    const fixCoords = []; // StationWithCoordinate[]
+    const knownEntry = fixEntries.find((fe) => fe.cs && fe.cs.type !== 'unknown');
+    if (knownEntry) {
+      for (const { fix, cs } of fixEntries) {
+        const built = cs && cs.type !== 'unknown' ? buildCoordinate(fix, cs) : null;
+        if (built) {
+          fixCoords.push(new StationWithCoordinate(fix.station, built.coordinate));
+          coordinateSys ??= built.csObj;
+          convergence ??= built.convergence;
         }
-      } else {
-        caveStationComments.push(new StationComment(station, comment));
+      }
+    } else if (fixEntries.length > 0) {
+      // No recognized CS — ask once (reused across the import), then project every fix.
+      const first = fixEntries[0];
+      coordinateSys = await resolveUnknownCs(first.fix, first.raw, caveRoot.name);
+      if (coordinateSys) {
+        for (const { fix } of fixEntries) {
+          const coord =
+            coordinateSys.type === CoordinateSystemType.EOV
+              ? new EOVCoordinateWithElevation(fix.x, fix.y, fix.z)
+              : new UTMCoordinateWithElevation(fix.x, fix.y, fix.z);
+          if (!globalNormalizer.isInitialized()) globalNormalizer.initializeGlobalOrigin(coord);
+          fixCoords.push(new StationWithCoordinate(fix.station, coord));
+        }
       }
     }
-  }
+    const geoData = coordinateSys && fixCoords.length > 0 ? new GeoData(coordinateSys, fixCoords) : null;
 
-  // Aggregate station-level LRUD (first-write-wins per station). Passage-derived
-  // entries (Survex `*data passage`) are processed first so they take precedence
-  // over shot-derived `_lrud` for the same station — `*data passage` is the
-  // explicit per-station source. The `_lrud` property is non-persistent —
-  // strip it after consuming.
-  const dimsByStation = new Map();
-  for (const s of ordered) {
-    for (const { station, ...lrud } of (s.stationDimensions ?? [])) {
-      if (!dimsByStation.has(station)) dimsByStation.set(station, lrud);
+    // Set each survey's start to its source start station and stamp meridian convergence,
+    // then solve the whole network with the SHARED order-independent fixpoint solver — the
+    // same one used on reload/edit, so all three paths agree. (Surveys connect only via
+    // shared/equated stations, so a single ordered pass cannot place every survey.)
+    for (const survey of caveRoot.getAllSurveys()) {
+      const entry = surveyEntry.get(survey);
+      survey.metadata.convergence = convergence ?? null;
+      if (entry?.startStation !== undefined) survey.start = entry.startStation;
     }
-  }
-  for (const surveyObj of surveyObjs) {
-    for (const shot of surveyObj.shots) {
-      if (!shot._lrud) continue;
-      if (!dimsByStation.has(shot.from)) {
-        dimsByStation.set(shot.from, shot._lrud);
+    let stations;
+    try {
+      stations = SurveyHelper.calculateCaveStations(caveRoot.getAllSurveys(), subAliases, geoData);
+    } catch (e) {
+      throw new Error(i18n.t('errors.import.surveyAtPathFailed', { path: caveRoot.name }) + ' ' + e.message);
+    }
+
+    // Distribute computed stations into each cave node's own map (by owning survey).
+    const surveyToCave = new Map();
+    subNodes.forEach((c) => {
+      c.stations = new Map();
+      c.surveys.forEach((s) => surveyToCave.set(s, c));
+    });
+    for (const [name, st] of stations) {
+      (surveyToCave.get(st.survey) ?? caveRoot).stations.set(name, st);
+    }
+
+    // Distribute station comments: start station → its cave; others → shot.comment (first use).
+    const shotCommentAssigned = new Set();
+    for (const survey of caveRoot.getAllSurveys()) {
+      const entry = surveyEntry.get(survey);
+      const cave = surveyToCave.get(survey) ?? caveRoot;
+      for (const { station, comment } of entry?.stationComments ?? []) {
+        if (station === entry.startStation) {
+          cave.stationComments.push(new StationComment(station, comment));
+        } else if (!shotCommentAssigned.has(station)) {
+          const shot = survey.shots.find((sh) => sh.from === station);
+          if (shot) {
+            shot.comment = comment;
+            shotCommentAssigned.add(station);
+          } else {
+            cave.stationComments.push(new StationComment(station, comment));
+          }
+        } else {
+          cave.stationComments.push(new StationComment(station, comment));
+        }
       }
-      delete shot._lrud;
     }
+
+    // Aggregate station-level LRUD (passage-derived first, then shot-derived `_lrud`).
+    const dimsByStation = new Map();
+    for (const survey of caveRoot.getAllSurveys()) {
+      for (const { station, ...lrud } of surveyEntry.get(survey)?.stationDimensions ?? []) {
+        if (!dimsByStation.has(station)) dimsByStation.set(station, lrud);
+      }
+    }
+    for (const survey of caveRoot.getAllSurveys()) {
+      for (const shot of survey.shots) {
+        if (!shot._lrud) continue;
+        if (!dimsByStation.has(shot.from)) dimsByStation.set(shot.from, shot._lrud);
+        delete shot._lrud;
+      }
+    }
+    for (const [name, l] of dimsByStation) {
+      const cave = (stations.get(name)?.survey && surveyToCave.get(stations.get(name).survey)) ?? caveRoot;
+      cave.stationDimensions.push(new StationDimension(name, l.left, l.right, l.up, l.down));
+    }
+
+    const firstSurvey = caveRoot.getAllSurveys()[0];
+    caveRoot.metadata = new CaveMetadata(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      firstSurvey?.metadata?.date ?? new Date(),
+      firstSurvey?.metadata?.team?.name ?? ''
+    );
+    caveRoot.geoData = geoData;
+  };
+
+  for (const caveRoot of caveRoots) {
+    await computeCaveRoot(caveRoot);
   }
-  const caveStationDimensions = [...dimsByStation.entries()].map(
-    ([name, l]) => new StationDimension(name, l.left, l.right, l.up, l.down)
-  );
 
-  // Cave name: title from the file, or the filename stem as fallback
-  const rootBase = rootFilename.replace(/\.[^.]+$/, '').split(/[\\/]/).pop();
-  const caveName = context.caveTitle ?? rootBase;
-
-  const firstS = ordered[0];
-  const caveMetadata = new CaveMetadata(
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    firstS.metadata.date,
-    firstS.metadata.team?.name ?? ''
-  );
-
-  return new Cave(
-    caveName,
-    caveMetadata,
-    geoData,
-    stations,
-    surveyObjs,
-    aliases,
-    undefined,
-    caveStationComments,
-    caveStationDimensions
-  );
+  // A single connected cave returns one element; a grouping file returns several
+  // independent caves. The caller adds each to the project.
+  return caveRoots;
 }

@@ -53,6 +53,7 @@
               <ul>
                 <li>Saját nevet és metaadatokat tartalmaz (barlang adatlap)</li>
                 <li>Egy vagy több felmérést tartalmazhat</li>
+                <li>További <strong>al-barlangokat</strong> (gyermek barlangokat) is tartalmazhat tetszőleges mélységig</li>
                 <li>Attribútumokat tartalmazhat</li>
                 <li>Pont megjegyzéseket tartalmazhat</li>
                 <li>Pont méreteket (LRUD) tartalmazhat</li>
@@ -106,9 +107,27 @@
           <p
             >A fix koordináták lehetővé teszik, hogy a barlangokat egy olyan koordináta rendszerben jelenítsük meg,
             amelyet más alkalmazások is használnak. Jelenleg az EOV és UTM vetületi koordináta rendszereket támogatja a
-            Speleo Studio (csak a kezdőpont koordinátája adható meg), de fel lehet venni fix pontokat WGS84 (GPS)
-            koordináták konvertálásával is.
+            Speleo Studio, és egy barlangon belül <strong>több fix pont</strong> is megadható (jellemzően
+            barlangrendszereknél, ahol minden résznek saját bejárati fix pontja van). Fel lehet venni fix pontokat WGS84
+            (GPS) koordináták konvertálásával is.
           </p>
+
+          <h4>Al-barlangok (gyermek barlangok)</h4>
+          <p
+            >A Therion és a Survex egyetlen, tetszőlegesen mélyen egymásba ágyazható <code>survey</code> /
+            <code>*begin</code> fogalmat használ: a magasabb szintek tipikusan barlangrendszereket vagy karsztterületeket,
+            a mélyebb szintek pedig járatokat jelölnek. A Speleo Studio ezt a hierarchiát megőrzi: egy barlang
+            tartalmazhat <strong>al-barlangokat</strong> és <strong>felméréseket</strong> is, az al-barlangok pedig
+            további al-barlangokat — tetszőleges mélységig. A felmérés mindig levélelem (csak mérési adatokat
+            tartalmaz), barlangot nem tartalmazhat.</p
+          >
+          <p
+            >Az egy <code>equate</code> kapcsolatokkal összekötött (topológiailag összefüggő) barlangrendszer
+            <strong>egyetlen barlangként</strong> töltődik be, a belső tagolás al-barlangokként jelenik meg a felfedező
+            fában, amely tetszőleges mélységig kinyitható. Több, egymással nem összekötött barlangot tartalmazó fájl
+            ezzel szemben <strong>külön-külön barlangokként</strong> töltődik be. A részletekért lásd
+            <a href="04-adatok-importalasa.html">Adatok importálása</a>.</p
+          >
         </div>
       </div>
 
@@ -129,8 +148,8 @@
                 <li><strong>Név:</strong> A felmérés azonosító neve</li>
                 <li><strong>Dátum:</strong> A felmérés végrehajtásának dátuma</li>
                 <li
-                  ><strong>Induló pont:</strong> A felmérés kezdőpontja (csak a barlang első felmérésénél van figyelembe
-                  véve)</li
+                  ><strong>Induló pont:</strong> A felmérés kezdőpontja. A felmérések sorrendje nem számít: a Speleo
+                  Studio sorrend-független módon számolja ki a pontok helyzetét (lásd lentebb).</li
                 >
                 <li><strong>Deklináció:</strong> A mágneses deklináció értéke</li>
                 <li><strong>Mérőeszközök:</strong> Mérési eszközök listája</li>
@@ -143,7 +162,12 @@
           <div class="warning">
             <h3>⚠️ Fontos megjegyzések</h3>
             <ul>
-              <li>A felmérés neve egyedi kell legyen</li>
+              <li>A felmérés neve egy barlangon (vagy al-barlangon) belül egyedi kell legyen.</li>
+              <li
+                >Importált, többszintű adatoknál a mérési pontok nevei (pl. „1”, „2”) felmérésenként ismétlődhetnek — a
+                Speleo Studio ezeket belsőleg felmérésenként egyedi módon tartja nyilván, így nem ütköznek. A
+                megjelenített és exportált pontnevek mindig a rövid, eredeti nevek maradnak.</li
+              >
             </ul>
           </div>
         </div>
@@ -346,6 +370,36 @@
           >
         </div>
       </div>
+
+      <h2>🧭 Pontok helyzetének kiszámítása (sorrend-független megoldó)</h2>
+
+      <p
+        >A barlang 3D pontjait a Speleo Studio a mérésekből (hossz, irányszög, lejtés) számolja ki, kiindulva a
+        rögzített (fix) pontokból. A számítás <strong>sorrend-független</strong>: nem számít, milyen sorrendben
+        szerepelnek a felmérések a barlangban, az eredmény ugyanaz lesz. Ennek a működése a következő:</p
+      >
+      <ul>
+        <li
+          ><strong>Több kiindulópont (fix):</strong> minden olyan felmérés, amely fix pontot tartalmaz, önállóan,
+          abszolút koordinátán kerül elhelyezésre. Egy barlangrendszernél jellemzően több bejárati fix is van — mindegyik
+          külön kiindulópontként szolgál.</li
+        >
+        <li
+          ><strong>Kapcsolódás equate-eken keresztül:</strong> a fix pontot nem tartalmazó felmérések akkor kerülnek a
+          helyükre, amikor egy közös vagy <code>equate</code>-tel összekötött pontjuk már elhelyezett. A megoldó addig
+          ismétli ezt, amíg már egyetlen felmérés sem tud újabb ponthoz kapcsolódni (fixpont-iteráció), így a
+          többlépcsős equate-láncok is helyesen feloldódnak.</li
+        >
+        <li
+          ><strong>Sorrend átrendezése biztonságos:</strong> a felmérések átrendezése (húzd-és-ejtsd vagy „felülre
+          mozgatás”) nem változtatja meg a pontok helyzetét — csak a felfedező fában megjelenő sorrendet —, ezért gyors
+          és nem indít újraszámolást.</li
+        >
+        <li
+          ><strong>Nem kapcsolódó felmérések:</strong> ha egy felmérés semmilyen kiindulóponthoz nem köthető, „izolált”
+          marad, a be nem helyezett méréseit pedig „árva” mérésként jelzi a program.</li
+        >
+      </ul>
 
       <h2>🔄 Adatvalidáció és ellenőrzés</h2>
 

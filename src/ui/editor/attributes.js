@@ -26,6 +26,21 @@ import { IconBar } from './iconbar.js';
 import { Editor } from './base.js';
 import { createFloatInput } from '../component/input.js';
 
+// Tabulator display formatters for station-name columns. Internally station names are
+// survey-qualified (`name@surveyPath`) so reused station numbers stay distinct across a
+// multi-survey cave; in the table we show only the bare name. The stored cell value stays
+// qualified (lookups, validation, rendering and persistence all rely on it).
+const bareStationFormatter = (cell) => {
+  const v = cell.getValue();
+  return v == null ? '' : U.bareStationName(v);
+};
+// Same, for a cell holding an array of station names (a component's terminations).
+const bareStationsArrayFormatter = (cell) => {
+  const v = cell.getValue();
+  if (Array.isArray(v)) return v.map(U.bareStationName).join(', ');
+  return v == null ? '' : U.bareStationName(v);
+};
+
 class BaseAttributeEditor extends Editor {
 
   constructor(db, options, cave, scene, attributeDefs, panel) {
@@ -622,7 +637,7 @@ class BaseAttributeEditor extends Editor {
   }
 
   nonSplayStationNames() {
-    return [...this.cave.stations.entries()]
+    return [...this.cave.getAllStations().entries()]
       .filter(([, s]) => s.type != ShotType.SPLAY)
       .map(([name]) => name);
   }
@@ -1004,8 +1019,8 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: translatedFields.join(',') });
     } else if (
       r.start &&
-      !this.cave.stations.has(r.start) &&
-      (!r.termination || (r.termination && r.termination.every((t) => !this.cave.stations.has(t))))
+      !this.cave.getAllStations().has(r.start) &&
+      (!r.termination || (r.termination && r.termination.every((t) => !this.cave.getAllStations().has(t))))
     ) {
       newRow = { ...r };
       newRow.status = 'invalid';
@@ -1144,6 +1159,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
         field        : 'start',
         editor       : 'list',
         editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
+        formatter    : bareStationFormatter,
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.startOrTerminationEdited
@@ -1165,7 +1181,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
           return value.join(',');
 
         },
-        formatter    : 'array',
+        formatter    : bareStationsArrayFormatter,
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.startOrTerminationEdited
@@ -1185,7 +1201,7 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
       r.id,
       SectionHelper.getComponentSegments(
         new CaveComponent(r.start, r.termination, r.path, r.distance),
-        this.cave.stations
+        this.cave.getAllStations()
       ),
       r.attribute,
       r.format,
@@ -1387,7 +1403,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
       newRow = { ...r };
       newRow.status = 'incomplete';
       newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: translatedFields.join(',') });
-    } else if (r.from && r.to && (!this.cave.stations.has(r.from) || !this.cave.stations.has(r.to))) {
+    } else if (r.from && r.to && (!this.cave.getAllStations().has(r.from) || !this.cave.getAllStations().has(r.to))) {
       newRow = { ...r };
       newRow.status = 'invalid';
       newRow.message = i18n.t('ui.editors.base.status.invalid', {
@@ -1488,6 +1504,10 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         field        : 'from',
         editor       : 'list',
         editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
+        // Stored value is survey-qualified (`name@surveyPath`) so reused station numbers stay
+        // distinct; show only the bare name in the table. The edit dropdown keeps the qualified
+        // values so the user can disambiguate which survey's station.
+        formatter    : bareStationFormatter,
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.fromOrToEdited
@@ -1497,6 +1517,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
         field        : 'to',
         editor       : 'list',
         editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
+        formatter    : bareStationFormatter,
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.fromOrToEdited
@@ -1514,7 +1535,7 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
     this.scene.attributes.showFragmentAttribute(
       r.id,
-      SectionHelper.getSectionSegments(new CaveSection(r.from, r.to, r.path, r.distance), this.cave.stations),
+      SectionHelper.getSectionSegments(new CaveSection(r.from, r.to, r.path, r.distance), this.cave.getAllStations()),
       r.attribute,
       r.format,
       r.color,
@@ -1687,6 +1708,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
         field        : 'station',
         editor       : 'list',
         editorParams : { values: this.nonSplayStationNames(), autocomplete: true },
+        formatter    : bareStationFormatter,
         validator    : ['required'],
         headerFilter : 'input',
         cellEdited   : this.functions.stationEdited
@@ -1798,7 +1820,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
   }
 
   showAttribute(r) {
-    const station = this.cave.stations.get(r.station);
+    const station = this.cave.getAllStations().get(r.station);
     const position = this.getPositionFromRow(r);
     const offset = this.getOffsetFromRow(r);
     this.scene.attributes.showStationAttribute(r.id, station, r.attribute, this.cave.name, position, offset);
@@ -1876,7 +1898,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
       newRow = { ...r };
       newRow.status = 'incomplete';
       newRow.message = i18n.t('ui.editors.base.status.incomplete', { fields: translatedFields.join(',') });
-    } else if (r.station && !this.cave.stations.has(r.station)) {
+    } else if (r.station && !this.cave.getAllStations().has(r.station)) {
       newRow = { ...r };
       newRow.status = 'invalid';
       newRow.message = i18n.t('ui.editors.base.status.invalid', {
@@ -1921,7 +1943,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
   getTableData() {
     const rows = this.cave.attributes.stationAttributes.map((r) => {
-      const station = this.cave.stations.get(r.name);
+      const station = this.cave.getAllStations().get(r.name);
       return {
         id        : r.id,
         visible   : r.visible,
@@ -2001,7 +2023,7 @@ class StationAttributeEditor extends BaseAttributeEditor {
 
     stationEdited : (cell) => {
       const data = cell.getData();
-      const station = this.cave.stations.get(data.station);
+      const station = this.cave.getAllStations().get(data.station);
       if (station) {
         data.survey = station.survey.name;
         cell.getRow().update(data);

@@ -44,7 +44,11 @@ export class SpeleoScene {
     const entries = this.#getCaveObjectsFlattened();
     entries.forEach((e) => {
       if (e[fieldName] !== undefined) {
-        e[fieldName].visible = !e.centerLines.hidden && val;
+        // Never show an empty instanced line buffer (WebGL errors); only line-segment
+        // fields carry geometry — sphere/label fields are unaffected by this guard.
+        const isLine = fieldName === 'centerLines' || fieldName === 'splays' || fieldName === 'auxiliaries';
+        const nonEmpty = !isLine || this.#hasSegments(e[fieldName]);
+        e[fieldName].visible = !e.centerLines.hidden && val && nonEmpty;
       }
     });
     this.scene.view.renderView();
@@ -183,9 +187,15 @@ export class SpeleoScene {
   addStationLabels() {
     this.caveObjects.forEach((surveyEntries, caveName) => {
       const cave = this.db.getCave(caveName);
-      surveyEntries.forEach((surveyObject, surveyName) => {
-        cave.stations.forEach((station, stationName) => {
-          if (station.survey.name === surveyName && station.type !== ShotType.SPLAY) {
+      if (!cave) return;
+      // Scene survey entries are keyed by survey id; match stations by survey identity.
+      const stations = cave.getAllStations();
+      const surveysById = new Map(cave.getAllSurveys().map((s) => [s.id, s]));
+      surveyEntries.forEach((surveyObject, surveyId) => {
+        const survey = surveysById.get(surveyId);
+        if (!survey) return;
+        stations.forEach((station, stationName) => {
+          if (station.survey === survey && station.type !== ShotType.SPLAY) {
             this.addStationLabel(stationName, station.position, station.coordinates, surveyObject.stationLabels);
           }
         });
@@ -197,7 +207,7 @@ export class SpeleoScene {
     const mode = this.options.scene.stationLabels.mode;
 
     if (mode === 'name') {
-      return stationName;
+      return U.bareStationName(stationName);
     } else if (mode === 'depth') {
       return U.formatFloat(position.z, 2);
     } else {
@@ -230,7 +240,7 @@ export class SpeleoScene {
             labelData.push({
               stationName : label.userData.stationName,
               position    : label.userData.stationPosition.clone(),
-              coordinates  : label.userData.coordinates
+              coordinates : label.userData.coordinates
             });
           }
         });
@@ -292,14 +302,20 @@ export class SpeleoScene {
 
   //#region Survey
 
+  // True when a LineSegments2 actually has geometry. An empty instanced line buffer must
+  // never be made visible (WebGL errors on glDrawElementsInstanced with 0 instances).
+  #hasSegments(lineSegments) {
+    return (lineSegments?.geometry?.attributes?.instanceStart?.count ?? 0) > 0;
+  }
+
   setSurveyVisibility(caveName, surveyName, value) {
     const entry = this.caveObjects.get(caveName).get(surveyName);
     const s = this.options.scene;
-    entry.centerLines.visible = value && s.centerLines.segments.show;
+    entry.centerLines.visible = value && s.centerLines.segments.show && this.#hasSegments(entry.centerLines);
     entry.centerLines.hidden = !value; // hidden is a custom attribute set by me, used in setObjectsVisibility
-    entry.splays.visible = value && s.splays.segments.show;
+    entry.splays.visible = value && s.splays.segments.show && this.#hasSegments(entry.splays);
     entry.splays.hidden = !value;
-    entry.auxiliaries.visible = value && s.auxiliaries.segments.show;
+    entry.auxiliaries.visible = value && s.auxiliaries.segments.show && this.#hasSegments(entry.auxiliaries);
     entry.auxiliaries.hidden = !value;
 
     if (entry.centerLinesSpheres) {
@@ -337,17 +353,25 @@ export class SpeleoScene {
     const splayLineMat = this.mats.segments.splay;
     const auxiliaryLineMat = this.mats.segments.auxiliary;
 
+    // A LineSegments2 with an empty geometry (a survey with no splays/auxiliaries — most
+    // surveys) must NOT be visible: drawing instanced lines with a zero-length instance
+    // buffer makes WebGL spam "glDrawElementsInstanced: Vertex buffer is not big enough".
+    // Guard every segment object on having at least one segment.
+    const hasCl = polygonSegments.length > 0;
+    const hasSplay = splaySegments.length > 0;
+    const hasAux = auxiliarySegments.length > 0;
+
     const lineSegmentsPolygon = new LineSegments2(geometryStations, clLineMat);
     lineSegmentsPolygon.name = `centerline-segments-${cave.name}-${survey.name}`;
-    lineSegmentsPolygon.visible = visibility && this.options.scene.centerLines.segments.show;
+    lineSegmentsPolygon.visible = hasCl && visibility && this.options.scene.centerLines.segments.show;
 
     const lineSegmentsSplays = new LineSegments2(splaysGeometry, splayLineMat);
     lineSegmentsSplays.name = `splay-segments-${cave.name}-${survey.name}`;
-    lineSegmentsSplays.visible = visibility && this.options.scene.splays.segments.show;
+    lineSegmentsSplays.visible = hasSplay && visibility && this.options.scene.splays.segments.show;
 
     const lineSegmentsAuxiliaries = new LineSegments2(auxiliaryGeometry, auxiliaryLineMat);
     lineSegmentsAuxiliaries.name = `auxiliary-segments-${cave.name}-${survey.name}`;
-    lineSegmentsAuxiliaries.visible = visibility && this.options.scene.auxiliaries.segments.show;
+    lineSegmentsAuxiliaries.visible = hasAux && visibility && this.options.scene.auxiliaries.segments.show;
 
     const group = new THREE.Group();
     group.name = `segments-cave-${cave.name}-survey-${survey.name}`;
@@ -366,8 +390,10 @@ export class SpeleoScene {
       [ShotType.AUXILIARY] : []
     };
 
-    for (const [stationName, station] of cave.stations) {
-      if (station.survey.name === survey.name) {
+    // Match by survey object identity — survey names are not unique across a nested
+    // cave tree. getAllStations() spans the subtree (just `stations` for a flat cave).
+    for (const [stationName, station] of cave.getAllStations()) {
+      if (station.survey === survey) {
         stationsByType[station.type].push({ name: stationName, station });
       }
     }
@@ -400,8 +426,8 @@ export class SpeleoScene {
       group
     );
 
-    for (const [stationName, station] of cave.stations) {
-      if (station.survey.name !== survey.name) continue; // without this line we would add all stations for each survey
+    for (const [stationName, station] of cave.getAllStations()) {
+      if (station.survey !== survey) continue; // match by identity; survey names aren't unique across the tree, without this line we would add all stations for each survey
       if (
         (station.type === ShotType.CENTER || station.type === ShotType.AUXILIARY) &&
         this.options.scene.stationLabels.show

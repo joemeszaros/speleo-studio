@@ -411,9 +411,13 @@
 .explorer-tree-node {
   display: flex;
   align-items: center;
-  padding: 4px 0;
+  /* Right padding matches the cave header (.models-tree-category-header: 8px 12px) so the
+     trailing ⋮ menu and 👁 visibility icons line up vertically between sub-caves and
+     sub-surveys in a nested tree. */
+  padding: 4px 12px 4px 0;
   cursor: pointer;
   user-select: none;
+  gap: 8px;
 }
 
 .explorer-tree-node:hover {
@@ -475,11 +479,11 @@
 .explorer-tree-visibility {
   width: 16px;
   height: 16px;
-  margin-left: 8px;
   cursor: pointer;
   opacity: 0.7;
-  margin-right: 10px;
-  margin-bottom: 5px;
+  flex-shrink: 0;
+  /* No own margins: spacing comes from the row's flex `gap` and right padding, so the icon
+     aligns identically on cave-header rows and survey rows. */
 }
 
 .explorer-tree-visibility:hover {
@@ -1319,9 +1323,11 @@ body {
   text-align: center;
 }
 
-/* Children container */
+/* Children container. No right padding: child rows (survey nodes and nested cave headers)
+   carry their own 12px right padding, so their trailing ⋮/👁 icons line up with the parent
+   cave header's icons instead of being inset. */
 .models-tree-children {
-  padding: 4px 8px 8px 8px;
+  padding: 4px 0 8px 8px;
 }
 
 /* Model node styles */

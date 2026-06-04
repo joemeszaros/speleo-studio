@@ -406,6 +406,10 @@ class Survey {
    * @param {Array[Number]} orphanShotIds - An array of orphan shots that are disconnected (from and/or to is unknown)
    * @param {Array[Number]} duplicateShotIds - An array of duplicate shots that are the same from/to stations
    */
+  static generateId() {
+    return 'survey_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+  }
+
   constructor(
     name,
     visible = true,
@@ -416,6 +420,10 @@ class Survey {
     orphanShotIds = new Set(),
     duplicateShotIds = new Set()
   ) {
+    // Stable, unique, runtime identity. Survey names are NOT unique across (or even
+    // within) a nested cave tree, so the scene/explorer key surveys by this id.
+    // Not persisted — regenerated on load (the scene is rebuilt each session).
+    this.id = Survey.generateId();
     this.name = sanitizeName(name);
     this.visible = visible;
     this.metadata = metadata;
@@ -425,16 +433,38 @@ class Survey {
     this.duplicateShotIds = duplicateShotIds;
     this.units = units ?? { ...DEFAULT_UNITS };
     this.isolated = false;
+    // The survey's dot-separated path within its (possibly nested) source file
+    // (outermost-first, e.g. `system_migovec.m2m16m18.M18.gallery`). Used ONLY to qualify
+    // station names inside the position solver so that station numbers reused across
+    // surveys (every Therion survey numbers from 1) don't collide. Stays undefined for
+    // legacy caves and single-survey caves, in which case the solver keys by bare names —
+    // identical to the old behavior. Shot from/to and all displayed names remain bare.
+    this.surveyPath = undefined;
     this.validShots = this.getValidShots();
     this.invalidShotIds = this.getInvalidShotIds();
   }
 
+  // Qualifies a bare station name with this survey's path so it is unique across the
+  // connected network during position calculation. Returns the bare name unchanged when
+  // there is no surveyPath (legacy/single-survey caves) or the name is already qualified.
+  qualify(name) {
+    if (this.surveyPath === undefined || name === undefined || name === null) return name;
+    // Names that already contain '@' are pre-qualified (generated splay/aux names and
+    // resolved equate-alias partners that live in another survey) — they must pass through
+    // unchanged so their lookup still resolves. Bare shot names get this survey's path.
+    if (typeof name === 'string' && name.includes('@')) return name;
+    return `${name}@${this.surveyPath}`;
+  }
+
+  // Splay/auxiliary endpoints are not referenced by other shots, so their station names
+  // only need to be unique. Key them by the survey's unique id (not its name) — survey
+  // names are not unique across a nested cave tree, which would otherwise collide.
   getSplayStationName(id) {
-    return `splay-${id}@${this.name}`;
+    return `splay-${id}@${this.id}`;
   }
 
   getAuxiliaryStationName(id) {
-    return `auxiliary-${id}@${this.name}`;
+    return `auxiliary-${id}@${this.id}`;
   }
 
   getFromStationName(shot) {
@@ -452,6 +482,14 @@ class Survey {
   }
 
   updateShots(shots) {
+    // '@' is reserved internally as the survey-qualifier separator (`name@surveyPath`).
+    // Strip it from any user-typed station name so a typed `5@foo` can't corrupt the
+    // station-key scheme or be mistaken for a cross-survey reference. (Imported names are
+    // already '@'-free.) Dots are allowed and left untouched.
+    for (const sh of shots) {
+      if (typeof sh.from === 'string' && sh.from.includes('@')) sh.from = sh.from.slice(0, sh.from.indexOf('@'));
+      if (typeof sh.to === 'string' && sh.to.includes('@')) sh.to = sh.to.slice(0, sh.to.indexOf('@'));
+    }
     this.shots = shots;
     this.validShots = this.getValidShots();
     this.invalidShotIds = this.getInvalidShotIds();
@@ -540,13 +578,18 @@ class Survey {
   }
 
   toExport() {
-    return {
-      name     : this.name,
-      start    : this.start,
-      metadata : this.metadata?.toExport(),
-      units    : { ...this.units },
-      shots    : this.shots.map((s) => s.toExport())
+    const exported = {
+      name       : this.name,
+      start      : this.start,
+      metadata   : this.metadata?.toExport(),
+      units      : { ...this.units },
+      surveyPath : this.surveyPath,
+      shots      : this.shots.map((s) => s.toExport())
     };
+    if (this.color !== undefined) {
+      exported.color = this.color;
+    }
+    return exported;
   }
 
   static fromPure(pure) {
@@ -555,6 +598,7 @@ class Survey {
     pure.metadata = pure.metadata !== undefined ? SurveyMetadata.fromPure(pure.metadata) : undefined;
     pure.units = pure.units ?? { ...DEFAULT_UNITS };
     const survey = Object.assign(new Survey(), pure);
+    survey.surveyPath = pure.surveyPath; // undefined for legacy caves → bare keying
     survey.validShots = survey.getValidShots();
     survey.invalidShotIds = survey.getInvalidShotIds();
     return survey;

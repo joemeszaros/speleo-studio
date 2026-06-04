@@ -60,10 +60,17 @@ import { ProjectPanel } from './ui/project-panel.js';
 import { i18n } from './i18n/i18n.js';
 import { LoadingOverlay } from './ui/loading-overlay.js';
 import { PointCloudHelper } from './utils/models.js';
-import { PointCloud, Mesh3D, ModelFile, ModelMetadata } from './model.js';
+import { PointCloud, Mesh3D, ModelMetadata } from './model.js';
 import { ModelCoordinateDialog } from './ui/model-coordinate-dialog.js';
 import { AscRenderModeDialog } from './ui/asc-render-mode-dialog.js';
-import { GeoData, UTMCoordinateWithElevation, UTMCoordinateSystem, EOVCoordinateWithElevation, EOVCoordinateSystem, StationWithCoordinate, CoordinateSystemType } from './model/geo.js';
+import {
+  GeoData,
+  UTMCoordinateWithElevation,
+  UTMCoordinateSystem,
+  EOVCoordinateWithElevation,
+  StationWithCoordinate,
+  CoordinateSystemType
+} from './model/geo.js';
 import { UTMConverter, WGS84Converter } from './utils/geo.js';
 import { globalNormalizer } from './utils/global-coordinate-normalizer.js';
 import { PrintUtils } from './utils/print.js';
@@ -224,7 +231,13 @@ class Main {
       this.projectSystem
     );
 
-    this.googleDriveSync = new GoogleDriveSync(this.dbManager, this.projectSystem, this.caveSystem, attributeDefs, this.modelSystem);
+    this.googleDriveSync = new GoogleDriveSync(
+      this.dbManager,
+      this.projectSystem,
+      this.caveSystem,
+      attributeDefs,
+      this.modelSystem
+    );
     if (
       this.googleDriveSync.config.isConfigured() &&
       this.googleDriveSync.config.hasTokens() &&
@@ -374,79 +387,96 @@ class Main {
   }
 
   #preventFileDrop() {
-    document.addEventListener('dragover', e => e.preventDefault());
-    document.addEventListener('drop',     e => e.preventDefault());
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => e.preventDefault());
   }
 
   #setupCaveFileInputListener() {
-    const input = document.getElementById('caveInput');
-    input.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length === 0) return;
+    // Two inputs feed the same import logic: `caveInput` (multi-file selection) and
+    // `caveDirInput` (recursive directory pick, for multi-folder Therion/Survex projects).
+    for (const id of ['caveInput', 'caveDirInput']) {
+      const input = document.getElementById(id);
+      if (!input) continue;
+      input.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        try {
+          if (files.length > 0) await this.#importCaveFiles(files);
+        } finally {
+          input.value = '';
+        }
+      });
+    }
+  }
 
+  async #importCaveFiles(files) {
+    // For a directory import the browser provides `webkitRelativePath` — use it as the
+    // map key so `input`/`*include` directives that cross folders resolve. Plain
+    // multi-select files have no relative path, so fall back to the basename.
+    const keyOf = (f) => f.webkitRelativePath || f.name;
+
+    // Batch all .th files together so input directives can be resolved across them
+    const therionFiles = files.filter((f) => f.name.toLowerCase().endsWith('.th'));
+    // Batch all .svx files together so *include directives can be resolved across them
+    const svxFiles = files.filter((f) => f.name.toLowerCase().endsWith('.svx'));
+    const otherFiles = files.filter(
+      (f) => !f.name.toLowerCase().endsWith('.th') && !f.name.toLowerCase().endsWith('.svx')
+    );
+
+    if (therionFiles.length > 0) {
       try {
-        // Batch all .th files together so input directives can be resolved across them
-        const therionFiles = files.filter(f => f.name.toLowerCase().endsWith('.th'));
-        // Batch all .svx files together so *include directives can be resolved across them
-        const svxFiles     = files.filter(f => f.name.toLowerCase().endsWith('.svx'));
-        const otherFiles   = files.filter(f =>
-          !f.name.toLowerCase().endsWith('.th') &&
-          !f.name.toLowerCase().endsWith('.svx')
-        );
-
-        if (therionFiles.length > 0) {
-          try {
-            const filesMap = new Map(therionFiles.map(f => [f.name, f]));
-            await this.importers.therion.importFiles(filesMap, async (cave) => {
-              await this.#tryAddCave(cave);
-            });
-          } catch (error) {
-            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: therionFiles[0].name });
-            showErrorPanel(`${msgPrefix}: ${error.message}`);
-            console.error(msgPrefix, error);
-          }
-        }
-
-        if (svxFiles.length > 0) {
-          try {
-            const filesMap = new Map(svxFiles.map(f => [f.name, f]));
-            await this.importers.survex.importFiles(filesMap, async (cave) => {
-              await this.#tryAddCave(cave);
-            });
-          } catch (error) {
-            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: svxFiles[0].name });
-            showErrorPanel(`${msgPrefix}: ${error.message}`);
-            console.error(msgPrefix, error);
-          }
-        }
-
-        const handlers = new Map([
-          ['cave', this.importers.polygon],
-          ['json', this.importers.json],
-          ['3d',   this.importers.survex3d]
-        ]);
-
-        for (const file of otherFiles) {
-          try {
-            const ext     = file.name.toLowerCase().split('.').pop();
-            const handler = handlers.get(ext);
-            if (!handler) {
-              showErrorPanel(i18n.t('errors.import.unsupportedFileType', { extension: ext }));
-              continue;
-            }
-            await handler.importFile(file, file.name, async (cave) => {
-              await this.#tryAddCave(cave);
-            });
-          } catch (error) {
-            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
-            showErrorPanel(`${msgPrefix}: ${error.message}`);
-            console.error(msgPrefix, error);
-          }
-        }
-      } finally {
-        input.value = '';
+        const filesMap = new Map(therionFiles.map((f) => [keyOf(f), f]));
+        await this.importers.therion.importFiles(filesMap, async (cave) => {
+          await this.#tryAddCave(cave);
+        });
+      } catch (error) {
+        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: therionFiles[0].name });
+        showErrorPanel(`${msgPrefix}: ${error.message}`);
+        console.error(msgPrefix, error);
       }
-    });
+    }
+
+    if (svxFiles.length > 0) {
+      try {
+        const filesMap = new Map(svxFiles.map((f) => [keyOf(f), f]));
+        await this.importers.survex.importFiles(filesMap, async (cave) => {
+          await this.#tryAddCave(cave);
+        });
+      } catch (error) {
+        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: svxFiles[0].name });
+        showErrorPanel(`${msgPrefix}: ${error.message}`);
+        console.error(msgPrefix, error);
+      }
+    }
+
+    const handlers = new Map([
+      ['cave', this.importers.polygon],
+      ['json', this.importers.json],
+      ['3d', this.importers.survex3d]
+    ]);
+
+    // For directory imports only feed survey-data formats; the file picker for `caveDirInput`
+    // has no `accept` filter, so a folder may contain unrelated files (drawings, images, ...).
+    for (const file of otherFiles) {
+      const ext = file.name.toLowerCase().split('.').pop();
+      const handler = handlers.get(ext);
+      if (!handler) {
+        // Silently skip unknown files that came along with a directory pick; only warn
+        // for an explicit single-file selection.
+        if (!file.webkitRelativePath) {
+          showErrorPanel(i18n.t('errors.import.unsupportedFileType', { extension: ext }));
+        }
+        continue;
+      }
+      try {
+        await handler.importFile(file, file.name, async (cave) => {
+          await this.#tryAddCave(cave);
+        });
+      } catch (error) {
+        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
+        showErrorPanel(`${msgPrefix}: ${error.message}`);
+        console.error(msgPrefix, error);
+      }
+    }
   }
 
   #setupSurveyFileInputListeners() {
@@ -475,151 +505,153 @@ class Main {
       if (files.length === 0) return;
 
       await this.loadingOverlay.guard(i18n.t('ui.loading.openingModel'), async () => {
-      try {
-        // Separate model files from asset files (MTL, textures)
-        const modelFiles = [];
-        const assetFiles = [];
-
-        for (const file of files) {
-          const ext = file.name.toLowerCase().split('.').pop();
-          if (modelExtensions.has(ext)) {
-            modelFiles.push(file);
-          } else {
-            assetFiles.push(file);
-          }
-        }
-
-        const hasAssets = assetFiles.length > 0;
-
-        // XYZ files: ask the user whether the file is a DTM (regular grid)
-        // or a scattered point cloud. The format itself doesn't say.
-        const isXyz = (f) => f.name.toLowerCase().endsWith('.xyz');
-        let xyzKind = null;
-        const hasXyz = modelFiles.some(isXyz);
-        if (hasXyz) {
-          xyzKind = await new XyzKindDialog().show();
-          if (xyzKind === null) {
-            // Skip XYZ files if cancelled
-            modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !isXyz(f)));
-          }
-        }
-
-        // DTM files (.asc, .hgt, and .xyz when xyzKind==='dtm') need an extra
-        // dialog (mesh vs point cloud). Asked once per batch. The render-mode
-        // dialog is skipped for pure scattered-XYZ batches (no mesh option).
-        const innateDtmExts = new Set(['asc', 'hgt', 'tif', 'tiff']);
-        const isInnateDtm = (f) => innateDtmExts.has(f.name.toLowerCase().split('.').pop());
-        const dtmRequiresRenderMode = (f) => {
-          const ext = f.name.toLowerCase().split('.').pop();
-          if (innateDtmExts.has(ext)) return true;
-          if (ext === 'xyz' && xyzKind === 'dtm') return true;
-          return false;
-        };
-        let dtmRenderMode = null;
-        const hasDtmRenderMode = modelFiles.some(dtmRequiresRenderMode);
-        if (hasDtmRenderMode) {
-          dtmRenderMode = await new AscRenderModeDialog().show();
-          if (dtmRenderMode === null) {
-            // Skip DTM-rendered files if cancelled (innate DTMs + dtm-mode XYZ)
-            modelFiles.splice(
-              0, modelFiles.length,
-              ...modelFiles.filter((f) => !dtmRequiresRenderMode(f))
-            );
-          }
-        }
-
-        // Parse model files first to extract embedded coordinates
-        const parsedModels = [];
-        this.loadingOverlay.beginBatch(modelFiles.length);
         try {
-          for (const file of modelFiles) {
-            const ext = file.name.toLowerCase().split('.').pop();
-            const handler = this.importers[ext];
-            if (!handler) {
-              this.loadingOverlay.advanceBatch();
-              continue;
-            }
+          // Separate model files from asset files (MTL, textures)
+          const modelFiles = [];
+          const assetFiles = [];
 
-            try {
-              let importOpts;
-              if (ext === 'xyz') {
-                importOpts = { xyzKind, renderMode: dtmRenderMode };
-              } else if (innateDtmExts.has(ext)) {
-                importOpts = { renderMode: dtmRenderMode };
-              }
-              await handler.importFile(file, file.name, async (model, object3D, modelFile) => {
-                parsedModels.push({ model, object3D, modelFile });
-              }, importOpts);
-            } catch (error) {
-              const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
-              showErrorPanel(`${msgPrefix}: ${error.message}`);
-              console.error(msgPrefix, error);
+          for (const file of files) {
+            const ext = file.name.toLowerCase().split('.').pop();
+            if (modelExtensions.has(ext)) {
+              modelFiles.push(file);
+            } else {
+              assetFiles.push(file);
             }
-            this.loadingOverlay.advanceBatch();
+          }
+
+          const hasAssets = assetFiles.length > 0;
+
+          // XYZ files: ask the user whether the file is a DTM (regular grid)
+          // or a scattered point cloud. The format itself doesn't say.
+          const isXyz = (f) => f.name.toLowerCase().endsWith('.xyz');
+          let xyzKind = null;
+          const hasXyz = modelFiles.some(isXyz);
+          if (hasXyz) {
+            xyzKind = await new XyzKindDialog().show();
+            if (xyzKind === null) {
+              // Skip XYZ files if cancelled
+              modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !isXyz(f)));
+            }
+          }
+
+          // DTM files (.asc, .hgt, and .xyz when xyzKind==='dtm') need an extra
+          // dialog (mesh vs point cloud). Asked once per batch. The render-mode
+          // dialog is skipped for pure scattered-XYZ batches (no mesh option).
+          const innateDtmExts = new Set(['asc', 'hgt', 'tif', 'tiff']);
+          const isInnateDtm = (f) => innateDtmExts.has(f.name.toLowerCase().split('.').pop());
+          const dtmRequiresRenderMode = (f) => {
+            const ext = f.name.toLowerCase().split('.').pop();
+            if (innateDtmExts.has(ext)) return true;
+            if (ext === 'xyz' && xyzKind === 'dtm') return true;
+            return false;
+          };
+          let dtmRenderMode = null;
+          const hasDtmRenderMode = modelFiles.some(dtmRequiresRenderMode);
+          if (hasDtmRenderMode) {
+            dtmRenderMode = await new AscRenderModeDialog().show();
+            if (dtmRenderMode === null) {
+              // Skip DTM-rendered files if cancelled (innate DTMs + dtm-mode XYZ)
+              modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !dtmRequiresRenderMode(f)));
+            }
+          }
+
+          // Parse model files first to extract embedded coordinates
+          const parsedModels = [];
+          this.loadingOverlay.beginBatch(modelFiles.length);
+          try {
+            for (const file of modelFiles) {
+              const ext = file.name.toLowerCase().split('.').pop();
+              const handler = this.importers[ext];
+              if (!handler) {
+                this.loadingOverlay.advanceBatch();
+                continue;
+              }
+
+              try {
+                let importOpts;
+                if (ext === 'xyz') {
+                  importOpts = { xyzKind, renderMode: dtmRenderMode };
+                } else if (innateDtmExts.has(ext)) {
+                  importOpts = { renderMode: dtmRenderMode };
+                }
+                await handler.importFile(
+                  file,
+                  file.name,
+                  async (model, object3D, modelFile) => {
+                    parsedModels.push({ model, object3D, modelFile });
+                  },
+                  importOpts
+                );
+              } catch (error) {
+                const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
+                showErrorPanel(`${msgPrefix}: ${error.message}`);
+                console.error(msgPrefix, error);
+              }
+              this.loadingOverlay.advanceBatch();
+            }
+          } finally {
+            this.loadingOverlay.endBatch();
+          }
+
+          // Resolve per-model embeddedCoords (e.g. HGT filename, OBJ comment
+          // headers) to geoData first — each model gets its own anchor.
+          for (const pm of parsedModels) {
+            if (pm.model.embeddedCoords && !pm.model.geoData) {
+              pm.model.geoData = this.#createGeoDataFromWGS84(pm.model.embeddedCoords);
+            }
+          }
+
+          // Show the shared WGS84 dialog only for models that still lack
+          // geoData (typical for ASC / bare PLY / OBJ without comments).
+          const needsCoords = parsedModels.filter((pm) => !pm.model.geoData);
+          let sharedGeoData = null;
+          if (needsCoords.length > 0) {
+            const firstNeeding = needsCoords[0].model;
+            const embeddedCoords = firstNeeding?.embeddedCoords || null;
+            const firstPointCoords = firstNeeding?.firstPointCoords || null;
+            const modelCoordDialog = new ModelCoordinateDialog();
+            const wgs84Coords = await modelCoordDialog.show(
+              modelFiles[0]?.name || '',
+              embeddedCoords,
+              firstPointCoords
+            );
+            if (wgs84Coords) {
+              sharedGeoData = this.#createGeoDataFromWGS84(wgs84Coords);
+            }
+          }
+
+          // Add parsed models to the scene
+          const importedNodes = [];
+          for (const { model, object3D, modelFile } of parsedModels) {
+            // Hide model until textures are applied to prevent visual pop-in
+            if (hasAssets) object3D.visible = false;
+
+            // Apply shared dialog result only to models that didn't already
+            // have geoData from their own embeddedCoords.
+            if (!model.geoData && sharedGeoData) model.geoData = sharedGeoData;
+
+            await this.#tryAddModel(model, object3D, modelFile);
+
+            // Find the newly added model node for texture application
+            if (hasAssets && this.modelsTree) {
+              const node = this.modelsTree.categories
+                .get('3d-models')
+                ?.children.find((n) => n.label === model.name);
+              if (node) importedNodes.push(node);
+            }
+          }
+
+          // Apply asset files (MTL + textures) to imported models, then reveal
+          if (hasAssets && importedNodes.length > 0) {
+            for (const node of importedNodes) {
+              await this.modelsTree.loadTexturesForModel(node, assetFiles);
+              node.object3D.visible = true;
+            }
+            this.scene.view.renderView();
           }
         } finally {
-          this.loadingOverlay.endBatch();
+          input.value = '';
         }
-
-        // Resolve per-model embeddedCoords (e.g. HGT filename, OBJ comment
-        // headers) to geoData first — each model gets its own anchor.
-        for (const pm of parsedModels) {
-          if (pm.model.embeddedCoords && !pm.model.geoData) {
-            pm.model.geoData = this.#createGeoDataFromWGS84(pm.model.embeddedCoords);
-          }
-        }
-
-        // Show the shared WGS84 dialog only for models that still lack
-        // geoData (typical for ASC / bare PLY / OBJ without comments).
-        const needsCoords = parsedModels.filter((pm) => !pm.model.geoData);
-        let sharedGeoData = null;
-        if (needsCoords.length > 0) {
-          const firstNeeding = needsCoords[0].model;
-          const embeddedCoords = firstNeeding?.embeddedCoords || null;
-          const firstPointCoords = firstNeeding?.firstPointCoords || null;
-          const modelCoordDialog = new ModelCoordinateDialog();
-          const wgs84Coords = await modelCoordDialog.show(
-            modelFiles[0]?.name || '',
-            embeddedCoords,
-            firstPointCoords
-          );
-          if (wgs84Coords) {
-            sharedGeoData = this.#createGeoDataFromWGS84(wgs84Coords);
-          }
-        }
-
-        // Add parsed models to the scene
-        const importedNodes = [];
-        for (const { model, object3D, modelFile } of parsedModels) {
-          // Hide model until textures are applied to prevent visual pop-in
-          if (hasAssets) object3D.visible = false;
-
-          // Apply shared dialog result only to models that didn't already
-          // have geoData from their own embeddedCoords.
-          if (!model.geoData && sharedGeoData) model.geoData = sharedGeoData;
-
-          await this.#tryAddModel(model, object3D, modelFile);
-
-          // Find the newly added model node for texture application
-          if (hasAssets && this.modelsTree) {
-            const node = this.modelsTree.categories
-              .get('3d-models')
-              ?.children.find((n) => n.label === model.name);
-            if (node) importedNodes.push(node);
-          }
-        }
-
-        // Apply asset files (MTL + textures) to imported models, then reveal
-        if (hasAssets && importedNodes.length > 0) {
-          for (const node of importedNodes) {
-            await this.modelsTree.loadTexturesForModel(node, assetFiles);
-            node.object3D.visible = true;
-          }
-          this.scene.view.renderView();
-        }
-      } finally {
-        input.value = '';
-      }
       });
     });
   }
@@ -640,9 +672,10 @@ class Main {
 
       // LAS/LAZ octree point clouds have colors pre-computed (RGB or gradient in worker)
       // PLY point clouds without vertex colors need gradient colors computed here
-      const colorGradients = (model.hasVertexColors || model.hasOctree)
-        ? null
-        : PointCloudHelper.getColorGradientsMultiColor(model.points, this.options.scene.models.color.gradientColors);
+      const colorGradients =
+        model.hasVertexColors || model.hasOctree
+          ? null
+          : PointCloudHelper.getColorGradientsMultiColor(model.points, this.options.scene.models.color.gradientColors);
 
       entry = this.scene.models.getPointCloudObject(object3D, colorGradients);
       this.scene.models.addPointCloud(model, entry);
@@ -667,9 +700,11 @@ class Main {
 
     // Emit coordinate system change if the model has geoData
     if (model.geoData?.coordinateSystem) {
-      document.dispatchEvent(new CustomEvent('coordinateSystemChanged', {
-        detail: { coordinateSystem: model.geoData.coordinateSystem }
-      }));
+      document.dispatchEvent(
+        new CustomEvent('coordinateSystemChanged', {
+          detail : { coordinateSystem: model.geoData.coordinateSystem }
+        })
+      );
     }
 
     // Add to models tree for management (pass modelFileId for settings persistence)
@@ -795,9 +830,10 @@ class Main {
     const northern = zoneLetter >= 'N';
 
     // Use existing UTM system if available (preserves zone), otherwise create new
-    const coordinateSystem = (existingCoordSystem?.type === CoordinateSystemType.UTM)
-      ? existingCoordSystem
-      : new UTMCoordinateSystem(zoneNum, northern);
+    const coordinateSystem =
+      existingCoordSystem?.type === CoordinateSystemType.UTM
+        ? existingCoordSystem
+        : new UTMCoordinateSystem(zoneNum, northern);
 
     const coordinate = new UTMCoordinateWithElevation(easting, northing, elevation);
     return new GeoData(coordinateSystem, [new StationWithCoordinate('origin', coordinate)]);
@@ -907,7 +943,7 @@ class Main {
       this.projectPanel.hide();
 
       let importer;
-
+      console.log(`Trying to load cave from URL: ${caveNameUrl}`);
       if (caveNameUrl.includes('.cave')) {
         importer = this.importers.polygon;
       } else if (caveNameUrl.includes('.csv')) {

@@ -45,7 +45,7 @@ export class SurveyEditor extends Editor {
     const survey = e.detail.survey;
 
     if (this.table !== undefined && this.cave.name === cave.name && this.survey.name === survey.name) {
-      const tableRows = this.#getTableData(this.survey, this.cave.stations);
+      const tableRows = this.#getTableData(this.survey, this.cave.getAllStations());
       const invalidShotIdsArray = tableRows
         .filter((r) => ['invalid', 'invalidShot', 'incomplete'].includes(r.status))
         .map((x) => x.id);
@@ -241,7 +241,7 @@ export class SurveyEditor extends Editor {
     };
 
     const rows = survey.shots.map((sh) => {
-      const toStation = stations.get(survey.getToStationName(sh));
+      const toStation = stations.get(survey.qualify(survey.getToStationName(sh)));
 
       // Get attributes for both from and to stations
       const attributes = toStation ? getAttributesForStation(sh.to) : [];
@@ -389,7 +389,7 @@ export class SurveyEditor extends Editor {
         label  : `<span class="info-row"></span><span>${i18n.t('ui.editors.survey.menu.detailsFrom')}<span/>`,
         action : (e, row) => {
           const d = row.getData();
-          const s = this.cave.stations.get(d.from);
+          const s = this.cave.getAllStations().get(this.survey.qualify(d.from));
           const station = {
             position : s.position,
             name     : d.from,
@@ -408,7 +408,7 @@ export class SurveyEditor extends Editor {
         label  : `<span class="info-row"></span><span>${i18n.t('ui.editors.survey.menu.detailsTo')}<span/>`,
         action : (e, row) => {
           const d = row.getData();
-          const s = this.cave.stations.get(d.to);
+          const s = this.cave.getAllStations().get(this.survey.qualify(d.to));
           const station = {
             position : s.position,
             name     : d.to,
@@ -824,7 +824,7 @@ export class SurveyEditor extends Editor {
     this.table = new Tabulator('#surveydata', {
       history                   : true, //enable undo and redo
       height                    : this.options.ui.editor.survey.height - 36 - 48 - 5, // header + iconbar
-      data                      : this.#getTableData(this.survey, this.cave.stations),
+      data                      : this.#getTableData(this.survey, this.cave.getAllStations()),
       layout                    : 'fitDataStretch',
       validationMode            : 'highlight',
       //enable range selection

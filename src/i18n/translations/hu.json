@@ -6,6 +6,7 @@
           "name": "Fájl",
           "new": "Új barlang",
           "open": "Barlang(ok) megnyitása",
+          "openFolder": "Barlangmappa megnyitása…",
           "export": "Barlang(ok) exportálása",
           "openModel": "Model megnyitása",
           "print": "Nyomtatás",
@@ -602,7 +603,8 @@
       },
       "locateStation": {
         "title": "Pont megkeresése",
-        "locate": "Keresése"
+        "locate": "Keresése",
+        "notFound": "Nem található '{name}' nevű pont"
       },
       "export": {
         "title": "Barlang(ok) exportálása",
@@ -737,6 +739,7 @@
           "splays": "Tüskék",
           "stations": "Pontok",
           "surveys": "Felmérések",
+          "subCaves": "Albarlangok",
           "isolated": "Izolált felmérések",
           "stationAttributes": "Pont attribútumok",
           "sectionAttributes": "Szakasz attribútumok",
@@ -1099,6 +1102,7 @@
       "orthophotoDownsampled": "{name}: ortofotó ritkítva {fromCols}×{fromRows} pixelről {toCols}×{toRows} pixelre a teljesítmény érdekében",
       "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott",
       "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot.",
+      "surveyAtPathFailed": "A(z) '{path}' felmérés feldolgozása sikertelen:",
       "therionNoData": "Nem található felmérés adat a Therion fájlban",
       "therionMissingInputFiles": "Ez a Therion fájl egy projektgyökér, amely maga nem tartalmaz felmérési adatokat. Jelöld ki az összes .th fájlt a projektkönyvtárból egyszerre.",
       "therionUnresolvedInputs": "A Therion fájl olyan fájlokra hivatkozik, amelyek nem lettek kiválasztva: {files}. Jelöld ki az összes .th fájlt a projektkönyvtárból egyszerre.",
@@ -1204,7 +1208,7 @@
     },
     "survey": {
       "atLeastTwoGradientColorsRequired": "Legalább 2 gradiens szín szükséges",
-      "conflictingShot": "Ütköző mérés ({from} -> {to})!",
+      "conflictingShot": "Ütköző állomás: '{station}' a(z) '{survey}' felmérésben ({from} -> {to} mérés) — ugyanazt az állomásnevet két különböző pont használja; nevezd át az egyiket.",
       "undefinedSegmentType": "Meghatározatlan szegmens típus: {type}"
     },
     "utils": {

@@ -42,12 +42,37 @@
 
       <div class="info">
         <h3>Támogatott formátumok</h3>
+
+        <h4>Domborzati modellek (DTM)</h4>
         <ul>
-          <li><strong>PLY</strong> (Polygon File Format) &mdash; pontfelhők és háromszöghálók</li>
-          <li><strong>OBJ</strong> (Wavefront OBJ) &mdash; háromszöghálók textúra támogatással</li>
+          <li><strong>ASC</strong> (ESRI ASCII Grid) &mdash; szöveges, 6 soros fejléccel és cellaértékekkel</li>
+          <li><strong>HGT</strong> (SRTM) &mdash; NASA SRTM bináris domborzati modell, a fájlnévből kiolvasott földrajzi pozícióval</li>
+          <li><strong>XYZ</strong> &mdash; szöveges X Y Z pontlista, szabályos rácsú DTM módban</li>
+          <li><strong>GeoTIFF</strong> (.tif, .tiff) &mdash; egysávos Float32 / Int16 magassági raszter; a beépített GeoKey alapján automatikusan felismeri a koordináta rendszert (EOV, UTM, Web Mercator, WGS84)</li>
+        </ul>
+
+        <h4>Ortofotók</h4>
+        <ul>
+          <li><strong>GeoTIFF</strong> (.tif, .tiff) &mdash; többsávos 8 bites RGB(A) raszter; automatikusan ortofotóként ismeri fel és textúrázott lapként vagy &mdash; ha van fedő DTM &mdash; ráhúzva (drape) jeleníti meg</li>
+        </ul>
+
+        <h4>Pontfelhők</h4>
+        <ul>
+          <li><strong>PLY</strong> (Polygon File Format) &mdash; csúcsok faces nélkül</li>
           <li><strong>LAS</strong> (ASPRS LAS 1.0&ndash;1.4) &mdash; LiDAR pontfelhők</li>
           <li><strong>LAZ</strong> (tömörített LAS) &mdash; tömörített LiDAR pontfelhők</li>
+          <li><strong>XYZ</strong> &mdash; szöveges X Y Z pontlista, szórt pontfelhő módban</li>
+        </ul>
+
+        <h4>3D hálók</h4>
+        <ul>
+          <li><strong>PLY</strong> (Polygon File Format) &mdash; csúcsok háromszöglapokkal</li>
+          <li><strong>OBJ</strong> (Wavefront OBJ) &mdash; háromszöghálók textúra támogatással</li>
           <li><strong>LOX</strong> (Therion .lox) &mdash; Therion barlangtérképező szoftver 3D exportja: barlangjárat-falak háromszöghálója és mérési centrális</li>
+        </ul>
+
+        <h4>Kiegészítő fájlok</h4>
+        <ul>
           <li><strong>MTL</strong> (Material Template Library) &mdash; anyag- és textúra definíciók OBJ fájlokhoz</li>
           <li><strong>JPG, PNG</strong> &mdash; textúra képfájlok</li>
         </ul>
@@ -58,9 +83,8 @@
         <p
           >3D modellek betöltése után a navigációs sávban aktívvá válik a vetítés váltó gomb (<img class="icon"
           src="../../icons/camera_ortho.svg" /> / <img class="icon" src="../../icons/camera_perspective.svg" />), amely
-          perspektivikus vetítésre kapcsolva lehetővé teszi egy kamra belsejének bejárását: a modell belsejére mutató
-          forgáspont beállítása után az egér görgőjével át lehet haladni a falon, és belülről megtekinteni a térszkennelt
-          barlangjáratokat. Részletesebben a
+          perspektivikus vetítésre kapcsolva lehetővé teszi egy barlang / modell belsejének bejárását: a modell belsejére mutató
+          forgáspont beállítása után az egér görgőjével át lehet haladni a falon, és belülről megtekinteni a barlangjáratokat. Részletesebben a
           <a href="05-3d-vizualizacio.html#projection-mode">3D vizualizáció fejezet „Vetítési mód" szakaszában</a>.</p
         >
       </div>
@@ -75,9 +99,15 @@
       <div class="step">
         <h3>2. lépés: Fájlok kiválasztása</h3>
         <p>
-          A fájl tallózó ablakban válassza ki a modell fájlt (.ply, .obj, .las, .laz vagy .lox). Ha a modellhez textúra fájlok is
-          tartoznak (.mtl és képfájlok), azokat is kiválaszthatja egyszerre. A Speleo Studio automatikusan felismeri és
-          alkalmazza a textúrákat.
+          A fájl tallózó ablakban válassza ki a modell fájlt (.ply, .obj, .las, .laz, .lox, .asc, .hgt, .xyz, .tif vagy .tiff).
+          Ha a modellhez textúra fájlok is tartoznak (.mtl és képfájlok), azokat is kiválaszthatja egyszerre. A Speleo
+          Studio automatikusan felismeri és alkalmazza a textúrákat.
+        </p>
+        <p>
+          Domborzati modellek (.asc, .hgt, .xyz, GeoTIFF DTM) megnyitásakor egy plusz ablak jelenik meg, ahol kiválasztható,
+          hogy a modell <strong>háromszög hálóként</strong> vagy <strong>pontfelhőként</strong> jelenjen meg. XYZ fájloknál
+          ezt megelőzi még egy ablak, amely rákérdez, hogy a fájl <strong>szabályos rácsú DTM</strong>-et vagy
+          <strong>szórt pontfelhőt</strong> tartalmaz-e &mdash; a formátum maga ezt nem hordozza.
         </p>
       </div>
 
@@ -139,6 +169,100 @@
           feltéve hogy koordinátái a meglévő barlangokhoz közel esnek.
         </p>
       </div>
+
+      <h2>Domborzati modellek (DTM)</h2>
+      <p>
+        A Speleo Studio négy DTM-formátumot támogat. Mindegyikből háromszög hálót vagy pontfelhőt készít az importálási
+        beállítások alapján, és a NODATA cellákat lyukként hagyja a hálóban.
+      </p>
+
+      <table>
+        <tr><th>Formátum</th><th>Jellemzők</th><th>Földrajzi pozíció</th></tr>
+        <tr>
+          <td><strong>ASC</strong></td>
+          <td>ESRI ASCII Grid &mdash; szöveges, 6 soros fejléc (ncols, nrows, xll-, yll-, cellsize, NODATA) és cellaértékek.</td>
+          <td>Csak a sarokpont koordinátáját tartalmazza, koordináta rendszert nem. Az importálás után megjelenő WGS84 ablakba a fájl bal alsó sarkának koordinátáit kell beírni.</td>
+        </tr>
+        <tr>
+          <td><strong>HGT</strong></td>
+          <td>NASA SRTM, bináris (big-endian int16). Fix méret: 1201&times;1201 (SRTM3, ~90 m) vagy 3601&times;3601 (SRTM1, ~30 m).</td>
+          <td>A földrajzi pozíciót a fájlnév kódolja (pl. <code>N52E004.hgt</code> = 52&deg;N&ndash;53&deg;N, 4&deg;E&ndash;5&deg;E). A WGS84 ablak nem jelenik meg, a modell automatikusan a helyére kerül.</td>
+        </tr>
+        <tr>
+          <td><strong>XYZ</strong></td>
+          <td>Szöveges X Y Z pontlista, soronként egy pont. Lehet szabályos rács (DTM) vagy szórt pontfelhő (LIDAR, fotogrammetria).</td>
+          <td>A formátum nem tartalmaz koordináta rendszert. A WGS84 ablakba a bal alsó sarok koordinátáit kell beírni; a Speleo Studio onnan a projekt CRS-ébe (UTM / EOV) konvertál.</td>
+        </tr>
+        <tr>
+          <td><strong>GeoTIFF DTM</strong></td>
+          <td>Egysávos Float32 / Int16 raszter (.tif vagy .tiff). Az importer automatikusan elkülöníti az egysávos magassági adatokat a többsávos ortofotótól.</td>
+          <td>A beépített GeoKey jelzi a koordináta rendszert. Az importer ismeri az EOV-t (EPSG:23700), UTM N/S övezeteket (32601&ndash;32760), Web Mercatort (3857) és WGS84-et (4326); ezekben az esetekben a WGS84 ablak nem jelenik meg. Ismeretlen CRS esetén visszaesik a kézi koordináta-megadásra.</td>
+        </tr>
+      </table>
+
+      <div class="info">
+        <h3>Méretkorrekció és ritkítás</h3>
+        <p>
+          A Speleo Studio minden DTM cellaméretét <em>földi méterben</em> kezeli, formátumtól függetlenül: Web Mercator
+          esetén kivonja a szélességgel változó nyújtást (~1,64&times; 52&deg;N-en), WGS84 fokokat 111320 m/&deg;-on
+          (és <code>cos(szélesség)</code>-en) konvertál át. Az SRTM HGT minden csúcsát közvetlenül a projekt UTM-jébe
+          vetíti, így egy 1&deg; csempe valódi UTM-trapéz alakjával jelenik meg &mdash; nem közelítéssel.
+        </p>
+        <p>
+          Ha egy DTM cellaszáma meghaladja a <strong>Beállítások &rarr; 3D modellek &rarr; DTM max. cellák száma</strong>
+          értéket (alapértelmezetten 4 millió), az importer ritkítja a rácsot és figyelmeztetést jelenít meg az új
+          méretről.
+        </p>
+      </div>
+
+      <h2>Ortofotók GeoTIFF formátumban</h2>
+
+      <p>
+        A többsávos 8 bites RGB(A) GeoTIFF fájlokat a Speleo Studio automatikusan <strong>ortofotóként</strong> ismeri
+        fel (a <code>PhotometricInterpretation = RGB</code> és a 3&ndash;4 sáv alapján). Az ilyen ortofotó nem
+        domborzatként, hanem egy lapos textúrázott táblaként jelenik meg a saját földrajzi helyén.
+      </p>
+
+      <div class="info">
+        <h3>Automatikus ráhúzás (drape) DTM-re</h3>
+        <p>
+          Ha az ortofotó behúzásakor már van a jelenetben olyan DTM, amelynek XY befoglalója fedi az ortofotó területét,
+          a Speleo Studio automatikusan <strong>ráhúzza</strong> a fotót a domborzatra: a DTM háló minden csúcsára
+          kiszámolja a megfelelő textúra koordinátát, és az ortofotó RGB-jét rétegként a domborzati felszínre festi.
+          A DTM eredeti színátmenete (gradientByZ stb.) ott marad, ahova az ortofotó nem ér el, így egyszerre látszik
+          a felszín 3D-s formája és a fotó.
+        </p>
+        <p>
+          Több ortofotó is ráhúzható ugyanarra a DTM-re &mdash; mindegyikhez külön textúra koordináták tartoznak,
+          így nem zavarják egymást.
+        </p>
+      </div>
+
+      <h3>Modell böngészőben látható jelzések</h3>
+      <ul>
+        <li><strong>&#127956;</strong> &mdash; domborzati modell (DTM)</li>
+        <li><strong>&#128247;</strong> &mdash; ortofotó (textúrázott lap vagy ráhúzott réteg)</li>
+        <li><strong>&#128279; <em>dtm-fájlnév</em></strong> &mdash; ortofotó neve mellett megjelenik a céldomborzat, ha az ortofotó épp rá van húzva.</li>
+      </ul>
+
+      <h3>Ráhúzás kézzel: <em>Drape onto&hellip;</em> / <em>Undrape</em></h3>
+      <p>
+        Egy ortofotón jobb gombbal kattintva a helyi menüben elérhető:
+      </p>
+      <ul>
+        <li><strong>&#128444; Ráhúzás erre: <em>&lt;dtm-fájl&gt;</em></strong> &mdash; átirányítja a ráhúzást egy másik
+          DTM-re. A jelenetben lévő minden DTM felsorolásra kerül; a nem átfedő DTM-ek figyelmeztető jellel és
+          inaktívan jelennek meg.</li>
+        <li><strong>&#128274; Ráhúzás megszüntetése</strong> &mdash; visszaállítja a DTM eredeti anyagát (színátmenet
+          stb.), és az ortofotó újra önálló textúrázott táblaként jelenik meg. A táblát ilyenkor a domborzat fölé
+          emeli az importer, hogy ne ütközzön a háló elemeibe.</li>
+      </ul>
+
+      <p>
+        Egy ráhúzott ortofotó <strong>láthatóság (&#128065;&#65039;) ikonja</strong> a domborzaton lévő textúrát
+        kapcsolja ki/be &mdash; bekapcsolt állapotban a fotó látszik, kikapcsolva a DTM visszatér a saját szín
+        módjához. Az ortofotó törlésekor a Speleo Studio automatikusan elveszi a ráhúzott textúrát a DTM-ről.
+      </p>
 
       <h2>Nagy pontfelhők</h2>
 
@@ -235,6 +359,16 @@
           ><td>A háromszögháló éleinek megjelenítése drótváz (wireframe) módban, a topológia vizsgálatához.
           Csak textúra nélküli hálókra érhető el &mdash; pontfelhőkön és textúrázott modelleken nem jelenik meg.
           A drótváz kompatibilis a szín módokkal (pl. Z szerinti színátmenet).</td></tr
+        >
+        <tr
+          ><td>&#128444;</td><td>Ráhúzás erre: <em>&lt;dtm-fájl&gt;</em></td
+          ><td>Csak ortofotókra: a fotó textúraként felfeszül a kiválasztott DTM-re. A jelenet minden DTM-jét
+          felsorolja; az ortofotó területét nem fedő DTM-ek inaktívan jelennek meg.</td></tr
+        >
+        <tr
+          ><td>&#128274;</td><td>Ráhúzás megszüntetése</td
+          ><td>Csak ráhúzott ortofotókon látható: visszaállítja a DTM eredeti anyagát és az ortofotó újra önálló
+          textúrázott lapként jelenik meg a domborzat fölött.</td></tr
         >
         <tr><td>&#128465;&#65039;</td><td>Modell törlése</td><td>Modell és kapcsolódó textúrák törlése</td></tr>
       </table>

@@ -95,15 +95,11 @@ export class ExplorerTree {
   }
 
   addCave(cave) {
-    const node = {
-      id       : cave.name,
-      type     : 'cave',
-      label    : cave.name,
-      data     : cave,
-      children : [],
-      visible  : cave.visible !== false,
-      expanded : false
-    };
+    // Build the whole nested tree (a cave may contain child caves and surveys). The
+    // top-level node keeps the cave name as its id (the nodes map is keyed by it);
+    // nested cave/survey nodes use the model object's unique id (names are not unique
+    // across the tree). `rootCaveName` is the scene's outer key for every descendant.
+    const node = this.#buildCaveNode(cave, cave.name, null, cave.name);
 
     this.insertCaveInAlphabeticalOrder(node);
 
@@ -114,6 +110,42 @@ export class ExplorerTree {
 
     this.render();
     return node;
+  }
+
+  #buildCaveNode(cave, rootCaveName, parent, idOverride) {
+    const id = idOverride ?? cave.id;
+    const node = {
+      id,
+      type        : 'cave',
+      label       : cave.name,
+      data        : cave,
+      rootCaveName,
+      parent,
+      children    : [],
+      visible     : cave.visible !== false,
+      expanded    : this.expandedNodes.has(id)
+    };
+    for (const child of cave.children) {
+      node.children.push(this.#buildCaveNode(child, rootCaveName, node));
+    }
+    for (const survey of cave.surveys) {
+      node.children.push(this.#buildSurveyNode(survey, rootCaveName, node));
+    }
+    return node;
+  }
+
+  #buildSurveyNode(survey, rootCaveName, parent) {
+    return {
+      id       : survey.id,
+      type     : 'survey',
+      label    : survey.name,
+      data     : survey,
+      rootCaveName,
+      parent,
+      children : [], // leaf; kept for uniform tree traversal
+      visible  : survey.visible !== false && parent.visible,
+      expanded : false
+    };
   }
 
   /**
@@ -147,16 +179,7 @@ export class ExplorerTree {
     const caveNode = this.nodes.get(cave.name);
     if (!caveNode) return null;
 
-    const surveyNode = {
-      id       : `${cave.name}-${survey.name}`,
-      type     : 'survey',
-      label    : survey.name,
-      data     : survey,
-      parent   : caveNode,
-      visible  : survey.visible !== false && caveNode.visible, // Inherit cave visibility
-      expanded : false
-    };
-
+    const surveyNode = this.#buildSurveyNode(survey, cave.name, caveNode);
     caveNode.children.push(surveyNode);
 
     // Reapply filter if active
@@ -186,15 +209,20 @@ export class ExplorerTree {
     const caveNode = this.nodes.get(caveName);
     if (!caveNode) return;
 
-    const surveyIndex = caveNode.children.findIndex((s) => s.label === surveyName);
-    if (surveyIndex !== -1) {
-      caveNode.children.splice(surveyIndex, 1);
+    // Remove the first survey node with this name anywhere in the cave's subtree.
+    const removeFrom = (node) => {
+      const idx = node.children.findIndex((c) => c.type === 'survey' && c.label === surveyName);
+      if (idx !== -1) {
+        node.children.splice(idx, 1);
+        return true;
+      }
+      return node.children.some((c) => c.type === 'cave' && removeFrom(c));
+    };
 
-      // Reapply filter if active
+    if (removeFrom(caveNode)) {
       if (this.filterText) {
         this.applyFilter();
       }
-
       this.render();
     }
   }
@@ -203,14 +231,15 @@ export class ExplorerTree {
     if (!this.nodes.has(oldName)) return;
     const caveNode = this.nodes.get(oldName);
 
-    // Update the cave node properties
     caveNode.label = newName;
     caveNode.id = newName;
 
-    // Update survey node IDs to reference the new cave name
-    caveNode.children.forEach((surveyNode) => {
-      surveyNode.id = `${newName}-${surveyNode.data.name}`;
-    });
+    // The cave name is the scene's outer key for every descendant — update it.
+    const updateRoot = (node) => {
+      node.rootCaveName = newName;
+      node.children.forEach(updateRoot);
+    };
+    updateRoot(caveNode);
 
     // Update expandedNodes set to use the new name
     if (this.expandedNodes.has(oldName)) {
@@ -230,11 +259,12 @@ export class ExplorerTree {
     this.render();
   }
 
-  renameSurvey(oldName, newName, caveName) {
-    if (!this.nodes.has(caveName)) return;
-    const caveNode = this.nodes.get(caveName);
-    const surveyNode = caveNode.children.find((s) => s.label === oldName);
-    surveyNode.label = newName;
+  renameSurvey(survey, newName) {
+    // Survey nodes can be anywhere in the (possibly nested) tree and are identified by survey.id.
+    // findNodeById searches the whole tree; the previous name+cave-name lookup missed surveys in
+    // sub-caves (this.nodes holds only top-level cave nodes, keyed by cave name).
+    const surveyNode = this.findNodeById(survey.id);
+    if (surveyNode) surveyNode.label = newName;
 
     // Reapply filter if active
     if (this.filterText) {
@@ -245,44 +275,40 @@ export class ExplorerTree {
   }
 
   updateCave(cave) {
-    const caveNode = this.nodes.get(cave.name);
+    if (!this.nodes.has(cave.name)) return;
+    // Rebuild the cave's node subtree so structural changes (reorder, add/remove,
+    // recalculated state) are reflected; expansion state is restored from expandedNodes.
+    const node = this.#buildCaveNode(cave, cave.name, null, cave.name);
+    this.nodes.set(cave.name, node);
 
-    if (caveNode) {
-      caveNode.data = cave;
-      caveNode.visible = cave.visible !== false;
-
-      // Update all survey nodes' visibility to match the cave
-      caveNode.children.forEach((surveyNode) => {
-        surveyNode.visible = caveNode.visible;
-      });
-
-      // Reapply filter if active
-      if (this.filterText) {
-        this.applyFilter();
-      }
-
-      this.render();
+    if (this.filterText) {
+      this.applyFilter();
     }
+
+    this.render();
   }
 
-  // Helper method to find a node by ID (searches both top-level and children)
+  // Helper method to find a node by ID (recursively searches the whole nested tree)
   findNodeById(nodeId) {
-    // First check top-level nodes
     const topLevelNode = this.nodes.get(nodeId);
     if (topLevelNode) return topLevelNode;
 
-    // If not found, search through children of all caves
-    for (const [, caveNode] of this.nodes) {
-      const surveyNode = caveNode.children.find((s) => s.id === nodeId);
-      if (surveyNode) return surveyNode;
-    }
-
-    // If filtering is active, also search in filtered nodes
-    if (this.filterText && this.filteredNodes.size > 0) {
-      for (const [, caveNode] of this.filteredNodes) {
-        const surveyNode = caveNode.children.find((s) => s.id === nodeId);
-        if (surveyNode) return surveyNode;
+    const search = (nodes) => {
+      for (const node of nodes) {
+        if (node.id === nodeId) return node;
+        if (node.children && node.children.length > 0) {
+          const found = search(node.children);
+          if (found) return found;
+        }
       }
+      return null;
+    };
+
+    const fromMain = search([...this.nodes.values()]);
+    if (fromMain) return fromMain;
+
+    if (this.filterText && this.filteredNodes.size > 0) {
+      return search([...this.filteredNodes.values()]);
     }
 
     return null;
@@ -316,26 +342,25 @@ export class ExplorerTree {
 
     if (node.type === 'survey') {
       node.data.visible = node.visible;
-      if (!node.parent.visible && node.visible) {
-        node.parent.visible = true;
-        node.parent.data.visible = true;
-      } else if (node.parent.children.every((child) => !child.visible)) {
-        node.parent.visible = false;
-        node.parent.data.visible = false;
+      // Reflect the change on the survey's ancestor cave nodes (turning a survey on makes
+      // its ancestors visible; turning the last visible survey off hides the parent).
+      let p = node.parent;
+      while (p) {
+        if (node.visible) {
+          p.visible = true;
+          p.data.visible = true;
+        } else if (p.children.every((child) => !child.visible)) {
+          p.visible = false;
+          p.data.visible = false;
+        }
+        p = p.parent;
       }
-      this.scene.speleo.setSurveyVisibility(node.parent.data.name, node.data.name, node.visible);
+      this.scene.speleo.setSurveyVisibility(node.rootCaveName, node.data.id, node.visible);
     } else if (node.type === 'cave') {
-      node.data.visible = node.visible;
-
-      // Update all survey nodes' visibility to match the cave
-      node.children.forEach((surveyNode) => {
-        surveyNode.visible = node.visible;
-        surveyNode.data.visible = node.visible;
-        this.scene.speleo.setSurveyVisibility(node.data.name, surveyNode.data.name, node.visible);
-      });
-      // Update start point visibility to match cave visibility
-      this.scene.startPoint.updateStartingPointVisibility(node.data.name, node.visible);
-
+      // Cascade to the whole subtree (descendant caves + surveys).
+      this.#setSubtreeVisibility(node, node.visible);
+      // Update start point visibility to match the top cave's visibility
+      this.scene.startPoint.updateStartingPointVisibility(node.rootCaveName, node.visible);
     }
 
     const boundingBox = this.scene.computeBoundingBox();
@@ -346,6 +371,22 @@ export class ExplorerTree {
     this.scene.view.refreshElevationIndicators?.();
     this.scene.view.renderView();
     this.render();
+  }
+
+  // Recursively set visibility on a cave node and its entire subtree (child caves + surveys),
+  // pushing each survey's visibility to the scene (keyed by the survey's unique id).
+  #setSubtreeVisibility(node, visible) {
+    node.visible = visible;
+    node.data.visible = visible;
+    for (const child of node.children) {
+      if (child.type === 'survey') {
+        child.visible = visible;
+        child.data.visible = visible;
+        this.scene.speleo.setSurveyVisibility(child.rootCaveName, child.data.id, visible);
+      } else {
+        this.#setSubtreeVisibility(child, visible);
+      }
+    }
   }
 
   selectNode(nodeId) {
@@ -563,6 +604,11 @@ export class ExplorerTree {
               color  : e.target.value
             };
             this.render();
+            // Persist the color (saveCave resolves the root, so a sub-cave color is stored in its
+            // top-level cave record). 'color' is a cosmetic reason → saved without a recompute.
+            document.dispatchEvent(
+              new CustomEvent('caveChanged', { detail: { cave: caveNode.data, reasons: ['color'], source: 'explorer' } })
+            );
           });
 
         }
@@ -579,6 +625,9 @@ export class ExplorerTree {
             color  : undefined
           };
           this.render();
+          document.dispatchEvent(
+            new CustomEvent('caveChanged', { detail: { cave: caveNode.data, reasons: ['color'], source: 'explorer' } })
+          );
 
         }
       },
@@ -672,6 +721,12 @@ export class ExplorerTree {
               color  : e.target.value
             };
             this.render();
+            // Persist the survey color via its owning cave (saveCave stores the root record).
+            document.dispatchEvent(
+              new CustomEvent('surveyChanged', {
+                detail : { cave: surveyNode.parent.data, survey: surveyNode.data, reasons: ['color'] }
+              })
+            );
           });
         }
       },
@@ -688,6 +743,11 @@ export class ExplorerTree {
             color  : undefined
           };
           this.render();
+          document.dispatchEvent(
+            new CustomEvent('surveyChanged', {
+              detail : { cave: surveyNode.parent.data, survey: surveyNode.data, reasons: ['color'] }
+            })
+          );
 
         }
       },
@@ -698,10 +758,15 @@ export class ExplorerTree {
         onclick : () => {
           const result = confirm(i18n.t('ui.explorer.confirm.deleteSurvey', { name: surveyNode.data.name }));
           if (result) {
-            this.db.deleteSurvey(surveyNode.parent.data.name, surveyNode.data.name);
+            // Remove from the survey's owning cave node (works for nested + flat). The
+            // event carries the ROOT cave name so the manager recalculates/saves the
+            // whole network (one stored record per top-level cave).
+            const owningCave = surveyNode.parent.data;
+            const idx = owningCave.surveys.indexOf(surveyNode.data);
+            if (idx !== -1) owningCave.surveys.splice(idx, 1);
             const event = new CustomEvent('surveyDeleted', {
               detail : {
-                cave   : surveyNode.parent.data.name,
+                cave   : surveyNode.rootCaveName,
                 survey : surveyNode.data.name
               }
             });
@@ -938,86 +1003,63 @@ export class ExplorerTree {
       return;
     }
 
-    if (this.searchMode === 'shotNames') {
-      // Filter by shot names (from/to stations)
-      for (const [caveName, caveNode] of this.nodes) {
-        const matchingSurveys = [];
-
-        for (const survey of caveNode.children) {
-          const surveyData = survey.data;
-          if (surveyData && surveyData.shots) {
-            // Check if any shots have matching from/to station names
-            const hasMatchingShots = surveyData.shots.some(
-              (shot) =>
-                shot.from.toLowerCase().includes(this.filterText) ||
-                (shot.to && shot.to.toLowerCase().includes(this.filterText))
-            );
-
-            if (hasMatchingShots) {
-              matchingSurveys.push(survey);
-            }
-          }
-        }
-
-        if (matchingSurveys.length > 0) {
-          const filteredCaveNode = {
-            ...caveNode,
-            children : matchingSurveys
-          };
-
-          // Ensure the filtered node has the same expansion state as the original
-          filteredCaveNode.expanded = caveNode.expanded;
-          filteredCaveNode.selected = caveNode.selected;
-
-          // Ensure proper parent references
-          filteredCaveNode.children = matchingSurveys.map((survey) => ({
-            ...survey,
-            parent   : filteredCaveNode,
-            selected : survey.selected
-          }));
-
-          this.filteredNodes.set(caveName, filteredCaveNode);
-        }
-      }
-    } else {
-      // Filter caves and surveys based on name (original behavior)
-      for (const [caveName, caveNode] of this.nodes) {
-        const caveMatches = caveName.toLowerCase().includes(this.filterText);
-
-        // Check if any surveys match
-        const matchingSurveys = caveNode.children.filter((survey) =>
-          survey.label.toLowerCase().includes(this.filterText)
-        );
-
-        // Include cave if it matches or has matching surveys
-        if (caveMatches || matchingSurveys.length > 0) {
-          const filteredCaveNode = {
-            ...caveNode,
-            children : caveMatches ? caveNode.children : matchingSurveys
-          };
-
-          // Ensure the filtered node has the same expansion state as the original
-          filteredCaveNode.expanded = caveNode.expanded;
-
-          // Ensure the filtered node has the same selection state as the original
-          filteredCaveNode.selected = caveNode.selected;
-
-          // If we're only showing matching surveys, ensure they have proper parent references
-          if (!caveMatches && matchingSurveys.length > 0) {
-            filteredCaveNode.children = matchingSurveys.map((survey) => ({
-              ...survey,
-              parent   : filteredCaveNode, // Ensure proper parent reference
-              selected : survey.selected // Preserve selection state
-            }));
-          }
-
-          this.filteredNodes.set(caveName, filteredCaveNode);
-        }
-      }
+    // Recursively filter the (arbitrarily nested) tree. Each top-level cave is pruned to a
+    // copy that keeps only nodes which match the query or have a matching descendant; a node
+    // that matches by name keeps its whole subtree. Works for both search modes and any
+    // nesting depth (sub-caves, sub-surveys), so e.g. a station name deep in a sub-cave is
+    // found. Returns a filtered copy of `node`, or null when nothing in the subtree matches.
+    for (const [caveName, caveNode] of this.nodes) {
+      const filtered = this.#filterNode(caveNode, null);
+      if (filtered) this.filteredNodes.set(caveName, filtered);
     }
 
     // Update the filter input UI
     this.updateFilterInputUI();
+  }
+
+  // True when this node itself matches the active query (name, or shot station names in
+  // shotNames mode). Container/leaf agnostic.
+  #nodeSelfMatches(node) {
+    if (this.searchMode === 'shotNames') {
+      const shots = node.data?.shots;
+      if (!shots) return false;
+      return shots.some(
+        (shot) =>
+          (shot.from && shot.from.toLowerCase().includes(this.filterText)) ||
+          (shot.to && shot.to.toLowerCase().includes(this.filterText))
+      );
+    }
+    return (node.label ?? '').toLowerCase().includes(this.filterText);
+  }
+
+  // Builds a filtered copy of `node` (with `parent` rewired to the filtered parent), keeping
+  // only matching nodes / ancestors-of-matches. Returns null if nothing matches in the subtree.
+  #filterNode(node, filteredParent) {
+    const copy = { ...node, parent: filteredParent };
+    const selfMatch = this.#nodeSelfMatches(node);
+
+    if (selfMatch) {
+      // Keep the whole subtree under a matched node, but rewire parents on the copies.
+      copy.children = (node.children ?? []).map((c) => {
+        const childCopy = this.#filterNode(c, copy) ?? { ...c, parent: copy };
+        return childCopy;
+      });
+      copy.expanded = node.expanded;
+      return copy;
+    }
+
+    // No self-match: keep only children that contain a match.
+    const keptChildren = [];
+    for (const child of node.children ?? []) {
+      const fc = this.#filterNode(child, copy);
+      if (fc) keptChildren.push(fc);
+    }
+    if (keptChildren.length === 0) return null;
+
+    copy.children = keptChildren;
+    // Force-expand containers on the path to a match so the result is visible.
+    copy.expanded = true;
+    return copy;
   }
 
   renderCaveNode(node, container) {
@@ -1456,25 +1498,9 @@ export class ExplorerTree {
       return; // No change needed
     }
 
-    // Find the nodes by searching through all cave children
-    let draggedNode = null;
-    let targetNode = null;
-    let caveNode = null;
-
-    for (const [, cave] of this.nodes) {
-      if (cave.children) {
-        for (const child of cave.children) {
-          if (child.id === draggedNodeId) {
-            draggedNode = child;
-            caveNode = cave;
-          }
-          if (child.id === targetNodeId) {
-            targetNode = child;
-            if (!caveNode) caveNode = cave;
-          }
-        }
-      }
-    }
+    // Resolve both nodes anywhere in the (possibly nested) tree.
+    const draggedNode = this.findNodeById(draggedNodeId);
+    const targetNode = this.findNodeById(targetNodeId);
 
     if (
       !draggedNode ||
@@ -1483,46 +1509,43 @@ export class ExplorerTree {
       targetNode.type !== 'survey' ||
       draggedNode.parent !== targetNode.parent
     ) {
-      return; // Can only reorder surveys within the same cave
+      return; // Can only reorder surveys within the same (immediate) parent cave
     }
 
-    const caveName = caveNode.data.name;
-    const draggedSurveyName = draggedNode.data.name;
+    // The survey's immediate parent cave node owns it (could be a nested sub-cave).
+    const parentNode = draggedNode.parent;
+    const ownerCave = parentNode.data;
 
-    // Find current indices
-    const draggedIndex = caveNode.children.findIndex((child) => child.id === draggedNodeId);
-    const targetIndex = caveNode.children.findIndex((child) => child.id === targetNodeId);
-
+    const draggedIndex = parentNode.children.findIndex((child) => child.id === draggedNodeId);
+    const targetIndex = parentNode.children.findIndex((child) => child.id === targetNodeId);
     if (draggedIndex === -1 || targetIndex === -1) {
       return;
     }
 
-    // Calculate new index for the database
-    let newIndex = targetIndex;
-    if (draggedIndex < targetIndex) {
-      newIndex = targetIndex - 1; // Adjust for the removal of the dragged item
-    }
+    // Index within the owner cave's surveys array (children may interleave sub-caves and
+    // surveys, so map the survey-node position to a surveys-array position).
+    const surveyChildren = parentNode.children.filter((c) => c.type === 'survey');
+    const fromSurveyIdx = surveyChildren.findIndex((c) => c.id === draggedNodeId);
+    let toSurveyIdx = surveyChildren.findIndex((c) => c.id === targetNodeId);
+    if (fromSurveyIdx < toSurveyIdx) toSurveyIdx -= 1; // adjust for removal of the dragged item
 
-    // Update the database
-    const success = this.db.reorderSurvey(caveName, draggedSurveyName, newIndex);
+    const success = this.db.reorderSurvey(ownerCave, draggedNode.data, toSurveyIdx);
+    if (!success) return;
 
-    if (success) {
-      document.dispatchEvent(
-        new CustomEvent('surveyReordered', {
-          detail : {
-            cave     : caveNode.data,
-            survey   : draggedNode.data,
-            newIndex : newIndex
-          }
-        })
-      );
-      // Update the node order in the explorer tree
-      const [draggedChild] = caveNode.children.splice(draggedIndex, 1);
-      caveNode.children.splice(newIndex, 0, draggedChild);
+    // Mirror the move in the tree node's children array (re-render reads node order). The model
+    // (db.reorderSurvey) places the dragged survey immediately BEFORE the target in both
+    // directions, so insert before the target here too — inserting after it on downward drags
+    // made the UI show the dragged survey after the target while the saved order had it before.
+    const [draggedChild] = parentNode.children.splice(draggedIndex, 1);
+    const newChildIdx = parentNode.children.findIndex((child) => child.id === targetNodeId);
+    parentNode.children.splice(newChildIdx, 0, draggedChild);
 
-      // Re-render the tree to reflect the changes
-      this.render();
-    }
+    document.dispatchEvent(
+      new CustomEvent('surveyReordered', {
+        detail : { cave: ownerCave, survey: draggedNode.data, newIndex: toSurveyIdx }
+      })
+    );
+    this.render();
   }
 
   /**
@@ -1535,41 +1558,55 @@ export class ExplorerTree {
       return; // No change needed
     }
 
-    // Find the cave nodes
-    const draggedCaveNode = this.nodes.get(draggedNodeId);
-    const targetCaveNode = this.nodes.get(targetNodeId);
+    const draggedCaveNode = this.findNodeById(draggedNodeId);
+    const targetCaveNode = this.findNodeById(targetNodeId);
 
     if (!draggedCaveNode || !targetCaveNode || draggedCaveNode.type !== 'cave' || targetCaveNode.type !== 'cave') {
-      return; // Can only reorder caves
+      return; // Can only reorder caves onto caves
     }
 
-    // Convert nodes map to array for reordering (preserve current order)
-    const caveNodesArray = Array.from(this.nodes.values());
-    const draggedIndex = caveNodesArray.findIndex((node) => node.id === draggedNodeId);
-    const targetIndex = caveNodesArray.findIndex((node) => node.id === targetNodeId);
+    // Two cases: top-level caves (reordered in the `nodes` Map) and nested sub-caves
+    // (reordered within their shared parent's children). Both must have the SAME parent.
+    const draggedParent = draggedCaveNode.parent ?? null;
+    const targetParent = targetCaveNode.parent ?? null;
+    if (draggedParent !== targetParent) {
+      return; // only reorder among siblings
+    }
 
-    if (draggedIndex === -1 || targetIndex === -1) {
+    if (draggedParent === null) {
+      // Top-level caves: reorder the nodes Map (render order only; not persisted, as before).
+      const arr = Array.from(this.nodes.values());
+      const di = arr.findIndex((n) => n.id === draggedNodeId);
+      const ti = arr.findIndex((n) => n.id === targetNodeId);
+      if (di === -1 || ti === -1) return;
+      const [moved] = arr.splice(di, 1);
+      arr.splice(di < ti ? ti - 1 : ti, 0, moved);
+      this.nodes.clear();
+      arr.forEach((n) => this.nodes.set(n.id, n));
+      this.render();
       return;
     }
 
-    // Calculate new index for the array
-    let newIndex = targetIndex;
-    if (draggedIndex < targetIndex) {
-      newIndex = targetIndex - 1; // Adjust for the removal of the dragged item
+    // Nested sub-caves: reorder within the parent's children (tree) AND the parent cave's
+    // model children array, then persist via the root cave.
+    const di = draggedParent.children.findIndex((n) => n.id === draggedNodeId);
+    const ti = draggedParent.children.findIndex((n) => n.id === targetNodeId);
+    if (di === -1 || ti === -1) return;
+    const [movedNode] = draggedParent.children.splice(di, 1);
+    draggedParent.children.splice(di < ti ? ti - 1 : ti, 0, movedNode);
+
+    const parentCave = draggedParent.data;
+    const mFrom = parentCave.children.indexOf(draggedCaveNode.data);
+    const mTo = parentCave.children.indexOf(targetCaveNode.data);
+    if (mFrom !== -1 && mTo !== -1) {
+      const [movedCave] = parentCave.children.splice(mFrom, 1);
+      parentCave.children.splice(mFrom < mTo ? mTo - 1 : mTo, 0, movedCave);
     }
 
-    // Reorder the cave nodes array
-    const [draggedCave] = caveNodesArray.splice(draggedIndex, 1);
-    caveNodesArray.splice(newIndex, 0, draggedCave);
-
-    // Clear the nodes map and rebuild it with the new order
-    this.nodes.clear();
-    caveNodesArray.forEach((caveNode) => {
-      this.nodes.set(caveNode.id, caveNode);
-    });
-
-    // Re-render the tree to reflect the changes
     this.render();
+    document.dispatchEvent(
+      new CustomEvent('surveyReordered', { detail: { cave: parentCave } })
+    );
   }
 
   /**
@@ -1577,63 +1614,35 @@ export class ExplorerTree {
    * @param {string} surveyNodeId - ID of the survey node to move
    */
   moveSurveyToTop(surveyNodeId) {
-    // Find the survey node and its cave
-    let surveyNode = null;
-    let caveNode = null;
-
-    for (const [, cave] of this.nodes) {
-      if (cave.children) {
-        for (const child of cave.children) {
-          if (child.id === surveyNodeId) {
-            surveyNode = child;
-            caveNode = cave;
-            break;
-          }
-        }
-      }
-      if (surveyNode) break;
-    }
-
-    if (!surveyNode || !caveNode) {
+    // Resolve the survey node anywhere in the (possibly nested) tree.
+    const surveyNode = this.findNodeById(surveyNodeId);
+    if (!surveyNode || surveyNode.type !== 'survey' || !surveyNode.parent) {
       return;
     }
 
-    const caveName = caveNode.data.name;
-    const surveyName = surveyNode.data.name;
+    const parentNode = surveyNode.parent;
+    const ownerCave = parentNode.data;
 
-    // Find current index
-    const currentIndex = caveNode.children.findIndex((child) => child.id === surveyNodeId);
-
-    if (currentIndex === -1) {
+    // Already the first survey among its parent's survey children? Nothing to do.
+    const surveyChildren = parentNode.children.filter((c) => c.type === 'survey');
+    if (surveyChildren[0]?.id === surveyNodeId) {
       return;
     }
 
-    // If already at the top, do nothing
-    if (currentIndex === 0) {
-      return;
-    }
+    const success = this.db.reorderSurvey(ownerCave, surveyNode.data, 0);
+    if (!success) return;
 
-    // Move to top (index 0) in the database
-    const success = this.db.reorderSurvey(caveName, surveyName, 0);
+    // Mirror in the tree node order: move the dragged survey before the first survey child.
+    const currentIndex = parentNode.children.findIndex((c) => c.id === surveyNodeId);
+    const [moved] = parentNode.children.splice(currentIndex, 1);
+    const firstSurveyPos = parentNode.children.findIndex((c) => c.type === 'survey');
+    parentNode.children.splice(firstSurveyPos === -1 ? parentNode.children.length : firstSurveyPos, 0, moved);
 
-    if (success) {
-      // Update the node order in the explorer tree
-      const [movedSurvey] = caveNode.children.splice(currentIndex, 1);
-      caveNode.children.unshift(movedSurvey); // Add to beginning (index 0)
-
-      // Re-render the tree to reflect the changes
-      this.render();
-
-      // Dispatch custom event
-      document.dispatchEvent(
-        new CustomEvent('surveyReordered', {
-          detail : {
-            cave     : caveNode.data,
-            survey   : surveyNode.data,
-            newIndex : 0
-          }
-        })
-      );
-    }
+    this.render();
+    document.dispatchEvent(
+      new CustomEvent('surveyReordered', {
+        detail : { cave: ownerCave, survey: surveyNode.data, newIndex: 0 }
+      })
+    );
   }
 }

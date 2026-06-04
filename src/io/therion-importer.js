@@ -37,17 +37,17 @@ import {
   applyStnNames,
   qualifyStn,
   stripStn,
-  addAliases,
   assembleCave,
-  parseTeam,
+  parseTeam
 } from './cave-survey-helpers.js';
 
 const THERION_OPTS = {
-  commentChar    : '#',
-  stripStarPrefix: false,
-  includeKeyword : 'input',
-  countPattern   : /^\s*input\b/gim,
-  skipExtensions : ['.th2', '.thm'],
+  commentChar     : '#',
+  stripStarPrefix : false,
+  includeKeyword  : 'input',
+  countPattern    : /^\s*input\b/gim,
+  skipExtensions  : ['.th2', '.thm'],
+  defaultExt      : '.th' // Therion `input` allows omitting the .th extension
 };
 
 class TherionImporter extends Importer {
@@ -66,8 +66,10 @@ class TherionImporter extends Importer {
       const encoding = await detectEncoding(file);
       textMap.set(name, await readFileAsText(file, encoding));
     }
-    const cave = await this.getCave(textMap);
-    if (cave) await onCaveLoad(cave);
+    const caves = await this.getCaves(textMap);
+    for (const cave of caves) {
+      if (cave) await onCaveLoad(cave);
+    }
   }
 
   /** Single-file entry point – wraps into a one-entry map. */
@@ -75,16 +77,28 @@ class TherionImporter extends Importer {
     await this.importFiles(new Map([[file.name, file]]), onCaveLoad);
   }
 
-  /** Public for testing: textMap is Map<filename, string>. Returns a Cave. */
-  async getCave(textMap) {
+  /**
+   * Returns all caves found in the file. A connected system is one cave (with sub-caves);
+   * a file that just groups several unconnected caves yields one cave per independent cave.
+   */
+  async getCaves(textMap) {
     const rootName = this.#findRootFile(textMap);
     return await this.#parseTherion(rootName, textMap);
   }
 
+  /** Public for testing: returns the first (or only) cave. */
+  async getCave(textMap) {
+    return (await this.getCaves(textMap))[0];
+  }
+
   // ─── Root file detection / tokenizer / include expansion ─────────────────────
 
-  #findRootFile(textMap)                               { return findRootFile(textMap, THERION_OPTS); }
-  #flattenFile(filename, textMap, visited, unresolved) { return flattenFile(filename, textMap, visited, unresolved, THERION_OPTS); }
+  #findRootFile(textMap) {
+    return findRootFile(textMap, THERION_OPTS);
+  }
+  #flattenFile(filename, textMap, visited, unresolved) {
+    return flattenFile(filename, textMap, visited, unresolved, THERION_OPTS);
+  }
 
   // ─── Main parser ──────────────────────────────────────────────────────────────
 
@@ -97,7 +111,8 @@ class TherionImporter extends Importer {
       surveys         : [],
       topLevelEquates : [],
       globalCs        : null,
-      caveTitle       : null
+      caveTitle       : null,
+      titles          : new Map() // surveyPath -> block title (for naming cave nodes)
     };
 
     this.#parseBlocks(lines, context);
@@ -110,18 +125,20 @@ class TherionImporter extends Importer {
     }
 
     if (unresolvedInputs.length > 0) {
-      showInfoPanel(
-        i18n.t('errors.import.therionUnresolvedInputs', { files: unresolvedInputs.join(', ') }),
-        6000
-      );
+      showInfoPanel(i18n.t('errors.import.therionUnresolvedInputs', { files: unresolvedInputs.join(', ') }), 6000);
     }
 
-    return await assembleCave(
+    const caves = await assembleCave(
       context,
       rootFilename,
       this.coordinateSystemDialog,
       'errors.import.therionUnknownCs'
     );
+    // Source provenance for a future Therion exporter (unused by current features).
+    for (const cave of caves) {
+      cave.source = { format: 'therion', file: rootFilename, title: cave.name };
+    }
+    return caves;
   }
 
   // ─── Block parser ─────────────────────────────────────────────────────────────
@@ -142,6 +159,7 @@ class TherionImporter extends Importer {
           const titleIdx = tokens.indexOf('-title');
           const title = titleIdx >= 0 && titleIdx + 1 < tokens.length ? tokens[titleIdx + 1] : name;
           context.surveyStack.push({ name, title });
+          context.titles.set(context.surveyStack.map((x) => x.name).join('.'), title);
           if (context.surveyStack.length === 1 && !context.caveTitle) {
             context.caveTitle = title;
           }
@@ -218,18 +236,21 @@ class TherionImporter extends Importer {
     const displayName = inner && inner.title !== inner.name ? inner.title : surveyPath || 'Survey';
 
     const state = {
-      date        : null,
-      teamName    : null,
-      members     : [],
-      declination : 0,
-      units       : { length: 'meters', compass: 'degrees', clino: 'degrees' },
-      calibration    : { length: 0, lengthScale: 1, compass: 0, compassScale: 1, clino: 0, clinoScale: 1 },
-      stationPrefix  : '',
-      stationSuffix  : '',
-      cs          : context.globalCs,
-      fixes       : [],
-      equates     : [],
-      fmt               : null,
+      date              : null,
+      teamName          : null,
+      members           : [],
+      declination       : 0,
+      units             : { length: 'meters', compass: 'degrees', clino: 'degrees' },
+      calibration       : { length: 0, lengthScale: 1, compass: 0, compassScale: 1, clino: 0, clinoScale: 1 },
+      stationPrefix     : '',
+      stationSuffix     : '',
+      cs                : context.globalCs,
+      fixes             : [],
+      equates           : [],
+      // Therion's default data format when a centreline has no explicit `data` command
+      // (common in older surveys): `data normal from to length compass clino`. Without this
+      // such centrelines would parse zero shots.
+      fmt               : parseDataFormat(['data', 'normal', 'from', 'to', 'length', 'compass', 'clino']),
       isSplay           : false,
       stationComments   : [],
       stationDimensions : []
@@ -280,10 +301,15 @@ class TherionImporter extends Importer {
 
       if (kw === 'fix' && tokens.length >= 5) {
         const stn = stripStn(qualifyStn(applyStnNames(tokens[1], state), surveyPath));
+        // Keep the raw reference (prefix/suffix applied, but NOT stripped) so assembleCave
+        // can resolve a fix that targets a deep sub-survey station (e.g.
+        // `35@prima1.primadona...`) to its fully-qualified solver key — exactly like an
+        // equate. `station` stays bare for single-survey/legacy caves.
+        const ref = applyStnNames(tokens[1], state);
         const x = parseMyFloat(tokens[2]);
         const y = parseMyFloat(tokens[3]);
         const z = parseMyFloat(tokens[4]);
-        if (!isNaN(x) && !isNaN(y) && !isNaN(z)) state.fixes.push({ station: stn, x, y, z });
+        if (!isNaN(x) && !isNaN(y) && !isNaN(z)) state.fixes.push({ station: stn, ref, x, y, z });
         continue;
       }
 
@@ -292,14 +318,14 @@ class TherionImporter extends Importer {
         continue;
       }
 
-      if (kw === 'team') { parseTeam(tokens, state); continue; }
+      if (kw === 'team') {
+        parseTeam(tokens, state);
+        continue;
+      }
 
       if (kw === 'declination') {
         if (shots.length > 0) {
-          showWarningPanel(
-            i18n.t('errors.import.therionDeclinationAfterShots', { survey: displayName }),
-            8000
-          );
+          showWarningPanel(i18n.t('errors.import.therionDeclinationAfterShots', { survey: displayName }), 8000);
           return null;
         }
         if (tokens[1]?.toLowerCase() === 'auto') {
@@ -319,7 +345,10 @@ class TherionImporter extends Importer {
         continue;
       }
 
-      if (kw === 'calibrate') { applyCalibration(tokens, state); continue; }
+      if (kw === 'calibrate') {
+        applyCalibration(tokens, state);
+        continue;
+      }
 
       if (kw === 'flags') {
         const sub = tokens[1]?.toLowerCase();
