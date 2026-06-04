@@ -211,7 +211,7 @@ test.describe('Project Management', () => {
     test('project item shows multiple caves', async ({ page }) => {
       await setupWithCave(page, 'sample-cave.json', 'Test Cave');
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'multi-survey-cave.json'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'multi-survey-cave.json'));
       await expect(page.locator('#explorer-tree').locator('text=Multi Survey Cave')).toBeVisible({ timeout: 10000 });
       await dismissNotifications(page);
 
@@ -258,7 +258,7 @@ test.describe('Project Management', () => {
       await page.waitForTimeout(1000);
       await dismissNotifications(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-cave.json'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-cave.json'));
       await page.waitForTimeout(3000);
       await dismissNotifications(page);
 

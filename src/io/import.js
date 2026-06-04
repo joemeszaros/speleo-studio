@@ -103,7 +103,7 @@ class PolygonImporter extends Importer {
     return { shots, lruds };
   };
 
-  getNextLineValue(iterator, start, processor = (x) => x, validator = (x) => x.length > 0) {
+  getNextLineValue(iterator, start, processor = (x) => x, validator = (x) => x.length > 0, allowMissing = false) {
     if (iterator.done) {
       throw new Error(i18n.t('errors.import.invalidSurveyReachedEndOfFile'));
     }
@@ -116,7 +116,11 @@ class PolygonImporter extends Importer {
     if (parts.length !== 2) {
       throw new Error(i18n.t('errors.import.invalidSurveySeparator', { lineNr }));
     }
-    const result = processor(parts[1].trim());
+    const value = parts[1].trim();
+    if (value === '' && allowMissing) {
+      return undefined;
+    }
+    const result = processor(value);
     if (!validator(result)) {
       throw new Error(
         i18n.t('errors.import.invalidSurveyValidation', {
@@ -188,12 +192,14 @@ class PolygonImporter extends Importer {
             (x) => U.getPolygonDate(U.parseMyFloat(x)),
             (x) => x instanceof Date
           );
-          const declination = this.getNextLineValue(
-            lineIterator,
-            'Declination',
-            (x) => U.parseMyFloat(x),
-            (x) => x >= -25 && x < 30
-          );
+          const declination =
+            this.getNextLineValue(
+              lineIterator,
+              'Declination',
+              (x) => U.parseMyFloat(x),
+              (x) => x >= -25 && x < 30,
+              true
+            ) ?? 0; // default to 0 when missing, but allow it to be explicitly set to 0
           U.iterateUntil(lineIterator, (v) => !v.startsWith('Instruments'));
           const instruments = [];
           for (let i = 0; i < 3; i++) {

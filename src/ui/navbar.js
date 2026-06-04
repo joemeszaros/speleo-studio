@@ -147,7 +147,7 @@ class NavigationBar {
             name  : i18n.t('ui.navbar.menu.file.open'),
             click : () => {
               if (this.projectSystem.getCurrentProject()) {
-                document.getElementById('caveInput').click();
+                document.getElementById('openFileInput').click();
               }
             },
             shortkeys : ['crtl⊕o']
@@ -156,7 +156,7 @@ class NavigationBar {
             name  : i18n.t('ui.navbar.menu.file.openFolder'),
             click : () => {
               if (this.projectSystem.getCurrentProject()) {
-                document.getElementById('caveDirInput').click();
+                document.getElementById('openFolderInput').click();
               }
             }
           },
@@ -171,12 +171,6 @@ class NavigationBar {
               ).show();
             },
             shortkeys : ['crtl⊕h']
-          },
-          {
-            name  : i18n.t('ui.navbar.menu.file.openModel'),
-            click : function () {
-              document.getElementById('modelInput').click();
-            }
           },
           {
             name  : i18n.t('ui.navbar.menu.file.print'),

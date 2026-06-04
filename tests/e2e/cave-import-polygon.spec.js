@@ -11,7 +11,7 @@ test.describe('Polygon .cave File Import', () => {
     test('importing .cave file shows encoding dialog', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
 
       // Encoding selection dialog should appear
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
@@ -20,7 +20,7 @@ test.describe('Polygon .cave File Import', () => {
     test('encoding dialog has UTF-8 and ISO-8859-2 options', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
 
       const utf8Radio = page.locator('input[name="encoding"][value="utf8"]');
@@ -32,7 +32,7 @@ test.describe('Polygon .cave File Import', () => {
     test('encoding dialog has OK and Cancel buttons', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await expect(page.locator('#encoding-selection-cancel')).toBeVisible();
     });
@@ -40,7 +40,7 @@ test.describe('Polygon .cave File Import', () => {
     test('cancel encoding dialog aborts import', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
 
       await page.locator('#encoding-selection-cancel').click();
@@ -53,7 +53,7 @@ test.describe('Polygon .cave File Import', () => {
     test('ISO-8859-2 is default encoding', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
 
       const isoRadio = page.locator('input[name="encoding"][value="iso_8859-2"]');
@@ -66,7 +66,7 @@ test.describe('Polygon .cave File Import', () => {
     test('appears after encoding selection for .cave files', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
 
       // Select UTF-8 and confirm
@@ -80,7 +80,7 @@ test.describe('Polygon .cave File Import', () => {
     test('has coordinate system radio options', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();
@@ -98,7 +98,7 @@ test.describe('Polygon .cave File Import', () => {
     test('has coordinate input fields', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();
@@ -113,7 +113,7 @@ test.describe('Polygon .cave File Import', () => {
     test('has flip coordinates button', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();
@@ -125,7 +125,7 @@ test.describe('Polygon .cave File Import', () => {
     test('flip coordinates swaps X and Y values', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();
@@ -147,7 +147,7 @@ test.describe('Polygon .cave File Import', () => {
     test('selecting EOV and confirming imports cave', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();
@@ -167,7 +167,7 @@ test.describe('Polygon .cave File Import', () => {
     test('selecting None coordinate system imports cave without coordinates', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();
@@ -192,7 +192,7 @@ test.describe('Polygon .cave File Import', () => {
     test('import ISO-8859-2 file with correct encoding', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-iso8859.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-iso8859.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
 
       // ISO-8859-2 is default, just click OK
@@ -215,7 +215,7 @@ test.describe('Polygon .cave File Import', () => {
 
     async function importUtf8Cave(page) {
       await setupWithProject(page);
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();
@@ -342,7 +342,7 @@ test.describe('Polygon .cave File Import', () => {
 
     test('cancel coordinate system dialog aborts import', async ({ page }) => {
       await setupWithProject(page);
-      await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-utf8.cave'));
       await expect(page.locator('#encoding-selection-ok')).toBeVisible({ timeout: 5000 });
       await page.locator('input[name="encoding"][value="utf8"]').click();
       await page.locator('#encoding-selection-ok').click();

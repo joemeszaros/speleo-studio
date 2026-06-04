@@ -5,7 +5,7 @@ import { setupWithProject, dismissNotifications } from './helpers.js';
 const fixturesDir = path.resolve('tests/fixtures');
 
 async function importModelSkipCoords(page, fixture) {
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
   const skipBtn = page.locator('#model-coord-skip');
   await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   if (await skipBtn.isVisible()) {
@@ -17,7 +17,7 @@ async function importModelSkipCoords(page, fixture) {
 
 async function importModelWithTextures(page, files) {
   const filePaths = files.map(f => path.join(fixturesDir, f));
-  await page.locator('#modelInput').setInputFiles(filePaths);
+  await page.locator('#openFileInput').setInputFiles(filePaths);
   const skipBtn = page.locator('#model-coord-skip');
   await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   if (await skipBtn.isVisible()) {

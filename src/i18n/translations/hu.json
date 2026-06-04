@@ -5,10 +5,9 @@
         "file": {
           "name": "Fájl",
           "new": "Új barlang",
-          "open": "Barlang(ok) megnyitása",
-          "openFolder": "Barlangmappa megnyitása…",
+          "open": "Fájl megnyitása…",
+          "openFolder": "Mappa megnyitása…",
           "export": "Barlang(ok) exportálása",
-          "openModel": "Model megnyitása",
           "print": "Nyomtatás",
           "printPDF": "PDF generálás"
         },
@@ -671,6 +670,19 @@
           "description": "Közép-európai kódolás (régebbi fájlokhoz)"
         }
       },
+      "rootFileSelection": {
+        "title": "Importálandó elemek",
+        "message": "Több barlang és modell található. Válassza ki, melyiket/melyeket szeretné importálni.",
+        "files": "{count} fájl",
+        "types": {
+          "cave": "barlang",
+          "model": "modell",
+          "dtm": "domborzat",
+          "orthophoto": "ortofotó"
+        },
+        "importSelected": "Kijelöltek importálása",
+        "cancelled": "Törzsfájl kiválasztása megszakítva"
+      },
       "wgs84": {
         "title": "WGS84 Koordináták",
         "latitude": "Szélesség",
@@ -1075,6 +1087,7 @@
       "surveyNameUndefined": "A felmérés neve nincs megadva, kérem adja meg a nevet a fájlban",
       "surveyAlreadyExists": "A(z) {name} nevű felmérés már létezik a(z) {cave} barlangban",
       "caveAlreadyImported": "A(z) {name} nevű barlang már importálva lett korábban",
+      "duplicateCavesSkipped": "{count} ismétlődő barlang kihagyva, amelyeket egy másik kijelölt törzsfájl már tartalmaz: {names}",
       "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik, változtassa meg az azonosítót a fájlban",
       "projectUrlParameterMissing": "Valószínű, hogy a projekt URL paraméter hiányzik",
       "failedToDownloadFile": "Nem lehet letölteni a(z) {name} fájlt: {error}",

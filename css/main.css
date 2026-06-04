@@ -110,51 +110,60 @@ body {
   overflow: auto;
 }
 
+/* Container: stacks one notification item per message type, centered at the top. */
 .cautionpanel {
   position: fixed;
   z-index: 1100;
   display: none;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
   left: 50%;
   top: 20px;
   transform: translateX(-50%);
+  color: white;
+  text-align: left;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  pointer-events: none; /* clicks pass through the gaps between items */
+}
+
+/* One notification box per type (error / warning / info / success). */
+.cautionpanel-item {
+  pointer-events: auto;
   min-width: 300px;
   max-width: 600px;
-  color: white;
-  padding: 0;
   border: none;
   border-radius: 12px;
   font-size: 14px;
-  text-align: left;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
-  animation: slideInDown 0.3s ease-out;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: slideInDown 0.3s ease-out;
 }
 
 @keyframes slideInDown {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
 }
 
 @keyframes slideOutUp {
   from {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
   to {
     opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
+    transform: translateY(-20px);
   }
 }
 
-.cautionpanel.hiding {
+.cautionpanel-item.hiding {
   animation: slideOutUp 0.3s ease-in;
 }
 
@@ -741,6 +750,35 @@ body {
   padding: 30px 40px 40px 40px;
   color: #ffffff;
   line-height: 1.6;
+}
+
+/* Master-file chooser: wide enough to show full (often long, nested) file paths
+   on one line, with a scrollable candidate list when there are many masters. */
+.dialog-container.root-file-dialog {
+  width: min(95vw, 700px);
+}
+
+.root-file-dialog .settings-group-content {
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.root-file-dialog .settings-checkbox-label > small {
+  margin-left: 8px;
+}
+
+.root-file-dialog .root-file-path {
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+/* Type icon (cave / model / dtm / orthophoto) shown before each candidate's name,
+   matching the glyphs used in the explorer / models tree. */
+.root-file-dialog .root-file-type {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 15px;
+  vertical-align: middle;
 }
 
 /* Responsive adjustments for about dialog */

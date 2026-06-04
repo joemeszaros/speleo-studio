@@ -5,10 +5,9 @@
         "file": {
           "name": "File",
           "new": "New cave",
-          "open": "Open cave(s)",
-          "openFolder": "Open cave folder…",
+          "open": "Open file…",
+          "openFolder": "Open folder…",
           "export": "Export cave(s)",
-          "openModel": "Open model",
           "print": "Print",
           "printPDF": "Generate PDF"
         },
@@ -668,6 +667,19 @@
           "description": "Central European encoding"
         }
       },
+      "rootFileSelection": {
+        "title": "Items to import",
+        "message": "Several caves and models were found. Select which one(s) to import.",
+        "files": "{count} files",
+        "types": {
+          "cave": "cave",
+          "model": "model",
+          "dtm": "dtm",
+          "orthophoto": "orthophoto"
+        },
+        "importSelected": "Import selected",
+        "cancelled": "Master file selection cancelled"
+      },
       "wgs84": {
         "title": "WGS84 Coordinates",
         "latitude": "Latitude",
@@ -1052,6 +1064,7 @@
       "surveyNameUndefined": "Survey name is undefined, please set a name in the file",
       "surveyAlreadyExists": "Survey {name} already exists in cave {cave}",
       "caveAlreadyImported": "Cave {name} has already been imported",
+      "duplicateCavesSkipped": "Skipped {count} duplicate cave(s) already provided by another selected master: {names}",
       "caveIdAlreadyExists": "A cave with the id \"{id}\" already exists, please change the id of the cave to be imported",
       "projectUrlParameterMissing": "Probably the project URL parameter is missing",
       "failedToDownloadFile": "Failed to download file {name}: {error}",

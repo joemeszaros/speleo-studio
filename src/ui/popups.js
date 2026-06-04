@@ -15,106 +15,69 @@
  */
 
 import { i18n } from '../i18n/i18n.js';
-// Global state to track active panel and messages
-let activePanelState = {
-  isVisible : false,
-  messages  : [],
-  timeoutId : null,
-  type      : null
+
+// `#cautionpanel` is a fixed container that stacks one notification *item* per message type
+// (error / warning / info / success). Keeping the types separate means an info or success
+// message no longer wipes a still-visible error — they are shown together (stacked). Each type
+// keeps its own merged message list and auto-dismiss timeout.
+const panelStates = new Map(); // type -> { messages: string[], timeoutId: number | null }
+
+const PANEL_META = {
+  error   : { icon: '⚠️', titleKey: 'popups.error' },
+  warning : { icon: '⚠️', titleKey: 'popups.warning' },
+  success : { icon: '✅', titleKey: 'popups.success' },
+  info    : { icon: 'ℹ️', titleKey: 'popups.info' }
 };
 
-function showCautionPanel(message, seconds, errorOrWarning) {
-  let cautionPanel = document.getElementById('cautionpanel');
+function showCautionPanel(message, seconds, type) {
+  const container = document.getElementById('cautionpanel');
+  if (!container) return;
+  container.style.display = 'flex';
 
-  // Check if panel is already visible
-  if (activePanelState.isVisible) {
-    // If same type, merge messages
-    if (activePanelState.type === errorOrWarning) {
-      activePanelState.messages.push(message);
-
-      // Clear existing timeout
-      if (activePanelState.timeoutId) {
-        clearTimeout(activePanelState.timeoutId);
-      }
-
-      // Update display with merged messages
-      updatePanelDisplay(cautionPanel, activePanelState.messages, errorOrWarning);
-
-      // Set new timeout
-      if (seconds !== undefined && seconds > 0) {
-        activePanelState.timeoutId = setTimeout(() => {
-          hidePanel(cautionPanel);
-        }, seconds * 1000);
-      }
-
-      return;
-    } else {
-      hidePanel(cautionPanel, 0);
-    }
+  let state = panelStates.get(type);
+  if (!state) {
+    state = { messages: [], timeoutId: null };
+    panelStates.set(type, state);
+  }
+  state.messages.push(message);
+  if (state.timeoutId) {
+    clearTimeout(state.timeoutId);
+    state.timeoutId = null;
   }
 
-  // Start fresh panel
-  activePanelState.isVisible = true;
-  activePanelState.messages = [message];
-  activePanelState.type = errorOrWarning;
+  const item = ensureItem(container, type);
+  item.innerHTML = itemContent(type, state.messages);
 
-  // Remove all existing classes
-  cautionPanel.classList.remove(
-    'cautionpanel-error',
-    'cautionpanel-warning',
-    'cautionpanel-success',
-    'cautionpanel-info'
-  );
-
-  // Add appropriate class based on type
-  if (errorOrWarning === 'error') {
-    cautionPanel.classList.add('cautionpanel-error');
-  } else if (errorOrWarning === 'warning') {
-    cautionPanel.classList.add('cautionpanel-warning');
-  } else if (errorOrWarning === 'success') {
-    cautionPanel.classList.add('cautionpanel-success');
-  } else if (errorOrWarning === 'info') {
-    cautionPanel.classList.add('cautionpanel-info');
-  }
-
-  // Update display
-  updatePanelDisplay(cautionPanel, activePanelState.messages, errorOrWarning);
-
-  // Set timeout
   if (seconds !== undefined && seconds > 0) {
-    activePanelState.timeoutId = setTimeout(() => {
-      hidePanel(cautionPanel);
-    }, seconds * 1000);
+    state.timeoutId = setTimeout(() => closeType(type), seconds * 1000);
   }
 }
 
-function updatePanelDisplay(cautionPanel, messages, errorOrWarning) {
-  // Set appropriate icon and title based on type
-  let icon, title;
-  if (errorOrWarning === 'error') {
-    icon = '⚠️';
-    title = i18n.t('popups.error');
-  } else if (errorOrWarning === 'warning') {
-    icon = '⚠️';
-    title = i18n.t('popups.warning');
-  } else if (errorOrWarning === 'success') {
-    icon = '✅';
-    title = i18n.t('popups.success');
-  } else if (errorOrWarning === 'info') {
-    icon = 'ℹ️';
-    title = i18n.t('popups.info');
+// Returns the existing item element for a type, or creates and appends a fresh one. New items
+// animate in; existing ones are only updated in place (no re-entry animation on every message).
+function ensureItem(container, type) {
+  let item = container.querySelector(`.cautionpanel-item[data-type="${type}"]`);
+  if (!item) {
+    item = document.createElement('div');
+    item.className = `cautionpanel-item cautionpanel-${type}`;
+    item.dataset.type = type;
+    container.appendChild(item);
   }
+  return item;
+}
 
-  cautionPanel.style.display = 'block';
+function itemContent(type, messages) {
+  const meta = PANEL_META[type] ?? PANEL_META.info;
+  const icon = meta.icon;
+  const title = i18n.t(meta.titleKey);
 
-  // Create structured HTML with header and content
   let html = `
     <div class="cautionpanel-header">
       <div style="display: flex; align-items: center;">
         <div class="cautionpanel-icon">${icon}</div>
         <div class="cautionpanel-title">${title}</div>
       </div>
-      <div class="caution-close-btn" onclick="closeCautionPanel()">×</div>
+      <div class="caution-close-btn" onclick="closeCautionPanelType('${type}')">×</div>
     </div>
     <div class="cautionpanel-content">
   `;
@@ -136,39 +99,39 @@ function updatePanelDisplay(cautionPanel, messages, errorOrWarning) {
   }
 
   html += `</div>`;
-  cautionPanel.innerHTML = html;
+  return html;
 }
 
-function hidePanel(cautionPanel, timeout = 300) {
-  // Add exit animation class
-  cautionPanel.classList.add('hiding');
+// Closes a single type's item (with exit animation); hides the container once empty.
+function closeType(type) {
+  const state = panelStates.get(type);
+  if (!state) return;
+  if (state.timeoutId) clearTimeout(state.timeoutId);
+  panelStates.delete(type);
 
-  const hide = () => {
-    cautionPanel.style.display = 'none';
-    cautionPanel.classList.remove('hiding');
-    activePanelState.isVisible = false;
-    activePanelState.messages = [];
-    activePanelState.type = null;
-    if (activePanelState.timeoutId) {
-      clearTimeout(activePanelState.timeoutId);
-      activePanelState.timeoutId = null;
-    }
+  const container = document.getElementById('cautionpanel');
+  const item = container?.querySelector(`.cautionpanel-item[data-type="${type}"]`);
+  const finish = () => {
+    if (item) item.remove();
+    if (container && panelStates.size === 0) container.style.display = 'none';
   };
-
-  // Wait for animation to complete before hiding
-  if (timeout > 0) {
-    setTimeout(hide, timeout);
+  if (item) {
+    item.classList.add('hiding');
+    setTimeout(finish, 300);
   } else {
-    hide();
+    finish();
   }
 }
 
-// Global function to close caution panel (accessible from onclick)
+// Global helpers (accessible from inline onclick and from tests):
+//   closeCautionPanelType(type) — close one type's notification
+//   closeCautionPanel()         — close all notifications
+window.closeCautionPanelType = function (type) {
+  closeType(type);
+};
+
 window.closeCautionPanel = function () {
-  const cautionPanel = document.getElementById('cautionpanel');
-  if (cautionPanel) {
-    hidePanel(cautionPanel);
-  }
+  for (const type of [...panelStates.keys()]) closeType(type);
 };
 
 function showErrorPanel(message, seconds = 0) {

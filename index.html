@@ -43,13 +43,19 @@ limitations under the License.
 
   <body>
     <div class="file-upload">
-      <input type="file" id="caveInput" accept=".cave,.json,.th,.svx,.3d" multiple style="display: none" />
-      <!-- recursive directory import for multi-folder Therion/Survex projects -->
-      <input type="file" id="caveDirInput" webkitdirectory directory multiple style="display: none" />
+      <!-- Open file: any mix of cave + model + asset files -->
+      <input
+        type="file"
+        id="openFileInput"
+        accept=".cave,.json,.th,.svx,.3d,.ply,.obj,.mtl,.jpg,.jpeg,.png,.exr,.las,.laz,.lox,.asc,.hgt,.xyz,.tif,.tiff"
+        multiple
+        style="display: none"
+      />
+      <!-- Open folder: recursive directory import of all caves + models -->
+      <input type="file" id="openFolderInput" webkitdirectory directory multiple style="display: none" />
       <input type="file" id="surveyInput" accept=".csv" multiple style="display: none" />
       <!-- used in explorer tree to add a survey to a survey-->
       <input type="file" id="surveyInputPartial" accept=".csv" multiple style="display: none" />
-      <input type="file" id="modelInput" accept=".ply,.obj,.mtl,.jpg,.jpeg,.png,.exr,.las,.laz,.lox,.asc,.hgt,.xyz,.tif,.tiff" multiple style="display: none" />
       <input type="file" id="configInput" accept=".json" style="display: none" />
       <input type="file" id="projectInput" accept=".json,.gz" multiple style="display: none" />
       <input type="file" id="textureInput" accept=".mtl,.jpg,.jpeg,.png,.exr" multiple style="display: none" />

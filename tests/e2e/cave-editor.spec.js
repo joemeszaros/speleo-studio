@@ -604,12 +604,12 @@ test.describe('Cave Editor', () => {
   // doesn't fire from Playwright's selectOption(). Tested manually.
   test.skip('coordinate system mismatch is validated on save', async ({ page }) => {
     await setupWithProject(page, 'CoordMismatch Project');
-    await page.locator('#caveInput').setInputFiles('tests/fixtures/sample-cave.json');
+    await page.locator('#openFileInput').setInputFiles('tests/fixtures/sample-cave.json');
     await expect(page.locator('#explorer-tree').locator('text=Test Cave')).toBeVisible({ timeout: 10000 });
     await dismissNotifications(page);
 
     // Import second cave
-    await page.locator('#caveInput').setInputFiles('tests/fixtures/multi-survey-cave.json');
+    await page.locator('#openFileInput').setInputFiles('tests/fixtures/multi-survey-cave.json');
     await expect(page.locator('#explorer-tree').locator('text=Multi Survey Cave')).toBeVisible({ timeout: 10000 });
     await dismissNotifications(page);
 
@@ -679,12 +679,12 @@ test.describe('Cave Editor', () => {
 
   test('renaming cave to existing name shows warning', async ({ page }) => {
     await setupWithProject(page, 'DupeName Project');
-    await page.locator('#caveInput').setInputFiles('tests/fixtures/sample-cave.json');
+    await page.locator('#openFileInput').setInputFiles('tests/fixtures/sample-cave.json');
     await expect(page.locator('#explorer-tree').locator('text=Test Cave')).toBeVisible({ timeout: 10000 });
     await dismissNotifications(page);
 
     // Import second cave
-    await page.locator('#caveInput').setInputFiles('tests/fixtures/multi-survey-cave.json');
+    await page.locator('#openFileInput').setInputFiles('tests/fixtures/multi-survey-cave.json');
     await expect(page.locator('#explorer-tree').locator('text=Multi Survey Cave')).toBeVisible({ timeout: 10000 });
     await dismissNotifications(page);
 
@@ -710,7 +710,7 @@ test.describe('Cave Editor', () => {
 
   test('cannot save coordinate system without coordinates', async ({ page }) => {
     await setupWithProject(page, 'MissingCoords Project');
-    await page.locator('#caveInput').setInputFiles('tests/fixtures/sample-cave.json');
+    await page.locator('#openFileInput').setInputFiles('tests/fixtures/sample-cave.json');
     await expect(page.locator('#explorer-tree').locator('text=Test Cave')).toBeVisible({ timeout: 10000 });
     await dismissNotifications(page);
     // Use Test Cave from this project

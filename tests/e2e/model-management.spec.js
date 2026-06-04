@@ -18,7 +18,7 @@ async function importModel(page, fixture = 'sample-model.ply') {
   };
 
   // Trigger file input
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
 
   // Handle the coordinate dialog
   await skipCoordDialog();
@@ -32,7 +32,7 @@ async function importModel(page, fixture = 'sample-model.ply') {
  * Import a PLY model with coordinates.
  */
 async function importModelWithCoords(page, fixture = 'sample-model.ply', lat = '47.5', lon = '19.0', elev = '200') {
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
 
   // Fill coordinate dialog
   const okBtn = page.locator('#model-coord-ok');
@@ -54,7 +54,7 @@ test.describe('3D Model Management', () => {
     test('import PLY model shows coordinate dialog', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
       // Coordinate dialog should appear
       const dialog = page.locator('#model-coord-lat');
@@ -64,7 +64,7 @@ test.describe('3D Model Management', () => {
     test('coordinate dialog has lat/lon/elev inputs', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
       await expect(page.locator('#model-coord-lat')).toBeVisible({ timeout: 5000 });
       await expect(page.locator('#model-coord-lon')).toBeVisible();
@@ -74,7 +74,7 @@ test.describe('3D Model Management', () => {
     test('coordinate dialog has OK and Skip buttons', async ({ page }) => {
       await setupWithProject(page);
 
-      await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
       await expect(page.locator('#model-coord-ok')).toBeVisible({ timeout: 5000 });
       await expect(page.locator('#model-coord-skip')).toBeVisible();
@@ -105,16 +105,16 @@ test.describe('3D Model Management', () => {
       await expect(modelsTree.locator('.models-tree-node-label')).not.toHaveCount(0, { timeout: 5000 });
     });
 
-    test('import model via File menu Open Model', async ({ page }) => {
+    test('import model via File menu Open file', async ({ page }) => {
       await setupWithProject(page);
 
       // Open File menu
       const fileMenu = page.locator('.mydropdown').filter({ hasText: 'File' });
       await fileMenu.locator('.dropbtn').click();
 
-      // Click Open Model
-      const openModelItem = page.locator('.mydropdown-content a', { hasText: 'Open model' });
-      await expect(openModelItem).toBeVisible();
+      // Models are now imported through the unified "Open file" menu item
+      const openFileItem = page.locator('.mydropdown-content a', { hasText: 'Open file' });
+      await expect(openFileItem).toBeVisible();
       // Just verify the menu item exists - clicking would open native file dialog
     });
   });

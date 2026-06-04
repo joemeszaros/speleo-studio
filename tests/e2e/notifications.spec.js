@@ -12,8 +12,8 @@ test.describe('Notification Panels', () => {
     const cautionPanel = page.locator('#cautionpanel');
     await expect(cautionPanel).toBeVisible({ timeout: 3000 });
 
-    // Should have success styling
-    await expect(cautionPanel).toHaveClass(/cautionpanel-success/);
+    // Should have success styling (per-type item inside the container)
+    await expect(cautionPanel.locator('.cautionpanel-item')).toHaveClass(/cautionpanel-success/);
   });
 
   test('notification can be dismissed by clicking close', async ({ page }) => {
@@ -44,7 +44,7 @@ test.describe('Notification Panels', () => {
       // Info notification should appear
       const cautionPanel = page.locator('#cautionpanel');
       await expect(cautionPanel).toBeVisible({ timeout: 3000 });
-      await expect(cautionPanel).toHaveClass(/cautionpanel-info/);
+      await expect(cautionPanel.locator('.cautionpanel-item')).toHaveClass(/cautionpanel-info/);
     }
   });
 

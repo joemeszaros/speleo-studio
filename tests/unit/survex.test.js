@@ -3,26 +3,28 @@ import { describe, it, expect, vi } from 'vitest';
 // ─── Mocks (must come before dynamic imports) ────────────────────────────────
 
 vi.mock('../../src/i18n/i18n.js', () => ({
-  i18n: { t: (key, _params) => key }
+  i18n : { t: (key, _params) => key }
 }));
 
 vi.mock('../../src/ui/popups.js', () => ({
-  showErrorPanel  : vi.fn(),
-  showWarningPanel: vi.fn(),
-  showInfoPanel   : vi.fn(),
+  showErrorPanel   : vi.fn(),
+  showWarningPanel : vi.fn(),
+  showInfoPanel    : vi.fn()
 }));
 
 vi.mock('../../src/ui/coordinate-system-dialog.js', () => ({
-  CoordinateSystemDialog: class {
-    async show() { return { coordinateSystem: undefined, coordinates: [] }; }
+  CoordinateSystemDialog : class {
+    async show() {
+      return { coordinateSystem: undefined, coordinates: [] };
+    }
   }
 }));
 
 vi.mock('../../src/utils/global-coordinate-normalizer.js', () => ({
-  globalNormalizer: {
-    isInitialized         : () => false,
-    initializeGlobalOrigin: vi.fn(),
-    getNormalizedVector   : (c) => c,
+  globalNormalizer : {
+    isInitialized          : () => false,
+    initializeGlobalOrigin : vi.fn(),
+    getNormalizedVector    : (c) => c
   }
 }));
 
@@ -46,6 +48,17 @@ vi.mock('../../src/model.js', async () => {
 // ─── Dynamic imports (after mocks) ───────────────────────────────────────────
 
 const { SurvexImporter } = await import('../../src/io/survex-importer.js');
+const { findRootFiles, chooseRootImports } = await import('../../src/io/cave-survey-helpers.js');
+
+// Mirror of SURVEX_OPTS (module-private in survex-importer.js) for the root-file tests.
+const SURVEX_OPTS = {
+  commentChar     : ';',
+  stripStarPrefix : true,
+  includeKeyword  : 'include',
+  countPattern    : /^\s*\*include\b/gim,
+  skipExtensions  : [],
+  defaultExt      : '.svx'
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -230,8 +243,8 @@ describe('SurvexImporter', () => {
       expect(cave.surveys).toHaveLength(1);
 
       const shots = cave.surveys[0].shots;
-      const centers = shots.filter(s => s.type === 'center');
-      const splays  = shots.filter(s => s.type === 'splay');
+      const centers = shots.filter((s) => s.type === 'center');
+      const splays = shots.filter((s) => s.type === 'splay');
 
       // 7 center shots: 0→1, 1→2, 2→3, 1→4, 4→5, 5→6, 6→7
       expect(centers.length).toBe(7);
@@ -276,7 +289,7 @@ describe('SurvexImporter', () => {
 `;
       const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
       expect(cave.surveys).toHaveLength(2);
-      const names = cave.surveys.map(s => s.name);
+      const names = cave.surveys.map((s) => s.name);
       expect(names).toContain('outer');
       expect(names).toContain('inner');
     });
@@ -578,7 +591,7 @@ ${caseLine}
 *end outer
 `;
       const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
-      const inner = cave.surveys.find(s => s.name === 'inner');
+      const inner = cave.surveys.find((s) => s.name === 'inner');
       expect(inner.shots[0].azimuth).toBeCloseTo(45, 1);
     });
   });
@@ -684,9 +697,7 @@ ${caseLine}
   describe('error handling', () => {
     it('throws survexNoData when file has no survey data', async () => {
       const svx = `; just a comment\n; nothing here\n`;
-      await expect(
-        makeImporter().getCave(textMap(['empty.svx', svx]))
-      ).rejects.toThrow('errors.import.survexNoData');
+      await expect(makeImporter().getCave(textMap(['empty.svx', svx]))).rejects.toThrow('errors.import.survexNoData');
     });
 
     it('throws survexNoData when *begin/*end has no shots', async () => {
@@ -695,9 +706,7 @@ ${caseLine}
   ; no data lines
 *end test
 `;
-      await expect(
-        makeImporter().getCave(textMap(['test.svx', svx]))
-      ).rejects.toThrow('errors.import.survexNoData');
+      await expect(makeImporter().getCave(textMap(['test.svx', svx]))).rejects.toThrow('errors.import.survexNoData');
     });
   });
 
@@ -846,4 +855,112 @@ ${caseLine}
     });
   });
 
+  describe('master file chooser (directory / multi-file import)', () => {
+    // Two genuinely independent masters, each *include-ing its own pair of sub-caves.
+    const twoMasterMap = () =>
+      textMap(
+        ['A.svx', `*include a1\n*include a2\n`],
+        ['B.svx', `*include b1\n*include b2\n`],
+        ['a1.svx', `*begin acave1\n*data normal from to tape compass clino\n1 2 10 90 0\n*end acave1\n`],
+        ['a2.svx', `*begin acave2\n*data normal from to tape compass clino\n1 2 12 90 0\n*end acave2\n`],
+        ['b1.svx', `*begin bcave1\n*data normal from to tape compass clino\n1 2 14 90 0\n*end bcave1\n`],
+        ['b2.svx', `*begin bcave2\n*data normal from to tape compass clino\n1 2 16 90 0\n*end bcave2\n`]
+      );
+
+    it('findRootFiles returns multiple ranked candidates for two unconnected masters', () => {
+      const cands = findRootFiles(twoMasterMap(), SURVEX_OPTS);
+      const keys = cands.map((c) => c.key).sort();
+      expect(keys).toEqual(['A.svx', 'B.svx']);
+      expect(cands.every((c) => c.fileCount === 2)).toBe(true);
+    });
+
+    it('findRootFiles returns a single candidate for a normal single-master map', () => {
+      const map = textMap(
+        ['main.svx', `*include sub\n`],
+        ['sub.svx', `*begin sub\n*data normal from to tape compass clino\n1 2 10 90 0\n*end sub\n`]
+      );
+      const cands = findRootFiles(map, SURVEX_OPTS);
+      expect(cands.map((c) => c.key)).toEqual(['main.svx']);
+    });
+
+    it('findRootFiles omits empty / whitespace-only files', () => {
+      const map = twoMasterMap();
+      map.set('empty.svx', '');
+      map.set('blank.svx', '   \n\t\n');
+      const keys = findRootFiles(map, SURVEX_OPTS)
+        .map((c) => c.key)
+        .sort();
+      expect(keys).toEqual(['A.svx', 'B.svx']);
+    });
+
+    it("getCaves(textMap, root) imports only the chosen master's include tree", async () => {
+      const caves = await makeImporter().getCaves(twoMasterMap(), 'A.svx');
+      const names = caves.map((c) => c.name).sort();
+      expect(names).toEqual(['acave1', 'acave2']);
+      expect(caves.some((c) => c.name.startsWith('b'))).toBe(false);
+    });
+
+    it('chooseRootImports returns the single key without a dialog when unambiguous', async () => {
+      const map = textMap(
+        ['main.svx', `*include sub\n`],
+        ['sub.svx', `*begin sub\n*data normal from to tape compass clino\n1 2 10 90 0\n*end sub\n`]
+      );
+      const dialog = { show: vi.fn() };
+      const roots = await chooseRootImports(map, SURVEX_OPTS, dialog);
+      expect(roots).toEqual(['main.svx']);
+      expect(dialog.show).not.toHaveBeenCalled();
+    });
+
+    it('chooseRootImports shows the dialog and returns the chosen keys when ambiguous', async () => {
+      const dialog = { show: vi.fn(async () => ['A.svx']) };
+      const roots = await chooseRootImports(twoMasterMap(), SURVEX_OPTS, dialog);
+      expect(dialog.show).toHaveBeenCalledOnce();
+      expect(roots).toEqual(['A.svx']);
+    });
+
+    it('importFiles imports only the dialog-selected master', async () => {
+      vi.stubGlobal('FileReader', FakeFileReader);
+      try {
+        const importer = makeImporter();
+        importer.rootFileDialog = { show: async () => ['A.svx'] };
+        const loaded = [];
+        await importer.importFiles(blobMap(twoMasterMap()), (cave) => loaded.push(cave));
+        expect(loaded.map((c) => c.name).sort()).toEqual(['acave1', 'acave2']);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('importFiles imports nothing when the user cancels the chooser', async () => {
+      vi.stubGlobal('FileReader', FakeFileReader);
+      try {
+        const importer = makeImporter();
+        importer.rootFileDialog = { show: async () => null };
+        const loaded = [];
+        await importer.importFiles(blobMap(twoMasterMap()), (cave) => loaded.push(cave));
+        expect(loaded).toEqual([]);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+  });
+
 });
+
+// Minimal FileReader polyfill (node test env has none) — backs importFiles' detectEncoding /
+// readFileAsText, which read Blob contents as text. Encoding is ignored (ASCII test data).
+class FakeFileReader {
+  readAsText(blob) {
+    Promise.resolve(blob.text()).then(
+      (text) => this.onload?.({ target: { result: text } }),
+      (err) => this.onerror?.(err)
+    );
+  }
+}
+
+// Turn a Map<name, text> into the Map<name, Blob> shape importFiles expects.
+function blobMap(map) {
+  const out = new Map();
+  for (const [name, text] of map) out.set(name, new Blob([text]));
+  return out;
+}

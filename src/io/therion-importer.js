@@ -19,12 +19,15 @@ import { SurveyMetadata, SurveyTeam } from '../model/survey.js';
 import { showInfoPanel, showWarningPanel } from '../ui/popups.js';
 import { parseMyFloat, angleToDegrees } from '../utils/utils.js';
 import { CoordinateSystemDialog } from '../ui/coordinate-system-dialog.js';
+import { RootFileSelectionDialog } from '../ui/root-file-selection-dialog.js';
 import { i18n } from '../i18n/i18n.js';
 import {
   detectEncoding,
   readFileAsText,
   tokenizeLine,
   findRootFile,
+  findRootFiles,
+  chooseRootImports,
   flattenFile,
   parseDataFormat,
   parseShotRow,
@@ -55,20 +58,38 @@ class TherionImporter extends Importer {
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
     this.coordinateSystemDialog = new CoordinateSystemDialog();
+    this.rootFileDialog = new RootFileSelectionDialog();
   }
 
   // ─── Public API ──────────────────────────────────────────────────────────────
 
-  /** Batch entry point: filesMap is Map<filename, File>. All .th files passed together. */
-  async importFiles(filesMap, onCaveLoad) {
+  /** Reads every File in `filesMap` to text (auto-detecting encoding) → Map<key, text>. */
+  async buildTextMap(filesMap) {
     const textMap = new Map();
     for (const [name, file] of filesMap) {
       const encoding = await detectEncoding(file);
       textMap.set(name, await readFileAsText(file, encoding));
     }
-    const caves = await this.getCaves(textMap);
-    for (const cave of caves) {
-      if (cave) await onCaveLoad(cave);
+    return textMap;
+  }
+
+  /** Ranked candidate master files in `textMap` (`[{ key, fileCount, title }]`). */
+  getRootCandidates(textMap) {
+    return findRootFiles(textMap, THERION_OPTS);
+  }
+
+  /** Batch entry point: filesMap is Map<filename, File>. All .th files passed together. */
+  async importFiles(filesMap, onCaveLoad) {
+    const textMap = await this.buildTextMap(filesMap);
+    // When several candidate masters describe overlapping caves, let the user pick which
+    // one(s) to import; otherwise import the single (auto-detected) master's input tree.
+    const roots = await chooseRootImports(textMap, THERION_OPTS, this.rootFileDialog);
+    if (roots === null) return; // user cancelled
+    const targets = roots.length ? roots : [undefined]; // [] ⇒ auto-detect single tree
+    for (const root of targets) {
+      for (const cave of await this.getCaves(textMap, root)) {
+        if (cave) await onCaveLoad(cave);
+      }
     }
   }
 
@@ -81,9 +102,9 @@ class TherionImporter extends Importer {
    * Returns all caves found in the file. A connected system is one cave (with sub-caves);
    * a file that just groups several unconnected caves yields one cave per independent cave.
    */
-  async getCaves(textMap) {
-    const rootName = this.#findRootFile(textMap);
-    return await this.#parseTherion(rootName, textMap);
+  async getCaves(textMap, rootName) {
+    const root = rootName ?? this.#findRootFile(textMap);
+    return await this.#parseTherion(root, textMap);
   }
 
   /** Public for testing: returns the first (or only) cave. */

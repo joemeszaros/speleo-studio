@@ -211,9 +211,9 @@ test.describe('Menu Interactions', () => {
     const itemTexts = items.map((t) => t.trim());
 
     expect(itemTexts.some((t) => t.includes('New cave'))).toBeTruthy();
-    expect(itemTexts.some((t) => t.includes('Open cave'))).toBeTruthy();
+    expect(itemTexts.some((t) => t.includes('Open file'))).toBeTruthy();
+    expect(itemTexts.some((t) => t.includes('Open folder'))).toBeTruthy();
     expect(itemTexts.some((t) => t.includes('Export cave'))).toBeTruthy();
-    expect(itemTexts.some((t) => t.includes('Open model'))).toBeTruthy();
     expect(itemTexts.some((t) => t.includes('Print'))).toBeTruthy();
   });
 });

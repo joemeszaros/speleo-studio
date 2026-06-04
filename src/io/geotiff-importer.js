@@ -108,6 +108,22 @@ export class GeoTiffImporter extends DTMImporterBase {
   }
 
   /**
+   * Header-only kind detection (no raster decode) for the import chooser: reads just the
+   * GeoTIFF directory via a lazy Blob read and reports whether it is an RGB orthophoto or a
+   * single-band elevation DTM. Falls back to 'dtm' if the library/header can't be read.
+   */
+  static async detectKind(file) {
+    if (typeof window === 'undefined' || !window.GeoTIFF) return 'dtm';
+    try {
+      const tiff = await window.GeoTIFF.fromBlob(file);
+      const image = await tiff.getImage();
+      return GeoTiffImporter.isRgbPhoto(image) ? 'orthophoto' : 'dtm';
+    } catch {
+      return 'dtm';
+    }
+  }
+
+  /**
    * RGB photo detection: multi-band 8-bit raster with photometric=RGB.
    * Real DTMs are single-band Float32/Int16; real photos are 3-4 band uint8.
    */
@@ -115,11 +131,7 @@ export class GeoTiffImporter extends DTMImporterBase {
     const samplesPerPixel = image.getSamplesPerPixel();
     const bps = image.fileDirectory.BitsPerSample || [];
     const photoInterp = image.fileDirectory.PhotometricInterpretation;
-    return (
-      samplesPerPixel >= 3 &&
-      photoInterp === 2 &&
-      Array.from(bps).every((b) => b <= 8)
-    );
+    return samplesPerPixel >= 3 && photoInterp === 2 && Array.from(bps).every((b) => b <= 8);
   }
 
   // ─── DTM path (single-band elevation) ─────────────────────────────────────
@@ -136,9 +148,7 @@ export class GeoTiffImporter extends DTMImporterBase {
     // this is identity; for EPSG:3857 we divide out the Mercator stretch
     // (~1.64× at 52°N); for EPSG:4326 the file's resolution is in degrees,
     // which we convert via the standard 111320 m/° (×cos(lat) for X).
-    const { absXRes, absYRes } = GeoTiffImporter.#groundCellSize(
-      resolution, origin, nrows, geoKeys
-    );
+    const { absXRes, absYRes } = GeoTiffImporter.#groundCellSize(resolution, origin, nrows, geoKeys);
 
     const maxCells = opts.maxCells ?? this.options?.scene?.models?.dtmMaxCells ?? 4_000_000;
     const stride = DTMImporterBase.computeStride(ncols, nrows, maxCells);
@@ -201,9 +211,7 @@ export class GeoTiffImporter extends DTMImporterBase {
     const origin = image.getOrigin();
     const resolution = image.getResolution();
     const geoKeys = image.getGeoKeys() || {};
-    const { absXRes, absYRes } = GeoTiffImporter.#groundCellSize(
-      resolution, origin, nrows, geoKeys
-    );
+    const { absXRes, absYRes } = GeoTiffImporter.#groundCellSize(resolution, origin, nrows, geoKeys);
 
     // Decide the output texture size. Cap by MAX_ORTHOPHOTO_SIDE to avoid
     // GPU memory blowups on huge orthophotos.
@@ -215,7 +223,11 @@ export class GeoTiffImporter extends DTMImporterBase {
     if (texW !== ncols || texH !== nrows) {
       showWarningPanel(
         i18n.t('errors.import.orthophotoDownsampled', {
-          name, fromCols: ncols, fromRows: nrows, toCols: texW, toRows: texH
+          name,
+          fromCols : ncols,
+          fromRows : nrows,
+          toCols   : texW,
+          toRows   : texH
         })
       );
     }
@@ -234,13 +246,7 @@ export class GeoTiffImporter extends DTMImporterBase {
     // Pack into RGBA — Three's RGBAFormat expects 4 components per pixel.
     const rgba = GeoTiffImporter.packToRgba(rasterBytes, texW, texH, samplesPerPixel);
 
-    const tex = new THREE.DataTexture(
-      rgba,
-      texW,
-      texH,
-      THREE.RGBAFormat,
-      THREE.UnsignedByteType
-    );
+    const tex = new THREE.DataTexture(rgba, texW, texH, THREE.RGBAFormat, THREE.UnsignedByteType);
     tex.wrapS = THREE.ClampToEdgeWrapping;
     tex.wrapT = THREE.ClampToEdgeWrapping;
     tex.magFilter = THREE.LinearFilter;
@@ -261,18 +267,8 @@ export class GeoTiffImporter extends DTMImporterBase {
     const widthMeters  = ncols * absXRes;
     const heightMeters = nrows * absYRes;
 
-    const positions = new Float32Array([
-      0,            0,             0,
-      widthMeters,  0,             0,
-      widthMeters,  heightMeters,  0,
-      0,            heightMeters,  0
-    ]);
-    const uvs = new Float32Array([
-      0, 0,
-      1, 0,
-      1, 1,
-      0, 1
-    ]);
+    const positions = new Float32Array([0, 0, 0, widthMeters, 0, 0, widthMeters, heightMeters, 0, 0, heightMeters, 0]);
+    const uvs = new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]);
     const indices = new Uint16Array([0, 1, 2, 0, 2, 3]);
 
     const geometry = new THREE.BufferGeometry();
@@ -304,10 +300,10 @@ export class GeoTiffImporter extends DTMImporterBase {
     mesh.orthoMetadata = {
       widthMeters,
       heightMeters,
-      texture   : tex,
-      xResMeters: absXRes,
-      yResMeters: absYRes,
-      hasAlpha  : samplesPerPixel >= 4
+      texture    : tex,
+      xResMeters : absXRes,
+      yResMeters : absYRes,
+      hasAlpha   : samplesPerPixel >= 4
     };
 
     const placement = GeoTiffImporter.resolvePlacement(geoKeys, xMin, yMin);
@@ -360,7 +356,7 @@ export class GeoTiffImporter extends DTMImporterBase {
       // origin[1] is the file's yMax (top latitude) in degrees; midpoint is
       // half the file's height down from there.
       const latCenter = origin[1] - (nrows / 2) * absYRes;
-      absXRes *= METERS_PER_DEG * Math.cos(latCenter * Math.PI / 180);
+      absXRes *= METERS_PER_DEG * Math.cos((latCenter * Math.PI) / 180);
       absYRes *= METERS_PER_DEG;
     }
     return { absXRes, absYRes };
@@ -373,7 +369,7 @@ export class GeoTiffImporter extends DTMImporterBase {
     }
     const rgba = new Uint8Array(px * 4);
     for (let i = 0; i < px; i++) {
-      rgba[i * 4]     = srcBytes[i * 3];
+      rgba[i * 4] = srcBytes[i * 3];
       rgba[i * 4 + 1] = srcBytes[i * 3 + 1];
       rgba[i * 4 + 2] = srcBytes[i * 3 + 2];
       rgba[i * 4 + 3] = 255;

@@ -38,7 +38,7 @@ test.describe('File Import', () => {
   });
 
   test('import JSON cave file', async ({ page }) => {
-    const fileInput = page.locator('#caveInput');
+    const fileInput = page.locator('#openFileInput');
 
     await fileInput.setInputFiles(path.join(fixturesDir, 'sample-cave.json'));
 
@@ -48,7 +48,7 @@ test.describe('File Import', () => {
   });
 
   test('imported cave shows surveys in explorer tree', async ({ page }) => {
-    const fileInput = page.locator('#caveInput');
+    const fileInput = page.locator('#openFileInput');
     await fileInput.setInputFiles(path.join(fixturesDir, 'sample-cave.json'));
 
     const explorerTree = page.locator('#explorer-tree');
@@ -62,7 +62,7 @@ test.describe('File Import', () => {
   });
 
   test('imported cave renders in 3D viewport', async ({ page }) => {
-    const fileInput = page.locator('#caveInput');
+    const fileInput = page.locator('#openFileInput');
     await fileInput.setInputFiles(path.join(fixturesDir, 'sample-cave.json'));
 
     // Wait for cave to load
@@ -74,7 +74,7 @@ test.describe('File Import', () => {
   });
 
   test('import multi-survey cave file', async ({ page }) => {
-    const fileInput = page.locator('#caveInput');
+    const fileInput = page.locator('#openFileInput');
     await fileInput.setInputFiles(path.join(fixturesDir, 'multi-survey-cave.json'));
 
     const explorerTree = page.locator('#explorer-tree');
@@ -88,7 +88,7 @@ test.describe('File Import', () => {
   });
 
   test('scene overview has canvas after import', async ({ page }) => {
-    const fileInput = page.locator('#caveInput');
+    const fileInput = page.locator('#openFileInput');
     await fileInput.setInputFiles(path.join(fixturesDir, 'sample-cave.json'));
 
     // Wait for import
@@ -100,7 +100,7 @@ test.describe('File Import', () => {
   });
 
   test('duplicate cave import shows error', async ({ page }) => {
-    const fileInput = page.locator('#caveInput');
+    const fileInput = page.locator('#openFileInput');
 
     // Import once
     await fileInput.setInputFiles(path.join(fixturesDir, 'sample-cave.json'));

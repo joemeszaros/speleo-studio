@@ -8,7 +8,7 @@ async function importModelAndOpenSheet(page) {
   await setupWithProject(page);
 
   // Import PLY model, skip coordinates
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
   const skipBtn = page.locator('#model-coord-skip');
   await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   if (await skipBtn.isVisible()) await skipBtn.click();
@@ -229,7 +229,7 @@ test.describe('Model Sheet Editor', () => {
   test('cannot save model coordinate system different from existing caves', async ({ page }) => {
     // First set up a project with a cave that has UTM coordinates
     await setupWithProject(page, 'ModelCoordMismatch');
-    await page.locator('#caveInput').setInputFiles('tests/fixtures/sample-cave.json');
+    await page.locator('#openFileInput').setInputFiles('tests/fixtures/sample-cave.json');
     await expect(page.locator('#explorer-tree').locator('text=Test Cave')).toBeVisible({ timeout: 10000 });
     await dismissNotifications(page);
 
@@ -253,7 +253,7 @@ test.describe('Model Sheet Editor', () => {
     await dismissNotifications(page);
 
     // Now import a model
-    await page.locator('#modelInput').setInputFiles('tests/fixtures/sample-model.ply');
+    await page.locator('#openFileInput').setInputFiles('tests/fixtures/sample-model.ply');
     const skipBtn = page.locator('#model-coord-skip');
     await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     if (await skipBtn.isVisible()) await skipBtn.click();

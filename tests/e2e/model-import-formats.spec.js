@@ -8,7 +8,7 @@ const fixturesDir = path.resolve('tests/fixtures');
  * Import a model file and skip the coordinate dialog.
  */
 async function importModelSkipCoords(page, fixture) {
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
 
   const skipBtn = page.locator('#model-coord-skip');
   await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
@@ -25,7 +25,7 @@ async function importModelSkipCoords(page, fixture) {
  */
 async function importModelWithTextures(page, files) {
   const filePaths = files.map(f => path.join(fixturesDir, f));
-  await page.locator('#modelInput').setInputFiles(filePaths);
+  await page.locator('#openFileInput').setInputFiles(filePaths);
 
   const skipBtn = page.locator('#model-coord-skip');
   await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
@@ -58,7 +58,7 @@ test.describe('Model Import - OBJ Format', () => {
   test('OBJ with embedded coordinates shows them in dialog', async ({ page }) => {
     await setupWithProject(page);
 
-    await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.obj'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.obj'));
 
     // Dialog should appear with pre-filled coordinates from OBJ comments
     const latInput = page.locator('#model-coord-lat');
@@ -187,7 +187,7 @@ test.describe('Model Coordinate Dialog', () => {
   test('import model with WGS84 coordinates sets coordinate system', async ({ page }) => {
     await setupWithProject(page);
 
-    await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
     const okBtn = page.locator('#model-coord-ok');
     await okBtn.waitFor({ state: 'visible', timeout: 5000 });
@@ -211,7 +211,7 @@ test.describe('Model Coordinate Dialog', () => {
   test('model with coordinates imports when cave has no geoData', async ({ page }) => {
     await setupWithCave(page);
 
-    await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
     const okBtn = page.locator('#model-coord-ok');
     await okBtn.waitFor({ state: 'visible', timeout: 5000 });
@@ -281,7 +281,7 @@ test.describe('Loading Overlay', () => {
     await setupWithProject(page);
 
     // Start model import - overlay should appear briefly
-    const importPromise = page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+    const importPromise = page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
     // The overlay may be too fast to catch, but we can at least verify no errors
     await importPromise;

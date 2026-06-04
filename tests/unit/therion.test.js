@@ -52,6 +52,17 @@ vi.mock('../../src/model.js', async () => {
 // ─── Dynamic imports (after mocks) ───────────────────────────────────────────
 
 const { TherionImporter } = await import('../../src/io/therion-importer.js');
+const { findRootFiles, chooseRootImports } = await import('../../src/io/cave-survey-helpers.js');
+
+// Mirror of THERION_OPTS (module-private in therion-importer.js) for the root-file tests.
+const THERION_OPTS = {
+  commentChar    : '#',
+  stripStarPrefix: false,
+  includeKeyword : 'input',
+  countPattern   : /^\s*input\b/gim,
+  skipExtensions : ['.th2', '.thm'],
+  defaultExt     : '.th'
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -1408,4 +1419,93 @@ endsurvey
       expect(warned).toBe(false);
     });
   });
+
+  describe('master file chooser (directory / multi-file import)', () => {
+    // Two genuinely independent masters, each `input`-ing its own pair of sub-caves.
+    const acave = (n) =>
+      `survey acave${n}\n  centreline\n    data normal from to length compass clino\n    1 2 1${n} 90 0\n  endcentreline\nendsurvey\n`;
+    const bcave = (n) =>
+      `survey bcave${n}\n  centreline\n    data normal from to length compass clino\n    1 2 1${n} 90 0\n  endcentreline\nendsurvey\n`;
+    const twoMasterMap = () =>
+      textMap(
+        ['A.th', `input a1\ninput a2\n`],
+        ['B.th', `input b1\ninput b2\n`],
+        ['a1.th', acave(1)],
+        ['a2.th', acave(2)],
+        ['b1.th', bcave(1)],
+        ['b2.th', bcave(2)]
+      );
+
+    it('findRootFiles returns multiple ranked candidates for two unconnected masters', () => {
+      const cands = findRootFiles(twoMasterMap(), THERION_OPTS);
+      const keys = cands.map((c) => c.key).sort();
+      expect(keys).toEqual(['A.th', 'B.th']);
+      expect(cands.every((c) => c.fileCount === 2)).toBe(true);
+    });
+
+    it('findRootFiles returns a single candidate for a normal single-master map', () => {
+      const map = textMap(['main.th', `input sub\n`], ['sub.th', acave(1)]);
+      const cands = findRootFiles(map, THERION_OPTS);
+      expect(cands.map((c) => c.key)).toEqual(['main.th']);
+    });
+
+    it('getCaves(textMap, root) imports only the chosen master\'s input tree', async () => {
+      const caves = await makeImporter().getCaves(twoMasterMap(), 'A.th');
+      const names = caves.map((c) => c.name).sort();
+      expect(names).toEqual(['acave1', 'acave2']);
+      expect(caves.some((c) => c.name.startsWith('b'))).toBe(false);
+    });
+
+    it('chooseRootImports returns the single key without a dialog when unambiguous', async () => {
+      const map = textMap(['main.th', `input sub\n`], ['sub.th', acave(1)]);
+      const dialog = { show: vi.fn() };
+      const roots = await chooseRootImports(map, THERION_OPTS, dialog);
+      expect(roots).toEqual(['main.th']);
+      expect(dialog.show).not.toHaveBeenCalled();
+    });
+
+    it('chooseRootImports shows the dialog and returns the chosen keys when ambiguous', async () => {
+      const dialog = { show: vi.fn(async () => ['A.th']) };
+      const roots = await chooseRootImports(twoMasterMap(), THERION_OPTS, dialog);
+      expect(dialog.show).toHaveBeenCalledOnce();
+      expect(roots).toEqual(['A.th']);
+    });
+
+    it('importFiles imports only the dialog-selected master; nothing on cancel', async () => {
+      vi.stubGlobal('FileReader', FakeFileReader);
+      try {
+        const importer = makeImporter();
+        importer.rootFileDialog = { show: async () => ['A.th'] };
+        const loaded = [];
+        await importer.importFiles(blobMap(twoMasterMap()), (cave) => loaded.push(cave));
+        expect(loaded.map((c) => c.name).sort()).toEqual(['acave1', 'acave2']);
+
+        const cancelImporter = makeImporter();
+        cancelImporter.rootFileDialog = { show: async () => null };
+        const cancelled = [];
+        await cancelImporter.importFiles(blobMap(twoMasterMap()), (cave) => cancelled.push(cave));
+        expect(cancelled).toEqual([]);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+  });
 });
+
+// Minimal FileReader polyfill (node test env has none) — backs importFiles' detectEncoding /
+// readFileAsText, which read Blob contents as text. Encoding is ignored (ASCII test data).
+class FakeFileReader {
+  readAsText(blob) {
+    Promise.resolve(blob.text()).then(
+      (text) => this.onload?.({ target: { result: text } }),
+      (err) => this.onerror?.(err)
+    );
+  }
+}
+
+// Turn a Map<name, text> into the Map<name, Blob> shape importFiles expects.
+function blobMap(map) {
+  const out = new Map();
+  for (const [name, text] of map) out.set(name, new Blob([text]));
+  return out;
+}

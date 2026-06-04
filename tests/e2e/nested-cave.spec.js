@@ -27,7 +27,7 @@ test.describe('Nested cave (multi-level Therion)', () => {
   });
 
   test('imports a multi-level .th into a nested cave tree and renders all surveys', async ({ page }) => {
-    await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
 
     const explorerTree = page.locator('#explorer-tree');
     // Root cave keeps the file title
@@ -61,7 +61,7 @@ test.describe('Nested cave (multi-level Therion)', () => {
   });
 
   test('imports a grouping of unconnected caves as separate top-level caves', async ({ page }) => {
-    await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'grouping-caves.th'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'grouping-caves.th'));
 
     const explorerTree = page.locator('#explorer-tree');
     // The two unconnected caves (no equates) become separate top-level caves, not one.
@@ -77,7 +77,7 @@ test.describe('Nested cave (multi-level Therion)', () => {
   });
 
   test('expanding the tree reveals nested sub-cave and its surveys', async ({ page }) => {
-    await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
     const explorerTree = page.locator('#explorer-tree');
     await expect(explorerTree.locator('text=Nested System')).toBeVisible({ timeout: 10000 });
 
@@ -101,7 +101,7 @@ test.describe('Nested cave (multi-level Therion)', () => {
   });
 
   test('filter finds a survey nested deep under sub-caves (recursive search)', async ({ page }) => {
-    await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
     const explorerTree = page.locator('#explorer-tree');
     await expect(explorerTree.locator('text=Nested System')).toBeVisible({ timeout: 10000 });
 
@@ -119,7 +119,7 @@ test.describe('Nested cave (multi-level Therion)', () => {
   });
 
   test('shot-name (station) search matches stations in deeply nested surveys', async ({ page }) => {
-    await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
     const explorerTree = page.locator('#explorer-tree');
     await expect(explorerTree.locator('text=Nested System')).toBeVisible({ timeout: 10000 });
 
@@ -145,7 +145,7 @@ test.describe('Nested cave (multi-level Therion)', () => {
   });
 
   test('move-to-top reorders a survey within its nested sub-cave', async ({ page }) => {
-    await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'nested-cave.th'));
     await expect(page.locator('#explorer-tree').locator('text=Nested System')).toBeVisible({ timeout: 10000 });
 
     // caveA contains [passage1, passage2]; move passage2 to the top of its sub-cave and

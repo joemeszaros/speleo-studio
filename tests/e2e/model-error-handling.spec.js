@@ -13,7 +13,7 @@ async function importModelCapturingErrors(page, fixture) {
     consoleMessages.push({ type: msg.type(), text: msg.text() });
   });
 
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
 
   // Handle coordinate dialog if it appears
   const skipBtn = page.locator('#model-coord-skip');
@@ -101,7 +101,7 @@ test.describe('Model Error Handling', () => {
       await importModelCapturingErrors(page, 'sample-pointcloud-corrupt.las');
 
       // Now import a valid file - should work fine
-      await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
       const skipBtn = page.locator('#model-coord-skip');
       await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
@@ -125,7 +125,7 @@ test.describe('Model Error Handling', () => {
       await importModelCapturingErrors(page, 'sample-model-invalid.ply');
 
       // Now import a valid file
-      await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
       const skipBtn = page.locator('#model-coord-skip');
       await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});

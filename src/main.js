@@ -34,6 +34,7 @@ import { AscDTMImporter, HgtDTMImporter } from './io/dtm-importer.js';
 import { XyzImporter } from './io/xyz-importer.js';
 import { GeoTiffImporter } from './io/geotiff-importer.js';
 import { XyzKindDialog } from './ui/xyz-kind-dialog.js';
+import { RootFileSelectionDialog } from './ui/root-file-selection-dialog.js';
 import { SceneInteraction } from './interactive.js';
 import { ConfigManager, ObjectObserver, ConfigChanges } from './config.js';
 import { Materials } from './materials.js';
@@ -47,7 +48,7 @@ import { ModelsTree } from './ui/models-tree.js';
 import { SettingsPanel } from './ui/settings-panel.js';
 
 import { AttributesDefinitions } from './attributes.js';
-import { showErrorPanel, showInfoPanel, showSuccessPanel } from './ui/popups.js';
+import { showErrorPanel, showInfoPanel, showSuccessPanel, showWarningPanel } from './ui/popups.js';
 import { ProjectSystem } from './storage/project-system.js';
 import { CaveSystem } from './storage/cave-system.js';
 import { EditorStateSystem } from './storage/editor-states.js';
@@ -352,6 +353,8 @@ class Main {
       lox       : new LoxImporter(db, options, scene, this.projectManager)
     };
     this.importers.tiff = this.importers.tif;
+    // Shared chooser for a folder/multi-file open with several importable caves.
+    this.rootFileDialog = new RootFileSelectionDialog();
 
     this.#setupEventListeners();
 
@@ -375,9 +378,8 @@ class Main {
   }
 
   #setupEventListeners() {
-    this.#setupCaveFileInputListener();
+    this.#setupFileInputListeners();
     this.#setupSurveyFileInputListeners();
-    this.#setupModelFileInputListener();
     ConfigManager.setupConfigFileInputListener(
       this.options,
       this.settingsPanel,
@@ -391,91 +393,216 @@ class Main {
     document.addEventListener('drop', (e) => e.preventDefault());
   }
 
-  #setupCaveFileInputListener() {
-    // Two inputs feed the same import logic: `caveInput` (multi-file selection) and
-    // `caveDirInput` (recursive directory pick, for multi-folder Therion/Survex projects).
-    for (const id of ['caveInput', 'caveDirInput']) {
-      const input = document.getElementById(id);
-      if (!input) continue;
-      input.addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files);
-        try {
-          if (files.length > 0) await this.#importCaveFiles(files);
-        } finally {
-          input.value = '';
-        }
-      });
-    }
+  #setupFileInputListeners() {
+    // "Open file" — any mix of cave + model + asset files; import all immediately.
+    const openFile = document.getElementById('openFileInput');
+    openFile?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      try {
+        if (files.length > 0) await this.#importEntries(files, false);
+      } finally {
+        openFile.value = '';
+      }
+    });
+
+    // "Open folder" — recursive directory pick; offer everything found in the chooser panel.
+    const openFolder = document.getElementById('openFolderInput');
+    openFolder?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      try {
+        if (files.length > 0) await this.#importEntries(files, true);
+      } finally {
+        openFolder.value = '';
+      }
+    });
   }
 
-  async #importCaveFiles(files) {
-    // For a directory import the browser provides `webkitRelativePath` — use it as the
-    // map key so `input`/`*include` directives that cross folders resolve. Plain
-    // multi-select files have no relative path, so fall back to the basename.
+  // Split a flat file list (multi-select or recursive folder) into the three import families.
+  #classifyImportFiles(files) {
+    const CAVE_EXTS = new Set(['cave', 'json', 'th', 'svx', '3d']);
+    const MODEL_EXTS = new Set(['ply', 'obj', 'asc', 'hgt', 'xyz', 'tif', 'tiff', 'las', 'laz', 'lox']);
+    const ASSET_EXTS = new Set(['mtl', 'jpg', 'jpeg', 'png', 'exr']);
+    const extOf = (f) => f.name.toLowerCase().split('.').pop();
+
+    const caveFiles = [];
+    const modelFiles = [];
+    const assetFiles = [];
+    const unknownExts = new Set();
+    for (const f of files) {
+      const ext = extOf(f);
+      if (CAVE_EXTS.has(ext)) caveFiles.push(f);
+      else if (MODEL_EXTS.has(ext)) modelFiles.push(f);
+      else if (ASSET_EXTS.has(ext)) assetFiles.push(f);
+      else unknownExts.add(ext);
+    }
+    return { caveFiles, modelFiles, assetFiles, unknownExts };
+  }
+
+  // Type badge for a model file in the import chooser: 'orthophoto' / 'dtm' for surface rasters,
+  // 'model' for meshes & point clouds. GeoTIFFs are disambiguated by a header-only read.
+  async #modelType(file) {
+    const ext = file.name.toLowerCase().split('.').pop();
+    if (ext === 'tif' || ext === 'tiff') return await GeoTiffImporter.detectKind(file);
+    if (ext === 'asc' || ext === 'hgt') return 'dtm';
+    return 'model';
+  }
+
+  // Unified open: classify the files, then import caves and models. For a folder pick with more
+  // than one importable item, the chooser panel lists caves AND models so the user can select a
+  // subset; an explicit "Open file" selection imports everything straight through.
+  async #importEntries(files, isFolder) {
+    const { caveFiles, modelFiles, assetFiles, unknownExts } = this.#classifyImportFiles(files);
+
+    // A folder pick has no `accept` filter, so unrelated files (drawings, docs, …) are silently
+    // skipped; an explicit file pick warns about anything unsupported.
+    if (!isFolder) {
+      for (const ext of unknownExts) showErrorPanel(i18n.t('errors.import.unsupportedFileType', { extension: ext }));
+    }
+
     const keyOf = (f) => f.webkitRelativePath || f.name;
+    const caveCandidates = await this.#buildCaveCandidates(caveFiles);
+    const modelCandidates = modelFiles.map((file) => ({
+      key       : keyOf(file),
+      fileCount : 0,
+      title     : '',
+      isModel   : true,
+      file
+    }));
 
-    // Batch all .th files together so input directives can be resolved across them
-    const therionFiles = files.filter((f) => f.name.toLowerCase().endsWith('.th'));
-    // Batch all .svx files together so *include directives can be resolved across them
-    const svxFiles = files.filter((f) => f.name.toLowerCase().endsWith('.svx'));
-    const otherFiles = files.filter(
-      (f) => !f.name.toLowerCase().endsWith('.th') && !f.name.toLowerCase().endsWith('.svx')
-    );
+    let chosenCaveCandidates = caveCandidates;
+    let chosenModelFiles = modelFiles;
 
-    if (therionFiles.length > 0) {
-      try {
-        const filesMap = new Map(therionFiles.map((f) => [keyOf(f), f]));
-        await this.importers.therion.importFiles(filesMap, async (cave) => {
-          await this.#tryAddCave(cave);
-        });
-      } catch (error) {
-        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: therionFiles[0].name });
-        showErrorPanel(`${msgPrefix}: ${error.message}`);
-        console.error(msgPrefix, error);
-      }
+    if (isFolder && caveCandidates.length + modelCandidates.length > 1) {
+      // Resolve the type badge (model / dtm / orthophoto) only now that the chooser is shown —
+      // for GeoTIFFs this peeks at the header to tell an RGB orthophoto from an elevation DTM.
+      await Promise.all(
+        modelCandidates.map(async (c) => {
+          c.type = await this.#modelType(c.file);
+        })
+      );
+      const all = [...caveCandidates, ...modelCandidates];
+      const byKey = new Map(all.map((c) => [c.key, c]));
+      const keys = await this.rootFileDialog.show(all);
+      if (keys === null) return; // user cancelled
+      const chosen = keys.map((k) => byKey.get(k));
+      chosenCaveCandidates = chosen.filter((c) => !c.isModel);
+      chosenModelFiles = chosen.filter((c) => c.isModel).map((c) => c.file);
     }
 
-    if (svxFiles.length > 0) {
-      try {
-        const filesMap = new Map(svxFiles.map((f) => [keyOf(f), f]));
-        await this.importers.survex.importFiles(filesMap, async (cave) => {
-          await this.#tryAddCave(cave);
-        });
-      } catch (error) {
-        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: svxFiles[0].name });
-        showErrorPanel(`${msgPrefix}: ${error.message}`);
-        console.error(msgPrefix, error);
-      }
-    }
+    // Both helpers no-op on an empty list, so no length guard is needed here.
+    await this.#addCaves(chosenCaveCandidates);
+    await this.#importModelFiles(chosenModelFiles, assetFiles);
+  }
 
-    const handlers = new Map([
+  // Builds importable cave candidates (one per top-level master / standalone file) without
+  // showing any chooser. `.th`/`.svx` are batched so includes resolve across the set; each
+  // standalone `.cave/.json/.3d` is its own candidate. Each candidate's `import(collected)`
+  // pushes the caves it produces into the shared array.
+  async #buildCaveCandidates(caveFiles) {
+    const keyOf = (f) => f.webkitRelativePath || f.name;
+    const therionFiles = caveFiles.filter((f) => f.name.toLowerCase().endsWith('.th'));
+    const svxFiles = caveFiles.filter((f) => f.name.toLowerCase().endsWith('.svx'));
+    const standaloneImporters = new Map([
       ['cave', this.importers.polygon],
       ['json', this.importers.json],
       ['3d', this.importers.survex3d]
     ]);
 
-    // For directory imports only feed survey-data formats; the file picker for `caveDirInput`
-    // has no `accept` filter, so a folder may contain unrelated files (drawings, images, ...).
-    for (const file of otherFiles) {
-      const ext = file.name.toLowerCase().split('.').pop();
-      const handler = handlers.get(ext);
-      if (!handler) {
-        // Silently skip unknown files that came along with a directory pick; only warn
-        // for an explicit single-file selection.
-        if (!file.webkitRelativePath) {
-          showErrorPanel(i18n.t('errors.import.unsupportedFileType', { extension: ext }));
-        }
-        continue;
-      }
-      try {
-        await handler.importFile(file, file.name, async (cave) => {
-          await this.#tryAddCave(cave);
+    const candidates = [];
+
+    if (therionFiles.length > 0) {
+      const textMap = await this.importers.therion.buildTextMap(new Map(therionFiles.map((f) => [keyOf(f), f])));
+      for (const c of this.importers.therion.getRootCandidates(textMap)) {
+        candidates.push({
+          ...c,
+          type   : 'cave',
+          import : async (collected) => {
+            for (const cave of await this.importers.therion.getCaves(textMap, c.key)) if (cave) collected.push(cave);
+          }
         });
+      }
+    }
+
+    if (svxFiles.length > 0) {
+      const textMap = await this.importers.survex.buildTextMap(new Map(svxFiles.map((f) => [keyOf(f), f])));
+      for (const c of this.importers.survex.getRootCandidates(textMap)) {
+        candidates.push({
+          ...c,
+          type   : 'cave',
+          import : async (collected) => {
+            for (const cave of await this.importers.survex.getCaves(textMap, c.key)) if (cave) collected.push(cave);
+          }
+        });
+      }
+    }
+
+    for (const file of caveFiles) {
+      const ext = file.name.toLowerCase().split('.').pop();
+      const importer = standaloneImporters.get(ext);
+      if (!importer) continue; // .th / .svx handled above
+      candidates.push({
+        key       : keyOf(file),
+        fileCount : 0,
+        title     : '',
+        type      : 'cave',
+        import    : async (collected) => {
+          await importer.importFile(file, file.name, async (cave) => {
+            if (cave) collected.push(cave);
+          });
+        }
+      });
+    }
+
+    return candidates;
+  }
+
+  // Imports the chosen cave candidates and adds the resulting caves to the explorer tree
+  // alphabetically. A grouping master can yield many caves, and several masters may be chosen.
+  async #addCaves(candidates) {
+    if (candidates.length === 0) return;
+
+    const collected = [];
+    for (const candidate of candidates) {
+      try {
+        await candidate.import(collected);
       } catch (error) {
-        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
+        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: candidate.key });
         showErrorPanel(`${msgPrefix}: ${error.message}`);
         console.error(msgPrefix, error);
       }
+    }
+
+    // Selecting overlapping masters (e.g. the whole system AND one of its sub-caves, which is
+    // also listed standalone) yields the same cave more than once. Keep the first occurrence —
+    // candidates are ordered largest-first, so the full system wins over a stray fragment of it.
+    // The dropped names are reported below so this is never a silent loss.
+    const seenNames = new Set();
+    const skippedDuplicates = [];
+    const unique = collected.filter((cave) => {
+      const name = cave.name ?? '';
+      if (seenNames.has(name)) {
+        skippedDuplicates.push(name);
+        return false;
+      }
+      seenNames.add(name);
+      return true;
+    });
+
+    // Add to the explorer tree alphabetically. Guard each add: a duplicate name / id throws, and
+    // an unguarded throw here would abort every remaining cave in the batch.
+    unique.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', undefined, { sensitivity: 'base' }));
+    for (const cave of unique) {
+      try {
+        await this.#tryAddCave(cave);
+      } catch (error) {
+        showErrorPanel(`${i18n.t('errors.import.importFileFailed', { name: cave.name })}: ${error.message}`);
+        console.error(error);
+      }
+    }
+
+    if (skippedDuplicates.length > 0) {
+      const names = [...new Set(skippedDuplicates)].join(', ');
+      showWarningPanel(i18n.t('errors.import.duplicateCavesSkipped', { count: skippedDuplicates.length, names }), 8000);
     }
   }
 
@@ -496,163 +623,138 @@ class Main {
 
   }
 
-  #setupModelFileInputListener() {
-    const modelExtensions = new Set(['ply', 'obj', 'asc', 'hgt', 'xyz', 'tif', 'tiff', 'las', 'laz', 'lox']);
-    const input = document.getElementById('modelInput');
+  // Imports a batch of already-classified model files (+ optional MTL/texture asset files):
+  // resolves embedded/dialog coordinates, adds each model to the scene, then applies textures.
+  async #importModelFiles(modelFiles, assetFiles) {
+    if (modelFiles.length === 0) return;
 
-    input.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length === 0) return;
+    await this.loadingOverlay.guard(i18n.t('ui.loading.openingModel'), async () => {
+      const hasAssets = assetFiles.length > 0;
 
-      await this.loadingOverlay.guard(i18n.t('ui.loading.openingModel'), async () => {
-        try {
-          // Separate model files from asset files (MTL, textures)
-          const modelFiles = [];
-          const assetFiles = [];
-
-          for (const file of files) {
-            const ext = file.name.toLowerCase().split('.').pop();
-            if (modelExtensions.has(ext)) {
-              modelFiles.push(file);
-            } else {
-              assetFiles.push(file);
-            }
-          }
-
-          const hasAssets = assetFiles.length > 0;
-
-          // XYZ files: ask the user whether the file is a DTM (regular grid)
-          // or a scattered point cloud. The format itself doesn't say.
-          const isXyz = (f) => f.name.toLowerCase().endsWith('.xyz');
-          let xyzKind = null;
-          const hasXyz = modelFiles.some(isXyz);
-          if (hasXyz) {
-            xyzKind = await new XyzKindDialog().show();
-            if (xyzKind === null) {
-              // Skip XYZ files if cancelled
-              modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !isXyz(f)));
-            }
-          }
-
-          // DTM files (.asc, .hgt, and .xyz when xyzKind==='dtm') need an extra
-          // dialog (mesh vs point cloud). Asked once per batch. The render-mode
-          // dialog is skipped for pure scattered-XYZ batches (no mesh option).
-          const innateDtmExts = new Set(['asc', 'hgt', 'tif', 'tiff']);
-          const isInnateDtm = (f) => innateDtmExts.has(f.name.toLowerCase().split('.').pop());
-          const dtmRequiresRenderMode = (f) => {
-            const ext = f.name.toLowerCase().split('.').pop();
-            if (innateDtmExts.has(ext)) return true;
-            if (ext === 'xyz' && xyzKind === 'dtm') return true;
-            return false;
-          };
-          let dtmRenderMode = null;
-          const hasDtmRenderMode = modelFiles.some(dtmRequiresRenderMode);
-          if (hasDtmRenderMode) {
-            dtmRenderMode = await new AscRenderModeDialog().show();
-            if (dtmRenderMode === null) {
-              // Skip DTM-rendered files if cancelled (innate DTMs + dtm-mode XYZ)
-              modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !dtmRequiresRenderMode(f)));
-            }
-          }
-
-          // Parse model files first to extract embedded coordinates
-          const parsedModels = [];
-          this.loadingOverlay.beginBatch(modelFiles.length);
-          try {
-            for (const file of modelFiles) {
-              const ext = file.name.toLowerCase().split('.').pop();
-              const handler = this.importers[ext];
-              if (!handler) {
-                this.loadingOverlay.advanceBatch();
-                continue;
-              }
-
-              try {
-                let importOpts;
-                if (ext === 'xyz') {
-                  importOpts = { xyzKind, renderMode: dtmRenderMode };
-                } else if (innateDtmExts.has(ext)) {
-                  importOpts = { renderMode: dtmRenderMode };
-                }
-                await handler.importFile(
-                  file,
-                  file.name,
-                  async (model, object3D, modelFile) => {
-                    parsedModels.push({ model, object3D, modelFile });
-                  },
-                  importOpts
-                );
-              } catch (error) {
-                const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
-                showErrorPanel(`${msgPrefix}: ${error.message}`);
-                console.error(msgPrefix, error);
-              }
-              this.loadingOverlay.advanceBatch();
-            }
-          } finally {
-            this.loadingOverlay.endBatch();
-          }
-
-          // Resolve per-model embeddedCoords (e.g. HGT filename, OBJ comment
-          // headers) to geoData first — each model gets its own anchor.
-          for (const pm of parsedModels) {
-            if (pm.model.embeddedCoords && !pm.model.geoData) {
-              pm.model.geoData = this.#createGeoDataFromWGS84(pm.model.embeddedCoords);
-            }
-          }
-
-          // Show the shared WGS84 dialog only for models that still lack
-          // geoData (typical for ASC / bare PLY / OBJ without comments).
-          const needsCoords = parsedModels.filter((pm) => !pm.model.geoData);
-          let sharedGeoData = null;
-          if (needsCoords.length > 0) {
-            const firstNeeding = needsCoords[0].model;
-            const embeddedCoords = firstNeeding?.embeddedCoords || null;
-            const firstPointCoords = firstNeeding?.firstPointCoords || null;
-            const modelCoordDialog = new ModelCoordinateDialog();
-            const wgs84Coords = await modelCoordDialog.show(
-              modelFiles[0]?.name || '',
-              embeddedCoords,
-              firstPointCoords
-            );
-            if (wgs84Coords) {
-              sharedGeoData = this.#createGeoDataFromWGS84(wgs84Coords);
-            }
-          }
-
-          // Add parsed models to the scene
-          const importedNodes = [];
-          for (const { model, object3D, modelFile } of parsedModels) {
-            // Hide model until textures are applied to prevent visual pop-in
-            if (hasAssets) object3D.visible = false;
-
-            // Apply shared dialog result only to models that didn't already
-            // have geoData from their own embeddedCoords.
-            if (!model.geoData && sharedGeoData) model.geoData = sharedGeoData;
-
-            await this.#tryAddModel(model, object3D, modelFile);
-
-            // Find the newly added model node for texture application
-            if (hasAssets && this.modelsTree) {
-              const node = this.modelsTree.categories
-                .get('3d-models')
-                ?.children.find((n) => n.label === model.name);
-              if (node) importedNodes.push(node);
-            }
-          }
-
-          // Apply asset files (MTL + textures) to imported models, then reveal
-          if (hasAssets && importedNodes.length > 0) {
-            for (const node of importedNodes) {
-              await this.modelsTree.loadTexturesForModel(node, assetFiles);
-              node.object3D.visible = true;
-            }
-            this.scene.view.renderView();
-          }
-        } finally {
-          input.value = '';
+      // XYZ files: ask the user whether the file is a DTM (regular grid)
+      // or a scattered point cloud. The format itself doesn't say.
+      const isXyz = (f) => f.name.toLowerCase().endsWith('.xyz');
+      let xyzKind = null;
+      const hasXyz = modelFiles.some(isXyz);
+      if (hasXyz) {
+        xyzKind = await new XyzKindDialog().show();
+        if (xyzKind === null) {
+          // Skip XYZ files if cancelled
+          modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !isXyz(f)));
         }
-      });
+      }
+
+      // DTM files (.asc, .hgt, and .xyz when xyzKind==='dtm') need an extra
+      // dialog (mesh vs point cloud). Asked once per batch. The render-mode
+      // dialog is skipped for pure scattered-XYZ batches (no mesh option).
+      const innateDtmExts = new Set(['asc', 'hgt', 'tif', 'tiff']);
+      const isInnateDtm = (f) => innateDtmExts.has(f.name.toLowerCase().split('.').pop());
+      const dtmRequiresRenderMode = (f) => {
+        const ext = f.name.toLowerCase().split('.').pop();
+        if (innateDtmExts.has(ext)) return true;
+        if (ext === 'xyz' && xyzKind === 'dtm') return true;
+        return false;
+      };
+      let dtmRenderMode = null;
+      const hasDtmRenderMode = modelFiles.some(dtmRequiresRenderMode);
+      if (hasDtmRenderMode) {
+        dtmRenderMode = await new AscRenderModeDialog().show();
+        if (dtmRenderMode === null) {
+          // Skip DTM-rendered files if cancelled (innate DTMs + dtm-mode XYZ)
+          modelFiles.splice(0, modelFiles.length, ...modelFiles.filter((f) => !dtmRequiresRenderMode(f)));
+        }
+      }
+
+      // Parse model files first to extract embedded coordinates
+      const parsedModels = [];
+      this.loadingOverlay.beginBatch(modelFiles.length);
+      try {
+        for (const file of modelFiles) {
+          const ext = file.name.toLowerCase().split('.').pop();
+          const handler = this.importers[ext];
+          if (!handler) {
+            this.loadingOverlay.advanceBatch();
+            continue;
+          }
+
+          try {
+            let importOpts;
+            if (ext === 'xyz') {
+              importOpts = { xyzKind, renderMode: dtmRenderMode };
+            } else if (innateDtmExts.has(ext)) {
+              importOpts = { renderMode: dtmRenderMode };
+            }
+            await handler.importFile(
+              file,
+              file.name,
+              async (model, object3D, modelFile) => {
+                parsedModels.push({ model, object3D, modelFile });
+              },
+              importOpts
+            );
+          } catch (error) {
+            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: file.name });
+            showErrorPanel(`${msgPrefix}: ${error.message}`);
+            console.error(msgPrefix, error);
+          }
+          this.loadingOverlay.advanceBatch();
+        }
+      } finally {
+        this.loadingOverlay.endBatch();
+      }
+
+      // Resolve per-model embeddedCoords (e.g. HGT filename, OBJ comment
+      // headers) to geoData first — each model gets its own anchor.
+      for (const pm of parsedModels) {
+        if (pm.model.embeddedCoords && !pm.model.geoData) {
+          pm.model.geoData = this.#createGeoDataFromWGS84(pm.model.embeddedCoords);
+        }
+      }
+
+      // Show the shared WGS84 dialog only for models that still lack
+      // geoData (typical for ASC / bare PLY / OBJ without comments).
+      const needsCoords = parsedModels.filter((pm) => !pm.model.geoData);
+      let sharedGeoData = null;
+      if (needsCoords.length > 0) {
+        const firstNeeding = needsCoords[0].model;
+        const embeddedCoords = firstNeeding?.embeddedCoords || null;
+        const firstPointCoords = firstNeeding?.firstPointCoords || null;
+        const modelCoordDialog = new ModelCoordinateDialog();
+        const wgs84Coords = await modelCoordDialog.show(modelFiles[0]?.name || '', embeddedCoords, firstPointCoords);
+        if (wgs84Coords) {
+          sharedGeoData = this.#createGeoDataFromWGS84(wgs84Coords);
+        }
+      }
+
+      // Add parsed models to the scene
+      const importedNodes = [];
+      for (const { model, object3D, modelFile } of parsedModels) {
+        // Hide model until textures are applied to prevent visual pop-in
+        if (hasAssets) object3D.visible = false;
+
+        // Apply shared dialog result only to models that didn't already
+        // have geoData from their own embeddedCoords.
+        if (!model.geoData && sharedGeoData) model.geoData = sharedGeoData;
+
+        await this.#tryAddModel(model, object3D, modelFile);
+
+        // Find the newly added model node for texture application
+        if (hasAssets && this.modelsTree) {
+          const node = this.modelsTree.categories
+            .get('3d-models')
+            ?.children.find((n) => n.label === model.name);
+          if (node) importedNodes.push(node);
+        }
+      }
+
+      // Apply asset files (MTL + textures) to imported models, then reveal
+      if (hasAssets && importedNodes.length > 0) {
+        for (const node of importedNodes) {
+          await this.modelsTree.loadTexturesForModel(node, assetFiles);
+          node.object3D.visible = true;
+        }
+        this.scene.view.renderView();
+      }
     });
   }
 

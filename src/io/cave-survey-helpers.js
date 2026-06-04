@@ -150,9 +150,77 @@ export function tokenizeLine(line, opts) {
   return tokens;
 }
 
-export function findRootFile(textMap, opts) {
-  const { includeKeyword, countPattern, defaultExt } = opts;
-  if (textMap.size === 1) return [...textMap.keys()][0];
+// Best-effort human-readable title for a candidate master file. Tries an explicit
+// `*title "…"` / `title "…"` (Survex), a `-title "…"` option (Therion `survey … -title`),
+// then the first `*begin <name>` / `survey <name>` block name. Returns '' when nothing fits.
+function extractTitle(text) {
+  let m = text.match(/^\s*\*?title\s+"([^"]*)"/im);
+  if (m) return m[1];
+  m = text.match(/-title\s+"([^"]*)"/i);
+  if (m) return m[1];
+  m = text.match(/^\s*(?:\*?begin|survey)\s+(\S+)/im);
+  if (m) return m[1];
+  return '';
+}
+
+// Resolves an `input`/`*include` path (as written in a file located in `dir`) to its actual
+// textMap key, directory-aware and extension-aware, exactly like flattenFile. Falls back to a
+// basename match (flat multi-file selection where keys are basenames). Returns null if nothing
+// matches. Shared by findRootFiles for both root detection and recursive file counting.
+function resolveInclude(inc, dir, textMap, defaultExt) {
+  const cands = [inc, normalizeRelativePath(dir, inc)];
+  if (defaultExt && !inc.toLowerCase().endsWith(defaultExt)) {
+    cands.push(inc + defaultExt, normalizeRelativePath(dir, inc + defaultExt));
+  }
+  const direct = cands.find((c) => textMap.has(c));
+  if (direct) return direct;
+  const lcBase = inc.split(/[\\/]/).pop().toLowerCase();
+  const lcBaseExt = defaultExt ? lcBase + defaultExt : null;
+  for (const key of textMap.keys()) {
+    const keyBase = key.split(/[\\/]/).pop().toLowerCase();
+    if (keyBase === lcBase || keyBase === lcBaseExt) return key;
+  }
+  return null;
+}
+
+// Number of OTHER files a master pulls in through its recursive `input`/`*include` closure
+// (the master itself is not counted). This is the real "size" of importing that master.
+function recursiveFileCount(rootKey, textMap, opts) {
+  const { includeKeyword, defaultExt } = opts;
+  const visited = new Set();
+  const walk = (key) => {
+    if (visited.has(key)) return;
+    visited.add(key);
+    const text = textMap.get(key);
+    if (text === undefined) return;
+    const slash = Math.max(key.lastIndexOf('/'), key.lastIndexOf('\\'));
+    const dir = slash >= 0 ? key.slice(0, slash) : '';
+    for (const line of text.split(/\r?\n/)) {
+      const tokens = tokenizeLine(line, opts);
+      if (tokens.length >= 2 && tokens[0].toLowerCase() === includeKeyword) {
+        const resolved = resolveInclude(tokens[1], dir, textMap, defaultExt);
+        if (resolved) walk(resolved);
+      }
+    }
+  };
+  walk(rootKey);
+  return visited.size - 1; // exclude the master itself
+}
+
+// Returns the full ranked list of candidate master files as
+// `[{ key, fileCount, title }]` (best first). A "candidate" is a file that no other
+// file `input`s/`*include`s — i.e. a potential top of an include tree. `fileCount` is the
+// number of files reachable through its recursive include closure (used both to rank and to
+// display), `title` a best-effort display name. `findRootFile` is `findRootFiles(...)[0].key`.
+export function findRootFiles(textMap, opts) {
+  const { includeKeyword, defaultExt } = opts;
+  const describe = (key) => ({
+    key,
+    fileCount : recursiveFileCount(key, textMap, opts),
+    title     : extractTitle(textMap.get(key))
+  });
+
+  if (textMap.size === 1) return [describe([...textMap.keys()][0])];
 
   // Mark every file that is referenced by some `input`/`*include`. Resolve each include to
   // its ACTUAL textMap key (directory-aware, same as flattenFile) so that when two files
@@ -160,7 +228,6 @@ export function findRootFile(textMap, opts) {
   // only the truly-referenced one is excluded — not every file with that name. Basename is
   // only used as a last-resort fallback when the path can't be resolved to a key.
   const referencedKeys = new Set();
-  const referencedBasenames = new Set();
   const unresolvedBasenames = new Set();
 
   for (const [fromKey, text] of textMap) {
@@ -170,36 +237,48 @@ export function findRootFile(textMap, opts) {
       const tokens = tokenizeLine(line, opts);
       if (tokens.length >= 2 && tokens[0].toLowerCase() === includeKeyword) {
         const inc = tokens[1];
-        const basename = inc.split(/[\\/]/).pop();
-        referencedBasenames.add(basename);
-        // Candidate keys to resolve this include against (exact, dir-relative, +ext).
-        const cands = [inc, normalizeRelativePath(dir, inc)];
-        if (defaultExt && !inc.toLowerCase().endsWith(defaultExt)) {
-          cands.push(inc + defaultExt, normalizeRelativePath(dir, inc + defaultExt));
-        }
-        const resolved = cands.find((c) => textMap.has(c));
+        const resolved = resolveInclude(inc, dir, textMap, defaultExt);
         if (resolved) referencedKeys.add(resolved);
-        else unresolvedBasenames.add(basename);
+        else unresolvedBasenames.add(inc.split(/[\\/]/).pop());
       }
     }
   }
+
+  // Empty / whitespace-only files (e.g. 0-byte placeholder .th files that litter some
+  // datasets) can't be a master — never offer them as candidates.
+  const nonEmpty = (name) => (textMap.get(name) ?? '').trim() !== '';
 
   // A file is a root candidate if its full key was never referenced. When an include
   // couldn't be resolved to a key (e.g. flat multi-file selection keyed by basename), fall
   // back to excluding by basename so those still work.
   const candidates = [...textMap.keys()].filter((name) => {
+    if (!nonEmpty(name)) return false;
     if (referencedKeys.has(name)) return false;
     const base = name.split(/[\\/]/).pop();
     if (unresolvedBasenames.has(base)) return false;
     return true;
   });
 
-  const ranked = (candidates.length > 0 ? candidates : [...textMap.keys()]).sort((a, b) => {
-    const count = (text) => (text.match(countPattern) ?? []).length;
-    return count(textMap.get(b)) - count(textMap.get(a));
-  });
+  const fallback = [...textMap.keys()].filter(nonEmpty);
+  const ranked = (candidates.length > 0 ? candidates : fallback).map(describe);
+  ranked.sort((a, b) => b.fileCount - a.fileCount);
+  return ranked;
+}
 
-  return ranked[0];
+export function findRootFile(textMap, opts) {
+  return findRootFiles(textMap, opts)[0]?.key ?? [...textMap.keys()][0];
+}
+
+// Decides which master file(s) to import. Returns an array of textMap keys to import:
+//   • 0 candidates  → []        (caller auto-detects a single root)
+//   • 1 candidate   → [thatKey] (unambiguous — import straight through)
+//   • >1 candidates → shows `dialog` so the user picks; returns the chosen keys, or
+//                     `null` when the user cancelled (caller imports nothing).
+export async function chooseRootImports(textMap, opts, dialog) {
+  const cands = findRootFiles(textMap, opts);
+  if (cands.length <= 1) return cands.map((c) => c.key);
+  const sel = await dialog.show(cands);
+  return sel; // string[] of chosen keys, or null if cancelled
 }
 
 // Resolves an include path against the including file's directory, collapsing

@@ -68,7 +68,7 @@ export async function dismissNotifications(page) {
  */
 export async function setupWithCave(page, fixture = 'sample-cave.json', caveName = 'Test Cave') {
   await setupWithProject(page);
-  await page.locator('#caveInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
   await expect(page.locator('#explorer-tree').locator(`text=${caveName}`)).toBeVisible({ timeout: 10000 });
   // Dismiss success notification so it doesn't intercept clicks
   await dismissNotifications(page);

@@ -58,15 +58,20 @@
       <div class="step row">
         <div class="column-2">
           <h3>1. lépés: Importálás indítása</h3>
-          <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő importálási opciót:</p>
+          <p>Kattintson a "Fájl" menüre, majd válassza ki a megfelelő opciót:</p>
           <ul>
-            <li><strong>"Barlang(ok) megnyitása":</strong> JSON, .cave, Therion (.th), Survex (.svx) és Survex (.3d) fájlokhoz</li>
             <li
-              ><strong>"Barlangmappa megnyitása":</strong> egy teljes mappa rekurzív importálása. Hasznos több mappára
-              tagolt Therion/Survex projekteknél (pl. egy rendszer, amelynek az <code>input</code>/<code>*include</code>
-              hivatkozásai különböző almappákban lévő fájlokra mutatnak).</li
+              ><strong>"Fájl megnyitása":</strong> tetszőleges barlang- és modellfájlok megnyitása egy lépésben — JSON,
+              .cave, Therion (.th), Survex (.svx, .3d), valamint a 3D modellek (PLY, OBJ, LAS, LAZ és a domborzati
+              ASC, HGT, XYZ, GeoTIFF). Több fájl egyszerre is kijelölhető; mindegyik azonnal importálódik.</li
             >
-            <li><strong>"Model megnyitása":</strong> PLY, OBJ, LAS és LAZ fájlokhoz</li>
+            <li
+              ><strong>"Mappa megnyitása":</strong> egy teljes mappa rekurzív importálása (az al-mappákkal együtt). A
+              mappában talált összes barlang és modell egy <strong>kiválasztó panelen</strong> jelenik meg, ahol
+              eldönthető, melyeket szeretnénk importálni. Hasznos több mappára tagolt Therion/Survex projekteknél (pl.
+              egy rendszer, amelynek az <code>input</code>/<code>*include</code> hivatkozásai különböző almappákban lévő
+              fájlokra mutatnak).</li
+            >
           </ul>
         </div>
 
@@ -75,8 +80,8 @@
 
       <div class="step row">
         <div class="column-2">
-          <h3>2. lépés: Fájl kiválasztása</h3>
-          <p>A fájl kiválasztó ablakban navigáljon a kívánt fájlhoz és kattintson a "Megnyitás" gombra.</p>
+          <h3>2. lépés: Fájl vagy mappa kiválasztása</h3>
+          <p>A megnyíló ablakban navigáljon a kívánt fájl(ok)hoz vagy mappához és erősítse meg a választást.</p>
         </div>
         <div class="image-placeholder column-2 black" style="flex: 70%">
           <img width="500" src="images/4-fajl-panel.png" />
@@ -85,7 +90,29 @@
 
       <div class="step row">
         <div class="column-2">
-          <h3>3. lépés (opcionális): Koordináta rendszer kiválasztása</h3>
+          <h3>3. lépés (mappa megnyitásakor): Importálandó elemek kiválasztása</h3>
+          <p
+            >Ha a mappában egynél több importálható elem található, megjelenik az <strong>importálandó elemek</strong>
+            panel. Minden elem egy soron látható: a neve, alatta a fájl elérési útja, és — ha más fájlokat is behúz
+            (<code>input</code>/<code>*include</code>) — a hivatkozott fájlok száma. Kezdetben minden elem be van jelölve;
+            a feleslegesekről egyszerűen vegye le a pipát, majd kattintson a <strong>"Kijelöltek importálása"</strong>
+            gombra.</p
+          >
+          <ul>
+            <li
+              >Egy átfogó törzsfájl (pl. egy egész rendszer) és annak egy különálló rész-barlangja egyszerre is
+              szerepelhet a listában. Ha mindkettőt bejelölve hagyja, az ismétlődő barlangokat a program csak egyszer
+              importálja (a nagyobb törzsfájl változatát megtartva), és erről figyelmeztetést ad.</li
+            >
+            <li>Az üres (0 bájtos) <code>.th</code> fájlok nem jelennek meg a listában.</li>
+          </ul>
+        </div>
+        <div class="image-placeholder column-2 black" style="flex: 70%"></div>
+      </div>
+
+      <div class="step row">
+        <div class="column-2">
+          <h3>4. lépés (opcionális): Koordináta rendszer kiválasztása</h3>
           <p>A projekt által használt koordináta rendszer kiválasztása.</p>
         </div>
         <div class="image-placeholder column-2 black" style="flex: 70%">
@@ -95,10 +122,11 @@
 
       <div class="step row">
         <div class="column-2">
-          <h3>4. lépés: Importálás feldolgozása</h3>
+          <h3>5. lépés: Importálás feldolgozása</h3>
           <p
-            >Az alkalmazás automatikusan feldolgozza a fájlt és betölti a barlangot. Ha nem volt semmi probléma az
-            importálás során, a barlang megjelenik a felfedező panelben és a 3D nézetablakban. Gratulálunk! 🎉🎊✨</p
+            >Az alkalmazás automatikusan feldolgozza a fájl(oka)t és betölti a barlangokat. A barlangok
+            <strong>ábécé sorrendben</strong> kerülnek a felfedező fába. Ha nem volt semmi probléma az importálás során,
+            a barlang megjelenik a felfedező panelben és a 3D nézetablakban. Gratulálunk! 🎉🎊✨</p
           >
         </div>
         <div class="image-placeholder column-2 black small-padding" style="flex: 70%">
@@ -159,7 +187,7 @@
 
       <div class="step">
         <h3>JSON importálása</h3>
-        <p>1. Kattintson a "Fájl" → "Barlang(ok) megnyitása" menüre</p>
+        <p>1. Kattintson a "Fájl" → "Fájl megnyitása" menüre</p>
         <p>2. Válassza ki a .json fájlt</p>
         <p>3. Az alkalmazás automatikusan betölti a teljes barlang adatokat</p>
       </div>
@@ -188,7 +216,7 @@
 
       <div class="step">
         <h3>Polygon fájl importálása</h3>
-        <p>1. Kattintson a "Fájl" → "Barlang(ok) megnyitása" menüre</p>
+        <p>1. Kattintson a "Fájl" → "Fájl megnyitása" menüre</p>
         <p>2. Válassza ki a .cave fájlt</p>
         <p>3. Koordináta rendszer kiválasztása</p>
         <p>4. Az alkalmazás megnyitja a Polygon fájlt</p>
@@ -381,7 +409,7 @@
 
       <div class="step">
         <h3>Egyetlen Therion fájl importálása</h3>
-        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>1. Kattintson a <strong>Fájl &rarr; Fájl megnyitása</strong> menüre</p>
         <p>2. Válassza ki a <code>.th</code> fájlt</p>
         <p>3. Ha a fájl tartalmaz koordináta rendszert (<code>cs</code>) és rögzített pontot (<code>fix</code>),
            a georeferencia automatikusan betöltődik; ellenkező esetben a koordináta rendszer kiválasztó párbeszédablak jelenik meg</p>
@@ -397,7 +425,7 @@
 
       <div class="step">
         <h3>Több fájlból álló projekt importálása</h3>
-        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>1. Kattintson a <strong>Fájl &rarr; Fájl megnyitása</strong> menüre</p>
         <p>2. <strong>Válassza ki az összes <code>.th</code> fájlt egyszerre</strong> a projektmappából
            (Ctrl+A vagy Shift+kattintás a fájl kiválasztóban)</p>
         <p>3. A Speleo Studio automatikusan felismeri a gyökérfájlt és feloldja az <code>input</code> hivatkozásokat</p>
@@ -409,6 +437,11 @@
           >Ha egy <code>input</code> direktívával hivatkozott fájl nincs a kiválasztott fájlok között, a Speleo Studio
           figyelmeztetést jelenít meg, de a rendelkezésre álló adatokat betölti. A <code>.th2</code> (rajz) és
           <code>.thm</code> (morph) fájlokra vonatkozó hivatkozásokat a program nem jelzi hiányzóként.</p
+        >
+        <p
+          >Több almappára tagolt projektnél kényelmesebb a <strong>Fájl &rarr; Mappa megnyitása</strong> használata: az
+          egész mappát rekurzívan beolvassa, és ha több törzsfájlt talál (ami ugyanazokat a barlangokat többszörösen is
+          leírhatja), egy <strong>kiválasztó panelen</strong> lehet eldönteni, melyik(eke)t importáljuk.</p
         >
       </div>
 
@@ -519,7 +552,7 @@ data dimensions station left right up down
 
       <div class="step">
         <h3>Egyetlen Survex fájl importálása</h3>
-        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>1. Kattintson a <strong>Fájl &rarr; Fájl megnyitása</strong> menüre</p>
         <p>2. Válassza ki a <code>.svx</code> fájlt</p>
         <p>3. Ha a fájl tartalmaz koordináta rendszert (<code>*cs</code>) és rögzített pontot (<code>*fix</code>),
            a georeferencia automatikusan betöltődik; ellenkező esetben a koordináta rendszer kiválasztó párbeszédablak jelenik meg</p>
@@ -535,7 +568,7 @@ data dimensions station left right up down
 
       <div class="step">
         <h3>Több fájlból álló projekt importálása</h3>
-        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>1. Kattintson a <strong>Fájl &rarr; Fájl megnyitása</strong> menüre</p>
         <p>2. <strong>Válassza ki az összes <code>.svx</code> fájlt egyszerre</strong> a projektmappából
            (Ctrl+A vagy Shift+kattintás a fájl kiválasztóban)</p>
         <p>3. A Speleo Studio automatikusan felismeri a gyökérfájlt és feloldja az <code>*include</code> hivatkozásokat</p>
@@ -638,7 +671,7 @@ data dimensions station left right up down
 
       <div class="step">
         <h3>Egyetlen .3d fájl importálása</h3>
-        <p>1. Kattintson a <strong>Fájl &rarr; Barlang(ok) megnyitása</strong> menüre</p>
+        <p>1. Kattintson a <strong>Fájl &rarr; Fájl megnyitása</strong> menüre</p>
         <p>2. Válassza ki a <code>.3d</code> fájlt</p>
         <p>3. Ha a fájl tartalmaz felismert koordináta rendszert, a barlang automatikusan georeferenciát kap;
             ismeretlen koordináta rendszer esetén a barlang georeferencia nélkül, csak megjelenítésre töltődik be</p>
@@ -681,7 +714,7 @@ data dimensions station left right up down
 
       <div class="step">
         <h3>3D modell importálása</h3>
-        <p>1. Kattintson a <strong>Fájl &rarr; Modell megnyitása</strong> menüre</p>
+        <p>1. Kattintson a <strong>Fájl &rarr; Fájl megnyitása</strong> menüre</p>
         <p>2. Válassza ki a modell fájlt (.ply, .obj, .las vagy .laz). OBJ fájlokhoz az MTL és textúra fájlokat is kiválaszthatja egyszerre.</p>
         <p>3. Opcionálisan adja meg a WGS84 koordinátákat a megjelenő ablakban</p>
         <p>4. Az alkalmazás betölti a 3D modellt (textúrákkal együtt, ha kiválasztotta)</p>

@@ -16,7 +16,7 @@ async function importPlyModel(page, fixture) {
     }
   };
 
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
   await skipCoordDialog();
   await page.waitForTimeout(3000);
   await dismissNotifications(page);
@@ -31,7 +31,7 @@ test.describe('PLY Point Cloud Import', () => {
   test.describe('Small PLY (simple THREE.Points path)', () => {
 
     test('import small PLY shows coordinate dialog', async ({ page }) => {
-      await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-model.ply'));
 
       const skipBtn = page.locator('#model-coord-skip');
       await expect(skipBtn).toBeVisible({ timeout: 10000 });
@@ -103,7 +103,7 @@ test.describe('PLY Point Cloud Import', () => {
     });
 
     test('large PLY shows coordinate dialog', async ({ page }) => {
-      await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-pointcloud-large.ply'));
+      await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-pointcloud-large.ply'));
 
       const skipBtn = page.locator('#model-coord-skip');
       await expect(skipBtn).toBeVisible({ timeout: 10000 });

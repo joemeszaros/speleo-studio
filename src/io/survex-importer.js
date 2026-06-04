@@ -48,12 +48,15 @@ import { SurveyMetadata, SurveyTeam } from '../model/survey.js';
 import { showInfoPanel } from '../ui/popups.js';
 import { parseMyFloat, angleToDegrees } from '../utils/utils.js';
 import { CoordinateSystemDialog } from '../ui/coordinate-system-dialog.js';
+import { RootFileSelectionDialog } from '../ui/root-file-selection-dialog.js';
 import { i18n } from '../i18n/i18n.js';
 import {
   detectEncoding,
   readFileAsText,
   tokenizeLine,
   findRootFile,
+  findRootFiles,
+  chooseRootImports,
   flattenFile,
   parseDataFormat,
   parseShotRow,
@@ -68,16 +71,16 @@ import {
   stripStn,
   assembleCave,
   parseTeam,
-  applyCase,
+  applyCase
 } from './cave-survey-helpers.js';
 
 const SURVEX_OPTS = {
-  commentChar    : ';',
-  stripStarPrefix: true,
-  includeKeyword : 'include',
-  countPattern   : /^\s*\*include\b/gim,
-  skipExtensions : [],
-  defaultExt     : '.svx', // Survex `*include` allows omitting the .svx extension
+  commentChar     : ';',
+  stripStarPrefix : true,
+  includeKeyword  : 'include',
+  countPattern    : /^\s*\*include\b/gim,
+  skipExtensions  : [],
+  defaultExt      : '.svx' // Survex `*include` allows omitting the .svx extension
 };
 
 // Convert a Survex dotted station reference (`survey.sub.STATION`) used in *equate / *fix into
@@ -100,20 +103,38 @@ class SurvexImporter extends Importer {
   constructor(db, options, scene, manager) {
     super(db, options, scene, manager);
     this.coordinateSystemDialog = new CoordinateSystemDialog();
+    this.rootFileDialog = new RootFileSelectionDialog();
   }
 
   // ─── Public API ──────────────────────────────────────────────────────────────
 
-  /** Batch entry point: filesMap is Map<filename, File>. All .svx files passed together. */
-  async importFiles(filesMap, onCaveLoad) {
+  /** Reads every File in `filesMap` to text (auto-detecting encoding) → Map<key, text>. */
+  async buildTextMap(filesMap) {
     const textMap = new Map();
     for (const [name, file] of filesMap) {
       const encoding = await detectEncoding(file);
       textMap.set(name, await readFileAsText(file, encoding));
     }
-    const caves = await this.getCaves(textMap);
-    for (const cave of caves) {
-      if (cave) await onCaveLoad(cave);
+    return textMap;
+  }
+
+  /** Ranked candidate master files in `textMap` (`[{ key, fileCount, title }]`). */
+  getRootCandidates(textMap) {
+    return findRootFiles(textMap, SURVEX_OPTS);
+  }
+
+  /** Batch entry point: filesMap is Map<filename, File>. All .svx files passed together. */
+  async importFiles(filesMap, onCaveLoad) {
+    const textMap = await this.buildTextMap(filesMap);
+    // When several candidate masters describe overlapping caves, let the user pick which
+    // one(s) to import; otherwise import the single (auto-detected) master's include tree.
+    const roots = await chooseRootImports(textMap, SURVEX_OPTS, this.rootFileDialog);
+    if (roots === null) return; // user cancelled
+    const targets = roots.length ? roots : [undefined]; // [] ⇒ auto-detect single tree
+    for (const root of targets) {
+      for (const cave of await this.getCaves(textMap, root)) {
+        if (cave) await onCaveLoad(cave);
+      }
     }
   }
 
@@ -126,9 +147,9 @@ class SurvexImporter extends Importer {
    * Returns all caves found in the file. A connected system is one cave (with sub-caves);
    * a file that just groups several unconnected caves yields one cave per independent cave.
    */
-  async getCaves(textMap) {
-    const rootName = this.#findRootFile(textMap);
-    return await this.#parseSurvex(rootName, textMap);
+  async getCaves(textMap, rootName) {
+    const root = rootName ?? this.#findRootFile(textMap);
+    return await this.#parseSurvex(root, textMap);
   }
 
   /** Public for testing: returns the first (or only) cave. */
@@ -138,8 +159,12 @@ class SurvexImporter extends Importer {
 
   // ─── Root file detection / tokenizer / include expansion ─────────────────────
 
-  #findRootFile(textMap)                               { return findRootFile(textMap, SURVEX_OPTS); }
-  #flattenFile(filename, textMap, visited, unresolved) { return flattenFile(filename, textMap, visited, unresolved, SURVEX_OPTS); }
+  #findRootFile(textMap) {
+    return findRootFile(textMap, SURVEX_OPTS);
+  }
+  #flattenFile(filename, textMap, visited, unresolved) {
+    return flattenFile(filename, textMap, visited, unresolved, SURVEX_OPTS);
+  }
 
   // ─── Main parser ──────────────────────────────────────────────────────────────
 
@@ -148,10 +173,10 @@ class SurvexImporter extends Importer {
     const lines = this.#flattenFile(rootFilename, textMap, new Set(), unresolvedIncludes);
 
     const context = {
-      surveyStack     : [],   // stack of active *begin blocks
-      surveys         : [],   // completed survey objects
-      topLevelEquates : [],   // ALL equates, tagged with their declaring block path (see below)
-      topLevelFixes   : [],   // *fix declared outside any *begin block (e.g. a master file's anchor)
+      surveyStack     : [], // stack of active *begin blocks
+      surveys         : [], // completed survey objects
+      topLevelEquates : [], // ALL equates, tagged with their declaring block path (see below)
+      topLevelFixes   : [], // *fix declared outside any *begin block (e.g. a master file's anchor)
       globalCs        : null,
       globalCase      : 'tolower', // Survex default: names folded to lower case (case-insensitive)
       caveTitle       : null,
@@ -202,23 +227,25 @@ class SurvexImporter extends Importer {
 
     // Build a fresh state for a new *begin block, inheriting from parent state.
     const makeState = (parent) => ({
-      date          : parent?.date ?? null,
-      teamName      : parent?.teamName ?? null,
-      members       : [],
-      declination          : parent?.declination ?? 0,
-      cartesianNorth       : parent?.cartesianNorth ?? 'true',
-      cartesianExtraRot    : parent?.cartesianExtraRot ?? 0,
-      units         : parent ? { ...parent.units } : { length: 'meters', compass: 'degrees', clino: 'degrees' },
-      calibration   : parent ? { ...parent.calibration } : { length: 0, lengthScale: 1, compass: 0, compassScale: 1, clino: 0, clinoScale: 1 },
-      stationPrefix : parent?.stationPrefix ?? '',
-      stationSuffix : parent?.stationSuffix ?? '',
+      date              : parent?.date ?? null,
+      teamName          : parent?.teamName ?? null,
+      members           : [],
+      declination       : parent?.declination ?? 0,
+      cartesianNorth    : parent?.cartesianNorth ?? 'true',
+      cartesianExtraRot : parent?.cartesianExtraRot ?? 0,
+      units             : parent ? { ...parent.units } : { length: 'meters', compass: 'degrees', clino: 'degrees' },
+      calibration       : parent
+        ? { ...parent.calibration }
+        : { length: 0, lengthScale: 1, compass: 0, compassScale: 1, clino: 0, clinoScale: 1 },
+      stationPrefix     : parent?.stationPrefix ?? '',
+      stationSuffix     : parent?.stationSuffix ?? '',
       // *case is block-scoped and inherited by nested blocks, like units/calibrate.
-      caseMode      : parent?.caseMode ?? context.globalCase,
-      cs            : parent?.cs ?? context.globalCs,
-      fixes         : [],
-      equates       : [],
-      fmt           : parent ? parent.fmt : null,   // inherit active data format
-      isSplay       : parent?.isSplay ?? false,
+      caseMode          : parent?.caseMode ?? context.globalCase,
+      cs                : parent?.cs ?? context.globalCs,
+      fixes             : [],
+      equates           : [],
+      fmt               : parent ? parent.fmt : null, // inherit active data format
+      isSplay           : parent?.isSplay ?? false,
       stationComments   : [],
       stationDimensions : []
     });
@@ -227,10 +254,23 @@ class SurvexImporter extends Importer {
     const stack = [];
 
     const IGNORE_KWS = new Set([
-      'cs',       // catches malformed *cs with no argument (valid *cs handled above)
-      'entrance', 'title', 'copyright', 'ref', 'sd', 'instrument',
-      'solve', 'require', 'truncate', 'infer',
-      'export', 'passage', 'endpassage', 'walls', 'endwalls', 'nosurvey',
+      'cs', // catches malformed *cs with no argument (valid *cs handled above)
+      'entrance',
+      'title',
+      'copyright',
+      'ref',
+      'sd',
+      'instrument',
+      'solve',
+      'require',
+      'truncate',
+      'infer',
+      'export',
+      'passage',
+      'endpassage',
+      'walls',
+      'endwalls',
+      'nosurvey'
     ]);
 
     for (const tokens of lines) {
@@ -253,12 +293,12 @@ class SurvexImporter extends Importer {
         stack.push({
           name,
           surveyPath,
-          state         : makeState(parentState),
-          shots         : [],
-          shotId        : 0,
-          stationPairs  : [],
-          pendingLine1  : null,
-          pendingState  : null
+          state        : makeState(parentState),
+          shots        : [],
+          shotId       : 0,
+          stationPairs : [],
+          pendingLine1 : null,
+          pendingState : null
         });
         continue;
       }
@@ -423,7 +463,10 @@ class SurvexImporter extends Importer {
       }
 
       // ── *team ──────────────────────────────────────────────────────────────
-      if (kw === 'team') { parseTeam(tokens, state); continue; }
+      if (kw === 'team') {
+        parseTeam(tokens, state);
+        continue;
+      }
 
       // ── *cartesian ──────────────────────────────────────────────────────────
       // Specifies which North cartesian data is aligned to, with optional rotation.

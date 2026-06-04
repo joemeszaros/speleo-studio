@@ -16,7 +16,7 @@ async function importLasModel(page, fixture = 'sample-pointcloud.las') {
     }
   };
 
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
   await skipCoordDialog();
   await page.waitForTimeout(3000); // allow worker to parse + build octree
   await dismissNotifications(page);
@@ -29,7 +29,7 @@ test.describe('LAS Point Cloud Import', () => {
   });
 
   test('import LAS file shows coordinate dialog', async ({ page }) => {
-    await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, 'sample-pointcloud.las'));
+    await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, 'sample-pointcloud.las'));
 
     // Coordinate dialog should appear
     const skipBtn = page.locator('#model-coord-skip');
@@ -79,7 +79,7 @@ test.describe('LAS Point Cloud Import', () => {
   });
 
   test('LAS file input accepts .las extension', async ({ page }) => {
-    const accept = await page.locator('#modelInput').getAttribute('accept');
+    const accept = await page.locator('#openFileInput').getAttribute('accept');
     expect(accept).toContain('.las');
     expect(accept).toContain('.laz');
   });

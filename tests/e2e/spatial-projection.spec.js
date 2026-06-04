@@ -5,7 +5,7 @@ import { initApp, closeProjectPanel, setupWithProject, dismissNotifications } fr
 const fixturesDir = path.resolve('tests/fixtures');
 
 async function importModelSkipCoords(page, fixture) {
-  await page.locator('#modelInput').setInputFiles(path.join(fixturesDir, fixture));
+  await page.locator('#openFileInput').setInputFiles(path.join(fixturesDir, fixture));
   const skipBtn = page.locator('#model-coord-skip');
   await skipBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   if (await skipBtn.isVisible()) {
