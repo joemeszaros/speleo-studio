@@ -117,9 +117,12 @@ export const DEFAULT_OPTIONS = {
       }
     },
     sections : {
-      color  : '#00ff2a',
-      width  : 2.0,
-      labels : {
+      color          : '#00ff2a',
+      startColor     : '#00ff2a',
+      endColor       : '#ff2a00',
+      markerInterval : 10,
+      width          : 2.0,
+      labels         : {
         size        : 5,
         show        : true,
         strokeColor : '#000000',
@@ -481,6 +484,19 @@ export class ConfigManager {
     }
     if (config.scene.models.color.defaultColor === undefined) {
       config.scene.models.color.defaultColor = '#90ee90';
+    }
+
+    // Backfill shortest-path highlight keys for configs saved before they existed.
+    if (config.scene.sections !== undefined) {
+      if (config.scene.sections.startColor === undefined) {
+        config.scene.sections.startColor = '#00ff2a';
+      }
+      if (config.scene.sections.endColor === undefined) {
+        config.scene.sections.endColor = '#ff2a00';
+      }
+      if (config.scene.sections.markerInterval === undefined) {
+        config.scene.sections.markerInterval = 10;
+      }
     }
 
     if (config.scene.spatialView === undefined || config.scene.spatialView.projection === undefined) {

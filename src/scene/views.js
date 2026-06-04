@@ -279,6 +279,7 @@ class View {
   onZoomLevelChange(level) {
     this.updateRationSprites(level);
     this.scene.startPoint.updateAllStartPointSizesThrottled();
+    this.scene.segments.updateSegmentsEndpointSizesThrottled();
     document.dispatchEvent(new CustomEvent('zoomLevelChanged', { detail: { level } }));
   }
 
@@ -850,6 +851,7 @@ class SpatialView extends View {
       // Perspective wheel-dolly: camera translates, frustum corners move too.
       this.updateFrustumFrame();
       this.scene.startPoint.updateAllStartPointSizesThrottled();
+      this.scene.segments.updateSegmentsEndpointSizesThrottled();
     } else if (e.type === 'pan') {
       this.scene.points.setCameraTargetPosition(this.control.getTarget());
     }
@@ -870,6 +872,7 @@ class SpatialView extends View {
       this.onZoomLevelChange(this.control.zoom);
     } else {
       this.scene.startPoint.updateAllStartPointSizes();
+      this.scene.segments.updateSegmentsEndpointSizes();
     }
   }
 

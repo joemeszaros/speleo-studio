@@ -80,23 +80,103 @@ export class SegmentScene {
       const tubeGroup = SegmentScene.createTubeGeometryFromSegments(segments, this.options.scene.sections.width);
       tubeGroup.name = name;
       tubeGroup.layers.set(1);
-      // Apply material to all tube segments in the group
-      tubeGroup.children.forEach((tubeMesh) => {
-        tubeMesh.material = new THREE.MeshBasicMaterial({
-          color       : new THREE.Color(color),
-          transparent : false,
-          opacity     : 1.0
-        });
-      });
+      // Colour each segment along a start→end gradient, with an "on top" material so the
+      // path stays visible through nearer passages.
+      this.#applyGradientToTube(tubeGroup, color);
       this.tubes3DGroup.add(tubeGroup);
+
+      const markers = this.#createMarkers(segments, color);
+      this.tubes3DGroup.add(markers.group);
+
       this.tubes.set(id, {
         tube     : tubeGroup,
+        markers  : markers,
         segments : segments,
         color    : color,
         caveName : caveName
       });
       this.scene.view.renderView();
     }
+  }
+
+  // Builds the endpoint markers (green start / red end) plus optional bead spheres
+  // every N path vertices. Returns { group, spheres } where each sphere carries a
+  // userData.pxFactor so it can be re-sized on zoom.
+  #createMarkers(segments, color) {
+    const group = new THREE.Group();
+    group.name = 'shortest-path-markers';
+    group.layers.set(1);
+    const spheres = [];
+
+    const vertices = SegmentScene.getOrderedVertices(segments);
+    if (vertices.length === 0) {
+      return { group, spheres };
+    }
+
+    const px = this.scene.view.control.getWorldUnitsForPixels(8);
+    const sectionsCfg = this.options.scene.sections;
+    const interval = sectionsCfg.markerInterval ?? 0;
+
+    const addSphere = (pos, hexColor, pxFactor, renderOrder) => {
+      const geometry = new THREE.SphereGeometry(px * pxFactor, 12, 12);
+      const material = new THREE.MeshBasicMaterial({
+        color       : new THREE.Color(hexColor),
+        depthTest   : false,
+        depthWrite  : false,
+        transparent : true,
+        opacity     : 1.0
+      });
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.copy(pos);
+      sphere.renderOrder = renderOrder;
+      sphere.layers.set(1);
+      sphere.userData.pxFactor = pxFactor;
+      group.add(sphere);
+      spheres.push(sphere);
+    };
+
+    const startColor = sectionsCfg.startColor ?? color;
+    const endColor = sectionsCfg.endColor ?? color;
+    const lastIndex = vertices.length - 1;
+
+    // Bead spheres at every Nth intermediate vertex (skip the two endpoints), coloured
+    // along the same start→end gradient as the tube.
+    if (interval > 0) {
+      for (let i = interval; i < lastIndex; i += interval) {
+        const t = lastIndex > 0 ? i / lastIndex : 0;
+        addSphere(vertices[i], SegmentScene.gradientColor(startColor, endColor, t), 0.7, 1000);
+      }
+    }
+
+    // Endpoint markers drawn last/on top (the gradient ends).
+    addSphere(vertices[0], startColor, 1.4, 1001);
+    addSphere(vertices[lastIndex], endColor, 1.4, 1001);
+
+    return { group, spheres };
+  }
+
+  // Colours each child segment of a tube group along a start→end gradient and gives it
+  // the on-top material + render order. Gradient ends come from sections.startColor/endColor
+  // (falling back to the supplied solid color).
+  #applyGradientToTube(tubeGroup, fallbackColor) {
+    const sectionsCfg = this.options.scene.sections;
+    const startColor = sectionsCfg.startColor ?? fallbackColor;
+    const endColor = sectionsCfg.endColor ?? fallbackColor;
+    const n = tubeGroup.children.length;
+    tubeGroup.children.forEach((tubeMesh, idx) => {
+      const t = n > 1 ? idx / (n - 1) : 0;
+      tubeMesh.material = SegmentScene.createOnTopMaterial(SegmentScene.gradientColor(startColor, endColor, t));
+      tubeMesh.renderOrder = 999;
+    });
+  }
+
+  #disposeMarkers(markers) {
+    if (!markers) return;
+    markers.spheres.forEach((s) => {
+      s.geometry.dispose();
+      s.material.dispose();
+    });
+    this.tubes3DGroup.remove(markers.group);
   }
 
   disposeSegmentsTube(id) {
@@ -114,6 +194,8 @@ export class SegmentScene {
         this.tubes3DGroup.remove(tubeGroup);
       }
 
+      this.#disposeMarkers(e.markers);
+
       this.tubes.delete(id);
       this.scene.view.renderView();
     }
@@ -129,18 +211,64 @@ export class SegmentScene {
       this.tubes3DGroup.remove(e.tube);
 
       const newGroup = SegmentScene.createTubeGeometryFromSegments(e.segments, this.options.scene.sections.width);
-      newGroup.children.forEach((tubeMesh) => {
-        tubeMesh.material = new THREE.MeshBasicMaterial({
-          color       : new THREE.Color(e.color),
-          transparent : false,
-          opacity     : 1.0
-        });
-      });
+      this.#applyGradientToTube(newGroup, e.color);
       newGroup.layers.set(1);
       this.tubes3DGroup.add(newGroup);
       e.tube = newGroup;
     });
     this.scene.view.renderView();
+  }
+
+  // Keep endpoint/bead markers a constant pixel size as the user zoom changes.
+  updateSegmentsEndpointSizes() {
+    const px = this.scene.view.control.getWorldUnitsForPixels(8);
+    this.tubes.forEach((e) => {
+      e.markers?.spheres.forEach((s) => {
+        s.geometry.dispose();
+        s.geometry = new THREE.SphereGeometry(px * s.userData.pxFactor, 12, 12);
+      });
+    });
+  }
+
+  // Throttled variant for high-frequency callers (wheel zoom / dolly), mirroring
+  // StartPointScene.updateAllStartPointSizesThrottled.
+  updateSegmentsEndpointSizesThrottled() {
+    this._tick = (this._tick ?? 0) + 1;
+    if (this._tick % 3 === 0) {
+      this.updateSegmentsEndpointSizes();
+    }
+    clearTimeout(this._settleTimer);
+    this._settleTimer = setTimeout(() => this.updateSegmentsEndpointSizes(), 80);
+  }
+
+  // Linearly interpolated colour between two colours (hex strings or THREE.Color),
+  // t in [0, 1]. Returns a new THREE.Color.
+  static gradientColor(startColor, endColor, t) {
+    return new THREE.Color(startColor).lerp(new THREE.Color(endColor), t);
+  }
+
+  // Material that renders on top of the rest of the scene (no depth test/write),
+  // so the highlighted path is never occluded by nearer passages.
+  static createOnTopMaterial(color) {
+    return new THREE.MeshBasicMaterial({
+      color       : new THREE.Color(color),
+      depthTest   : false,
+      depthWrite  : false,
+      transparent : true,
+      opacity     : 1.0
+    });
+  }
+
+  // Reconstructs the ordered list of path vertices from the flat segment array
+  // [from0, to0, from1(=to0), to1, ...]. Returns Vector3[] of length path.length.
+  static getOrderedVertices(segments) {
+    const vertices = [];
+    if (!segments || segments.length < 6) return vertices;
+    vertices.push(new THREE.Vector3(segments[0], segments[1], segments[2]));
+    for (let i = 3; i + 2 < segments.length; i += 6) {
+      vertices.push(new THREE.Vector3(segments[i], segments[i + 1], segments[i + 2]));
+    }
+    return vertices;
   }
 
   static createTubeGeometryFromSegments(segments, sectionWidth) {
@@ -153,7 +281,7 @@ export class SegmentScene {
     group.name = `tube-geometry-from-segments`;
 
     // Use fixed values for simplicity
-    const tubeRadius = sectionWidth * 0.15; // 15% of line width
+    const tubeRadius = sectionWidth * 0.35; // thicker than the old 15% so the path reads boldly
 
     // Process segments in pairs (start and end points)
     for (let i = 0; i < segments.length; i += 6) {
