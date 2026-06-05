@@ -945,6 +945,72 @@ ${caseLine}
     });
   });
 
+  describe('*entrance', () => {
+    it('marks an in-block station as an entrance (single survey → bare key)', async () => {
+      const svx = `
+*begin test
+  *data normal from to tape compass clino
+  0 1 10 90 0
+  1 2 5 180 -5
+  *entrance 0
+*end test
+`;
+      const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
+      expect(cave.entrances).toEqual(['0']);
+    });
+
+    it('qualifies an in-block entrance to its survey key in a multi-survey cave', async () => {
+      const svx = `
+*begin sys
+  *begin a
+    *data normal from to tape compass clino
+    1 2 10 0 0
+    *entrance 1
+  *end a
+  *begin b
+    *data normal from to tape compass clino
+    1 2 10 90 0
+  *end b
+  *equate a.2 b.1
+*end sys
+`;
+      const cave = await makeImporter().getCave(textMap(['t.svx', svx]));
+      expect(cave.entrances).toEqual(['1@sys.a']);
+      // The entrance key resolves to a real station.
+      expect(cave.getAllStations().has('1@sys.a')).toBe(true);
+    });
+
+    it('resolves a top-level (out-of-block) dotted *entrance to its deep station key', async () => {
+      const svx = `
+*begin sys
+  *begin a
+    *data normal from to tape compass clino
+    1 2 10 0 0
+  *end a
+  *begin b
+    *data normal from to tape compass clino
+    1 2 10 90 0
+  *end b
+  *equate a.2 b.1
+*end sys
+*entrance sys.a.1
+`;
+      const cave = await makeImporter().getCave(textMap(['t.svx', svx]));
+      expect(cave.entrances).toEqual(['1@sys.a']);
+    });
+
+    it('leaves entrances empty when no *entrance is present', async () => {
+      const svx = `
+*begin test
+  *data normal from to tape compass clino
+  0 1 10 90 0
+*end test
+`;
+      const cave = await makeImporter().getCave(textMap(['test.svx', svx]));
+      expect(cave.entrances).toEqual([]);
+    });
+  });
+
 });
 
 // Minimal FileReader polyfill (node test env has none) — backs importFiles' detectEncoding /

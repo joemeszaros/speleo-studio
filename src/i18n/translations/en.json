@@ -218,6 +218,9 @@
         "startPoint": "Cave start point",
         "startPointSize": "Start point size",
         "startPointColor": "Start point color",
+        "entrance": "Cave entrances",
+        "entranceSize": "Entrance size",
+        "entranceColor": "Entrance color",
         "modelDefaultColor": "Model default color",
         "pointCloudPointSize": "Point cloud point size",
         "pointCloudColorStart": "Point cloud color (top)",
@@ -359,6 +362,7 @@
         "openSurveyEditor": "Open survey editor",
         "editStationComments": "Edit station comments",
         "editStationDimensions": "Edit station dimensions (LRUD)",
+        "editEntrances": "Edit entrances",
         "editSurveyAliases": "Edit survey aliases"
       },
       "confirm": {
@@ -765,6 +769,7 @@
           "componentAttributes": "Component attributes",
           "stationComments": "Station comments",
           "stationDimensions": "Station dimensions (LRUD)",
+          "entrances": "Entrances",
           "length": "Length",
           "orphanLength": "Length (orphan)",
           "invalidLength": "Length (invalid)",
@@ -874,6 +879,21 @@
         "message": {
           "missingFields": "Row has missing fields: {fields}",
           "duplicateStationComment": "Station comment for station {station} already exists"
+        }
+      },
+      "entrances": {
+        "title": "Entrances: {name}",
+        "station": "Station",
+        "buttons": {
+          "validate": "Validate",
+          "update": "Update"
+        },
+        "columns": {
+          "station": "Station"
+        },
+        "message": {
+          "missingFields": "Row has missing fields: {fields}",
+          "duplicateEntrance": "Entrance for station {station} already exists"
         }
       },
       "surveyAliases": {

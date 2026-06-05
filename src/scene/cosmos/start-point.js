@@ -16,6 +16,11 @@
 
 import * as THREE from 'three';
 
+// Renders two kinds of per-cave point markers, both as pixel-sized spheres in one group:
+//   - the START POINT (first survey's start station) — `scene.startPoints` config / `startPoint` material
+//   - ENTRANCE markers (stations flagged via Survex *entrance / Therion `entrance`) — `scene.entrances`
+//     config / `entrance` material
+// The two share this class and group but have independent color, size and visibility.
 export class StartPointScene {
 
   constructor(options, materials, scene) {
@@ -24,114 +29,184 @@ export class StartPointScene {
     this.scene = scene;
     this.startPoints3DGroup = new THREE.Group();
     this.startPoints3DGroup.name = 'starting points';
-    this.startPointObjects = new Map(); // Map to store starting point objects for each cave
+    // cave.name -> { mesh?, geometry?, entranceMeshes: [{ mesh, geometry }] }
+    this.startPointObjects = new Map();
     this.scene.addObjectToScene(this.startPoints3DGroup);
-
   }
-  toggleStartingPointsVisibility(visible) {
-    this.startPoints3DGroup.children.forEach((child) => {
-      child.visible = visible;
-    });
+
+  // Build a pixel-sized sphere and add it to the group.
+  #makeSphere(position, name, radius, material, visible) {
+    const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
+    const geometry = new THREE.SphereGeometry((radius || 1) * _8_px, 8, 8);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.copy(position);
+    mesh.name = name;
+    mesh.visible = visible;
+    mesh.layers.set(1);
+    this.startPoints3DGroup.add(mesh);
+    return { mesh, geometry };
   }
 
   addOrUpdateStartingPoint(cave) {
-    // Remove existing starting point if it exists
+    // Remove existing markers for this cave if they exist
     if (this.startPointObjects.has(cave.name)) {
       this.removeStartingPoint(cave.name);
     }
-    // Get the first station of the first survey
+
+    const caveVisible = cave.visible !== false;
+    const startCfg = this.options.scene.startPoints;
+    const entCfg = this.options.scene.entrances;
+
+    // Start point — the first survey's start station.
+    let start;
     const firstStation = cave.getFirstStation();
-    if (!firstStation) return;
+    if (firstStation) {
+      start = this.#makeSphere(
+        firstStation.position,
+        `startPoint_${cave.name}`,
+        startCfg.radius,
+        this.mats.sphere.startPoint,
+        startCfg.show && caveVisible
+      );
+    }
 
-    // Use configured radius instead of pixel-based calculation
-    const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
-    const radius = this.options.scene.startPoints.radius || 1;
-
-    // Create a new sphere geometry for the starting point
-    const startPointGeo = new THREE.SphereGeometry(radius * _8_px, 8, 8);
-
-    // Create the starting point mesh
-    const startPoint = new THREE.Mesh(startPointGeo, this.mats.sphere.startPoint);
-    startPoint.position.copy(firstStation.position);
-    startPoint.name = `startPoint_${cave.name}`;
-
-    // Set visibility based on configuration and cave visibility
-    startPoint.visible = this.options.scene.startPoints.show && cave.visible !== false;
-    startPoint.layers.set(1);
-
-    // Add to the starting points group
-    this.startPoints3DGroup.add(startPoint);
-
-    // Store reference for later management
-    this.startPointObjects.set(cave.name, {
-      mesh     : startPoint,
-      geometry : startPointGeo,
-      material : this.mats.sphere.startPoint
+    // Entrance markers — every station flagged as an entrance across this cave's subtree.
+    // Keys match getAllStations() keys (qualified for multi-survey caves, bare otherwise).
+    const allStations = cave.getAllStations();
+    const entranceMeshes = [];
+    const seen = new Set();
+    cave.walk((c) => {
+      (c.entrances ?? []).forEach((key) => {
+        if (seen.has(key)) return;
+        seen.add(key);
+        const station = allStations.get(key);
+        if (station) {
+          entranceMeshes.push(
+            this.#makeSphere(
+              station.position,
+              `entrance_${cave.name}_${key}`,
+              entCfg.radius,
+              this.mats.sphere.entrance,
+              entCfg.show && caveVisible
+            )
+          );
+        }
+      });
     });
 
-    return startPoint;
+    if (!start && entranceMeshes.length === 0) return;
+
+    this.startPointObjects.set(cave.name, {
+      mesh     : start?.mesh,
+      geometry : start?.geometry,
+      entranceMeshes
+    });
+
+    return start?.mesh;
   }
 
   removeStartingPoint(caveName) {
-    const startPointObj = this.startPointObjects.get(caveName);
-    if (startPointObj) {
-      this.startPoints3DGroup.remove(startPointObj.mesh);
-      startPointObj.geometry.dispose();
-      startPointObj.material.dispose();
-      this.startPointObjects.delete(caveName);
+    const obj = this.startPointObjects.get(caveName);
+    if (!obj) return;
+    if (obj.mesh) {
+      this.startPoints3DGroup.remove(obj.mesh);
+      obj.geometry.dispose();
     }
+    (obj.entranceMeshes ?? []).forEach((e) => {
+      this.startPoints3DGroup.remove(e.mesh);
+      e.geometry.dispose();
+    });
+    // Materials are shared across all caves — never dispose them here.
+    this.startPointObjects.delete(caveName);
   }
 
   renameCave(oldName, newName) {
     if (this.startPointObjects.has(oldName)) {
-      const startPointObj = this.startPointObjects.get(oldName);
+      const obj = this.startPointObjects.get(oldName);
       this.startPointObjects.delete(oldName);
-      this.startPointObjects.set(newName, startPointObj);
-      startPointObj.mesh.name = `startPoint_${newName}`;
+      this.startPointObjects.set(newName, obj);
+      if (obj.mesh) obj.mesh.name = `startPoint_${newName}`;
     }
+  }
 
+  // ── Start point appearance ──────────────────────────────────────────────────
+
+  toggleStartingPointsVisibility(visible) {
+    this.startPointObjects.forEach((obj) => {
+      if (obj.mesh) obj.mesh.visible = visible;
+    });
   }
 
   updateStartingPointColor(color) {
+    this.mats.sphere.startPoint.color = new THREE.Color(color);
+  }
+
+  updateStartingPointRadius() {
+    this.updateAllMarkerSizes();
+  }
+
+  // ── Entrance appearance ─────────────────────────────────────────────────────
+
+  toggleEntrancesVisibility(visible) {
     this.startPointObjects.forEach((obj) => {
-      obj.material.color = new THREE.Color(color);
+      (obj.entranceMeshes ?? []).forEach((e) => (e.mesh.visible = visible));
     });
   }
 
-  updateStartingPointRadius(radius) {
-    this.updateAllStartPointSizes(radius);
+  updateEntranceColor(color) {
+    this.mats.sphere.entrance.color = new THREE.Color(color);
   }
 
-  updateAllStartPointSizes(radius) {
-    const r = radius ?? this.options.scene.startPoints.radius ?? 1;
-    const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
-    this.startPointObjects.forEach((obj) => {
-      const newGeometry = new THREE.SphereGeometry(r * _8_px, 8, 8);
-      obj.mesh.geometry.dispose();
-      obj.mesh.geometry = newGeometry;
-      obj.geometry = newGeometry;
-    });
+  updateEntranceRadius() {
+    this.updateAllMarkerSizes();
   }
 
-  // Throttled variant for high-frequency callers (wheel zoom / dolly). Runs
-  // every 3rd call and schedules a trailing-edge flush 80 ms after the last
-  // call so the sphere settles correctly when scrolling stops mid-counter.
-  updateAllStartPointSizesThrottled(radius) {
-    this._tick = (this._tick ?? 0) + 1;
-    if (this._tick % 3 === 0) {
-      this.updateAllStartPointSizes(radius);
-    }
-    clearTimeout(this._settleTimer);
-    this._settleTimer = setTimeout(() => this.updateAllStartPointSizes(radius), 80);
-  }
+  // ── Per-cave visibility (cave shown/hidden in the tree) ─────────────────────
 
   updateStartingPointVisibility(caveName, caveVisible) {
-    const startPointObj = this.startPointObjects.get(caveName);
-    if (startPointObj) {
-      // Update visibility based on both configuration and cave visibility
-      startPointObj.mesh.visible = this.options.scene.startPoints.show && caveVisible;
-      this.scene.view.renderView();
-    }
+    const obj = this.startPointObjects.get(caveName);
+    if (!obj) return;
+    if (obj.mesh) obj.mesh.visible = this.options.scene.startPoints.show && caveVisible;
+    (obj.entranceMeshes ?? []).forEach((e) => (e.mesh.visible = this.options.scene.entrances.show && caveVisible));
+    this.scene.view.renderView();
   }
 
+  // ── Pixel-size maintenance ──────────────────────────────────────────────────
+  // Start points and entrances keep a constant pixel size, so their world-space radius is
+  // recomputed on zoom/dolly. Each kind uses its own configured radius.
+
+  updateAllMarkerSizes() {
+    const _8_px = this.scene.view.control.getWorldUnitsForPixels(8);
+    const startR = this.options.scene.startPoints.radius ?? 1;
+    const entR = this.options.scene.entrances.radius ?? 1;
+    const resize = (mesh, r) => {
+      const geometry = new THREE.SphereGeometry(r * _8_px, 8, 8);
+      mesh.geometry.dispose();
+      mesh.geometry = geometry;
+      return geometry;
+    };
+    this.startPointObjects.forEach((obj) => {
+      if (obj.mesh) obj.geometry = resize(obj.mesh, startR);
+      (obj.entranceMeshes ?? []).forEach((e) => {
+        e.geometry = resize(e.mesh, entR);
+      });
+    });
+  }
+
+  // Kept for the existing zoom callers in views.js.
+  updateAllStartPointSizes() {
+    this.updateAllMarkerSizes();
+  }
+
+  // Throttled variant for high-frequency callers (wheel zoom / dolly). Runs every 3rd call and
+  // schedules a trailing-edge flush 80 ms after the last call so the spheres settle correctly
+  // when scrolling stops mid-counter.
+  updateAllStartPointSizesThrottled() {
+    this._tick = (this._tick ?? 0) + 1;
+    if (this._tick % 3 === 0) {
+      this.updateAllMarkerSizes();
+    }
+    clearTimeout(this._settleTimer);
+    this._settleTimer = setTimeout(() => this.updateAllMarkerSizes(), 80);
+  }
 }

@@ -291,11 +291,13 @@ class Cave {
    *        whole connected network is stored as one root Cave, and the nesting is preserved as a tree
    *        of child Caves. A Survey is always a leaf (shot data) and can never contain a Cave.
    *        `geoData` lives on the root cave only; `aliases`/`stations`/`stationComments`/
-   *        `stationDimensions`/`attributes` are owned per cave at the level they were declared.
+   *        `stationDimensions`/`entrances`/`attributes` are owned per cave at the level they were declared.
    * @param {SurveyAlias[]} - Mapping of connection point between surveys
    * @param {CaveAttributes} attributes - The attributes of the cave (sections and components)
    * @param {StationComment[]} stationComments - Comments for stations in this cave
    * @param {StationDimension[]} stationDimensions - LRUD passage dimensions for stations in this cave
+   * @param {string[]} entrances - Station keys marked as cave entrances (same key form as `stations`:
+   *        survey-qualified `name@surveyPath` for multi-survey caves, bare `name` otherwise)
    * @param {boolean} visible - The visibility property of a cave
    * @param {boolean} readOnly - When true the cave is visualization-only: its station positions are
    *        the source of truth (not rebuilt from shots) and editing is locked. Used for Survex .3d imports.
@@ -311,6 +313,7 @@ class Cave {
     attributes = new CaveAttributes(),
     stationComments = [],
     stationDimensions = [],
+    entrances = [],
     visible = true,
     readOnly = false
   ) {
@@ -326,6 +329,7 @@ class Cave {
     this.attributes = attributes;
     this.stationComments = stationComments;
     this.stationDimensions = stationDimensions;
+    this.entrances = entrances;
     this.visible = visible;
     this.readOnly = readOnly;
     this.version = 1;
@@ -542,7 +546,7 @@ class Cave {
     // Attribute / comment / dimension counts aggregate across the whole subtree
     // (each cave node owns its own).
     var stationAttributes = 0, sectionAttributes = 0, componentAttributes = 0;
-    var stationComments = 0, stationDimensions = 0;
+    var stationComments = 0, stationDimensions = 0, entrances = 0;
     var subCaves = 0;
     this.walk((c) => {
       if (c !== this) subCaves += 1; // every descendant cave (self excluded)
@@ -551,6 +555,7 @@ class Cave {
       componentAttributes += c.attributes.componentAttributes.length;
       stationComments += c.stationComments.length;
       stationDimensions += c.stationDimensions.length;
+      entrances += c.entrances.length;
     });
 
     var minZ = undefined,
@@ -589,6 +594,7 @@ class Cave {
       componentAttributes : componentAttributes,
       stationComments     : stationComments,
       stationDimensions   : stationDimensions,
+      entrances           : entrances,
       subCaves            : subCaves,
       surveys             : surveys,
       isolated            : isolated,
@@ -620,6 +626,12 @@ class Cave {
       stationDimensions : this.stationDimensions.map((sd) => sd.toExport()),
       surveys           : this.surveys.map((s) => s.toExport())
     };
+
+    // Stations flagged as cave entrances (Survex *entrance / Therion `entrance` flag).
+    // Omitted when empty so caves without entrances export unchanged.
+    if (this.entrances !== undefined && this.entrances.length > 0) {
+      exported.entrances = [...this.entrances];
+    }
 
     // Nested sub-caves (Therion/Survex hierarchy). Omitted entirely for flat caves so
     // existing 2-level exports are byte-for-byte unchanged.
@@ -681,6 +693,7 @@ class Cave {
       pure.stationComments !== undefined ? pure.stationComments.map((sc) => StationComment.fromPure(sc)) : [];
     pure.stationDimensions =
       pure.stationDimensions !== undefined ? pure.stationDimensions.map((sd) => StationDimension.fromPure(sd)) : [];
+    pure.entrances = Array.isArray(pure.entrances) ? pure.entrances : [];
 
     // Recurse into nested sub-caves. Absent for flat caves (-> empty children array).
     pure.children = Array.isArray(pure.children)

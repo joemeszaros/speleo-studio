@@ -218,6 +218,9 @@
         "startPoint": "Barlang kezdőpont",
         "startPointSize": "Kezdőpont mérete",
         "startPointColor": "Kezdőpont színe",
+        "entrance": "Barlang bejáratok",
+        "entranceSize": "Bejárat mérete",
+        "entranceColor": "Bejárat színe",
         "modelDefaultColor": "Modell alapértelmezett színe",
         "pointCloudPointSize": "Pontfelhő pontméret",
         "pointCloudColorStart": "Pontfelhő szín (felső)",
@@ -359,6 +362,7 @@
         "openSurveyEditor": "Felmérés szerkesztése",
         "editStationComments": "Pont megjegyzések szerkesztése",
         "editStationDimensions": "Pont méretek szerkesztése (LRUD)",
+        "editEntrances": "Bejáratok szerkesztése",
         "editSurveyAliases": "Felmérés aliasok szerkesztése"
       },
       "confirm": {
@@ -768,6 +772,7 @@
           "componentAttributes": "Komponens attribútumok",
           "stationComments": "Pont megjegyzések",
           "stationDimensions": "Pont méretek (LRUD)",
+          "entrances": "Bejáratok",
           "length": "Hossz",
           "orphanLength": "Hossz (árva)",
           "invalidLength": "Hossz (hibás)",
@@ -884,6 +889,21 @@
           "missingFields": "Sor hiányzó mezői: {fields}",
           "duplicateStationComment": "A(z) {station} pont megjegyzése már létezik",
           "invalidRowWithIds": "{nrBadRows} sor érvénytelen: {badRowIds}"
+        }
+      },
+      "entrances": {
+        "title": "Bejáratok: {name}",
+        "station": "Pont",
+        "buttons": {
+          "validate": "Ellenőrzés",
+          "update": "Frissítés"
+        },
+        "columns": {
+          "station": "Pont"
+        },
+        "message": {
+          "missingFields": "A sorból hiányoznak mezők: {fields}",
+          "duplicateEntrance": "A(z) {station} ponthoz már tartozik bejárat"
         }
       },
       "surveyAliases": {

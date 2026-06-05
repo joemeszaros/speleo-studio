@@ -1490,6 +1490,126 @@ endsurvey
       }
     });
   });
+
+  describe('entrance station flag', () => {
+    it('captures the `entrance` flag on a station command (single survey → bare key)', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    0 1 10 90 0
+    1 2 5 180 -5
+    station 0 "main entrance" entrance
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.entrances).toEqual(['0']);
+      // The comment is still captured independently of the flag.
+      expect(cave.stationComments.some((sc) => sc.name === '0')).toBe(true);
+    });
+
+    it('captures the `entrance` flag when the comment is omitted (`station 16 entrance`)', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    16 17 10 90 0
+    station 16 entrance
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.entrances).toEqual(['16']);
+      // `entrance` was a flag, not a comment.
+      expect(cave.stationComments).toHaveLength(0);
+    });
+
+    it('treats a quoted comment that reads "Entrance" as a comment, not the flag', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    1 2 5.0 90.0 0.0
+    station 1 "Entrance"
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.entrances).toEqual([]);
+      expect(cave.stationComments.map((sc) => [sc.name, sc.comment])).toEqual([['1', 'Entrance']]);
+    });
+
+    it('resolves @-addressed entrances declared in a no-shot grouping centreline', async () => {
+      // Mirrors system_migovec.th: the top-level survey's own centreline carries no shots, only
+      // `station <name>@<path> entrance` + matching `fix`. These entrances are owned by no Survey
+      // object, so assembleCave must still collect and resolve them against the real stations.
+      const th = `
+survey sys -title "System"
+  survey alpha
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 0.0 0.0
+    endcentreline
+  endsurvey alpha
+  survey beta
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 90.0 0.0
+    endcentreline
+  endsurvey beta
+  centreline
+    station 1@alpha.sys entrance
+    station 2@beta.sys entrance
+  endcentreline
+  equate 2@alpha.sys 1@beta.sys
+endsurvey sys
+`;
+      const cave = await makeImporter().getCave(textMap(['sys.th', th]));
+      expect(cave.entrances.sort()).toEqual(['1@sys.alpha', '2@sys.beta']);
+      expect(cave.getAllStations().has('1@sys.alpha')).toBe(true);
+      expect(cave.getAllStations().has('2@sys.beta')).toBe(true);
+    });
+
+    it('does not flag a station whose `station` command has no entrance flag', async () => {
+      const th = `
+survey cave
+  centreline
+    data normal from to length compass clino
+    0 1 10 90 0
+    station 0 "just a note"
+    station 1 "fixed point" fixed
+  endcentreline
+endsurvey
+`;
+      const cave = await makeImporter().getCave(textMap(['cave.th', th]));
+      expect(cave.entrances).toEqual([]);
+    });
+
+    it('qualifies an entrance to its survey key in a multi-survey cave', async () => {
+      const th = `
+survey sys -title "Reuse"
+  survey alpha
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 0.0 0.0
+      station 1 "entrance" entrance
+    endcentreline
+  endsurvey alpha
+  survey beta
+    centreline
+      data normal from to length compass clino
+      1 2 5.0 90.0 0.0
+    endcentreline
+  endsurvey beta
+  equate 2@alpha 1@beta
+endsurvey sys
+`;
+      const cave = await makeImporter().getCave(textMap(['sys.th', th]));
+      expect(cave.entrances).toEqual(['1@sys.alpha']);
+      expect(cave.getAllStations().has('1@sys.alpha')).toBe(true);
+    });
+  });
 });
 
 // Minimal FileReader polyfill (node test env has none) — backs importFiles' detectEncoding /

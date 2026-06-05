@@ -179,6 +179,11 @@ export const DEFAULT_OPTIONS = {
       show   : true,
       color  : '#ffff00',
       radius : 1
+    },
+    entrances : {
+      show   : true,
+      color  : '#ff6600',
+      radius : 1
     }
   },
 
@@ -219,6 +224,11 @@ export const DEFAULT_OPTIONS = {
       stationDimensions : {
         height       : 320,
         width        : 700,
+        columnWidths : {}
+      },
+      entrances : {
+        height       : 300,
+        width        : 500,
         columnWidths : {}
       },
       surveyAliases : {
@@ -489,6 +499,12 @@ export class ConfigManager {
     }
     if (config.scene.models.color.defaultColor === undefined) {
       config.scene.models.color.defaultColor = '#90ee90';
+    }
+
+    // Backfill entrance-marker config for configs saved before it existed (entrances render with
+    // their own color / size / visibility, independent of the start point).
+    if (config.scene.entrances === undefined) {
+      config.scene.entrances = { show: true, color: '#ff6600', radius: 1 };
     }
 
     // Backfill shortest-path highlight keys for configs saved before they existed.
@@ -974,6 +990,29 @@ export class ConfigChanges {
   }
 
   /**
+   * Handle entrance marker configuration changes. Entrance markers are rendered by the same
+   * StartPointScene but with their own color / size / visibility.
+   */
+  handleEntranceChanges(path, oldValue, newValue) {
+    switch (path) {
+      case 'scene.entrances.show':
+        this.scene.startPoint.toggleEntrancesVisibility(newValue);
+        break;
+
+      case 'scene.entrances.color':
+        this.mats.sphere.entrance.color = new THREE.Color(newValue);
+        this.scene.startPoint.updateEntranceColor(newValue);
+        break;
+
+      case 'scene.entrances.radius':
+        this.scene.startPoint.updateEntranceRadius(newValue);
+        break;
+    }
+
+    this.scene.view.renderView();
+  }
+
+  /**
    * Handle scene configuration changes
    */
   handleSceneChanges(path, oldValue, newValue) {
@@ -1268,6 +1307,8 @@ export class ConfigChanges {
       this.handleAuxiliaryChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.startPoints')) {
       this.handleStartingPointChanges(path, oldValue, newValue);
+    } else if (path.startsWith('scene.entrances')) {
+      this.handleEntranceChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.caveLines.color')) {
       this.handleCaveLineColorChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.background') || path.startsWith('scene.sections')) {

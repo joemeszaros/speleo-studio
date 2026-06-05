@@ -790,6 +790,12 @@ class CaveEditor extends Editor {
         field     : 'stationDimensions',
         formatter : (v) => v
       },
+      {
+        id        : 'entrances',
+        label     : i18n.t('ui.editors.caveSheet.stats.entrances'),
+        field     : 'entrances',
+        formatter : (v) => v
+      },
       { break: true },
       {
         id        : 'orphanLength',

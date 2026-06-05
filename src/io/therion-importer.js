@@ -274,7 +274,8 @@ class TherionImporter extends Importer {
       fmt               : parseDataFormat(['data', 'normal', 'from', 'to', 'length', 'compass', 'clino']),
       isSplay           : false,
       stationComments   : [],
-      stationDimensions : []
+      stationDimensions : [],
+      entrances         : []
     };
 
     const shots = [];
@@ -389,10 +390,23 @@ class TherionImporter extends Importer {
         continue;
       }
 
-      if (kw === 'station' && tokens.length >= 3) {
-        const stnName = stripStn(qualifyStn(applyStnNames(tokens[1], state), surveyPath));
-        const comment = tokens[2];
-        state.stationComments.push({ station: stnName, comment });
+      if (kw === 'station' && tokens.length >= 2) {
+        const qualified = qualifyStn(applyStnNames(tokens[1], state), surveyPath);
+        const stnName = stripStn(qualified);
+        // `station <name> [<comment>] [<flags>...]`: the comment is an optional QUOTED string and
+        // the flags are bare keywords. After quote-stripping `station 1 "Entrance"` (a comment)
+        // and `station 16 entrance` (a flag) look identical, so rely on the tokenizer's quote
+        // marks: a quoted token right after the name is the comment, everything unquoted is a flag.
+        const commentQuoted = tokens.quoted?.has(2);
+        const flags = commentQuoted ? tokens.slice(3) : tokens.slice(2);
+        if (commentQuoted) {
+          state.stationComments.push({ station: stnName, comment: tokens[2] });
+        }
+        // Capture the `entrance` flag; other flags are not modelled. The fully-qualified
+        // `name@surveyPath` ref lets assembleCave resolve this to the solver's station key.
+        if (flags.some((t) => t.toLowerCase() === 'entrance')) {
+          state.entrances.push({ station: stnName, ref: qualified });
+        }
         continue;
       }
 
@@ -436,7 +450,13 @@ class TherionImporter extends Importer {
       flushStationPairs(stationPairs, shots, shotId, surveyPath);
     }
 
-    if (shots.length === 0 && state.fixes.length === 0 && state.stationDimensions.length === 0) return null;
+    if (
+      shots.length === 0 &&
+      state.fixes.length === 0 &&
+      state.stationDimensions.length === 0 &&
+      state.entrances.length === 0
+    )
+      return null;
 
     const metadata = new SurveyMetadata(
       state.date ?? new Date(),
@@ -457,7 +477,8 @@ class TherionImporter extends Importer {
       fixes             : state.fixes,
       startStation      : shots[0]?.from,
       stationComments   : state.stationComments,
-      stationDimensions : state.stationDimensions
+      stationDimensions : state.stationDimensions,
+      entrances         : state.entrances
     };
   }
 }

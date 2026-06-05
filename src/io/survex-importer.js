@@ -177,6 +177,7 @@ class SurvexImporter extends Importer {
       surveys         : [], // completed survey objects
       topLevelEquates : [], // ALL equates, tagged with their declaring block path (see below)
       topLevelFixes   : [], // *fix declared outside any *begin block (e.g. a master file's anchor)
+      topLevelEntrances : [], // *entrance declared outside any *begin block
       globalCs        : null,
       globalCase      : 'tolower', // Survex default: names folded to lower case (case-insensitive)
       caveTitle       : null,
@@ -247,7 +248,8 @@ class SurvexImporter extends Importer {
       fmt               : parent ? parent.fmt : null, // inherit active data format
       isSplay           : parent?.isSplay ?? false,
       stationComments   : [],
-      stationDimensions : []
+      stationDimensions : [],
+      entrances         : []
     });
 
     // Each stack entry: {name, surveyPath, state, shots, shotId, stationPairs, pendingLine1, pendingState}
@@ -255,7 +257,6 @@ class SurvexImporter extends Importer {
 
     const IGNORE_KWS = new Set([
       'cs', // catches malformed *cs with no argument (valid *cs handled above)
-      'entrance',
       'title',
       'copyright',
       'ref',
@@ -312,7 +313,12 @@ class SurvexImporter extends Importer {
           flushStationPairs(top.stationPairs, top.shots, top.shotId, top.surveyPath);
         }
 
-        if (top.shots.length > 0 || top.state.fixes.length > 0 || top.state.stationDimensions.length > 0) {
+        if (
+          top.shots.length > 0 ||
+          top.state.fixes.length > 0 ||
+          top.state.stationDimensions.length > 0 ||
+          top.state.entrances.length > 0
+        ) {
           const metadata = new SurveyMetadata(
             top.state.date ?? new Date(),
             top.state.declination,
@@ -331,7 +337,8 @@ class SurvexImporter extends Importer {
             fixes             : top.state.fixes,
             startStation      : top.shots[0]?.from,
             stationComments   : top.state.stationComments,
-            stationDimensions : top.state.stationDimensions
+            stationDimensions : top.state.stationDimensions,
+            entrances         : top.state.entrances
           });
         }
         continue;
@@ -388,6 +395,14 @@ class SurvexImporter extends Importer {
         const y = parseMyFloat(tokens[3]);
         const z = parseMyFloat(tokens[4]);
         if (!isNaN(x) && !isNaN(y) && !isNaN(z)) context.topLevelFixes.push({ station: ref, ref, x, y, z });
+        continue;
+      }
+
+      // *entrance declared outside any *begin block. Like a top-level *fix, it has no enclosing
+      // block, so capture it centrally; assembleCave resolves the ref to the real station key.
+      if (kw === 'entrance' && !top && tokens.length >= 2) {
+        const ref = survexRefToInternal(applyCase(tokens[1], context.globalCase));
+        context.topLevelEntrances.push({ ref });
         continue;
       }
 
@@ -453,6 +468,17 @@ class SurvexImporter extends Importer {
         const y = parseMyFloat(tokens[3]);
         const z = parseMyFloat(tokens[4]);
         if (!isNaN(x) && !isNaN(y) && !isNaN(z)) state.fixes.push({ station: stn, ref, x, y, z });
+        continue;
+      }
+
+      // ── *entrance ──────────────────────────────────────────────────────────
+      // Flags a station as a cave entrance. Mirror *fix's name handling: keep both the
+      // qualified-then-stripped station key and a resolvable ref so assembleCave can map a
+      // deep sub-survey entrance to its qualified solver key.
+      if (kw === 'entrance' && tokens.length >= 2) {
+        const stn = stripStn(qualifyStn(applyStnNames(tokens[1], state), top.surveyPath));
+        const ref = survexRefToInternal(applyStnNames(tokens[1], state));
+        state.entrances.push({ station: stn, ref });
         continue;
       }
 

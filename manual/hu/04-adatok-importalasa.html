@@ -399,6 +399,7 @@
           <li>Hivatkozott fájlok (<code>input</code> direktíva)</li>
           <li>Pont méretek (LRUD): <code>data normal</code> sorokba ágyazott
               <code>left right up down</code> oszlopok és önálló <code>data dimensions</code> blokkok</li>
+          <li>Bejáratok (a <code>station</code> parancs <code>entrance</code> jelölője)</li>
         </ul>
         <h5>Amit nem importál (első fázis):</h5>
         <ul>
@@ -471,6 +472,14 @@ station 12 "Elágazás - főág jobbra" continuation</div>
         <li><strong>Második és további megjegyzések ugyanahhoz az állomáshoz:</strong> barlang szintű pont megjegyzésként tárolódnak</li>
       </ul>
 
+      <p>
+        A <code>station</code> parancs jelölői közül a Speleo Studio az <code>entrance</code> jelölőt ismeri fel,
+        amely az állomást a barlang bejárataként jelöli (a fenti példában a <code>continuation</code> jelölő nem
+        kerül feldolgozásra). A megjegyzés elhagyható, így a <code>station 5 entrance</code> forma is érvényes. A
+        felismert bejáratok külön színű jelölőként jelennek meg a 3D jelenetben, és a
+        <a href="06-barlang-szerkesztese.html">bejárat szerkesztőben</a> kezelhetők.
+      </p>
+
       <div class="warning">
         <h3>⚠️ Therion importálás megjegyzések</h3>
         <ul>
@@ -541,6 +550,8 @@ data dimensions station left right up down
           <li>Hivatkozott fájlok (<code>*include</code> direktíva)</li>
           <li>Pont méretek (LRUD): <code>*data normal</code> sorokba ágyazott
               <code>left right up down</code> oszlopok és önálló <code>*data passage</code> blokkok</li>
+          <li>Bejáratok (<code>*entrance</code> parancs) &mdash; a blokkon belül és a blokkon kívül (a teljes
+              útvonallal megadott) jelölés is</li>
         </ul>
         <h5>Amit nem importál:</h5>
         <ul>

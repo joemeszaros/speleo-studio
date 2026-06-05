@@ -100,6 +100,7 @@ class ProjectManager {
     document.addEventListener('stationAttributesChanged', (e) => this.onAttributesChanged(e));
     document.addEventListener('surveyCommentsChanged', (e) => this.onSurveyCommentsChanged(e));
     document.addEventListener('stationDimensionsChanged', (e) => this.onStationDimensionsChanged(e));
+    document.addEventListener('entrancesChanged', (e) => this.onEntrancesChanged(e));
   }
 
   async saveCave(cave) {
@@ -207,6 +208,26 @@ class ProjectManager {
   async onStationDimensionsChanged(e) {
     const cave = e.detail.cave;
     await this.saveCave(cave);
+  }
+
+  async onEntrancesChanged(e) {
+    const cave = e.detail.cave;
+    // Scene markers and persistence are keyed by the top-level (root) cave; the edited node may be
+    // a sub-cave, so find the root that owns it before refreshing markers / saving.
+    let root = cave;
+    for (const c of this.db.getAllCaves()) {
+      let found = false;
+      c.walk((n) => {
+        if (n === cave) found = true;
+      });
+      if (found) {
+        root = c;
+        break;
+      }
+    }
+    this.scene.startPoint.addOrUpdateStartingPoint(root);
+    this.scene.view.renderView();
+    await this.saveCave(root);
   }
 
   async onSurveyDataEdited(e) {

@@ -122,6 +122,11 @@ export async function readFileAsText(file, encoding) {
 export function tokenizeLine(line, opts) {
   const { commentChar, stripStarPrefix } = opts;
   const tokens = [];
+  // Indices of tokens that came from a double-quoted string. Lets callers tell a quoted value
+  // (e.g. a Therion `station` comment) from a bare keyword that survived quote-stripping with the
+  // same text (e.g. the `entrance` flag). Attached to the returned array; ignored by callers that
+  // don't need it.
+  const quoted = new Set();
   let i = 0;
   while (i < line.length) {
     while (i < line.length && (line[i] === ' ' || line[i] === '\t')) i++;
@@ -136,6 +141,7 @@ export function tokenizeLine(line, opts) {
         i++;
       }
       if (i < line.length) i++; // skip closing quote
+      quoted.add(tokens.length);
       tokens.push(str);
     } else {
       let token = '';
@@ -147,6 +153,7 @@ export function tokenizeLine(line, opts) {
       }
     }
   }
+  tokens.quoted = quoted;
   return tokens;
 }
 
@@ -916,6 +923,7 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
       m.fixes.push(...s.fixes);
       m.stationComments.push(...(s.stationComments ?? []));
       m.stationDimensions.push(...(s.stationDimensions ?? []));
+      m.entrances.push(...(s.entrances ?? []));
       if (!m.cs && s.cs) m.cs = s.cs;
     } else {
       mergedMap.set(s.surveyPath, {
@@ -924,7 +932,8 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
         equates           : [...s.equates],
         fixes             : [...s.fixes],
         stationComments   : [...(s.stationComments ?? [])],
-        stationDimensions : [...(s.stationDimensions ?? [])]
+        stationDimensions : [...(s.stationDimensions ?? [])],
+        entrances         : [...(s.entrances ?? [])]
       });
     }
   }
@@ -968,6 +977,14 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
           const resolved = resolveRef(fix.ref, s.surveyPath, allPaths);
           // Adopt the qualified form only when it resolves to a real survey path.
           if (resolved.includes('@')) fix.station = resolved;
+        }
+      }
+      // Same treatment for *entrance refs (Survex stores a ref; Therion stores only the
+      // already-qualified station). A single-survey cave keeps bare keys, so leave them.
+      for (const e of s.entrances ?? []) {
+        if (e.ref !== undefined) {
+          const resolved = resolveRef(e.ref, s.surveyPath, allPaths);
+          if (resolved.includes('@')) e.station = resolved;
         }
       }
     }
@@ -1077,6 +1094,18 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
     fix.station = resolved;
     (nodeForPath(fixPath)._fixes ??= []).push(fix);
   }
+
+  // Survex top-level *entrance (declared outside any *begin) — resolve each ref to its station key.
+  const topLevelEntranceStations = (context.topLevelEntrances ?? []).map((e) => resolveRef(e.ref, '', allPaths));
+  // Every entrance station key across the import: top-level *entrance plus every survey entry's
+  // entrances. We read straight from `surveys` (not via the per-cave Survey objects) so entrances
+  // declared in a no-shot grouping centreline — e.g. Therion's `system_migovec` centreline whose
+  // `station … entrance` lines own no shots — are not lost. The per-cave distribution below keeps
+  // only the keys that resolve to a real station in that cave.
+  const allEntranceStations = [
+    ...topLevelEntranceStations,
+    ...surveys.flatMap((s) => (s.entrances ?? []).map((e) => e.station))
+  ];
 
   // Prefer the block's title for cave node names (keep the segment as fallback).
   for (const [path, node] of caveByPath) node.name = titleFor(path, node.name);
@@ -1339,6 +1368,8 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
       const cave = (stations.get(name)?.survey && surveyToCave.get(stations.get(name).survey)) ?? caveRoot;
       cave.stationDimensions.push(new StationDimension(name, l.left, l.right, l.up, l.down));
     }
+
+    caveRoot.entrances = [...allEntranceStations];
 
     const firstSurvey = caveRoot.getAllSurveys()[0];
     caveRoot.metadata = new CaveMetadata(

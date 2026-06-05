@@ -177,6 +177,20 @@ describe('Cave serialization round-trip', () => {
     expect(restored.getAllSurveys()).toHaveLength(1);
   });
 
+  it('round-trips entrance station keys (top + sub-cave), omitting the key when empty', () => {
+    const { root, a, b } = buildTree();
+    root.entrances = ['1@sys.trunk'];
+    b.entrances = ['5@sys.a.b.deep'];
+    const exported = root.toExport();
+    // Omitted entirely when empty so caves without entrances export unchanged.
+    expect(exported.children[0].entrances).toBeUndefined(); // node 'A' has none
+    const restored = Cave.fromPure(JSON.parse(JSON.stringify(exported)), ATTR_DEFS);
+    expect(restored.entrances).toEqual(['1@sys.trunk']);
+    expect(restored.findCaveByPath('Sys/A/B').entrances).toEqual(['5@sys.a.b.deep']);
+    // A node with no entrances restores to an empty array.
+    expect(restored.findCaveByPath('Sys/A').entrances).toEqual([]);
+  });
+
   it('round-trips optional source provenance', () => {
     const { root } = buildTree();
     root.source = { format: 'therion', file: 'sys.th', title: 'Sys' };

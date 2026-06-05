@@ -71,6 +71,7 @@ class Materials {
         hover               : new THREE.MeshBasicMaterial({ color: 0x00ffff }),
         distanceMeasurement : new THREE.MeshBasicMaterial({ color: 0xff8800 }), // Orange color for distance measurement
         startPoint          : new THREE.MeshBasicMaterial({ color: this.config.startPoints.color }),
+        entrance            : new THREE.MeshBasicMaterial({ color: this.config.entrances.color }),
         cameraTarget        : new THREE.MeshBasicMaterial({ color: this.config.camera.target.color })
       },
 

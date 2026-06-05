@@ -21,6 +21,7 @@ import { StationAttributeEditor, SectionAttributeEditor, ComponentAttributeEdito
 import { CyclePanel } from './editor/cycle.js';
 import { StationCommentsEditor } from './editor/station-comments.js';
 import { StationDimensionsEditor } from './editor/station-dimensions.js';
+import { EntrancesEditor } from './editor/entrances.js';
 import { SurveyAliasesEditor } from './editor/survey-aliases.js';
 import { ExportWindow } from '../io/export.js';
 import { i18n } from '../i18n/i18n.js';
@@ -569,6 +570,20 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.editStationDimensions'),
         onclick : () => {
           this.editor = new StationDimensionsEditor(
+            this.options,
+            caveNode.data,
+            document.getElementById('resizable-editor')
+          );
+          this.editor.setupPanel();
+          this.editor.show();
+        }
+      },
+      {
+        id      : 'editEntrances',
+        icon    : '🚪',
+        title   : i18n.t('ui.explorer.menu.editEntrances'),
+        onclick : () => {
+          this.editor = new EntrancesEditor(
             this.options,
             caveNode.data,
             document.getElementById('resizable-editor')

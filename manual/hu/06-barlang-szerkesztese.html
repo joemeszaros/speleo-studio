@@ -71,6 +71,7 @@
               >
               Pont méretek (Bal/Jobb/Fel/Le) szerkesztése</li
             >
+            <li><strong>🚪 Bejáratok:</strong> A barlang bejáratainak szerkesztése</li>
             <li><strong>🔄 Hurkok:</strong> Hurkok keresése, megjelenítése és hibák eliminálása</li>
             <li><strong>🎨 Szín</strong> Barlang színének változtatása</li>
             <li
@@ -434,6 +435,62 @@
       <p>
         A pont méretek a barlang exportálásakor (projekt JSON fájl) automatikusan elmentődnek. Egy különálló CSV
         exportra is van lehetőség a szerkesztő ikon sávjában az <i>Exportálás CSV-be</i> gombra kattintva.
+      </p>
+
+      <h2>Bejáratok szerkesztése</h2>
+      <p>
+        A bejáratok azokat a felmérési pontokat jelölik, ahol a barlang a felszínre nyílik. A
+        Therion (.th) és Survex (.svx) formátumok importálásakor a Speleo Studio automatikusan kiolvassa a bejárat
+        jelöléseket: Therion esetén a <code>station &lt;pont&gt; entrance</code> jelölőt, Survex esetén a
+        <code>*entrance &lt;pont&gt;</code> parancsot. A felismert bejáratok a barlanghoz rendelődnek, és külön
+        színű jelölőként jelennek meg a 3D jelenetben (lásd <a href="13-beallitasok.html">Beállítások</a>).
+      </p>
+
+      <h3>Szerkesztő ablak áttekintése</h3>
+      <p
+        >A barlang menüjében a bejáratok szerkesztés ikonjára (🚪) kattintva megnyílik a szerkesztő ablak a bejáratok
+        táblázatos megjelenítésével. A szerkesztő felépítése a pont megjegyzéseknél leírtakhoz hasonló, az alábbi
+        oszlopokkal:</p
+      >
+      <ul>
+        <li><strong>Státusz:</strong> Sor érvényessége (zöld pipa = rendben, narancs = hibás vagy hiányos)</li>
+        <li
+          ><strong>Pont:</strong> A bejáratot jelölő felmérési pont neve (a barlangban létező pontok közül
+          választható). Több felmérésből álló barlangrendszer esetén a pont neve a felmérés útvonalával együtt jelenik
+          meg (például <code>16@system_migovec.m2m16m18.M2.izent1</code>), így a különböző felmérésekben ismétlődő
+          pontnevek is egyértelműen azonosíthatók.</li
+        >
+      </ul>
+
+      <div class="info">
+        Az ablak jobb felső sarkában található bezárás piros ikonra kattintva a bejáratok változtatásai mentődnek!
+      </div>
+
+      <div class="step">
+        <h3>Bejárat felvétele</h3>
+        <p>1. Kattintson a barlang nevére a Felfedezőben, majd a bejáratok ikonjára (🚪) az ikon sávon</p>
+        <p>2. A megjelenő szerkesztőben vegyen fel új sort a <i>Sor hozzáadása a végéhez</i> gombra kattintva</p>
+        <p>3. Az új sorban adja meg a pontot a létező pontok listájából</p>
+        <p>4. Kattintson a <i>Bejáratok frissítése</i> gombra a táblázat feletti ikon sorban</p>
+        <p>
+          A frissítés után a bejárat jelölője azonnal megjelenik a 3D jelenetben az adott pont helyén. A bejárat
+          eltávolításához törölje a sort, majd frissítse a táblázatot.
+        </p>
+      </div>
+
+      <h3>Bejáratok validálása és frissítése</h3>
+      <div class="editor-box">
+        <h4>Validálási szabályok</h4>
+        <ul>
+          <li><strong>Pont:</strong> Nem lehet üres</li>
+          <li><strong>Duplikáció:</strong> Egy pont csak egyszer szerepelhet bejáratként</li>
+        </ul>
+      </div>
+
+      <h3>Bejáratok exportálása</h3>
+      <p>
+        A bejáratok a barlang exportálásakor (projekt JSON fájl) automatikusan elmentődnek. Egy különálló CSV exportra
+        is van lehetőség a szerkesztő ikon sávjában az <i>Exportálás CSV-be</i> gombra kattintva.
       </p>
 
       <h2>Hurkok kezelése</h2>

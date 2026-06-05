@@ -296,6 +296,31 @@ export class IconBar {
     ];
   }
 
+  // Entrances editor-specific buttons
+  static getEntrancesButtons(validateEntrances, updateEntrances, cancelEntrances) {
+    return [
+      { separator: true },
+      {
+        id      : 'validate-entrances',
+        tooltip : i18n.t('ui.editors.entrances.buttons.validate'),
+        icon    : 'icons/validate.svg',
+        click   : () => validateEntrances()
+      },
+      {
+        id      : 'update-entrances',
+        tooltip : i18n.t('ui.editors.entrances.buttons.update'),
+        icon    : 'icons/update.svg',
+        click   : () => updateEntrances()
+      },
+      {
+        id      : 'cancel-entrances',
+        tooltip : i18n.t('ui.editors.base.buttons.cancel'),
+        icon    : 'icons/cancel.svg',
+        click   : () => cancelEntrances()
+      }
+    ];
+  }
+
   // Survey aliases editor-specific buttons
   static getSurveyAliasesButtons(validateAliases, updateAliases, cancelAliases) {
     return [
