@@ -686,6 +686,8 @@
           "orthophoto": "orthophoto"
         },
         "importSelected": "Import selected",
+        "selectAll": "Select all",
+        "deselectAll": "Deselect all",
         "cancelled": "Master file selection cancelled"
       },
       "wgs84": {

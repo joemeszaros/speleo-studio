@@ -689,6 +689,8 @@
           "orthophoto": "ortofotó"
         },
         "importSelected": "Kijelöltek importálása",
+        "selectAll": "Összes kijelölése",
+        "deselectAll": "Kijelölés törlése",
         "cancelled": "Törzsfájl kiválasztása megszakítva"
       },
       "wgs84": {

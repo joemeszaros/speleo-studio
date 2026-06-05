@@ -82,8 +82,16 @@ export class RootFileSelectionDialog {
       <div class="dialog-container dialog-content root-file-dialog">
         <p class="about-description">${i18n.t('ui.panels.rootFileSelection.message')}</p>
         <div class="settings-group">
-          <div class="settings-group-title">
+          <div class="settings-group-title root-file-group-title">
             <span>${i18n.t('ui.panels.rootFileSelection.title')}</span>
+            <span class="root-file-select-actions">
+              <button type="button" class="root-file-select-btn" id="root-file-select-all">
+                <span class="root-file-select-icon">☑</span>${i18n.t('ui.panels.rootFileSelection.selectAll')}
+              </button>
+              <button type="button" class="root-file-select-btn" id="root-file-deselect-all">
+                <span class="root-file-select-icon">☐</span>${i18n.t('ui.panels.rootFileSelection.deselectAll')}
+              </button>
+            </span>
           </div>
           <div class="settings-group-content">
             ${items}
@@ -109,6 +117,9 @@ export class RootFileSelectionDialog {
       cb.addEventListener('change', () => this.updateOkState());
     });
 
+    this.dialog.querySelector('#root-file-select-all').addEventListener('click', () => this.setAllChecked(true));
+    this.dialog.querySelector('#root-file-deselect-all').addEventListener('click', () => this.setAllChecked(false));
+
     this.dialog.querySelector('#root-file-ok').addEventListener('click', () => {
       const keys = [...this.dialog.querySelectorAll('input[name="root-file"]:checked')].map(
         (cb) => this.candidates[+cb.value].key
@@ -128,6 +139,13 @@ export class RootFileSelectionDialog {
       if (e.key === 'Escape' && this.dialog) this.resolveAndClose(null);
     };
     document.addEventListener('keydown', this.keydownHandler);
+  }
+
+  setAllChecked(checked) {
+    this.dialog.querySelectorAll('input[name="root-file"]').forEach((cb) => {
+      cb.checked = checked;
+    });
+    this.updateOkState();
   }
 
   // Disable "Import selected" when nothing is checked.

@@ -772,6 +772,52 @@ body {
   word-break: break-all;
 }
 
+/* Title bar holds the group label on the left and the select-all / deselect-all
+   links on the right. Default cursor (no collapse toggle in this dialog). */
+.root-file-dialog .root-file-group-title {
+  cursor: default;
+  justify-content: space-between;
+}
+
+.root-file-dialog .root-file-group-title:hover {
+  background: #2a2a2a;
+}
+
+.root-file-select-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: normal;
+}
+
+.root-file-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #cfcfcf;
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.root-file-select-btn:hover {
+  background: #404040;
+  border-color: #04aa6d;
+  color: #ffffff;
+}
+
+.root-file-select-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
 /* Type icon (cave / model / dtm / orthophoto) shown before each candidate's name,
    matching the glyphs used in the explorer / models tree. */
 .root-file-dialog .root-file-type {
