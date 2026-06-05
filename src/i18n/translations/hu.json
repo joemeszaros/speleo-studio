@@ -91,6 +91,8 @@
     },
     "loading": {
       "openingModel": "3D modell megnyitása...",
+      "importingCaves": "Barlangok importálása...",
+      "openingProject": "Projekt megnyitása...",
       "calculatingModelColors": "Modell színek kiszámítása...",
       "lasHeader": "LAS fejléc feldolgozása...",
       "lasParsing": "LAS feldolgozás: {percent}%",

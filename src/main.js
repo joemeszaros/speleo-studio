@@ -561,6 +561,14 @@ class Main {
   async #addCaves(candidates) {
     if (candidates.length === 0) return;
 
+    // Large systems (e.g. Migovec) parse and build for several seconds. Show a loading
+    // overlay, but only if the work runs past ~1s so quick single-cave imports don't flash it.
+    await this.loadingOverlay.guardDeferred(i18n.t('ui.loading.importingCaves'), async () => {
+      await this.#addCavesInner(candidates);
+    });
+  }
+
+  async #addCavesInner(candidates) {
     const collected = [];
     for (const candidate of candidates) {
       try {

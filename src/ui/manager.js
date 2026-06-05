@@ -335,91 +335,109 @@ class ProjectManager {
   }
 
   async currentProjectChanged(project, skipLocalChanges = false) {
+    // Loading a large system (e.g. Migovec) takes several seconds. Reveal a loading overlay only
+    // if the build is genuinely slow: `overlay.tick()` shows it the first time we cross ~1s and
+    // never slows a fast open. `overlay?.done()` hides it (only if it was shown) when we're done.
+    const overlay = this.loadingOverlay?.deferredReveal(i18n.t('ui.loading.openingProject'));
+    try {
+      this.#clearScene();
 
-    this.db.getAllCaves().forEach((cave) => {
-      this.disposeCave(cave.name, cave.id);
-    });
+      const caves = await this.caveSystem.getCavesByProjectId(project.id);
+      await this.#buildCaves(caves, overlay);
+      const modelCoordSystem = await this.loadProjectModels(project.id);
 
+      this.#applyDefaultProjection();
+      this.#emitProjectCoordinateSystem(caves, modelCoordSystem);
+
+      // Fit grid + camera and refresh start points once, now that every cave and model exists
+      // (replaces the per-cave finalization skipped by the bulk addCave calls in #buildCaves).
+      this.#finalizeSceneAfterCaveAdd();
+      this.scene.view.renderView();
+
+      this.projectSystem.setCurrentProject(project);
+      await this.#restoreEditorState(project.id, skipLocalChanges);
+      console.log(`🚧 Loaded project: ${project.name}`);
+    } finally {
+      overlay?.done();
+    }
+  }
+
+  // Tear down the current scene (caves + models) before loading or clearing a project.
+  #clearScene() {
+    this.db.getAllCaves().forEach((cave) => this.disposeCave(cave.name));
     this.db.clear();
     this.clearAllModels();
     globalNormalizer.reset();
+  }
 
-    const caves = await this.caveSystem.getCavesByProjectId(project.id);
-
-    caves.forEach((cave) => {
+  // Recalculate and add every cave to the scene. `bulk` defers the per-cave scene finalization
+  // (bbox/camera/start-points) so it runs once afterwards instead of per cave — that quadratic
+  // per-cave cost is what made large systems slow to open. `overlay` is polled to reveal the
+  // loading overlay once the build crosses its time threshold.
+  async #buildCaves(caves, overlay) {
+    for (const cave of caves) {
       if (cave.readOnly) {
         this.#prepareReadOnlyCave(cave);
       } else {
         this.recalculateCave(cave);
       }
       this.calculateFragmentAttributes(cave);
-      this.addCave(cave);
-    });
+      this.addCave(cave, true);
+      await overlay?.tick();
+    }
+    // Bulk add skipped the per-cave recolor; apply the color mode once now that every survey exists.
+    this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
+  }
 
-    // Load models for this project
-    const modelCoordSystem = await this.loadProjectModels(project.id);
-
-    // Perspective projection is meaningless without a 3D model to fly into —
-    // if this project has only caves, force ortho so the view (and the navbar
-    // toggle icon, via the spatialProjectionChanged event) reflect reality.
+  // Perspective projection is meaningless without a 3D model to fly into — if this project has
+  // only caves, force ortho so the view (and the navbar toggle icon) reflect reality.
+  #applyDefaultProjection() {
     const hasModels = (this.modelsTree?.getModelNames?.() ?? []).length > 0;
     if (!hasModels && this.options.scene.spatialView?.projection === 'perspective') {
       this.options.scene.spatialView.projection = 'ortho';
     }
+  }
 
-    // Emit coordinate system from caves or models
+  // The footer's coordinate system comes from the first cave that has one, else the first model's.
+  #emitProjectCoordinateSystem(caves, modelCoordSystem) {
     const caveCoordSystem = caves.find((c) => c.geoData?.coordinateSystem)?.geoData?.coordinateSystem;
     this.#emitCoordinateSystemChange(caveCoordSystem || modelCoordSystem || null);
+  }
 
-    // Adjust grid and camera to fit all content (caves + models)
-    const boundingBox = this.scene.computeBoundingBox();
-    if (boundingBox) {
-      this.scene.grid.adjust(boundingBox);
-      this.scene.view.fitScreen(boundingBox);
-    }
+  // Reopen the survey editor on the survey that was being edited when the project was last open.
+  async #restoreEditorState(projectId, skipLocalChanges) {
+    const editorState = await this.editorStateSystem.loadState(projectId);
+    if (editorState === undefined || skipLocalChanges) return;
 
-    this.scene.view.renderView();
-    this.projectSystem.setCurrentProject(project);
-
-    const editorState = await this.editorStateSystem.loadState(project.id);
-    if (editorState !== undefined && !skipLocalChanges) {
-      const cave = this.db.getCave(editorState.metadata.caveName);
-      // Prefer the unique surveyPath (names repeat across sub-caves in a multi-level cave); fall
-      // back to a name match for states saved before surveyPath was stored and for flat caves.
-      const survey =
-        (editorState.metadata.surveyPath !== undefined
-          ? cave.getAllSurveys().find((s) => s.surveyPath === editorState.metadata.surveyPath)
-          : undefined) ?? cave.getAllSurveys().find((s) => s.name === editorState.metadata.surveyName);
-      this.editor = new SurveyEditor(
-        this.options,
-        cave,
-        survey,
-        this.scene,
-        this.interaction,
-        document.getElementById('resizable-editor'),
-        editorState.state,
-        this.attributeDefs
-      );
-      this.editor.setupPanel();
-      this.editor.show();
-      showInfoPanel(
-        i18n.t('ui.editors.survey.messages.openedSurveyEditorUnsavedChanges', {
-          caveName   : cave.name,
-          surveyName : survey.name
-        })
-      );
-    }
-    console.log(`🚧 Loaded project: ${project.name}`);
+    const cave = this.db.getCave(editorState.metadata.caveName);
+    // Prefer the unique surveyPath (names repeat across sub-caves in a multi-level cave); fall
+    // back to a name match for states saved before surveyPath was stored and for flat caves.
+    const survey =
+      (editorState.metadata.surveyPath !== undefined
+        ? cave.getAllSurveys().find((s) => s.surveyPath === editorState.metadata.surveyPath)
+        : undefined) ?? cave.getAllSurveys().find((s) => s.name === editorState.metadata.surveyName);
+    this.editor = new SurveyEditor(
+      this.options,
+      cave,
+      survey,
+      this.scene,
+      this.interaction,
+      document.getElementById('resizable-editor'),
+      editorState.state,
+      this.attributeDefs
+    );
+    this.editor.setupPanel();
+    this.editor.show();
+    showInfoPanel(
+      i18n.t('ui.editors.survey.messages.openedSurveyEditorUnsavedChanges', {
+        caveName   : cave.name,
+        surveyName : survey.name
+      })
+    );
   }
 
   async onCurrentProjectDeleted() {
-    this.db.getAllCaves().forEach((cave) => {
-      this.disposeCave(cave.name, cave.id);
-    });
-
-    this.db.clear();
-    this.clearAllModels();
-    globalNormalizer.reset();
+    this.#clearScene();
     this.scene.view.renderView();
   }
 
@@ -590,7 +608,10 @@ class ProjectManager {
         }
       };
 
-      if (this.loadingOverlay) {
+      // If an overlay is already showing (e.g. the "Opening project..." overlay raised while
+      // building caves), guard() would early-return and skip the model load — so run directly
+      // and let beginBatch/advanceBatch drive the existing overlay's progress instead.
+      if (this.loadingOverlay && !this.loadingOverlay.isActive()) {
         await this.loadingOverlay.guard(i18n.t('ui.loading.openingModel'), runLoad);
       } else {
         await runLoad();
@@ -1213,7 +1234,11 @@ class ProjectManager {
     );
   }
 
-  addCave(cave) {
+  // `bulk` is set when adding many caves at once (project load). It skips the per-cave
+  // scene-wide finalization — recolor, bounding-box recompute, camera fit, and the
+  // start-point refresh that loops over every cave (O(n²) across the batch). The caller is
+  // responsible for running that finalization once after the batch (see #finalizeSceneAfterCaveAdd).
+  addCave(cave, bulk = false) {
     this.db.addCave(cave);
 
     const allStations = cave.getAllStations();
@@ -1245,7 +1270,7 @@ class ProjectManager {
         this.scene.speleo.addSurvey(cave.name, s.id, _3dobjects);
       }
 
-      this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
+      if (!bulk) this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
 
       let shouldRender = false;
       cave.attributes.sectionAttributes.forEach((sa) => {
@@ -1318,7 +1343,7 @@ class ProjectManager {
           sa.visible = false;
         }
       });
-      if (shouldRender) {
+      if (shouldRender && !bulk) {
         if (promises.length > 0) {
           Promise.all(promises).then(() => {
             this.scene.view.renderView();
@@ -1328,38 +1353,45 @@ class ProjectManager {
         }
       }
 
-      const boundingBox = this.scene.computeBoundingBox();
-
-      const [w, h, d] = boundingBox.getSize(new THREE.Vector3());
-
-      // if the center lines or splays are not visible
-      if (!(w === 0 && h === 0 && d === 0)) {
-        this.scene.grid.adjust(boundingBox);
-
-        if (this.options.scene.grid.mode === 'hidden') {
-          this.scene.grid.hide();
-        }
-
-        this.scene.views.forEach((view) => {
-          view.initiated = false;
-        });
-
-        this.scene.view.activate(boundingBox);
-
-        // update starting points for all caves
-        this.db.getAllCaves().forEach((c) => {
-          this.scene.startPoint.addOrUpdateStartingPoint(c);
-        });
-        // Add starting point for the cave
-        // it is displayed based on world units in pixels that's why it is here
-        this.scene.startPoint.addOrUpdateStartingPoint(cave);
-
-      }
+      if (!bulk) this.#finalizeSceneAfterCaveAdd();
     }
 
     // addCave builds the whole nested tree (child caves + surveys) recursively.
     this.explorer.addCave(cave);
 
+  }
+
+  // Scene-wide finalization after one or more caves were added: recompute the bounding box,
+  // fit the grid + camera, and refresh every cave's start-point sprite. The bounding-box
+  // recompute is O(scene) and the start-point refresh loops over every cave, so during a bulk
+  // project load this runs ONCE after all caves are added (see the `bulk` flag on addCave)
+  // instead of per cave — that quadratic per-cave cost is what made large systems slow to open.
+  #finalizeSceneAfterCaveAdd() {
+    const boundingBox = this.scene.computeBoundingBox();
+    if (!boundingBox) return;
+
+    const [w, h, d] = boundingBox.getSize(new THREE.Vector3());
+
+    // if the center lines or splays are not visible
+    if (!(w === 0 && h === 0 && d === 0)) {
+      this.scene.grid.adjust(boundingBox);
+
+      if (this.options.scene.grid.mode === 'hidden') {
+        this.scene.grid.hide();
+      }
+
+      this.scene.views.forEach((view) => {
+        view.initiated = false;
+      });
+
+      this.scene.view.activate(boundingBox);
+
+      // update starting points for all caves
+      // they are displayed based on world units in pixels that's why they are here
+      this.db.getAllCaves().forEach((c) => {
+        this.scene.startPoint.addOrUpdateStartingPoint(c);
+      });
+    }
   }
 
   async uploadCaveToDrive(cave) {

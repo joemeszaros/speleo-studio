@@ -91,6 +91,8 @@
     },
     "loading": {
       "openingModel": "Opening 3D model...",
+      "importingCaves": "Importing caves...",
+      "openingProject": "Opening project...",
       "calculatingModelColors": "Calculating model colors...",
       "lasHeader": "Parsing LAS header...",
       "lasParsing": "Parsing LAS: {percent}%",
