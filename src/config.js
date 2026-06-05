@@ -195,7 +195,7 @@ export const DEFAULT_OPTIONS = {
     DPI : 96
   },
   interactive : {
-    raycasting : true
+    raycasting : false
   },
 
   ui : {
