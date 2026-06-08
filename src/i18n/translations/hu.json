@@ -114,7 +114,8 @@
       "coordinateSystem": "Koordináták",
       "noCoordinateSystemLoaded": "Nincs koordináta-rendszer",
       "privacyPolicy": "Adatvédelmi irányelvek",
-      "termsOfService": "Felhasználási feltételek"
+      "termsOfService": "Felhasználási feltételek",
+      "installApp": "Alkalmazás telepítése"
     },
     "units": {
       "short": {

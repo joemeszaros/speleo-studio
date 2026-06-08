@@ -29,6 +29,20 @@ limitations under the License.
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Speleo Studio" />
     <link rel="apple-touch-icon" href="icons/logo-180.png" />
+
+    <!-- Capture the install prompt early so the in-app install button can offer it later -->
+    <script>
+      window.__deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.__deferredInstallPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwaInstallAvailable'));
+      });
+      window.addEventListener('appinstalled', () => {
+        window.__deferredInstallPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwaInstalled'));
+      });
+    </script>
     <link rel="stylesheet" href="css/navbar.css" />
     <link rel="stylesheet" href="css/iconbar.css" />
     <link rel="stylesheet" href="css/tabulator_midnight.css" />

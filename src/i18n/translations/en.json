@@ -114,7 +114,8 @@
       "coordinateSystem": "Coordinate System",
       "noCoordinateSystemLoaded": "No coordinate system",
       "privacyPolicy": "Privacy Policy",
-      "termsOfService": "Terms of Service"
+      "termsOfService": "Terms of Service",
+      "installApp": "Install app"
     },
     "units": {
       "short": {

@@ -36,6 +36,19 @@ class Footer {
     // Get existing legal links container from HTML (if present)
     this.legalLinksContainer = element.querySelector('.footer-legal-links');
 
+    // PWA install button — discreetly shown only when the browser offers installation
+    this.installButton = node`<a href="#" class="footer-icon-link footer-install-link" style="display: none;" title="${i18n.t('ui.footer.installApp')}">
+      <img src="icons/install.svg" class="footer-icon" alt="${i18n.t('ui.footer.installApp')}">
+    </a>`;
+    this.installButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.promptInstall();
+    });
+    if (this.legalLinksContainer) {
+      this.legalLinksContainer.insertBefore(this.installButton, this.legalLinksContainer.firstChild);
+    }
+    this.initInstallPrompt();
+
     // Create zoom level container
     this.zoomSeparator = node`<div class="footer-separator">|</div>`;
     this.zoomInfoContainer = node`<div class="meta-info"></div>`;
@@ -114,8 +127,50 @@ class Footer {
     this.driveSeparator.style.display = 'none';
   }
 
+  initInstallPrompt() {
+    // The beforeinstallprompt event is captured early in index.html and stashed
+    // on window.__deferredInstallPrompt; reveal the button when it is available.
+    if (window.__deferredInstallPrompt) this.showInstallButton();
+    window.addEventListener('pwaInstallAvailable', () => this.showInstallButton());
+    window.addEventListener('pwaInstalled', () => this.hideInstallButton());
+  }
+
+  isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  showInstallButton() {
+    // Already running as an installed app → nothing to offer.
+    if (!this.isStandalone()) this.installButton.style.display = 'inline-flex';
+  }
+
+  hideInstallButton() {
+    this.installButton.style.display = 'none';
+  }
+
+  async promptInstall() {
+    const deferred = window.__deferredInstallPrompt;
+    if (!deferred) return;
+    this.hideInstallButton();
+    deferred.prompt();
+    try {
+      await deferred.userChoice;
+    } catch {
+      // user dismissed or the prompt failed – nothing to do
+    }
+    // A captured prompt can only be used once.
+    window.__deferredInstallPrompt = null;
+  }
+
   updateLegalLinksTitles() {
     // Update tooltips for legal links when language changes
+    if (this.installButton) {
+      this.installButton.title = i18n.t('ui.footer.installApp');
+      const installImg = this.installButton.querySelector('img');
+      if (installImg) {
+        installImg.alt = i18n.t('ui.footer.installApp');
+      }
+    }
     if (this.legalLinksContainer) {
       const privacyLink = this.legalLinksContainer.querySelector('a[href="pages/privacy-policy.html"]');
       const termsLink = this.legalLinksContainer.querySelector('a[href="pages/terms-of-service.html"]');
