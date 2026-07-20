@@ -1157,6 +1157,7 @@
       "unsupportedFileType": "Nem támogatott fájltípus: {extension}",
       "ascDecimated": "{name}: a DTM ritkítva {fromCols}×{fromRows} cellából {toCols}×{toRows} cellára a teljesítmény érdekében",
       "xyzNotAGrid": "A(z) {name} XYZ fájl nem tűnik szabályos rácsnak; próbáld pontfelhőként importálni.",
+      "dtmNoCaveOverlap": "{name}: a felszíni modell a saját koordinátái alapján a helyére került, de egyetlen barlangot sem fed le — a legközelebbi {distance} m-rel esik kívül a lapon. A kivágás valószínűleg rossz területről készült.",
       "orthophotoDownsampled": "{name}: ortofotó ritkítva {fromCols}×{fromRows} pixelről {toCols}×{toRows} pixelre a teljesítmény érdekében",
       "longFormatNotSupported": "Csak az egyszerűsített formátum támogatott",
       "pointCloudFileTooLarge": "A(z) {name} mérete {size} MB, ami meghaladja a pontfelhő importálás {limit} MB-os határát. Próbáld szétdarabolni a fájlt, vagy exportálj egy ritkított változatot.",

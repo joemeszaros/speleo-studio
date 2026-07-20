@@ -742,7 +742,12 @@ class Main {
 
         // Apply shared dialog result only to models that didn't already
         // have geoData from their own embeddedCoords.
-        if (!model.geoData && sharedGeoData) model.geoData = sharedGeoData;
+        if (!model.geoData && sharedGeoData) {
+          // A DTM's vertex Z is the file's absolute elevation, so its anchor
+          // must sit at elevation 0 — otherwise the entered elevation is
+          // added on top and the terrain floats by that amount.
+          model.geoData = model.modelKind === 'dtm' ? sharedGeoData.withZeroElevation() : sharedGeoData;
+        }
 
         await this.#tryAddModel(model, object3D, modelFile);
 

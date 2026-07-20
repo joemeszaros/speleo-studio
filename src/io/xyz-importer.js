@@ -409,7 +409,8 @@ export class XyzImporter extends DTMImporterBase {
       xllcorner : detection.xMin,
       yllcorner : detection.yMin,
       origNcols : detection.ncols,
-      origNrows : detection.nrows
+      origNrows : detection.nrows,
+      headerCRS : 'projected'
     };
 
     await this.dispatchToScene(grid, header, name, modelFile, modelFileId, opts, onModelLoad);

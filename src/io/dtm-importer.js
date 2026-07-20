@@ -128,6 +128,148 @@ export class DTMImporterBase extends PointCloudImporter {
     return { positions, vertexIndex, validCount, minZ, maxZ };
   }
 
+  /**
+   * Sniff the project's existing coordinate system from the loaded caves,
+   * falling back to any georeferenced model. Returns null when the project
+   * has no CS yet.
+   */
+  detectProjectCS() {
+    const caves = this.db?.getAllCaves?.() ?? [];
+    for (const cave of caves) {
+      const cs = cave.geoData?.coordinateSystem;
+      if (cs) return cs;
+    }
+    const models = this.db?.getAllModels?.() ?? [];
+    for (const m of models) {
+      const cs = m.geoData?.coordinateSystem;
+      if (cs) return cs;
+    }
+    return null;
+  }
+
+  /**
+   * Read a projected coordinate's east/north axes regardless of CS flavour.
+   * UTM stores them as easting/northing, EOV as y/x.
+   */
+  static #eastNorthOf(coordinate) {
+    if (coordinate.type === CoordinateSystemType.UTM) {
+      return { east: coordinate.easting, north: coordinate.northing };
+    }
+    if (coordinate.type === CoordinateSystemType.EOV) {
+      return { east: coordinate.y, north: coordinate.x };
+    }
+    return null;
+  }
+
+  /**
+   * Construct a `GeoData` anchoring a DTM's local (0, 0) vertex at the given
+   * projected coordinate.
+   *
+   * `elevation` defaults to **0**: `buildVertexLayout` localises X and Y to
+   * the grid's SW corner but leaves Z as the file's absolute elevation, so a
+   * non-zero anchor elevation would be added on top of an already-absolute Z
+   * and float the terrain by that amount. The octree path passes a non-zero
+   * value to fold in the worker's centering offset — see
+   * `tryGeoreferenceFromHeader`.
+   */
+  static buildGeoDataAt(cs, east, north, elevation = 0) {
+    if (cs.type === CoordinateSystemType.UTM) {
+      return new GeoData(cs, [
+        new StationWithCoordinate('origin', new UTMCoordinateWithElevation(east, north, elevation))
+      ]);
+    }
+    if (cs.type === CoordinateSystemType.EOV) {
+      return new GeoData(cs, [
+        new StationWithCoordinate('origin', new EOVCoordinateWithElevation(east, north, elevation))
+      ]);
+    }
+    throw new Error(`Unsupported CS for DTM geoData: ${cs.type}`);
+  }
+
+  /**
+   * Auto-georeference a DTM whose header carries projected coordinates that
+   * are already in the project's own CS (the common case: a tile cut from a
+   * national/regional DTM for a cave that is surveyed in that same CS).
+   *
+   * Only subclasses whose header is projected opt in, via
+   * `header.headerCRS === 'projected'` — HGT's header is lat/lon degrees and
+   * must not take this path.
+   *
+   * Guarded by a plausibility check: the grid's footprint must lie within
+   * `import.cavesMaxDistance` of a known cave. A file in a *different* CS
+   * lands hundreds of km away (or further) and is rejected, so the caller
+   * falls back to asking the user for WGS84 coordinates.
+   *
+   * `centeringOffset` is the octree worker's `positionOffset` — the bbox
+   * centre it subtracted from every vertex for Float32 precision. Folding it
+   * into the anchor keeps the composition exact, because the consumers
+   * (`Main.#positionModelFromGeoData`, `ProjectManager`'s reload path) *set*
+   * the group position from the anchor rather than adding to it, and would
+   * otherwise discard the offset. Omit for non-octree paths, whose vertices
+   * are already in the grid's local frame.
+   *
+   * Sets `model.geoData` and returns true when georeferencing was applied.
+   */
+  tryGeoreferenceFromHeader(model, grid, header, centeringOffset = [0, 0, 0]) {
+    if (header?.headerCRS !== 'projected') return false;
+    if (model.geoData) return false;
+    if (!Number.isFinite(header.xllcorner) || !Number.isFinite(header.yllcorner)) return false;
+
+    const cs = this.detectProjectCS();
+    if (!cs) return false;
+
+    // Footprint the mesh actually spans: local (0,0) is the SW corner and
+    // vertices reach (ncols-1)*cellsizeX / (nrows-1)*cellsizeY from there.
+    const cellsizeX = grid.cellsizeX ?? grid.cellsize;
+    const cellsizeY = grid.cellsizeY ?? grid.cellsize;
+    const minEast = header.xllcorner;
+    const minNorth = header.yllcorner;
+    const maxEast = minEast + (grid.ncols - 1) * cellsizeX;
+    const maxNorth = minNorth + (grid.nrows - 1) * cellsizeY;
+
+    const maxDistance = this.options?.import?.cavesMaxDistance ?? 10000;
+    const caveCoords = (this.db?.getAllCaves?.() ?? [])
+      .map((c) => c.geoData?.coordinates?.[0]?.coordinate)
+      .filter((c) => c)
+      .map((c) => DTMImporterBase.#eastNorthOf(c))
+      .filter((c) => c);
+
+    // No cave to check against — a model-only project. Trust the header.
+    if (caveCoords.length > 0) {
+      // Distance from each cave to the footprint rectangle (0 when inside).
+      let nearest = Infinity;
+      let anyInside = false;
+      for (const { east, north } of caveCoords) {
+        const dx = Math.max(minEast - east, 0, east - maxEast);
+        const dy = Math.max(minNorth - north, 0, north - maxNorth);
+        const d = Math.hypot(dx, dy);
+        if (d === 0) anyInside = true;
+        if (d < nearest) nearest = d;
+      }
+      // Too far to plausibly be the same CS — let the WGS84 dialog decide.
+      if (nearest > maxDistance) return false;
+
+      // Same CS, but the tile was cut from the wrong spot. Place it anyway
+      // (the coordinates are right) and tell the user why nothing lines up.
+      if (!anyInside) {
+        showWarningPanel(
+          i18n.t('errors.import.dtmNoCaveOverlap', {
+            name     : model.name,
+            distance : Math.round(nearest)
+          })
+        );
+      }
+    }
+
+    model.geoData = DTMImporterBase.buildGeoDataAt(
+      cs,
+      minEast + centeringOffset[0],
+      minNorth + centeringOffset[1],
+      centeringOffset[2]
+    );
+    return true;
+  }
+
   static computePositionBounds(layout) {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (let i = 0; i < layout.validCount; i++) {
@@ -217,6 +359,7 @@ export class DTMImporterBase extends PointCloudImporter {
     const mesh = new Mesh3D(name, new Vector(center.x, center.y, center.z));
     mesh.firstPointCoords = [header.xllcorner, header.yllcorner, layout.minZ];
     mesh.modelKind = 'dtm';
+    this.tryGeoreferenceFromHeader(mesh, grid, header);
 
     await onModelLoad(mesh, meshObject, modelFile);
   }
@@ -229,7 +372,7 @@ export class DTMImporterBase extends PointCloudImporter {
     }
 
     if (layout.validCount > DTMImporterBase.OCTREE_THRESHOLD) {
-      await this.#importAsOctree(layout, header, name, modelFile, modelFileId, onModelLoad);
+      await this.#importAsOctree(layout, grid, header, name, modelFile, modelFileId, onModelLoad);
       return;
     }
 
@@ -259,11 +402,12 @@ export class DTMImporterBase extends PointCloudImporter {
     const pointCloud = new PointCloud(name, points, center, false);
     pointCloud.firstPointCoords = [header.xllcorner, header.yllcorner, layout.minZ];
     pointCloud.modelKind = 'dtm';
+    this.tryGeoreferenceFromHeader(pointCloud, grid, header);
 
     await onModelLoad(pointCloud, pointsObject, modelFile);
   }
 
-  async #importAsOctree(layout, header, name, modelFile, modelFileId, onModelLoad) {
+  async #importAsOctree(layout, grid, header, name, modelFile, modelFileId, onModelLoad) {
     const options = this.options;
     const pointBudget = options.scene.models.pointBudget;
     const sseThreshold = options.scene.models.sseThreshold;
@@ -315,6 +459,9 @@ export class DTMImporterBase extends PointCloudImporter {
             });
             result.pointCloud.firstPointCoords = [header.xllcorner, header.yllcorner, layout.minZ];
             result.pointCloud.modelKind = 'dtm';
+            this.tryGeoreferenceFromHeader(
+              result.pointCloud, grid, header, msg.header.positionOffset || [0, 0, 0]
+            );
             await onModelLoad(result.pointCloud, result.octree.group, modelFile);
             this.saveOctreeToCache(modelFileId || modelFile.id, msg, maxPoints);
             resolve();
@@ -371,11 +518,13 @@ export class DTMImporterBase extends PointCloudImporter {
  * non-sampled cells without invoking parseFloat, and allocates a Float32Array
  * sized for the (already decimated) grid only.
  *
- * Coordinate handling: xllcorner/yllcorner from the file are NOT used for
- * scene placement (they may be in any projected CS — EOV, UTM, custom — and
- * the file doesn't say). The user-entered WGS84 from the existing
- * ModelCoordinateDialog is treated as the lower-left corner. The header
- * values are surfaced as `firstPointCoords` for display in that dialog.
+ * Coordinate handling: the file doesn't state its CS, so xllcorner/yllcorner
+ * are assumed to be in the project's own CS and used for scene placement —
+ * but only when the resulting footprint lands within `cavesMaxDistance` of a
+ * known cave (see `tryGeoreferenceFromHeader`). A file in some other CS fails
+ * that check and falls back to the user-entered WGS84 from
+ * ModelCoordinateDialog, treated as the lower-left corner. The header values
+ * are surfaced as `firstPointCoords` for display in that dialog either way.
  */
 export class AscDTMImporter extends DTMImporterBase {
 
@@ -418,7 +567,12 @@ export class AscDTMImporter extends DTMImporterBase {
     const modelFile = new ModelFile(name, 'asc', sourceBlob ?? text);
 
     // Surface pre-decimation dims so dispatchToScene can show the warning
-    const fullHeader = { ...header, origNcols: header.ncols, origNrows: header.nrows };
+    const fullHeader = {
+      ...header,
+      origNcols : header.ncols,
+      origNrows : header.nrows,
+      headerCRS : 'projected'
+    };
 
     await this.dispatchToScene(grid, fullHeader, name, modelFile, modelFileId, opts, onModelLoad);
   }
@@ -708,7 +862,7 @@ export class HgtDTMImporter extends DTMImporterBase {
       // back to embeddedCoords (the SW WGS84 corner) and let main.js handle
       // conversion if a CS becomes available later.
       if (grid.worldOriginX !== undefined && grid.worldOriginY !== undefined && projectCS) {
-        model.geoData = HgtDTMImporter.#buildGeoDataAt(
+        model.geoData = DTMImporterBase.buildGeoDataAt(
           projectCS, grid.worldOriginX, grid.worldOriginY
         );
       } else {
@@ -725,38 +879,13 @@ export class HgtDTMImporter extends DTMImporterBase {
   }
 
   /**
-   * Construct a `GeoData` with a single station at world coordinate
-   * `(worldX, worldY)` in the given projected CS.
-   * worldX = east-axis (UTM easting / EOV y), worldY = north-axis (UTM northing / EOV x).
-   */
-  static #buildGeoDataAt(cs, worldX, worldY) {
-    if (cs.type === CoordinateSystemType.UTM) {
-      const coord = new UTMCoordinateWithElevation(worldX, worldY, 0);
-      return new GeoData(cs, [new StationWithCoordinate('origin', coord)]);
-    }
-    if (cs.type === CoordinateSystemType.EOV) {
-      const coord = new EOVCoordinateWithElevation(worldX, worldY, 0);
-      return new GeoData(cs, [new StationWithCoordinate('origin', coord)]);
-    }
-    throw new Error(`Unsupported CS for HGT geoData: ${cs.type}`);
-  }
-
-  /**
    * Sniff the project's existing CS so we can build the HGT mesh in that
-   * same projection. Returns null when nothing is loaded yet — the caller
-   * falls back to flat-grid metres in that case.
+   * same projection. Falls back to a UTM zone derived from the tile when the
+   * project has no CS yet.
    */
   #detectProjectCS(tile) {
-    const caves = this.db?.getAllCaves?.() ?? [];
-    for (const cave of caves) {
-      const cs = cave.geoData?.coordinateSystem;
-      if (cs) return cs;
-    }
-    const models = this.db?.getAllModels?.() ?? [];
-    for (const m of models) {
-      const cs = m.geoData?.coordinateSystem;
-      if (cs) return cs;
-    }
+    const projectCS = this.detectProjectCS();
+    if (projectCS) return projectCS;
     // No CS in the project yet — pick a sensible UTM zone from the tile's
     // longitude so the HGT is built in a real projection. Any subsequent
     // model with embeddedCoords ends up in the same zone via main.js.

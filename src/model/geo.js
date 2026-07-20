@@ -77,6 +77,10 @@ class EOVCoordinateWithElevation extends EOVCoordinate {
     return new EOVCoordinateWithElevation(this.y + y, this.x + x, this.elevation + elevation);
   }
 
+  withElevation(elevation) {
+    return new EOVCoordinateWithElevation(this.y, this.x, elevation);
+  }
+
   addVector(v) {
     return new EOVCoordinateWithElevation(this.y + v.x, this.x + v.y, this.elevation + v.z);
   }
@@ -164,6 +168,10 @@ class UTMCoordinateWithElevation extends UTMCoordinate {
 
   addVector(v) {
     return new UTMCoordinateWithElevation(this.easting + v.x, this.northing + v.y, this.elevation + v.z);
+  }
+
+  withElevation(elevation) {
+    return new UTMCoordinateWithElevation(this.easting, this.northing, elevation);
   }
 
   toVector() {
@@ -417,6 +425,18 @@ class GeoData {
       this.coordinateSystem.isEqual(other.coordinateSystem) &&
       this.coordinates.length === other.coordinates.length &&
       this.coordinates.every((c, i) => c.isEqual(other.coordinates[i]));
+  }
+
+  /**
+   * Copy with every coordinate's elevation set to 0, leaving this instance
+   * untouched. Used for DTM anchors, whose vertex Z already carries absolute
+   * elevation — a non-zero anchor would be added on top of it.
+   */
+  withZeroElevation() {
+    return new GeoData(
+      this.coordinateSystem,
+      this.coordinates.map((c) => new StationWithCoordinate(c.name, c.coordinate.withElevation(0)))
+    );
   }
 
   toExport() {
