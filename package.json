@@ -5,6 +5,7 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
+    "build:sw": "node generate-sw.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npx playwright test",

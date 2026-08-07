@@ -52,6 +52,13 @@ Whether you're a professional speleologist, cave researcher, or enthusiast, Spel
 - **Responsive design** that works on desktop and tablet devices
 - **Local data storage** for privacy and offline capability
 
+### 📲 **Installable & Offline (PWA)**
+
+- **Installable** to your desktop or mobile home screen, running in its own standalone window
+- **Works fully offline** - once loaded, 3D visualization, survey editing, and import/export run with no internet connection
+- **Automatic updates** - the cached app refreshes whenever a new version is deployed
+- **Note**: a few online-only features degrade gracefully when offline - Google Drive sync, magnetic declination lookup, and fetching remote images/map tiles
+
 ### 🌍 **Multi-Language Support**
 
 - **Internationalization (i18n)** built-in with English and Hungarian languages
@@ -84,6 +91,20 @@ npx serve .
 
 Then open `http://localhost:8000` in your browser.
 
+### Install as an App
+
+Speleo Studio is a Progressive Web App. In a supported browser, open the app and choose **Install** (the install icon in the address bar, or *⋮ → Install Speleo Studio*) to add it to your desktop or home screen. After the first load it works offline.
+
+> The service worker that powers offline support is only active over **HTTPS or `localhost`** (a `file://` page won't register it).
+
+### Updating the offline cache
+
+The list of files cached for offline use is generated and committed as `precache-manifest.js`. Whenever you change app assets, regenerate it (the cache version is a content hash, so users' caches refresh automatically on next visit):
+
+```bash
+npm run build:sw
+```
+
 ## 📁 Supported File Formats
 
 | Format            | Import | Export | Description                              |
@@ -109,6 +130,7 @@ Then open `http://localhost:8000` in your browser.
 - **3D Graphics**: Three.js for WebGL rendering
 - **Data Management**: Tabulator.js for table operations
 - **Storage**: Browser LocalStorage and IndexedDB for data persistence
+- **Offline**: Service Worker + Web App Manifest (installable PWA)
 
 ## 🤝 Contributing
 

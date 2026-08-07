@@ -17,9 +17,32 @@ limitations under the License.
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="google-site-verification" content="m90aIleM7rz7JNpV0oovqpQFrQsXWGTG_ANuRxwaBt8" />
     <title>Speleo studio</title>
     <link rel="icon" type="image/png" href="images/logo.png" />
+
+    <!-- Progressive Web App (installable + offline) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#2a2a2a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Speleo Studio" />
+    <link rel="apple-touch-icon" href="icons/logo-180.png" />
+
+    <!-- Capture the install prompt early so the in-app install button can offer it later -->
+    <script>
+      window.__deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.__deferredInstallPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwaInstallAvailable'));
+      });
+      window.addEventListener('appinstalled', () => {
+        window.__deferredInstallPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwaInstalled'));
+      });
+    </script>
     <link rel="stylesheet" href="css/navbar.css" />
     <link rel="stylesheet" href="css/iconbar.css" />
     <link rel="stylesheet" href="css/tabulator_midnight.css" />
@@ -172,6 +195,17 @@ limitations under the License.
     <script type="module">
       import { Main } from './src/main.js';
       window.speleo = new Main();
+    </script>
+
+    <!-- Register the service worker for offline support (no-op on unsupported browsers) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js', { scope: './' }).catch((err) => {
+            console.warn('Service worker registration failed:', err);
+          });
+        });
+      }
     </script>
   </body>
 </html>
