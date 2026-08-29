@@ -344,6 +344,14 @@ class SurveyHelper {
     const duplicateShotIds = new Set();
 
     const tryAddStation = (name, st, sh, otherSt) => {
+      if (name === undefined || name === null || name === '') {
+        // No usable name for the new endpoint (e.g. a center shot whose `to` was left empty).
+        // Leave the shot unprocessed so it is reported as an orphan. Keying the station map
+        // with an empty name would be far worse than dropping one shot: a single `undefined`
+        // key resolves as an existing to-station for every later shot that has no `to`, so all
+        // subsequent splays would be silently swallowed and flagged as duplicates.
+        return false;
+      }
       if (stations.has(name)) {
         // Two different physical stations resolved to the same name (e.g. station numbers
         // reused across surveys whose namespaces were stripped). Name the survey and the
@@ -361,6 +369,7 @@ class SurveyHelper {
         sh.processed = true;
         st.shots.push(new ShotWithSurvey(sh, survey)); // this is used in loop closure
         otherSt.shots.push(new ShotWithSurvey(sh, survey)); // this is used in loop closure
+        return true;
       }
 
     };
@@ -416,8 +425,9 @@ class SurveyHelper {
             const fp = fromStation.position;
             const st = new Vector(fp.x, fp.y, fp.z).add(polarVector);
             const stationName = qualify(survey.getToStationName(sh));
-            tryAddStation(stationName, newStation(st, fromStation, polarVector), sh, fromStation);
-            repeat = true;
+            if (tryAddStation(stationName, newStation(st, fromStation, polarVector), sh, fromStation)) {
+              repeat = true;
+            }
           } else {
             // from = 1, to = 1
             // find a previously processed shot with the same from/to (or to/from) stations
@@ -441,8 +451,9 @@ class SurveyHelper {
           // from = 0, to = 1
           const tp = toStation.position;
           const st = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-          tryAddStation(qualify(sh.from), newStation(st, toStation, polarVector.neg()), sh, toStation);
-          repeat = true;
+          if (tryAddStation(qualify(sh.from), newStation(st, toStation, polarVector.neg()), sh, toStation)) {
+            repeat = true;
+          }
         } else {
           // from = 0, to = 0 → look for equate aliases that connect this shot to an
           // already-placed station in another survey. Aliases are stored fully qualified
@@ -481,10 +492,11 @@ class SurveyHelper {
               const fp = from.position;
               const to = new Vector(fp.x, fp.y, fp.z).add(polarVector);
               const toStationName = qualify(survey.getToStationName(sh));
-              tryAddStation(toStationName, newStation(to, from, polarVector), sh, from);
-              repeat = true;
-              sh.fromAlias = fromName; // the actual placed key, possibly several hops away
-              fromAliasFound = true;
+              if (tryAddStation(toStationName, newStation(to, from, polarVector), sh, from)) {
+                repeat = true;
+                sh.fromAlias = fromName; // the actual placed key, possibly several hops away
+                fromAliasFound = true;
+              }
             }
           }
 
@@ -497,9 +509,10 @@ class SurveyHelper {
               }
               const tp = to.position;
               const from = new Vector(tp.x, tp.y, tp.z).sub(polarVector);
-              tryAddStation(qualify(sh.from), newStation(from, to, polarVector.neg()), sh, to);
-              repeat = true;
-              sh.toAlias = toName; // the actual placed key, possibly several hops away
+              if (tryAddStation(qualify(sh.from), newStation(from, to, polarVector.neg()), sh, to)) {
+                repeat = true;
+                sh.toAlias = toName; // the actual placed key, possibly several hops away
+              }
             }
           }
         }
@@ -517,11 +530,19 @@ class SurveyHelper {
 
   static findDuplicateShots(shot, survey, surveys) {
 
+    // A shot without a to-station (splay / bare auxiliary) has no from/to pair to duplicate.
+    // Comparing them would make `s.to === sh.to` true for two `undefined`s, so every pair of
+    // splays leaving the same station would look like a duplicate leg.
+    if (shot.to === undefined || shot.to === null || shot.to === '') return [];
+
     const existingShot = (sh, survey) =>
       survey.validShots.find(
         (s) =>
           s.id !== sh.id &&
           s.processed &&
+          s.to !== undefined &&
+          s.to !== null &&
+          s.to !== '' &&
           ((s.from === sh.from && s.to === sh.to) || (s.from === sh.to && s.to === sh.from))
       );
 

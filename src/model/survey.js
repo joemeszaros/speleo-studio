@@ -474,6 +474,13 @@ class Survey {
   getToStationName(shot) {
     if (shot.isSplay()) {
       return this.getSplayStationName(shot.id);
+    } else if (shot.isAuxiliary() && (shot.to === undefined || shot.to === null || shot.to === '')) {
+      // An auxiliary shot may end in a named station (so splays can be shot from it), but it
+      // may also be a bare measurement with no to-station. Give the nameless endpoint the same
+      // kind of generated unique name splays get — without it the solver would key the station
+      // map with `undefined`, which then resolves as a real to-station for EVERY later shot
+      // that has no `to` (i.e. every splay), swallowing them and flagging them as duplicates.
+      return this.getAuxiliaryStationName(shot.id);
     } else if (shot.toAlias !== undefined) {
       return shot.toAlias;
     } else {
