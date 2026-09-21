@@ -18,7 +18,7 @@ import * as U from '../utils/utils.js';
 import { SurveyHelper } from '../survey.js';
 import { CaveEditor } from './editor/cave.js';
 import { SurveyEditor } from './editor/survey.js';
-import { showInfoPanel, showSuccessPanel } from './popups.js';
+import { showInfoPanel, showSuccessPanel, showWarningPanel } from './popups.js';
 import { SectionHelper } from '../section.js';
 import { showErrorPanel } from './popups.js';
 import { i18n } from '../i18n/i18n.js';
@@ -29,6 +29,10 @@ import { PointCloudHelper } from '../utils/models.js';
 import { globalNormalizer } from '../utils/global-coordinate-normalizer.js';
 
 class ProjectManager {
+
+  // The convergence migration warning is a one-off explanation, not a recurring status.
+  static #convergenceWarningShown = false;
+
 
   /**
    * Creates a new project manager that is used on survey updates
@@ -387,6 +391,33 @@ class ProjectManager {
     }
     // Bulk add skipped the per-cave recolor; apply the color mode once now that every survey exists.
     this.scene.speleo.colorModeHelper.setColorMode(this.options.scene.caveLines.color.mode);
+    ProjectManager.warnAboutConvergenceMigration(caves);
+  }
+
+  /**
+   * Tells the user that some caves just moved because their surveys no longer disagree about
+   * meridian convergence. Without this the shift looks like a fresh bug rather than the fix it is.
+   *
+   * Shown AT MOST ONCE per session: it explains a one-off correction, and repeating it on every
+   * project open would be noise. Saving rewrites each survey's mirrored copy, after which no
+   * cave reports a correction at all.
+   *
+   * @param {Cave[]} caves - the caves that were just loaded
+   */
+  static warnAboutConvergenceMigration(caves) {
+    if (ProjectManager.#convergenceWarningShown) return;
+    const corrected = caves.filter((c) => c.correctedConvergenceSurveys > 0);
+    if (corrected.length === 0) return;
+
+    ProjectManager.#convergenceWarningShown = true;
+    showWarningPanel(
+      i18n.t('errors.import.convergenceMigrated', {
+        caves   : corrected.map((c) => `${c.name} (${c.correctedConvergenceSurveys}/${c.getAllSurveys().length})`).join(', '),
+        count   : corrected.length,
+        surveys : corrected.reduce((sum, c) => sum + c.correctedConvergenceSurveys, 0)
+      }),
+      15000
+    );
   }
 
   // Perspective projection is meaningless without a 3D model to fly into — if this project has

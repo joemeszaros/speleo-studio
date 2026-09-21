@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Declination, MeridianConvergence } from '../../utils/geo.js';
+import { Declination } from '../../utils/geo.js';
 import { BaseEditor } from './base.js';
 import {
   SurveyMetadata,
@@ -24,7 +24,6 @@ import {
   SurveyInstrument,
   DEFAULT_UNITS
 } from '../../model/survey.js';
-import { CoordinateSystemType } from '../../model/geo.js';
 import { WGS84Converter } from '../../utils/geo.js';
 import { showErrorPanel } from '../popups.js';
 import { i18n } from '../../i18n/i18n.js';
@@ -71,7 +70,6 @@ export class SurveySheetEditor extends BaseEditor {
       start       : this.survey?.start || '',
       date        : this.survey?.metadata?.date ? U.formatDateISO(this.survey.metadata.date) : '',
       declination : this.survey?.metadata?.declination ?? '',
-      convergence : this.survey?.metadata?.convergence ?? '',
       team        : this.survey?.metadata?.team?.name || '',
       members     : (this.survey?.metadata?.team?.members || []).map((m) => ({ name: m.name, role: m.role })),
       instruments : (this.survey?.metadata?.instruments || []).map((i) => ({ name: i.name, value: i.value })),
@@ -292,10 +290,10 @@ export class SurveySheetEditor extends BaseEditor {
     form.appendChild(saveBtn);
     form.appendChild(cancelBtn);
 
-    const convergence = this.survey?.metadata?.convergence ?? this.getConvergence(this.cave.geoData);
-    form.appendChild(
-      U.node`<p>${i18n.t('ui.editors.surveySheet.fields.convergence')}: ${convergence !== undefined ? U.formatFloat(convergence, 3) : i18n.t('ui.editors.surveySheet.errors.notAvailable')}</p>`
-    );
+    // Meridian convergence is NOT shown here: it belongs to the cave (one position, one value)
+    // and is edited/displayed on the cave sheet. Showing it per survey is what made the old
+    // per-survey storage bug invisible — the sheet displayed the geoData-derived value while
+    // the solver used 0 for any survey that had none stored.
     this.declinationText = U.node`<p id="declination-official">${i18n.t('ui.editors.surveySheet.fields.declination')}: ${i18n.t('ui.editors.surveySheet.errors.unavailable')}</p>`;
     form.appendChild(this.declinationText);
 
@@ -315,7 +313,8 @@ export class SurveySheetEditor extends BaseEditor {
       const metadata = new SurveyMetadata(
         this.formData.date ? new Date(this.formData.date) : undefined,
         this.formData.declination ? parseFloat(this.formData.declination) : undefined,
-        this.formData.convergence ? parseFloat(this.formData.convergence) : undefined,
+        // Mirrored from the cave for older builds only; the solver reads cave.convergence.
+        this.cave?.getConvergence(),
         team,
         instruments
       );
@@ -360,17 +359,7 @@ export class SurveySheetEditor extends BaseEditor {
           return;
         }
 
-        // this is a new survey
-        if (this.cave.surveys.size > 0) {
-          // get convergence from first existing survey
-          metadata.convergence = this.cave.surveys.entries().next().value[1].metadata.convergence;
-        } else if (
-          this.cave.geoData !== undefined &&
-          this.cave.geoData.coordinates.length > 0 &&
-          this.cave.geoData.coordinateSystem !== undefined
-        ) {
-          metadata.convergence = this.getConvergence(this.cave.geoData);
-        }
+        // this is a new survey — its convergence is the cave's (already set on metadata above)
         const newSurveyUnits = { length: this.formData.lengthUnit, angle: this.formData.angleUnit };
         this.survey = new Survey(this.formData.name, true, metadata, start, [], newSurveyUnits, new Set(), new Set());
         this.#emitSurveyAdded();
@@ -501,28 +490,6 @@ export class SurveySheetEditor extends BaseEditor {
       },
       addButtonLabel : i18n.t('ui.editors.surveySheet.buttons.addInstrument')
     });
-  }
-
-  getConvergence(geoData) {
-    if (geoData === undefined || (geoData?.coordinates?.length ?? 0) === 0 || geoData?.coordinateSystem === undefined) {
-      return undefined;
-    }
-
-    const firstCoord = geoData.coordinates[0];
-    switch (geoData.coordinateSystem.type) {
-      case CoordinateSystemType.EOV:
-        return MeridianConvergence.getEOVConvergence(firstCoord.coordinate.y, firstCoord.coordinate.x);
-
-      case CoordinateSystemType.UTM:
-        return MeridianConvergence.getUTMConvergence(
-          firstCoord.coordinate.easting,
-          firstCoord.coordinate.northing,
-          geoData.coordinateSystem.zoneNum,
-          geoData.coordinateSystem.northern
-        );
-      default:
-        return undefined;
-    }
   }
 
   #setupStats(contentElmnt) {

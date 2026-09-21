@@ -761,7 +761,10 @@
           "stationName": "Pont neve",
           "eovy": "Y koordináta",
           "eovx": "X koordináta",
-          "elevation": "Magasság"
+          "elevation": "Magasság",
+          "convergence": "Meridián konvergencia",
+          "convergenceNotAvailable": "nem elérhető",
+          "convergenceNotApplicable": "nem alkalmazandó (rácsazimut)"
         },
         "stats": {
           "splays": "Tüskék",
@@ -833,7 +836,6 @@
           "start": "Induló pont",
           "date": "Dátum",
           "declination": "Deklináció",
-          "convergence": "Meridián konvergencia",
           "team": "Csapat neve",
           "teamMembers": "Csapat tagok",
           "instruments": "Mérőeszközök",
@@ -849,7 +851,6 @@
         },
         "errors": {
           "unavailable": "nem elérhető",
-          "notAvailable": "Nem elérhető",
           "noWgs84Coordinates": "Nincs WGS84 koordináta vagy felmérés dátuma"
         },
         "buttons": {
@@ -1174,7 +1175,8 @@
       "survex3dNoData": "Nem található barlangadat a Survex .3d fájlban",
       "survex3dBadMagic": "Ez nem egy Survex .3d fájl (hiányzó fejléc-aláírás)",
       "survex3dUnsupportedVersion": "Nem támogatott Survex .3d verzió: {version}",
-      "survex3dUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Survex .3d fájlban — a barlang georeferencia nélkül jelenik meg"
+      "survex3dUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Survex .3d fájlban — a barlang georeferencia nélkül jelenik meg",
+      "convergenceMigrated": "A meridián konvergencia mostantól a barlang koordinátáiból jön, nem mérésenként, mert a barlang helyétől függ, nem a felmérés idejétől. {count} barlangban egyes mérések más értéket használtak, ezért {surveys} mérés eddig elforgatva jelent meg, és most a helyes pozícióba került: {caves}. Mentsd a projektet a javítás megőrzéséhez."
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",

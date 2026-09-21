@@ -1302,13 +1302,18 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
     }
     const geoData = coordinateSys && fixCoords.length > 0 ? new GeoData(coordinateSys, fixCoords) : null;
 
-    // Set each survey's start to its source start station and stamp meridian convergence,
-    // then solve the whole network with the SHARED order-independent fixpoint solver — the
-    // same one used on reload/edit, so all three paths agree. (Surveys connect only via
-    // shared/equated stations, so a single ordered pass cannot place every survey.)
+    // Attach geoData now, not at the end of this function: meridian convergence is derived from
+    // it (Cave.getConvergence) and the solve below needs it. Convergence belongs to the cave —
+    // one position, one value; the per-survey copies are written only for older builds.
+    caveRoot.geoData = geoData;
+    caveRoot.applyConvergenceToSurveys();
+
+    // Set each survey's start to its source start station, then solve the whole network with
+    // the SHARED order-independent fixpoint solver — the same one used on reload/edit, so all
+    // three paths agree. (Surveys connect only via shared/equated stations, so a single
+    // ordered pass cannot place every survey.)
     for (const survey of caveRoot.getAllSurveys()) {
       const entry = surveyEntry.get(survey);
-      survey.metadata.convergence = convergence ?? null;
       if (entry?.startStation !== undefined) survey.start = entry.startStation;
     }
     let stations;
@@ -1380,7 +1385,6 @@ export async function assembleCave(context, rootFilename, coordinateSystemDialog
       firstSurvey?.metadata?.date ?? new Date(),
       firstSurvey?.metadata?.team?.name ?? ''
     );
-    caveRoot.geoData = geoData;
   };
 
   for (const caveRoot of caveRoots) {

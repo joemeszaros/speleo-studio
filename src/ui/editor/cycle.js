@@ -284,7 +284,11 @@ class CyclePanel {
 
   adjustLoopDeviationShots(data) {
     const path = [...data.path, data.path[0]];
-    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.getAllStations());
+    const deviationShots = CycleUtil.findLoopDeviationShots(
+      path,
+      this.cave.getAllStations(),
+      this.cave.getConvergence()
+    );
     if (deviationShots.length > 0 && CycleUtil.adjustShots(deviationShots)) {
       this.#emitCaveChanged();
     }
@@ -349,7 +353,11 @@ class CyclePanel {
   }
 
   showDeviatingShots(path, id) {
-    const deviationShots = CycleUtil.findLoopDeviationShots(path, this.cave.getAllStations());
+    const deviationShots = CycleUtil.findLoopDeviationShots(
+      path,
+      this.cave.getAllStations(),
+      this.cave.getConvergence()
+    );
     if (deviationShots.length > 0) {
       const segments = [];
       deviationShots.forEach((s) => {
@@ -364,7 +372,7 @@ class CyclePanel {
           const toPos = from.position.add(
             new Polar(
               s.diff.length(),
-              U.degreesToRads(aziDeg + s.declination + s.convergence),
+              U.degreesToRads(aziDeg + s.declination - s.convergence),
               U.degreesToRads(cliDeg)
             ).toVector()
           );

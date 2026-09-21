@@ -63,6 +63,42 @@ class MeridianConvergence {
    * For a random Hungarian position (47.646821, 19.02363) or (351570.942, 5278939.251, 34T) the value is -1.4608.
    * The other implementation gives -1.45208.
    */
+  /**
+   * Meridian convergence for a whole cave, derived from its geoData fix point.
+   *
+   * Convergence is the angle between grid north and true north AT A POSITION — unlike magnetic
+   * declination it does not drift with time, so it is a property of the cave, not of when a
+   * given survey was made. Every survey of a cave must therefore use this one value.
+   *
+   * @param {GeoData} geoData - the (root) cave's geo data
+   * @returns {number|undefined} degrees, or undefined when the cave is not georeferenced
+   */
+  static fromGeoData(geoData) {
+    if (geoData === undefined || geoData === null) return undefined;
+    if ((geoData?.coordinates?.length ?? 0) === 0 || geoData?.coordinateSystem === undefined) return undefined;
+
+    // A half-typed coordinate in the cave sheet parses to NaN. Report "no convergence" rather
+    // than NaN, which would otherwise reach the solver and turn every station position into NaN.
+    const finite = (...values) => values.every((v) => Number.isFinite(v));
+
+    const first = geoData.coordinates[0].coordinate;
+    switch (geoData.coordinateSystem.type) {
+      case CoordinateSystemType.EOV:
+        return finite(first.y, first.x) ? MeridianConvergence.getEOVConvergence(first.y, first.x) : undefined;
+      case CoordinateSystemType.UTM:
+        return finite(first.easting, first.northing, geoData.coordinateSystem.zoneNum)
+          ? MeridianConvergence.getUTMConvergence(
+              first.easting,
+              first.northing,
+              geoData.coordinateSystem.zoneNum,
+              geoData.coordinateSystem.northern
+            )
+          : undefined;
+      default:
+        return undefined;
+    }
+  }
+
   static getUTMConvergence(easting, northing, zone, northern = true) {
 
     const { latitude, longitude } = UTMConverter.toLatLon(easting, northing, zone, undefined, northern);

@@ -612,6 +612,10 @@ class Main {
       const names = [...new Set(skippedDuplicates)].join(', ');
       showWarningPanel(i18n.t('errors.import.duplicateCavesSkipped', { count: skippedDuplicates.length, names }), 8000);
     }
+
+    // An imported cave may carry surveys whose stored convergence differs from the cave's own,
+    // which moves them once corrected. Say so, or the shift looks like an import bug.
+    ProjectManager.warnAboutConvergenceMigration(unique);
   }
 
   #setupSurveyFileInputListeners() {

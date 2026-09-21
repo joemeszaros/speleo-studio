@@ -20,7 +20,7 @@ import { Vector, Color } from './model.js';
 import { ShotType } from './model/survey.js';
 import { CoordinateSystemType, StationCoordinates, WGS84Coordinate } from './model/geo.js';
 import { Graph } from './utils/graph.js';
-import { WGS84Converter } from './utils/geo.js';
+import { WGS84Converter, MeridianConvergence } from './utils/geo.js';
 import { i18n } from './i18n/i18n.js';
 import { globalNormalizer } from './utils/global-coordinate-normalizer.js';
 
@@ -109,7 +109,7 @@ class SurveyHelper {
       startName,
       startPosition,
       startCoordinate,
-      geoData?.coordinateSystem
+      geoData
     );
     return es;
   }
@@ -295,10 +295,14 @@ class SurveyHelper {
     startName,
     startPosition,
     startCoordinate,
-    coordinateSystem
+    geoData
   ) {
 
     if (survey.validShots.length === 0) return;
+
+    // Everything this function needs about WHERE the cave sits comes out of geoData: the
+    // projection (to report WGS84 station coordinates) and the meridian convergence.
+    const coordinateSystem = geoData?.coordinateSystem;
 
     // Station keys in the shared solver map are qualified with the survey's path
     // (`name@surveyPath`) so that station numbers reused across surveys (every Therion
@@ -335,9 +339,15 @@ class SurveyHelper {
       sh.toAlias = undefined;
     });
 
-    // declination and meridian convergence are also used in utils/cycle.js
+    // Declination is per survey (the magnetic field drifts, so it depends on the survey date).
+    // Convergence is NOT: it is the grid-north/true-north angle at the cave's POSITION, so it is
+    // derived from the same geoData that positions the cave rather than passed in beside it, and
+    // every survey of the cave gets the same value. Never read the survey's own copy — that copy
+    // is a backward-compatibility mirror (see Cave.applyConvergenceToSurveys) and trusting it is
+    // what let parts of a cave render rotated. (Read-only .3d caves never reach the solver; their
+    // bearings are already grid bearings — see Cave.getConvergence.)
     const declination = survey?.metadata?.declination ?? 0.0; //TODO: remove fallback logic
-    const convergence = survey?.metadata?.convergence ?? 0.0;
+    const convergenceDeg = MeridianConvergence.fromGeoData(geoData) ?? 0.0;
 
     var repeat = true;
 
@@ -392,7 +402,7 @@ class SurveyHelper {
 
         const polarVector = U.fromPolar(
           lenM,
-          U.degreesToRads(aziDeg + declination - convergence),
+          U.degreesToRads(aziDeg + declination - convergenceDeg),
           U.degreesToRads(cliDeg)
         );
 

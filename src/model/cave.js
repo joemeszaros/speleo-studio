@@ -18,6 +18,7 @@ import { Vector, SectionAttribute, ComponentAttribute, StationAttribute } from '
 import { GeoData } from './geo.js';
 import { Survey, SurveyAlias, SurveyStation, StationComment, StationDimension, DEFAULT_UNITS } from './survey.js';
 import { sanitizeName, convertLengthToMeters } from '../utils/utils.js';
+import { MeridianConvergence } from '../utils/geo.js';
 
 class CaveCycle {
 
@@ -333,10 +334,56 @@ class Cave {
     this.visible = visible;
     this.readOnly = readOnly;
     this.version = 1;
+    // How many surveys were drawn with the wrong meridian convergence until this cave was
+    // loaded — see #applyCaveConvergence. Transient and never serialized, like a Survey's
+    // orphanShotIds; the UI reads it to explain why the cave moved.
+    this.correctedConvergenceSurveys = 0;
   }
 
   static generateId() {
     return 'cave_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+  }
+
+  /**
+   * Meridian convergence (degrees) for the whole cave: the angle between grid north and true
+   * north AT THE CAVE'S POSITION.
+   *
+   * Derived, never stored. It is a pure function of the fix point and the coordinate system,
+   * both of which live in geoData — so deriving it on demand is the only way it cannot drift
+   * from its source. It used to be stored on every Survey, and that drift IS the bug this
+   * replaced: importers disagreed about stamping it, the solver treated a missing value as 0
+   * while the survey sheet displayed the derived value, and part of a cave rendered rotated by
+   * the convergence angle while the UI showed the number that was not being applied.
+   *
+   * Unlike magnetic declination it does not change with time, so it is per cave, not per survey.
+   *
+   * @returns {number|undefined} degrees, or undefined when no convergence applies
+   */
+  getConvergence() {
+    // A read-only .3d cave's bearings are back-calculated from grid coordinates, so they are
+    // already grid bearings and no convergence may be applied. Nothing currently solves such a
+    // cave, but the mirror below would otherwise hand an older build a value to rotate it by.
+    if (this.readOnly) return undefined;
+    return MeridianConvergence.fromGeoData(this.geoData);
+  }
+
+  /**
+   * Copies the cave's convergence onto every survey's metadata.
+   *
+   * Nothing in this build reads those copies — everything calls getConvergence(). They exist so
+   * an older Speleo Studio build, which still reads `survey.metadata.convergence`, does not
+   * render a project saved by this one rotated. Drop this (and SurveyMetadata.convergence) once
+   * old builds no longer matter.
+   */
+  applyConvergenceToSurveys() {
+    const convergence = this.getConvergence();
+    this.walk((c) => {
+      c.surveys.forEach((s) => {
+        if (s.metadata !== undefined && s.metadata !== null) {
+          s.metadata.convergence = convergence ?? null;
+        }
+      });
+    });
   }
 
   // ─── Tree traversal / aggregation ──────────────────────────────────────────────
@@ -712,8 +759,41 @@ class Cave {
     }
 
     const cave = Object.assign(new Cave(), pure);
+    cave.#applyCaveConvergence();
     return cave;
   }
+
+  /**
+   * Replaces the per-survey convergence copies loaded from the project with the cave's own
+   * (derived) value, and records on the cave how many surveys that moved.
+   *
+   * Older projects stored convergence on each survey and the write paths disagreed: a survey
+   * created in the survey sheet got the geoData-derived value, a TopoDroid/CSV import got none,
+   * and the solver treated "none" as 0. Those surveys were therefore drawn rotated by the
+   * convergence angle. Using one derived value per cave corrects them — but correcting them
+   * MOVES them, which the UI explains to the user (correctedConvergenceSurveys).
+   *
+   * Once the project is saved every survey carries the derived value, nothing differs any more,
+   * and the count is 0 from then on — no stored flag or format version needed.
+   */
+  #applyCaveConvergence() {
+    const convergence = this.getConvergence() ?? 0;
+    // Sub-caves inherit geoData (and therefore convergence) from the root, and a child is built
+    // before its parent, so let the root speak for the whole tree.
+    const surveys = this.getAllSurveys();
+
+    // Compare against what the solver USED to apply for each survey: its own copy, or 0 when it
+    // had none. Count before overwriting the copies.
+    this.correctedConvergenceSurveys = surveys.filter(
+      (s) => Math.abs((s.metadata?.convergence ?? 0) - convergence) > Cave.#CONVERGENCE_EPSILON
+    ).length;
+
+    this.applyConvergenceToSurveys();
+  }
+
+  // Degrees. Well below any survey's angular resolution, so it only absorbs the last-bit
+  // difference between a value computed now and the same value computed by an earlier build.
+  static #CONVERGENCE_EPSILON = 1e-6;
 }
 
 export { CaveCycle, CaveAttributes, CaveComponent, CaveSection, CaveMetadata, Cave };

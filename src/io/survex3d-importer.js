@@ -312,6 +312,9 @@ class Survex3dImporter extends Importer {
     }
 
     // visible = true, readOnly = true: .3d caves are visualization-only.
+    // .3d bearings are back-calculated from grid coordinates, so they are already grid bearings
+    // and no convergence applies. Cave.getConvergence() returns undefined for a read-only cave,
+    // so there is nothing to set here.
     return new Cave(caveName, caveMeta, geoData, stations, surveys, [], aliases, undefined, [], dims, [], true, true);
   }
 }

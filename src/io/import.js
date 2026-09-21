@@ -273,22 +273,10 @@ class PolygonImporter extends Importer {
                 })
               );
             }
-            //calculate convergence based on the first survey
-            if (startCoordinate !== undefined) {
-              if (startCoordinate.coordinate.type === CoordinateSystemType.EOV) {
-                convergence = MeridianConvergence.getEOVConvergence(
-                  startCoordinate.coordinate.y,
-                  startCoordinate.coordinate.x
-                );
-              } else if (startCoordinate.coordinate.type === CoordinateSystemType.UTM) {
-                convergence = MeridianConvergence.getUTMConvergence(
-                  startCoordinate.coordinate.easting,
-                  startCoordinate.coordinate.northing,
-                  geoData.coordinateSystem.zoneNum,
-                  geoData.coordinateSystem.northern
-                );
-              }
-            }
+            // Convergence follows the cave's position, so derive it from the geoData built above
+            // — the same rule the solver and Cave.getConvergence use. The value is put on each
+            // survey below only so an older build reads this project the same way.
+            convergence = MeridianConvergence.fromGeoData(geoData);
           }
 
           const metadata = new SurveyMetadata(
@@ -311,7 +299,7 @@ class PolygonImporter extends Importer {
             fixPointName,
             startPosition,
             startCoordinate?.coordinate,
-            coordinateSystem
+            geoData
           );
           surveys.push(survey);
           surveyIndex++;
@@ -321,7 +309,12 @@ class PolygonImporter extends Importer {
       const stationDimensions = [...aggregatedLruds.values()].map(
         (l) => new StationDimension(l.from, l.left, l.right, l.up, l.down)
       );
-      return new Cave(projectName, metadata, geoData, stations, surveys, [], [], undefined, [], stationDimensions);
+      const cave = new Cave(projectName, metadata, geoData, stations, surveys, [], [], undefined, [], stationDimensions);
+      // Convergence is derived from the cave's geoData (Cave.getConvergence), not stored. The
+      // per-survey copies written above exist only so an older build can read the project; keep
+      // them in step with what this build will actually apply.
+      cave.applyConvergenceToSurveys();
+      return cave;
     }
   }
 

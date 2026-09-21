@@ -62,15 +62,22 @@ export class CycleUtil {
   }
 
   /**
-   * Helper method to get survey metadata with fallbacks
+   * Corrections applied to a shot's azimuth.
+   *
+   * Declination is per survey (it drifts with time, so it depends on the survey date).
+   * Convergence is per CAVE — the grid-north/true-north angle at the cave's position — and is
+   * passed in by the caller. It is deliberately NOT read off the survey: the copy stored there
+   * is a backward-compatibility mirror (see Cave.applyConvergenceToSurveys) and may be stale.
+   *
    * @param {Object} survey - Survey object
+   * @param {number} [caveConvergence] - the cave's meridian convergence in degrees
    * @returns {Object} Object containing declination and convergence
    */
-  static _getSurveyMetadata(survey) {
+  static _getSurveyMetadata(survey, caveConvergence) {
     //TODO: remove fallback logic
     return {
       declination : survey?.metadata?.declination ?? 0.0,
-      convergence : survey?.metadata?.convergence ?? 0.0
+      convergence : caveConvergence ?? 0.0
     };
   }
 
@@ -199,7 +206,7 @@ export class CycleUtil {
     return true;
   }
 
-  static findLoopDeviationShots(path, stations) {
+  static findLoopDeviationShots(path, stations, caveConvergence) {
     this._validateLoopPath(path, stations);
 
     const result = [];
@@ -211,7 +218,7 @@ export class CycleUtil {
       const toStation = stations.get(to);
 
       const { shot, survey } = this._findShotBetweenStations(fromStation, from, to);
-      const { declination, convergence } = this._getSurveyMetadata(survey);
+      const { declination, convergence } = this._getSurveyMetadata(survey, caveConvergence);
 
       const shotVector = this._createShotVector(shot, declination, convergence, survey);
 

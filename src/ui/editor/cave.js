@@ -20,7 +20,7 @@ import { DEFAULT_UNITS } from '../../model/survey.js';
 import { wm } from '../window.js';
 import { showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
-import { UTMConverter } from '../../utils/geo.js';
+import { UTMConverter, MeridianConvergence } from '../../utils/geo.js';
 import {
   GeoData,
   EOVCoordinateWithElevation,
@@ -306,9 +306,15 @@ class CaveEditor extends Editor {
 
     this.coordsList = U.node`<div class="coords-list"></div>`;
 
+    // Meridian convergence: derived from the fix point below, shown for the whole cave (it is a
+    // property of the position, not of a survey date like declination). Read-only — it follows
+    // the coordinates, so it is recomputed on save rather than typed.
+    this.convergenceText = U.node`<p id="cave-convergence"></p>`;
+
     coordsDiv.appendChild(coordSystemDiv);
     coordsDiv.appendChild(utmZoneDiv);
     coordsDiv.appendChild(this.coordsList);
+    coordsDiv.appendChild(this.convergenceText);
     // Sub-caves inherit geoData from the root cave; they never own a coordinate system, so
     // the whole coordinate section is hidden when creating one.
     if (this.parentCave !== undefined) {
@@ -338,6 +344,7 @@ class CaveEditor extends Editor {
         default:
           this.coordsList.innerHTML = '';
           this.caveData.coordinateSystem = undefined;
+          this.#renderConvergence();
           break;
       }
 
@@ -468,33 +475,7 @@ class CaveEditor extends Editor {
           new Date(this.caveData.metadata.date),
           this.caveData.metadata.creator
         );
-        let geoData;
-        if (this.caveData.coordinates.length > 0 && this.caveData.coordinateSystem !== undefined) {
-          const coordinates = this.caveData.coordinates.map((c) => {
-            let coordinate;
-            switch (this.caveData.coordinateSystem.type) {
-              case CoordinateSystemType.UTM:
-                coordinate = new UTMCoordinateWithElevation(
-                  U.parseMyFloat(c.easting),
-                  U.parseMyFloat(c.northing),
-                  U.parseMyFloat(c.elevation)
-                );
-                break;
-              case CoordinateSystemType.EOV:
-                coordinate = new EOVCoordinateWithElevation(
-                  U.parseMyFloat(c.y),
-                  U.parseMyFloat(c.x),
-                  U.parseMyFloat(c.elevation)
-                );
-                break;
-            }
-            return new StationWithCoordinate(c.name, coordinate);
-          });
-
-          geoData = new GeoData(this.caveData.coordinateSystem, coordinates);
-        } else {
-          geoData = undefined;
-        }
+        const geoData = this.#buildGeoData();
 
         // validate coordinates
         let errors = [];
@@ -571,6 +552,7 @@ class CaveEditor extends Editor {
 
         } else if (this.cave === undefined) {
           this.cave = new Cave(this.caveData.name, caveMetadata, geoData);
+          this.cave.applyConvergenceToSurveys();
           this.#emitCaveAdded();
 
         } else {
@@ -588,6 +570,9 @@ class CaveEditor extends Editor {
             (geoData !== undefined && geoData.isEqual(oldGeoData));
 
           if (!geoDataIsEqual) {
+            // Convergence is derived from where the cave sits, so moving the fix point changes it
+            // with no action here. Only the older-build mirror on each survey has to be refreshed.
+            this.cave.applyConvergenceToSurveys();
             this.#emitCoordinateSystemChanged(geoData?.coordinateSystem);
           }
           // deleting an eov coordinate will change the survey data
@@ -611,7 +596,66 @@ class CaveEditor extends Editor {
     contentElmnt.appendChild(form);
   }
 
+  /**
+   * Shows the cave's meridian convergence, recomputed live from the coordinates being edited.
+   *
+   * Read-only on purpose: it is a function of where the fix point sits on the projection grid,
+   * so it follows the coordinates rather than being typed. A read-only .3d cave reports "not
+   * applicable" — its bearings are already grid bearings, so no convergence is applied.
+   */
+  /**
+   * Builds a GeoData from the coordinates currently in the form, or undefined when the form has
+   * none. Shared by the save path and the convergence preview so both read the form the same
+   * way — the preview used to reshape the rows by hand, which is how it could end up disagreeing
+   * with what saving actually produces.
+   *
+   * @returns {GeoData|undefined}
+   */
+  #buildGeoData() {
+    const cs = this.caveData.coordinateSystem;
+    if (cs === undefined || this.caveData.coordinates.length === 0) return undefined;
+
+    const coordinates = this.caveData.coordinates.map((c) => {
+      let coordinate;
+      switch (cs.type) {
+        case CoordinateSystemType.UTM:
+          coordinate = new UTMCoordinateWithElevation(
+            U.parseMyFloat(c.easting),
+            U.parseMyFloat(c.northing),
+            U.parseMyFloat(c.elevation)
+          );
+          break;
+        case CoordinateSystemType.EOV:
+          coordinate = new EOVCoordinateWithElevation(
+            U.parseMyFloat(c.y),
+            U.parseMyFloat(c.x),
+            U.parseMyFloat(c.elevation)
+          );
+          break;
+      }
+      return new StationWithCoordinate(c.name, coordinate);
+    });
+    return new GeoData(cs, coordinates);
+  }
+
+  #renderConvergence() {
+    if (this.convergenceText === undefined) return;
+    const label = i18n.t('ui.editors.caveSheet.fields.convergence');
+
+    if (this.cave?.readOnly === true) {
+      this.convergenceText.innerHTML = `${label}: ${i18n.t('ui.editors.caveSheet.fields.convergenceNotApplicable')}`;
+      return;
+    }
+
+    const value = MeridianConvergence.fromGeoData(this.#buildGeoData());
+
+    this.convergenceText.innerHTML = `${label}: ${
+      value === undefined ? i18n.t('ui.editors.caveSheet.fields.convergenceNotAvailable') : U.formatFloat(value, 3)
+    }`;
+  }
+
   renderCoords() {
+    this.#renderConvergence();
     const fields = [
       {
         key         : 'name',
