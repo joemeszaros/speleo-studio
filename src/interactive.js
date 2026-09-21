@@ -25,12 +25,14 @@ import {
   convertLengthFromMeters,
   convertAngleFromDegrees,
   formatFloat,
+  normalizeAzimuthDeg,
   bareStationName
 } from './utils/utils.js';
 import { i18n } from './i18n/i18n.js';
 import { Raycasting } from './scene/raycasting.js';
 import { AttributesDefinitions } from './attributes.js';
 import { CoordinateSystemType } from './model/geo.js';
+import { MeridianConvergence } from './utils/geo.js';
 import { DEFAULT_UNITS } from './model/survey.js';
 
 class SceneInteraction {
@@ -802,6 +804,38 @@ class SceneInteraction {
     );
   }
 
+  /**
+   * The azimuth and clino rows of the distance panel.
+   *
+   * The panel measures the RENDERED positions, so its azimuth is a GRID bearing: the solver
+   * already rotated every placed shot by `declination - convergence`. Typing that number back
+   * into the survey sheet applies the rotation a second time and the new leg misses by that
+   * angle (6.5 degrees, ~0.7 m over 6 m, in a Hungarian UTM cave). So the azimuth is shown
+   * twice: first raw, as an instrument would have read it — the value the survey sheet expects
+   * and the reason to open this panel — then corrected, as the model is drawn. Clino is shown
+   * once; the correction is a rotation about the vertical axis, so it does not change.
+   *
+   * Declination comes from the `from` station's own survey (it is dated, so surveys differ) and
+   * convergence from its cave. Without a survey to take a declination from — a surface point —
+   * or with nothing to undo, the single measured azimuth is shown.
+   */
+  #azimuthClinoRows(from, gridAzimuthDeg, clinoDeg, fmtA) {
+    const t = (key) => i18n.t(`ui.panels.distance.${key}`);
+    const clinoRow = `${t('clino')}: ${fmtA(clinoDeg)}<br>`;
+
+    const declination = from?.type === 'station' ? (from.station?.survey?.metadata?.declination ?? 0.0) : 0.0;
+    const convergence = from?.type === 'station' ? (MeridianConvergence.fromGeoData(from.cave?.geoData) ?? 0.0) : 0.0;
+    const correction = declination - convergence;
+    if (correction === 0) return `${t('azimuth')}: ${fmtA(gridAzimuthDeg)}<br>${clinoRow}`;
+
+    // Raw first: it is the one the user is here to copy into the survey sheet.
+    return (
+      `${t('azimuth')}: ${fmtA(normalizeAzimuthDeg(gridAzimuthDeg - correction))}<br>` +
+      `${t('azimuthCorrected')}: ${fmtA(gridAzimuthDeg)}<br>` +
+      clinoRow
+    );
+  }
+
   buildDistancePanel(contentElmnt, from, to, diffVector, left, top) {
 
     const fp = from.position;
@@ -825,6 +859,12 @@ class SceneInteraction {
     const fmtA = (deg) => `${formatFloat(convertAngleFromDegrees(deg, angleUnit), 3)}${aSep}${aLabel}`;
 
     const horizontal = Math.sqrt(diffVector.x * diffVector.x + diffVector.y * diffVector.y);
+
+    // The panel measures the RENDERED positions, so its azimuth is a grid bearing: the solver
+    // already applied `declination - convergence` to every shot it placed.
+    const gridAzimuthDeg = radsToDegrees(polar.azimuth);
+    const clinoDeg = radsToDegrees(polar.clino);
+
     content.innerHTML = `
         ${i18n.t('common.from')}: ${fromDetails}<br>
         X: ${fmtL(fp.x)}<br>
@@ -840,8 +880,7 @@ class SceneInteraction {
         ${i18n.t('ui.panels.distance.y')}: ${fmtL(diffVector.y)}<br>
         ${i18n.t('ui.panels.distance.z')}: ${fmtL(diffVector.z)}<br>
         ${i18n.t('ui.panels.distance.spatial')}: ${fmtL(polar.distance)}<br>
-        ${i18n.t('ui.panels.distance.azimuth')}: ${fmtA(radsToDegrees(polar.azimuth))}<br>
-        ${i18n.t('ui.panels.distance.clino')}: ${fmtA(radsToDegrees(polar.clino))}<br>
+        ${this.#azimuthClinoRows(from, gridAzimuthDeg, clinoDeg, fmtA)}
         ${i18n.t('ui.panels.distance.horizontal')}: ${fmtL(horizontal)}<br>
         <br>
         `;

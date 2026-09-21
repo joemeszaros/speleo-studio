@@ -489,6 +489,12 @@ function clinoToDegrees(value, unit) {
   return angleToDegrees(value, unit);
 }
 
+// Wraps an azimuth into [0, 360). Removing a correction (declination/convergence) from a bearing
+// can push it below zero, and a survey azimuth is always reported in that range.
+function normalizeAzimuthDeg(azimuth) {
+  return ((azimuth % 360) + 360) % 360;
+}
+
 // ─── Display-side unit conversions ────────────────────────────────────────────
 // Used to convert between stored survey units and the user's display unit.
 
@@ -559,6 +565,7 @@ export {
   detectPlatform,
   parseMyFloat,
   formatFloat,
+  normalizeAzimuthDeg,
   formatFree,
   isFloatStr,
   interpolate,

@@ -555,7 +555,8 @@
         "clickNextStation": "Click on another station to measure distance",
         "error": {
           "noStartingPoint": "You should select the starting point for distance measurement"
-        }
+        },
+        "azimuthCorrected": "Azimuth (declination + convergence)"
       },
       "locateStation": {
         "title": "Locate station",

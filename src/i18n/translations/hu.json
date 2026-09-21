@@ -607,7 +607,8 @@
         "clickNextStation": "Kattints egy másik pontra a távolság méréséhez",
         "error": {
           "noStartingPoint": "A távolság méréséhez válasszon ki egy kezdőpontot"
-        }
+        },
+        "azimuthCorrected": "Irány (deklináció + konvergencia)"
       },
       "locateStation": {
         "title": "Pont megkeresése",
