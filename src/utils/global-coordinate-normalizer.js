@@ -34,33 +34,35 @@ export class GlobalCoordinateNormalizer {
    * @param {Object} coordinate - The first coordinate to establish global origin
    */
   initializeGlobalOrigin(coordinate) {
-    if (this.initialized) {
+    if (this.initialized || !coordinate) {
       return;
     }
 
-    if (coordinate) {
+    // A half-typed coordinate in the cave sheet parses to NaN. The origin is set ONCE and never
+    // revised, so accepting one would offset every cave in the session by NaN: the whole model
+    // vanishes, and reopening the project does not bring it back. Refuse it and stay
+    // uninitialized so the next usable coordinate can seed the origin instead.
+    const usable = (...values) => values.every((v) => Number.isFinite(v));
 
-      switch (coordinate.type) {
-        case CoordinateSystemType.UTM:
-          this.globalOrigin = {
-            easting   : coordinate.easting,
-            northing  : coordinate.northing,
-            elevation : coordinate.elevation
-          };
-          break;
-        case CoordinateSystemType.EOV:
-          this.globalOrigin = {
-            y         : coordinate.y,
-            x         : coordinate.x,
-            elevation : coordinate.elevation
-          };
-          break;
-        default:
-          throw new Error(`Unknown coordinate system type: ${coordinate.type}`);
-      }
+    // Elevation only shifts z. When it is missing or unusable, anchor z at 0 rather than reject
+    // the coordinate — giving up the origin would put large raw UTM eastings back into the
+    // scene, which is the float-precision problem this class exists to remove.
+    const elevation = Number.isFinite(coordinate.elevation) ? coordinate.elevation : 0;
 
-      this.initialized = true;
+    switch (coordinate.type) {
+      case CoordinateSystemType.UTM:
+        if (!usable(coordinate.easting, coordinate.northing)) return;
+        this.globalOrigin = { easting: coordinate.easting, northing: coordinate.northing, elevation };
+        break;
+      case CoordinateSystemType.EOV:
+        if (!usable(coordinate.y, coordinate.x)) return;
+        this.globalOrigin = { y: coordinate.y, x: coordinate.x, elevation };
+        break;
+      default:
+        throw new Error(`Unknown coordinate system type: ${coordinate.type}`);
     }
+
+    this.initialized = true;
   }
 
   /**
