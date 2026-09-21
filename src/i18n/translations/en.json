@@ -1154,7 +1154,7 @@
       "survex3dBadMagic": "Not a Survex .3d file (header signature missing)",
       "survex3dUnsupportedVersion": "Unsupported Survex .3d version: {version}",
       "survex3dUnknownCs": "Unknown coordinate system '{cs}' in Survex .3d file — cave shown without georeferencing",
-      "convergenceMigrated": "Meridian convergence is now taken from the cave's coordinates instead of each survey, because it depends on where the cave is, not on when a survey was made. In {count} cave(s) some surveys used a different value, so {surveys} survey(s) were drawn rotated until now and have moved to their correct position: {caves}. Save the project to keep the correction."
+      "convergenceMigrated": "Meridian convergence is now taken from the cave's coordinates instead of each survey, because it depends on where the cave is, not on when a survey was made. In {count} cave(s) some surveys used a different value, so {surveys} survey(s) were drawn rotated until now and have moved to their correct position: {caves}."
     },
     "init": {
       "failedToLoadFont": "Failed to load font: {error}",

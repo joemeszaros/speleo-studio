@@ -1177,7 +1177,7 @@
       "survex3dBadMagic": "Ez nem egy Survex .3d fájl (hiányzó fejléc-aláírás)",
       "survex3dUnsupportedVersion": "Nem támogatott Survex .3d verzió: {version}",
       "survex3dUnknownCs": "Ismeretlen koordináta-rendszer ({cs}) a Survex .3d fájlban — a barlang georeferencia nélkül jelenik meg",
-      "convergenceMigrated": "A meridián konvergencia mostantól a barlang koordinátáiból jön, nem mérésenként, mert a barlang helyétől függ, nem a felmérés idejétől. {count} barlangban egyes mérések más értéket használtak, ezért {surveys} mérés eddig elforgatva jelent meg, és most a helyes pozícióba került: {caves}. Mentsd a projektet a javítás megőrzéséhez."
+      "convergenceMigrated": "A meridián konvergencia mostantól a barlang koordinátáiból jön, nem mérésenként, mert a barlang helyétől függ, nem a felmérés idejétől. {count} barlangban egyes mérések más értéket használtak, ezért {surveys} mérés eddig elforgatva jelent meg, és most a helyes pozícióba került: {caves}."
     },
     "init": {
       "failedToLoadFont": "Nem lehet betölteni a betűt: {error}",
