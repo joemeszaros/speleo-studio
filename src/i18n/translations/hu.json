@@ -1123,6 +1123,15 @@
           "errorPercentage": "Δ Százalék"
         }
       }
+    },
+    "window": {
+      "close": "Bezárás",
+      "minimize": "Kis méret",
+      "restore": "Visszaállítás",
+      "resetLayout": "Panel-elrendezés visszaállítása",
+      "menuTitle": "Ablak",
+      "noOpenWindows": "Nincs nyitott ablak",
+      "closeAll": "Minden ablak bezárása"
     }
   },
   "errors": {

@@ -445,13 +445,7 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.editCaveData'),
         onclick : () => {
           editorSetup(
-            new CaveEditor(
-              this.db,
-              this.options,
-              caveNode.data,
-              this.scene,
-              document.getElementById('fixed-size-editor')
-            )
+            new CaveEditor(this.db, this.options, caveNode.data, this.scene)
           );
         }
       },
@@ -461,14 +455,7 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.newSurvey'),
         onclick : () => {
           editorSetup(
-            new SurveySheetEditor(
-              this.db,
-              caveNode.data,
-              undefined,
-              document.getElementById('fixed-size-editor'),
-              this.declinationCache,
-              this.options
-            )
+            new SurveySheetEditor(this.db, caveNode.data, undefined, this.declinationCache, this.options)
           );
         }
       },
@@ -478,14 +465,7 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.newSubCave'),
         onclick : () => {
           editorSetup(
-            new CaveEditor(
-              this.db,
-              this.options,
-              undefined,
-              this.scene,
-              document.getElementById('fixed-size-editor'),
-              caveNode.data
-            )
+            new CaveEditor(this.db, this.options, undefined, this.scene, caveNode.data)
           );
         }
       },
@@ -505,14 +485,7 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.editStationAttributes'),
         onclick : () => {
           editorSetup(
-            new StationAttributeEditor(
-              this.db,
-              this.options,
-              caveNode.data,
-              this.scene,
-              this.attributeDefs,
-              document.getElementById('resizable-editor')
-            )
+            new StationAttributeEditor(this.db, this.options, caveNode.data, this.scene, this.attributeDefs)
           );
         }
       },
@@ -522,14 +495,7 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.editSectionAttributes'),
         onclick : () => {
           editorSetup(
-            new SectionAttributeEditor(
-              this.db,
-              this.options,
-              caveNode.data,
-              this.scene,
-              this.attributeDefs,
-              document.getElementById('resizable-editor')
-            )
+            new SectionAttributeEditor(this.db, this.options, caveNode.data, this.scene, this.attributeDefs)
           );
         }
       },
@@ -539,14 +505,7 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.editComponentAttributes'),
         onclick : () => {
           editorSetup(
-            new ComponentAttributeEditor(
-              this.db,
-              this.options,
-              caveNode.data,
-              this.scene,
-              this.attributeDefs,
-              document.getElementById('resizable-editor')
-            )
+            new ComponentAttributeEditor(this.db, this.options, caveNode.data, this.scene, this.attributeDefs)
           );
         }
       },
@@ -555,11 +514,7 @@ export class ExplorerTree {
         icon    : '💬',
         title   : i18n.t('ui.explorer.menu.editStationComments'),
         onclick : () => {
-          this.editor = new StationCommentsEditor(
-            this.options,
-            caveNode.data,
-            document.getElementById('resizable-editor')
-          );
+          this.editor = new StationCommentsEditor(this.options, caveNode.data);
           this.editor.setupPanel();
           this.editor.show();
         }
@@ -569,11 +524,7 @@ export class ExplorerTree {
         icon    : '<img src="icons/lrud.svg" alt="LRUD" style="width: 18px; height: 18px;">',
         title   : i18n.t('ui.explorer.menu.editStationDimensions'),
         onclick : () => {
-          this.editor = new StationDimensionsEditor(
-            this.options,
-            caveNode.data,
-            document.getElementById('resizable-editor')
-          );
+          this.editor = new StationDimensionsEditor(this.options, caveNode.data);
           this.editor.setupPanel();
           this.editor.show();
         }
@@ -583,11 +534,7 @@ export class ExplorerTree {
         icon    : '🚪',
         title   : i18n.t('ui.explorer.menu.editEntrances'),
         onclick : () => {
-          this.editor = new EntrancesEditor(
-            this.options,
-            caveNode.data,
-            document.getElementById('resizable-editor')
-          );
+          this.editor = new EntrancesEditor(this.options, caveNode.data);
           this.editor.setupPanel();
           this.editor.show();
         }
@@ -597,11 +544,7 @@ export class ExplorerTree {
         icon    : '🎭',
         title   : i18n.t('ui.explorer.menu.editSurveyAliases'),
         onclick : () => {
-          this.editor = new SurveyAliasesEditor(
-            this.options,
-            caveNode.data,
-            document.getElementById('resizable-editor')
-          );
+          this.editor = new SurveyAliasesEditor(this.options, caveNode.data);
           this.editor.setupPanel();
           this.editor.show();
         }
@@ -612,7 +555,7 @@ export class ExplorerTree {
         title   : i18n.t('ui.explorer.menu.cycles'),
         onclick : () => {
           editorSetup(
-            new CyclePanel(this.options, document.getElementById('resizable-editor'), this.scene, caveNode.data)
+            new CyclePanel(this.options, this.scene, caveNode.data)
           );
         }
       },
@@ -670,12 +613,7 @@ export class ExplorerTree {
         icon    : '📤',
         title   : i18n.t('ui.explorer.menu.exportCave'),
         onclick : () => {
-          new ExportWindow(
-            [caveNode.data],
-            this.projectSystem.getCurrentProject(),
-            this.scene,
-            document.getElementById('export-panel')
-          ).show();
+          new ExportWindow([caveNode.data], this.projectSystem.getCurrentProject(), this.scene).show();
         }
       },
       {
@@ -726,7 +664,6 @@ export class ExplorerTree {
             this.db,
             surveyNode.parent.data,
             surveyNode.data,
-            document.getElementById('fixed-size-editor'),
             this.declinationCache,
             this.options
           );
@@ -1003,7 +940,6 @@ export class ExplorerTree {
       surveyNode.data,
       this.scene,
       this.interaction,
-      document.getElementById('resizable-editor'),
       undefined,
       this.attributeDefs
     );

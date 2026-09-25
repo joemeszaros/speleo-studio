@@ -23,6 +23,7 @@ import { RotationTool } from './tool/rotation.js';
 import { ShortestPathTool } from './tool/shortestpath.js';
 import { DipStrikeCalculatorTool } from './tool/dipstrike.js';
 import { RoseDiagramTool } from './tool/rosediagram.js';
+import { windowManager } from './window/manager.js';
 
 class NavigationBar {
 
@@ -42,9 +43,7 @@ class NavigationBar {
     projectManager,
     projectSystem,
     googleDriveSettings,
-    projectPanel,
-    exportPanel,
-    printPanel
+    projectPanel
   ) {
     this.db = db;
     this.options = options;
@@ -55,8 +54,6 @@ class NavigationBar {
     this.projectSystem = projectSystem;
     this.googleDriveSettings = googleDriveSettings;
     this.projectPanel = projectPanel;
-    this.exportPanel = exportPanel;
-    this.printPanel = printPanel;
     this.listeners = [];
     // Icons with a dynamic `disabled` function are registered here so
     // we can re-evaluate their state when relevant data changes.
@@ -163,12 +160,7 @@ class NavigationBar {
           {
             name  : i18n.t('ui.navbar.menu.file.export'),
             click : () => {
-              new ExportWindow(
-                this.db.getAllCaves(),
-                this.projectSystem.getCurrentProject(),
-                this.scene,
-                this.exportPanel
-              ).show();
+              new ExportWindow(this.db.getAllCaves(), this.projectSystem.getCurrentProject(), this.scene).show();
             },
             shortkeys : ['crtl⊕h']
           },
@@ -192,7 +184,6 @@ class NavigationBar {
                 this.db.getAllCaves(),
                 this.scene,
                 this.projectSystem.getCurrentProject(),
-                this.printPanel,
                 this.options
               ).show();
             }
@@ -257,6 +248,38 @@ class NavigationBar {
             click : () => this.googleDriveSettings.show()
           }
         ]
+      },
+      {
+        name     : i18n.t('ui.window.menuTitle'),
+        // A function, so the list of open windows is rebuilt every time the menu is opened.
+        elements : () => {
+          const open = [...windowManager.windows.values()];
+          const entries =
+            open.length === 0
+              ? [{ name: i18n.t('ui.window.noOpenWindows'), disabled: () => true, click: () => {} }]
+              : open.map((win) => ({
+                  name     : win.titleText,
+                  selected : win === windowManager.active,
+                  // Raising a window is the way back to one that ended up behind another.
+                  click    : () => win.focus()
+                }));
+
+          return [
+            ...entries,
+            { separator: true },
+            {
+              name     : i18n.t('ui.window.closeAll'),
+              disabled : () => windowManager.windows.size === 0,
+              click    : () => windowManager.closeAll()
+            },
+            {
+              // The way back from a layout that has gone wrong: forget every remembered position
+              // and size and re-centre whatever is still open.
+              name  : i18n.t('ui.window.resetLayout'),
+              click : () => windowManager.resetLayout()
+            }
+          ];
+        }
       },
       {
         name     : i18n.t('ui.navbar.menu.help.name'),
@@ -502,36 +525,16 @@ class NavigationBar {
       }
     };
 
+    /**
+     * `elements` may be an array, or a function returning one. A function is re-evaluated every
+     * time the menu is opened, which is how the Window menu can list whatever is open right now.
+     */
     const createMenu = (name, elements, disabled = false, iconSize = 20) => {
       const c = document.createElement('div');
       c.setAttribute('class', 'mydropdown-content');
       c.setAttribute('id', 'myDropdown');
 
-      const dynamicItems = [];
-
-      elements.forEach((e) => {
-        const a = document.createElement('a');
-        if (e.icon !== undefined) {
-          const img = document.createElement('img');
-          img.setAttribute('src', e.icon);
-          img.setAttribute('width', iconSize);
-          img.setAttribute('height', iconSize);
-          a.appendChild(img);
-        }
-        a.appendChild(document.createTextNode(shortKeyText(e.shortkeys, e.name)));
-        if (e.disabled) {
-          dynamicItems.push({ element: a, disabledFn: e.disabled, clickFn: e.click });
-          a.onclick = () => {
-            if (!a.hasAttribute('disabled')) e.click();
-          };
-        } else {
-          a.onclick = e.click;
-        }
-        if (e.shortkeys) {
-          addShortkeys(e.shortkeys, e.click);
-        }
-        c.appendChild(a);
-      });
+      let dynamicItems = [];
 
       const updateDynamicItems = () => {
         dynamicItems.forEach(({ element, disabledFn }) => {
@@ -545,7 +548,51 @@ class NavigationBar {
           }
         });
       };
-      updateDynamicItems();
+
+      // Shortkeys are registered once, on the first build: a menu rebuilt on every open would
+      // otherwise stack up a duplicate binding each time it is looked at.
+      const renderItems = (registerShortkeys) => {
+        const items = typeof elements === 'function' ? elements() : elements;
+        c.replaceChildren();
+        dynamicItems = [];
+
+        items.forEach((e) => {
+          if (e.separator) {
+            const hr = document.createElement('div');
+            hr.setAttribute('class', 'mydropdown-separator');
+            c.appendChild(hr);
+            return;
+          }
+          const a = document.createElement('a');
+          if (e.icon !== undefined) {
+            const img = document.createElement('img');
+            img.setAttribute('src', e.icon);
+            img.setAttribute('width', iconSize);
+            img.setAttribute('height', iconSize);
+            a.appendChild(img);
+          }
+          if (e.selected) {
+            a.classList.add('selected');
+          }
+          a.appendChild(document.createTextNode(shortKeyText(e.shortkeys, e.name)));
+          if (e.disabled) {
+            dynamicItems.push({ element: a, disabledFn: e.disabled, clickFn: e.click });
+            a.onclick = () => {
+              if (!a.hasAttribute('disabled')) e.click();
+            };
+          } else {
+            a.onclick = e.click;
+          }
+          if (e.shortkeys && registerShortkeys) {
+            addShortkeys(e.shortkeys, e.click);
+          }
+          c.appendChild(a);
+        });
+
+        updateDynamicItems();
+      };
+
+      renderItems(true);
 
       const d = document.createElement('div');
       d.setAttribute('class', 'mydropdown');
@@ -554,7 +601,7 @@ class NavigationBar {
       b.disabled = disabled;
 
       b.onclick = function () {
-        updateDynamicItems();
+        renderItems(false);
         c.classList.toggle('mydropdown-show');
         document.querySelectorAll('.mydropdown-content').forEach((element) => {
           if (element !== c) {

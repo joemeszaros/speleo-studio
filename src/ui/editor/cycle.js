@@ -16,23 +16,24 @@
 
 import * as U from '../../utils/utils.js';
 import { SectionHelper } from '../../section.js';
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import { Polar } from '../../model.js';
 import { CaveCycle } from '../../model/cave.js';
 import { DEFAULT_UNITS } from '../../model/survey.js';
 import { CycleUtil } from '../../utils/cycle.js';
 import { IconBar } from './iconbar.js';
+import { BaseEditor } from './base.js';
 import { i18n } from '../../i18n/i18n.js';
 
-class CyclePanel {
+class CyclePanel extends BaseEditor {
 
-  constructor(options, panel, scene, cave) {
+  constructor(options, scene, cave) {
+    super();
     this.options = options;
-    this.panel = panel;
     this.scene = scene;
     this.cave = cave;
     //surveyChanged is not used here, because the whole cave needs to be recalculated to show all the loops and loop errors in the table
-    document.addEventListener('caveRecalculated', (e) => this.onCaveRecalculated(e));
+    this.bag.onDoc('caveRecalculated', (e) => this.onCaveRecalculated(e));
   }
 
   onCaveRecalculated(e) {
@@ -43,37 +44,25 @@ class CyclePanel {
     }
   }
 
-  show() {
-    this.panel.style.display = 'block';
-  }
-
   closeEditor() {
-
-    this.closed = true;
-
     if (this.table !== undefined) {
       this.hideAllCycles();
       this.hideAllDeviatingShots();
-      this.table.destroy();
-      this.table = undefined;
     }
+    super.closeEditor();
   }
 
   setupPanel() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt) => this.build(contentElmnt),
-      () => i18n.t('ui.editors.cycles.title', { name: this.cave.name }),
-      true,
-      true,
-      this.options.ui.editor.cycles,
-      () => this.closeEditor(),
-      (_newWidth, newHeight) => {
-        const h = this.panel.offsetHeight - 100;
-        this.table.setHeight(h);
-      },
-      () => this.table.redraw()
-    );
+    this.window = new Window({
+      key             : 'editor.cycles',
+      instanceId      : this.cave.name,
+      title           : () => i18n.t('ui.editors.cycles.title', { name: this.cave.name }),
+      variant         : 'editor',
+      defaultSize     : { width: 700, height: 300 },
+      persistGeometry : true,
+      onClose         : () => this.closeEditor()
+    });
+    this.window.open((contentElmnt) => this.build(contentElmnt));
 
   }
 
@@ -214,10 +203,11 @@ class CyclePanel {
   }
 
   #setupTable(contentElmnt) {
-    contentElmnt.appendChild(U.node`<div id="cycle-table"></div>`);
+    const tableContainer = U.node`<div class="cycle-table"></div>`;
+    contentElmnt.appendChild(tableContainer);
     // eslint-disable-next-line no-undef
-    this.table = new Tabulator('#cycle-table', {
-      height         : this.options.ui.editor.cycles.height - 36 - 48 - 5, // header + iconbar
+    this.table = new Tabulator(tableContainer, {
+      height         : '100%',
       data           : this.#getTableData(),
       layout         : 'fitDataStretch',
       reactiveData   : false,

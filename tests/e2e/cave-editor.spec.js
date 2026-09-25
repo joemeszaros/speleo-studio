@@ -14,7 +14,7 @@ test.describe('Cave Editor', () => {
     await contextMenu.locator('.context-menu-option[title*="cave sheet"]').click();
 
     // Editor panel should be visible
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
   });
 
@@ -22,7 +22,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Should have a form with the cave name
@@ -38,7 +38,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Should have grid layout
@@ -54,7 +54,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const coordSelect = editor.locator('#coord-system');
@@ -65,7 +65,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Submit button (Save)
@@ -81,7 +81,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Click cancel
@@ -93,7 +93,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Should show stats section
@@ -109,7 +109,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const stats = editor.locator('.cave-stats');
@@ -123,7 +123,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const stats = editor.locator('.cave-stats');
@@ -137,7 +137,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const stats = editor.locator('.cave-stats');
@@ -151,7 +151,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const stats = editor.locator('.cave-stats');
@@ -165,7 +165,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const statsText = await editor.locator('.cave-stats').textContent();
@@ -179,7 +179,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const statsText = await editor.locator('.cave-stats').textContent();
@@ -193,7 +193,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const statsText = await editor.locator('.cave-stats').textContent();
@@ -206,7 +206,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // First input in the form should be the cave name
@@ -218,7 +218,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Change the cave name
@@ -241,7 +241,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Footer should initially show "No coordinate system"
@@ -285,7 +285,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const footer = page.locator('#footer');
@@ -330,7 +330,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Select EOV
@@ -353,7 +353,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Select UTM
@@ -369,7 +369,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Click Convert GPS button
@@ -386,7 +386,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Click Convert GPS
@@ -417,7 +417,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Convert GPS coordinates (Budapest: 47.4979°N, 19.04016°E)
@@ -447,7 +447,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#convert-gps-button').click();
@@ -474,7 +474,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Coordinate system should be "none" initially
@@ -496,7 +496,7 @@ test.describe('Cave Editor', () => {
   test('WGS84 dialog auto-converts DD to DMS when typing latitude', async ({ page }) => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#convert-gps-button').click();
@@ -519,7 +519,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey aliases"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     await expect(editor.locator('#survey-aliases-table')).toBeVisible();
   });
@@ -528,7 +528,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // sample-cave.json has date: 1700000000000 = 2023-11-14 (UTC)
@@ -542,7 +542,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Change date to a new valid value
@@ -566,7 +566,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Clear the date field
@@ -589,7 +589,7 @@ test.describe('Cave Editor', () => {
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const dateInput = editor.locator('input#date');
@@ -614,7 +614,7 @@ test.describe('Cave Editor', () => {
     // Set first cave to UTM via GPS conversion (most reliable way)
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
-    let editor = page.locator('#fixed-size-editor');
+    let editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#convert-gps-button').click();
@@ -633,7 +633,7 @@ test.describe('Cave Editor', () => {
     // Now try to set Multi Survey Cave to EOV (conflicts with UTM)
     await rightClickCave(page, 'Multi Survey Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
-    editor = page.locator('#fixed-size-editor');
+    editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Select EOV by clicking the select and choosing the option
@@ -689,7 +689,7 @@ test.describe('Cave Editor', () => {
     // Try to rename Multi Survey Cave to "Test Cave" (already exists)
     await rightClickCave(page, 'Multi Survey Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('.sheet-editor-grid input[type="text"]').first().fill('Test Cave');
@@ -715,7 +715,7 @@ test.describe('Cave Editor', () => {
 
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Select UTM but don't add any coordinates

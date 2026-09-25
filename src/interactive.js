@@ -15,7 +15,10 @@
  */
 
 import * as THREE from 'three';
-import { wm } from './ui/window.js';
+import { Window } from './ui/window/window.js';
+import { windowManager } from './ui/window/manager.js';
+import { clampRect } from './ui/window/geometry.js';
+import { getUsableBounds } from './ui/window/viewport-bounds.js';
 import { showErrorPanel } from './ui/popups.js';
 import {
   get3DCoordsStr,
@@ -44,10 +47,7 @@ class SceneInteraction {
     scene,
     materials,
     sceneDOMElement,
-    contextMenu,
-    infoPanel,
-    toolPanel,
-    editorElementIDs
+    contextMenu
   ) {
     this.db = db;
     this.options = options;
@@ -56,8 +56,6 @@ class SceneInteraction {
     this.materials = materials;
     this.mouseCoordinates = new THREE.Vector2();
     this.contextMenu = contextMenu;
-    this.infoPanel = infoPanel;
-    this.toolPanel = toolPanel;
     this.selectedStation = undefined;
     this.selectedPosition = undefined;
     this.pointedStation = undefined;
@@ -70,16 +68,25 @@ class SceneInteraction {
 
     this.raycasting = new Raycasting(this.options, this.scene);
 
+    // No ListenerBag here on purpose: SceneInteraction is created once in main.js and lives as
+    // long as the page does, so none of the listeners below is ever torn down. The bag exists for
+    // things that are opened and closed repeatedly — windows, editors, dialogs.
     document.addEventListener('pointermove', (event) => this.onPointerMove(event));
     sceneDOMElement.addEventListener('click', () => this.onClick(), false);
     sceneDOMElement.addEventListener('dblclick', () => this.onDoubleClick(), false);
-    editorElementIDs.forEach((id) => {
-      document.getElementById(id).addEventListener('mouseenter', () => {
-        this.mouseOnEditor = true;
-      });
-      document.getElementById(id).addEventListener('mouseleave', () => {
+    // Suppress raycasting while the pointer is over any floating window. One delegated listener
+    // on the window layer covers every window there is, including the ones that only exist while
+    // they are open. The previous version wired up two fixed panels by id and so left the tool
+    // and info panels raycasting straight through themselves.
+    const layer = windowManager.layer;
+    layer?.addEventListener('pointerover', (event) => {
+      this.mouseOnEditor = event.target instanceof Element && event.target.closest('.popup') !== null;
+    });
+    layer?.addEventListener('pointerout', (event) => {
+      const goingTo = event.relatedTarget;
+      if (!(goingTo instanceof Element) || goingTo.closest('.popup') === null) {
         this.mouseOnEditor = false;
-      });
+      }
     });
 
     // Handle window resize to keep panels within bounds
@@ -611,15 +618,15 @@ class SceneInteraction {
   }
 
   showLocateStationPanel() {
-    wm.makeFloatingPanel(
-      this.toolPanel,
-      (e) => this.buildLocateStationPanel(e),
-      'ui.panels.locateStation.title',
-      false,
-      false,
-      {}
-    );
-
+    this.locateStationWindow = new Window({
+      key         : 'tool.locateStation',
+      title       : 'ui.panels.locateStation.title',
+      variant     : 'tool',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 300, height: 260 }
+    });
+    this.locateStationWindow.open((e) => this.buildLocateStationPanel(e));
   }
 
   buildLocateStationPanel(contentElmnt) {
@@ -663,21 +670,22 @@ class SceneInteraction {
       const stationName = selectedOption.getAttribute('station');
       this.locateStation(caveName, stationName);
       input.value = '';
-      this.toolPanel.style.display = 'none';
+      this.locateStationWindow.close();
     };
 
     contentElmnt.appendChild(container);
   }
 
   showDistanceColorPanel() {
-    wm.makeFloatingPanel(
-      this.toolPanel,
-      (e) => this.buildDistanceColorPanel(e),
-      'ui.panels.distanceColor.title',
-      false,
-      false,
-      {}
-    );
+    this.distanceColorWindow = new Window({
+      key         : 'tool.distanceColor',
+      title       : 'ui.panels.distanceColor.title',
+      variant     : 'tool',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 300, height: 280 }
+    });
+    this.distanceColorWindow.open((e) => this.buildDistanceColorPanel(e));
   }
 
   buildDistanceColorPanel(contentElmnt) {
@@ -718,7 +726,7 @@ class SceneInteraction {
       // config mode) so re-picking a station while already in distance mode still takes effect.
       this.scene.speleo.colorModeHelper.distanceStartStation = { cave: caveName, station: stationKey };
       this.scene.speleo.changeCenterLineColorMode('gradientByDistance');
-      this.toolPanel.style.display = 'none';
+      this.distanceColorWindow.close();
     };
 
     contentElmnt.appendChild(container);
@@ -787,21 +795,17 @@ class SceneInteraction {
   }
 
   showDistancePanel(from, to, diffVector, left, top, lineRemoveFn) {
-    this.infoPanel.style.width = '400px';
-    wm.makeFloatingPanel(
-      this.infoPanel,
-      (contentElmnt) => this.buildDistancePanel(contentElmnt, from, to, diffVector, left, top),
-      'ui.panels.distance.title',
-      false,
-      false,
-      {},
-      () => {
-        lineRemoveFn();
-      },
-      () => {},
-      () => {},
-      false
-    );
+    this.distanceWindow = new Window({
+      key         : 'info.distance',
+      title       : 'ui.panels.distance.title',
+      variant     : 'info',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 400, height: 420 },
+      at          : { x: left, y: top },
+      onClose     : () => lineRemoveFn()
+    });
+    this.distanceWindow.open((contentElmnt) => this.buildDistancePanel(contentElmnt, from, to, diffVector));
   }
 
   /**
@@ -836,7 +840,7 @@ class SceneInteraction {
     );
   }
 
-  buildDistancePanel(contentElmnt, from, to, diffVector, left, top) {
+  buildDistancePanel(contentElmnt, from, to, diffVector) {
 
     const fp = from.position;
     const tp = to.position;
@@ -885,35 +889,26 @@ class SceneInteraction {
         <br>
         `;
     contentElmnt.appendChild(content);
-
-    const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
-
-    //FIXME: replace this with a generalized solution
-    this.infoPanel.style.left = adjustedPosition.left + 'px';
-    this.infoPanel.style.top = adjustedPosition.top + 'px';
-
   }
 
   showSurfacePointDetailsPanel(stationMeta, left, top) {
-    this.infoPanel.style.width = '350px';
-    wm.makeFloatingPanel(
-      this.infoPanel,
-      (contentElmnt) => this.buildSurfacePointDetailsPanel(contentElmnt, stationMeta, left, top),
-      'ui.panels.pointCloudPointDetails.title',
-      false,
-      false,
-      {},
-      () => {
+    this.surfacePointWindow = new Window({
+      key         : 'info.surfacePoint',
+      title       : 'ui.panels.pointCloudPointDetails.title',
+      variant     : 'info',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 350, height: 260 },
+      at          : { x: left, y: top },
+      onClose     : () => {
         this.#clearSelected();
         this.scene.view.renderView();
-      },
-      () => {},
-      () => {},
-      false
-    );
+      }
+    });
+    this.surfacePointWindow.open((contentElmnt) => this.buildSurfacePointDetailsPanel(contentElmnt, stationMeta));
   }
 
-  buildSurfacePointDetailsPanel(contentElmnt, pointMeta, left, top) {
+  buildSurfacePointDetailsPanel(contentElmnt, pointMeta) {
     const content = node`<div class="infopanel-content"></div>`;
     content.innerHTML = `
         ${i18n.t('ui.panels.pointCloudPointDetails.fileName')}: ${pointMeta.name}<br><br>
@@ -921,33 +916,26 @@ class SceneInteraction {
         Y: ${formatFloat(pointMeta.position.y, 3)}<br>
         Z: ${formatFloat(pointMeta.position.z, 3)}<br>`;
     contentElmnt.appendChild(content);
-    const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
-    this.infoPanel.style.left = adjustedPosition.left + 'px';
-    this.infoPanel.style.top = adjustedPosition.top + 'px';
-
   }
 
   showStationDetailsPanel(stationMeta, left, top) {
-    this.infoPanel.style.width = '450px';
-    this.infoPanel.style.heigth = '';
-    wm.makeFloatingPanel(
-      this.infoPanel,
-      (contentElmnt) => this.buildStationDetailsPanel(contentElmnt, stationMeta, left, top),
-      'ui.panels.stationDetails.title',
-      false,
-      false,
-      {},
-      () => {
+    this.stationDetailsWindow = new Window({
+      key         : 'info.station',
+      title       : 'ui.panels.stationDetails.title',
+      variant     : 'info',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 450, height: 320 },
+      at          : { x: left, y: top },
+      onClose     : () => {
         this.#clearSelected();
         this.scene.view.renderView();
-      },
-      () => {},
-      () => {},
-      false
-    );
+      }
+    });
+    this.stationDetailsWindow.open((contentElmnt) => this.buildStationDetailsPanel(contentElmnt, stationMeta));
   }
 
-  buildStationDetailsPanel(contentElmnt, stationMeta, left, top) {
+  buildStationDetailsPanel(contentElmnt, stationMeta) {
 
     // Shots touching this station. `stationMeta.name` is the bare station name, which is only
     // unique WITHIN one survey, so scope the search to the station's owning survey (the
@@ -1045,98 +1033,27 @@ class SceneInteraction {
         ${attributesString}
         `;
     contentElmnt.appendChild(content);
-
-    const adjustedPosition = this.#ensurePanelInViewport(left, top, this.infoPanel);
-    this.infoPanel.style.left = adjustedPosition.left + 'px';
-    this.infoPanel.style.top = adjustedPosition.top + 'px';
-
   }
 
   /**
-   * Ensures the panel position stays within the viewport bounds
-   * @param {number} left - Left position in pixels
-   * @param {number} top - Top position in pixels
-   * @param {number} panelWidth - Width of the panel in pixels
-   * @param {number} panelHeight - Height of the panel in pixels
-   * @returns {Object} Adjusted left and top positions
+   * Clamps a transient popup (the station context menu) into the area left free by the
+   * application chrome. Floating windows do their own clamping in the window manager; this
+   * shares the same maths so there is only one implementation of it.
    */
   #ensurePanelInViewport(left, top, panel) {
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const margin = 10; // Consistent margin from viewport edges
-
-    let panelWidth = panel.offsetWidth;
-    let panelHeight = panel.offsetHeight;
-
-    // Ensure we have valid dimensions - get dimensions if not available
-    if (panelWidth <= 0 || panelHeight <= 0) {
-      // Temporarily show the panel to get accurate dimensions
-      const wasVisible = panel.style.display !== 'none';
-      if (!wasVisible) {
-        panel.style.display = 'block';
-        panel.style.visibility = 'hidden';
-        panel.style.position = 'absolute';
-        panel.style.left = '-9999px';
-        panel.style.top = '-9999px';
-      }
-
-      panelWidth = panel.offsetWidth || 200; // fallback width
-      panelHeight = panel.offsetHeight || 150; // fallback height
-
-      if (!wasVisible) {
-        panel.style.display = 'none';
-        panel.style.visibility = 'visible';
-        panel.style.position = 'absolute';
-        panel.style.left = '';
-        panel.style.top = '';
-      }
-    }
-
-    // Adjust horizontal position
-    if (left + panelWidth > viewportWidth - margin) {
-      // Try to position to the left of the cursor
-      left = Math.max(margin, left - panelWidth);
-    }
-
-    // Ensure minimum left margin
-    if (left < margin) {
-      left = margin;
-    }
-
-    // Adjust vertical position
-    if (top + panelHeight > viewportHeight - margin) {
-      // Try to position above the cursor
-      top = Math.max(margin, top - panelHeight);
-    }
-
-    // Ensure minimum top margin (account for potential header/navbar)
-    const minTopMargin = 50; // Account for navbar height
-    if (top < minTopMargin) {
-      top = minTopMargin;
-    }
-
-    // Final safety checks to ensure panel is completely within viewport
-    left = Math.max(margin, Math.min(left, viewportWidth - panelWidth - margin));
-    top = Math.max(minTopMargin, Math.min(top, viewportHeight - panelHeight - margin));
-
-    return { left, top };
+    const rect = panel.getBoundingClientRect();
+    const clamped = clampRect(
+      { x: left, y: top, width: rect.width || 200, height: rect.height || 150 },
+      getUsableBounds()
+    );
+    return { left: clamped.x, top: clamped.y };
   }
 
   /**
    * Handles window resize events to ensure open panels stay within bounds
    */
   handleWindowResize() {
-    // Check if infoPanel is visible and reposition if needed
-    if (this.infoPanel.style.display === 'block') {
-      const currentLeft = parseInt(this.infoPanel.style.left) || 0;
-      const currentTop = parseInt(this.infoPanel.style.top) || 0;
-      const adjustedPosition = this.#ensurePanelInViewport(currentLeft, currentTop, this.infoPanel);
-
-      this.infoPanel.style.left = adjustedPosition.left + 'px';
-      this.infoPanel.style.top = adjustedPosition.top + 'px';
-    }
-
-    // Check if contextMenu is visible and reposition if needed
+    // Floating windows are the window manager's business now; only the context menu is left.
     if (this.contextMenu.style.display === 'block') {
       const currentLeft = parseInt(this.contextMenu.style.left) || 0;
       const currentTop = parseInt(this.contextMenu.style.top) || 0;

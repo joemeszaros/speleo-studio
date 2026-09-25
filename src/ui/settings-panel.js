@@ -18,6 +18,7 @@ import { ConfigManager } from '../config.js';
 import { i18n } from '../i18n/i18n.js';
 import { DEFAULT_UNITS } from '../model/survey.js';
 import { createFloatInput } from './component/input.js';
+import { windowManager } from './window/manager.js';
 
 export class SettingsPanel {
   constructor(container, options) {
@@ -1616,6 +1617,9 @@ export class SettingsPanel {
         ConfigManager.clear();
         ConfigManager.deepMerge(this.options, defaultConfig);
       }
+      // deepMerge only adds and overwrites, so keys that exist only in the saved config survive
+      // it. Window geometry is one of those, and a reset that left it behind would be a lie.
+      windowManager.resetLayout();
       this.render();
     }
   }

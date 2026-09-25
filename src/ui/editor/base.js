@@ -20,17 +20,32 @@ import { SectionHelper } from '../../section.js';
 import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { DEFAULT_UNITS } from '../../model/survey.js';
 import { i18n } from '../../i18n/i18n.js';
+import { ListenerBag } from '../window/listener-bag.js';
 
 class BaseEditor {
-  constructor(panel) {
-    this.panel = panel;
+  constructor() {
+    // Subscriptions that outlive the editor's own DOM: document events, scene emitters, timers.
+    // Disposed by closeEditor, so a constructor can register without leaking on reopen.
+    this.bag = new ListenerBag();
   }
 
+  /** Bring an already open editor forward. `setupPanel()` is what creates the window. */
   show() {
-    this.panel.style.display = 'block';
+    this.window?.focus();
   }
 
+  /**
+   * Tear the editor down. Called by the window manager when the window closes, and directly by
+   * editors that dismiss themselves (after a successful save, for instance).
+   */
   closeEditor() {
+    if (this.window !== undefined && !this.window.closed) {
+      // Go back through the window so the element and everything attached to it goes too. The
+      // window calls this method again from its onClose, where the guard above lets it through.
+      this.window.close();
+      return;
+    }
+
     this.closed = true;
 
     if (this.table !== undefined) {
@@ -38,7 +53,8 @@ class BaseEditor {
       this.table = undefined;
     }
 
-    this.panel.style.display = 'none';
+    this.bag.dispose();
+    this.window = undefined;
   }
 
   showAlert(msg, postAction = () => {}) {
@@ -203,8 +219,8 @@ class BaseEditor {
 }
 
 class Editor extends BaseEditor {
-  constructor(panel, scene, cave, attributeDefs) {
-    super(panel);
+  constructor(scene, cave, attributeDefs) {
+    super();
     this.scene = scene;
     this.cave = cave;
     this.closed = false;

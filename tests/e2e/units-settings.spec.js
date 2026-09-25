@@ -29,8 +29,8 @@ async function expandSection(page, titleText) {
 async function openSurveyEditor(page, surveyName = 'Main Survey') {
   await rightClickSurvey(page, surveyName);
   await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
-  await expect(page.locator('#resizable-editor')).toBeVisible({ timeout: 5000 });
-  await expect(page.locator('#surveydata .tabulator-row').first()).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.popup--editor')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.surveydata .tabulator-row').first()).toBeVisible({ timeout: 5000 });
 }
 
 test.describe('Unit Settings', () => {
@@ -121,7 +121,7 @@ test.describe('Unit Settings — Survey Editor display', () => {
     await openSurveyEditor(page);
 
     const stored = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getData().find((r) => r.type === 'center')?.length;
     });
     expect(typeof stored).toBe('number');
@@ -137,14 +137,14 @@ test.describe('Unit Settings — Survey Editor display', () => {
   test('switching display unit to feet converts cells without changing stored values', async ({ page }) => {
     await openSurveyEditor(page);
     const originalMeters = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getData().find((r) => r.type === 'center')?.length;
     });
     expect(typeof originalMeters).toBe('number');
 
     // Close editor and switch unit
-    await page.locator('#resizable-editor .close').first().click();
-    await expect(page.locator('#resizable-editor')).toBeHidden({ timeout: 5000 });
+    await page.locator('.popup--editor .close').first().click();
+    await expect(page.locator('.popup--editor')).toBeHidden({ timeout: 5000 });
 
     await page.evaluate(() => {
       window.speleo.options.units.length = 'feet';
@@ -161,7 +161,7 @@ test.describe('Unit Settings — Survey Editor display', () => {
     expect(parseFloat((firstLengthCellText || '').trim())).toBeCloseTo(expectedFeet, 2);
 
     const storedAfter = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getData().find((r) => r.type === 'center')?.length;
     });
     // Storage stays in survey.units (meters for fixture imported as JSON)
@@ -171,11 +171,11 @@ test.describe('Unit Settings — Survey Editor display', () => {
   test('switching display unit to grads converts azimuth/clino', async ({ page }) => {
     await openSurveyEditor(page);
     const originalAzi = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getData().find((r) => r.type === 'center')?.azimuth;
     });
-    await page.locator('#resizable-editor .close').first().click();
-    await expect(page.locator('#resizable-editor')).toBeHidden({ timeout: 5000 });
+    await page.locator('.popup--editor .close').first().click();
+    await expect(page.locator('.popup--editor')).toBeHidden({ timeout: 5000 });
 
     await page.evaluate(() => {
       window.speleo.options.units.angle = 'grads';
@@ -274,7 +274,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
 
     // Set first center row's length cell to "10" (feet) via the Tabulator API (triggers mutatorEdit)
     await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       const row = tbl.getRows().find((r) => r.getData().type === 'center');
       const cell = row.getCell('length');
       // Use cell.setValue to mimic an edit (mutatorEdit runs on user edits)
@@ -286,7 +286,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
 
     // Stored value should be 10 ft → 3.048 m (the underlying survey is meters)
     const storedMeters = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       const row = tbl.getRows().find((r) => r.getData().type === 'center');
       return row.getData().length;
     });
@@ -314,7 +314,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
     await page.waitForTimeout(150);
 
     const stored = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getRows().find((r) => r.getData().type === 'center').getData().length;
     });
     expect(stored).toBe(1.5);
@@ -337,7 +337,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
     await page.waitForTimeout(150);
 
     const stored = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getRows().find((r) => r.getData().type === 'center').getData().length;
     });
     expect(stored).toBe(2.7);
@@ -364,7 +364,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
     await page.waitForTimeout(150);
 
     const stored = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getRows().find((r) => r.getData().type === 'center').getData().length;
     });
     expect(stored).toBe(8.25);
@@ -393,7 +393,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
 
     // Storage is meters, so 10 ft → ~3.048 m
     const stored = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getRows().find((r) => r.getData().type === 'center').getData().length;
     });
     expect(stored).toBeCloseTo(3.048, 4);
@@ -405,7 +405,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
     await openSurveyEditor(page);
 
     const result = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       const cell = tbl.getRows().find((r) => r.getData().type === 'center').getCell('length');
       // Simulate the cumulative writes that setupCustomEditMode performs
       cell.setValue('1');
@@ -425,7 +425,7 @@ test.describe('Unit Settings — Editing in survey editor', () => {
 
     // Also accept comma decimal separator
     const commaResult = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       const cell = tbl.getRows().find((r) => r.getData().type === 'center').getCell('length');
       cell.setValue('2');
       cell.setValue((cell.getValue() ?? '') + ',');
@@ -439,14 +439,14 @@ test.describe('Unit Settings — Editing in survey editor', () => {
     // Both display and storage are meters → no conversion
     await openSurveyEditor(page);
     await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       const row = tbl.getRows().find((r) => r.getData().type === 'center');
       row.getCell('length').setValue(7.5, true);
     });
     await page.waitForTimeout(150);
 
     const storedMeters = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getRows().find((r) => r.getData().type === 'center').getData().length;
     });
     expect(storedMeters).toBeCloseTo(7.5, 6);
@@ -460,14 +460,14 @@ test.describe('Unit Settings — Editing in survey editor', () => {
 
     await openSurveyEditor(page);
     await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       const row = tbl.getRows().find((r) => r.getData().type === 'center');
       row.getCell('azimuth').setValue(100, true); // 100 grads = 90 degrees
     });
     await page.waitForTimeout(150);
 
     const storedDegrees = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       return tbl.getRows().find((r) => r.getData().type === 'center').getData().azimuth;
     });
     expect(storedDegrees).toBeCloseTo(90, 6);
@@ -516,7 +516,7 @@ test.describe('Unit Settings — Validators', () => {
     await openSurveyEditor(page);
 
     const isValid = await page.evaluate(() => {
-      const tbl = window.Tabulator.findTable('#surveydata')[0];
+      const tbl = window.Tabulator.findTable('.surveydata')[0];
       const row = tbl.getRows().find((r) => r.getData().type === 'center');
       const cell = row.getCell('azimuth');
       // Simulate the validators running on raw user input "380" in grads
@@ -668,7 +668,7 @@ test.describe('Unit Settings — Tools and panels', () => {
       .locator('.models-tree-category-header');
     await caveHeader.click({ button: 'right' });
     await page.locator('#explorer-context-menu .context-menu-option').first().click();
-    await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
 
     const statsText = await page.locator('.cave-stats').textContent();
     // Expect the length stat to use feet labels
@@ -682,7 +682,7 @@ test.describe('Unit Settings — Tools and panels', () => {
       .locator('.models-tree-category-header');
     await caveHeader.click({ button: 'right' });
     await page.locator('#explorer-context-menu .context-menu-option').first().click();
-    await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
 
     const statsText = await page.locator('.cave-stats').textContent();
     expect(statsText).toContain(' m');
@@ -721,7 +721,7 @@ test.describe('Unit Settings — Survey sheet stats', () => {
   async function openSurveySheet(page) {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
-    await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
   }
 
   test('survey sheet shows length in display unit (feet)', async ({ page }) => {
@@ -804,7 +804,7 @@ test.describe('Unit Settings — Localized unit labels', () => {
       .locator('.models-tree-category-header');
     await caveHeader.click({ button: 'right' });
     await page.locator('#explorer-context-menu .context-menu-option').first().click();
-    await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
 
     const statsText = await page.locator('.cave-stats').textContent();
     expect(statsText).toContain(' láb');
@@ -818,7 +818,7 @@ test.describe('Unit Settings — Survey sheet unit editing', () => {
   async function openSurveySheet(page) {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
     return editor;
   }
@@ -1041,7 +1041,7 @@ test.describe('Unit Settings — Survey sheet unit editing', () => {
       .locator('.models-tree-category-header');
     await caveHeader.click({ button: 'right' });
     await page.locator('#explorer-context-menu .context-menu-option[title*="ew survey" i]').click();
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#name').fill('Imperial Survey');

@@ -1100,6 +1100,15 @@
           "errorPercentage": "Δ Percentage"
         }
       }
+    },
+    "window": {
+      "close": "Close",
+      "minimize": "Minimize",
+      "restore": "Restore",
+      "resetLayout": "Reset panel layout",
+      "menuTitle": "Window",
+      "noOpenWindows": "No open windows",
+      "closeAll": "Close all windows"
     }
   },
   "errors": {

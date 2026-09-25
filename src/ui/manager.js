@@ -453,7 +453,6 @@ class ProjectManager {
       survey,
       this.scene,
       this.interaction,
-      document.getElementById('resizable-editor'),
       editorState.state,
       this.attributeDefs
     );
@@ -1147,13 +1146,7 @@ class ProjectManager {
   }
 
   addNewCave() {
-    this.editor = new CaveEditor(
-      this.db,
-      this.options,
-      undefined,
-      this.scene,
-      document.getElementById('fixed-size-editor')
-    );
+    this.editor = new CaveEditor(this.db, this.options, undefined, this.scene);
 
     this.editor.setupPanel();
     this.editor.show();

@@ -7,14 +7,14 @@ test.describe('Cycle Editor', () => {
     await setupWithCave(page, fixture, caveName);
     await rightClickCave(page, caveName);
     await page.locator('#explorer-context-menu .context-menu-option[title*="ycle"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     return editor;
   }
 
   test('opens from cave context menu', async ({ page }) => {
     const editor = await openCycleEditor(page);
-    await expect(editor.locator('#cycle-table')).toBeVisible();
+    await expect(editor.locator('.cycle-table')).toBeVisible();
   });
 
   test('has show/hide all cycles buttons', async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe('Cycle Editor', () => {
     const editor = await openCycleEditor(page);
 
     const columns = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator
         .getColumns()
@@ -62,7 +62,7 @@ test.describe('Cycle Editor', () => {
     const editor = await openCycleEditor(page);
 
     const hasFilter = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       const pathCol = tabulator.getColumn('path');
       return pathCol.getDefinition().headerFilter !== undefined;
@@ -77,11 +77,11 @@ test.describe('Cycle Detection', () => {
     await setupWithCave(page, 'cave-with-loops.json', 'Loop Cave');
     await rightClickCave(page, 'Loop Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="ycle"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     // Wait for table to have rows
     await page.waitForFunction(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       if (!table) return false;
       const tabs = window.Tabulator?.findTable?.(table);
       return tabs?.[0]?.getRows()?.length > 0;
@@ -93,7 +93,7 @@ test.describe('Cycle Detection', () => {
     await openCycleEditorForLoopCave(page);
 
     const rowCount = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().length;
     });
@@ -106,7 +106,7 @@ test.describe('Cycle Detection', () => {
     await openCycleEditorForLoopCave(page);
 
     const paths = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map((r) => r.getData().path);
     });
@@ -128,7 +128,7 @@ test.describe('Cycle Detection', () => {
     await openCycleEditorForLoopCave(page);
 
     const distances = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map((r) => r.getData().distance);
     });
@@ -142,7 +142,7 @@ test.describe('Cycle Detection', () => {
     await openCycleEditorForLoopCave(page);
 
     const errorPercentages = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map((r) => r.getData().errorPercentage);
     });
@@ -158,7 +158,7 @@ test.describe('Cycle Detection', () => {
     await page.waitForTimeout(300);
 
     const allVisible = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().every((r) => r.getData().visible === true);
     });
@@ -175,7 +175,7 @@ test.describe('Cycle Detection', () => {
     await page.waitForTimeout(300);
 
     const allHidden = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().every((r) => r.getData().visible === false);
     });
@@ -186,11 +186,11 @@ test.describe('Cycle Detection', () => {
     await setupWithCave(page);
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="ycle"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const rowCount = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().length;
     });
@@ -204,11 +204,11 @@ test.describe('Loop Closure Error Fix', () => {
     await setupWithCave(page, 'cave-with-loop-error.json', 'Error Cave');
     await rightClickCave(page, 'Error Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="ycle"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     // Wait for table to have at least one row
     await page.waitForFunction(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       if (!table) return false;
       const tabs = window.Tabulator?.findTable?.(table);
       return tabs?.[0]?.getRows()?.length > 0;
@@ -220,7 +220,7 @@ test.describe('Loop Closure Error Fix', () => {
     await openCycleEditorForErrorCave(page);
 
     const errorData = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       if (rows.length === 0) return null;
@@ -243,14 +243,14 @@ test.describe('Loop Closure Error Fix', () => {
 
     // Get initial error
     const initialError = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows()[0]?.getData()?.errorDistance ?? 0;
     });
     expect(initialError).toBeGreaterThan(0);
 
     // Right-click on the first row to open context menu
-    const firstRow = page.locator('#cycle-table .tabulator-row').first();
+    const firstRow = page.locator('.cycle-table .tabulator-row').first();
     await firstRow.click({ button: 'right' });
     await page.waitForTimeout(300);
 
@@ -262,7 +262,7 @@ test.describe('Loop Closure Error Fix', () => {
 
     // After propagation, error should be reduced to near zero
     const newData = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       if (rows.length === 0) return null;
@@ -277,7 +277,7 @@ test.describe('Loop Closure Error Fix', () => {
   test('context menu has propagate and adjust options', async ({ page }) => {
     await openCycleEditorForErrorCave(page);
 
-    const firstRow = page.locator('#cycle-table .tabulator-row').first();
+    const firstRow = page.locator('.cycle-table .tabulator-row').first();
     await firstRow.click({ button: 'right' });
     await page.waitForTimeout(300);
 
@@ -294,7 +294,7 @@ test.describe('Loop Closure Error Fix', () => {
     await openCycleEditorForErrorCave(page);
 
     const rowCount = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().length;
     });
@@ -306,7 +306,7 @@ test.describe('Loop Closure Error Fix', () => {
     await openCycleEditorForErrorCave(page);
 
     const path = await page.evaluate(() => {
-      const table = document.querySelector('#cycle-table');
+      const table = document.querySelector('.cycle-table');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows()[0]?.getData()?.path ?? [];
     });

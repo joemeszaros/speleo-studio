@@ -20,7 +20,7 @@ import { CaveSection, CaveComponent } from '../../model/cave.js';
 import { SectionHelper } from '../../section.js';
 import { randomAlphaNumbericString } from '../../utils/utils.js';
 import * as U from '../../utils/utils.js';
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import { i18n } from '../../i18n/i18n.js';
 import { IconBar } from './iconbar.js';
 import { Editor } from './base.js';
@@ -43,16 +43,21 @@ const bareStationsArrayFormatter = (cell) => {
 
 class BaseAttributeEditor extends Editor {
 
-  constructor(db, options, cave, scene, attributeDefs, panel) {
-    super(panel, scene, cave, attributeDefs);
+  constructor(db, options, cave, scene, attributeDefs) {
+    super(scene, cave, attributeDefs);
     this.db = db;
     this.options = options;
     this.attributeDefs = attributeDefs;
     this._floatInputs = []; // float-input wrappers; reformatted on decimalSeparatorChanged
-    document.addEventListener('decimalSeparatorChanged', () => {
+    this.bag.onDoc('decimalSeparatorChanged', () => {
       this._floatInputs = this._floatInputs.filter((w) => document.contains(w));
       this._floatInputs.forEach((w) => w.reformat());
     });
+  }
+
+  /** Geometry key, one per concrete editor. */
+  get windowKey() {
+    throw new Error('windowKey must be implemented by the concrete attribute editor');
   }
 
   getValidationUpdates(data) {
@@ -83,24 +88,16 @@ class BaseAttributeEditor extends Editor {
   }
 
   setupPanel() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt, close) => this.buildPanel(contentElmnt, close),
-      () => {
-        return this.getTitle();
-      },
-      true,
-      true,
-      this.options.ui.editor.attributes,
-      (content, saveOnExit) => {
-        this.closeEditor(saveOnExit);
-      },
-      () => {
-        const h = this.panel.offsetHeight - 100;
-        this.table.setHeight(h);
-      },
-      () => this.table.redraw()
-    );
+    this.window = new Window({
+      key             : this.windowKey,
+      instanceId      : this.cave.name,
+      title           : () => this.getTitle(),
+      variant         : 'editor',
+      defaultSize     : { width: 700, height: 300 },
+      persistGeometry : true,
+      onClose         : (content, saveOnExit) => this.closeEditor(saveOnExit)
+    });
+    this.window.open((contentElmnt, close) => this.buildPanel(contentElmnt, close));
   }
 
   buildPanel(contentElmnt, close) {
@@ -116,6 +113,7 @@ class BaseAttributeEditor extends Editor {
     const rcIC = this.iconBar.getRowCountInputContainer();
     // Add common buttons (undo, redo, add row, delete row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      bag                    : this.bag,
       getEmptyRow            : () => this.getEmptyRow(),
       rowCountInputContainer : rcIC
 
@@ -232,16 +230,15 @@ class BaseAttributeEditor extends Editor {
   setupTable(contentElmnt) {
 
     const tableDiv = document.createElement('div');
-    tableDiv.setAttribute('id', 'sectionattributes');
+    tableDiv.className = 'sectionattributes';
     contentElmnt.appendChild(tableDiv);
 
     const columns = this.getColumns();
 
     // eslint-disable-next-line no-undef
-    this.table = new Tabulator('#sectionattributes', {
+    this.table = new Tabulator(tableDiv, {
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.attributes.height - 36 - 48 - 5, // header + iconbar
-      autoResize                : false,
+      height                    : '100%',
       data                      : this.getTableData(),
       layout                    : 'fitColumns',
       validationMode            : 'highlight',
@@ -688,8 +685,8 @@ class BaseAttributeEditor extends Editor {
 
 class FragmentAttributeEditor extends BaseAttributeEditor {
 
-  constructor(db, options, cave, scene, attributeDefs, panel) {
-    super(db, options, cave, scene, attributeDefs, panel);
+  constructor(db, options, cave, scene, attributeDefs) {
+    super(db, options, cave, scene, attributeDefs);
   }
 
   updateInterpolated(cell) {
@@ -936,8 +933,12 @@ class FragmentAttributeEditor extends BaseAttributeEditor {
 
 class ComponentAttributeEditor extends FragmentAttributeEditor {
 
-  constructor(db, options, cave, scene, attributeDefs, panel) {
-    super(db, options, cave, scene, attributeDefs, panel);
+  constructor(db, options, cave, scene, attributeDefs) {
+    super(db, options, cave, scene, attributeDefs);
+  }
+
+  get windowKey() {
+    return 'editor.componentAttributes';
   }
 
   getTitle() {
@@ -1317,8 +1318,12 @@ class ComponentAttributeEditor extends FragmentAttributeEditor {
 
 class SectionAttributeEditor extends FragmentAttributeEditor {
 
-  constructor(db, options, cave, scene, attributeDefs, panel) {
-    super(db, options, cave, scene, attributeDefs, panel);
+  constructor(db, options, cave, scene, attributeDefs) {
+    super(db, options, cave, scene, attributeDefs);
+  }
+
+  get windowKey() {
+    return 'editor.sectionAttributes';
   }
 
   getTitle() {
@@ -1652,8 +1657,12 @@ class SectionAttributeEditor extends FragmentAttributeEditor {
 
 class StationAttributeEditor extends BaseAttributeEditor {
 
-  constructor(db, options, cave, scene, attributeDefs, panel) {
-    super(db, options, cave, scene, attributeDefs, panel);
+  constructor(db, options, cave, scene, attributeDefs) {
+    super(db, options, cave, scene, attributeDefs);
+  }
+
+  get windowKey() {
+    return 'editor.stationAttributes';
   }
 
   getTitle() {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import { node, degreesToRads, fromPolar, formatFloat } from '../../utils/utils.js';
 import { StrikeDipCalculator } from '../../utils/geo.js';
 import { Vector } from '../../model.js';
@@ -23,10 +23,7 @@ import { i18n } from '../../i18n/i18n.js';
 
 export class DipStrikeCalculatorTool {
 
-  constructor(panel = '#tool-panel') {
-    this.panel = document.querySelector(panel);
-    this.panel.style.width = '300px';
-
+  constructor() {
     // Data storage
     this.points = [null, null, null];
     this.surveyData = [null, null, null];
@@ -52,18 +49,16 @@ export class DipStrikeCalculatorTool {
   }
 
   show() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt) => this.build(contentElmnt),
-      'ui.panels.dipStrikeCalculator.title',
-      false,
-      false,
-      {},
-      () => {
-        // Cleanup event listeners when panel is closed
-        this.cleanup();
-      }
-    );
+    this.window = new Window({
+      key         : 'tool.dipStrike',
+      title       : 'ui.panels.dipStrikeCalculator.title',
+      variant     : 'tool',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 300, height: 400 },
+      onClose     : () => this.cleanup()
+    });
+    this.window.open((contentElmnt) => this.build(contentElmnt));
   }
 
   showCalculatorError(message) {

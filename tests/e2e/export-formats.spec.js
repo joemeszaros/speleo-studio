@@ -17,7 +17,7 @@ async function openExportAndSelect(page, format) {
   await fileMenu.locator('.dropbtn').click();
   await page.locator('.mydropdown-content a', { hasText: 'Export cave' }).click();
 
-  const exportPanel = page.locator('#export-panel');
+  const exportPanel = page.locator('.popup--export');
   await expect(exportPanel).toBeVisible({ timeout: 5000 });
 
   await exportPanel.locator('#export-format').selectOption(format);
@@ -48,7 +48,7 @@ test.describe('Export Formats', () => {
     await fileMenu.locator('.dropbtn').click();
     await page.locator('.mydropdown-content a', { hasText: 'Export cave' }).click();
 
-    const exportPanel = page.locator('#export-panel');
+    const exportPanel = page.locator('.popup--export');
     await expect(exportPanel).toBeVisible({ timeout: 5000 });
   });
 
@@ -57,7 +57,7 @@ test.describe('Export Formats', () => {
     await fileMenu.locator('.dropbtn').click();
     await page.locator('.mydropdown-content a', { hasText: 'Export cave' }).click();
 
-    const exportPanel = page.locator('#export-panel');
+    const exportPanel = page.locator('.popup--export');
     await expect(exportPanel).toBeVisible({ timeout: 5000 });
 
     const options = await exportPanel.locator('#export-format option').evaluateAll(
@@ -76,7 +76,7 @@ test.describe('Export Formats', () => {
     await fileMenu.locator('.dropbtn').click();
     await page.locator('.mydropdown-content a', { hasText: 'Export cave' }).click();
 
-    const exportPanel = page.locator('#export-panel');
+    const exportPanel = page.locator('.popup--export');
     await expect(exportPanel).toBeVisible({ timeout: 5000 });
 
     const nameInput = exportPanel.locator('#export-project-name');
@@ -181,7 +181,7 @@ test.describe('Export Formats', () => {
     await fileMenu.locator('.dropbtn').click();
     await page.locator('.mydropdown-content a', { hasText: 'Export cave' }).click();
 
-    const exportPanel = page.locator('#export-panel');
+    const exportPanel = page.locator('.popup--export');
     await expect(exportPanel).toBeVisible({ timeout: 5000 });
 
     await exportPanel.locator('#export-format').selectOption('png');

@@ -29,7 +29,7 @@ async function openNewSubCaveEditor(page, caveName) {
   const contextMenu = page.locator('#explorer-context-menu');
   await expect(contextMenu).toBeVisible();
   await contextMenu.locator('.context-menu-option[title="New sub-cave"]').click();
-  await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
 }
 
 /**
@@ -37,7 +37,7 @@ async function openNewSubCaveEditor(page, caveName) {
  */
 async function createSubCave(page, parentName, subCaveName) {
   await openNewSubCaveEditor(page, parentName);
-  const editor = page.locator('#fixed-size-editor');
+  const editor = page.locator('.popup--sheet');
   await fillRequiredFields(editor, subCaveName);
   await editor.locator('button[type="submit"]').click();
   await dismissNotifications(page);
@@ -100,7 +100,7 @@ test.describe('Sub-cave creation from cave context menu', () => {
     await setupWithCave(page);
     await openNewSubCaveEditor(page, 'Test Cave');
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor.locator('.popup-header')).toContainText('New sub-cave');
     await expect(editor.locator('input#name')).toHaveValue('');
   });
@@ -110,14 +110,14 @@ test.describe('Sub-cave creation from cave context menu', () => {
     await openNewSubCaveEditor(page, 'Test Cave');
 
     // Sub-caves inherit geoData from the root cave, so the coordinate section is hidden.
-    await expect(page.locator('#fixed-size-editor .coords-section')).toBeHidden();
+    await expect(page.locator('.popup--sheet .coords-section')).toBeHidden();
   });
 
   test('saving a new sub-cave nests it under the parent cave', async ({ page }) => {
     await setupWithCave(page);
     await openNewSubCaveEditor(page, 'Test Cave');
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await fillRequiredFields(editor, 'Lower Branch');
     await editor.locator('button[type="submit"]').click();
     await dismissNotifications(page);
@@ -142,7 +142,7 @@ test.describe('Sub-cave creation from cave context menu', () => {
     await setupWithCave(page);
     await openNewSubCaveEditor(page, 'Test Cave');
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await fillInput(editor.locator('input#name'), 'Ghost Branch');
     await editor.getByRole('button', { name: 'Cancel' }).click();
 
@@ -155,7 +155,7 @@ test.describe('Sub-cave creation from cave context menu', () => {
 
     // Create the first sub-cave.
     await openNewSubCaveEditor(page, 'Test Cave');
-    let editor = page.locator('#fixed-size-editor');
+    let editor = page.locator('.popup--sheet');
     await fillRequiredFields(editor, 'Duplicate Branch');
     await editor.locator('button[type="submit"]').click();
     await dismissNotifications(page);
@@ -163,7 +163,7 @@ test.describe('Sub-cave creation from cave context menu', () => {
 
     // Attempt a second sub-cave with the same name.
     await openNewSubCaveEditor(page, 'Test Cave');
-    editor = page.locator('#fixed-size-editor');
+    editor = page.locator('.popup--sheet');
     await fillRequiredFields(editor, 'Duplicate Branch');
     await editor.locator('button[type="submit"]').click();
 
@@ -189,7 +189,7 @@ test.describe('Sub-cave creation from cave context menu', () => {
     await expect(contextMenu).toBeVisible();
     await contextMenu.locator('.context-menu-option[title="New survey"]').click();
 
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
     await fillInput(editor.locator('input#name'), 'Sub Survey 1');
     await editor.locator('input#date').fill('2025-01-01');
@@ -215,7 +215,7 @@ test.describe('Sub-cave creation from cave context menu', () => {
     await expandCaveNode(page, 'Test Cave');
     await rightClickSubCave(page, 'Persisted Branch');
     await page.locator('#explorer-context-menu .context-menu-option[title="New survey"]').click();
-    const editor = page.locator('#fixed-size-editor');
+    const editor = page.locator('.popup--sheet');
     await expect(editor).toBeVisible({ timeout: 5000 });
     await fillInput(editor.locator('input#name'), 'Persisted Survey');
     await editor.locator('input#date').fill('2025-01-01');

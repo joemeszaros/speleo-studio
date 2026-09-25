@@ -7,14 +7,14 @@ test.describe('Survey Aliases Editor', () => {
     await setupWithCave(page);
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey aliases"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     return editor;
   }
 
   // Add a row and set its from/to via the Tabulator API.
   async function addAlias(page, from, to) {
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await editor.locator('#add-row').click();
     await page.waitForTimeout(200);
     await page.evaluate(({ from, to }) => {
@@ -183,7 +183,7 @@ test.describe('Survey Aliases Editor', () => {
     await addAlias(page, 'A0', 'A2');
     await addAlias(page, 'A1', 'A4');
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     const downloadPromise = page.waitForEvent('download');
     await editor.locator('#export-to-csv').click();
     const download = await downloadPromise;

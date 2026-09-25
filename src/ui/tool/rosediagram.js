@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import { node, convertLengthToMeters, convertAngleToDegrees, formatFloat } from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { DEFAULT_UNITS } from '../../model/survey.js';
 
 export class RoseDiagramTool {
 
-  constructor(db, panel = '#tool-panel') {
+  constructor(db) {
     this.db = db;
-    this.panel = document.querySelector(panel);
-    this.panel.style.width = '450px';
 
     // Default settings
     this.binCount = 36; // Number of direction bins (36 = 10° each)
@@ -34,17 +32,14 @@ export class RoseDiagramTool {
   }
 
   show() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt) => this.build(contentElmnt),
-      'ui.panels.roseDiagram.title',
-      true,
-      true,
-      { width: 450, height: 520 },
-      () => {
-        // Cleanup when panel is closed
-      }
-    );
+    this.window = new Window({
+      key             : 'tool.roseDiagram',
+      title           : 'ui.panels.roseDiagram.title',
+      variant         : 'tool',
+      defaultSize     : { width: 450, height: 520 },
+      persistGeometry : true
+    });
+    this.window.open((contentElmnt) => this.build(contentElmnt));
   }
 
   /**

@@ -17,7 +17,7 @@
 import * as U from '../../utils/utils.js';
 import { CaveMetadata, Cave } from '../../model/cave.js';
 import { DEFAULT_UNITS } from '../../model/survey.js';
-import { wm } from '../window.js';
+
 import { showErrorPanel } from '../popups.js';
 import { Editor } from './base.js';
 import { UTMConverter, MeridianConvergence } from '../../utils/geo.js';
@@ -32,6 +32,7 @@ import {
 } from '../../model/geo.js';
 import { i18n } from '../../i18n/i18n.js';
 import { WGS84Dialog } from '../wgs84-dialog.js';
+import { Window } from '../window/window.js';
 
 class CaveEditor extends Editor {
   /**
@@ -39,13 +40,12 @@ class CaveEditor extends Editor {
    *        sub-cave nested under this parent instead of a new top-level cave. Sub-caves inherit
    *        geoData from the root cave, so the coordinate-system section is hidden in this mode.
    */
-  constructor(db, options, cave, scene, panel, parentCave = undefined) {
-    super(panel, scene, cave, undefined); // no attributes thus attributeDefs is undefined
+  constructor(db, options, cave, scene, parentCave = undefined) {
+    super(scene, cave, undefined); // no attributes thus attributeDefs is undefined
     this.db = db;
     this.options = options;
     this.parentCave = parentCave;
     this.graph = undefined; // sort of a lazy val
-    document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
   #emitCaveChanged(reasons) {
@@ -91,22 +91,26 @@ class CaveEditor extends Editor {
   }
 
   setupPanel() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt) => this.build(contentElmnt),
-      () =>
+    this.window = new Window({
+      key         : 'sheet.cave',
+      title       : () =>
         i18n.t('ui.editors.caveSheet.title', {
           name :
             this.cave?.name === undefined
-              ? i18n.t(this.parentCave !== undefined ? 'ui.editors.caveSheet.titleNewSubCave' : 'ui.editors.caveSheet.titleNew')
+              ? i18n.t(
+                  this.parentCave !== undefined
+                    ? 'ui.editors.caveSheet.titleNewSubCave'
+                    : 'ui.editors.caveSheet.titleNew'
+                )
               : this.cave.name
         }),
-      true,
-      false,
-      {},
-      () => this.closeEditor()
-    );
-
+      variant     : 'sheet',
+      minimizable : false,
+      defaultSize : { width: 700, height: 560 },
+      onClose     : () => this.closeEditor()
+    });
+    this.window.rebuildOnLanguageChange((contentElmnt) => this.build(contentElmnt));
+    this.window.open((contentElmnt) => this.build(contentElmnt));
   }
 
   build(contentElmnt) {

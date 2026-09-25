@@ -15,7 +15,7 @@
  */
 
 import { BaseEditor } from './base.js';
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { ShotType, StationComment } from '../../model/survey.js';
@@ -23,34 +23,24 @@ import { IconBar } from './iconbar.js';
 
 class StationCommentsEditor extends BaseEditor {
 
-  constructor(options, cave, panel) {
-    super(panel);
+  constructor(options, cave) {
+    super();
     this.options = options;
     this.cave = cave;
     this.modified = false;
   }
 
   setupPanel() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt, close) => this.build(contentElmnt, close),
-      () => i18n.t('ui.editors.stationComments.title', { name: this.cave.name }),
-      true,
-      true,
-      this.options.ui.editor.stationComments,
-      () => {
-        this.closeEditor();
-      },
-      () => {
-        const h = this.panel.offsetHeight - 100;
-        this.table.setHeight(h);
-      },
-      () => {
-        if (this.table) {
-          this.table.redraw(true);
-        }
-      }
-    );
+    this.window = new Window({
+      key             : 'editor.stationComments',
+      instanceId      : this.cave.name,
+      title           : () => i18n.t('ui.editors.stationComments.title', { name: this.cave.name }),
+      variant         : 'editor',
+      defaultSize     : { width: 500, height: 300 },
+      persistGeometry : true,
+      onClose         : () => this.closeEditor()
+    });
+    this.window.open((contentElmnt, close) => this.build(contentElmnt, close));
   }
 
   build(contentElmnt, close) {
@@ -64,6 +54,7 @@ class StationCommentsEditor extends BaseEditor {
     const rcIC = this.iconBar.getRowCountInputContainer();
     // Add common buttons (undo, redo, add row, delete row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      bag                    : this.bag,
       getEmptyRow            : () => this.getEmptyRow(),
       rowCountInputContainer : rcIC
     });
@@ -266,7 +257,7 @@ class StationCommentsEditor extends BaseEditor {
     this.table = new Tabulator(tableContainer, {
       data                      : this.getTableData(),
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.stationComments.height - 36 - 48 - 5, // header + iconbar
+      height                    : '100%',
       layout                    : 'fitDataStretch',
       columns                   : this.getColumns(),
       //enable range selection

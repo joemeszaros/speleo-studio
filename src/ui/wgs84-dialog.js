@@ -16,10 +16,12 @@
 
 import { i18n } from '../i18n/i18n.js';
 import { showErrorPanel } from './popups.js';
+import { ListenerBag } from './window/listener-bag.js';
 
 export class WGS84Dialog {
   constructor() {
     this.dialog = null;
+    this.bag = new ListenerBag();
     this.resolve = null;
     this.reject = null;
   }
@@ -164,7 +166,7 @@ export class WGS84Dialog {
     });
 
     // Close on Escape key
-    document.addEventListener('keydown', (e) => {
+    this.bag.onDoc('keydown', (e) => {
       if (e.key === 'Escape' && this.dialog) {
         this.hide();
       }
@@ -334,6 +336,10 @@ export class WGS84Dialog {
   }
 
   hide() {
+    this.bag.dispose();
+    // Importers keep a single dialog instance and show it again for the next file, so the bag
+    // has to be re-armed rather than left spent.
+    this.bag = new ListenerBag();
     if (this.dialog) {
       document.body.removeChild(this.dialog);
       this.dialog = null;

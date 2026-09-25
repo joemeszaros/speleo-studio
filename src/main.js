@@ -58,6 +58,7 @@ import { DeclinationCache } from './storage/declination-cache.js';
 import { GoogleDriveSync } from './storage/google-drive-sync.js';
 import { GoogleDriveSettings } from './ui/google-drive-settings.js';
 import { ProjectPanel } from './ui/project-panel.js';
+import { windowManager } from './ui/window/manager.js';
 import { i18n } from './i18n/i18n.js';
 import { LoadingOverlay } from './ui/loading-overlay.js';
 import { PointCloudHelper } from './utils/models.js';
@@ -96,6 +97,9 @@ class Main {
       ConfigManager.fillWithNewDefaults(loadedOptions);
       const observer = new ObjectObserver();
       const options = observer.watchObject(loadedOptions);
+
+      // The floating window manager owns ui.windows and the #window-layer stacking context.
+      windowManager.init({ options });
 
       // Apply the configured decimal separator and keep it in sync with config changes.
       setDecimalSeparator(options.format?.decimalSeparator ?? '.');
@@ -197,10 +201,7 @@ class Main {
       scene,
       materials,
       scene.domElement,
-      document.getElementById('station-context-menu'),
-      document.getElementById('infopanel'),
-      document.getElementById('tool-panel'),
-      ['fixed-size-editor', 'resizable-editor']
+      document.getElementById('station-context-menu')
     );
 
     // Initialize explorer tree in sidebar
@@ -317,10 +318,7 @@ class Main {
       this.projectManager,
       this.projectSystem,
       this.googleDriveSettings,
-      this.projectPanel,
-      document.getElementById('export-panel'),
-      document.getElementById('print-panel')
-
+      this.projectPanel
     );
 
     this.loadingOverlay = new LoadingOverlay();

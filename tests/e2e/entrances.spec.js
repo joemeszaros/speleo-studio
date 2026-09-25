@@ -19,7 +19,7 @@ test.describe('Cave Entrances Editor', () => {
     await setupWithCave(page);
     await rightClickCave(page, 'Test Cave');
     await page.locator('#explorer-context-menu .context-menu-option[title*="ntrance"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     return editor;
   }

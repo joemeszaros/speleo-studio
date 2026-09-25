@@ -93,6 +93,12 @@
   text-align: left;
 }
 
+.mydropdown-separator {
+  height: 1px;
+  margin: 4px 8px;
+  background: #d0d0d0;
+}
+
 .mydropdown-content a.disabled,
 .mydropdown-content a[disabled] {
   color: #999;

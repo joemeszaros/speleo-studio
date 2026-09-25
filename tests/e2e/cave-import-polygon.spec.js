@@ -255,7 +255,7 @@ test.describe('Polygon .cave File Import', () => {
       await caveHeader.click({ button: 'right' });
       await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Verify metadata fields
@@ -285,12 +285,12 @@ test.describe('Polygon .cave File Import', () => {
       const contextMenu = page.locator('#explorer-context-menu');
       await contextMenu.locator('.context-menu-option[title*="survey editor"]').click();
 
-      const editor = page.locator('#resizable-editor');
+      const editor = page.locator('.popup--editor');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Wait for table rows to load
       await page.waitForFunction(() => {
-        const table = document.querySelector('#surveydata');
+        const table = document.querySelector('.surveydata');
         if (!table) return false;
         const tabs = window.Tabulator?.findTable?.(table);
         return tabs?.[0]?.getRows()?.length > 0;
@@ -298,7 +298,7 @@ test.describe('Polygon .cave File Import', () => {
 
       // Should have 3 center shots (T0-T1, T1-T2, T2-T3)
       const rowCount = await page.evaluate(() => {
-        const table = document.querySelector('#surveydata');
+        const table = document.querySelector('.surveydata');
         const tabs = window.Tabulator.findTable(table);
         return tabs[0].getRows().length;
       });
@@ -318,11 +318,11 @@ test.describe('Polygon .cave File Import', () => {
       await surveyNode.click({ button: 'right' });
       await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-      const editor = page.locator('#resizable-editor');
+      const editor = page.locator('.popup--editor');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       await page.waitForFunction(() => {
-        const table = document.querySelector('#surveydata');
+        const table = document.querySelector('.surveydata');
         if (!table) return false;
         const tabs = window.Tabulator?.findTable?.(table);
         return tabs?.[0]?.getRows()?.length > 0;
@@ -330,7 +330,7 @@ test.describe('Polygon .cave File Import', () => {
 
       // Check station names in the table
       const firstRow = await page.evaluate(() => {
-        const table = document.querySelector('#surveydata');
+        const table = document.querySelector('.surveydata');
         const tabs = window.Tabulator.findTable(table);
         return tabs[0].getRows()[0].getData();
       });

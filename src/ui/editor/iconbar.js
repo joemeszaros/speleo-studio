@@ -16,6 +16,7 @@
 
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
+import { ListenerBag } from '../window/listener-bag.js';
 
 export class IconBar {
 
@@ -401,22 +402,27 @@ export class IconBar {
           const menuDiv = document.getElementById('toogle-column-visibility-menu');
           if (menuDiv.style.display === 'block') {
             menuDiv.style.display = 'none';
-          } else {
-            menuDiv.style.display = 'block';
-
-            // Add click outside handler to close menu
-            const closeMenu = (event) => {
-              if (!menuDiv.contains(event.target) && !e.target.contains(event.target)) {
-                menuDiv.style.display = 'none';
-                document.removeEventListener('click', closeMenu);
-              }
-            };
-
-            // Use setTimeout to prevent immediate closure
-            setTimeout(() => {
-              document.addEventListener('click', closeMenu);
-            }, 100);
+            return;
           }
+
+          menuDiv.style.display = 'block';
+
+          // The dismiss handler used to take itself off `document` only when a click landed
+          // outside the menu, so closing the editor with the menu still open left it there for
+          // good, holding on to the menu and the button, both detached by then. Handing the
+          // session to the editor's bag means it is given back either way.
+          const session = new ListenerBag();
+          options.bag?.add(() => session.dispose());
+
+          const closeMenu = (event) => {
+            if (!menuDiv.contains(event.target) && !e.target.contains(event.target)) {
+              menuDiv.style.display = 'none';
+              session.dispose();
+            }
+          };
+
+          // Deferred, so the click that opened the menu does not immediately close it again.
+          session.timeout(() => session.onDoc('click', closeMenu), 100);
         }
       }
     ];

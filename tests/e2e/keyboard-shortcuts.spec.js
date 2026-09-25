@@ -73,12 +73,12 @@ test.describe('Keyboard Shortcuts', () => {
 
     test('Ctrl+R opens rotation tool', async ({ page }) => {
       await page.keyboard.press('Control+r');
-      await expect(page.locator('#tool-panel')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--tool')).toBeVisible({ timeout: 5000 });
     });
 
     test('Ctrl+L opens locate station panel', async ({ page }) => {
       await page.keyboard.press('Control+l');
-      await expect(page.locator('#tool-panel')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--tool')).toBeVisible({ timeout: 5000 });
       await expect(page.locator('#pointtolocate')).toBeVisible();
     });
   });
@@ -98,7 +98,7 @@ test.describe('Keyboard Shortcuts', () => {
 
     test('Ctrl+H opens export panel', async ({ page }) => {
       await page.keyboard.press('Control+h');
-      const exportPanel = page.locator('#export-panel');
+      const exportPanel = page.locator('.popup--export');
       await expect(exportPanel).toBeVisible({ timeout: 5000 });
     });
 

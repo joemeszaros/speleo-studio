@@ -54,7 +54,7 @@ test.describe('Decimal separator', () => {
 
     // Open the survey editor for the first survey.
     await page.locator('#explorer-tree').locator('text=Survey-1').dblclick();
-    await expect(page.locator('#surveydata')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.surveydata')).toBeVisible({ timeout: 5000 });
 
     // Find a length cell (column "length") and check its display uses comma.
     const lengthCells = page.locator('.tabulator-cell[tabulator-field="length"]');

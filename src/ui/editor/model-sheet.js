@@ -16,7 +16,7 @@
 
 import * as U from '../../utils/utils.js';
 import { BaseEditor } from './base.js';
-import { wm } from '../window.js';
+
 import { i18n } from '../../i18n/i18n.js';
 import { showErrorPanel } from '../popups.js';
 import {
@@ -29,6 +29,7 @@ import {
   CoordinateSystemType
 } from '../../model/geo.js';
 import { UTMConverter } from '../../utils/geo.js';
+import { Window } from '../window/window.js';
 
 /**
  * Editor for 3D model metadata — coordinate system and coordinates.
@@ -36,8 +37,8 @@ import { UTMConverter } from '../../utils/geo.js';
  */
 export class ModelSheetEditor extends BaseEditor {
 
-  constructor(modelNode, modelSystem, projectSystem, panel, db, modelsTree, options) {
-    super(panel);
+  constructor(modelNode, modelSystem, projectSystem, db, modelsTree, options) {
+    super();
     this.modelNode = modelNode;
     this.modelSystem = modelSystem;
     this.projectSystem = projectSystem;
@@ -67,15 +68,16 @@ export class ModelSheetEditor extends BaseEditor {
   }
 
   setupPanel() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt) => this.build(contentElmnt),
-      () => i18n.t('ui.editors.modelSheet.title', { name: this.modelNode.label }),
-      true,
-      false,
-      {},
-      () => this.closeEditor()
-    );
+    this.window = new Window({
+      key         : 'sheet.model',
+      title       : () => i18n.t('ui.editors.modelSheet.title', { name: this.modelNode.label }),
+      variant     : 'sheet',
+      minimizable : false,
+      defaultSize : { width: 700, height: 520 },
+      onClose     : () => this.closeEditor()
+    });
+    this.window.rebuildOnLanguageChange((contentElmnt) => this.build(contentElmnt));
+    this.window.open((contentElmnt) => this.build(contentElmnt));
   }
 
   build(contentElmnt) {
@@ -297,7 +299,7 @@ export class ModelSheetEditor extends BaseEditor {
       return;
     }
 
-    const newName = this.panel.querySelector('#model-name').value.trim();
+    const newName = this.window.element.querySelector('#model-name').value.trim();
     const oldName = this.modelNode.label;
 
     // Validate: duplicate model name (check db, not tree)

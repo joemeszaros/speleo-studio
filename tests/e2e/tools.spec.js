@@ -13,7 +13,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
     });
 
@@ -25,7 +25,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       const radioButtons = toolPanel.locator('input[name="input-method"]');
@@ -40,7 +40,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       const coordInputs = toolPanel.locator('.coord-input');
@@ -55,7 +55,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await expect(toolPanel.locator('#calculate-btn')).toBeVisible();
@@ -70,7 +70,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       // Verify StrikeDipCalculator produces correct results for known points
@@ -99,7 +99,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       // Switch to survey method
@@ -136,7 +136,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       const firstInput = toolPanel.locator('.coord-input').first();
@@ -156,7 +156,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await toolPanel.locator('input[name="input-method"][value="survey"]').click();
@@ -173,7 +173,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Dip & Strike' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await toolPanel.locator('.coord-input').first().fill('42');
@@ -196,7 +196,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Rose Diagram' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
     });
 
@@ -207,7 +207,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Rose Diagram' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await expect(toolPanel.locator('#rose-cave-select')).toBeVisible();
@@ -220,7 +220,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Rose Diagram' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await expect(toolPanel.locator('#rose-bin-count')).toBeVisible();
@@ -233,7 +233,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Rose Diagram' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await toolPanel.locator('#rose-cave-select').selectOption({ index: 1 });
@@ -249,7 +249,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Rose Diagram' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await toolPanel.locator('#rose-cave-select').selectOption({ index: 1 });
@@ -269,7 +269,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Rose Diagram' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       const options = await toolPanel.locator('#rose-bin-count option').evaluateAll(
@@ -290,7 +290,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Shortest path' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
     });
 
@@ -301,7 +301,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Shortest path' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       const inputs = toolPanel.locator('input');
@@ -316,7 +316,7 @@ test.describe('Tools', () => {
       await toolsMenu.locator('.dropbtn').click();
       await page.locator('.mydropdown-content a', { hasText: 'Shortest path' }).click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       const inputs = toolPanel.locator('input');
@@ -345,7 +345,7 @@ test.describe('Tools', () => {
       await expect(rotationBtn).toBeVisible();
       await rotationBtn.click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
     });
 
@@ -356,7 +356,7 @@ test.describe('Tools', () => {
       const rotationBtn = page.locator('a.mytooltip.dropbtn:has(.mytooltiptext:text("Rotation"))');
       await rotationBtn.click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await expect(toolPanel.locator('#rotation-angle')).toBeVisible();
@@ -369,7 +369,7 @@ test.describe('Tools', () => {
       const rotationBtn = page.locator('a.mytooltip.dropbtn:has(.mytooltiptext:text("Rotation"))');
       await rotationBtn.click();
 
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await expect(toolPanel.locator('#rotation-canvas')).toBeVisible();
@@ -380,7 +380,7 @@ test.describe('Tools', () => {
       await closeProjectPanel(page);
 
       await page.keyboard.press('Control+r');
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       const angleInput = toolPanel.locator('#rotation-angle');
@@ -398,7 +398,7 @@ test.describe('Tools', () => {
       await page.waitForTimeout(300);
 
       await page.keyboard.press('Control+r');
-      const toolPanel = page.locator('#tool-panel');
+      const toolPanel = page.locator('.popup--tool');
       await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
       await expect(toolPanel.locator('#dip-angle')).toBeVisible();

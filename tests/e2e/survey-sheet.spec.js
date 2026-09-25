@@ -10,7 +10,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickCave(page, 'Test Cave');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey" i]').first().click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Form should have name, date, declination fields
@@ -24,7 +24,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickCave(page, 'Test Cave');
       await page.locator('#explorer-context-menu .context-menu-option[title*="ew survey" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       await editor.locator('#name').fill('New Test Survey');
@@ -45,7 +45,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickCave(page, 'Test Cave');
       await page.locator('#explorer-context-menu .context-menu-option[title*="ew survey" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       await editor.locator('#name').fill('Should Not Exist');
@@ -63,7 +63,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickCave(page, 'Test Cave');
       await page.locator('#explorer-context-menu .context-menu-option[title*="ew survey" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Try to save with empty name
@@ -85,7 +85,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
     });
 
@@ -97,7 +97,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       const name = await editor.locator('#name').inputValue();
@@ -115,7 +115,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       const stats = editor.locator('.survey-stats');
@@ -150,7 +150,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       const membersSection = editor.locator('.team-members-section');
@@ -165,7 +165,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       const instrumentsSection = editor.locator('.instruments-section');
@@ -180,7 +180,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Click add member button
@@ -206,7 +206,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       const instrumentsSection = editor.locator('.instruments-section');
@@ -230,7 +230,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       await editor.getByRole('button', { name: /cancel/i }).click();
@@ -245,7 +245,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       await expect(editor.locator('button[type="submit"]')).toBeVisible();
@@ -260,7 +260,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Change name
@@ -281,7 +281,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       const declInput = editor.locator('#declination');
@@ -298,7 +298,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // First survey should have start station field with value "A0"
@@ -316,7 +316,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Inner Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Non-first survey should NOT have start station field
@@ -333,7 +333,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Entrance Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // First survey should have start station field with value "E0"
@@ -350,7 +350,7 @@ test.describe('Survey Sheet Editor', () => {
       await rightClickSurvey(page, 'Main Survey');
       await page.locator('#explorer-context-menu .context-menu-option[title*="urvey sheet" i]').click();
 
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
       // Change start station to a non-existent one via evaluate to trigger oninput

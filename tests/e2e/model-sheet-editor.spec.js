@@ -28,7 +28,7 @@ async function importModelAndOpenSheet(page) {
   // First context menu option is the sheet editor (🔠)
   await contextMenu.locator('.context-menu-option').first().click();
 
-  const editor = page.locator('#fixed-size-editor');
+  const editor = page.locator('.popup--sheet');
   await expect(editor).toBeVisible({ timeout: 5000 });
   return editor;
 }
@@ -238,7 +238,7 @@ test.describe('Model Sheet Editor', () => {
     const caveHeader = tree.locator('.models-tree-category', { has: page.locator('text=Test Cave') }).locator('.models-tree-category-header');
     await caveHeader.click({ button: 'right' });
     await page.locator('#explorer-context-menu .context-menu-option[title*="cave sheet"]').click();
-    let editor = page.locator('#fixed-size-editor');
+    let editor = page.locator('.popup[data-window-key="sheet.cave"]');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#convert-gps-button').click();
@@ -266,7 +266,8 @@ test.describe('Model Sheet Editor', () => {
     await expect(modelNode).toBeVisible({ timeout: 5000 });
     await modelNode.click({ button: 'right' });
     await page.locator('#models-context-menu .context-menu-option').first().click();
-    editor = page.locator('#fixed-size-editor');
+    // The cave sheet opened earlier is still its own window, so address this one by its key.
+    editor = page.locator('.popup[data-window-key="sheet.model"]');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Set model to EOV (conflicts with UTM on cave)

@@ -1020,15 +1020,7 @@ export class ModelsTree {
         title   : i18n.t('ui.models.menu.sheet'),
         onclick : () => {
           this.hideContextMenu();
-          const editor = new ModelSheetEditor(
-            node,
-            this.modelSystem,
-            this.projectSystem,
-            document.getElementById('fixed-size-editor'),
-            this.db,
-            this,
-            this.options
-          );
+          const editor = new ModelSheetEditor(node, this.modelSystem, this.projectSystem, this.db, this, this.options);
           editor.setupPanel();
           editor.show();
         }

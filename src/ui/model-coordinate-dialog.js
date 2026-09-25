@@ -16,6 +16,7 @@
 
 import { i18n } from '../i18n/i18n.js';
 import { parseMyFloat, formatFloat } from '../utils/utils.js';
+import { ListenerBag } from './window/listener-bag.js';
 
 /**
  * Dialog for entering WGS84 coordinates (lat, lon, elevation) for a 3D model.
@@ -24,6 +25,7 @@ import { parseMyFloat, formatFloat } from '../utils/utils.js';
 export class ModelCoordinateDialog {
   constructor() {
     this.dialog = null;
+    this.bag = new ListenerBag();
     this.resolve = null;
   }
 
@@ -115,7 +117,7 @@ export class ModelCoordinateDialog {
       }
     });
 
-    document.addEventListener('keydown', (e) => {
+    this.bag.onDoc('keydown', (e) => {
       if (e.key === 'Escape' && this.dialog) {
         this.hide();
         if (this.resolve) this.resolve(null);
@@ -146,6 +148,10 @@ export class ModelCoordinateDialog {
   }
 
   hide() {
+    this.bag.dispose();
+    // Importers keep a single dialog instance and show it again for the next file, so the bag
+    // has to be re-armed rather than left spent.
+    this.bag = new ListenerBag();
     if (this.dialog) {
       document.body.removeChild(this.dialog);
       this.dialog = null;

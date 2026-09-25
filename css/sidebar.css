@@ -540,7 +540,7 @@
   border: 1px solid #404040;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  z-index: 9999;
+  z-index: 1004;
   padding: 6px;
   pointer-events: auto;
   color: #ffffff;
@@ -1050,13 +1050,13 @@ body {
 /* Ensure navbar and footer are properly positioned */
 .topnavbar {
   flex-shrink: 0;
-  z-index: 1001;
+  z-index: 1003;
   background: #333;
 }
 
 .footer {
   flex-shrink: 0;
-  z-index: 1001;
+  z-index: 1003;
   background: #333;
 }
 

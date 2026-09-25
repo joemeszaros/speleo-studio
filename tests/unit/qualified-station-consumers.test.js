@@ -6,9 +6,6 @@ import { vi, describe, it, expect, beforeAll } from 'vitest';
 
 vi.mock('../../src/i18n/i18n.js', () => ({ i18n: { t: (k) => k } }));
 vi.mock('../../src/ui/popups.js', () => ({ showErrorPanel: vi.fn(), showWarningPanel: vi.fn(), showInfoPanel: vi.fn() }));
-// export.js imports window.js, which instantiates a WindowManager that touches `document`
-// at module load. Stub it so the pure Exporter methods can be tested headlessly.
-vi.mock('../../src/ui/window.js', () => ({ wm: { makeFloatingPanel: vi.fn() }, WindowManager: class {} }));
 vi.mock('../../src/ui/coordinate-system-dialog.js', () => ({
   CoordinateSystemDialog: class { async show() { return { coordinateSystem: undefined, coordinates: [] }; } }
 }));

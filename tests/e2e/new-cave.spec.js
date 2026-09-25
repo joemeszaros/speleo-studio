@@ -34,17 +34,17 @@ test.describe('New Cave Dialog', () => {
       await fileMenu.locator('.dropbtn').click();
       await fileMenu.locator('.mydropdown-content a').filter({ hasText: 'New cave' }).click();
 
-      await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
     });
 
     test('opens via Ctrl+N shortcut', async ({ page }) => {
       await page.keyboard.press('Control+n');
-      await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
     });
 
     test('title shows "New cave"', async ({ page }) => {
       await page.keyboard.press('Control+n');
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor).toBeVisible({ timeout: 5000 });
       await expect(editor.locator('.popup-header')).toContainText('New cave');
     });
@@ -55,11 +55,11 @@ test.describe('New Cave Dialog', () => {
     test.beforeEach(async ({ page }) => {
       await setupWithProject(page);
       await page.keyboard.press('Control+n');
-      await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
     });
 
     test('has name, cataster code, date, creator fields', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor.locator('input#name')).toBeVisible();
       await expect(editor.locator('input#name')).toHaveValue('');
       await expect(editor.locator('input#catasterCode')).toBeVisible();
@@ -68,14 +68,14 @@ test.describe('New Cave Dialog', () => {
     });
 
     test('has country, region, settlement fields', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor.locator('input#country')).toBeVisible();
       await expect(editor.locator('input#region')).toBeVisible();
       await expect(editor.locator('input#settlement')).toBeVisible();
     });
 
     test('has coordinate system dropdown defaulting to None', async ({ page }) => {
-      const select = page.locator('#fixed-size-editor select#coord-system');
+      const select = page.locator('.popup--sheet select#coord-system');
       await expect(select).toBeVisible();
 
       const options = await select.locator('option').allTextContents();
@@ -86,17 +86,17 @@ test.describe('New Cave Dialog', () => {
     });
 
     test('has GPS convert button', async ({ page }) => {
-      await expect(page.locator('#fixed-size-editor #convert-gps-button')).toBeVisible();
+      await expect(page.locator('.popup--sheet #convert-gps-button')).toBeVisible();
     });
 
     test('has save and cancel buttons', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor.locator('button[type="submit"]')).toBeVisible();
       await expect(editor.getByRole('button', { name: 'Cancel' })).toBeVisible();
     });
 
     test('has two-column grid layout', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await expect(editor.locator('.sheet-editor-grid')).toBeVisible();
       await expect(editor.locator('.sheet-editor-column')).toHaveCount(2);
     });
@@ -107,46 +107,46 @@ test.describe('New Cave Dialog', () => {
     test.beforeEach(async ({ page }) => {
       await setupWithProject(page);
       await page.keyboard.press('Control+n');
-      await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
     });
 
     test('selecting UTM shows zone and hemisphere inputs', async ({ page }) => {
-      const select = page.locator('#fixed-size-editor select#coord-system');
+      const select = page.locator('.popup--sheet select#coord-system');
       await select.selectOption('utm');
       await select.evaluate(el => el.onchange({ target: el }));
 
-      await expect(page.locator('#fixed-size-editor #utm-zone-selection')).toBeVisible();
-      await expect(page.locator('#fixed-size-editor #utm-zone')).toHaveValue('34');
-      await expect(page.locator('#fixed-size-editor #utm-hemisphere')).toBeVisible();
+      await expect(page.locator('.popup--sheet #utm-zone-selection')).toBeVisible();
+      await expect(page.locator('.popup--sheet #utm-zone')).toHaveValue('34');
+      await expect(page.locator('.popup--sheet #utm-hemisphere')).toBeVisible();
     });
 
     test('selecting EOV hides UTM zone selection', async ({ page }) => {
-      const select = page.locator('#fixed-size-editor select#coord-system');
+      const select = page.locator('.popup--sheet select#coord-system');
       await select.selectOption('eov');
       await select.evaluate(el => el.onchange({ target: el }));
 
-      await expect(page.locator('#fixed-size-editor #utm-zone-selection')).toBeHidden();
+      await expect(page.locator('.popup--sheet #utm-zone-selection')).toBeHidden();
     });
 
     test('switching from UTM to None hides zone inputs', async ({ page }) => {
-      const select = page.locator('#fixed-size-editor select#coord-system');
+      const select = page.locator('.popup--sheet select#coord-system');
       await select.selectOption('utm');
       await select.evaluate(el => el.onchange({ target: el }));
 
       await select.selectOption({ index: 0 });
       await select.evaluate(el => el.onchange({ target: el }));
 
-      await expect(page.locator('#fixed-size-editor #utm-zone-selection')).toBeHidden();
+      await expect(page.locator('.popup--sheet #utm-zone-selection')).toBeHidden();
     });
 
     test('clicking Add coordinate creates input row with 4 fields', async ({ page }) => {
-      const select = page.locator('#fixed-size-editor select#coord-system');
+      const select = page.locator('.popup--sheet select#coord-system');
       await select.selectOption('utm');
       await select.evaluate(el => el.onchange({ target: el }));
 
-      await page.locator('#fixed-size-editor .coords-list button', { hasText: 'Add' }).click();
+      await page.locator('.popup--sheet .coords-list button', { hasText: 'Add' }).click();
 
-      const coordRows = page.locator('#fixed-size-editor .coords-list .list-row');
+      const coordRows = page.locator('.popup--sheet .coords-list .list-row');
       await expect(coordRows).toHaveCount(1);
       await expect(coordRows.first().locator('input')).toHaveCount(4);
     });
@@ -157,11 +157,11 @@ test.describe('New Cave Dialog', () => {
     test.beforeEach(async ({ page }) => {
       await setupWithProject(page);
       await page.keyboard.press('Control+n');
-      await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
     });
 
     test('saving with required fields adds cave to explorer tree', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await fillRequiredFields(editor, 'Baradla');
 
       await editor.locator('button[type="submit"]').click();
@@ -171,7 +171,7 @@ test.describe('New Cave Dialog', () => {
     });
 
     test('saving with all metadata fields', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await fillRequiredFields(editor, 'Meteor Cave', {
         catasterCode: '4321-01',
         date: '2025-06-15',
@@ -188,7 +188,7 @@ test.describe('New Cave Dialog', () => {
     });
 
     test('cancel button closes editor without adding cave', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await fillInput(editor.locator('input#name'), 'Ghost Cave');
 
       await editor.getByRole('button', { name: 'Cancel' }).click();
@@ -198,7 +198,7 @@ test.describe('New Cave Dialog', () => {
     });
 
     test('saving with UTM coordinates', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await fillRequiredFields(editor, 'UTM Cave');
 
       // Select UTM
@@ -221,7 +221,7 @@ test.describe('New Cave Dialog', () => {
     });
 
     test('saving with EOV coordinates', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await fillRequiredFields(editor, 'EOV Cave');
 
       // Select EOV
@@ -249,11 +249,11 @@ test.describe('New Cave Dialog', () => {
     test.beforeEach(async ({ page }) => {
       await setupWithProject(page);
       await page.keyboard.press('Control+n');
-      await expect(page.locator('#fixed-size-editor')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.popup--sheet')).toBeVisible({ timeout: 5000 });
     });
 
     test('coordinate system with empty station name blocks submit via HTML5 validation', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await fillRequiredFields(editor, 'Bad Coord Cave');
 
       const select = editor.locator('select#coord-system');
@@ -275,7 +275,7 @@ test.describe('New Cave Dialog', () => {
     });
 
     test('duplicate cave name shows error', async ({ page }) => {
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
       await fillRequiredFields(editor, 'Duplicate Cave');
       await editor.locator('button[type="submit"]').click();
       await dismissNotifications(page);
@@ -294,7 +294,7 @@ test.describe('New Cave Dialog', () => {
 
     test('creating multiple caves sequentially', async ({ page }) => {
       await setupWithProject(page);
-      const editor = page.locator('#fixed-size-editor');
+      const editor = page.locator('.popup--sheet');
 
       await page.keyboard.press('Control+n');
       await expect(editor).toBeVisible({ timeout: 5000 });

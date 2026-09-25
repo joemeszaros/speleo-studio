@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import { node, degreesToRads, radsToDegrees } from '../../utils/utils.js';
 
 import { i18n } from '../../i18n/i18n.js';
 
 export class RotationTool {
 
-  constructor(scene, panel = '#tool-panel') {
+  constructor(scene) {
     this.scene = scene;
-    this.panel = document.querySelector(panel);
 
     // Rotation state
     this.currentRotation = 0;
@@ -52,34 +51,22 @@ export class RotationTool {
   }
 
   show() {
-    this.panel.style.width = '450px';
-
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt) => this.build(contentElmnt),
-      'ui.panels.rotation.title',
-      false,
-      true,
-      {},
-      (contentElmnt) => {
-        this.rotationCanvas.removeEventListener('mousedown', this.onRotationMouseDown);
-        this.dipCanvas.removeEventListener('mousedown', this.onDipMouseDown);
-        contentElmnt.parentNode.removeEventListener('mousemove', this.onMouseMove);
-        contentElmnt.parentNode.removeEventListener('mouseup', this.onMouseUp);
-        this.angleInput.removeEventListener('change', this.onRotationInputChange);
-        this.dipInput.removeEventListener('change', this.onDipInputChange);
-        this.scene.views.forEach((view) => {
-          view.control.removeEventListener('orbitChange', this.onOrbitChange);
-          view.removeEventListener('viewActivated', this.onViewActivated);
-        });
-
+    this.window = new Window({
+      key         : 'tool.rotation',
+      title       : 'ui.panels.rotation.title',
+      variant     : 'tool',
+      resizable   : false,
+      defaultSize : { width: 450, height: 420 },
+      onClose     : () => {
+        // The bag has already given back every subscription; only the references are left.
         this.rotationCanvas = null; // avoid detached dom nodes
         this.dipCanvas = null;
         this.angleInput = null;
         this.dipInput = null;
         this.spatialControls = null;
       }
-    );
+    });
+    this.window.open((contentElmnt) => this.build(contentElmnt));
   }
 
   // Function to draw the rotation circle
@@ -467,20 +454,23 @@ export class RotationTool {
     this.dipInput = container.querySelector('#dip-angle');
     this.spatialControls = container.querySelector('#dip-control');
 
-    //TODO; remove event listeners
+    // Everything this tool subscribes to goes through the window's bag, which is disposed when
+    // the window closes. The canvases and inputs would in fact go with the removed element, but
+    // routing them the same way means there is one rule here rather than two.
     // orbitChange is dispatched by manual rotation by the cursor
     // orbitSet is dispatched by setting the rotation programmatically to the rotation input
+    const bag = this.window.bag;
     this.scene.views.forEach((view) => {
-      view.control.addEventListener('orbitChange', this.onOrbitChange);
-      view.addEventListener('viewActivated', this.onViewActivated);
+      bag.on(view.control, 'orbitChange', this.onOrbitChange);
+      bag.on(view, 'viewActivated', this.onViewActivated);
     });
 
-    this.rotationCanvas.addEventListener('mousedown', this.onRotationMouseDown);
-    this.dipCanvas.addEventListener('mousedown', this.onDipMouseDown);
-    contentElmnt.parentNode.addEventListener('mousemove', this.onMouseMove);
-    contentElmnt.parentNode.addEventListener('mouseup', this.onMouseUp);
-    this.angleInput.addEventListener('change', this.onRotationInputChange);
-    this.dipInput.addEventListener('change', this.onDipInputChange);
+    bag.on(this.rotationCanvas, 'mousedown', this.onRotationMouseDown);
+    bag.on(this.dipCanvas, 'mousedown', this.onDipMouseDown);
+    bag.on(contentElmnt.parentNode, 'mousemove', this.onMouseMove);
+    bag.on(contentElmnt.parentNode, 'mouseup', this.onMouseUp);
+    bag.on(this.angleInput, 'change', this.onRotationInputChange);
+    bag.on(this.dipInput, 'change', this.onDipInputChange);
 
     // Initial draw
     this.updateRotationDisplay();

@@ -201,39 +201,25 @@ export const DEFAULT_OPTIONS = {
   ui : {
     editor : {
       survey : {
-        height       : 300,
-        width        : 700,
         columns      : ['type', 'from', 'to', 'length', 'azimuth', 'clino', 'x', 'y', 'z', 'attributes', 'comment'],
         columnWidths : {}
       },
       attributes : {
-        height       : 300,
-        width        : 700,
         columnWidths : {}
       },
       cycles : {
-        height       : 300,
-        width        : 700,
         columnWidths : {}
       },
       stationComments : {
-        height       : 300,
-        width        : 500,
         columnWidths : {}
       },
       stationDimensions : {
-        height       : 320,
-        width        : 700,
         columnWidths : {}
       },
       entrances : {
-        height       : 300,
-        width        : 500,
         columnWidths : {}
       },
       surveyAliases : {
-        height       : 300,
-        width        : 500,
         columnWidths : {}
       }
     },
@@ -243,6 +229,9 @@ export const DEFAULT_OPTIONS = {
       collapsed         : false,
       overviewCollapsed : false
     },
+    // Floating window geometry, keyed by logical window key (e.g. 'editor.survey'), each entry
+    // {x, y, w, h, vw, vh}. Owned exclusively by the window manager; see src/ui/window/.
+    windows        : {},
     stationDetails : {
       caveName    : true,
       surveyName  : true,
@@ -553,7 +542,7 @@ export class ConfigManager {
     }
 
     if (config.ui.editor.surveyAliases === undefined) {
-      config.ui.editor.surveyAliases = { height: 300, width: 500, columnWidths: {} };
+      config.ui.editor.surveyAliases = { columnWidths: {} };
     }
   }
 
@@ -1317,6 +1306,8 @@ export class ConfigChanges {
       this.handleScreenChanges(path, oldValue, newValue);
     } else if (path.startsWith('ui.editor.')) {
       // do nothing, no action on survey editor changes
+    } else if (path.startsWith('ui.windows')) {
+      // do nothing, floating window geometry is only ever read back on open
     } else if (path.startsWith('ui.panels.')) {
       this.handlePanelChanges(path, oldValue, newValue);
     } else if (path.startsWith('scene.stationAttributes')) {

@@ -8,7 +8,7 @@ test.describe('Locate Station', () => {
 
     await page.keyboard.press('Control+l');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
     await expect(toolPanel.locator('#pointtolocate')).toBeVisible();
   });
@@ -19,7 +19,7 @@ test.describe('Locate Station', () => {
     const locateBtn = page.locator('a.mytooltip.dropbtn:has(.mytooltiptext:text("Locate"))');
     await locateBtn.click();
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
   });
 
@@ -27,7 +27,7 @@ test.describe('Locate Station', () => {
     await setupWithCave(page);
     await page.keyboard.press('Control+l');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
     await expect(toolPanel.locator('#pointtolocate')).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('Locate Station', () => {
     await setupWithCave(page);
     await page.keyboard.press('Control+l');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
     const options = await toolPanel.locator('#stations option').allTextContents();
@@ -57,7 +57,7 @@ test.describe('Locate Station', () => {
     await setupWithCave(page);
     await page.keyboard.press('Control+l');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
     await toolPanel.locator('#pointtolocate').fill('A2');
@@ -72,7 +72,7 @@ test.describe('Locate Station', () => {
     await setupWithCave(page);
     await page.keyboard.press('Control+l');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
     await toolPanel.locator('#pointtolocate').fill('A0');
@@ -93,7 +93,7 @@ test.describe('Locate Station', () => {
 
     await page.keyboard.press('Control+l');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
     const options = await toolPanel.locator('#stations option').count();

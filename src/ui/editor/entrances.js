@@ -15,7 +15,7 @@
  */
 
 import { BaseEditor } from './base.js';
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { ShotType } from '../../model/survey.js';
@@ -28,39 +28,29 @@ import { IconBar } from './iconbar.js';
  */
 class EntrancesEditor extends BaseEditor {
 
-  constructor(options, cave, panel) {
-    super(panel);
+  constructor(options, cave) {
+    super();
     this.options = options;
     this.cave = cave;
     this.modified = false;
     // `ui.editor.entrances` was added after this config existed, so an older persisted config
     // won't have it — fall back to a default so the floating panel and table can size themselves.
     if (!this.options.ui.editor.entrances) {
-      this.options.ui.editor.entrances = { height: 300, width: 500, columnWidths: {} };
+      this.options.ui.editor.entrances = { columnWidths: {} };
     }
   }
 
   setupPanel() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt, close) => this.build(contentElmnt, close),
-      () => i18n.t('ui.editors.entrances.title', { name: this.cave.name }),
-      true,
-      true,
-      this.options.ui.editor.entrances,
-      () => {
-        this.closeEditor();
-      },
-      () => {
-        const h = this.panel.offsetHeight - 100;
-        this.table.setHeight(h);
-      },
-      () => {
-        if (this.table) {
-          this.table.redraw(true);
-        }
-      }
-    );
+    this.window = new Window({
+      key             : 'editor.entrances',
+      instanceId      : this.cave.name,
+      title           : () => i18n.t('ui.editors.entrances.title', { name: this.cave.name }),
+      variant         : 'editor',
+      defaultSize     : { width: 500, height: 300 },
+      persistGeometry : true,
+      onClose         : () => this.closeEditor()
+    });
+    this.window.open((contentElmnt, close) => this.build(contentElmnt, close));
   }
 
   build(contentElmnt, close) {
@@ -73,6 +63,7 @@ class EntrancesEditor extends BaseEditor {
 
     const rcIC = this.iconBar.getRowCountInputContainer();
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      bag                    : this.bag,
       getEmptyRow            : () => this.getEmptyRow(),
       rowCountInputContainer : rcIC
     });
@@ -254,7 +245,7 @@ class EntrancesEditor extends BaseEditor {
     this.table = new Tabulator(tableContainer, {
       data                      : this.getTableData(),
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.entrances.height - 36 - 48 - 5, // header + iconbar
+      height                    : '100%',
       layout                    : 'fitDataStretch',
       columns                   : this.getColumns(),
       selectableRange           : 1,

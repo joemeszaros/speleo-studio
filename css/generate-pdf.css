@@ -1,12 +1,9 @@
-#print-panel {
-  position: absolute;
-  z-index: 100;
+.popup--print {
   color: azure;
   background: rgb(40, 40, 40);
-  display: none;
 }
 
-#print-panel .popup-content div {
+.popup--print .popup-content div {
   padding: 10px;
 }
 

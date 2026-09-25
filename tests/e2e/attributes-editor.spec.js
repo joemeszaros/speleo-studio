@@ -7,28 +7,28 @@ test.describe('Attributes Editor', () => {
     await setupWithCave(page);
     await rightClickCave(page, 'Test Cave');
     await page.locator(`#explorer-context-menu .context-menu-option[title="${menuTitle}"]`).click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     return editor;
   }
 
   function getTabulator(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       return window.Tabulator.findTable(table)[0];
     });
   }
 
   async function getRowCount(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       return window.Tabulator.findTable(table)[0].getRows().length;
     });
   }
 
   async function getRowData(page, rowIndex) {
     return page.evaluate((idx) => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const rows = window.Tabulator.findTable(table)[0].getRows();
       return rows[idx]?.getData();
     }, rowIndex);
@@ -36,7 +36,7 @@ test.describe('Attributes Editor', () => {
 
   async function getColumns(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       return window.Tabulator.findTable(table)[0].getColumns().map(c => c.getField()).filter(Boolean);
     });
   }
@@ -45,17 +45,17 @@ test.describe('Attributes Editor', () => {
 
   test('open station attributes editor', async ({ page }) => {
     const editor = await openAttributesEditor(page, 'Edit station attributes');
-    await expect(editor.locator('#sectionattributes')).toBeVisible();
+    await expect(editor.locator('.sectionattributes')).toBeVisible();
   });
 
   test('open section attributes editor', async ({ page }) => {
     const editor = await openAttributesEditor(page, 'Edit section attributes');
-    await expect(editor.locator('#sectionattributes')).toBeVisible();
+    await expect(editor.locator('.sectionattributes')).toBeVisible();
   });
 
   test('open component attributes editor', async ({ page }) => {
     const editor = await openAttributesEditor(page, 'Edit component attributes');
-    await expect(editor.locator('#sectionattributes')).toBeVisible();
+    await expect(editor.locator('.sectionattributes')).toBeVisible();
   });
 
   test('has toolbar with add, delete, and visibility buttons', async ({ page }) => {
@@ -118,7 +118,7 @@ test.describe('Attributes Editor', () => {
     expect(countBefore).toBe(2);
 
     // Click the first row to select it
-    await page.locator('#sectionattributes .tabulator-row').first().click();
+    await page.locator('.sectionattributes .tabulator-row').first().click();
     await page.waitForTimeout(200);
     await editor.locator('#delete-row').click();
     await page.waitForTimeout(200);
@@ -216,7 +216,7 @@ test.describe('Attributes Editor', () => {
 
     // Edit the station cell by setting its value via Tabulator API
     await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       const row = tab.getRows()[0];
       const cell = row.getCell('station');
@@ -236,7 +236,7 @@ test.describe('Attributes Editor', () => {
 
     // Set from and to stations via Tabulator API
     await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       const row = tab.getRows()[0];
       row.getCell('from').setValue('A0');
@@ -259,7 +259,7 @@ test.describe('Attributes Editor', () => {
     await page.waitForTimeout(300);
 
     // Verify the visible cell exists and is a tick/cross formatter
-    const visibleCell = page.locator('#sectionattributes .tabulator-row .tabulator-cell[tabulator-field="visible"]').first();
+    const visibleCell = page.locator('.sectionattributes .tabulator-row .tabulator-cell[tabulator-field="visible"]').first();
     await expect(visibleCell).toBeVisible();
 
     // New row starts with visible=false
@@ -278,7 +278,7 @@ test.describe('Attributes Editor', () => {
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       tab.getRows()[0].getCell('station').setValue('A0');
     });
@@ -337,7 +337,7 @@ test.describe('Attributes Editor', () => {
     await editor.locator('#add-row').click();
     await page.waitForTimeout(300);
 
-    const row = page.locator('#sectionattributes .tabulator-row').first();
+    const row = page.locator('.sectionattributes .tabulator-row').first();
     await row.click({ button: 'right' });
     await page.waitForTimeout(300);
 
@@ -358,7 +358,7 @@ test.describe('Attributes Editor', () => {
 
     // Set station
     await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       tab.getRows()[0].getCell('station').setValue('A0');
     });
@@ -380,7 +380,7 @@ test.describe('Attributes Editor', () => {
 
     // Set from=A0 and to=A1
     await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       const row = tab.getRows()[0];
       row.getCell('from').setValue('A0');
@@ -401,7 +401,7 @@ test.describe('Attributes Editor', () => {
     await page.waitForTimeout(300);
 
     await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       tab.getRows()[0].getCell('start').setValue('A0');
     });
@@ -417,7 +417,7 @@ test.describe('Attributes Editor', () => {
     await openAttributesEditor(page, 'Edit station attributes');
 
     const hasFilter = await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       const col = tab.getColumn('station');
       return col.getDefinition().headerFilter !== undefined;
@@ -429,7 +429,7 @@ test.describe('Attributes Editor', () => {
     await openAttributesEditor(page, 'Edit section attributes');
 
     const hasFilter = await page.evaluate(() => {
-      const table = document.querySelector('#sectionattributes');
+      const table = document.querySelector('.sectionattributes');
       const tab = window.Tabulator.findTable(table)[0];
       const col = tab.getColumn('from');
       return col.getDefinition().headerFilter !== undefined;

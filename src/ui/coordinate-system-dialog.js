@@ -19,10 +19,12 @@ import { CoordinateSystemType, EOVCoordinateSystem, UTMCoordinateSystem } from '
 import { UTMConverter } from '../utils/geo.js';
 import { parseMyFloat } from '../utils/utils.js';
 import { showInfoPanel } from './popups.js';
+import { ListenerBag } from './window/listener-bag.js';
 
 export class CoordinateSystemDialog {
   constructor() {
     this.dialog = null;
+    this.bag = new ListenerBag();
     this.resolve = null;
     this.reject = null;
   }
@@ -176,7 +178,7 @@ export class CoordinateSystemDialog {
     });
 
     // Close on Escape key
-    document.addEventListener('keydown', (e) => {
+    this.bag.onDoc('keydown', (e) => {
       if (e.key === 'Escape' && this.dialog) {
         this.hide();
       }
@@ -285,6 +287,10 @@ export class CoordinateSystemDialog {
   }
 
   hide() {
+    this.bag.dispose();
+    // Importers keep a single dialog instance and show it again for the next file, so the bag
+    // has to be re-armed rather than left spent.
+    this.bag = new ListenerBag();
     if (this.dialog) {
       document.body.removeChild(this.dialog);
       this.dialog = null;

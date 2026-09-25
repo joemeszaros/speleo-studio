@@ -15,7 +15,7 @@
  */
 
 import { Editor } from './base.js';
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import { Shot, ShotType, DEFAULT_UNITS } from '../../model/survey.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
@@ -24,8 +24,8 @@ import { CoordinateSystemType } from '../../model/geo.js';
 
 export class SurveyEditor extends Editor {
 
-  constructor(options, cave, survey, scene, interactive, panel, unsavedChanges, attributeDefs) {
-    super(panel, scene, cave, attributeDefs);
+  constructor(options, cave, survey, scene, interactive, unsavedChanges, attributeDefs) {
+    super(scene, cave, attributeDefs);
     this.interactive = interactive;
     this.options = options;
     this.survey = survey;
@@ -37,7 +37,7 @@ export class SurveyEditor extends Editor {
       this.surveyModified = true;
     }
 
-    document.addEventListener('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
+    this.bag.onDoc('surveyRecalculated', (e) => this.onSurveyRecalculated(e));
   }
 
   onSurveyRecalculated(e) {
@@ -187,16 +187,7 @@ export class SurveyEditor extends Editor {
   }
 
   closeEditor() {
-    this.updateSurvey();
-    if (this._unitsChangedHandler) {
-      document.removeEventListener('unitsChanged', this._unitsChangedHandler);
-      document.removeEventListener('decimalSeparatorChanged', this._unitsChangedHandler);
-      this._unitsChangedHandler = undefined;
-    }
-    if (this._surveyUnitsChangedHandler) {
-      document.removeEventListener('surveyChanged', this._surveyUnitsChangedHandler);
-      this._surveyUnitsChangedHandler = undefined;
-    }
+    if (!this.closed) this.updateSurvey();
     super.closeEditor();
   }
 
@@ -476,24 +467,18 @@ export class SurveyEditor extends Editor {
   }
 
   setupPanel() {
-    //TODO: downsize if the table is too wide (settings > viewport)
-
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt, close) => this.buildPanel(contentElmnt, close),
-      () => i18n.t('ui.editors.survey.title', { name: this.survey.name }),
-      true,
-      true,
-      this.options.ui.editor.survey,
-      () => {
-        this.closeEditor();
-      },
-      () => {
-        const h = this.panel.offsetHeight - 100;
-        this.table.setHeight(h);
-      },
-      () => this.table.redraw()
-    );
+    // No size arithmetic here any more: the window is a flex column and the table fills what is
+    // left of it, so Tabulator follows the window without anyone computing pixels.
+    this.window = new Window({
+      key             : 'editor.survey',
+      instanceId      : `${this.cave.name}/${this.survey.name}`,
+      title           : () => i18n.t('ui.editors.survey.title', { name: this.survey.name }),
+      variant         : 'editor',
+      defaultSize     : { width: 700, height: 300 },
+      persistGeometry : true,
+      onClose         : () => this.closeEditor()
+    });
+    this.window.open((contentElmnt, close) => this.buildPanel(contentElmnt, close));
   }
 
   buildPanel(contentElmnt, close) {
@@ -504,6 +489,7 @@ export class SurveyEditor extends Editor {
     const rcIC = this.iconBar.getRowCountInputContainer();
     // Add common buttons (undo, redo, add row)
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      bag                    : this.bag,
       getEmptyRow            : () => this.getEmptyRow(),
       rowCountInputContainer : rcIC
     });
@@ -528,7 +514,10 @@ export class SurveyEditor extends Editor {
     const exportButton = IconBar.getExportButton(() => this.table, this.cave.name + ' - ' + this.survey.name + '.csv');
     exportButton.forEach((button) => this.iconBar.addButton(button));
 
-    contentElmnt.appendChild(U.node`<div id="surveydata" class="popup-content"></div>`);
+    // Identified by class, not id: several survey editors can be open at once and duplicate
+    // ids would be invalid and, worse, make Tabulator bind every one of them to the first.
+    const tableContainer = U.node`<div class="surveydata popup-content"></div>`;
+    contentElmnt.appendChild(tableContainer);
 
     var isFloatNumber = function (_cell, value) {
       return U.isFloatStr(value);
@@ -821,9 +810,9 @@ export class SurveyEditor extends Editor {
     });
 
     // eslint-disable-next-line no-undef
-    this.table = new Tabulator('#surveydata', {
+    this.table = new Tabulator(tableContainer, {
       history                   : true, //enable undo and redo
-      height                    : this.options.ui.editor.survey.height - 36 - 48 - 5, // header + iconbar
+      height                    : '100%',
       data                      : this.#getTableData(this.survey, this.cave.getAllStations()),
       layout                    : 'fitDataStretch',
       validationMode            : 'highlight',
@@ -940,19 +929,21 @@ export class SurveyEditor extends Editor {
         this.table.redraw(true);
       }
     };
-    document.addEventListener('unitsChanged', this._unitsChangedHandler);
-    document.addEventListener('decimalSeparatorChanged', this._unitsChangedHandler);
+    this.bag.onDoc('unitsChanged', this._unitsChangedHandler);
+    this.bag.onDoc('decimalSeparatorChanged', this._unitsChangedHandler);
 
     // When the survey's stored units change (via the survey sheet), the formatter,
     // mutator and validator closures captured in the column definitions are stale.
     // Rebuild the panel so they pick up the new survey.units.
     this._surveyUnitsChangedHandler = (e) => {
       if (e.detail?.survey === this.survey && e.detail?.reasons?.includes('units')) {
-        this.panel.innerHTML = '';
-        this.buildPanel(this.panel, () => this.closeEditor());
+        // Rebuild into the content div. Rebuilding into the window root used to wipe the header
+        // and the resize handles, leaving the editor impossible to move or close.
+        this.window.content.replaceChildren();
+        this.buildPanel(this.window.content, () => this.closeEditor());
       }
     };
-    document.addEventListener('surveyChanged', this._surveyUnitsChangedHandler);
+    this.bag.onDoc('surveyChanged', this._surveyUnitsChangedHandler);
   }
 
   #emitSurveyDataUpdated() {

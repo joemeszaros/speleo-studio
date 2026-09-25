@@ -76,7 +76,7 @@ test.describe('Additional Navbar Controls', () => {
     await expect(locateBtn).toBeVisible();
     await locateBtn.click();
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
   });
 
@@ -84,7 +84,7 @@ test.describe('Additional Navbar Controls', () => {
     const locateBtn = page.locator('a.mytooltip.dropbtn:has(.mytooltiptext:text("Locate"))');
     await locateBtn.click();
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
 
     const searchInput = toolPanel.locator('#pointtolocate');
@@ -94,14 +94,14 @@ test.describe('Additional Navbar Controls', () => {
   test('keyboard shortcut Ctrl+R opens rotation tool', async ({ page }) => {
     await page.keyboard.press('Control+r');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
   });
 
   test('keyboard shortcut Ctrl+L opens locate panel', async ({ page }) => {
     await page.keyboard.press('Control+l');
 
-    const toolPanel = page.locator('#tool-panel');
+    const toolPanel = page.locator('.popup--tool');
     await expect(toolPanel).toBeVisible({ timeout: 5000 });
   });
 

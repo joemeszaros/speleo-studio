@@ -28,38 +28,37 @@ import { WGS84Converter } from '../../utils/geo.js';
 import { showErrorPanel } from '../popups.js';
 import { i18n } from '../../i18n/i18n.js';
 import * as U from '../../utils/utils.js';
-import { wm } from '../window.js';
+
 import { createFloatInput } from '../component/input.js';
+import { Window } from '../window/window.js';
 
 export class SurveySheetEditor extends BaseEditor {
 
-  constructor(db, cave, survey, panel, declinationCache, options) {
-    super(panel);
-    this.panel = panel;
+  constructor(db, cave, survey, declinationCache, options) {
+    super();
     this.db = db;
     this.cave = cave;
     this.survey = survey;
     this.declinationCache = declinationCache;
     this.options = options;
     this.declinationOfficial = survey?.metadata?.declinationReal;
-    document.addEventListener('languageChanged', () => this.setupPanel());
   }
 
   setupPanel() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt) => this.buildForm(contentElmnt),
-      () =>
+    this.window = new Window({
+      key   : 'sheet.survey',
+      title : () =>
         i18n.t('ui.editors.surveySheet.title', {
           name : this.survey?.name || i18n.t('ui.editors.surveySheet.titleNew')
         }),
-      false,
-      false,
-      {},
-      () => {
-        this.closeEditor();
-      }
-    );
+      variant: 'sheet',
+      resizable: false,
+      minimizable: false,
+      defaultSize: { width: 700, height: 540 },
+      onClose: () => this.closeEditor()
+    });
+    this.window.rebuildOnLanguageChange((contentElmnt) => this.buildForm(contentElmnt));
+    this.window.open((contentElmnt) => this.buildForm(contentElmnt));
   }
 
   buildForm(contentElmnt) {

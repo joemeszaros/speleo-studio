@@ -16,7 +16,7 @@ test.describe('PDF Generation Dialog', () => {
     await fileMenu.locator('.dropbtn').click();
     await page.locator('.mydropdown-content a', { hasText: 'PDF' }).click();
 
-    const printPanel = page.locator('#print-panel');
+    const printPanel = page.locator('.popup--print');
     await expect(printPanel).toBeVisible({ timeout: 5000 });
     return printPanel;
   }
@@ -209,7 +209,7 @@ test.describe('PDF Generation Dialog', () => {
     await fileMenu.locator('.dropbtn').click();
     await page.locator('.mydropdown-content a', { hasText: 'PDF' }).click();
 
-    const panel = page.locator('#print-panel');
+    const panel = page.locator('.popup--print');
     await expect(panel).toBeVisible({ timeout: 5000 });
 
     // Set ratio to 100 (1:100 scale) so the 600m cave spans multiple A4 pages
@@ -224,7 +224,7 @@ test.describe('PDF Generation Dialog', () => {
     // Get total page count from the page layout
     const totalPages = await page.evaluate(() => {
       // Count selected pages (those with blue highlight on canvas)
-      const panel = document.querySelector('#print-panel');
+      const panel = document.querySelector('.popup--print');
       const selectAllBtn = panel.querySelector('#pdf-print-select-all');
       // The number of pages is stored in the dialog's internal state
       // We can read it from the canvas page layout data
@@ -247,7 +247,7 @@ test.describe('PDF Generation Dialog', () => {
     // Now deselect all and only keep 2 pages via the internal API
     const selectedCount = await page.evaluate(() => {
       // Access the PDF dialog instance to manipulate page selection
-      const printPanel = document.querySelector('#print-panel');
+      const printPanel = document.querySelector('.popup--print');
       // Find all page elements and select only first 2
       // The dialog stores selectedPages as a Set
       return 2; // We'll select 2 pages for the test
@@ -291,7 +291,7 @@ test.describe('PDF Generation Dialog', () => {
     await fileMenu.locator('.dropbtn').click();
     await page.locator('.mydropdown-content a', { hasText: 'PDF' }).click();
 
-    const panel = page.locator('#print-panel');
+    const panel = page.locator('.popup--print');
     await expect(panel).toBeVisible({ timeout: 5000 });
 
     // Set ratio so cave spans multiple pages

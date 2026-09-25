@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { wm } from './window.js';
+import { Window } from './window/window.js';
 import { node, formatFloat } from '../utils/utils.js';
 import { i18n } from '../i18n/i18n.js';
 import { showErrorPanel } from './popups.js';
@@ -22,11 +22,10 @@ import { generatePDF } from '../io/pdf.js';
 
 class PDFPrintDialog {
 
-  constructor(caves, scene, project = null, panel, options = null) {
+  constructor(caves, scene, project = null, options = null) {
     this.caves = caves;
     this.scene = scene;
     this.project = project;
-    this.panel = panel;
     this.options = options;
 
     // Layout state
@@ -295,26 +294,25 @@ class PDFPrintDialog {
     // Calculate initial page layout
     this.calculatePageLayout();
 
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt, close) => this.build(contentElmnt, close),
-      'ui.panels.pdfPrint.title',
-      true,
-      true,
-      { width: window.innerWidth - 100, height: window.innerHeight - 100 },
-      () => {
-        // Cleanup
+    this.window = new Window({
+      key             : 'panel.pdfPrint',
+      title           : 'ui.panels.pdfPrint.title',
+      variant         : 'print',
+      defaultSize     : { width: window.innerWidth - 100, height: window.innerHeight - 100 },
+      persistGeometry : true,
+      onClose         : (content) => {
         if (this.resizeObserver) {
           this.resizeObserver.disconnect();
           this.resizeObserver = null;
         }
-        const canvas = this.panel.querySelector('#pdf-layout-canvas');
+        const canvas = content.querySelector('#pdf-layout-canvas');
         if (canvas) {
           const ctx = canvas.getContext('2d');
           ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
       }
-    );
+    });
+    this.window.open((contentElmnt, close) => this.build(contentElmnt, close));
   }
 
   calculatePageLayout() {
@@ -1368,7 +1366,7 @@ class PDFPrintDialog {
   }
 
   updatePageCountDisplay() {
-    const pageCountEl = this.panel?.querySelector('.pdf-print-page-count');
+    const pageCountEl = this.window?.element.querySelector('.pdf-print-page-count');
     if (pageCountEl) {
       pageCountEl.textContent = i18n.t('ui.panels.pdfPrint.pagesCount', {
         count : this.selectedPages?.size || 0,

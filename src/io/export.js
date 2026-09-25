@@ -16,7 +16,7 @@
 
 import { toAscii, textToIso88592Bytes, toPolygonDate, node, formatDistance, bareStationName } from '../utils/utils.js';
 import { showErrorPanel } from '../ui/popups.js';
-import { wm } from '../ui/window.js';
+import { Window } from '../ui/window/window.js';
 import { i18n } from '../i18n/i18n.js';
 import * as THREE from 'three';
 import { ShotType } from '../model/survey.js';
@@ -964,32 +964,26 @@ class Exporter {
 
 class ExportWindow {
 
-  constructor(caves, project, scene, panel) {
+  constructor(caves, project, scene) {
     this.caves = caves;
     this.project = project;
     this.scene = scene;
-    this.panel = panel;
 
     // Bind event handlers
     this.onExportSubmit = this.handleExportSubmit.bind(this);
   }
 
   show() {
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt, close) => this.build(contentElmnt, close),
-      'common.export',
-      false,
-      false,
-      {},
-      () => {
-        // Cleanup event listeners when panel is closed
-        const form = this.panel.querySelector('form');
-        if (form) {
-          form.removeEventListener('submit', this.onExportSubmit);
-        }
-      }
-    );
+    // The form and its submit handler live inside the window, so both go when it is removed.
+    this.window = new Window({
+      key         : 'panel.export',
+      title       : 'common.export',
+      variant     : 'export',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 300, height: 400 }
+    });
+    this.window.open((contentElmnt, close) => this.build(contentElmnt, close));
   }
 
   build(contentElmnt, close) {
@@ -1018,14 +1012,14 @@ class ExportWindow {
     contentElmnt.appendChild(form);
     form.addEventListener('submit', this.onExportSubmit);
     this.close = close;
-    const projectNameInput = this.panel.querySelector('#export-project-name');
+    const projectNameInput = contentElmnt.querySelector('#export-project-name');
     // Set default filename
     projectNameInput.value = this.project?.name ?? 'cave-export';
   }
 
   handleExportSubmit(e) {
     e.preventDefault();
-    Exporter.executeExport(this.caves, this.scene, this.panel, this.project);
+    Exporter.executeExport(this.caves, this.scene, this.window.element, this.project);
     this.close();
   }
 

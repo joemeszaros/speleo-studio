@@ -23,6 +23,11 @@
     /* Pretty Modern Browsers */ url('/fonts/fragmentmono-regular.ttf') format('truetype');
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -94,20 +99,6 @@ body {
   padding: 2px 5px;
   background: #ccc;
   color: black;
-}
-
-#infopanel {
-  text-align: left;
-  display: none;
-  color: azure;
-  width: 350px;
-  background: #333;
-  z-index: 100;
-}
-
-#infopanel .infopanel-content {
-  padding: 10px;
-  overflow: auto;
 }
 
 /* Container: stacks one notification item per message type, centered at the top. */
@@ -897,7 +888,7 @@ body {
 
 #explorer-context-menu {
   position: absolute;
-  z-index: 1001;
+  z-index: 1004;
   color: azure;
   background: #3a3a3a;
   border: 1px solid #5a5a5a;
@@ -909,7 +900,7 @@ body {
 
 #station-context-menu {
   position: absolute;
-  z-index: 1000;
+  z-index: 1004;
   color: azure;
   background: rgb(40, 40, 40);
   display: none;
@@ -966,112 +957,6 @@ body {
 
 #station-context-menu button:only-child {
   border-radius: 4px;
-}
-
-#cycle-panel {
-  width: 600px;
-  position: absolute;
-  top: 80px;
-  left: 300px;
-  text-align: center;
-  z-index: 100;
-  color: azure;
-  background: rgb(40, 40, 40);
-  display: none;
-}
-
-#fixed-size-editor {
-  width: 700px;
-  position: absolute;
-  top: 80px;
-  left: 300px;
-  text-align: center;
-  z-index: 100;
-  color: azure;
-  background: rgb(40, 40, 40);
-  display: none;
-}
-
-#resizable-editor {
-  position: absolute;
-  top: 80px;
-  left: 300px;
-  text-align: left;
-  z-index: 100;
-  color: azure;
-  background: rgb(40, 40, 40);
-  display: none;
-}
-
-#export-panel {
-  width: 300px;
-  position: absolute;
-  top: 80px;
-  left: 300px;
-  text-align: center;
-  z-index: 100;
-  color: azure;
-  background: rgb(40, 40, 40);
-  display: none;
-}
-
-#export-panel .popup-content div {
-  padding: 10px;
-}
-
-#tool-panel {
-  text-align: left;
-  font-size: 12px;
-  position: absolute;
-  color: azure;
-  background: #333;
-  width: 260px;
-  min-width: 200px;
-  z-index: 100;
-  display: none;
-  top: 50px;
-  left: 650px;
-}
-
-#tool-panel button {
-  margin-top: 20px;
-  text-align: center;
-}
-
-#tool-panel div {
-  margin-bottom: 5px;
-  text-align: center;
-}
-
-#tool-panel select {
-  background: #333;
-  color: azure;
-  border-top-width: 0px;
-  border-right-width: 0px;
-  border-left-width: 0px;
-  border-bottom-width: 2px;
-  width: 160px;
-  margin-left: 10px;
-}
-
-#tool-panel input.coord-input {
-  width: 60px;
-  margin-left: 5px;
-  margin-right: 5px;
-}
-
-#tool-panel input.survey-input {
-  width: 60px;
-  margin-left: 5px;
-  margin-right: 5px;
-}
-
-#tool-panel input[type='radio'] {
-  margin-right: 5px;
-}
-
-#tool-panel label {
-  margin-right: 10px;
 }
 
 .footer {
@@ -1611,7 +1496,7 @@ body {
   max-width: 250px;
 }
 
-.popup button {
+.popup button:not(.close):not(.minimize) {
   font-size: 12px;
   border: 1px solid #328e3a;
   background: linear-gradient(to bottom, #328e3a 0%, #5fc768 100%);
@@ -1627,14 +1512,16 @@ body {
     0.3s;
 }
 
-.popup button:hover {
+.popup button:not(.close):not(.minimize):hover {
   border: 1px solid #328e3a;
   background: linear-gradient(to bottom, #5fc768 0%, #328e3a 100%);
   color: #000;
 }
 
 .popup .close {
-  cursor: default;
+  cursor: pointer;
+  border: none;
+  margin: 0;
   right: 10px;
   top: 8px;
   height: 20px;
@@ -1653,7 +1540,9 @@ body {
 }
 
 .popup .minimize {
-  cursor: default;
+  cursor: pointer;
+  border: none;
+  margin: 0;
   right: 35px;
   top: 8px;
   height: 20px;
@@ -1671,7 +1560,8 @@ body {
   transform: scale(1.1);
 }
 
-.popup .minimize.minimized {
+.popup .minimize.minimized,
+.popup.minimized .minimize {
   background: no-repeat center/100% url(../icons/maximize.svg);
   transform: rotate(180deg);
 }
@@ -1717,20 +1607,255 @@ body {
   background-color: #ddd;
 }
 
+/* Stacking order of the application chrome, from the back:
+     1000  sidebar
+     1002  floating windows (#window-layer)
+     1003  navbar and footer, so their dropdowns are not covered by a window. Safe because the
+           window manager never lets a window overlap either of them.
+     1004  context menus, which open over the viewport and so must clear the windows
+     1100  notifications
+     2000  modal dialogs and the loading overlay
+    10000  tooltips
+   The layer below gives the window manager its own stacking context, so its z-index counter can
+   climb for as long as the session lasts without ever escaping the layer. */
+#window-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1002;
+  isolation: isolate;
+  pointer-events: none;
+}
+
 /*Dragable */
 
 .popup {
-  position: absolute;
-  overflow: hidden;
+  /* fixed, not absolute: the viewport's scrollable overflow region excludes fixed boxes, so an
+     oversized window cannot enlarge the document and push the navbar out of sight. */
+  position: fixed;
+  /* clip, not hidden: hidden still makes this a scroll container, which let a focused Tabulator
+     cell scroll the panel's own chrome out of reach. */
+  overflow: clip;
+  pointer-events: auto;
+}
+
+.popup[data-window-key] {
+  display: flex;
+  flex-direction: column;
+}
+
+.popup.active {
+  border-color: #04aa6d;
+}
+
+/* Per panel family looks. These must come after the .popup base rule: they used to be id
+   selectors, which won on specificity, and now rely on source order instead. */
+.popup--info {
+  text-align: left;
+  color: azure;
+  background: #333;
+}
+
+.popup--info .infopanel-content {
+  padding: 10px;
+  overflow: auto;
+}
+
+.popup--sheet {
+  text-align: center;
+  color: azure;
+  background: rgb(40, 40, 40);
+}
+
+.popup--editor {
+  text-align: left;
+  color: azure;
+  background: rgb(40, 40, 40);
+}
+
+.popup--export {
+  text-align: center;
+  color: azure;
+  background: rgb(40, 40, 40);
+}
+
+.popup--export .popup-content div {
+  padding: 10px;
+}
+
+.popup--tool {
+  text-align: left;
+  font-size: 12px;
+  color: azure;
+  background: #333;
+  min-width: 200px;
+}
+
+.popup--tool button {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.popup--tool div {
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.popup--tool select {
+  background: #333;
+  color: azure;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  border-left-width: 0px;
+  border-bottom-width: 2px;
+  width: 160px;
+  margin-left: 10px;
+}
+
+.popup--tool input.coord-input {
+  width: 60px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.popup--tool input.survey-input {
+  width: 60px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.popup--tool input[type='radio'] {
+  margin-right: 5px;
+}
+
+.popup--tool label {
+  margin-right: 10px;
 }
 
 .popup-header {
+  position: relative;
+  flex: 0 0 auto;
   text-align: center;
   padding: 10px;
   cursor: move;
+  touch-action: none;
   z-index: 10;
   background-color: rgb(17, 17, 17);
   color: #fff;
+}
+
+.popup-title {
+  margin: 0;
+  font-size: 1em;
+  font-weight: bold;
+  /* Leave room for the close and minimize buttons on the right. */
+  padding: 0 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* min-height:0 is load bearing. Without it the flex item refuses to shrink below its content,
+   which is exactly how a full height table ends up taller than the window holding it. */
+.popup[data-window-key] > .popup-content-div {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Table editors hand their whole body to Tabulator, which manages its own scrolling. */
+.popup--editor[data-window-key] > .popup-content-div {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.popup--editor[data-window-key] > .popup-content-div .tabulator {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Minimized is expressed here rather than by juggling pixel heights in JS, so there is no stored
+   state that can survive a close and leave the window unresizable on the next open. */
+.popup.minimized {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.popup.minimized > .popup-content-div,
+.popup.minimized > .popup-resizer {
+  display: none;
+}
+
+/* Resize handles. They sit inside the border box because overflow:clip would stop anything
+   outside it from being painted or hit. Corners are larger so they win over the edges. */
+.popup-resizer {
+  position: absolute;
+  z-index: 20;
+  touch-action: none;
+}
+
+.popup-resizer--n,
+.popup-resizer--s {
+  left: 14px;
+  right: 14px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.popup-resizer--e,
+.popup-resizer--w {
+  top: 14px;
+  bottom: 14px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.popup-resizer--n {
+  top: 0;
+}
+
+.popup-resizer--s {
+  bottom: 0;
+}
+
+.popup-resizer--e {
+  right: 0;
+}
+
+.popup-resizer--w {
+  left: 0;
+}
+
+.popup-resizer--nw,
+.popup-resizer--ne,
+.popup-resizer--sw,
+.popup-resizer--se {
+  width: 14px;
+  height: 14px;
+}
+
+.popup-resizer--nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.popup-resizer--ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.popup-resizer--sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
+.popup-resizer--se {
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
 }
 
 /* Photo Preview Tooltip Styles */

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import { node, convertLengthFromMeters, formatFloat } from '../../utils/utils.js';
 import { SectionHelper } from '../../section.js';
 import { i18n } from '../../i18n/i18n.js';
@@ -22,28 +22,25 @@ import { ShotType, DEFAULT_UNITS } from '../../model/survey.js';
 
 export class ShortestPathTool {
 
-  constructor(db, options, scene, panel = '#tool-panel') {
+  constructor(db, options, scene) {
     this.db = db;
     this.options = options;
     this.scene = scene;
-    this.panel = document.querySelector(panel);
-    this.panel.style.width = '300px';
   }
 
   show() {
     const segmentsId = 'shortest-path-segments';
 
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmt) => this.build(segmentsId, contentElmt),
-      'ui.panels.shortestPath.title',
-      false,
-      false,
-      {},
-      () => {
-        this.scene.segments.disposeSegmentsTube(segmentsId);
-      }
-    );
+    this.window = new Window({
+      key         : 'tool.shortestPath',
+      title       : 'ui.panels.shortestPath.title',
+      variant     : 'tool',
+      resizable   : false,
+      minimizable : false,
+      defaultSize : { width: 300, height: 320 },
+      onClose     : () => this.scene.segments.disposeSegmentsTube(segmentsId)
+    });
+    this.window.open((contentElmt) => this.build(segmentsId, contentElmt));
   }
 
   build(segmentsId, contentElmnt) {

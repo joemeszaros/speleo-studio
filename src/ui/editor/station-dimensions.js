@@ -15,7 +15,7 @@
  */
 
 import { BaseEditor } from './base.js';
-import { wm } from '../window.js';
+import { Window } from '../window/window.js';
 import * as U from '../../utils/utils.js';
 import { i18n } from '../../i18n/i18n.js';
 import { ShotType, StationDimension } from '../../model/survey.js';
@@ -23,8 +23,8 @@ import { IconBar } from './iconbar.js';
 
 class StationDimensionsEditor extends BaseEditor {
 
-  constructor(options, cave, panel) {
-    super(panel);
+  constructor(options, cave) {
+    super();
     this.options = options;
     this.cave = cave;
     this.modified = false;
@@ -33,28 +33,18 @@ class StationDimensionsEditor extends BaseEditor {
   setupPanel() {
     // Defensive default in case the saved config predates this editor.
     if (!this.options.ui.editor.stationDimensions) {
-      this.options.ui.editor.stationDimensions = { height: 320, width: 700, columnWidths: {} };
+      this.options.ui.editor.stationDimensions = { columnWidths: {} };
     }
-    wm.makeFloatingPanel(
-      this.panel,
-      (contentElmnt, close) => this.build(contentElmnt, close),
-      () => i18n.t('ui.editors.stationDimensions.title', { name: this.cave.name }),
-      true,
-      true,
-      this.options.ui.editor.stationDimensions,
-      () => {
-        this.closeEditor();
-      },
-      () => {
-        const h = this.panel.offsetHeight - 100;
-        this.table.setHeight(h);
-      },
-      () => {
-        if (this.table) {
-          this.table.redraw(true);
-        }
-      }
-    );
+    this.window = new Window({
+      key             : 'editor.stationDimensions',
+      instanceId      : this.cave.name,
+      title           : () => i18n.t('ui.editors.stationDimensions.title', { name: this.cave.name }),
+      variant         : 'editor',
+      defaultSize     : { width: 700, height: 320 },
+      persistGeometry : true,
+      onClose         : () => this.closeEditor()
+    });
+    this.window.open((contentElmnt, close) => this.build(contentElmnt, close));
   }
 
   build(contentElmnt, close) {
@@ -67,6 +57,7 @@ class StationDimensionsEditor extends BaseEditor {
 
     const rcIC = this.iconBar.getRowCountInputContainer();
     const commonButtons = IconBar.getCommonButtons(() => this.table, {
+      bag                    : this.bag,
       getEmptyRow            : () => this.getEmptyRow(),
       rowCountInputContainer : rcIC
     });
@@ -301,7 +292,7 @@ class StationDimensionsEditor extends BaseEditor {
     this.table = new Tabulator(tableContainer, {
       data                      : this.getTableData(),
       history                   : true,
-      height                    : this.options.ui.editor.stationDimensions.height - 36 - 48 - 5,
+      height                    : '100%',
       layout                    : 'fitDataStretch',
       columns                   : this.getColumns(),
       selectableRange           : 1,

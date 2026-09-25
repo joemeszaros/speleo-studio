@@ -16,7 +16,7 @@ test.describe('Survey Editor', () => {
     await contextMenu.locator('.context-menu-option[title*="survey editor"]').click();
 
     // Editor panel should be visible
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
   });
 
@@ -24,7 +24,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Tabulator table should have rows
@@ -36,7 +36,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // sample-cave.json has 6 shots in Main Survey (table may include extra row)
@@ -49,7 +49,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Check key toolbar buttons exist
@@ -63,7 +63,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const initialRowCount = await editor.locator('.tabulator-row').count();
@@ -79,7 +79,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#cancel-survey').click();
@@ -90,7 +90,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const validateBtn = editor.locator('#validate-shots');
@@ -102,7 +102,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await expect(editor.locator('#export-to-csv')).toBeAttached();
@@ -112,7 +112,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#toggle-column').click();
@@ -125,7 +125,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const initialCount = await editor.locator('.tabulator-row').count();
@@ -143,7 +143,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const initialCount = await editor.locator('.tabulator-row').count();
@@ -152,7 +152,7 @@ test.describe('Survey Editor', () => {
     await editor.locator('#add-row').click();
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       rows[rows.length - 1].update({
@@ -170,7 +170,7 @@ test.describe('Survey Editor', () => {
 
     // Verify the new row data is present
     const fromValues = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map(r => r.getData().from);
     });
@@ -181,7 +181,7 @@ test.describe('Survey Editor', () => {
     expect(await editor.locator('.tabulator-row').count()).toBe(initialCount);
 
     const fromValuesAfterUndo = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map(r => r.getData().from);
     });
@@ -192,7 +192,7 @@ test.describe('Survey Editor', () => {
     expect(await editor.locator('.tabulator-row').count()).toBe(initialCount + 1);
 
     const fromValuesAfterRedo = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map(r => r.getData().from);
     });
@@ -200,7 +200,7 @@ test.describe('Survey Editor', () => {
 
     // Also verify all values were restored
     const restoredRow = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       const row = rows.find(r => r.getData().from === 'UNDO_FROM');
@@ -221,7 +221,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const initialCount = await editor.locator('.tabulator-row').count();
@@ -240,7 +240,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Select the second row (A1→A2, index 1)
@@ -253,7 +253,7 @@ test.describe('Survey Editor', () => {
 
     // Fill the new row with distinct values
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       // The new row should be at index 3 (after row 2)
@@ -270,7 +270,7 @@ test.describe('Survey Editor', () => {
 
     // Verify position: read from values of rows around the insertion point
     const rowData = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map(r => ({ from: r.getData().from, to: r.getData().to }));
     });
@@ -290,7 +290,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const initialCount = await editor.locator('.tabulator-row').count();
@@ -310,7 +310,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     const initialCount = await editor.locator('.tabulator-row').count();
@@ -331,7 +331,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Add an empty row (missing from, to, length, azimuth, clino)
@@ -344,7 +344,7 @@ test.describe('Survey Editor', () => {
 
     // Check the last row's status via Tabulator API
     const lastRowStatus = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       return rows[rows.length - 1].getData().status;
@@ -356,14 +356,14 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Add a row with invalid data (clino out of range: must be -90 to 90)
     await editor.locator('#add-row').click();
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       rows[rows.length - 1].update({
@@ -383,7 +383,7 @@ test.describe('Survey Editor', () => {
 
     // The row with clino=-100 should be marked invalid
     const lastRowStatus = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       return rows[rows.length - 1].getData().status;
@@ -395,7 +395,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Validate the existing data (all shots are valid)
@@ -404,7 +404,7 @@ test.describe('Survey Editor', () => {
 
     // Check first row status is ok
     const firstRowStatus = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows()[0].getData().status;
     });
@@ -415,7 +415,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Add a new row at the end
@@ -424,7 +424,7 @@ test.describe('Survey Editor', () => {
 
     // Fill the new row's cells via Tabulator API
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       const lastRow = rows[rows.length - 1];
@@ -480,14 +480,14 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Add a row and fill it with data
     await editor.locator('#add-row').click();
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       const lastRow = rows[rows.length - 1];
@@ -538,7 +538,7 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Listen for download
@@ -568,14 +568,14 @@ test.describe('Survey Editor', () => {
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
 
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Add a row with comma decimal separators via Tabulator (simulating user typing "5,2")
     await editor.locator('#add-row').click();
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       const lastRow = rows[rows.length - 1];
@@ -612,7 +612,7 @@ test.describe('Survey Editor', () => {
 
     // Wait for table to populate
     await page.waitForFunction(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       if (!table) return false;
       const tabs = window.Tabulator?.findTable?.(table);
       return tabs?.[0]?.getRows()?.length > 0;
@@ -620,7 +620,7 @@ test.describe('Survey Editor', () => {
 
     // Find the saved row and verify commas were converted to dots
     const savedRow = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const row = tabulator.getRows().find(r => r.getData().from === 'C0');
       if (!row) return null;
@@ -646,7 +646,7 @@ test.describe('Survey Editor Row Context Menu', () => {
     await expect(page.locator('#explorer-tree').locator('text=Main Survey')).toBeVisible({ timeout: 5000 });
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     return editor;
   }
@@ -656,7 +656,7 @@ test.describe('Survey Editor Row Context Menu', () => {
    */
   async function rightClickRowAndSelect(page, rowIndex, menuText) {
     await page.evaluate((idx) => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const row = tabulator.getRows()[idx];
       const el = row.getElement();
@@ -678,7 +678,7 @@ test.describe('Survey Editor Row Context Menu', () => {
    */
   async function getTableData(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map(r => {
         const d = r.getData();
@@ -806,7 +806,7 @@ test.describe('Survey Editor Row Context Menu', () => {
 
     // Right-click row 0, verify "Locate from" menu item exists and is clickable
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const row = tabulator.getRows()[0];
       const el = row.getElement();
@@ -827,7 +827,7 @@ test.describe('Survey Editor Row Context Menu', () => {
     const editor = await openSurveyEditor(page);
 
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const row = tabulator.getRows()[0];
       const el = row.getElement();
@@ -849,7 +849,7 @@ test.describe('Survey Editor Row Context Menu', () => {
 
     // Right-click first row to open context menu
     await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const row = tabulator.getRows()[0];
       const el = row.getElement();
@@ -893,7 +893,7 @@ test.describe('Survey Editor Filtering', () => {
     await expect(page.locator('#explorer-tree').locator('text=Main Survey')).toBeVisible({ timeout: 5000 });
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     // Validate so rows get ok/incomplete statuses
     await editor.locator('#validate-shots').click();
@@ -906,7 +906,7 @@ test.describe('Survey Editor Filtering', () => {
    */
   async function getVisibleRowCount(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows('active').length;
     });
@@ -917,7 +917,7 @@ test.describe('Survey Editor Filtering', () => {
    */
   async function getVisibleRows(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows('active').map(r => {
         const d = r.getData();
@@ -931,7 +931,7 @@ test.describe('Survey Editor Filtering', () => {
    */
   async function setHeaderFilter(page, field, value) {
     await page.evaluate(({ field, value }) => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       tabulator.setHeaderFilterValue(field, value);
     }, { field, value });
@@ -1072,13 +1072,13 @@ test.describe('Survey Editor Row Status Detection', () => {
     await expect(page.locator('#explorer-tree').locator('text=Main Survey')).toBeVisible({ timeout: 5000 });
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#add-row').click();
     await page.waitForTimeout(300);
     await page.evaluate((data) => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       rows[rows.length - 1].update(data);
@@ -1101,13 +1101,13 @@ test.describe('Survey Editor Row Status Detection', () => {
     await expect(page.locator('#explorer-tree').locator('text=Main Survey')).toBeVisible({ timeout: 5000 });
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     await editor.locator('#add-row').click();
     await page.waitForTimeout(300);
     await page.evaluate((data) => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       rows[rows.length - 1].update(data);
@@ -1137,7 +1137,7 @@ test.describe('Survey Editor Row Status Detection', () => {
 
     // Wait for Tabulator table to be fully populated with rows
     await page.waitForFunction(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       if (!table) return false;
       const tabs = window.Tabulator?.findTable?.(table);
       if (!tabs || tabs.length === 0) return false;
@@ -1150,7 +1150,7 @@ test.describe('Survey Editor Row Status Detection', () => {
 
   async function getLastRowStatus(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       const d = rows[rows.length - 1].getData();
@@ -1160,7 +1160,7 @@ test.describe('Survey Editor Row Status Detection', () => {
 
   async function getRowStatuses(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map(r => {
         const d = r.getData();
@@ -1189,7 +1189,7 @@ test.describe('Survey Editor Row Status Detection', () => {
     });
 
     const bgColor = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const rows = tabulator.getRows();
       return rows[rows.length - 1].getElement().style.backgroundColor;
@@ -1248,14 +1248,14 @@ test.describe('Survey Editor Copy & Paste', () => {
     await expect(page.locator('#explorer-tree').locator('text=Main Survey')).toBeVisible({ timeout: 5000 });
     await rightClickSurvey(page, 'Main Survey');
     await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
-    const editor = page.locator('#resizable-editor');
+    const editor = page.locator('.popup--editor');
     await expect(editor).toBeVisible({ timeout: 5000 });
     return editor;
   }
 
   async function getRowData(page, rowIndex) {
     return page.evaluate((idx) => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const d = tabulator.getRows()[idx].getData();
       return { type: d.type, from: d.from, to: d.to, length: d.length, azimuth: d.azimuth, clino: d.clino };
@@ -1264,7 +1264,7 @@ test.describe('Survey Editor Copy & Paste', () => {
 
   async function getAllRowData(page) {
     return page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       return tabulator.getRows().map(r => {
         const d = r.getData();
@@ -1279,7 +1279,7 @@ test.describe('Survey Editor Copy & Paste', () => {
    */
   async function selectRange(page, startRow, startCol, endRow, endCol) {
     await page.evaluate(({ sr, sc, er, ec }) => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       // Clear existing ranges
       tabulator.getRanges().forEach(r => r.remove());
@@ -1297,7 +1297,7 @@ test.describe('Survey Editor Copy & Paste', () => {
    */
   async function pasteIntoTable(page, tsvData) {
     await page.evaluate((data) => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const pasteEvent = new ClipboardEvent('paste', {
         bubbles: true,
         cancelable: true,
@@ -1329,7 +1329,7 @@ test.describe('Survey Editor Copy & Paste', () => {
     await page.waitForTimeout(300);
 
     const lastIdx = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       return window.Tabulator.findTable(table)[0].getRows().length - 1;
     });
 
@@ -1364,7 +1364,7 @@ test.describe('Survey Editor Copy & Paste', () => {
     await page.waitForTimeout(300);
 
     const totalRows = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       return window.Tabulator.findTable(table)[0].getRows().length;
     });
 
@@ -1390,7 +1390,7 @@ test.describe('Survey Editor Copy & Paste', () => {
 
     // Verify the range exists and contains expected bounds
     const rangeInfo = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       const tabulator = window.Tabulator.findTable(table)[0];
       const ranges = tabulator.getRanges();
       if (ranges.length === 0) return null;
@@ -1441,7 +1441,7 @@ test.describe('Survey Editor Copy & Paste', () => {
     await page.waitForTimeout(300);
 
     const lastIdx = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       return window.Tabulator.findTable(table)[0].getRows().length - 1;
     });
 
@@ -1466,7 +1466,7 @@ test.describe('Survey Editor Copy & Paste', () => {
     await page.waitForTimeout(300);
 
     const totalRows = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       return window.Tabulator.findTable(table)[0].getRows().length;
     });
 
@@ -1506,7 +1506,7 @@ test.describe('Survey Editor Copy & Paste', () => {
     await page.waitForTimeout(300);
 
     const lastIdx = await page.evaluate(() => {
-      const table = document.querySelector('#surveydata');
+      const table = document.querySelector('.surveydata');
       return window.Tabulator.findTable(table)[0].getRows().length - 1;
     });
 
@@ -1517,5 +1517,79 @@ test.describe('Survey Editor Copy & Paste', () => {
     expect(String(pasted.type)).toBe('splay');
     expect(pasted.from).toBe(splayRow.from);
     expect(parseFloat(pasted.length)).toBe(splayRow.length);
+  });
+});
+
+test.describe('Survey Editor — several open at once', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await setupWithCave(page, 'multi-survey-cave.json', 'Multi Survey Cave');
+    await expandCaveNode(page, 'Multi Survey Cave');
+    await dismissNotifications(page);
+  });
+
+  async function openSurveyEditor(page, surveyName) {
+    await rightClickSurvey(page, surveyName);
+    await page.locator('#explorer-context-menu .context-menu-option[title*="survey editor"]').click();
+  }
+
+  // Both editors used to share one DOM element and one table container id, so Tabulator bound
+  // every editor to the first container it found: the second window came up empty and grey.
+  test('each editor renders its own table', async ({ page }) => {
+    await openSurveyEditor(page, 'Entrance Survey');
+    await openSurveyEditor(page, 'Inner Survey');
+
+    const editors = page.locator('.popup[data-window-key="editor.survey"]');
+    await expect(editors).toHaveCount(2);
+
+    for (let i = 0; i < 2; i++) {
+      await expect(editors.nth(i).locator('.tabulator')).toHaveCount(1);
+      await expect(editors.nth(i).locator('.tabulator-row').first()).toBeVisible();
+    }
+
+    // Duplicate ids would bring the whole problem straight back.
+    const containers = await page.evaluate(() => ({
+      byClass : document.querySelectorAll('.surveydata').length,
+      byId    : document.querySelectorAll('#surveydata').length
+    }));
+    expect(containers.byClass).toBe(2);
+    expect(containers.byId).toBe(0);
+  });
+
+  // Geometry is remembered per key, so without a cascade the second window lands exactly on the
+  // first and it looks as though nothing happened.
+  test('a second editor is offset from the first', async ({ page }) => {
+    await openSurveyEditor(page, 'Entrance Survey');
+    await openSurveyEditor(page, 'Inner Survey');
+
+    const editors = page.locator('.popup[data-window-key="editor.survey"]');
+    const first = await editors.nth(0).boundingBox();
+    const second = await editors.nth(1).boundingBox();
+
+    expect(second.x).toBeGreaterThan(first.x);
+    expect(second.y).toBeGreaterThan(first.y);
+  });
+
+  // The cascade belongs to the window, not to the key: closing siblings must not walk the
+  // remembered position across the screen.
+  test('the cascade offset is not persisted', async ({ page }) => {
+    const stored = () => page.evaluate(() => ({ ...window.speleo.options.ui.windows['editor.survey'] }));
+    const editors = page.locator('.popup[data-window-key="editor.survey"]');
+
+    // A window with no siblings is never cascaded, so closing it records the baseline position.
+    await openSurveyEditor(page, 'Entrance Survey');
+    await editors.nth(0).locator('button.close').click();
+    const baseline = await stored();
+    expect(baseline.x).toEqual(expect.any(Number));
+
+    // Now do it again with a cascaded sibling in the middle.
+    await openSurveyEditor(page, 'Entrance Survey');
+    await openSurveyEditor(page, 'Inner Survey');
+    await editors.nth(1).locator('button.close').click();
+    await editors.nth(0).locator('button.close').click();
+
+    const after = await stored();
+    expect(after.x).toBe(baseline.x);
+    expect(after.y).toBe(baseline.y);
   });
 });
