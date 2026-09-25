@@ -22,7 +22,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'python3 -m http.server 3000',
+    // dev-server.py is the stock http.server plus no-store headers, so a changed module is
+    // never served from a stale cache.
+    command: 'python3 dev-server.py 3000',
     port: 3000,
     reuseExistingServer: !process.env.CI,
   },
