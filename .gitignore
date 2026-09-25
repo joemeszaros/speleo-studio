@@ -9,3 +9,4 @@ package/
 .env
 .mcp.json
 CLAUDE.md
+*.swp
