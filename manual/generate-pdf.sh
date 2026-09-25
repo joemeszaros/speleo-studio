@@ -21,7 +21,7 @@ echo "✅ wkhtmltopdf telepítve van"
 # Ellenőrizze, hogy a manual mappa létezik-e
 if [ ! -d "hu" ]; then
     echo "❌ Hiba: A 'hu' mappa nem található!"
-    echo "Győződjön meg róla, hogy ezt a scriptet a projekt gyökérkönyvtárában futtatja."
+    echo "Győződjön meg róla, hogy ezt a scriptet a manual mappában futtatja."
     exit 1
 fi
 
@@ -36,30 +36,13 @@ wkhtmltopdf \
   --enable-local-file-access \
   --page-size A4 \
   --margin-top 20mm \
-  --margin-bottom 25mm \
+  --margin-bottom 20mm \
   --margin-left 15mm \
   --margin-right 15mm \
-  --footer-html ${PWD}/hu/footer.html \
   --print-media-type \
   --no-stop-slow-scripts \
   --javascript-delay 1000 \
-  --encoding 'UTF-8' \
-  --disable-smart-shrinking \
-  --disable-plugins \
   ${PWD}/hu/index.html \
-  ${PWD}/hu/01-bevezetes.html \
-  ${PWD}/hu/02-projekt-kezeles.html \
-  ${PWD}/hu/03-adatmodell.html \
-  ${PWD}/hu/04-adatok-importalasa.html \
-  ${PWD}/hu/05-3d-vizualizacio.html \
-  ${PWD}/hu/06-barlang-szerkesztese.html \
-  ${PWD}/hu/07-felmereek-szerkesztese.html \
-  ${PWD}/hu/08-attributumok.html \
-  ${PWD}/hu/09-eszkozok.html \
-  ${PWD}/hu/10-exportalas.html \
-  ${PWD}/hu/11-beallitasok.html \
-  ${PWD}/hu/12-tamogatas.html \
-  ${PWD}/hu/13-about.html \
    ../speleo-studio-teljes-kezikonyv.pdf
 
 # Ellenőrizze, hogy a PDF sikeresen létrejött-e
