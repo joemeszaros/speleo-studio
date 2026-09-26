@@ -63,16 +63,7 @@ export class ProjectPanel {
 
       await this.loadingOverlay.guard(i18n.t('ui.panels.projectManager.importing'), async () => {
         try {
-          const result = await FatProject.deserialize(file, this.attributeDefs);
-          if (result instanceof FatProjects) {
-            await U.sequential(
-              result.projects.map((fatProject) => async () => {
-                await this.importFatProject(fatProject, this.attributeDefs);
-              })
-            );
-          } else {
-            await this.importFatProject(result, this.attributeDefs);
-          }
+          await this.importFatProjectFromBlob(file);
         } catch (error) {
           console.error(i18n.t('ui.panels.projectManager.errors.projectImportFailed'), error);
           showErrorPanel(i18n.t('ui.panels.projectManager.errors.projectImportFailed', { error: error.message }));
@@ -81,6 +72,25 @@ export class ProjectPanel {
 
       this.fileInputElement.value = '';
     });
+  }
+
+  // Deserializes a project file (JSON or gzipped JSON, single project or a bundle) and imports
+  // it. `blob` may be a local File (from the file input) or a Blob fetched from a remote URL —
+  // FatProject.deserialize only relies on Blob methods, so both work unchanged. Returns the
+  // imported project (the first one, for a bundle), or null if the import failed.
+  async importFatProjectFromBlob(blob) {
+    const result = await FatProject.deserialize(blob, this.attributeDefs);
+    if (result instanceof FatProjects) {
+      const imported = [];
+      await U.sequential(
+        result.projects.map((fatProject) => async () => {
+          const project = await this.importFatProject(fatProject, this.attributeDefs);
+          if (project) imported.push(project);
+        })
+      );
+      return imported[0] ?? null;
+    }
+    return await this.importFatProject(result, this.attributeDefs);
   }
 
   async createClickHandler(event, uploadFunction) {
@@ -950,7 +960,9 @@ Drive : ${c.drive.revision} (${this.#getAppName(c.drive.app)})`;
         await this.importModels(fatProject.project.id, fatProject.models);
       }
       this.updateDisplay();
+      return fatProject.project;
     }
+    return null;
   }
 
   /**

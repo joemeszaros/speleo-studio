@@ -1122,7 +1122,7 @@
       "caveAlreadyImported": "Cave {name} has already been imported",
       "duplicateCavesSkipped": "Skipped {count} duplicate cave(s) already provided by another selected master: {names}",
       "caveIdAlreadyExists": "A cave with the id \"{id}\" already exists, please change the id of the cave to be imported",
-      "projectUrlParameterMissing": "Probably the project URL parameter is missing",
+      "projectUrlParameterMissing": "Probably the project or projectUrl parameter is missing",
       "failedToDownloadFile": "Failed to download file {name}: {error}",
       "failedToLoadCaveFromUrl": "Failed to load cave from URL: {error}",
       "failedToLoadProjectOrCaveFromUrl": "Failed to load project or cave from URL: {error}",

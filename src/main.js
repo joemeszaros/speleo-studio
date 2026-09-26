@@ -86,7 +86,11 @@ class Main {
   constructor() {
     const loader = new FontLoader();
     i18n.init().then(() => {
-      if (localStorage.getItem('first-visit') === null) {
+      const urlParams = new URLSearchParams(window.location.search);
+      // A shared link (?project=/?projectUrl=) means someone sent this URL specifically to show
+      // a cave/project right away — the onboarding overlay would just be another click in the way.
+      const isDeepLink = urlParams.has('project') || urlParams.has('projectUrl');
+      if (localStorage.getItem('first-visit') === null && !isDeepLink) {
         this.showWelcomePanel();
       }
 
@@ -133,7 +137,7 @@ class Main {
             'fonts/helvetiker_regular.typeface.json',
             (font) => {
               // Initialize the application
-              this.#initializeApp(db, options, observer, attributeDefs, font);
+              this.#initializeApp(db, options, observer, attributeDefs, font, urlParams);
             },
             () => {},
             (error) => {
@@ -159,7 +163,7 @@ class Main {
     return await response.json();
   }
 
-  async #initializeApp(db, options, observer, attributeDefs, font) {
+  async #initializeApp(db, options, observer, attributeDefs, font, urlParams) {
     try {
       await this.databaseManager.init();
     } catch (error) {
@@ -356,7 +360,6 @@ class Main {
 
     this.#setupEventListeners();
 
-    const urlParams = new URLSearchParams(window.location.search);
     this.#loadProjectFromUrl(urlParams)
       .then(async (project) => {
         if (project) {
@@ -1033,25 +1036,51 @@ class Main {
 
   async #loadProjectFromUrl(urlParams) {
 
-    if (urlParams.has('project')) {
-      const projectName = urlParams.get('project');
-      const loadedProject = await this.projectSystem.loadProjectOrCreateByName(projectName);
-
-      document.dispatchEvent(
-        new CustomEvent('currentProjectChanged', {
-          detail : {
-            project : loadedProject
-          }
-        })
-      );
-      return loadedProject;
+    let loadedProject;
+    if (urlParams.has('projectUrl')) {
+      loadedProject = await this.#loadProjectFromRemoteUrl(urlParams.get('projectUrl'));
+    } else if (urlParams.has('project')) {
+      loadedProject = await this.projectSystem.loadProjectOrCreateByName(urlParams.get('project'));
+    } else {
+      return null;
     }
+
+    if (!loadedProject) {
+      return null;
+    }
+
+    document.dispatchEvent(
+      new CustomEvent('currentProjectChanged', {
+        detail : {
+          project : loadedProject
+        }
+      })
+    );
+    return loadedProject;
+  }
+
+  // Fetches a whole shared project (.json / .json.gz, as produced by "Export Project") from a
+  // remote URL and imports it. This is what lets `?projectUrl=<url>` share a project with someone
+  // just by sending them a link — no dialog, no click, mirroring how `?caveUrl=<url>` already
+  // shares a single cave (#loadCaveFromUrlValue).
+  async #loadProjectFromRemoteUrl(url) {
+    console.log(`Trying to load project from URL: ${url}`);
+    const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    if (!response.ok) {
+      throw new Error(i18n.t('errors.import.failedToDownloadFile', { name: url, error: response.statusText }));
+    }
+    const blob = await response.blob();
+    const project = await this.projectPanel.importFatProjectFromBlob(blob);
+    if (project) {
+      this.projectSystem.setCurrentProject(project);
+    }
+    return project;
   }
 
   async #loadCaveFromUrl(urlParams, project) {
 
-    if (urlParams.has('cave')) {
-      const caveNameUrl = urlParams.get('cave');
+    if (urlParams.has('caveUrl')) {
+      const caveUrl = urlParams.get('caveUrl');
 
       if (!project) {
         throw new Error(i18n.t('errors.import.projectUrlParameterMissing'));
@@ -1059,47 +1088,62 @@ class Main {
 
       this.projectPanel.hide();
 
-      let importer;
-      console.log(`Trying to load cave from URL: ${caveNameUrl}`);
-      if (caveNameUrl.includes('.cave')) {
-        importer = this.importers.polygon;
-      } else if (caveNameUrl.includes('.csv')) {
-        importer = this.importers.topodroid;
-      } else if (caveNameUrl.includes('.json')) {
-        importer = this.importers.json;
-      }
-
-      if (importer !== undefined) {
-        fetch(caveNameUrl)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(
-                i18n.t('errors.import.failedToDownloadFile', { name: caveNameUrl, error: response.statusText })
-              );
-            }
-            return response.blob();
-          })
-          .then((res) => {
-            return new Promise((resolve, reject) => {
-              importer.importFile(res, caveNameUrl, async (cave) => {
-                try {
-                  await this.#tryAddCave(cave);
-                  resolve();
-                } catch (error) {
-                  reject(error);
-                }
-              });
-            });
-          })
-          .catch((error) => {
-            const msgPrefix = i18n.t('errors.import.importFileFailed', { name: caveNameUrl });
-            showErrorPanel(`${msgPrefix}: ${error.message}`);
-            console.error(msgPrefix, error);
-          });
+      try {
+        await this.#loadCaveFromUrlValue(caveUrl);
+      } catch (error) {
+        const msgPrefix = i18n.t('errors.import.importFileFailed', { name: caveUrl });
+        showErrorPanel(`${msgPrefix}: ${error.message}`);
+        console.error(msgPrefix, error);
       }
     } else {
       this.scene.view.renderView();
     }
+  }
+
+  // Picks the cave importer for a URL by its path extension (ignoring any query string),
+  // mirroring the family of standalone cave files handled by #buildCaveCandidates.
+  #pickCaveImporterForUrl(url) {
+    let pathname;
+    try {
+      pathname = new URL(url).pathname;
+    } catch {
+      pathname = url;
+    }
+    const ext = pathname.toLowerCase().split('.').pop();
+    if (ext === 'cave') return this.importers.polygon;
+    if (ext === 'csv') return this.importers.topodroid;
+    if (ext === 'json') return this.importers.json;
+    return undefined;
+  }
+
+  // Fetches a cave file from a remote URL (the `?caveUrl=<url>` startup deep-link) and imports it
+  // exactly like a local file pick.
+  async #loadCaveFromUrlValue(url) {
+    const importer = this.#pickCaveImporterForUrl(url);
+    if (!importer) {
+      throw new Error(i18n.t('errors.import.unsupportedFileType', { extension: url.split('.').pop() }));
+    }
+
+    console.log(`Trying to load cave from URL: ${url}`);
+    const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    if (!response.ok) {
+      throw new Error(i18n.t('errors.import.failedToDownloadFile', { name: url, error: response.statusText }));
+    }
+    const blob = await response.blob();
+    // Wrap as a File: PolygonImporter.importFile reads `file.name` directly (for the encoding
+    // dialog), which a bare fetch() Blob does not have.
+    const file = new File([blob], url, { type: blob.type });
+
+    await new Promise((resolve, reject) => {
+      importer.importFile(file, url, async (cave) => {
+        try {
+          await this.#tryAddCave(cave);
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      }).catch(reject);
+    });
   }
 
   showWelcomePanel() {

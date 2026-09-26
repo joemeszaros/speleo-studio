@@ -1145,7 +1145,7 @@
       "caveAlreadyImported": "A(z) {name} nevű barlang már importálva lett korábban",
       "duplicateCavesSkipped": "{count} ismétlődő barlang kihagyva, amelyeket egy másik kijelölt törzsfájl már tartalmaz: {names}",
       "caveIdAlreadyExists": "A \"{id}\" azonosítójú barlang már létezik, változtassa meg az azonosítót a fájlban",
-      "projectUrlParameterMissing": "Valószínű, hogy a projekt URL paraméter hiányzik",
+      "projectUrlParameterMissing": "Valószínű, hogy a project vagy a projectUrl paraméter hiányzik",
       "failedToDownloadFile": "Nem lehet letölteni a(z) {name} fájlt: {error}",
       "failedToLoadCaveFromUrl": "Nem lehet betölteni a(z) {name} barlangot a URL-ből: {error}",
       "failedToLoadProjectOrCaveFromUrl": "Nem lehet betölteni a(z) {name} projektet és barlangot a URL-ből: {error}",
